@@ -29,10 +29,9 @@ class Greenpak4BitstreamEntity
 public:
 	Greenpak4BitstreamEntity(
 		Greenpak4Device* device,
-		unsigned int imatrix,
+		unsigned int matrix,
 		unsigned int ibase,
-		unsigned int omatrix,
-		unsigned int oword,
+		unsigned int obase,
 		unsigned int cbase
 		);
 	virtual ~Greenpak4BitstreamEntity();
@@ -51,8 +50,8 @@ protected:
 	///The device we're attached to
 	Greenpak4Device* m_device;
 
-	///Number of the routing matrix our inputs come from (currently 0 or 1 for all GP4 devices)
-	unsigned int m_inputMatrix;
+	///Number of the routing matrix we're attached to (currently 0 or 1 for all GP4 devices)
+	unsigned int m_matrix;
 	
 	/**
 		@brief Base address of our input bus.
@@ -63,9 +62,6 @@ protected:
 		then our first input is bits 12-17 from the start of matrix 0 (offset 0 in the bitstream).
 	 */
 	unsigned int m_inputBaseWord;
-	
-	///Number of the routing matrix our output goes to
-	unsigned int m_outputMatrix;
 	
 	///Base address of the output bus
 	unsigned int m_outputBaseWord;

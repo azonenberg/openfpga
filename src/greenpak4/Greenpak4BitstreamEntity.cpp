@@ -23,17 +23,15 @@
 
 Greenpak4BitstreamEntity::Greenpak4BitstreamEntity(
 	Greenpak4Device* device,
-	unsigned int imatrix,
+	unsigned int matrix,
 	unsigned int ibase,
-	unsigned int omatrix,
-	unsigned int oword,
+	unsigned int obase,
 	unsigned int cbase
 	)
 	: m_device(device)
-	, m_inputMatrix(imatrix)
+	, m_matrix(matrix)
 	, m_inputBaseWord(ibase)
-	, m_outputMatrix(omatrix)
-	, m_outputBaseWord(oword)
+	, m_outputBaseWord(obase)
 	, m_configBase(cbase)
 {
 	

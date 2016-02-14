@@ -39,11 +39,23 @@ public:
 	
 protected:
 
+	void CreateDevice_SLG46620();
+
 	///The part number
 	GREENPAK4_PART m_part;
+	
+	///The number of bits in a routing matrix selector
+	unsigned int m_matrixBits;
 
 	///One vector with everything in the bistream
 	std::vector<Greenpak4BitstreamEntity*> m_bitstuff;
+	
+	/**
+		@brief Just the LUTs (all sizes)
+		
+		Sorted with LUT2s, LUT3s, LUT4s in that order
+	 */
+	std::vector<Greenpak4LUT*> m_luts;
 };
 
 #endif

@@ -29,9 +29,8 @@ public:
 	//Construction / destruction
 	Greenpak4LUT(
 		Greenpak4Device* device,
-		unsigned int imatrix,
+		unsigned int matrix,
 		unsigned int ibase,
-		unsigned int omatrix,
 		unsigned int oword,
 		unsigned int cbase,
 		unsigned int order);
