@@ -97,6 +97,42 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: Create the LUT4s (this is special because both have alternate functions)
 	
+	//TODO: DFF/latches
+	
+	//TODO: Pipe delays
+	
+	//TODO: Edge detector/prog delays
+	
+	//TODO: Inverters
+	
+	//TODO: Output pins
+	
+	//TODO: Comparators
+	
+	//TODO: External clock??
+	
+	//TODO: Oscillators
+	
+	//TODO: Counters
+	
+	//TODO: Slave SPI
+	
+	//TODO: Cross-connections between matrixes
+	
+	//TODO: ADC
+	
+	//TODO: DAC
+	
+	//TODO: Bandgap reference
+	
+	//TODO: Reserved bits
+	
+	//TODO: Vdd bypass
+	
+	//TODO: Configuration/boot stuff
+	
+	//TODO: IO pad precharge? what does this involve?
+	
 	//Finally, put everything in bitstuff so we can walk the whole bitstream and not care about details
 	for(auto x : m_luts)
 		m_bitstuff.push_back(x);
