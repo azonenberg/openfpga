@@ -31,7 +31,8 @@ Greenpak4LUT::Greenpak4LUT(
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 	, m_order(order)
 {
-	
+	for(unsigned int i=0; i<16; i++)
+		m_truthtable[i] = 0;
 }
 
 Greenpak4LUT::~Greenpak4LUT()
@@ -45,4 +46,27 @@ Greenpak4LUT::~Greenpak4LUT()
 unsigned int Greenpak4LUT::GetConfigLen()
 {
 	return 1 << m_order;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization of the truth table
+
+void Greenpak4LUT::Load(bool* bitstream)
+{
+	//TODO: Do our inputs
+	
+	//Do the LUT
+	unsigned int nmax = GetConfigLen();
+	for(unsigned int i=0; i<nmax; i++)
+		m_truthtable[i] = bitstream[m_configBase + i];
+}
+
+void Greenpak4LUT::Save(bool* bitstream)
+{
+	//TODO: Do our inputs
+	
+	//Do the LUT
+	unsigned int nmax = GetConfigLen();
+	for(unsigned int i=0; i<nmax; i++)
+		bitstream[m_configBase + i] = m_truthtable[i];
 }

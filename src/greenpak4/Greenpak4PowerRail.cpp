@@ -43,3 +43,14 @@ unsigned int Greenpak4PowerRail::GetConfigLen()
 {
 	return 1;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Dummy serialization placeholders (nothing to do, we have no data)
+
+void Greenpak4PowerRail::Load(bool* /*bitstream*/)
+{
+}
+
+void Greenpak4PowerRail::Save(bool* /*bitstream*/)
+{
+}

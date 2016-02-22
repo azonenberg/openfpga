@@ -38,7 +38,11 @@ public:
 	
 	//TODO: Print for debugging
 
-	//TODO: Save and load to external bool[]
+	///Deserialize from an external bitstream
+	virtual void Load(bool* bitstream) =0;
+	
+	///Serialize to an external bitstream
+	virtual void Save(bool* bitstream) =0;
 	
 	/**
 		@brief Returns the length, in bits, of our configuration data

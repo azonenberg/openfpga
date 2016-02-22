@@ -36,6 +36,10 @@ public:
 	//Bitfile metadata
 	virtual unsigned int GetConfigLen();
 	
+	//Serialization (no-ops)
+	virtual void Load(bool* bitstream);
+	virtual void Save(bool* bitstream);
+	
 protected:
 };
 

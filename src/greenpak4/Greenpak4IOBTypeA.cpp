@@ -45,3 +45,16 @@ unsigned int Greenpak4IOBTypeA::GetConfigLen()
 	//2 bit input mode, 2 bit output mode, 2 bit pullup value, 1 bit pullup enable
 	return 7;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization
+
+void Greenpak4IOBTypeA::Load(bool* bitstream)
+{
+	//TODO
+}
+
+void Greenpak4IOBTypeA::Save(bool* bitstream)
+{
+	//TODO
+}
