@@ -51,7 +51,7 @@ unsigned int Greenpak4LUT::GetConfigLen()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization of the truth table
 
-void Greenpak4LUT::Load(bool* bitstream)
+bool Greenpak4LUT::Load(bool* bitstream)
 {
 	//TODO: Do our inputs
 	
@@ -59,9 +59,11 @@ void Greenpak4LUT::Load(bool* bitstream)
 	unsigned int nmax = GetConfigLen();
 	for(unsigned int i=0; i<nmax; i++)
 		m_truthtable[i] = bitstream[m_configBase + i];
+		
+	return true;
 }
 
-void Greenpak4LUT::Save(bool* bitstream)
+bool Greenpak4LUT::Save(bool* bitstream)
 {
 	//TODO: Do our inputs
 	
@@ -69,4 +71,6 @@ void Greenpak4LUT::Save(bool* bitstream)
 	unsigned int nmax = GetConfigLen();
 	for(unsigned int i=0; i<nmax; i++)
 		bitstream[m_configBase + i] = m_truthtable[i];
+		
+	return true;
 }

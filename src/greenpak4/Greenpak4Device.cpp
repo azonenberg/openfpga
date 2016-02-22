@@ -52,6 +52,14 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//64 inputs per routing matrix
 	m_matrixBits = 6;
 	
+	//Create power rails (need one for each matrix).
+	//These have to come first, since all other devices will refer to these during construction
+	for(int i=0; i<2; i++)
+	{
+		m_constantZero[i] = new Greenpak4PowerRail(this, i, 0);
+		m_constantOne[i] = new Greenpak4PowerRail(this, i, 63);
+	}
+	
 	//Create the LUT2s (4 per device half)
 	for(int i=0; i<4; i++)
 	{
@@ -98,13 +106,75 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: Create the LUT4s (this is special because both have alternate functions)
 	
-	//IOBs
+	//Create the Type-A IOBs
 	m_iobs[3] = new Greenpak4IOBTypeA(
 		this,
 		0,
 		56, 
 		25,
 		946);
+	m_iobs[5] = new Greenpak4IOBTypeA(
+		this,
+		0,
+		59, 
+		27,
+		960);		
+	m_iobs[7] = new Greenpak4IOBTypeA(
+		this,
+		0,
+		62, 
+		29,
+		974);
+	m_iobs[9] = new Greenpak4IOBTypeA(
+		this,
+		0,
+		65, 
+		31,
+		988);
+	m_iobs[10] = new Greenpak4IOBTypeA(
+		this,
+		0,
+		67, 
+		32,
+		995);
+	/*
+	//these are mostly type A but seem inverted in a few spots - separate class or just a flag?
+	m_iobs[13] = new Greenpak4IOBTypeA(
+		this,
+		1,
+		//56, 
+		//25,
+		1919
+		);
+	m_iobs[14] = new Greenpak4IOBTypeA(
+		this,
+		1,
+		//56, 
+		//25,
+		1926
+		);
+	m_iobs[16] = new Greenpak4IOBTypeA(
+		this,
+		1,
+		//56, 
+		//25,
+		1940
+		);
+	m_iobs[18] = new Greenpak4IOBTypeA(
+		this,
+		1,
+		//56, 
+		//25,
+		1954
+		);
+	m_iobs[19] = new Greenpak4IOBTypeA(
+		this,
+		1,
+		//56, 
+		//25,
+		1961
+		);
+	*/
 	
 	//TODO: DFF/latches
 	
@@ -140,13 +210,6 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: IO pad precharge? what does this involve?
 	
-	//Create power rails (need one for each matrix)
-	for(int i=0; i<2; i++)
-	{
-		m_constantZero[i] = new Greenpak4PowerRail(this, i, 0);
-		m_constantOne[i] = new Greenpak4PowerRail(this, i, 63);
-	}
-	
 	//Finally, put everything in bitstuff so we can walk the whole bitstream and not care about details
 	for(auto x : m_luts)
 		m_bitstuff.push_back(x);
@@ -161,6 +224,30 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//Total length of our bitstream
 	m_bitlen = 2048;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+Greenpak4BitstreamEntity* Greenpak4Device::GetPowerRail(unsigned int matrix, bool rail)
+{
+	if(matrix > 1)
+		return NULL;
+	
+	if(rail)
+		return m_constantOne[matrix];
+	else
+		return m_constantZero[matrix];
+}
+
+Greenpak4IOB* Greenpak4Device::GetIOB(unsigned int pin)
+{
+	if(m_iobs.find(pin) == m_iobs.end())
+		return NULL;
+	return m_iobs[pin];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// File I/O
 
 bool Greenpak4Device::WriteToFile(const char* fname)
 {
@@ -181,7 +268,10 @@ bool Greenpak4Device::WriteToFile(const char* fname)
 	
 	//Get the config data from each of our blocks
 	for(auto x : m_bitstuff)
-		x->Save(bitstream);
+	{
+		if(!x->Save(bitstream))
+			return false;
+	}
 		
 	//Write the bitfile (TODO comment more meaningfully?)
 	fprintf(fp, "index		value		comment\n");

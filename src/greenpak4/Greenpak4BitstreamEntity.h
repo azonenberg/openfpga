@@ -39,17 +39,34 @@ public:
 	//TODO: Print for debugging
 
 	///Deserialize from an external bitstream
-	virtual void Load(bool* bitstream) =0;
+	virtual bool Load(bool* bitstream) =0;
 	
 	///Serialize to an external bitstream
-	virtual void Save(bool* bitstream) =0;
+	virtual bool Save(bool* bitstream) =0;
 	
 	/**
 		@brief Returns the length, in bits, of our configuration data
 	 */
 	virtual unsigned int GetConfigLen() =0;
 	
+	/**
+		@brief Returns the index of the routing matrix we're attached to
+	 */
+	unsigned int GetMatrix()
+	{ return m_matrix; }
+	
+	/**
+		@brief Gets the index of the first (only, in most cases) output word
+	 */
+	unsigned int GetOutputBase()
+	{ return m_outputBaseWord; }
+	
 protected:
+
+	/**
+		@brief Writes a matrix select value to the bitstream
+	 */
+	void WriteMatrixSelector(bool* bitstream, unsigned int wordpos, unsigned int sel);
 
 	///The device we're attached to
 	Greenpak4Device* m_device;

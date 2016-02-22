@@ -41,3 +41,21 @@ Greenpak4BitstreamEntity::~Greenpak4BitstreamEntity()
 {
 	
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Load/save helpers
+
+void Greenpak4BitstreamEntity::WriteMatrixSelector(bool* bitstream, unsigned int wordpos, unsigned int sel)
+{
+	unsigned int nbits = m_device->GetMatrixBits();
+	unsigned int nleft = 1 << (nbits - 1);
+	unsigned int startbit = wordpos * nbits;
+	
+	for(unsigned int i=0; i<nbits; i++)
+	{
+		if( (sel << i) & startbit )
+			bitstream[startbit + i] = true;
+		else
+			bitstream[startbit + i] = false;
+	}
+}

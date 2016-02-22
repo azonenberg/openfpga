@@ -49,12 +49,132 @@ unsigned int Greenpak4IOBTypeA::GetConfigLen()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4IOBTypeA::Load(bool* bitstream)
+bool Greenpak4IOBTypeA::Load(bool* /*bitstream*/)
 {
 	//TODO
+	fprintf(stderr, "Greenpak4IOBTypeA::Load not implemented\n");
+	exit(-1);
+	
+	return false;
 }
 
-void Greenpak4IOBTypeA::Save(bool* bitstream)
+bool Greenpak4IOBTypeA::Save(bool* bitstream)
 {
-	//TODO
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+	
+	//Digital output
+	WriteMatrixSelector(bitstream, m_inputBaseWord, m_outputSignal->GetOutputBase());
+	
+	//Output enable
+	WriteMatrixSelector(bitstream, m_inputBaseWord+1, m_outputEnable->GetOutputBase());
+		
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CONFIGURATION
+	
+	//Input threshold 1:0
+	switch(m_inputThreshold)
+	{ 
+		case THRESHOLD_ANALOG:
+			bitstream[m_configBase+0] = true;
+			bitstream[m_configBase+1] = true;
+			break;
+			
+		case THRESHOLD_LOW:
+			bitstream[m_configBase+0] = false;
+			bitstream[m_configBase+1] = true;
+			break;
+			
+		case THRESHOLD_NORMAL:
+			bitstream[m_configBase+1] = false;
+			bitstream[m_configBase+0] = m_schmittTrigger;
+			break;
+			
+		default:
+			fprintf(stderr, "ERROR: Invalid IOB threshold\n");
+			return false;
+	}
+	
+	//Output drive strength 2
+	switch(m_driveStrength)
+	{
+		case DRIVE_1X:
+			bitstream[m_configBase+2] = false;
+			break;
+			
+		case DRIVE_2X:
+			bitstream[m_configBase+2] = true;
+			break;
+		
+		default:
+			fprintf(stderr, "ERROR: Invalid drive strength\n");
+			return false;
+	}
+	
+	//Output buffer type 3
+	switch(m_driveType)
+	{
+		case DRIVE_PUSHPULL:
+			bitstream[m_configBase+3] = false;
+			break;
+			
+		case DRIVE_NMOS_OPENDRAIN:
+			bitstream[m_configBase+3] = true;
+			break;
+			
+		default:
+			fprintf(stderr, "ERROR: Invalid driver type\n");
+			return false;
+	}
+	
+	//Pullup/down resistor strength 5:4, direction 6
+	if(m_pullDirection == PULL_NONE)
+	{
+		bitstream[m_configBase + 4] = false;
+		bitstream[m_configBase + 5] = false;
+		
+		//don't care, pull circuit disconnected
+		bitstream[m_configBase + 6] = false;
+	}
+	else
+	{
+		switch(m_pullStrength)
+		{
+			case PULL_10K:
+				bitstream[m_configBase + 4] = true;
+				bitstream[m_configBase + 5] = false;
+				break;
+				
+			case PULL_100K:
+				bitstream[m_configBase + 4] = false;
+				bitstream[m_configBase + 5] = true;
+				break;
+				
+			case PULL_1M:
+				bitstream[m_configBase + 4] = true;
+				bitstream[m_configBase + 5] = true;
+				break;
+				
+			default:
+				fprintf(stderr, "ERROR: Invalid pull strength\n");
+				return false;
+		}
+		
+		switch(m_pullDirection)
+		{
+			case PULL_UP:
+				bitstream[m_configBase + 6] = true;
+				break;
+			
+			case PULL_DOWN:
+				bitstream[m_configBase + 6] = false;
+				break;
+				
+			default:
+				fprintf(stderr, "ERROR: Invalid pull direction\n");
+				return false;
+		}
+	}
+	
+	return true;
 }

@@ -41,6 +41,15 @@ public:
 	//Write to a bitfile
 	bool WriteToFile(const char* fname);
 	
+	//Get the power rail for a binary constant
+	Greenpak4BitstreamEntity* GetPowerRail(unsigned int matrix, bool rail);
+	
+	//Get the IO buffer for a given pin number
+	Greenpak4IOB* GetIOB(unsigned int pin);
+	
+	unsigned int GetMatrixBits()
+	{ return m_matrixBits; }
+	
 protected:
 
 	void CreateDevice_SLG46620();
@@ -64,7 +73,7 @@ protected:
 	/**
 		@brief I/O pins (map from pin numbers to IOBs)
 	 */
-	std::map<int, Greenpak4IOB*> m_iobs;
+	std::map<unsigned int, Greenpak4IOB*> m_iobs;
 	
 	///Constant digital 1 for each matrix
 	Greenpak4PowerRail* m_constantOne[2];

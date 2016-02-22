@@ -67,8 +67,13 @@ public:
 	//Output driver type
 	enum DriveType
 	{
+		//Push-pull
 		DRIVE_PUSHPULL,
+		
+		///Pull low only
 		DRIVE_NMOS_OPENDRAIN,
+		
+		///Pull high only
 		DRIVE_PMOS_OPENDRAIN,
 	};
 	
@@ -86,22 +91,28 @@ public:
 	};
 	
 	virtual void SetSchmittTrigger(bool enabled);
-	bool GetSchmittTrigger();
+	virtual bool GetSchmittTrigger();
 	
 	virtual void SetPullStrength(PullStrength strength);
-	bool GetPullStrength();
+	virtual bool GetPullStrength();
 	
 	virtual void SetPullDirection(PullDirection direction);
-	bool GetPullDirection();
+	virtual bool GetPullDirection();
 	
 	virtual void SetDriveStrength(DriveStrength strength);
-	bool GetDriveStrength();
+	virtual bool GetDriveStrength();
 	
 	virtual void SetDriveType(DriveType type);
-	bool GetDriveType();
+	virtual bool GetDriveType();
 	
 	virtual void SetInputThreshold(InputThreshold thresh);
-	bool GetInputThreshold();
+	virtual bool GetInputThreshold();
+	
+	virtual void SetOutputEnable(Greenpak4BitstreamEntity* oe);
+	virtual Greenpak4BitstreamEntity* GetOutputEnable();
+	
+	virtual void SetOutputSignal(Greenpak4BitstreamEntity* sig);
+	virtual Greenpak4BitstreamEntity* GetOutputSignal();
 	
 protected:
 
@@ -125,6 +136,12 @@ protected:
 	
 	///Type of the input threshold
 	InputThreshold m_inputThreshold;
+	
+	///Signal source for our output enable
+	Greenpak4BitstreamEntity* m_outputEnable;
+	
+	///Signal source for our output driver
+	Greenpak4BitstreamEntity* m_outputSignal;
 };
 
 #endif

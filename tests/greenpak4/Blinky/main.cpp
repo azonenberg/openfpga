@@ -24,7 +24,20 @@ int main(int /*argc*/, char* /*argv*/[])
 	//Create the device
 	Greenpak4Device device(Greenpak4Device::GREENPAK4_SLG46620);
 	
-	//TODO: configure it
+	//Pull pin 3 high
+	Greenpak4IOB* iob = device.GetIOB(3);
+	Greenpak4BitstreamEntity* vdd = device.GetPowerRail(iob->GetMatrix(), true);
+	iob->SetOutputEnable(vdd);
+	iob->SetOutputSignal(vdd);
+	
+	//Pull pins 5-7-9-10 low
+	unsigned int pins[] = {5, 7, 9, 10};
+	for(auto pin : pins)
+	{
+		iob = device.GetIOB(pin);
+		iob->SetPullStrength(Greenpak4IOB::PULL_10K);
+		iob->SetPullDirection(Greenpak4IOB::PULL_DOWN);
+	}
 	
 	//Write the bitstream
 	device.WriteToFile("/tmp/Blinky-bits.txt");

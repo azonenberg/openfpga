@@ -34,6 +34,8 @@ Greenpak4IOB::Greenpak4IOB(
 	, m_driveStrength(DRIVE_1X)
 	, m_driveType(DRIVE_PUSHPULL)
 	, m_inputThreshold(THRESHOLD_NORMAL)
+	, m_outputEnable(device->GetPowerRail(matrix, 0))
+	, m_outputSignal(device->GetPowerRail(matrix, 0))
 {
 	
 }
@@ -104,4 +106,24 @@ void Greenpak4IOB::SetInputThreshold(InputThreshold thresh)
 bool Greenpak4IOB::GetInputThreshold()
 {
 	return m_inputThreshold;
+}
+
+void Greenpak4IOB::SetOutputEnable(Greenpak4BitstreamEntity* oe)
+{
+	m_outputEnable = oe;
+}
+
+Greenpak4BitstreamEntity* Greenpak4IOB::GetOutputEnable()
+{
+	return m_outputEnable;
+}
+
+void Greenpak4IOB::SetOutputSignal(Greenpak4BitstreamEntity* sig)
+{
+	m_outputSignal = sig;
+}
+
+Greenpak4BitstreamEntity* Greenpak4IOB::GetOutputSignal()
+{
+	return m_outputSignal;
 }

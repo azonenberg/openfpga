@@ -40,8 +40,8 @@ public:
 	virtual unsigned int GetConfigLen();
 	
 	//Serialization
-	virtual void Load(bool* bitstream);
-	virtual void Save(bool* bitstream);
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
 	
 protected:
 
