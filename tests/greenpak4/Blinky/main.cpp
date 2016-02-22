@@ -16,64 +16,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4Device_h
-#define Greenpak4Device_h
+#include "../../../src/greenpak4/Greenpak4.h"
+#include <stdio.h>
 
-#include <vector>
-#include <map>
-
-/**
-	@brief Top level class for an entire Silego Greenpak4 device
- */ 
-class Greenpak4Device
+int main(int /*argc*/, char* /*argv*/[])
 {
-public:
-
-	enum GREENPAK4_PART
-	{
-		GREENPAK4_SLG46620
-	};
-
-	Greenpak4Device(Greenpak4Device::GREENPAK4_PART part);
+	//Create the device
+	Greenpak4Device device(Greenpak4Device::GREENPAK4_SLG46620);
 	
-	virtual ~Greenpak4Device();
+	//TODO: configure it
 	
-	//Write to a bitfile
-	bool WriteToFile(const char* fname);
+	//Write the bitstream
+	device.WriteToFile("/tmp/Blinky-bits.txt");
 	
-protected:
-
-	void CreateDevice_SLG46620();
-
-	///The part number
-	GREENPAK4_PART m_part;
-	
-	///The number of bits in a routing matrix selector
-	unsigned int m_matrixBits;
-
-	///One vector with everything in the bistream
-	std::vector<Greenpak4BitstreamEntity*> m_bitstuff;
-	
-	/**
-		@brief Just the LUTs (all sizes)
-		
-		Sorted with LUT2s, LUT3s, LUT4s in that order
-	 */
-	std::vector<Greenpak4LUT*> m_luts;
-	
-	/**
-		@brief I/O pins (map from pin numbers to IOBs)
-	 */
-	std::map<int, Greenpak4IOB*> m_iobs;
-	
-	///Constant digital 1 for each matrix
-	Greenpak4PowerRail* m_constantOne[2];
-	
-	///Constant digital 0
-	Greenpak4PowerRail* m_constantZero[2];
-	
-	//Total bitfile length
-	unsigned int m_bitlen;
-};
-
-#endif
+	return 0;
+}

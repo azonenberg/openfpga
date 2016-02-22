@@ -152,9 +152,44 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		m_bitstuff.push_back(x);
 	for(auto x : m_iobs)
 		m_bitstuff.push_back(x.second);
-	for(int i=0; i<2; i++)
+	for(unsigned int i=0; i<2; i++)
 	{
 		m_bitstuff.push_back(m_constantZero[i]);
 		m_bitstuff.push_back(m_constantOne[i]);
 	}
+	
+	//Total length of our bitstream
+	m_bitlen = 2048;
+}
+
+bool Greenpak4Device::WriteToFile(const char* fname)
+{
+	//Open the file
+	FILE* fp = fopen(fname, "w");
+	if(!fp)
+	{
+		fprintf(stderr, "Couldn't open %s for writing\n", fname);
+		return false;
+	}
+	
+	//Allocate the bitstream and initialize to zero
+	//According to phone conversation w Silego FAE, 0 is legal default state for everything incl reserved bits
+	//All IOs will be floating digital inputs
+	bool* bitstream = new bool[m_bitlen];
+	for(unsigned int i=0; i<m_bitlen; i++)
+		bitstream[i] = false;
+	
+	//Get the config data from each of our blocks
+	for(auto x : m_bitstuff)
+		x->Save(bitstream);
+		
+	//Write the bitfile (TODO comment more meaningfully?)
+	fprintf(fp, "index		value		comment\n");
+	for(unsigned int i=0; i<m_bitlen; i++)
+		fprintf(fp, "%d		%d		//\n", i, bitstream[i]);
+	
+	//Done
+	delete[] bitstream;
+	fclose(fp);
+	return true;
 }
