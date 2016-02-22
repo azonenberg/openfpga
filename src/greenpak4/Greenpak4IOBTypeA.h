@@ -16,20 +16,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#ifndef Greenpak4IOBTypeA_h
+#define Greenpak4IOBTypeA_h
 
 /**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
- 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
+	@brief A single IOB, bitfile format type A
+ */ 
+class Greenpak4IOBTypeA : public Greenpak4IOB
+{
+public:
 
-#include "Greenpak4Device.h"
+	//Construction / destruction
+	Greenpak4IOBTypeA(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	virtual ~Greenpak4IOBTypeA();
+		
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
+	
+protected:
+};
 
 #endif
+

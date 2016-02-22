@@ -16,20 +16,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#include "Greenpak4.h"
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
- 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-#include "Greenpak4Device.h"
+Greenpak4IOBTypeA::Greenpak4IOBTypeA(
+	Greenpak4Device* device,
+	unsigned int matrix,
+	unsigned int ibase,
+	unsigned int oword,
+	unsigned int cbase)
+	: Greenpak4IOB(device, matrix, ibase, oword, cbase)
+{
+	
+}
 
-#endif
+Greenpak4IOBTypeA::~Greenpak4IOBTypeA()
+{
+	
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Bitfile metadata
+
+unsigned int Greenpak4IOBTypeA::GetConfigLen()
+{
+	//2 bit input mode, 2 bit output mode, 2 bit pullup value, 1 bit pullup enable
+	return 7;
+}

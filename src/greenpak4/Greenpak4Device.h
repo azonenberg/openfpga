@@ -20,6 +20,7 @@
 #define Greenpak4Device_h
 
 #include <vector>
+#include <map>
 
 /**
 	@brief Top level class for an entire Silego Greenpak4 device
@@ -56,6 +57,17 @@ protected:
 		Sorted with LUT2s, LUT3s, LUT4s in that order
 	 */
 	std::vector<Greenpak4LUT*> m_luts;
+	
+	/**
+		@brief I/O pins (map from pin numbers to IOBs)
+	 */
+	std::map<int, Greenpak4IOB*> m_iobs;
+	
+	///Constant digital 1 for each matrix
+	Greenpak4PowerRail* m_constantOne[2];
+	
+	///Constant digital 0
+	Greenpak4PowerRail* m_constantZero[2];
 };
 
 #endif

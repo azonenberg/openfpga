@@ -16,20 +16,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#ifndef Greenpak4PowerRail_h
+#define Greenpak4PowerRail_h
 
 /**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
- 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
+	@brief A single power rail
+ */ 
+class Greenpak4PowerRail : public Greenpak4BitstreamEntity
+{
+public:
 
-#include "Greenpak4Device.h"
+	//Construction / destruction
+	Greenpak4PowerRail(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int oword);
+	virtual ~Greenpak4PowerRail();
+		
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
+	
+protected:
+};
 
 #endif

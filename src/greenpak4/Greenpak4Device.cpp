@@ -41,6 +41,7 @@ Greenpak4Device::Greenpak4Device(GREENPAK4_PART part)
 
 Greenpak4Device::~Greenpak4Device()
 {
+	//Delete everything
 	for(auto x : m_bitstuff)
 		delete x;
 	m_bitstuff.clear();
@@ -97,6 +98,14 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: Create the LUT4s (this is special because both have alternate functions)
 	
+	//IOBs
+	m_iobs[3] = new Greenpak4IOBTypeA(
+		this,
+		0,
+		56, 
+		25,
+		946);
+	
 	//TODO: DFF/latches
 	
 	//TODO: Pipe delays
@@ -104,8 +113,6 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//TODO: Edge detector/prog delays
 	
 	//TODO: Inverters
-	
-	//TODO: Output pins
 	
 	//TODO: Comparators
 	
@@ -133,7 +140,21 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: IO pad precharge? what does this involve?
 	
+	//Create power rails (need one for each matrix)
+	for(int i=0; i<2; i++)
+	{
+		m_constantZero[i] = new Greenpak4PowerRail(this, i, 0);
+		m_constantOne[i] = new Greenpak4PowerRail(this, i, 63);
+	}
+	
 	//Finally, put everything in bitstuff so we can walk the whole bitstream and not care about details
 	for(auto x : m_luts)
 		m_bitstuff.push_back(x);
+	for(auto x : m_iobs)
+		m_bitstuff.push_back(x.second);
+	for(int i=0; i<2; i++)
+	{
+		m_bitstuff.push_back(m_constantZero[i]);
+		m_bitstuff.push_back(m_constantOne[i]);
+	}
 }
