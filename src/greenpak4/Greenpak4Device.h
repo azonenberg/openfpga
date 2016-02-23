@@ -47,8 +47,14 @@ public:
 	//Get the IO buffer for a given pin number
 	Greenpak4IOB* GetIOB(unsigned int pin);
 	
+	//Accessors
+	
 	unsigned int GetMatrixBits()
 	{ return m_matrixBits; }
+	
+	Greenpak4LUT* GetLUT2(unsigned int i);
+	
+	unsigned int GetMatrixBase(unsigned int matrix);
 	
 protected:
 
@@ -70,9 +76,16 @@ protected:
 	 */
 	std::vector<Greenpak4LUT*> m_luts;
 	
-	/**
-		@brief I/O pins (map from pin numbers to IOBs)
-	 */
+	///Just the LUT2s
+	std::vector<Greenpak4LUT*> m_lut2s;
+	
+	///Just the LUT3s
+	std::vector<Greenpak4LUT*> m_lut3s;
+	
+	///Just the LUT4s
+	std::vector<Greenpak4LUT*> m_lut4s;
+	
+	///I/O pins (map from pin numbers to IOBs)
 	std::map<unsigned int, Greenpak4IOB*> m_iobs;
 	
 	///Constant digital 1 for each matrix
@@ -83,6 +96,9 @@ protected:
 	
 	//Total bitfile length
 	unsigned int m_bitlen;
+	
+	//Base address of each routing matrix
+	unsigned int m_matrixBase[2];
 };
 
 #endif

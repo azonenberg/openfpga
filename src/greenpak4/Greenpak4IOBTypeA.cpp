@@ -63,11 +63,10 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
 	
-	//Digital output
-	WriteMatrixSelector(bitstream, m_inputBaseWord, m_outputSignal->GetOutputBase());
-	
-	//Output enable
-	WriteMatrixSelector(bitstream, m_inputBaseWord+1, m_outputEnable->GetOutputBase());
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_outputSignal))
+		return false;
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord+1, m_outputEnable))
+		return false;
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION

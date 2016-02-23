@@ -127,3 +127,13 @@ Greenpak4BitstreamEntity* Greenpak4IOB::GetOutputSignal()
 {
 	return m_outputSignal;
 }
+
+void Greenpak4IOB::SetOutputEnable(bool b)
+{
+	m_outputEnable = m_device->GetPowerRail(m_matrix, b);
+}
+
+void Greenpak4IOB::SetOutputSignal(bool b)
+{
+	m_outputSignal = m_device->GetPowerRail(m_matrix, b);
+}

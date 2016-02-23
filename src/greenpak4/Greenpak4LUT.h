@@ -43,6 +43,15 @@ public:
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
 	
+	//TODO: Normal accessors to truth table
+	
+	//Quick and dirty helpers to initialize the LUT to a standard Boolean function
+	void MakeOR();
+	
+	//Set inputs
+	virtual void SetInputSignal(unsigned int n, Greenpak4BitstreamEntity* sig);
+	virtual Greenpak4BitstreamEntity* GetInputSignal(unsigned int n);
+	
 protected:
 
 	///Number of inputs to the LUT
@@ -55,6 +64,14 @@ protected:
 		Only bits 0... (2^order - 1) are valid.
 	 */
 	bool m_truthtable[16];
+	
+	/**
+		@brief Array of LUT inputs.
+		
+		Statically allocate 4 per LUT to avoid the overhead of dynamic allocation.
+		Only inputs 0... (order-1) are valid.
+	 */
+	Greenpak4BitstreamEntity* m_inputs[4];
 };
 
 #endif

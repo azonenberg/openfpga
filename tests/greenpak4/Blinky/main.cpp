@@ -26,18 +26,30 @@ int main(int /*argc*/, char* /*argv*/[])
 	
 	//Pull pin 3 high
 	Greenpak4IOB* iob = device.GetIOB(3);
-	Greenpak4BitstreamEntity* vdd = device.GetPowerRail(iob->GetMatrix(), true);
-	iob->SetOutputEnable(vdd);
-	iob->SetOutputSignal(vdd);
+	iob->SetOutputEnable(true);
+	iob->SetOutputSignal(true);
 	
-	//Pull pins 5-7-9-10 low
-	unsigned int pins[] = {5, 7, 9, 10};
+	//Set pins 7-9-10 as inputs with 10k pulldowns
+	unsigned int pins[] = {7, 9, 10};
 	for(auto pin : pins)
 	{
 		iob = device.GetIOB(pin);
 		iob->SetPullStrength(Greenpak4IOB::PULL_10K);
 		iob->SetPullDirection(Greenpak4IOB::PULL_DOWN);
+		iob->SetInputThreshold(Greenpak4IOB::THRESHOLD_NORMAL);
+		iob->SetSchmittTrigger(false);
 	}
+		
+	//Set up the first LUT as an OR gate between pins 7 and 9
+	Greenpak4LUT* lut = device.GetLUT2(0);
+	lut->MakeOR();
+	lut->SetInputSignal(0, device.GetIOB(7));
+	lut->SetInputSignal(1, device.GetIOB(9));
+	
+	//Set pin 5 to be an output, driven by the LUT
+	iob = device.GetIOB(5);
+	iob->SetOutputEnable(true);
+	iob->SetOutputSignal(lut);
 	
 	//Write the bitstream
 	device.WriteToFile("/tmp/Blinky-bits.txt");

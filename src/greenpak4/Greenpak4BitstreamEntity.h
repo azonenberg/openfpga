@@ -66,7 +66,7 @@ protected:
 	/**
 		@brief Writes a matrix select value to the bitstream
 	 */
-	void WriteMatrixSelector(bool* bitstream, unsigned int wordpos, unsigned int sel);
+	bool WriteMatrixSelector(bool* bitstream, unsigned int wordpos, Greenpak4BitstreamEntity* signal);
 
 	///The device we're attached to
 	Greenpak4Device* m_device;

@@ -63,7 +63,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//Create the LUT2s (4 per device half)
 	for(int i=0; i<4; i++)
 	{
-		m_luts.push_back(new Greenpak4LUT(
+		m_lut2s.push_back(new Greenpak4LUT(
 			this,
 			0,			//First half of LUT2s are attached to crossbar #0
 			i*2,		//LUT2 base is row 0, then 2 inputs per LUT
@@ -73,7 +73,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	}
 	for(int i=0; i<4; i++)
 	{
-		m_luts.push_back(new Greenpak4LUT(
+		m_lut2s.push_back(new Greenpak4LUT(
 			this,
 			1,			//Second half are attached to crossbar #1
 			i*2,		//LUT2 base is row 0, then 2 inputs per LUT
@@ -85,7 +85,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//Create the LUT3s (8 per device half)
 	for(int i=0; i<8; i++)
 	{
-		m_luts.push_back(new Greenpak4LUT(
+		m_lut3s.push_back(new Greenpak4LUT(
 			this,
 			0,			//First half of LUT3s are attached to crossbar #0
 			i*3 + 8,	//LUT3 base is row 8, then 3 inputs per LUT
@@ -95,7 +95,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	}
 	for(int i=0; i<8; i++)
 	{
-		m_luts.push_back(new Greenpak4LUT(
+		m_lut3s.push_back(new Greenpak4LUT(
 			this,
 			1,			//Second half are attached to crossbar #1
 			i*3 + 8,	//LUT3 base is row 8, then 3 inputs per LUT
@@ -105,6 +105,14 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	}
 	
 	//TODO: Create the LUT4s (this is special because both have alternate functions)
+	
+	//Add LUT2-3-4s to the LUT list
+	for(auto x : m_lut2s)
+		m_luts.push_back(x);
+	for(auto x : m_lut3s)
+		m_luts.push_back(x);
+	for(auto x : m_lut4s)
+		m_luts.push_back(x);
 	
 	//Create the Type-A IOBs
 	m_iobs[3] = new Greenpak4IOBTypeA(
@@ -223,6 +231,10 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//Total length of our bitstream
 	m_bitlen = 2048;
+	
+	//Initialize matrix base addresses
+	m_matrixBase[0] = 0;
+	m_matrixBase[1] = 1024;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -244,6 +256,21 @@ Greenpak4IOB* Greenpak4Device::GetIOB(unsigned int pin)
 	if(m_iobs.find(pin) == m_iobs.end())
 		return NULL;
 	return m_iobs[pin];
+}
+
+Greenpak4LUT* Greenpak4Device::GetLUT2(unsigned int i)
+{
+	if(i >= m_lut2s.size())
+		return NULL;
+	return m_lut2s[i];
+}
+
+unsigned int Greenpak4Device::GetMatrixBase(unsigned int matrix)
+{
+	if(matrix > 1)
+		return 0;
+		
+	return m_matrixBase[matrix];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

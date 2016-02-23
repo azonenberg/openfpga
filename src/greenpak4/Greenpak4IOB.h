@@ -114,6 +114,9 @@ public:
 	virtual void SetOutputSignal(Greenpak4BitstreamEntity* sig);
 	virtual Greenpak4BitstreamEntity* GetOutputSignal();
 	
+	virtual void SetOutputEnable(bool b);
+	virtual void SetOutputSignal(bool b);
+	
 protected:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

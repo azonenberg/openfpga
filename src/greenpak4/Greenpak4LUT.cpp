@@ -32,7 +32,9 @@ Greenpak4LUT::Greenpak4LUT(
 	, m_order(order)
 {
 	for(unsigned int i=0; i<16; i++)
-		m_truthtable[i] = 0;
+		m_truthtable[i] = false;
+	for(unsigned int i=0; i<4; i++)
+		m_inputs[i] = device->GetPowerRail(matrix, 0);
 }
 
 Greenpak4LUT::~Greenpak4LUT()
@@ -67,10 +69,59 @@ bool Greenpak4LUT::Save(bool* bitstream)
 {
 	//TODO: Do our inputs
 	
-	//Do the LUT
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+	
+	for(unsigned int i=0; i<m_order; i++)
+	{
+		if(!WriteMatrixSelector(bitstream, m_inputBaseWord + i, m_inputs[i]))
+			return false;
+	}
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// LUT CONTENTS
+	
 	unsigned int nmax = GetConfigLen();
 	for(unsigned int i=0; i<nmax; i++)
 		bitstream[m_configBase + i] = m_truthtable[i];
 		
 	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+void Greenpak4LUT::SetInputSignal(unsigned int n, Greenpak4BitstreamEntity* sig)
+{
+	if(n >= m_order)
+	{
+		fprintf(stderr, "Tried to use input not physically present on this LUT\n");
+		return;
+	}
+	
+	m_inputs[n] = sig;
+}
+
+Greenpak4BitstreamEntity* Greenpak4LUT::GetInputSignal(unsigned int n)
+{
+	if(n >= m_order)
+	{
+		fprintf(stderr, "Tried to get input not physically present on this LUT\n");
+		return NULL;
+	}
+	
+	return m_inputs[n];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Initialization helpers
+
+void Greenpak4LUT::MakeOR()
+{
+	//Set input 0 (all inputs false) to false
+	m_truthtable[0] = false;
+	
+	//everything else true
+	for(unsigned int i=1; i<16; i++)
+		m_truthtable[i] = true;
 }
