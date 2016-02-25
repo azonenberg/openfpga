@@ -27,6 +27,7 @@
 #include "Greenpak4BitstreamEntity.h"
 #include "Greenpak4IOB.h"
 #include "Greenpak4IOBTypeA.h"
+#include "Greenpak4IOBTypeB.h"
 #include "Greenpak4LUT.h"
 #include "Greenpak4PowerRail.h"
 

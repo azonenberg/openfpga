@@ -16,38 +16,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#include "../../../src/greenpak4/Greenpak4.h"
-#include <stdio.h>
+#ifndef Greenpak4IOBTypeB_h
+#define Greenpak4IOBTypeB_h
 
-int main(int /*argc*/, char* /*argv*/[])
+/**
+	@brief A single IOB, bitfile format type B. No output enable.
+ */ 
+class Greenpak4IOBTypeB : public Greenpak4IOB
 {
-	//Create the device
-	Greenpak4Device device(Greenpak4Device::GREENPAK4_SLG46620);
-	
-	//Set a bunch of pins as inputs with 10k pulldowns
-	unsigned int pins[] = {2, 3, 7, 9, 10, 13, 14, 16, 18, 19};
-	for(auto pin : pins)
-	{
-		Greenpak4IOB* iob = device.GetIOB(pin);
-		iob->SetPullStrength(Greenpak4IOB::PULL_10K);
-		iob->SetPullDirection(Greenpak4IOB::PULL_DOWN);
-		iob->SetInputThreshold(Greenpak4IOB::THRESHOLD_NORMAL);
-		iob->SetSchmittTrigger(false);
-	}
+public:
+
+	//Construction / destruction
+	Greenpak4IOBTypeB(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	virtual ~Greenpak4IOBTypeB();
 		
-	//Set up the first LUT as an OR gate between pins 7 and 9
-	Greenpak4LUT* lut = device.GetLUT2(0);
-	lut->MakeOR();
-	lut->SetInputSignal(0, device.GetIOB(7));
-	lut->SetInputSignal(1, device.GetIOB(9));
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
 	
-	//Set pin 5 to be an output, driven by the LUT
-	Greenpak4IOB* iob = device.GetIOB(5);
-	iob->SetOutputEnable(true);
-	iob->SetOutputSignal(lut);
-	
-	//Write the bitstream
-	device.WriteToFile("/tmp/Blinky-bits.txt");
-	
-	return 0;
-}
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
+};
+
+#endif
+

@@ -61,7 +61,8 @@ public:
 	enum DriveStrength
 	{
 		DRIVE_1X,
-		DRIVE_2X
+		DRIVE_2X,
+		DRIVE_4X
 	};
 	
 	//Output driver type
@@ -88,6 +89,14 @@ public:
 		
 		///Analog input
 		THRESHOLD_ANALOG
+	};
+	
+	//Special configuration flags
+	enum IOBFlags
+	{
+		IOB_FLAG_NORMAL = 0,
+		IOB_FLAG_INPUTONLY = 1,
+		IOB_FLAG_X4DRIVE = 2
 	};
 	
 	virtual void SetSchmittTrigger(bool enabled);

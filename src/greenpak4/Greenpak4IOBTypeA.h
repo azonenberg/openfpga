@@ -20,7 +20,7 @@
 #define Greenpak4IOBTypeA_h
 
 /**
-	@brief A single IOB, bitfile format type A
+	@brief A single IOB, bitfile format type A. Tristate capable.
  */ 
 class Greenpak4IOBTypeA : public Greenpak4IOB
 {
@@ -32,7 +32,8 @@ public:
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword,
-		unsigned int cbase);
+		unsigned int cbase,
+		unsigned int flags = IOB_FLAG_NORMAL);
 	virtual ~Greenpak4IOBTypeA();
 		
 	//Bitfile metadata
@@ -43,6 +44,8 @@ public:
 	virtual bool Save(bool* bitstream);
 	
 protected:
+	
+	unsigned int m_flags;
 };
 
 #endif

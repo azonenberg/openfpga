@@ -114,75 +114,18 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	for(auto x : m_lut4s)
 		m_luts.push_back(x);
 	
-	//Create the Type-A IOBs
-	m_iobs[3] = new Greenpak4IOBTypeA(
-		this,
-		0,
-		56, 
-		25,
-		946);
-	m_iobs[5] = new Greenpak4IOBTypeA(
-		this,
-		0,
-		59, 
-		27,
-		960);		
-	m_iobs[7] = new Greenpak4IOBTypeA(
-		this,
-		0,
-		62, 
-		29,
-		974);
-	m_iobs[9] = new Greenpak4IOBTypeA(
-		this,
-		0,
-		65, 
-		31,
-		988);
-	m_iobs[10] = new Greenpak4IOBTypeA(
-		this,
-		0,
-		67, 
-		32,
-		995);
-	/*
-	//these are mostly type A but seem inverted in a few spots - separate class or just a flag?
-	m_iobs[13] = new Greenpak4IOBTypeA(
-		this,
-		1,
-		//56, 
-		//25,
-		1919
-		);
-	m_iobs[14] = new Greenpak4IOBTypeA(
-		this,
-		1,
-		//56, 
-		//25,
-		1926
-		);
-	m_iobs[16] = new Greenpak4IOBTypeA(
-		this,
-		1,
-		//56, 
-		//25,
-		1940
-		);
-	m_iobs[18] = new Greenpak4IOBTypeA(
-		this,
-		1,
-		//56, 
-		//25,
-		1954
-		);
-	m_iobs[19] = new Greenpak4IOBTypeA(
-		this,
-		1,
-		//56, 
-		//25,
-		1961
-		);
-	*/
+	//Create the Type-A IOBs (with output enable)
+	m_iobs[2] =  new Greenpak4IOBTypeA(this, 0, -1, 24, 941, Greenpak4IOB::IOB_FLAG_INPUTONLY);
+	m_iobs[3] =  new Greenpak4IOBTypeA(this, 0, 56, 25, 946);
+	m_iobs[5] =  new Greenpak4IOBTypeA(this, 0, 59, 27, 960);		
+	m_iobs[7] =  new Greenpak4IOBTypeA(this, 0, 62, 29, 974);
+	m_iobs[9] =  new Greenpak4IOBTypeA(this, 0, 65, 31, 988);
+	m_iobs[10] = new Greenpak4IOBTypeA(this, 0, 67, 32, 995, Greenpak4IOB::IOB_FLAG_X4DRIVE);
+	m_iobs[13] = new Greenpak4IOBTypeA(this, 1, 57, 25, 1919);
+	m_iobs[14] = new Greenpak4IOBTypeA(this, 1, 59, 26, 1926);
+	m_iobs[16] = new Greenpak4IOBTypeA(this, 1, 62, 28, 1940);
+	m_iobs[18] = new Greenpak4IOBTypeA(this, 1, 65, 30, 1954);
+	m_iobs[19] = new Greenpak4IOBTypeA(this, 1, 67, 31, 1961);
 	
 	//TODO: DFF/latches
 	
