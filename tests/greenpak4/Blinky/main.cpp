@@ -24,8 +24,8 @@ int main(int /*argc*/, char* /*argv*/[])
 	//Create the device
 	Greenpak4Device device(Greenpak4Device::GREENPAK4_SLG46620);
 	
-	//Set a bunch of pins as inputs with 10k pulldowns
-	unsigned int pins[] = {2, 3, 7, 9, 10, 13, 14, 16, 18, 19};
+	//Set all pins (other than 5) as inputs with 10k pulldowns
+	unsigned int pins[] = {2, 3, 4, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20};
 	for(auto pin : pins)
 	{
 		Greenpak4IOB* iob = device.GetIOB(pin);

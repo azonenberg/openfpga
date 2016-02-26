@@ -32,7 +32,8 @@ public:
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword,
-		unsigned int cbase);
+		unsigned int cbase,
+		unsigned int flags = IOB_FLAG_NORMAL);
 	virtual ~Greenpak4IOB();
 		
 	//Bitfile metadata
@@ -76,6 +77,9 @@ public:
 		
 		///Pull high only
 		DRIVE_PMOS_OPENDRAIN,
+		
+		///Analog I/O (also has NMOS open-drain)
+		DRIVE_ANALOG
 	};
 	
 	//Input voltage threshold
@@ -154,6 +158,9 @@ protected:
 	
 	///Signal source for our output driver
 	Greenpak4BitstreamEntity* m_outputSignal;
+	
+	///Flags indicating special capabilities of this IOB
+	unsigned int m_flags;
 };
 
 #endif

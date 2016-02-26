@@ -127,6 +127,15 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_iobs[18] = new Greenpak4IOBTypeA(this, 1, 65, 30, 1954);
 	m_iobs[19] = new Greenpak4IOBTypeA(this, 1, 67, 31, 1961);
 	
+	//Create the Type-B IOBs (no output enable)
+	m_iobs[4]  = new Greenpak4IOBTypeB(this, 0, 58, 26, 953);
+	m_iobs[6]  = new Greenpak4IOBTypeB(this, 0, 61, 28, 967);
+	m_iobs[8]  = new Greenpak4IOBTypeB(this, 0, 64, 30, 981);
+	m_iobs[12] = new Greenpak4IOBTypeB(this, 1, 56, 24, 1911, Greenpak4IOB::IOB_FLAG_X4DRIVE);	
+	m_iobs[15] = new Greenpak4IOBTypeB(this, 1, 61, 27, 1933);
+	m_iobs[17] = new Greenpak4IOBTypeB(this, 1, 64, 29, 1947);
+	m_iobs[20] = new Greenpak4IOBTypeB(this, 1, 69, 32, 1968);
+	
 	//TODO: DFF/latches
 	
 	//TODO: Pipe delays

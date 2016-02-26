@@ -26,7 +26,8 @@ Greenpak4IOB::Greenpak4IOB(
 	unsigned int matrix,
 	unsigned int ibase,
 	unsigned int oword,
-	unsigned int cbase)
+	unsigned int cbase,
+	unsigned int flags)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 	, m_schmittTrigger(false)
 	, m_pullStrength(PULL_10K)
@@ -36,6 +37,7 @@ Greenpak4IOB::Greenpak4IOB(
 	, m_inputThreshold(THRESHOLD_NORMAL)
 	, m_outputEnable(device->GetPowerRail(matrix, 0))
 	, m_outputSignal(device->GetPowerRail(matrix, 0))
+	, m_flags(flags)
 {
 	
 }

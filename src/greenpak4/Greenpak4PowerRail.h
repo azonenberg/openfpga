@@ -40,6 +40,10 @@ public:
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
 	
+	//Helper - get digital value (1 = Vdd, 0 = Vss)
+	bool GetDigitalValue()
+	{ return (m_outputBaseWord != 0); }
+	
 protected:
 };
 

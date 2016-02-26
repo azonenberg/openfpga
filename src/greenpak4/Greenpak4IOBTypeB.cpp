@@ -26,8 +26,9 @@ Greenpak4IOBTypeB::Greenpak4IOBTypeB(
 	unsigned int matrix,
 	unsigned int ibase,
 	unsigned int oword,
-	unsigned int cbase)
-	: Greenpak4IOB(device, matrix, ibase, oword, cbase)
+	unsigned int cbase,
+	unsigned int flags)
+	: Greenpak4IOB(device, matrix, ibase, oword, cbase, flags)
 {
 	
 }
@@ -42,15 +43,9 @@ Greenpak4IOBTypeB::~Greenpak4IOBTypeB()
 
 unsigned int Greenpak4IOBTypeB::GetConfigLen()
 {
-	/*
-	//2 bit input mode, 2 bit output mode, 2 bit pullup value, 1 bit pullup enable.
-	//Possibly one more bit for super driver
-
-	if(m_hasSuperDriver)
-		return 8;
-
+	if(m_flags & IOB_FLAG_X4DRIVE)
+		return 0;
 	return 7;
-	*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -65,115 +60,118 @@ bool Greenpak4IOBTypeB::Load(bool* /*bitstream*/)
 
 bool Greenpak4IOBTypeB::Save(bool* bitstream)
 {
-	/*
+	//See if we're an input or output.
+	//Throw an error if OE isn't tied to a power rail, because we don't have runtime adjustable direction
+	Greenpak4PowerRail* oe = dynamic_cast<Greenpak4PowerRail*>(m_outputEnable);
+	if(oe == NULL)
+	{
+		fprintf(stderr, "ERROR: Tried to tie OE of a type-B IOB to something other than a power rail\n");
+		return false;
+	}
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
 	
+	//Write the output signal (even if we don't actually have an output hooked up, there has to be something)
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_outputSignal))
-		return false;
-	if(!WriteMatrixSelector(bitstream, m_inputBaseWord+1, m_outputEnable))
 		return false;
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
-	
-	//Input threshold 1:0
-	switch(m_inputThreshold)
-	{ 
-		case THRESHOLD_ANALOG:
-			bitstream[m_configBase+0] = true;
-			bitstream[m_configBase+1] = true;
-			break;
-			
-		case THRESHOLD_LOW:
-			bitstream[m_configBase+0] = false;
-			bitstream[m_configBase+1] = true;
-			break;
-			
-		case THRESHOLD_NORMAL:
-			bitstream[m_configBase+1] = false;
-			bitstream[m_configBase+0] = m_schmittTrigger;
-			break;
-			
-		default:
-			fprintf(stderr, "ERROR: Invalid IOB threshold\n");
-			return false;
-	}
-	
-	//Output drive strength 2, 7 if super driver present
-	switch(m_driveStrength)
-	{
-		case DRIVE_1X:
-			bitstream[m_configBase+2] = false;
-			if(m_hasSuperDriver)
-				bitstream[m_configBase+7] = false;
-			break;
-			
-		case DRIVE_2X:
-			bitstream[m_configBase+2] = true;
-			if(m_hasSuperDriver)
-				bitstream[m_configBase+7] = false;
-			break;
 		
-		//If we have a super driver, write x4 as double x2
-		case DRIVE_4X:
-			bitstream[m_configBase+2] = true;
-			if(m_hasSuperDriver)
-				bitstream[m_configBase+7] = true;
-			else
-			{
-				fprintf(stderr, "ERROR: Invalid drive strength (x4 drive not present on this pin\n");
+	//MODE CONTROL 2:0. 2 is direction, 1:0 is type
+	
+	//OUTPUT
+	if(oe->GetDigitalValue())
+	{
+		//always high for outputs
+		bitstream[m_configBase + 2] = true;
+		
+		switch(m_driveType)
+		{
+			case DRIVE_PUSHPULL:
+				bitstream[m_configBase+1] = false;
+				bitstream[m_configBase+0] = false;
+				break;
+				
+			case DRIVE_NMOS_OPENDRAIN:
+				bitstream[m_configBase+1] = false;
+				bitstream[m_configBase+0] = true;
+				break;
+				
+			case DRIVE_PMOS_OPENDRAIN:
+				bitstream[m_configBase+1] = true;
+				bitstream[m_configBase+0] = false;
+				break;
+			
+			//also may have NMOS open drain capability according to datasheet
+			//but not currently tested with this toolchian
+			case DRIVE_ANALOG:
+				bitstream[m_configBase+1] = true;
+				bitstream[m_configBase+0] = true;
+				break;
+				
+			default:
+				fprintf(stderr, "ERROR: Invalid IOB drive type\n");
 				return false;
-			}
-			break;
-		
-		default:
-			fprintf(stderr, "ERROR: Invalid drive strength\n");
-			return false;
+		}
 	}
 	
-	//Output buffer type 3
-	switch(m_driveType)
+	//INPUT
+	else
 	{
-		case DRIVE_PUSHPULL:
-			bitstream[m_configBase+3] = false;
-			break;
-			
-		case DRIVE_NMOS_OPENDRAIN:
-			bitstream[m_configBase+3] = true;
-			break;
-			
-		default:
-			fprintf(stderr, "ERROR: Invalid driver type\n");
-			return false;
+		//always low for inputs
+		bitstream[m_configBase + 2] = false;
+
+		switch(m_inputThreshold)
+		{ 
+			case THRESHOLD_ANALOG:
+				bitstream[m_configBase+0] = true;
+				bitstream[m_configBase+1] = true;
+				break;
+				
+			case THRESHOLD_LOW:
+				bitstream[m_configBase+0] = false;
+				bitstream[m_configBase+1] = true;
+				break;
+				
+			case THRESHOLD_NORMAL:
+				bitstream[m_configBase+1] = false;
+				bitstream[m_configBase+0] = m_schmittTrigger;
+				break;
+				
+			default:
+				fprintf(stderr, "ERROR: Invalid IOB threshold\n");
+				return false;
+		}
 	}
 	
-	//Pullup/down resistor strength 5:4, direction 6
+	//Pullup/down resistor strength 4:3, direction 5
 	if(m_pullDirection == PULL_NONE)
 	{
 		bitstream[m_configBase + 4] = false;
-		bitstream[m_configBase + 5] = false;
+		bitstream[m_configBase + 3] = false;
 		
 		//don't care, pull circuit disconnected
-		bitstream[m_configBase + 6] = false;
+		bitstream[m_configBase + 5] = false;
 	}
 	else
 	{
 		switch(m_pullStrength)
 		{
 			case PULL_10K:
-				bitstream[m_configBase + 4] = true;
-				bitstream[m_configBase + 5] = false;
+				bitstream[m_configBase + 3] = true;
+				bitstream[m_configBase + 4] = false;
 				break;
 				
 			case PULL_100K:
-				bitstream[m_configBase + 4] = false;
-				bitstream[m_configBase + 5] = true;
+				bitstream[m_configBase + 3] = false;
+				bitstream[m_configBase + 4] = true;
 				break;
 				
 			case PULL_1M:
+				bitstream[m_configBase + 3] = true;
 				bitstream[m_configBase + 4] = true;
-				bitstream[m_configBase + 5] = true;
 				break;
 				
 			default:
@@ -184,11 +182,11 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 		switch(m_pullDirection)
 		{
 			case PULL_UP:
-				bitstream[m_configBase + 6] = true;
+				bitstream[m_configBase + 5] = true;
 				break;
 			
 			case PULL_DOWN:
-				bitstream[m_configBase + 6] = false;
+				bitstream[m_configBase + 5] = false;
 				break;
 				
 			default:
@@ -197,7 +195,38 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 		}
 	}
 	
-	//Super driver, if present (pin 10)
-	*/
+	//Output drive strength 6
+	switch(m_driveStrength)
+	{
+		case DRIVE_1X:
+			bitstream[m_configBase + 6] = false;
+			if(m_flags & IOB_FLAG_X4DRIVE)
+				bitstream[m_configBase + 7] = false;
+			break;
+			
+		case DRIVE_2X:
+			bitstream[m_configBase + 6] = true;
+			if(m_flags & IOB_FLAG_X4DRIVE)
+				bitstream[m_configBase + 7] = false;
+			break;
+			
+		case DRIVE_4X:
+			if(m_flags & IOB_FLAG_X4DRIVE)
+			{
+				bitstream[m_configBase + 6] = true;
+				bitstream[m_configBase + 7] = true;
+			}
+			else
+			{
+				fprintf(stderr, "ERROR: Asked for x4 drive strength on a pin without a super driver\n");
+				return false;
+			}
+			break;
+			
+		default:
+			fprintf(stderr, "ERROR: Invalid drive strength\n");
+			return false;
+	}
+	
 	return true;
 }

@@ -32,7 +32,8 @@ public:
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword,
-		unsigned int cbase);
+		unsigned int cbase,
+		unsigned int flags = IOB_FLAG_NORMAL);
 	virtual ~Greenpak4IOBTypeB();
 		
 	//Bitfile metadata

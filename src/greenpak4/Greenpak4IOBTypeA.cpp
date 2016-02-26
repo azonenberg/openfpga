@@ -28,8 +28,7 @@ Greenpak4IOBTypeA::Greenpak4IOBTypeA(
 	unsigned int oword,
 	unsigned int cbase,
 	unsigned int flags)
-	: Greenpak4IOB(device, matrix, ibase, oword, cbase)
-	, m_flags(flags)
+	: Greenpak4IOB(device, matrix, ibase, oword, cbase, flags)
 {
 	
 }
@@ -76,15 +75,13 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 	if(m_flags & IOB_FLAG_INPUTONLY)
 	{
 		//Verify that they are tied sanely (output enable is ground, signal is dontcare)
-		Greenpak4PowerRail* hopefully_ground = dynamic_cast<Greenpak4PowerRail*>(m_outputEnable);
-		if(hopefully_ground == NULL)
+		Greenpak4PowerRail* oe = dynamic_cast<Greenpak4PowerRail*>(m_outputEnable);
+		if(oe == NULL)
 		{
 			fprintf(stderr, "ERROR: Tried to tie OE of an input-only pin to something other than a power rail\n");
 			return false;
 		}
-		
-		//TODO: Don't assume matrix word 0 is ground. Is there a way to tell this more cleanly?
-		if(hopefully_ground->GetOutputBase() != 0)
+		if(oe->GetDigitalValue() != false)
 		{
 			fprintf(stderr, "ERROR: Tried to tie OE of an input-only pin to something other than ground\n");
 			return false;
