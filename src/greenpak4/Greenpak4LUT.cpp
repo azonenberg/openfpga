@@ -125,3 +125,64 @@ void Greenpak4LUT::MakeOR()
 	for(unsigned int i=1; i<16; i++)
 		m_truthtable[i] = true;
 }
+
+void Greenpak4LUT::MakeAND()
+{
+	//Default to false
+	for(unsigned int i=0; i<16; i++)
+		m_truthtable[i] = false;
+		
+	//True depending on our order
+	switch(m_order)
+	{
+		case 2:
+			m_truthtable[3] = true;
+			break;
+			
+		case 3:
+			m_truthtable[7] = true;
+			break;
+			
+		case 4:
+			m_truthtable[15] = true;
+			break;
+	}
+}
+
+void Greenpak4LUT::MakeNOR()
+{
+	//Set input 0 (all inputs false) to true
+	m_truthtable[0] = true;
+	
+	//everything else false
+	for(unsigned int i=1; i<16; i++)
+		m_truthtable[i] = false;
+}
+
+void Greenpak4LUT::MakeNAND()
+{
+	//Default to true
+	for(unsigned int i=0; i<16; i++)
+		m_truthtable[i] = true;
+		
+	//False depending on our order
+	switch(m_order)
+	{
+		case 2:
+			m_truthtable[3] = false;
+			break;
+			
+		case 3:
+			m_truthtable[7] = false;
+			break;
+			
+		case 4:
+			m_truthtable[15] = false;
+			break;
+	}
+}
+
+void Greenpak4LUT::SetBit(bool val, bool a0, bool a1, bool a2, bool a3)
+{
+	m_truthtable[a3*8 | a2*4 | a1*2 | a0] = val;
+}

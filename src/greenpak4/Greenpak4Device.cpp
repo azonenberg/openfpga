@@ -217,6 +217,13 @@ Greenpak4LUT* Greenpak4Device::GetLUT2(unsigned int i)
 	return m_lut2s[i];
 }
 
+Greenpak4LUT* Greenpak4Device::GetLUT3(unsigned int i)
+{
+	if(i >= m_lut3s.size())
+		return NULL;
+	return m_lut3s[i];
+}
+
 unsigned int Greenpak4Device::GetMatrixBase(unsigned int matrix)
 {
 	if(matrix > 1)

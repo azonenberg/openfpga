@@ -24,8 +24,8 @@ int main(int /*argc*/, char* /*argv*/[])
 	//Create the device
 	Greenpak4Device device(Greenpak4Device::GREENPAK4_SLG46620);
 	
-	//Set all pins (other than 5) as inputs with 10k pulldowns
-	unsigned int pins[] = {2, 3, 4, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20};
+	//To start, set all pins as inputs with 10k pulldowns
+	unsigned int pins[] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20};
 	for(auto pin : pins)
 	{
 		Greenpak4IOB* iob = device.GetIOB(pin);
@@ -35,14 +35,26 @@ int main(int /*argc*/, char* /*argv*/[])
 		iob->SetSchmittTrigger(false);
 	}
 		
-	//Set up the first LUT as an OR gate between pins 7 and 9
+	//Set up the first LUT as an OR gate between pins 2 and 3
 	Greenpak4LUT* lut = device.GetLUT2(0);
 	lut->MakeOR();
-	lut->SetInputSignal(0, device.GetIOB(7));
-	lut->SetInputSignal(1, device.GetIOB(9));
+	lut->SetInputSignal(0, device.GetIOB(2));
+	lut->SetInputSignal(1, device.GetIOB(3));
 	
 	//Set pin 5 to be an output, driven by the LUT
 	Greenpak4IOB* iob = device.GetIOB(5);
+	iob->SetOutputEnable(true);
+	iob->SetOutputSignal(lut);
+	
+	//Make an AND3 between 2-3-4
+	lut = device.GetLUT3(0);
+	lut->MakeAND();
+	lut->SetInputSignal(0, device.GetIOB(2));
+	lut->SetInputSignal(1, device.GetIOB(3));
+	lut->SetInputSignal(2, device.GetIOB(4));
+	
+	//Drive it to pin 6
+	iob = device.GetIOB(6);
 	iob->SetOutputEnable(true);
 	iob->SetOutputSignal(lut);
 	

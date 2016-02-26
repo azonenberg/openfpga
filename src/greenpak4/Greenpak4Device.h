@@ -53,6 +53,7 @@ public:
 	{ return m_matrixBits; }
 	
 	Greenpak4LUT* GetLUT2(unsigned int i);
+	Greenpak4LUT* GetLUT3(unsigned int i);
 	
 	unsigned int GetMatrixBase(unsigned int matrix);
 	
