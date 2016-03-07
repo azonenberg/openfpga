@@ -25,11 +25,11 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::string name, json_object* object)
-	: m_parent(parent)
-{
-	printf("Module %s...\n", name.c_str());
-	
+Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::string name, json_object* object)
+	: m_direction(DIR_INPUT)
+	, m_module(module)
+	, m_name(name)
+{	
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
 		!json_object_iter_equal(&it, &end);
@@ -39,97 +39,66 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 		string name = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
 		
-		//Whatever it is, it should be an object
-		if(!json_object_is_type(child, json_type_object))
+		//Direction should be a string from the enumerated list
+		if(name == "direction")
 		{
-			fprintf(stderr, "ERROR: module child should be of type object but isn't\n");
-			exit(-1);
-		}
-		
-		//Go over the children's children and process it
-		json_object_iterator end = json_object_iter_end(child);
-		for(json_object_iterator it2 = json_object_iter_begin(child);
-			!json_object_iter_equal(&it2, &end);
-			json_object_iter_next(&it2))
-		{
-			//See what we got
-			string cname = json_object_iter_peek_name(&it2);
-			json_object* cobject = json_object_iter_peek_value(&it2);
-			
-			//Whatever it is, it should be an object
-			if(!json_object_is_type(cobject, json_type_object))
+			if(!json_object_is_type(child, json_type_string))
 			{
-				fprintf(stderr, "ERROR: module child should be of type object but isn't\n");
+				fprintf(stderr, "ERROR: Port direction should be of type string but isn't\n");
 				exit(-1);
 			}
 			
-			//Load ports
-			if(name == "ports")
+			//See what the direction is
+			string str = json_object_get_string(child);
+			if(str == "input")
+				m_direction = Greenpak4NetlistPort::DIR_INPUT;
+			else if(str == "output")
+				m_direction = Greenpak4NetlistPort::DIR_OUTPUT;
+			else if(str == "inout")
+				m_direction = Greenpak4NetlistPort::DIR_INOUT;
+			else
 			{
-				//Make sure it doesn't exist
-				if(m_ports.find(cname) != m_ports.end())
+				fprintf(stderr, "ERROR: Invalid port direction \"%s\"\n", str.c_str());
+				exit(-1);
+			}
+		}
+		
+		//List of nodes in the object (should be an array)
+		else if(name == "bits")
+		{
+			if(!json_object_is_type(child, json_type_array))
+			{
+				fprintf(stderr, "ERROR: Port bits should be of type array but isn't\n");
+				exit(-1);
+			}
+
+			//Walk the array
+			//TODO: verify bit ordering is correct (does this even matter as long as we're consistent?)
+			int len = json_object_array_length(child);
+			for(int i=0; i<len; i++)
+			{
+				json_object* jnode = json_object_array_get_idx(child, i);
+				if(!json_object_is_type(jnode, json_type_int))
 				{
-					fprintf(stderr, "ERROR: Attempted redeclaration of module port \"%s\"\n", name.c_str());
+					fprintf(stderr, "ERROR: Net number should be of type integer but isn't\n");
 					exit(-1);
 				}
 				
-				//Create the port
-				Greenpak4NetlistPort* port = new Greenpak4NetlistPort(this, cname, cobject);
-				m_ports[cname] = port;
+				//Add the net				
+				m_nodes.push_back(module->GetNode(json_object_get_int(jnode)));
 			}
-			
-			//Load cells
-			else if(name == "cells")
-				LoadCell(cname, cobject);
-			
-			//Load net names
-			else if(name == "netnames")
-				LoadNetName(cname, cobject);
-			
-			//Whatever it is, we don't want it
-			else
-			{
-				fprintf(stderr, "ERROR: Unknown top-level JSON object \"%s\"\n", name.c_str());
-				exit(-1);
-			}
+		}
+		
+		//Garbage
+		else
+		{
+			fprintf(stderr, "ERROR: Unknown JSON blob \"%s\" under module port list\n", name.c_str());
+			exit(-1);
 		}
 	}
 }
 
-Greenpak4NetlistModule::~Greenpak4NetlistModule()
+Greenpak4NetlistPort::~Greenpak4NetlistPort()
 {
-	//Clean up in reverse order
 	
-	//ports don't depend on anything but nodes
-	for(auto x : m_ports)
-		delete x.second;
-	m_ports.clear();
-	
-	//then nodes at end
-	for(auto x : m_nodes)
-		delete x.second;
-	m_nodes.clear();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Loading
-
-Greenpak4NetlistNode* Greenpak4NetlistModule::GetNode(int32_t netnum)
-{
-	//See if we already have a node with this number.
-	//If not, create it
-	if(m_nodes.find(netnum) == m_nodes.end())
-		m_nodes[netnum] = new Greenpak4NetlistNode;
-		
-	return m_nodes[netnum];
-}
-
-void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
-{
-	printf("    Cell %s\n", name.c_str());
-}
-
-void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
-{
-	printf("    Net name %s\n", name.c_str());
 }

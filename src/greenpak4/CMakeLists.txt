@@ -12,6 +12,7 @@ ADD_LIBRARY(greenpak4 SHARED
 	# Unplaced (but techmapped) netlist
 	Greenpak4Netlist.cpp
 	Greenpak4NetlistModule.cpp
+	Greenpak4NetlistPort.cpp
 )
 
 target_link_libraries(greenpak4
