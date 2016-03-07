@@ -16,23 +16,96 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#include "../greenpak4/Greenpak4.h"
+#include <stdio.h>
+#include <string>
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
- 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
+using namespace std;
 
-#include "Greenpak4Netlist.h"
+void ShowUsage();
+void ShowVersion();
 
-#include "Greenpak4Device.h"
+int main(int argc, char* argv[])
+{
+	//Netlist file
+	string fname = "";
+	
+	//Top-level module name
+	string top = "";
+	
+	//TODO: make this switchable via command line args
+	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
+	
+	//Parse command-line arguments
+	for(int i=1; i<argc; i++)
+	{
+		string s(argv[i]);
+		
+		if(s == "--help")
+		{
+			ShowUsage();
+			return 0;
+		}
+		else if(s == "--version")
+		{
+			ShowVersion();
+			return 0;
+		}
+		else if(s == "--top")
+		{
+			if(i+1 < argc)
+				top = argv[++i];
+			else
+			{
+				printf("--top requires an argument\n");
+				return 1;
+			}
+		}
+		
+		//assume it's the netlist file if it'[s the first non-switch argument
+		else if( (s[0] != '-') && (fname == "") )
+			fname = s;
+			
+		else
+		{
+			printf("Unrecognized command-line argument \"%s\", use --help\n", s.c_str());
+			return 1;
+		}
+	}
+	
+	//Netlist filename must be specified
+	if(fname == "")
+	{
+		ShowUsage();
+		return 1;
+	}
+	
+	//Print header
+	ShowVersion();
+	printf("Loading Yosys JSON file \"%s\", expecting top-level module \"%s\"\n",
+		fname.c_str(), top.c_str());
+	
+	//Parse the unplaced netlist
+	Greenpak4Netlist netlist(fname, top);
+	
+	//Create the device
+	Greenpak4Device device(part);
+	
+	return 0;
+}
 
-#endif
+void ShowUsage()
+{
+	
+}
+
+void ShowVersion()
+{
+	printf(
+		"Greenpak4 place-and-route by Andrew D. Zonenberg.\n"
+		"\n"
+		"License: LGPL v2.1+\n"
+		"This is free software: you are free to change and redistribute it.\n"
+		"There is NO WARRANTY, to the extent permitted by law.\n"
+		"\n");
+}

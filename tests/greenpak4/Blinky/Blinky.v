@@ -16,23 +16,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+module Blinky(a, b, o);
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
- 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// I/O declarations
+	
+	(* LOC = "P2" *)
+	input wire a;
+	
+	(* LOC = "P3" *)
+	input wire b;
+	
+	(* LOC = "P5" *)
+	output wire o;
 
-#include "Greenpak4Netlist.h"
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Internal logic
+	
+	assign o = a | b;
 
-#include "Greenpak4Device.h"
-
-#endif
+endmodule

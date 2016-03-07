@@ -1,4 +1,6 @@
 ADD_LIBRARY(greenpak4 SHARED
+
+	# Post-PAR netlist
 	Greenpak4BitstreamEntity.cpp
 	Greenpak4Device.cpp
 	Greenpak4IOB.cpp
@@ -6,4 +8,12 @@ ADD_LIBRARY(greenpak4 SHARED
 	Greenpak4IOBTypeB.cpp
 	Greenpak4LUT.cpp
 	Greenpak4PowerRail.cpp
+	
+	# Unplaced (but techmapped) netlist
+	Greenpak4Netlist.cpp
+	Greenpak4NetlistModule.cpp
 )
+
+target_link_libraries(greenpak4
+	json-c
+	)

@@ -15,24 +15,38 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
-#ifndef Greenpak4_h
-#define Greenpak4_h
+
+#ifndef Greenpak4Netlist_h
+#define Greenpak4Netlist_h
+
+#include <string>
+#include <map>
+
+#include <json-c/json.h>
+
+#include "Greenpak4NetlistModule.h"
 
 /**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
+	@brief An UNPLACED netlist for a Greenpak4 device
  */
- 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
-
-#include "Greenpak4Netlist.h"
-
-#include "Greenpak4Device.h"
+class Greenpak4Netlist
+{
+public:
+	Greenpak4Netlist(std::string fname, std::string top);
+	virtual ~Greenpak4Netlist();
+	
+protected:
+	void Load(json_object* object);
+	void LoadModules(json_object* object);
+		
+	std::string m_topModuleName;
+	std::string m_creator;
+	
+	//All of the modules in the netlist
+	std::map<std::string, Greenpak4NetlistModule*> m_modules;
+	
+	//The top-level module
+	Greenpak4NetlistModule* m_topModule;
+};
 
 #endif

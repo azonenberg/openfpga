@@ -1,0 +1,7 @@
+#!/usr/local/bin/yosys
+read_verilog Blinky.v
+
+# TODO: do mapping for different devices (this uses nlutmap with 46620 support only)
+synth_greenpak4 -top Blinky
+
+write_json /tmp/Blinky.json
