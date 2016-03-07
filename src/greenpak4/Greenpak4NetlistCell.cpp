@@ -15,42 +15,19 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
+ 
+#include "Greenpak4.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-#ifndef Greenpak4NetlistPort_h
-#define Greenpak4NetlistPort_h
+using namespace std;
 
-#include <string>
-#include <vector>
-#include <json-c/json.h>
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-//A single node in the netlist (may be a wire or part of a bus)
-//For now, only attribute is name
-class Greenpak4NetlistNode
+Greenpak4NetlistCell::~Greenpak4NetlistCell()
 {
-public:
-	std::string m_name;
-};
-
-//A module port (may contain one or more nodes)
-class Greenpak4NetlistPort
-{
-public:
-	Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::string name, json_object* object);
-	virtual ~Greenpak4NetlistPort();
-
-	enum Direction
-	{
-		DIR_INPUT,
-		DIR_OUTPUT,
-		DIR_INOUT
-	};
-	Direction m_direction;
-
-	Greenpak4NetlistModule* m_module;
-	
-	std::string m_name;
-	
-	std::vector<Greenpak4NetlistNode*> m_nodes;
-};
-
-#endif
+	for(auto x : m_connections)
+		delete x.second;
+	m_connections.clear();
+}

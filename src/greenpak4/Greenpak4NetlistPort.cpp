@@ -68,7 +68,8 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 		{
 			if(!json_object_is_type(child, json_type_array))
 			{
-				fprintf(stderr, "ERROR: Port bits should be of type array but isn't\n");
+				fprintf(stderr, "ERROR: Port bits (for module %s, port %s) should be of type array but isn't\n",
+					module->GetName().c_str(), name.c_str());
 				exit(-1);
 			}
 
