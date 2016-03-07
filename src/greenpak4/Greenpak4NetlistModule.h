@@ -20,6 +20,7 @@
 #define Greenpak4NetlistModule_h
 
 #include <string>
+#include <vector>
 #include <json-c/json.h>
 
 class Greenpak4Netlist;
