@@ -34,6 +34,12 @@ public:
 	std::string m_name;
 	std::vector<Greenpak4NetlistNode*> m_nodes;
 	std::map<std::string, std::string> m_attributes;
+	
+	bool HasAttribute(std::string name)
+	{ return (m_attributes.find(name) != m_attributes.end() ); }
+	
+	std::string GetAttribute(std::string name)
+	{ return m_attributes[name]; }
 };
 
 //A single primitive cell in the netlist
@@ -65,6 +71,20 @@ public:
 	std::string GetName()
 	{ return m_name; }
 	
+	typedef std::map<std::string, Greenpak4NetlistPort*> portmap;
+	
+	portmap::iterator port_begin()
+	{ return m_ports.begin(); }
+	
+	portmap::iterator port_end()
+	{ return m_ports.end(); }
+	
+	bool HasNet(std::string name)
+	{ return (m_nets.find(name) != m_nets.end()); }
+	
+	Greenpak4NetlistNet* GetNet(std::string name)
+	{ return m_nets[name]; }
+	
 protected:
 	Greenpak4Netlist* m_parent;
 	
@@ -78,7 +98,7 @@ protected:
 	void LoadCellConnections(Greenpak4NetlistCell* cell, json_object* object);
 	
 	std::map<int32_t, Greenpak4NetlistNode*> m_nodes;
-	std::map<std::string, Greenpak4NetlistPort*> m_ports;
+	portmap m_ports;
 	std::map<std::string, Greenpak4NetlistNet*> m_nets;
 	std::map<std::string, Greenpak4NetlistCell*> m_cells;
 };

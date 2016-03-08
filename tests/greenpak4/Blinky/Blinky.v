@@ -21,9 +21,13 @@ module Blinky(a, b, o);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 	
+	(* SCHMITT_TRIGGER *)
+	(* PULLDOWN = "10k" *)
 	(* LOC = "P2" *)
 	input wire a;
 	
+	(* SCHMITT_TRIGGER *)
+	(* PULLDOWN = "10k" *)
 	(* LOC = "P3" *)
 	input wire b;
 	

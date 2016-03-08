@@ -51,6 +51,10 @@ public:
 	std::string m_name;
 	
 	std::vector<Greenpak4NetlistNode*> m_nodes;
+	
+	//Assigned IOB (only valid after ParIOBs())
+	//TODO: Support vectors here
+	Greenpak4IOB* m_iob;
 };
 
 #endif

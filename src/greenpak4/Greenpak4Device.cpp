@@ -24,9 +24,13 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4Device::Greenpak4Device(GREENPAK4_PART part)
+Greenpak4Device::Greenpak4Device(
+	GREENPAK4_PART part,
+	Greenpak4IOB::PullDirection default_pull,
+	Greenpak4IOB::PullStrength default_drive)
 	: m_part(part)
 {
+	//Initialize everything
 	switch(part)
 	{
 	case GREENPAK4_SLG46620:
@@ -36,6 +40,13 @@ Greenpak4Device::Greenpak4Device(GREENPAK4_PART part)
 	default:
 		assert(false);
 		break;
+	}
+	
+	//Set up pullups/downs on every IOB by default
+	for(auto x : m_iobs)
+	{
+		x.second->SetPullDirection(default_pull);
+		x.second->SetPullStrength(default_drive);
 	}
 }
 
@@ -235,13 +246,13 @@ unsigned int Greenpak4Device::GetMatrixBase(unsigned int matrix)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File I/O
 
-bool Greenpak4Device::WriteToFile(const char* fname)
+bool Greenpak4Device::WriteToFile(std::string fname)
 {
 	//Open the file
-	FILE* fp = fopen(fname, "w");
+	FILE* fp = fopen(fname.c_str(), "w");
 	if(!fp)
 	{
-		fprintf(stderr, "Couldn't open %s for writing\n", fname);
+		fprintf(stderr, "Couldn't open %s for writing\n", fname.c_str());
 		return false;
 	}
 	

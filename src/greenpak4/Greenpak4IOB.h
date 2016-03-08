@@ -130,6 +130,12 @@ public:
 	virtual void SetOutputEnable(bool b);
 	virtual void SetOutputSignal(bool b);
 	
+	unsigned int GetFlags()
+	{ return m_flags; }
+	
+	bool IsInputOnly()
+	{ return (m_flags & IOB_FLAG_INPUTONLY) ? true : false; }
+	
 protected:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

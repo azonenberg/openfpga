@@ -22,19 +22,14 @@
 int main(int /*argc*/, char* /*argv*/[])
 {
 	//Create the device
-	Greenpak4Device device(Greenpak4Device::GREENPAK4_SLG46620);
+	Greenpak4Device device(
+		Greenpak4Device::GREENPAK4_SLG46620,
+		Greenpak4IOB::PULL_DOWN,
+		Greenpak4IOB::PULL_10K
+	);
 	
-	//To start, set all pins as inputs with 10k pulldowns
-	unsigned int pins[] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20};
-	for(auto pin : pins)
-	{
-		Greenpak4IOB* iob = device.GetIOB(pin);
-		iob->SetPullStrength(Greenpak4IOB::PULL_10K);
-		iob->SetPullDirection(Greenpak4IOB::PULL_DOWN);
-		iob->SetInputThreshold(Greenpak4IOB::THRESHOLD_NORMAL);
-		iob->SetSchmittTrigger(false);
-	}
-		
+	//schmitt trigger defaults to off, threshold defaults to normal
+			
 	//Set up the first LUT as an OR gate between pins 2 and 3
 	Greenpak4LUT* lut = device.GetLUT2(0);
 	lut->MakeOR();

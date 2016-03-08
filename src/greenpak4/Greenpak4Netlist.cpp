@@ -180,3 +180,155 @@ void Greenpak4Netlist::LoadModules(json_object* object)
 		exit(-1);
 	}
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// P&R logic
+
+void Greenpak4Netlist::PlaceAndRoute(Greenpak4Device* device)
+{
+	printf("\nPlace-and-route engine initializing...\n");
+	
+	//Verify we have a top-level module, fail if none found
+	if(m_topModule == NULL)
+	{
+		fprintf(stderr, "INTERNAL ERROR: Cannot place a netlist without a top-level module\n");
+		exit(-1);
+	}
+	
+	//Do the IO pins first
+	ParIOBs(device);	
+}
+
+/**
+	@brief Place all of the IO pins at the assigned locations
+ */
+void Greenpak4Netlist::ParIOBs(Greenpak4Device* device)
+{
+	printf("I/O pin constrained placement\n");
+	for(auto it = m_topModule->port_begin(); it != m_topModule->port_end(); it ++)
+	{
+		Greenpak4NetlistPort* port = it->second;
+		
+		//Sanity check
+		if(!m_topModule->HasNet(it->first))
+		{
+			fprintf(stderr, "INTERNAL ERROR: Netlist has a port named \"%s\" but no corresponding net\n",
+				it->first.c_str());
+			exit(-1);
+		}
+		
+		//Look up the net and make sure there's a LOC
+		Greenpak4NetlistNet* net = m_topModule->GetNet(it->first);
+		if(!net->HasAttribute("LOC"))
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" does not have a constrained location (LOC attribute).\n"
+				"       In order to ensure proper device functionality all IO pins must be constrained.\n",
+				it->first.c_str());
+			exit(-1);
+		}
+		
+		//Look up the matching IOB
+		int pin_num;
+		string sloc = net->GetAttribute("LOC");
+		if(1 != sscanf(sloc.c_str(), "P%d", &pin_num))
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" has an invalid LOC constraint \"%s\" (expected P3, P5, etc)\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		Greenpak4IOB* iob = device->GetIOB(pin_num);
+		if(iob == NULL)
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" has an invalid LOC constraint \"%s\" (no such pin, or not a GPIO)\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
+		//Type B IOBs cannot be used for inout
+		if( (port->m_direction == Greenpak4NetlistPort::DIR_INOUT) &&
+			(dynamic_cast<Greenpak4IOBTypeB*>(iob) != NULL) )
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level inout port \"%s\" is constrained to a pin \"%s\" which does "
+					"not support bidirectional IO\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
+		//Input-only pins cannot be used for IO or output
+		if( (port->m_direction != Greenpak4NetlistPort::DIR_INPUT) &&
+			iob->IsInputOnly() )
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" is constrained to an input-only pin \"%s\" but is not "
+					"declared as an input\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
+		//If we get here, everything looks good! Pair the port wth the IOB
+		//TODO: support vectors
+		port->m_iob = iob;
+		
+		//Iterate over attributes and figure out what to do
+		for(auto jt : net->m_attributes)
+		{
+			//do nothing, only for debugging
+			if(jt.first == "src")
+			{}
+			
+			//already handled elsewhere
+			else if(jt.first == "LOC")
+			{}
+			
+			//IO schmitt trigger
+			else if(jt.first == "SCHMITT_TRIGGER")
+			{
+				if(jt.second == "0")
+					iob->SetSchmittTrigger(false);
+				else
+					iob->SetSchmittTrigger(true);
+			}
+			
+			else if(jt.first == "PULLUP")
+			{
+				iob->SetPullDirection(Greenpak4IOB::PULL_UP);
+				if(jt.second == "10k")
+					iob->SetPullStrength(Greenpak4IOB::PULL_10K);
+				else if(jt.second == "100k")
+					iob->SetPullStrength(Greenpak4IOB::PULL_100K);
+				else if(jt.second == "1M")
+					iob->SetPullStrength(Greenpak4IOB::PULL_1M);
+			}
+			
+			else if(jt.first == "PULLDOWN")
+			{
+				iob->SetPullDirection(Greenpak4IOB::PULL_DOWN);
+				if(jt.second == "10k")
+					iob->SetPullStrength(Greenpak4IOB::PULL_10K);
+				else if(jt.second == "100k")
+					iob->SetPullStrength(Greenpak4IOB::PULL_100K);
+				else if(jt.second == "1M")
+					iob->SetPullStrength(Greenpak4IOB::PULL_1M);
+			}
+
+			else
+			{
+				printf("WARNING: Top-level port \"%s\" has unrecognized attribute %s, ignoring\n",
+					it->first.c_str(), jt.first.c_str());
+			}
+		}
+	}
+}

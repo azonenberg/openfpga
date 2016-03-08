@@ -34,12 +34,15 @@ public:
 		GREENPAK4_SLG46620
 	};
 
-	Greenpak4Device(Greenpak4Device::GREENPAK4_PART part);
+	Greenpak4Device(
+		Greenpak4Device::GREENPAK4_PART part,
+		Greenpak4IOB::PullDirection default_pull = Greenpak4IOB::PULL_NONE,
+		Greenpak4IOB::PullStrength default_drive = Greenpak4IOB::PULL_1M);
 	
 	virtual ~Greenpak4Device();
 	
 	//Write to a bitfile
-	bool WriteToFile(const char* fname);
+	bool WriteToFile(std::string fname);
 	
 	//Get the power rail for a binary constant
 	Greenpak4BitstreamEntity* GetPowerRail(unsigned int matrix, bool rail);

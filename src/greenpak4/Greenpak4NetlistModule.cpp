@@ -29,7 +29,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 	: m_parent(parent)
 	, m_name(name)
 {
-	printf("Module %s...\n", name.c_str());
+	printf("    %s\n", name.c_str());
 	
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
@@ -282,12 +282,8 @@ void Greenpak4NetlistModule::LoadNetAttributes(Greenpak4NetlistNet* net, json_ob
 		string cname = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
 				
-		if(!json_object_is_type(child, json_type_string))
-		{
-			fprintf(stderr, "ERROR: Net name attribute should be of type string but isn't\n");
-			exit(-1);
-		}
-		
+		//no type check, convert whatever it is to a string
+				
 		//Make sure we don't have it already
 		if(net->m_attributes.find(cname) != net->m_attributes.end())
 		{
