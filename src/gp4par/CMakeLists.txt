@@ -3,4 +3,4 @@ add_executable(gp4par
 )
 
 target_link_libraries(gp4par
-	greenpak4)
+	greenpak4 xbpar)

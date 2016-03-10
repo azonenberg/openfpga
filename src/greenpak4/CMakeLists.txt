@@ -17,5 +17,5 @@ ADD_LIBRARY(greenpak4 SHARED
 )
 
 target_link_libraries(greenpak4
-	json-c
+	json-c xbpar
 	)
