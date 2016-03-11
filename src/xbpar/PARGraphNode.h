@@ -46,6 +46,9 @@ public:
 	uint32_t GetEdgeCount();
 	PARGraphNode* GetEdgeByIndex(uint32_t index);
 
+	void AddEdge(PARGraphNode* sink)
+	{ m_edges.push_back(sink); }
+
 protected:
 	
 	/**
@@ -71,7 +74,7 @@ protected:
 	PARGraphNode* m_mate;
 	
 	/**
-		@brief List of all outbound edges from this node (TODO have more metadata on them)
+		@brief List of all outbound edges from this node (TODO have more metadata on them?)
 	 */
 	std::vector<PARGraphNode*> m_edges;
 };

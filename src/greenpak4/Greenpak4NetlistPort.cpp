@@ -29,6 +29,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 	: m_direction(DIR_INPUT)
 	, m_module(module)
 	, m_name(name)
+	, m_parnode(NULL)
 {	
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);

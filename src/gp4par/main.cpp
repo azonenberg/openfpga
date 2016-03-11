@@ -366,7 +366,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		//Create the node
 		//TODO: Support buses here (for now, assume the first one)
 		PARGraphNode* netnode = new PARGraphNode(label, net->m_nodes[0]);
-		net->m_nodes[0]->m_parnode = netnode;
+		port->m_parnode = netnode;
 		ngraph->AddNode(netnode);
 		
 		//Re-label the assigned IOB so we get a proper match to it
@@ -422,28 +422,85 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 			exit(-1);			
 		}
 		
-		//Create a node for the cell
+		//Create a node for the cell's output
+		//TODO: handle cells with multiple outputs
 		PARGraphNode* nnode = new PARGraphNode(label, cell);
-		cell->m_parNode = nnode;
+		cell->m_parnode = nnode;
 		ngraph->AddNode(nnode);
 	}
 	
 	//Create edges in the netlist.
 	//This requires breaking point-to-multipoint nets into multiple point-to-point links.
-	
-	/*
-	for(auto node : m_nodes)
+	for(auto it = netlist->nodebegin(); it != netlist->nodeend(); it ++)
 	{
-		printf("    Node %s connects to:\n", node->m_name.c_str());
+		Greenpak4NetlistNode* node = *it;
+		printf("    Node %s is sourced by:\n", node->m_name.c_str());
+		
+		PARGraphNode* source = NULL;
+		
+		//See if it was sourced by a port
 		for(auto p : node->m_ports)
 		{
-			Greenpak4NetlistNet* net = m_topModule->GetNet(p->m_name);
-			printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+			if(p->m_direction == Greenpak4NetlistPort::DIR_INPUT)
+			{
+				source = p->m_parnode;
+				Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
+				printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+			}
+			
+			else if(p->m_direction == Greenpak4NetlistPort::DIR_INOUT)
+			{
+				fprintf(
+					stderr,
+					"ERROR: Tristates not implemented\n");
+				exit(-1);
+			}
+		}
+		
+		//See if it was sourced by a node
+		for(auto c : node->m_nodeports)
+		{
+			Greenpak4NetlistModule* module = netlist->GetModule(c.m_cell->m_type);
+			Greenpak4NetlistPort* port = module->GetPort(c.m_portname);
+			
+			if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
+				continue;
+			else if(port->m_direction == Greenpak4NetlistPort::DIR_INOUT)
+			{
+				fprintf(
+					stderr,
+					"ERROR: Tristates not implemented\n");
+				exit(-1);
+			}
+			
+			//TODO: Get the graph node for this port
+			//For now, the entire cell has a single node as its output
+			source = c.m_cell->m_parnode;
+			printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+		}
+		
+		//DRC fail if undriven net
+		if(source == NULL)
+		{
+			fprintf(
+				stderr,
+				"ERROR: Net \"%s\" has loads, but no driver\n",
+				node->m_name.c_str());
+			exit(-1);	
+		}
+		
+		//Create edges from this source node to all sink nodes
+		for(auto p : node->m_ports)
+		{
+			if(p->m_parnode != source)
+				source->AddEdge(p->m_parnode);
 		}
 		for(auto c : node->m_nodeports)
-			printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+		{
+			if(c.m_cell->m_parnode != source)
+				source->AddEdge(c.m_cell->m_parnode);
+		}
 	}
-	*/
 	
 	//Create edges in the device. This is easy as we know a priori what connections are legal
 }

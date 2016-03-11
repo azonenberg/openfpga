@@ -39,6 +39,17 @@ public:
 	Greenpak4NetlistModule* GetTopModule()
 	{ return m_topModule; }
 	
+	typedef std::set<Greenpak4NetlistNode*> nodeset;
+	
+	nodeset::iterator nodebegin()
+	{ return m_nodes.begin(); }
+	
+	nodeset::iterator nodeend()
+	{ return m_nodes.end(); }
+	
+	Greenpak4NetlistModule* GetModule(std::string name)
+	{ return m_modules[name]; }
+	
 protected:
 	
 	void IndexNets();
@@ -57,7 +68,7 @@ protected:
 	Greenpak4NetlistModule* m_topModule;
 	
 	//All of the nets in the netlist
-	std::set<Greenpak4NetlistNode*> m_nodes;
+	nodeset m_nodes;
 };
 
 #endif

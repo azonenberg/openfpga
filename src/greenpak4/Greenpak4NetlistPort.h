@@ -42,10 +42,7 @@ class Greenpak4NetlistNode
 public:
 
 	Greenpak4NetlistNode()
-	{ m_parnode = NULL; }
-
-	//Link to the graph node for place-and-route
-	PARGraphNode* m_parnode;
+	{}
 
 	std::string m_name;
 	
@@ -70,7 +67,7 @@ public:
 		DIR_INOUT
 	};
 	Direction m_direction;
-
+	
 	Greenpak4NetlistModule* m_module;
 	
 	std::string m_name;
@@ -79,7 +76,9 @@ public:
 	
 	//Assigned IOB (only valid after ParIOBs())
 	//TODO: Support vectors here
-	Greenpak4IOB* m_iob;
+	//Greenpak4IOB* m_iob;
+	
+	PARGraphNode* m_parnode;
 };
 
 #endif

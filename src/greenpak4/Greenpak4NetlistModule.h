@@ -47,7 +47,7 @@ class Greenpak4NetlistCell
 {
 public:
 	Greenpak4NetlistCell()
-	{ m_parNode = NULL; }
+	{ m_parnode = NULL; }
 	virtual ~Greenpak4NetlistCell();
 
 	std::string m_name;
@@ -58,7 +58,7 @@ public:
 	
 	std::map<std::string, Greenpak4NetlistNet* > m_connections;
 	
-	PARGraphNode* m_parNode;
+	PARGraphNode* m_parnode;
 };
 
 /**
@@ -102,6 +102,9 @@ public:
 	
 	Greenpak4NetlistNet* GetNet(std::string name)
 	{ return m_nets[name]; }
+	
+	Greenpak4NetlistPort* GetPort(std::string name)
+	{ return m_ports[name]; }
 	
 protected:
 	Greenpak4Netlist* m_parent;
