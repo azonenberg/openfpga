@@ -17,16 +17,21 @@
  **********************************************************************************************************************/
  
 #include "../xbpar/xbpar.h"
+#include "Greenpak4PAREngine.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
 Greenpak4PAREngine::Greenpak4PAREngine(PARGraph* netlist, PARGraph* device)
+	: PAREngine(netlist, device)
 {
 	
 }
 
-virtual ~Greenpak4PAREngine()
+Greenpak4PAREngine::~Greenpak4PAREngine()
 {
 	
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: cost functions etc

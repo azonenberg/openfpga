@@ -30,7 +30,7 @@ public:
 	PAREngine(PARGraph* netlist, PARGraph* device);
 	virtual ~PAREngine();
 	
-	virtual bool Route(bool verbose = true);
+	virtual bool PlaceAndRoute(bool verbose = true);
 	
 	virtual uint32_t ComputeCost();
 	

@@ -40,7 +40,7 @@ PAREngine::~PAREngine()
 	
 	@return true on success, fail if design could not be routed
  */
-bool PAREngine::Route(bool verbose)
+bool PAREngine::PlaceAndRoute(bool verbose)
 {
 	if(verbose)
 		printf("XBPAR initializing...\n");
@@ -67,7 +67,7 @@ bool PAREngine::Route(bool verbose)
 			);
 		
 		//Try to optimize the placement more
-		if(!OptimizePlacement())
+		if(!OptimizePlacement(verbose))
 			break;
 	}
 	
@@ -197,6 +197,8 @@ uint32_t PAREngine::ComputeUnroutableCost()
 				cost ++;
 		}
 	}
+	
+	return cost;
 }
 
 /**

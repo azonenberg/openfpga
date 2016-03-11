@@ -22,7 +22,7 @@
 /**
 	@brief The place-and-route engine for Greenpak4
  */
-class Greenpak4PAREngine
+class Greenpak4PAREngine : public PAREngine
 {
 public:
 	Greenpak4PAREngine(PARGraph* netlist, PARGraph* device);

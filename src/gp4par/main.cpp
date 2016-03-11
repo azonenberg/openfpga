@@ -17,6 +17,8 @@
  **********************************************************************************************************************/
  
 #include "../greenpak4/Greenpak4.h"
+#include "../xbpar/xbpar.h"
+#include "Greenpak4PAREngine.h"
 #include <stdio.h>
 #include <string>
 
@@ -24,9 +26,10 @@ using namespace std;
 
 void ShowUsage();
 void ShowVersion();
-void DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
+bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
 PARGraph* BuildNetlistGraph(Greenpak4Netlist* netlist);
 PARGraph* BuildDeviceGraph(Greenpak4Device* device);
+void CommitChanges(PARGraph* netlist, PARGraph* device);
 
 int main(int argc, char* argv[])
 {
@@ -204,7 +207,8 @@ int main(int argc, char* argv[])
 	Greenpak4Device device(part, unused_pull, unused_drive);
 	
 	//Do the actual P&R
-	DoPAR(netlist, device);
+	if(!DoPAR(&netlist, &device))
+		return 2;
 	
 	//Write the final bitstream
 	printf("\nWriting final bitstream to output file \"%s\"\n", ofname.c_str());
@@ -216,16 +220,34 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-void DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
+/**
+	@brief The main place-and-route logic
+ */
+bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 {
+	//Create the graphs
+	printf("\nCreating netlist graphs...\n");
+	PARGraph* ngraph = BuildNetlistGraph(netlist);
+	PARGraph* dgraph = BuildDeviceGraph(device);
 	
+	//Create and run the PAR engine
+	Greenpak4PAREngine engine(ngraph, dgraph);
+	if(!engine.PlaceAndRoute(true))
+	{
+		printf("PAR failed\n");
+		return false;
+	}
+	
+	//Copy the netlist over
+	CommitChanges(ngraph, dgraph);
 }
 
 /**
-	@brief
+	@brief Make the graph for the input netlist
  */
 PARGraph* BuildNetlistGraph(Greenpak4Netlist* netlist)
 {
+	return NULL;
 }
 
 /**
@@ -233,6 +255,15 @@ PARGraph* BuildNetlistGraph(Greenpak4Netlist* netlist)
  */
 PARGraph* BuildDeviceGraph(Greenpak4Device* device)
 {
+	return NULL;
+}
+
+/**
+	@brief After a successful PAR, copy all of the data from the unplaced to placed nodes
+ */
+void CommitChanges(PARGraph* netlist, PARGraph* device)
+{
+	
 }
 
 void ShowUsage()
