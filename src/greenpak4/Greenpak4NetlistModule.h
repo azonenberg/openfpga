@@ -46,6 +46,8 @@ public:
 class Greenpak4NetlistCell
 {
 public:
+	Greenpak4NetlistCell()
+	{ m_parNode = NULL; }
 	virtual ~Greenpak4NetlistCell();
 
 	std::string m_name;
@@ -55,6 +57,8 @@ public:
 	std::map<std::string, std::string> m_attributes;
 	
 	std::map<std::string, Greenpak4NetlistNet* > m_connections;
+	
+	PARGraphNode* m_parNode;
 };
 
 /**

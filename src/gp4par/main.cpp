@@ -378,8 +378,8 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 	dgraph->AllocateLabel();
 	uint32_t lut3_label = ngraph->AllocateLabel();
 	dgraph->AllocateLabel();
-	//uint32_t lut4_label = ngraph->AllocateLabel();
-	//dgraph->AllocateLabel();
+	uint32_t lut4_label = ngraph->AllocateLabel();
+	dgraph->AllocateLabel();
 	for(unsigned int i=0; i<device->GetLUT2Count(); i++)
 	{
 		Greenpak4LUT* lut = device->GetLUT2(i);
@@ -401,7 +401,31 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 	//Make netlist nodes for cells
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
 	{
+		//TODO: Support LOC constraints on individual cells
+		//For now, just label by type
 		
+		//Figure out the type of node
+		Greenpak4NetlistCell* cell = it->second;
+		uint32_t label = 0;
+		if(cell->m_type == "GP_2LUT")
+			label = lut2_label;
+		else if(cell->m_type == "GP_3LUT")
+			label = lut3_label;
+		else if(cell->m_type == "GP_4LUT")
+			label = lut4_label;
+		else
+		{
+			fprintf(
+				stderr,
+				"ERROR: Cell \"%s\" is of type \"%s\" which is not a valid GreenPak4 primitive\n",
+				cell->m_name.c_str(), cell->m_type.c_str());
+			exit(-1);			
+		}
+		
+		//Create a node for the cell
+		PARGraphNode* nnode = new PARGraphNode(label, cell);
+		cell->m_parNode = nnode;
+		ngraph->AddNode(nnode);
 	}
 	
 	//Once all of the nodes are created, make all of the edges between them!
