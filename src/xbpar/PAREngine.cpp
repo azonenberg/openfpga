@@ -43,7 +43,7 @@ PAREngine::~PAREngine()
 bool PAREngine::PlaceAndRoute(bool verbose)
 {
 	if(verbose)
-		printf("XBPAR initializing...\n");
+		printf("\nXBPAR initializing...\n");
 		
 	//Detect obviously impossible-to-route designs
 	if(!SanityCheck(verbose))
@@ -96,7 +96,7 @@ bool PAREngine::SanityCheck(bool verbose)
 			nmax_net, nmax_dev);
 		return false;
 	}
-	
+		
 	//Cache the node count for both
 	m_netlist->CountLabels();
 	m_device->CountLabels();
@@ -110,7 +110,8 @@ bool PAREngine::SanityCheck(bool verbose)
 		//TODO: error reporting by device type, not just node IDs
 		if(nnet > ndev)
 		{
-			printf("ERROR: Design is not too big (netlist has %d nodes with label %d, device only has %d)\n",
+			printf("ERROR: Design is too big for the device "
+				"(netlist has %d nodes with label %d, device only has %d)\n",
 				nnet, label, ndev);
 			return false;
 		}
@@ -125,6 +126,13 @@ bool PAREngine::SanityCheck(bool verbose)
  */
 void PAREngine::InitialPlacement(bool verbose)
 {
+	if(verbose)
+	{
+		printf("Global placement of %d instances into %d sites...\n",
+			m_netlist->GetNumNodes(),
+			m_device->GetNumNodes());
+	}
+	
 	//Cache the indexes
 	m_netlist->IndexNodesByLabel();
 	m_device->IndexNodesByLabel();

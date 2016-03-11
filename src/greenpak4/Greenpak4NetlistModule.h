@@ -72,12 +72,19 @@ public:
 	{ return m_name; }
 	
 	typedef std::map<std::string, Greenpak4NetlistPort*> portmap;
+	typedef std::map<std::string, Greenpak4NetlistCell*> cellmap;
 	
 	portmap::iterator port_begin()
 	{ return m_ports.begin(); }
 	
 	portmap::iterator port_end()
 	{ return m_ports.end(); }
+	
+	cellmap::iterator cell_begin()
+	{ return m_cells.begin(); }
+	
+	cellmap::iterator cell_end()
+	{ return m_cells.end(); }
 	
 	bool HasNet(std::string name)
 	{ return (m_nets.find(name) != m_nets.end()); }
@@ -100,7 +107,7 @@ protected:
 	std::map<int32_t, Greenpak4NetlistNode*> m_nodes;
 	portmap m_ports;
 	std::map<std::string, Greenpak4NetlistNet*> m_nets;
-	std::map<std::string, Greenpak4NetlistCell*> m_cells;
+	cellmap m_cells;
 };
 
 #endif

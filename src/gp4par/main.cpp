@@ -27,9 +27,10 @@ using namespace std;
 void ShowUsage();
 void ShowVersion();
 bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
-PARGraph* BuildNetlistGraph(Greenpak4Netlist* netlist);
-PARGraph* BuildDeviceGraph(Greenpak4Device* device);
+void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& ngraph, PARGraph*& dgraph);
 void CommitChanges(PARGraph* netlist, PARGraph* device);
+void ApplyLocConstraints(Greenpak4Netlist* netlist, PARGraph* ngraph, PARGraph* dgraph);
+void PostPARDRC(PARGraph* netlist, PARGraph* device);
 
 int main(int argc, char* argv[])
 {
@@ -227,9 +228,10 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 {
 	//Create the graphs
 	printf("\nCreating netlist graphs...\n");
-	PARGraph* ngraph = BuildNetlistGraph(netlist);
-	PARGraph* dgraph = BuildDeviceGraph(device);
-	
+	PARGraph* ngraph = NULL;
+	PARGraph* dgraph = NULL;
+	BuildGraphs(netlist, device, ngraph, dgraph);
+
 	//Create and run the PAR engine
 	Greenpak4PAREngine engine(ngraph, dgraph);
 	if(!engine.PlaceAndRoute(true))
@@ -238,32 +240,234 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 		return false;
 	}
 	
-	//Copy the netlist over
+	//Final DRC to make sure the placement is sane
+	PostPARDRC(ngraph, dgraph);
+	
+	//Copy the netlist over, then clean up
 	CommitChanges(ngraph, dgraph);
+	delete ngraph;
+	delete dgraph;
+	return true;
 }
 
 /**
-	@brief Make the graph for the input netlist
+	@brief Do various sanity checks after the design is routed
  */
-PARGraph* BuildNetlistGraph(Greenpak4Netlist* netlist)
+void PostPARDRC(PARGraph* /*netlist*/, PARGraph* /*device*/)
 {
-	return NULL;
+	printf("\nPost-PAR design rule checks\n");
+	
+	//TODO: check floating inputs etc
+	
+	//TODO: check 
 }
 
 /**
-	@brief Make the graph for the target device
+	@brief Build the graphs
  */
-PARGraph* BuildDeviceGraph(Greenpak4Device* device)
+void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& ngraph, PARGraph*& dgraph)
 {
-	return NULL;
+	//Create the graphs
+	ngraph = new PARGraph;
+	dgraph = new PARGraph;
+	
+	//This is the module being PAR'd
+	Greenpak4NetlistModule* module = netlist->GetTopModule();
+	
+	//Create device entries for the IOBs
+	uint32_t iob_label = ngraph->AllocateLabel();
+	dgraph->AllocateLabel();
+	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
+	{
+		Greenpak4IOB* iob =it->second;
+		PARGraphNode* inode = new PARGraphNode(iob_label, iob);
+		iob->SetPARNode(inode);
+		dgraph->AddNode(inode);
+	}
+	
+	//Create netlist nodes for the IOBs
+	for(auto it = module->port_begin(); it != module->port_end(); it ++)
+	{
+		Greenpak4NetlistPort* port = it->second;
+		
+		if(!module->HasNet(it->first))
+		{
+			fprintf(stderr, "INTERNAL ERROR: Netlist has a port named \"%s\" but no corresponding net\n",
+				it->first.c_str());
+			exit(-1);
+		}
+		
+		//Look up the net and make sure there's a LOC
+		Greenpak4NetlistNet* net = module->GetNet(it->first);
+		if(!net->HasAttribute("LOC"))
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" does not have a constrained location (LOC attribute).\n"
+				"       In order to ensure proper device functionality all IO pins must be constrained.\n",
+				it->first.c_str());
+			exit(-1);
+		}
+		
+		//Look up the matching IOB
+		int pin_num;
+		string sloc = net->GetAttribute("LOC");
+		if(1 != sscanf(sloc.c_str(), "P%d", &pin_num))
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" has an invalid LOC constraint \"%s\" (expected P3, P5, etc)\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		Greenpak4IOB* iob = device->GetIOB(pin_num);
+		if(iob == NULL)
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" has an invalid LOC constraint \"%s\" (no such pin, or not a GPIO)\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
+		//Type B IOBs cannot be used for inout
+		if( (port->m_direction == Greenpak4NetlistPort::DIR_INOUT) &&
+			(dynamic_cast<Greenpak4IOBTypeB*>(iob) != NULL) )
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level inout port \"%s\" is constrained to a pin \"%s\" which does "
+					"not support bidirectional IO\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
+		//Input-only pins cannot be used for IO or output
+		if( (port->m_direction != Greenpak4NetlistPort::DIR_INPUT) &&
+			iob->IsInputOnly() )
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" is constrained to an input-only pin \"%s\" but is not "
+					"declared as an input\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
+		//Allocate a new graph label for these IOBs
+		//Must always allocate from both graphs at the same time (TODO: paired allocation somehow?)
+		uint32_t label = ngraph->AllocateLabel();
+		dgraph->AllocateLabel();
+		
+		//Create the node
+		//TODO: Support buses here (for now, assume the first one)
+		PARGraphNode* netnode = new PARGraphNode(label, net->m_nodes[0]);
+		net->m_nodes[0]->m_parnode = netnode;
+		ngraph->AddNode(netnode);
+		
+		//Re-label the assigned IOB so we get a proper match to it
+		iob->GetPARNode()->Relabel(label);
+	}
+	
+	//Make device nodes for each type of LUT
+	uint32_t lut2_label = ngraph->AllocateLabel();
+	dgraph->AllocateLabel();
+	uint32_t lut3_label = ngraph->AllocateLabel();
+	dgraph->AllocateLabel();
+	//uint32_t lut4_label = ngraph->AllocateLabel();
+	//dgraph->AllocateLabel();
+	for(unsigned int i=0; i<device->GetLUT2Count(); i++)
+	{
+		Greenpak4LUT* lut = device->GetLUT2(i);
+		PARGraphNode* lnode = new PARGraphNode(lut2_label, lut);
+		lut->SetPARNode(lnode);
+		dgraph->AddNode(lnode);
+	}
+	for(unsigned int i=0; i<device->GetLUT3Count(); i++)
+	{
+		Greenpak4LUT* lut = device->GetLUT3(i);
+		PARGraphNode* lnode = new PARGraphNode(lut3_label, lut);
+		lut->SetPARNode(lnode);
+		dgraph->AddNode(lnode);
+	}
+	//TODO: LUT4s
+	
+	//TODO: make nodes for all of the other hard IP
+	
+	//Make netlist nodes for cells
+	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
+	{
+		
+	}
+	
+	//Once all of the nodes are created, make all of the edges between them!
 }
 
 /**
 	@brief After a successful PAR, copy all of the data from the unplaced to placed nodes
  */
-void CommitChanges(PARGraph* netlist, PARGraph* device)
+void CommitChanges(PARGraph* /*netlist*/, PARGraph* /*device*/)
 {
+	printf("\nBuilding final post-route netlist...\n");
 	
+	/*
+	//If we get here, everything looks good! Pair the port wth the IOB
+	//TODO: support vectors
+	port->m_iob = iob;
+	
+	//Iterate over attributes and figure out what to do
+	for(auto jt : net->m_attributes)
+	{
+		//do nothing, only for debugging
+		if(jt.first == "src")
+		{}
+		
+		//already handled elsewhere
+		else if(jt.first == "LOC")
+		{}
+		
+		//IO schmitt trigger
+		else if(jt.first == "SCHMITT_TRIGGER")
+		{
+			if(jt.second == "0")
+				iob->SetSchmittTrigger(false);
+			else
+				iob->SetSchmittTrigger(true);
+		}
+		
+		else if(jt.first == "PULLUP")
+		{
+			iob->SetPullDirection(Greenpak4IOB::PULL_UP);
+			if(jt.second == "10k")
+				iob->SetPullStrength(Greenpak4IOB::PULL_10K);
+			else if(jt.second == "100k")
+				iob->SetPullStrength(Greenpak4IOB::PULL_100K);
+			else if(jt.second == "1M")
+				iob->SetPullStrength(Greenpak4IOB::PULL_1M);
+		}
+		
+		else if(jt.first == "PULLDOWN")
+		{
+			iob->SetPullDirection(Greenpak4IOB::PULL_DOWN);
+			if(jt.second == "10k")
+				iob->SetPullStrength(Greenpak4IOB::PULL_10K);
+			else if(jt.second == "100k")
+				iob->SetPullStrength(Greenpak4IOB::PULL_100K);
+			else if(jt.second == "1M")
+				iob->SetPullStrength(Greenpak4IOB::PULL_1M);
+		}
+
+		else
+		{
+			printf("WARNING: Top-level port \"%s\" has unrecognized attribute %s, ignoring\n",
+				it->first.c_str(), jt.first.c_str());
+		}
+	}
+	*/
 }
 
 void ShowUsage()

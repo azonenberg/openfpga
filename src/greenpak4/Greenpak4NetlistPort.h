@@ -24,10 +24,16 @@
 #include <json-c/json.h>
 
 //A single node in the netlist (may be a wire or part of a bus)
-//For now, only attribute is name
 class Greenpak4NetlistNode
 {
 public:
+
+	Greenpak4NetlistNode()
+	{ m_parnode = NULL; }
+
+	//Link to the graph node for place-and-route
+	PARGraphNode* m_parnode;
+
 	std::string m_name;
 };
 

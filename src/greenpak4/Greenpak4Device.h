@@ -52,11 +52,25 @@ public:
 	
 	//Accessors
 	
+	typedef std::map<unsigned int, Greenpak4IOB*> iobmap;
+	
+	iobmap::iterator iobbegin()
+	{ return m_iobs.begin(); }
+	
+	iobmap::iterator iobend()
+	{ return m_iobs.end(); }
+	
 	unsigned int GetMatrixBits()
 	{ return m_matrixBits; }
 	
 	Greenpak4LUT* GetLUT2(unsigned int i);
 	Greenpak4LUT* GetLUT3(unsigned int i);
+	
+	unsigned int GetLUT2Count()
+	{ return m_lut2s.size(); }
+	
+	unsigned int GetLUT3Count()
+	{ return m_lut3s.size(); }
 	
 	unsigned int GetMatrixBase(unsigned int matrix);
 	
@@ -90,7 +104,7 @@ protected:
 	std::vector<Greenpak4LUT*> m_lut4s;
 	
 	///I/O pins (map from pin numbers to IOBs)
-	std::map<unsigned int, Greenpak4IOB*> m_iobs;
+	iobmap m_iobs;
 	
 	///Constant digital 1 for each matrix
 	Greenpak4PowerRail* m_constantOne[2];

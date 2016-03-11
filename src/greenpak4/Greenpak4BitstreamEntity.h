@@ -20,6 +20,7 @@
 #define Greenpak4BitstreamEntity_h
 
 class Greenpak4Device;
+class PARGraphNode;
 
 /**
 	@brief An entity which is serialized to/from the bitstream
@@ -61,6 +62,12 @@ public:
 	unsigned int GetOutputBase()
 	{ return m_outputBaseWord; }
 	
+	PARGraphNode* GetPARNode()
+	{ return m_parnode; }
+	
+	void SetPARNode(PARGraphNode* node)
+	{ m_parnode = node; }
+	
 protected:
 
 	/**
@@ -89,6 +96,9 @@ protected:
 	
 	///Base address of our configuration data, in bits
 	unsigned int m_configBase;
+	
+	///The graph node used for place-and-route
+	PARGraphNode* m_parnode;
 };
 
 #endif

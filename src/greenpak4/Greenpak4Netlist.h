@@ -35,16 +35,14 @@ public:
 	Greenpak4Netlist(std::string fname, std::string top);
 	virtual ~Greenpak4Netlist();
 	
-	//void PlaceAndRoute(Greenpak4Device* device);
+	Greenpak4NetlistModule* GetTopModule()
+	{ return m_topModule; }
 	
 protected:
 	
 	//Init helpers
 	void Load(json_object* object);
 	void LoadModules(json_object* object);
-	
-	//PAR helpers
-	//void ParIOBs(Greenpak4Device* device);
 		
 	std::string m_topModuleName;
 	std::string m_creator;

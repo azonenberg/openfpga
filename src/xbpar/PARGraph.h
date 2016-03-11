@@ -45,6 +45,9 @@ public:
 	//Node iteration
 	uint32_t GetNumNodes();
 	PARGraphNode* GetNodeByIndex(uint32_t index);
+	
+	//Insertion
+	void AddNode(PARGraphNode* node);
 
 protected:
 

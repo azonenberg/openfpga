@@ -32,6 +32,11 @@ public:
 	
 	void MateWith(PARGraphNode* mate);
 
+	//do not call during PAR, only during initialization of constraints
+	//or caches will get very confused
+	void Relabel(uint32_t label)
+	{ m_label = label; }
+
 	uint32_t GetLabel()
 	{ return m_label; }
 	

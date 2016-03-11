@@ -33,6 +33,7 @@ Greenpak4BitstreamEntity::Greenpak4BitstreamEntity(
 	, m_inputBaseWord(ibase)
 	, m_outputBaseWord(obase)
 	, m_configBase(cbase)
+	, m_parnode(NULL)
 {
 	
 }
