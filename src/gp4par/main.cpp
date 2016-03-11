@@ -24,6 +24,9 @@ using namespace std;
 
 void ShowUsage();
 void ShowVersion();
+void DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
+PARGraph* BuildNetlistGraph(Greenpak4Netlist* netlist);
+PARGraph* BuildDeviceGraph(Greenpak4Device* device);
 
 int main(int argc, char* argv[])
 {
@@ -200,8 +203,8 @@ int main(int argc, char* argv[])
 	//Create the device and initialize all IO pins
 	Greenpak4Device device(part, unused_pull, unused_drive);
 	
-	//Place and route the final netlist
-	netlist.PlaceAndRoute(&device);
+	//Do the actual P&R
+	DoPAR(netlist, device);
 	
 	//Write the final bitstream
 	printf("\nWriting final bitstream to output file \"%s\"\n", ofname.c_str());
@@ -211,6 +214,25 @@ int main(int argc, char* argv[])
 	printf("\nStatic timing analysis: not yet implemented\n");
 	
 	return 0;
+}
+
+void DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
+{
+	
+}
+
+/**
+	@brief
+ */
+PARGraph* BuildNetlistGraph(Greenpak4Netlist* netlist)
+{
+}
+
+/**
+	@brief Make the graph for the target device
+ */
+PARGraph* BuildDeviceGraph(Greenpak4Device* device)
+{
 }
 
 void ShowUsage()

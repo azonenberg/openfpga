@@ -183,7 +183,7 @@ void Greenpak4Netlist::LoadModules(json_object* object)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // P&R logic
-
+/*
 void Greenpak4Netlist::PlaceAndRoute(Greenpak4Device* device)
 {
 	printf("\nPlace-and-route engine initializing...\n");
@@ -197,11 +197,12 @@ void Greenpak4Netlist::PlaceAndRoute(Greenpak4Device* device)
 	
 	//Do the IO pins first
 	ParIOBs(device);	
-}
+}*/
 
 /**
 	@brief Place all of the IO pins at the assigned locations
  */
+/*
 void Greenpak4Netlist::ParIOBs(Greenpak4Device* device)
 {
 	printf("I/O pin constrained placement\n");
@@ -332,3 +333,4 @@ void Greenpak4Netlist::ParIOBs(Greenpak4Device* device)
 		}
 	}
 }
+*/

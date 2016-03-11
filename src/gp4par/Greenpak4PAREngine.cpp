@@ -15,45 +15,18 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
+ 
+#include "../xbpar/xbpar.h"
 
-#ifndef Greenpak4Netlist_h
-#define Greenpak4Netlist_h
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-#include <string>
-#include <map>
-
-#include <json-c/json.h>
-
-#include "Greenpak4NetlistModule.h"
-
-/**
-	@brief An UNPLACED netlist for a Greenpak4 device
- */
-class Greenpak4Netlist
+Greenpak4PAREngine::Greenpak4PAREngine(PARGraph* netlist, PARGraph* device)
 {
-public:
-	Greenpak4Netlist(std::string fname, std::string top);
-	virtual ~Greenpak4Netlist();
 	
-	//void PlaceAndRoute(Greenpak4Device* device);
-	
-protected:
-	
-	//Init helpers
-	void Load(json_object* object);
-	void LoadModules(json_object* object);
-	
-	//PAR helpers
-	//void ParIOBs(Greenpak4Device* device);
-		
-	std::string m_topModuleName;
-	std::string m_creator;
-	
-	//All of the modules in the netlist
-	std::map<std::string, Greenpak4NetlistModule*> m_modules;
-	
-	//The top-level module
-	Greenpak4NetlistModule* m_topModule;
-};
+}
 
-#endif
+virtual ~Greenpak4PAREngine()
+{
+	
+}
