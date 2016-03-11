@@ -177,7 +177,7 @@ void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
 		else if(cname == "connections")
 			LoadCellConnections(cell, child);
 		
-		//not needed, it's a primitive cell
+		//redundant, we can look this up from the module
 		else if(cname == "port_directions")
 		{
 		}
@@ -256,7 +256,7 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 		{
 			if(!json_object_is_type(child, json_type_object))
 			{
-				fprintf(stderr, "ERROR: Port attributes should be of type object but isn't\n");
+				fprintf(stderr, "ERROR: Net attributes should be of type object but isn't\n");
 				exit(-1);
 			}
 			

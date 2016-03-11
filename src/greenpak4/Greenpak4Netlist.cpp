@@ -137,7 +137,72 @@ void Greenpak4Netlist::Load(json_object* object)
 			fprintf(stderr, "ERROR: Unknown top-level JSON object \"%s\"\n", name.c_str());
 			exit(-1);
 		}
-	}	
+	}
+	
+	IndexNets();
+}
+
+/**
+	@brief Index the nets so that each net has a list of cell ports it connects to.
+	
+	Has to be done as a second pass because there may be cycles in the netlist preventing us from resolving names
+	as we parse the JSON
+ */
+void Greenpak4Netlist::IndexNets()
+{
+	printf("Indexing...\n");
+	
+	//Loop over all of our ports and add them to the associated nets
+	for(auto it = m_topModule->port_begin(); it != m_topModule->port_end(); it ++)
+	{
+		Greenpak4NetlistPort* port = it->second;
+		//printf("    Port %s connects to:\n", it->first.c_str());
+		
+		for(size_t i=0; i<port->m_nodes.size(); i++)
+		{
+			Greenpak4NetlistNode* node = port->m_nodes[i];
+			//printf("        node %s\n", node->m_name.c_str());
+			node->m_ports.push_back(port);
+		}
+	}
+	
+	//Loop over all of our cells and add their connections
+	for(auto it = m_topModule->cell_begin(); it != m_topModule->cell_end(); it ++)
+	{
+		Greenpak4NetlistCell* cell = it->second;
+		//printf("    Cell %s connects to:\n", it->first.c_str());
+		for(auto jt : cell->m_connections)
+		{
+			Greenpak4NetlistNet* net = jt.second;
+			//TODO: support vectors
+			Greenpak4NetlistNode* node = net->m_nodes[0];
+			//printf("        %s: net %s\n", jt.first.c_str(), node->m_name.c_str());
+			node->m_nodeports.push_back(Greenpak4NetlistNodePoint(cell, jt.first));
+		}
+	}
+	
+	//Make a set of the nodes to avoid duplication
+	for(auto it = m_topModule->net_begin(); it != m_topModule->net_end(); it ++)
+	{
+		Greenpak4NetlistNet* net = it->second;
+		for(auto node : net->m_nodes)
+			m_nodes.insert(node);
+	}
+	
+	//Print them out
+	/*
+	for(auto node : m_nodes)
+	{
+		printf("    Node %s connects to:\n", node->m_name.c_str());
+		for(auto p : node->m_ports)
+		{
+			Greenpak4NetlistNet* net = m_topModule->GetNet(p->m_name);
+			printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+		}
+		for(auto c : node->m_nodeports)
+			printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+	}
+	*/
 }
 
 /**

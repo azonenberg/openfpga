@@ -21,6 +21,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 
 #include <json-c/json.h>
 
@@ -40,6 +41,8 @@ public:
 	
 protected:
 	
+	void IndexNets();
+	
 	//Init helpers
 	void Load(json_object* object);
 	void LoadModules(json_object* object);
@@ -52,6 +55,9 @@ protected:
 	
 	//The top-level module
 	Greenpak4NetlistModule* m_topModule;
+	
+	//All of the nets in the netlist
+	std::set<Greenpak4NetlistNode*> m_nodes;
 };
 
 #endif

@@ -23,6 +23,19 @@
 #include <vector>
 #include <json-c/json.h>
 
+class Greenpak4NetlistNodePoint
+{
+public:
+
+	Greenpak4NetlistNodePoint(Greenpak4NetlistCell* cell, std::string port)
+		: m_cell(cell)
+		, m_portname(port)
+	{}
+
+	Greenpak4NetlistCell* m_cell;
+	std::string m_portname;
+};
+
 //A single node in the netlist (may be a wire or part of a bus)
 class Greenpak4NetlistNode
 {
@@ -35,6 +48,12 @@ public:
 	PARGraphNode* m_parnode;
 
 	std::string m_name;
+	
+	//List of internal points we link to (only valid after indexing)
+	std::vector<Greenpak4NetlistNodePoint> m_nodeports;
+	
+	//List of ports we link to (only valid after indexing)
+	std::vector<Greenpak4NetlistPort*> m_ports;
 };
 
 //A module port (may contain one or more nodes)

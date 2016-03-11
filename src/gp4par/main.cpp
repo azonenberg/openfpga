@@ -428,7 +428,24 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		ngraph->AddNode(nnode);
 	}
 	
-	//Once all of the nodes are created, make all of the edges between them!
+	//Create edges in the netlist.
+	//This requires breaking point-to-multipoint nets into multiple point-to-point links.
+	
+	/*
+	for(auto node : m_nodes)
+	{
+		printf("    Node %s connects to:\n", node->m_name.c_str());
+		for(auto p : node->m_ports)
+		{
+			Greenpak4NetlistNet* net = m_topModule->GetNet(p->m_name);
+			printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+		}
+		for(auto c : node->m_nodeports)
+			printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+	}
+	*/
+	
+	//Create edges in the device. This is easy as we know a priori what connections are legal
 }
 
 /**
