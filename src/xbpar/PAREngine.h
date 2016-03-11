@@ -32,7 +32,15 @@ public:
 	
 	virtual bool Route(bool verbose = true);
 	
+	virtual uint32_t ComputeCost();
+	
 protected:
+
+	//TODO: enumerate unroutable nets for debugging
+
+	virtual uint32_t ComputeCongestionCost();
+	virtual uint32_t ComputeTimingCost();
+	virtual uint32_t ComputeUnroutableCost();
 
 	virtual bool SanityCheck(bool verbose);
 	virtual void InitialPlacement(bool verbose);

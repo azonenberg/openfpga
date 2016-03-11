@@ -34,6 +34,12 @@ public:
 
 	uint32_t GetLabel()
 	{ return m_label; }
+	
+	PARGraphNode* GetMate()
+	{ return m_mate; }
+
+	uint32_t GetEdgeCount();
+	PARGraphNode* GetEdgeByIndex(uint32_t index);
 
 protected:
 	
@@ -60,9 +66,9 @@ protected:
 	PARGraphNode* m_mate;
 	
 	/**
-		@brief List of all outbound edges from this node
+		@brief List of all outbound edges from this node (TODO have more metadata on them)
 	 */
-	//std::vector<PARGraphNode*> m_edges;
+	std::vector<PARGraphNode*> m_edges;
 };
 
 #endif

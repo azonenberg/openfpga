@@ -53,8 +53,25 @@ bool PAREngine::Route(bool verbose)
 	InitialPlacement(verbose);
 		
 	//Converge until we get a passing placement
-	if(!OptimizePlacement(verbose))
-		return false;
+	uint32_t iteration = 0;
+	while(true)
+	{
+		printf(
+			"\nOptimizing placement (iteration %d)\n"
+			"    unroutability cost %d, congestion cost %d, timing cost %d (total %d)\n",
+			iteration,
+			ComputeUnroutableCost(),
+			ComputeCongestionCost(),
+			ComputeTimingCost(),
+			ComputeCost()
+			);
+		
+		//Try to optimize the placement more
+		if(!OptimizePlacement())
+			break;
+	}
+	
+	//
 		
 	return true;
 }
@@ -128,11 +145,76 @@ void PAREngine::InitialPlacement(bool verbose)
 }
 
 /**
-	@brief Iteratively refine the placement
+	@brief Iteratively refine the placement until we can't get any better.
 	
 	Calculate a cost function for the current placement, then optimize
+	
+	@return True if further optimization is necessary/possible, false otherwise
  */
 bool PAREngine::OptimizePlacement(bool verbose)
 {
-	return false;	
+	//For now, give up and just live with whatever the initial placement was because we're lazy :p	
+	return false;
+}
+
+/**
+	@brief Compute the cost of a given placement.
+ */
+uint32_t PAREngine::ComputeCost()
+{
+	return ComputeUnroutableCost() + ComputeTimingCost() + ComputeCongestionCost();
+}
+
+/**
+	@brief Compute the unroutability cost (measure of how many requested routes do not exist)
+ */
+uint32_t PAREngine::ComputeUnroutableCost()
+{
+	uint32_t cost = 0;
+	
+	//Loop over each edge in the source netlist and try to find a matching edge in the destination.
+	//No checks for multiple signals in one place for now.
+	for(uint32_t i=0; i<m_netlist->GetNumNodes(); i++)
+	{
+		PARGraphNode* netsrc = m_netlist->GetNodeByIndex(i);
+		for(uint32_t j=0; j<netsrc->GetEdgeCount(); j++)
+		{
+			PARGraphNode* netdst = netsrc->GetEdgeByIndex(j);
+			
+			//For now, just bruteforce to find a matching edge (if there is one)
+			bool found = false;
+			PARGraphNode* devsrc = netsrc->GetMate();
+			PARGraphNode* devdst = netdst->GetMate();
+			for(uint32_t k=0; k<devsrc->GetEdgeCount(); k++)
+			{
+				if(devsrc->GetEdgeByIndex(k) == devdst)
+				{
+					found = true;
+					break;
+				}
+			}
+			if(!found)
+				cost ++;
+		}
+	}
+}
+
+/**
+	@brief Computes the timing cost (measure of how much the current placement fails timing constraints).
+	
+	Default is zero (no timing analysis performed).
+ */
+uint32_t PAREngine::ComputeTimingCost()
+{
+	return 0;
+}
+
+/**
+	@brief Computes the congestion cost (measure of how many routes are simultaneously occupied by multiple signals)
+	
+	Default is zero (no congestion analysis performed)
+ */
+uint32_t PAREngine::ComputeCongestionCost()
+{
+	return 0;	
 }

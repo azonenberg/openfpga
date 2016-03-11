@@ -41,6 +41,10 @@ public:
 	uint32_t GetNumNodesWithLabel(uint32_t label);
 	void IndexNodesByLabel();
 	PARGraphNode* GetNodeByLabelAndIndex(uint32_t label, uint32_t index);
+	
+	//Node iteration
+	uint32_t GetNumNodes();
+	PARGraphNode* GetNodeByIndex(uint32_t index);
 
 protected:
 

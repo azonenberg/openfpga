@@ -53,3 +53,13 @@ void PARGraphNode::MateWith(PARGraphNode* mate)
 	//and set the forward pointer regardless
 	m_mate = mate;
 }
+
+uint32_t PARGraphNode::GetEdgeCount()
+{
+	return m_edges.size();
+}
+
+PARGraphNode* PARGraphNode::GetEdgeByIndex(uint32_t index)
+{
+	return m_edges[index];
+}

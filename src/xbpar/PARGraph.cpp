@@ -53,6 +53,16 @@ uint32_t PARGraph::GetMaxLabel()
 	return m_nextLabel - 1;
 }
 
+uint32_t PARGraph::GetNumNodes()
+{
+	return m_nodes.size();
+}
+
+PARGraphNode* PARGraph::GetNodeByIndex(uint32_t index)
+{
+	return m_nodes[index];
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Label counting helpers
 
