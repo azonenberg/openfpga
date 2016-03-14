@@ -437,7 +437,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 	for(auto it = netlist->nodebegin(); it != netlist->nodeend(); it ++)
 	{
 		Greenpak4NetlistNode* node = *it;
-		printf("    Node %s is sourced by:\n", node->m_name.c_str());
+		//printf("    Node %s is sourced by:\n", node->m_name.c_str());
 		
 		PARGraphNode* source = NULL;
 		
@@ -447,8 +447,8 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 			if(p->m_direction == Greenpak4NetlistPort::DIR_INPUT)
 			{
 				source = p->m_parnode;
-				Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
-				printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+				//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
+				//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
 			}
 			
 			else if(p->m_direction == Greenpak4NetlistPort::DIR_INOUT)
@@ -482,7 +482,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 			printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 		}
 		
-		printf("        and drives\n");
+		//printf("        and drives\n");
 		
 		//DRC fail if undriven net
 		if(source == NULL)
@@ -500,8 +500,8 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 			if(p->m_parnode != source)
 			{
 				source->AddEdge(p->m_parnode);
-				Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
-				printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+				//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
+				//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
 			}
 		}
 		for(auto c : node->m_nodeports)
@@ -509,7 +509,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 			if(c.m_cell->m_parnode != source)
 			{
 				source->AddEdge(c.m_cell->m_parnode, c.m_portname);
-				printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+				//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 			}
 		}
 	}
