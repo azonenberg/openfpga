@@ -68,6 +68,9 @@ public:
 	void SetPARNode(PARGraphNode* node)
 	{ m_parnode = node; }
 	
+	unsigned int GetConfigBase()
+	{ return m_configBase; }
+	
 protected:
 
 	/**

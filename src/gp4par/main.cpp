@@ -26,11 +26,14 @@ using namespace std;
 
 void ShowUsage();
 void ShowVersion();
-bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
+
 void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& ngraph, PARGraph*& dgraph);
-void CommitChanges(PARGraph* netlist, PARGraph* device);
 void ApplyLocConstraints(Greenpak4Netlist* netlist, PARGraph* ngraph, PARGraph* dgraph);
+bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
 void PostPARDRC(PARGraph* netlist, PARGraph* device);
+void CommitChanges(PARGraph* netlist, PARGraph* device);
+void CommitIOBChanges(Greenpak4NetlistPort* niob, Greenpak4IOB* iob);
+void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut);
 
 int main(int argc, char* argv[])
 {
@@ -259,7 +262,7 @@ void PostPARDRC(PARGraph* /*netlist*/, PARGraph* /*device*/)
 	
 	//TODO: check floating inputs etc
 	
-	//TODO: check 
+	//TODO: check invalid IOB configuration (driving an input-only pin etc)
 }
 
 /**
@@ -559,64 +562,161 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 /**
 	@brief After a successful PAR, copy all of the data from the unplaced to placed nodes
  */
-void CommitChanges(PARGraph* /*netlist*/, PARGraph* /*device*/)
+void CommitChanges(PARGraph* /*netlist*/, PARGraph* device)
 {
 	printf("\nBuilding final post-route netlist...\n");
 	
-	/*
-	//If we get here, everything looks good! Pair the port wth the IOB
-	//TODO: support vectors
-	port->m_iob = iob;
+	//Go over all of the nodes in the graph and configure the nodes themselves
+	//Net routing will come later!
+	for(uint32_t i=0; i<device->GetNumNodes(); i++)
+	{
+		//If no node in the netlist is assigned to us, leave us at default configuration
+		PARGraphNode* node = device->GetNodeByIndex(i);
+		PARGraphNode* mate = node->GetMate();
+		if(mate == NULL)
+			continue;
+		
+		//See what kind of device we are
+		auto bnode = static_cast<Greenpak4BitstreamEntity*>(node->GetData());
+		auto iob = dynamic_cast<Greenpak4IOB*>(bnode);
+		auto lut = dynamic_cast<Greenpak4LUT*>(bnode);
+			
+		//If we're an IOB, configure us
+		if(iob)
+			CommitIOBChanges(static_cast<Greenpak4NetlistPort*>(mate->GetData()), iob);
+		
+		//If we're a LUT, configure us
+		else if(lut)
+			CommitLUTChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), lut);
+		
+		//No idea what it is
+		else
+		{
+			printf("WARNING: Node at config base %d has unrecognized entity type\n", bnode->GetConfigBase());
+		}
+	}
 	
-	//Iterate over attributes and figure out what to do
-	for(auto jt : net->m_attributes)
+	//Done configuring all of the nodes!
+	//Configure routes between them
+	
+}
+
+/**
+	@brief Commit post-PAR results from the netlist to a single IOB
+ */
+void CommitIOBChanges(Greenpak4NetlistPort* niob, Greenpak4IOB* iob)
+{
+	//TODO: support array nets
+	auto net = niob->m_net;
+			
+	//printf("    Configuring IOB %d\n", iob->GetPinNumber());
+
+	//Apply attributes to configure the net
+	for(auto x : net->m_attributes)
 	{
 		//do nothing, only for debugging
-		if(jt.first == "src")
+		if(x.first == "src")
 		{}
 		
-		//already handled elsewhere
-		else if(jt.first == "LOC")
+		//already PAR'd, useless now
+		else if(x.first == "LOC")
 		{}
 		
 		//IO schmitt trigger
-		else if(jt.first == "SCHMITT_TRIGGER")
+		else if(x.first == "SCHMITT_TRIGGER")
 		{
-			if(jt.second == "0")
+			if(x.second == "0")
 				iob->SetSchmittTrigger(false);
 			else
 				iob->SetSchmittTrigger(true);
 		}
 		
-		else if(jt.first == "PULLUP")
+		//Pullup strength/direction
+		else if(x.first == "PULLUP")
 		{
 			iob->SetPullDirection(Greenpak4IOB::PULL_UP);
-			if(jt.second == "10k")
+			if(x.second == "10k")
 				iob->SetPullStrength(Greenpak4IOB::PULL_10K);
-			else if(jt.second == "100k")
+			else if(x.second == "100k")
 				iob->SetPullStrength(Greenpak4IOB::PULL_100K);
-			else if(jt.second == "1M")
+			else if(x.second == "1M")
 				iob->SetPullStrength(Greenpak4IOB::PULL_1M);
 		}
 		
-		else if(jt.first == "PULLDOWN")
+		//Pulldown strength/direction
+		else if(x.first == "PULLDOWN")
 		{
 			iob->SetPullDirection(Greenpak4IOB::PULL_DOWN);
-			if(jt.second == "10k")
+			if(x.second == "10k")
 				iob->SetPullStrength(Greenpak4IOB::PULL_10K);
-			else if(jt.second == "100k")
+			else if(x.second == "100k")
 				iob->SetPullStrength(Greenpak4IOB::PULL_100K);
-			else if(jt.second == "1M")
+			else if(x.second == "1M")
 				iob->SetPullStrength(Greenpak4IOB::PULL_1M);
 		}
-
+		
+		//TODO: 
+		
 		else
 		{
 			printf("WARNING: Top-level port \"%s\" has unrecognized attribute %s, ignoring\n",
-				it->first.c_str(), jt.first.c_str());
+				niob->m_name.c_str(), x.first.c_str());
+		}
+		
+		//printf("        %s = %s\n", x.first.c_str(), x.second.c_str());
+	}
+	
+	//Configure output enable
+	switch(niob->m_direction)
+	{
+		case Greenpak4NetlistPort::DIR_OUTPUT:
+			iob->SetOutputEnable(true);
+			break;
+			
+		case Greenpak4NetlistPort::DIR_INPUT:
+			iob->SetOutputEnable(false);
+			break;
+			
+		case Greenpak4NetlistPort::DIR_INOUT:
+		default:
+			printf("ERROR: Requested invalid output configuration (or inout, which isn't implemented)\n");
+			break;
+	}
+}
+
+/**
+	@brief Commit post-PAR results from the netlist to a single LUT
+ */
+void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut)
+{
+	//printf("    Configuring LUT %s\n", ncell->m_name.c_str() );
+	
+	for(auto x : ncell->m_parameters)
+	{
+		//LUT initialization value, as decimal
+		if(x.first == "INIT")
+		{
+			//convert to bit array format for the bitstream library
+			uint32_t truth_table = atoi(x.second.c_str());
+			unsigned int nbits = 1 << lut->GetOrder();
+			for(unsigned int i=0; i<nbits; i++)
+			{
+				bool a3 = (i & 8) ? true : false;
+				bool a2 = (i & 4) ? true : false;
+				bool a1 = (i & 2) ? true : false;
+				bool a0 = (i & 1) ? true : false;
+				bool nbit = (truth_table & (1 << i)) ? true : false;
+				//printf("        inputs %d %d %d %d: %d\n", a3, a2, a1, a0, nbit);
+				lut->SetBit(nbit, a0, a1, a2, a3);
+			}
+		}
+		
+		else
+		{
+			printf("WARNING: Cell\"%s\" has unrecognized parameter %s, ignoring\n",
+				ncell->m_name.c_str(), x.first.c_str());
 		}
 	}
-	*/
 }
 
 void ShowUsage()

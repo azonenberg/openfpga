@@ -42,9 +42,13 @@ class Greenpak4NetlistNode
 public:
 
 	Greenpak4NetlistNode()
+	: m_net(NULL)
 	{}
 
 	std::string m_name;
+	
+	//The net we're part of
+	Greenpak4NetlistNet* m_net;
 	
 	//List of internal points we link to (only valid after indexing)
 	std::vector<Greenpak4NetlistNodePoint> m_nodeports;
@@ -71,6 +75,8 @@ public:
 	Greenpak4NetlistModule* m_module;
 	
 	std::string m_name;
+	
+	Greenpak4NetlistNet* m_net;
 	
 	std::vector<Greenpak4NetlistNode*> m_nodes;
 	

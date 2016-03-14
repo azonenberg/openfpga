@@ -95,6 +95,10 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 			}
 		}
 	}
+	
+	//Assign port nets
+	for(auto it : m_ports)
+		it.second->m_net = m_nets[it.first];
 }
 
 Greenpak4NetlistModule::~Greenpak4NetlistModule()
@@ -245,9 +249,21 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 				}
 				
 				//Name the net (TODO support arrays with []'s or something)
+				//How to handle multiple names for the same net??
 				Greenpak4NetlistNode* node = GetNode(json_object_get_int(jnode));
+				if(node->m_net != NULL)
+				{
+					//printf("WARNING: replacing node %s net %s with net %s\n",
+					//	node->m_name.c_str(), node->m_net->m_name.c_str(), net->m_name.c_str());
+				}
+				
+				//Don't insert net if it's already in the list from before?
+				else
+					net->m_nodes.push_back(node);
+			
+				//Set up name etc
 				node->m_name = name;
-				net->m_nodes.push_back(node);
+				node->m_net = net;
 			}
 		}
 		
@@ -290,6 +306,8 @@ void Greenpak4NetlistModule::LoadNetAttributes(Greenpak4NetlistNet* net, json_ob
 			fprintf(stderr, "ERROR: Attempted redeclaration of net attribute \"%s\"\n", cname.c_str());
 			exit(-1);
 		}
+		
+		//printf("    net %s attribute %s = %s\n", net->m_name.c_str(), cname.c_str(), json_object_get_string(child));
 		
 		//Save the attribute
 		net->m_attributes[cname] = json_object_get_string(child);
