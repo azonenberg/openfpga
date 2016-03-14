@@ -581,11 +581,9 @@ void CommitChanges(PARGraph* /*netlist*/, PARGraph* device)
 		auto iob = dynamic_cast<Greenpak4IOB*>(bnode);
 		auto lut = dynamic_cast<Greenpak4LUT*>(bnode);
 			
-		//If we're an IOB, configure us
+		//Configure nodes of known type
 		if(iob)
-			CommitIOBChanges(static_cast<Greenpak4NetlistPort*>(mate->GetData()), iob);
-		
-		//If we're a LUT, configure us
+			CommitIOBChanges(static_cast<Greenpak4NetlistPort*>(mate->GetData()), iob);		
 		else if(lut)
 			CommitLUTChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), lut);
 		
@@ -598,7 +596,53 @@ void CommitChanges(PARGraph* /*netlist*/, PARGraph* device)
 	
 	//Done configuring all of the nodes!
 	//Configure routes between them
-	
+	for(uint32_t i=0; i<device->GetNumNodes(); i++)
+	{
+		//If no node in the netlist is assigned to us, nothing to do
+		PARGraphNode* node = device->GetNodeByIndex(i);
+		PARGraphNode* netnode = node->GetMate();
+		if(netnode == NULL)
+			continue;
+			
+		//Commit changes to all edges.
+		//Iterate over the NETLIST graph, not the DEVICE graph, but then transfer to the device graph
+		for(uint32_t i=0; i<netnode->GetEdgeCount(); i++)
+		{
+			auto edge = netnode->GetEdgeByIndex(i);
+			auto src = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
+			auto dst = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
+			auto iob = dynamic_cast<Greenpak4IOB*>(dst);
+			auto lut = dynamic_cast<Greenpak4LUT*>(dst);
+			
+			//TODO: Cross connections
+			if(src->GetMatrix() != dst->GetMatrix())
+			{
+				printf("WARNING: Ignoring cross-matrix connection (not yet implemented)\n");
+				continue;
+			}
+			
+			//Destination is an IOB - configure the signal (TODO: output enable for tristates)
+			if(iob)
+				iob->SetOutputSignal(src);
+				
+			//Destination is a LUT - multiple ports, figure out which one
+			else if(lut)
+			{
+				unsigned int nport;
+				if(1 != sscanf(edge->m_destport.c_str(), "IN%u", &nport))
+				{
+					printf("WARNING: Ignoring connection to unknown LUT input %s\n", edge->m_destport.c_str());
+					continue;
+				}
+				
+				lut->SetInputSignal(nport, src);
+			}
+
+			//Don't know what to do
+			else
+				printf("WARNING: Node at config base %d has unrecognized entity type\n", dst->GetConfigBase());
+		}
+	}
 }
 
 /**
