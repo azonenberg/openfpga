@@ -27,6 +27,13 @@ class Greenpak4Netlist;
 class Greenpak4NetlistPort;
 class Greenpak4NetlistNode;
 
+//only for RTTI support
+class Greenpak4NetlistEntity
+{
+public:
+	virtual ~Greenpak4NetlistEntity();
+};
+
 //A single named net in the netlist (may be one or multiple bits)
 class Greenpak4NetlistNet
 {
@@ -43,7 +50,7 @@ public:
 };
 
 //A single primitive cell in the netlist
-class Greenpak4NetlistCell
+class Greenpak4NetlistCell : public Greenpak4NetlistEntity
 {
 public:
 	Greenpak4NetlistCell()
@@ -105,7 +112,7 @@ public:
 	
 	Greenpak4NetlistPort* GetPort(std::string name)
 	{ return m_ports[name]; }
-	
+		
 protected:
 	Greenpak4Netlist* m_parent;
 	

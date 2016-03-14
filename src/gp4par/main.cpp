@@ -279,7 +279,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 	dgraph->AllocateLabel();
 	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
 	{
-		Greenpak4IOB* iob =it->second;
+		Greenpak4IOB* iob = it->second;
 		PARGraphNode* inode = new PARGraphNode(iob_label, iob);
 		iob->SetPARNode(inode);
 		dgraph->AddNode(inode);
@@ -362,10 +362,10 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		//Must always allocate from both graphs at the same time (TODO: paired allocation somehow?)
 		uint32_t label = ngraph->AllocateLabel();
 		dgraph->AllocateLabel();
-		
+				
 		//Create the node
-		//TODO: Support buses here (for now, assume the first one)
-		PARGraphNode* netnode = new PARGraphNode(label, net->m_nodes[0]);
+		//TODO: Support buses here (for now, point to the entire port)
+		PARGraphNode* netnode = new PARGraphNode(label, port);
 		port->m_parnode = netnode;
 		ngraph->AddNode(netnode);
 		
@@ -479,6 +479,8 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 			printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 		}
 		
+		printf("        and drives\n");
+		
 		//DRC fail if undriven net
 		if(source == NULL)
 		{
@@ -493,16 +495,65 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		for(auto p : node->m_ports)
 		{
 			if(p->m_parnode != source)
+			{
 				source->AddEdge(p->m_parnode);
+				Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
+				printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+			}
 		}
 		for(auto c : node->m_nodeports)
 		{
 			if(c.m_cell->m_parnode != source)
-				source->AddEdge(c.m_cell->m_parnode);
+			{
+				source->AddEdge(c.m_cell->m_parnode, c.m_portname);
+				printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+			}
 		}
 	}
 	
 	//Create edges in the device. This is easy as we know a priori what connections are legal
+	//TODO: do more hard IP
+	
+	//Make a list of all nodes in each half of the device connected to general fabric routing
+	std::vector<PARGraphNode*> device_nodes;
+	for(unsigned int i=0; i<device->GetLUT2Count(); i++)
+		device_nodes.push_back(device->GetLUT2(i)->GetPARNode());
+	for(unsigned int i=0; i<device->GetLUT3Count(); i++)
+		device_nodes.push_back(device->GetLUT3(i)->GetPARNode());
+	//TODO: LUT4s
+	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
+		device_nodes.push_back(it->second->GetPARNode());
+	//TODO: hard IP
+	
+	//Add the O(n^2) edges between the main fabric nodes
+	for(auto x : device_nodes)
+	{
+		for(auto y : device_nodes)
+		{
+			if(x != y)
+			{
+				//If the destination is a LUT, add paths to every input
+				auto entity = static_cast<Greenpak4BitstreamEntity*>(y->GetData());
+				auto lut = dynamic_cast<Greenpak4LUT*>(entity);
+				if(lut)
+				{
+					x->AddEdge(y, "IN0");
+					x->AddEdge(y, "IN1");
+					if(lut->GetOrder() > 2)
+						x->AddEdge(y, "IN2");
+					if(lut->GetOrder() > 3)
+						x->AddEdge(y, "IN3");
+				}
+				
+				//no, just add path to the node in general
+				else
+					x->AddEdge(y);
+			}
+		}
+	}
+	
+	//TODO: add dedicated routing between hard IP etc
+	
 }
 
 /**

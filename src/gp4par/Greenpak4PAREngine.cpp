@@ -17,7 +17,10 @@
  **********************************************************************************************************************/
  
 #include "../xbpar/xbpar.h"
+#include "../greenpak4/Greenpak4.h"
 #include "Greenpak4PAREngine.h"
+
+using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
@@ -34,4 +37,50 @@ Greenpak4PAREngine::~Greenpak4PAREngine()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: cost functions etc
+// Print logic
+
+void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
+{
+	printf("\nUnroutable nets (%zu):\n", unroutes.size());
+	for(auto edge : unroutes)
+	{
+		auto source = static_cast<Greenpak4NetlistEntity*>(edge->m_sourcenode->GetData());
+		auto sport = dynamic_cast<Greenpak4NetlistPort*>(source);
+		auto scell = dynamic_cast<Greenpak4NetlistCell*>(source);
+		auto dest = static_cast<Greenpak4NetlistEntity*>(edge->m_destnode->GetData());
+		auto dport = dynamic_cast<Greenpak4NetlistPort*>(dest);
+		auto dcell = dynamic_cast<Greenpak4NetlistCell*>(dest);
+		
+		if(scell != NULL)
+			printf("    from cell %s ", scell->m_name.c_str());
+		else if(sport != NULL)
+		{		
+			auto iob = static_cast<Greenpak4IOB*>(edge->m_sourcenode->GetMate()->GetData());
+			printf("    from port %s (mapped to IOB_%d)", sport->m_name.c_str(), iob->GetPinNumber());
+		}
+		else
+			printf("    from [invalid] ");
+		
+		printf(" to ");
+		if(dcell != NULL)
+		{
+			printf("cell %s (mapped to ", dcell->m_name.c_str());
+			
+			//Figure out what we got mapped to
+			auto entity = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
+			auto lut = dynamic_cast<Greenpak4LUT*>(entity);
+			if(lut != NULL)
+				printf("LUT%u_%u", lut->GetOrder(), lut->GetLutIndex());
+			else
+				printf("unknown site");
+			
+			printf(") pin %s\n", edge->m_destport.c_str());
+		}
+		else if(dport != NULL)
+			printf("port %s\n", dport->m_name.c_str());
+		else
+			printf("[invalid]\n");
+	}
+	
+	printf("\n");
+}

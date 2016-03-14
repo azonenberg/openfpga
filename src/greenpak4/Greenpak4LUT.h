@@ -29,6 +29,7 @@ public:
 	//Construction / destruction
 	Greenpak4LUT(
 		Greenpak4Device* device,
+		unsigned int lutnum,
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword,
@@ -58,7 +59,16 @@ public:
 	virtual void SetInputSignal(unsigned int n, Greenpak4BitstreamEntity* sig);
 	virtual Greenpak4BitstreamEntity* GetInputSignal(unsigned int n);
 	
+	unsigned int GetOrder()
+	{ return m_order; }
+	
+	unsigned int GetLutIndex()
+	{ return m_lutnum; }
+	
 protected:
+
+	///Index of our LUT
+	unsigned int m_lutnum;
 
 	///Number of inputs to the LUT
 	unsigned int m_order;

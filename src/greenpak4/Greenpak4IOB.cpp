@@ -23,12 +23,14 @@
 
 Greenpak4IOB::Greenpak4IOB(
 	Greenpak4Device* device,
+	unsigned int pin_num,
 	unsigned int matrix,
 	unsigned int ibase,
 	unsigned int oword,
 	unsigned int cbase,
 	unsigned int flags)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
+	, m_pinNumber(pin_num)
 	, m_schmittTrigger(false)
 	, m_pullStrength(PULL_10K)
 	, m_pullDirection(PULL_NONE)

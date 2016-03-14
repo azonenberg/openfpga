@@ -23,12 +23,13 @@
 
 Greenpak4IOBTypeA::Greenpak4IOBTypeA(
 	Greenpak4Device* device,
+	unsigned int pin_num,
 	unsigned int matrix,
 	unsigned int ibase,
 	unsigned int oword,
 	unsigned int cbase,
 	unsigned int flags)
-	: Greenpak4IOB(device, matrix, ibase, oword, cbase, flags)
+	: Greenpak4IOB(device, pin_num, matrix, ibase, oword, cbase, flags)
 {
 	
 }

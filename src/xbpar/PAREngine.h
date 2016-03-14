@@ -36,11 +36,13 @@ public:
 	
 protected:
 
+	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
+
 	//TODO: enumerate unroutable nets for debugging
 
 	virtual uint32_t ComputeCongestionCost();
 	virtual uint32_t ComputeTimingCost();
-	virtual uint32_t ComputeUnroutableCost();
+	virtual uint32_t ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes);
 
 	virtual bool SanityCheck(bool verbose);
 	virtual void InitialPlacement(bool verbose);

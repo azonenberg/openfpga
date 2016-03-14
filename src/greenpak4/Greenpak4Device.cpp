@@ -76,6 +76,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	{
 		m_lut2s.push_back(new Greenpak4LUT(
 			this,
+			i,
 			0,			//First half of LUT2s are attached to crossbar #0
 			i*2,		//LUT2 base is row 0, then 2 inputs per LUT
 			i+1,		//First mux entry is ground, then the LUT2s
@@ -86,6 +87,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	{
 		m_lut2s.push_back(new Greenpak4LUT(
 			this,
+			i+4,
 			1,			//Second half are attached to crossbar #1
 			i*2,		//LUT2 base is row 0, then 2 inputs per LUT
 			i+1,		//First mux entry is ground, then the LUT2s
@@ -98,6 +100,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	{
 		m_lut3s.push_back(new Greenpak4LUT(
 			this,
+			i,
 			0,			//First half of LUT3s are attached to crossbar #0
 			i*3 + 8,	//LUT3 base is row 8, then 3 inputs per LUT
 			i+5,		//we come after the last LUT2
@@ -108,6 +111,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	{
 		m_lut3s.push_back(new Greenpak4LUT(
 			this,
+			i+8,
 			1,			//Second half are attached to crossbar #1
 			i*3 + 8,	//LUT3 base is row 8, then 3 inputs per LUT
 			i+5,		//we come after the last LUT2
@@ -126,26 +130,26 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		m_luts.push_back(x);
 	
 	//Create the Type-A IOBs (with output enable)
-	m_iobs[2] =  new Greenpak4IOBTypeA(this, 0, -1, 24, 941, Greenpak4IOB::IOB_FLAG_INPUTONLY);
-	m_iobs[3] =  new Greenpak4IOBTypeA(this, 0, 56, 25, 946);
-	m_iobs[5] =  new Greenpak4IOBTypeA(this, 0, 59, 27, 960);		
-	m_iobs[7] =  new Greenpak4IOBTypeA(this, 0, 62, 29, 974);
-	m_iobs[9] =  new Greenpak4IOBTypeA(this, 0, 65, 31, 988);
-	m_iobs[10] = new Greenpak4IOBTypeA(this, 0, 67, 32, 995, Greenpak4IOB::IOB_FLAG_X4DRIVE);
-	m_iobs[13] = new Greenpak4IOBTypeA(this, 1, 57, 25, 1919);
-	m_iobs[14] = new Greenpak4IOBTypeA(this, 1, 59, 26, 1926);
-	m_iobs[16] = new Greenpak4IOBTypeA(this, 1, 62, 28, 1940);
-	m_iobs[18] = new Greenpak4IOBTypeA(this, 1, 65, 30, 1954);
-	m_iobs[19] = new Greenpak4IOBTypeA(this, 1, 67, 31, 1961);
+	m_iobs[2] =  new Greenpak4IOBTypeA(this, 2,  0, -1, 24, 941, Greenpak4IOB::IOB_FLAG_INPUTONLY);
+	m_iobs[3] =  new Greenpak4IOBTypeA(this, 3,  0, 56, 25, 946);
+	m_iobs[5] =  new Greenpak4IOBTypeA(this, 5,  0, 59, 27, 960);		
+	m_iobs[7] =  new Greenpak4IOBTypeA(this, 7,  0, 62, 29, 974);
+	m_iobs[9] =  new Greenpak4IOBTypeA(this, 9,  0, 65, 31, 988);
+	m_iobs[10] = new Greenpak4IOBTypeA(this, 10, 0, 67, 32, 995, Greenpak4IOB::IOB_FLAG_X4DRIVE);
+	m_iobs[13] = new Greenpak4IOBTypeA(this, 13, 1, 57, 25, 1919);
+	m_iobs[14] = new Greenpak4IOBTypeA(this, 14, 1, 59, 26, 1926);
+	m_iobs[16] = new Greenpak4IOBTypeA(this, 16, 1, 62, 28, 1940);
+	m_iobs[18] = new Greenpak4IOBTypeA(this, 18, 1, 65, 30, 1954);
+	m_iobs[19] = new Greenpak4IOBTypeA(this, 19, 1, 67, 31, 1961);
 	
 	//Create the Type-B IOBs (no output enable)
-	m_iobs[4]  = new Greenpak4IOBTypeB(this, 0, 58, 26, 953);
-	m_iobs[6]  = new Greenpak4IOBTypeB(this, 0, 61, 28, 967);
-	m_iobs[8]  = new Greenpak4IOBTypeB(this, 0, 64, 30, 981);
-	m_iobs[12] = new Greenpak4IOBTypeB(this, 1, 56, 24, 1911, Greenpak4IOB::IOB_FLAG_X4DRIVE);	
-	m_iobs[15] = new Greenpak4IOBTypeB(this, 1, 61, 27, 1933);
-	m_iobs[17] = new Greenpak4IOBTypeB(this, 1, 64, 29, 1947);
-	m_iobs[20] = new Greenpak4IOBTypeB(this, 1, 69, 32, 1968);
+	m_iobs[4]  = new Greenpak4IOBTypeB(this,  4, 0, 58, 26, 953);
+	m_iobs[6]  = new Greenpak4IOBTypeB(this,  6, 0, 61, 28, 967);
+	m_iobs[8]  = new Greenpak4IOBTypeB(this,  8, 0, 64, 30, 981);
+	m_iobs[12] = new Greenpak4IOBTypeB(this, 12, 1, 56, 24, 1911, Greenpak4IOB::IOB_FLAG_X4DRIVE);	
+	m_iobs[15] = new Greenpak4IOBTypeB(this, 15, 1, 61, 27, 1933);
+	m_iobs[17] = new Greenpak4IOBTypeB(this, 17, 1, 64, 29, 1947);
+	m_iobs[20] = new Greenpak4IOBTypeB(this, 20, 1, 69, 32, 1968);
 	
 	//TODO: DFF/latches
 	

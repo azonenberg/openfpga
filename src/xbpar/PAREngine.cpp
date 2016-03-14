@@ -54,13 +54,15 @@ bool PAREngine::PlaceAndRoute(bool verbose)
 		
 	//Converge until we get a passing placement
 	uint32_t iteration = 0;
+	std::vector<PARGraphEdge*> unroutes;
 	while(true)
 	{
+		unroutes.clear();
 		printf(
 			"\nOptimizing placement (iteration %d)\n"
 			"    unroutability cost %d, congestion cost %d, timing cost %d (total %d)\n",
 			iteration,
-			ComputeUnroutableCost(),
+			ComputeUnroutableCost(unroutes),
 			ComputeCongestionCost(),
 			ComputeTimingCost(),
 			ComputeCost()
@@ -71,9 +73,20 @@ bool PAREngine::PlaceAndRoute(bool verbose)
 			break;
 	}
 	
-	//
+	//Check for any remaining unroutable nets
+	unroutes.clear();
+	if(0 != ComputeUnroutableCost(unroutes))
+	{
+		printf("ERROR: Some nets could not be completely routed!\n");
+		PrintUnroutes(unroutes);
+		return false;
+	}
 		
 	return true;
+}
+
+void PAREngine::PrintUnroutes(std::vector<PARGraphEdge*>& /*unroutes*/)
+{
 }
 
 /**
@@ -131,6 +144,9 @@ void PAREngine::InitialPlacement(bool verbose)
 		printf("Global placement of %d instances into %d sites...\n",
 			m_netlist->GetNumNodes(),
 			m_device->GetNumNodes());
+		printf("    %d nets, %d routing channels available\n",
+			m_netlist->GetNumEdges(),
+			m_device->GetNumEdges());
 	}
 	
 	//Cache the indexes
@@ -170,13 +186,17 @@ bool PAREngine::OptimizePlacement(bool verbose)
  */
 uint32_t PAREngine::ComputeCost()
 {
-	return ComputeUnroutableCost() + ComputeTimingCost() + ComputeCongestionCost();
+	std::vector<PARGraphEdge*> unroutes;
+	return
+		ComputeUnroutableCost(unroutes) +
+		ComputeTimingCost() +
+		ComputeCongestionCost();
 }
 
 /**
 	@brief Compute the unroutability cost (measure of how many requested routes do not exist)
  */
-uint32_t PAREngine::ComputeUnroutableCost()
+uint32_t PAREngine::ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes)
 {
 	uint32_t cost = 0;
 	
@@ -187,7 +207,8 @@ uint32_t PAREngine::ComputeUnroutableCost()
 		PARGraphNode* netsrc = m_netlist->GetNodeByIndex(i);
 		for(uint32_t j=0; j<netsrc->GetEdgeCount(); j++)
 		{
-			PARGraphNode* netdst = netsrc->GetEdgeByIndex(j);
+			PARGraphEdge* nedge = netsrc->GetEdgeByIndex(j);
+			PARGraphNode* netdst = nedge->m_destnode;
 			
 			//For now, just bruteforce to find a matching edge (if there is one)
 			bool found = false;
@@ -195,14 +216,24 @@ uint32_t PAREngine::ComputeUnroutableCost()
 			PARGraphNode* devdst = netdst->GetMate();
 			for(uint32_t k=0; k<devsrc->GetEdgeCount(); k++)
 			{
-				if(devsrc->GetEdgeByIndex(k) == devdst)
+				PARGraphEdge* dedge = devsrc->GetEdgeByIndex(k);
+				if(
+					(dedge->m_destnode == devdst) &&
+					(dedge->m_destport == nedge->m_destport)
+					)
 				{
+					
 					found = true;
 					break;
 				}
 			}
+			
+			//If nothing found, add to list
 			if(!found)
+			{
+				unroutes.push_back(nedge);
 				cost ++;
+			}
 		}
 	}
 	

@@ -29,6 +29,7 @@ public:
 	//Construction / destruction
 	Greenpak4IOB(
 		Greenpak4Device* device,
+		unsigned int pin_num,
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword,
@@ -136,10 +137,16 @@ public:
 	bool IsInputOnly()
 	{ return (m_flags & IOB_FLAG_INPUTONLY) ? true : false; }
 	
+	unsigned int GetPinNumber()
+	{ return m_pinNumber; }
+	
 protected:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Abstracted version of format-dependent bitstream state
+	
+	///Pin number in the packaged device
+	unsigned int m_pinNumber;
 	
 	///Set true to enable Schmitt triggering on the input
 	bool m_schmittTrigger;

@@ -29,6 +29,7 @@ public:
 	virtual ~Greenpak4PAREngine();
 	
 protected:
+	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
 };
 
 #endif

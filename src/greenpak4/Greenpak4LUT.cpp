@@ -23,12 +23,14 @@
 
 Greenpak4LUT::Greenpak4LUT(
 	Greenpak4Device* device,
+	unsigned int lutnum,
 	unsigned int matrix,
 	unsigned int ibase,
 	unsigned int oword,
 	unsigned int cbase,
 	unsigned int order)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
+	, m_lutnum(lutnum)
 	, m_order(order)
 {
 	for(unsigned int i=0; i<16; i++)

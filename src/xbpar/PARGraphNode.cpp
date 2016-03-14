@@ -30,7 +30,9 @@ PARGraphNode::PARGraphNode(uint32_t label, void* pData)
 
 PARGraphNode::~PARGraphNode()
 {
-	
+	for(auto x : m_edges)
+		delete x;
+	m_edges.clear();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -59,7 +61,7 @@ uint32_t PARGraphNode::GetEdgeCount()
 	return m_edges.size();
 }
 
-PARGraphNode* PARGraphNode::GetEdgeByIndex(uint32_t index)
+PARGraphEdge* PARGraphNode::GetEdgeByIndex(uint32_t index)
 {
 	return m_edges[index];
 }

@@ -63,6 +63,16 @@ PARGraphNode* PARGraph::GetNodeByIndex(uint32_t index)
 	return m_nodes[index];
 }
 
+uint32_t PARGraph::GetNumEdges()
+{
+	uint32_t netcount = 0;
+	
+	for(auto x : m_nodes)
+		netcount += x->GetEdgeCount();
+	
+	return netcount;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Insertion
 

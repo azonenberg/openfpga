@@ -20,6 +20,30 @@
 #define PARGraphNode_h
 
 #include <vector>
+#include <string>
+
+class PARGraphEdge
+{
+public:
+	
+	PARGraphEdge(PARGraphNode* source, PARGraphNode* dest, std::string port)
+		: m_sourcenode(source)
+		, m_destnode(dest)
+		, m_destport(port)
+	{
+	}
+
+	//the source node
+	PARGraphNode* m_sourcenode;
+	
+	//todo: port name for source
+
+	//the destination node
+	PARGraphNode* m_destnode;
+	
+	//port name (if multiple ports in target)
+	std::string m_destport;
+};
 
 /**
 	@brief A single node in a place-and-route graph
@@ -44,10 +68,13 @@ public:
 	{ return m_mate; }
 
 	uint32_t GetEdgeCount();
-	PARGraphNode* GetEdgeByIndex(uint32_t index);
+	PARGraphEdge* GetEdgeByIndex(uint32_t index);
 
-	void AddEdge(PARGraphNode* sink)
-	{ m_edges.push_back(sink); }
+	void AddEdge(PARGraphNode* sink, std::string port = "")
+	{ m_edges.push_back(new PARGraphEdge(this, sink, port)); }
+
+	void* GetData()
+	{ return m_pData; }
 
 protected:
 	
@@ -76,7 +103,7 @@ protected:
 	/**
 		@brief List of all outbound edges from this node (TODO have more metadata on them?)
 	 */
-	std::vector<PARGraphNode*> m_edges;
+	std::vector<PARGraphEdge*> m_edges;
 };
 
 #endif

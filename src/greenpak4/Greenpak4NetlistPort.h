@@ -54,7 +54,7 @@ public:
 };
 
 //A module port (may contain one or more nodes)
-class Greenpak4NetlistPort
+class Greenpak4NetlistPort : public Greenpak4NetlistEntity
 {
 public:
 	Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::string name, json_object* object);

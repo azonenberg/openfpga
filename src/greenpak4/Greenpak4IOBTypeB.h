@@ -29,6 +29,7 @@ public:
 	//Construction / destruction
 	Greenpak4IOBTypeB(
 		Greenpak4Device* device,
+		unsigned int pin_num,
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword,
