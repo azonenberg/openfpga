@@ -51,7 +51,7 @@ public:
 	virtual unsigned int GetConfigLen() =0;
 	
 	/**
-		@brief Returns the index of the routing matrix we're attached to
+		@brief Returns the index of the routing matrix our OUTPUT is attached to
 	 */
 	unsigned int GetMatrix()
 	{ return m_matrix; }
@@ -75,8 +75,14 @@ protected:
 
 	/**
 		@brief Writes a matrix select value to the bitstream
+		
+		Set cross_matrix for cross connections only
 	 */
-	bool WriteMatrixSelector(bool* bitstream, unsigned int wordpos, Greenpak4BitstreamEntity* signal);
+	bool WriteMatrixSelector(
+		bool* bitstream,
+		unsigned int wordpos,
+		Greenpak4BitstreamEntity* signal,
+		bool cross_matrix = false);
 
 	///The device we're attached to
 	Greenpak4Device* m_device;

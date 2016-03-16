@@ -206,6 +206,9 @@ int main(int argc, char* argv[])
 	//TODO: Static timing analysis
 	printf("\nStatic timing analysis: not yet implemented\n");
 	
+	//TODO: Device utilization report
+	printf("\nDevice utilization report: not yet implemented\n");
+	
 	return 0;
 }
 

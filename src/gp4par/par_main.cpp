@@ -43,7 +43,7 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 	PostPARDRC(ngraph, dgraph);
 	
 	//Copy the netlist over, then clean up
-	CommitChanges(ngraph, dgraph);
+	CommitChanges(ngraph, dgraph, device);
 	delete ngraph;
 	delete dgraph;
 	return true;
@@ -275,7 +275,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 			//TODO: Get the graph node for this port
 			//For now, the entire cell has a single node as its output
 			source = c.m_cell->m_parnode;
-			printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+			//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 		}
 		
 		//printf("        and drives\n");
@@ -358,7 +358,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 /**
 	@brief After a successful PAR, copy all of the data from the unplaced to placed nodes
  */
-void CommitChanges(PARGraph* /*netlist*/, PARGraph* device)
+void CommitChanges(PARGraph* /*netlist*/, PARGraph* device, Greenpak4Device* pdev)
 {
 	printf("\nBuilding final post-route netlist...\n");
 	
@@ -392,7 +392,7 @@ void CommitChanges(PARGraph* /*netlist*/, PARGraph* device)
 	
 	//Done configuring all of the nodes!
 	//Configure routes between them
-	CommitRouting(device);
+	CommitRouting(device, pdev);
 }
 
 /**
@@ -516,8 +516,10 @@ void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut)
 /**
 	@brief Commit post-PAR results from the netlist to the routing matrix
  */
-void CommitRouting(PARGraph* device)
+void CommitRouting(PARGraph* device, Greenpak4Device* pdev)
 {
+	unsigned int xcindex[2] = {0};
+	
 	for(uint32_t i=0; i<device->GetNumNodes(); i++)
 	{
 		//If no node in the netlist is assigned to us, nothing to do
@@ -536,11 +538,28 @@ void CommitRouting(PARGraph* device)
 			auto iob = dynamic_cast<Greenpak4IOB*>(dst);
 			auto lut = dynamic_cast<Greenpak4LUT*>(dst);
 			
-			//TODO: Cross connections
-			if(src->GetMatrix() != dst->GetMatrix())
+			//Cross connections
+			unsigned int srcmatrix = src->GetMatrix();
+			if(srcmatrix != dst->GetMatrix())
 			{
-				printf("WARNING: Ignoring cross-matrix connection (not yet implemented)\n");
-				continue;
+				//We need to jump from one matrix to another!
+				//Make sure we have a free cross-connection to use
+				if(xcindex[srcmatrix] >= 10)
+				{
+					printf(
+						"ERROR: More than 100%% of device resources are used "
+						"(cross connections from matrix %d to %d)\n",
+							src->GetMatrix(),
+							dst->GetMatrix());
+				}
+				
+				//Save our cross-connection and mark it as used
+				auto xconn = pdev->GetCrossConnection(srcmatrix, xcindex[srcmatrix]);
+				xcindex[srcmatrix] ++;
+				
+				//Insert the cross-connection into the path
+				xconn->SetInput(src);
+				src = xconn;
 			}
 			
 			//Destination is an IOB - configure the signal (TODO: output enable for tristates)

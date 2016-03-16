@@ -36,6 +36,7 @@ public:
 	
 protected:
 
+	virtual void ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration);
 	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
 
 	//TODO: enumerate unroutable nets for debugging

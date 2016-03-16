@@ -49,20 +49,38 @@ Greenpak4BitstreamEntity::~Greenpak4BitstreamEntity()
 bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	bool* bitstream,
 	unsigned int wordpos,
-	Greenpak4BitstreamEntity* signal)
+	Greenpak4BitstreamEntity* signal,
+	bool cross_matrix)
 {
 	//SANITY CHECK - must be attached to the same matrix
-	if(m_matrix != signal->GetMatrix())
+	//cross connections use opposite, though
+	if(cross_matrix)
 	{
-		fprintf(stderr, "DRC fail: tried to write signal from opposite matrix without using a cross connection\n");
-		return false;
+		if(m_matrix == signal->GetMatrix())
+		{
+			fprintf(stderr, "DRC fail: tried to write signal from same matrix through a cross connection\n");
+			return false;
+		}
+	}
+	else
+	{
+		if(m_matrix != signal->GetMatrix())
+		{
+			fprintf(stderr, "DRC fail: tried to write signal from opposite matrix without using a cross connection\n");
+			return false;
+		}
 	}
 	
 	//Good to go, write it
 	unsigned int sel = signal->GetOutputBase();
 	
+	//Calculate right matrix for cross connections etc
+	unsigned int matrix = m_matrix;
+	if(cross_matrix)
+		matrix = 1 - matrix;
+	
 	unsigned int nbits = m_device->GetMatrixBits();
-	unsigned int startbit = m_device->GetMatrixBase(m_matrix) + wordpos * nbits;
+	unsigned int startbit = m_device->GetMatrixBase(matrix) + wordpos * nbits;
 	
 	//Need to flip bit ordering since lowest array index is the MSB
 	for(unsigned int i=0; i<nbits; i++)

@@ -185,6 +185,23 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: IO pad precharge? what does this involve?
 	
+	//Create cross connections
+	for(unsigned int matrix=0; matrix<2; matrix++)
+	{
+		for(unsigned int i=0; i<10; i++)
+		{
+			auto cc = new Greenpak4CrossConnection(
+				this,
+				1 - matrix,	//invert, since matrix is OUTPUT location
+				85 + i,		//ibase
+				52 + i,		//oword
+				0			//cbase is invalid, we have no configuration at all
+				);
+			cc->SetInput(m_constantZero[matrix]);
+			m_crossConnections[matrix][i] = cc;
+		}
+	}
+	
 	//Finally, put everything in bitstuff so we can walk the whole bitstream and not care about details
 	for(auto x : m_luts)
 		m_bitstuff.push_back(x);
@@ -195,6 +212,9 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		m_bitstuff.push_back(m_constantZero[i]);
 		m_bitstuff.push_back(m_constantOne[i]);
 	}
+	for(unsigned int matrix=0; matrix<2; matrix++)
+		for(unsigned int i=0; i<10; i++)
+			m_bitstuff.push_back(m_crossConnections[matrix][i]);
 	
 	//Total length of our bitstream
 	m_bitlen = 2048;

@@ -40,9 +40,9 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
 void PostPARDRC(PARGraph* netlist, PARGraph* device);
 
 //Committing
-void CommitChanges(PARGraph* netlist, PARGraph* device);
+void CommitChanges(PARGraph* netlist, PARGraph* device, Greenpak4Device* pdev);
 void CommitIOBChanges(Greenpak4NetlistPort* niob, Greenpak4IOB* iob);
 void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut);
-void CommitRouting(PARGraph* device);
+void CommitRouting(PARGraph* device, Greenpak4Device* pdev);
 
 #endif

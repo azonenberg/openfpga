@@ -74,6 +74,9 @@ public:
 	
 	unsigned int GetMatrixBase(unsigned int matrix);
 	
+	Greenpak4CrossConnection* GetCrossConnection(unsigned int src_matrix, unsigned int index)
+	{ return m_crossConnections[src_matrix][index]; }
+
 protected:
 
 	void CreateDevice_SLG46620();
@@ -111,6 +114,13 @@ protected:
 	
 	///Constant digital 0
 	Greenpak4PowerRail* m_constantZero[2];
+	
+	/**
+		@brief Cross-connections between our matrices
+		
+		connections[i][j] is the j'th connection from matrix i to (i+1) mod 2
+	 */
+	Greenpak4CrossConnection* m_crossConnections[2][10];
 	
 	//Total bitfile length
 	unsigned int m_bitlen;

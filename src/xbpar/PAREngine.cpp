@@ -57,16 +57,8 @@ bool PAREngine::PlaceAndRoute(bool verbose)
 	std::vector<PARGraphEdge*> unroutes;
 	while(true)
 	{
-		unroutes.clear();
-		printf(
-			"\nOptimizing placement (iteration %d)\n"
-			"    unroutability cost %d, congestion cost %d, timing cost %d (total %d)\n",
-			iteration,
-			ComputeUnroutableCost(unroutes),
-			ComputeCongestionCost(),
-			ComputeTimingCost(),
-			ComputeCost()
-			);
+		//Figure out how good we are now
+		ComputeAndPrintScore(unroutes, iteration);
 		
 		//Try to optimize the placement more
 		if(!OptimizePlacement(verbose))
@@ -83,6 +75,23 @@ bool PAREngine::PlaceAndRoute(bool verbose)
 	}
 		
 	return true;
+}
+
+/**
+	@brief Update the scores for the current netlist and then print the result
+ */
+void PAREngine::ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration)
+{
+	unroutes.clear();
+	printf(
+		"\nOptimizing placement (iteration %d)\n"
+		"    unroutability cost %d, congestion cost %d, timing cost %d (total %d)\n",
+		iteration,
+		ComputeUnroutableCost(unroutes),
+		ComputeCongestionCost(),
+		ComputeTimingCost(),
+		ComputeCost()
+		);
 }
 
 void PAREngine::PrintUnroutes(std::vector<PARGraphEdge*>& /*unroutes*/)

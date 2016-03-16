@@ -15,27 +15,67 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
-#ifndef Greenpak4_h
-#define Greenpak4_h
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
- 
-#include "Greenpak4BitstreamEntity.h"
 #include "Greenpak4CrossConnection.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-#include "Greenpak4Device.h"
+Greenpak4CrossConnection::Greenpak4CrossConnection(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase)
+		: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
+		, m_input(NULL)
+{
+}
 
-#endif
+Greenpak4CrossConnection::~Greenpak4CrossConnection()
+{
+	
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Bitfile metadata
+
+unsigned int Greenpak4CrossConnection::GetConfigLen()
+{
+	//no configuration other than the inputs
+	return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+void Greenpak4CrossConnection::SetInput(Greenpak4BitstreamEntity* input)
+{
+	if(input->GetMatrix() == m_matrix)
+	{
+		fprintf(stderr, "INTERNAL ERROR: tried to set cross-connection input from wrong matrix\n");
+		exit(-1);
+	}
+	
+	m_input = input;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization of the truth table
+
+bool Greenpak4CrossConnection::Load(bool* /*bitstream*/)
+{
+	//TODO: Do our inputs
+	fprintf(stderr, "unimplemented\n");
+	return false;
+}
+
+bool Greenpak4CrossConnection::Save(bool* bitstream)
+{
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input, true))
+		return false;
+		
+	return true;
+}

@@ -15,27 +15,37 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
-#ifndef Greenpak4_h
-#define Greenpak4_h
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
- 
+#ifndef Greenpak4CrossConnection_h
+#define Greenpak4CrossConnection_h
+
 #include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
 
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
+class Greenpak4CrossConnection : public Greenpak4BitstreamEntity
+{
+public:
 
-#include "Greenpak4Device.h"
+	//Construction / destruction
+	Greenpak4CrossConnection(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+		
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
+	
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
+		
+	virtual ~Greenpak4CrossConnection();
+	
+	void SetInput(Greenpak4BitstreamEntity* input);
+	
+protected:
+	Greenpak4BitstreamEntity* m_input;
+};
 
-#endif
+#endif	//Greenpak4CrossConnection_h
