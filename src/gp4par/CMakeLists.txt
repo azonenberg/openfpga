@@ -1,5 +1,6 @@
 add_executable(gp4par
 	main.cpp
+	par_main.cpp
 	
 	Greenpak4PAREngine.cpp
 )
