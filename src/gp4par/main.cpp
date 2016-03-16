@@ -34,6 +34,7 @@ void PostPARDRC(PARGraph* netlist, PARGraph* device);
 void CommitChanges(PARGraph* netlist, PARGraph* device);
 void CommitIOBChanges(Greenpak4NetlistPort* niob, Greenpak4IOB* iob);
 void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut);
+void CommitRouting(PARGraph* device);
 
 int main(int argc, char* argv[])
 {
@@ -596,53 +597,7 @@ void CommitChanges(PARGraph* /*netlist*/, PARGraph* device)
 	
 	//Done configuring all of the nodes!
 	//Configure routes between them
-	for(uint32_t i=0; i<device->GetNumNodes(); i++)
-	{
-		//If no node in the netlist is assigned to us, nothing to do
-		PARGraphNode* node = device->GetNodeByIndex(i);
-		PARGraphNode* netnode = node->GetMate();
-		if(netnode == NULL)
-			continue;
-			
-		//Commit changes to all edges.
-		//Iterate over the NETLIST graph, not the DEVICE graph, but then transfer to the device graph
-		for(uint32_t i=0; i<netnode->GetEdgeCount(); i++)
-		{
-			auto edge = netnode->GetEdgeByIndex(i);
-			auto src = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
-			auto dst = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
-			auto iob = dynamic_cast<Greenpak4IOB*>(dst);
-			auto lut = dynamic_cast<Greenpak4LUT*>(dst);
-			
-			//TODO: Cross connections
-			if(src->GetMatrix() != dst->GetMatrix())
-			{
-				printf("WARNING: Ignoring cross-matrix connection (not yet implemented)\n");
-				continue;
-			}
-			
-			//Destination is an IOB - configure the signal (TODO: output enable for tristates)
-			if(iob)
-				iob->SetOutputSignal(src);
-				
-			//Destination is a LUT - multiple ports, figure out which one
-			else if(lut)
-			{
-				unsigned int nport;
-				if(1 != sscanf(edge->m_destport.c_str(), "IN%u", &nport))
-				{
-					printf("WARNING: Ignoring connection to unknown LUT input %s\n", edge->m_destport.c_str());
-					continue;
-				}
-				
-				lut->SetInputSignal(nport, src);
-			}
-
-			//Don't know what to do
-			else
-				printf("WARNING: Node at config base %d has unrecognized entity type\n", dst->GetConfigBase());
-		}
-	}
+	CommitRouting(device);
 }
 
 /**
@@ -759,6 +714,60 @@ void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut)
 		{
 			printf("WARNING: Cell\"%s\" has unrecognized parameter %s, ignoring\n",
 				ncell->m_name.c_str(), x.first.c_str());
+		}
+	}
+}
+
+/**
+	@brief Commit post-PAR results from the netlist to the routing matrix
+ */
+void CommitRouting(PARGraph* device)
+{
+	for(uint32_t i=0; i<device->GetNumNodes(); i++)
+	{
+		//If no node in the netlist is assigned to us, nothing to do
+		PARGraphNode* node = device->GetNodeByIndex(i);
+		PARGraphNode* netnode = node->GetMate();
+		if(netnode == NULL)
+			continue;
+			
+		//Commit changes to all edges.
+		//Iterate over the NETLIST graph, not the DEVICE graph, but then transfer to the device graph
+		for(uint32_t i=0; i<netnode->GetEdgeCount(); i++)
+		{
+			auto edge = netnode->GetEdgeByIndex(i);
+			auto src = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
+			auto dst = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
+			auto iob = dynamic_cast<Greenpak4IOB*>(dst);
+			auto lut = dynamic_cast<Greenpak4LUT*>(dst);
+			
+			//TODO: Cross connections
+			if(src->GetMatrix() != dst->GetMatrix())
+			{
+				printf("WARNING: Ignoring cross-matrix connection (not yet implemented)\n");
+				continue;
+			}
+			
+			//Destination is an IOB - configure the signal (TODO: output enable for tristates)
+			if(iob)
+				iob->SetOutputSignal(src);
+				
+			//Destination is a LUT - multiple ports, figure out which one
+			else if(lut)
+			{
+				unsigned int nport;
+				if(1 != sscanf(edge->m_destport.c_str(), "IN%u", &nport))
+				{
+					printf("WARNING: Ignoring connection to unknown LUT input %s\n", edge->m_destport.c_str());
+					continue;
+				}
+				
+				lut->SetInputSignal(nport, src);
+			}
+
+			//Don't know what to do
+			else
+				printf("WARNING: Node at config base %d has unrecognized entity type\n", dst->GetConfigBase());
 		}
 	}
 }
