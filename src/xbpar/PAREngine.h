@@ -30,13 +30,16 @@ public:
 	PAREngine(PARGraph* netlist, PARGraph* device);
 	virtual ~PAREngine();
 	
-	virtual bool PlaceAndRoute(bool verbose = true);
+	virtual bool PlaceAndRoute(bool verbose = true, uint32_t seed = 0);
 	
 	virtual uint32_t ComputeCost();
 	
 protected:
 
-	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*> bad_nodes) =0;
+	void MoveNode(PARGraphNode* node, PARGraphNode* newpos);
+
+	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot) =0;
+	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes) =0;
 
 	virtual uint32_t ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration);
 	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);

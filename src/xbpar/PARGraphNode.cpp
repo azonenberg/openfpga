@@ -41,8 +41,13 @@ PARGraphNode::~PARGraphNode()
 void PARGraphNode::MateWith(PARGraphNode* mate)
 {
 	//Clear our prior mate, if any
+	//need to set m_mate to null FIRST to avoid infinite recursion
 	if(m_mate != NULL)
-		m_mate->MateWith(NULL);
+	{
+		PARGraphNode* oldmate = m_mate;
+		m_mate = NULL;
+		oldmate->MateWith(NULL);
+	}
 
 	//Valid mate, set up back pointer
 	//Clear out old partner of the new mating node, of any

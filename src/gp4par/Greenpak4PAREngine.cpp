@@ -126,10 +126,71 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 	
 	This means that the node contributes in some nonzero fashion to the overall score of the system.
 	
-	Use a set internally to allow de-duplication, but a vector for output
-	so that the caller can do random access efficiently
+	Nodes are in the NETLIST graph, not the DEVICE graph.
  */
-void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*> bad_nodes)
+void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes)
 {
-	//For now, the set of suboptimal placements is the set of all nodes that have at least one cross-spine route
+	std::set<PARGraphNode*> nodes;
+	
+	//Find all nodes that have at least one cross-spine route
+	for(uint32_t i=0; i<m_device->GetNumNodes(); i++)
+	{
+		//If no node in the netlist is assigned to us, nothing to do
+		PARGraphNode* node = m_device->GetNodeByIndex(i);
+		PARGraphNode* netnode = node->GetMate();
+		if(netnode == NULL)
+			continue;
+			
+		//Commit changes to all edges.
+		//Iterate over the NETLIST graph, not the DEVICE graph, but then transfer to the device graph
+		for(uint32_t i=0; i<netnode->GetEdgeCount(); i++)
+		{
+			auto edge = netnode->GetEdgeByIndex(i);
+			auto src = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
+			auto dst = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
+						
+			//Cross connections
+			unsigned int srcmatrix = src->GetMatrix();
+			if(srcmatrix != dst->GetMatrix())
+			{
+				//If either node is an IOB, do NOT add to the sub-optimal list
+				//because the IOB is constrained and can't move
+				if(dynamic_cast<Greenpak4IOB*>(src) == NULL)
+					nodes.insert(edge->m_sourcenode);
+				if(dynamic_cast<Greenpak4IOB*>(dst) == NULL)
+					nodes.insert(edge->m_destnode);
+			}
+		}
+	}
+	
+	//Push into the final output list
+	for(auto x : nodes)
+		bad_nodes.push_back(x);
+}
+
+/**
+	@brief Find a new (hopefully more efficient) placement for a given netlist node
+ */
+PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
+{
+	//Find which matrix we were assigned to
+	PARGraphNode* current_node = pivot->GetMate();
+	auto current_site = static_cast<Greenpak4BitstreamEntity*>(current_node->GetData());
+	uint32_t current_matrix = current_site->GetMatrix();
+	uint32_t label = current_node->GetLabel();
+	uint32_t ncandidates = m_device->GetNumNodesWithLabel(label);
+	
+	//Pick a random node of the same label that's in the correct half of the device
+	PARGraphNode* newmate = NULL;
+	Greenpak4BitstreamEntity* newsite = NULL;
+	for(int i=0; i<20; i++)
+	{
+		newmate = m_device->GetNodeByLabelAndIndex(label, rand() % ncandidates);
+		newsite = static_cast<Greenpak4BitstreamEntity*>(newmate->GetData());
+		if(newsite->GetMatrix() != current_matrix)
+			return newmate;
+	}
+		
+	//Nothing found, give up
+	return NULL;
 }

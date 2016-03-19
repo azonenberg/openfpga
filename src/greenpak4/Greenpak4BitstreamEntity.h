@@ -71,6 +71,9 @@ public:
 	unsigned int GetConfigBase()
 	{ return m_configBase; }
 	
+	Greenpak4Device* GetDevice()
+	{ return m_device; }
+	
 protected:
 
 	/**

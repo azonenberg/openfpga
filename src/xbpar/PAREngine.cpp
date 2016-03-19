@@ -40,11 +40,15 @@ PAREngine::~PAREngine()
 	
 	@return true on success, fail if design could not be routed
  */
-bool PAREngine::PlaceAndRoute(bool verbose)
+bool PAREngine::PlaceAndRoute(bool verbose, uint32_t seed)
 {
 	if(verbose)
 		printf("\nXBPAR initializing...\n");
 	m_temperature = 100;
+	
+	//TODO: glibc rand sucks, replace with something a bit more random
+	//(this may not make a difference for a device this tiny though)
+	srand(seed);
 		
 	//Detect obviously impossible-to-route designs
 	if(!SanityCheck(verbose))
@@ -79,6 +83,9 @@ bool PAREngine::PlaceAndRoute(bool verbose)
 		//Try to optimize the placement more
 		if(!OptimizePlacement(verbose))
 			break;
+			
+		//Cool the system down
+		m_temperature --;
 	}
 	
 	//Check for any remaining unroutable nets
@@ -207,24 +214,79 @@ void PAREngine::InitialPlacement(bool verbose)
 	
 	@return True if further optimization is necessary/possible, false otherwise
  */
-bool PAREngine::OptimizePlacement(bool verbose)
+bool PAREngine::OptimizePlacement(bool /*verbose*/)
 {
 	//If temperature hits zero, we can't optimize any further
 	if(m_temperature == 0)
 		return false;
-	
-	/*
-		Since xbpar targets small netlists, only move one primitive at a time
 		
-		Step 1: Find a primitive that's not in an optimal location
-		Step 2: Move it to a random site in the other half of the device
-		Step 3: If new score is better, or worse by less than temperature, keep it else revert
-		Step 4: Decrement temperature
-	 */
+	//Find the set of nodes in the netlist that we can optimize
+	//If none were found, give up
+	std::vector<PARGraphNode*> badnodes;
+	FindSubOptimalPlacements(badnodes);
+	if(badnodes.empty())
+		return false;
+		
+	//Pick one of those nodes at random as our pivot node
+	PARGraphNode* pivot = badnodes[rand() % badnodes.size()];
 	
-	//For now, give up and just live with whatever the initial placement was because we're lazy :p	
+	//Find a new site for the pivot node (but remember the old site)
+	//If nothing was found, skip it but don't abort the whole PAR
+	PARGraphNode* old_mate = pivot->GetMate();
+	PARGraphNode* new_mate = GetNewPlacementForNode(pivot);
+	if(new_mate == NULL)
+		return true;
 	
-	return true;
+	//Do the swap, and measure the old/new scores
+	uint32_t original_cost = ComputeCost();
+	MoveNode(pivot, new_mate);
+	uint32_t new_cost = ComputeCost();
+	
+	//TODO: say what we swapped?
+	
+	//if(verbose)
+	//	printf("    Original cost %u, new cost %u\n", original_cost, new_cost);
+
+	//If new cost is less, or greater with probability temperature, accept it
+	//TODO: make probability depend on delta cost
+	if(new_cost < original_cost)
+		return true;
+	if( (rand() % 100) < (int)m_temperature )
+		return true;
+		
+	//If we don't like the change, revert
+	MoveNode(pivot, old_mate);
+	return false;
+}
+
+/**
+	@brief Moves a netlist node to a new placement.
+	
+	If there is already a node at the requested site, the two are swapped.
+	
+	@param node			Netlist node to be moved
+	@param newpos		Device node with the new position
+ */
+void PAREngine::MoveNode(PARGraphNode* node, PARGraphNode* newpos)
+{
+	//Verify the labels match
+	if(node->GetLabel() != newpos->GetLabel())
+	{
+		fprintf(stderr, "INTERNAL ERROR: tried to assign node to illegal site\n");
+		exit(-1);
+	}
+	
+	//If the new position is already used by a netlist node, we have to fix that
+	if(newpos->GetMate() != NULL)
+	{
+		PARGraphNode* other_net = newpos->GetMate();
+		PARGraphNode* old_pos = node->GetMate();
+		
+		other_net->MateWith(old_pos);
+	}
+	
+	//Now that the new node has no mate, just hook them up
+	node->MateWith(newpos);
 }
 
 /**

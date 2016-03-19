@@ -31,7 +31,8 @@ public:
 protected:
 	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
 	
-	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*> bad_nodes);
+	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes);
+	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot);
 	
 	virtual uint32_t ComputeCongestionCost();
 };
