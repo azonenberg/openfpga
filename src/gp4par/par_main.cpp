@@ -520,6 +520,9 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev)
 {
 	unsigned int xcindex[2] = {0};
 	
+	//Map of source node to cross-connection output
+	std::map<Greenpak4BitstreamEntity*, Greenpak4BitstreamEntity*> nodemap;
+	
 	for(uint32_t i=0; i<device->GetNumNodes(); i++)
 	{
 		//If no node in the netlist is assigned to us, nothing to do
@@ -537,29 +540,38 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev)
 			auto dst = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
 			auto iob = dynamic_cast<Greenpak4IOB*>(dst);
 			auto lut = dynamic_cast<Greenpak4LUT*>(dst);
-			
+						
 			//Cross connections
 			unsigned int srcmatrix = src->GetMatrix();
 			if(srcmatrix != dst->GetMatrix())
 			{
-				//We need to jump from one matrix to another!
-				//Make sure we have a free cross-connection to use
-				if(xcindex[srcmatrix] >= 10)
-				{
-					printf(
-						"ERROR: More than 100%% of device resources are used "
-						"(cross connections from matrix %d to %d)\n",
-							src->GetMatrix(),
-							dst->GetMatrix());
+				//Reuse existing connections, if any
+				if(nodemap.find(src) != nodemap.end())
+					src = nodemap[src];
+
+				//Allocate a new cross-connection
+				else
+				{				
+					//We need to jump from one matrix to another!
+					//Make sure we have a free cross-connection to use
+					if(xcindex[srcmatrix] >= 10)
+					{
+						printf(
+							"ERROR: More than 100%% of device resources are used "
+							"(cross connections from matrix %d to %d)\n",
+								src->GetMatrix(),
+								dst->GetMatrix());
+					}
+					
+					//Save our cross-connection and mark it as used
+					auto xconn = pdev->GetCrossConnection(srcmatrix, xcindex[srcmatrix]);
+					xcindex[srcmatrix] ++;
+					
+					//Insert the cross-connection into the path
+					xconn->SetInput(src);
+					nodemap[src] = xconn;
+					src = xconn;
 				}
-				
-				//Save our cross-connection and mark it as used
-				auto xconn = pdev->GetCrossConnection(srcmatrix, xcindex[srcmatrix]);
-				xcindex[srcmatrix] ++;
-				
-				//Insert the cross-connection into the path
-				xconn->SetInput(src);
-				src = xconn;
 			}
 			
 			//Destination is an IOB - configure the signal (TODO: output enable for tristates)

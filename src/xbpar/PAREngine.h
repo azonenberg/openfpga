@@ -36,10 +36,10 @@ public:
 	
 protected:
 
-	virtual void ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration);
-	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
+	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*> bad_nodes) =0;
 
-	//TODO: enumerate unroutable nets for debugging
+	virtual uint32_t ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration);
+	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
 
 	virtual uint32_t ComputeCongestionCost();
 	virtual uint32_t ComputeTimingCost();
@@ -51,6 +51,8 @@ protected:
 
 	PARGraph* m_netlist;
 	PARGraph* m_device;
+	
+	uint32_t m_temperature;
 };
 
 #endif

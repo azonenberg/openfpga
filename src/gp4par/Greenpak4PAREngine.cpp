@@ -19,6 +19,7 @@
 #include "../xbpar/xbpar.h"
 #include "../greenpak4/Greenpak4.h"
 #include "Greenpak4PAREngine.h"
+#include <math.h>
 
 using namespace std;
 
@@ -34,6 +35,38 @@ Greenpak4PAREngine::Greenpak4PAREngine(PARGraph* netlist, PARGraph* device)
 Greenpak4PAREngine::~Greenpak4PAREngine()
 {
 	
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Congestion metrics
+
+uint32_t Greenpak4PAREngine::ComputeCongestionCost()
+{
+	uint32_t costs[2] = {0};
+	
+	for(uint32_t i=0; i<m_device->GetNumNodes(); i++)
+	{
+		//If no node in the netlist is assigned to us, nothing to do
+		PARGraphNode* node = m_device->GetNodeByIndex(i);
+		PARGraphNode* netnode = node->GetMate();
+		if(netnode == NULL)
+			continue;
+			
+		//Find all edges crossing the central routing matrix
+		for(uint32_t i=0; i<netnode->GetEdgeCount(); i++)
+		{
+			auto edge = netnode->GetEdgeByIndex(i);
+			uint32_t sm = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData())->GetMatrix();
+			uint32_t dm = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData())->GetMatrix();
+			
+			if(sm != dm)
+				costs[sm] ++;
+		}
+	}
+	
+	//Squaring each half makes minimizing the larger one more important
+	//vs if we just summed
+	return sqrt(costs[0]*costs[0] + costs[1]*costs[1]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,4 +116,20 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 	}
 	
 	printf("\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Optimization helpers
+
+/**
+	@brief Find all nodes that are not optimally placed.
+	
+	This means that the node contributes in some nonzero fashion to the overall score of the system.
+	
+	Use a set internally to allow de-duplication, but a vector for output
+	so that the caller can do random access efficiently
+ */
+void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*> bad_nodes)
+{
+	//For now, the set of suboptimal placements is the set of all nodes that have at least one cross-spine route
 }

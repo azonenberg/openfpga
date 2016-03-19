@@ -23,18 +23,18 @@ module Blinky(a, b, o, a_copy);
 	
 	(* SCHMITT_TRIGGER *)
 	(* PULLDOWN = "10k" *)
-	(* LOC = "P2" *)
+	(* LOC = "P20" *)
 	input wire a;
 	
 	(* SCHMITT_TRIGGER *)
 	(* PULLDOWN = "10k" *)
-	(* LOC = "P3" *)
+	(* LOC = "P19" *)
 	input wire b;
 	
-	(* LOC = "P5" *)
+	(* LOC = "P18" *)
 	output wire o;
 	
-	(* LOC = "P13" *)
+	(* LOC = "P3" *)
 	output wire a_copy;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

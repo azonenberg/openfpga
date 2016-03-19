@@ -44,6 +44,7 @@ bool PAREngine::PlaceAndRoute(bool verbose)
 {
 	if(verbose)
 		printf("\nXBPAR initializing...\n");
+	m_temperature = 100;
 		
 	//Detect obviously impossible-to-route designs
 	if(!SanityCheck(verbose))
@@ -55,10 +56,25 @@ bool PAREngine::PlaceAndRoute(bool verbose)
 	//Converge until we get a passing placement
 	uint32_t iteration = 0;
 	std::vector<PARGraphEdge*> unroutes;
+	uint32_t best_cost = 1000000;
+	uint32_t time_since_best_cost = 0;
 	while(true)
 	{
 		//Figure out how good we are now
-		ComputeAndPrintScore(unroutes, iteration);
+		uint32_t newcost = ComputeAndPrintScore(unroutes, iteration);
+		time_since_best_cost ++;
+		iteration ++;
+		
+		//If the new placement is better, make a note of that
+		if(newcost < best_cost)
+		{
+			best_cost = newcost;
+			time_since_best_cost = 0;
+		}
+		
+		//If several iterations have gone by without improving placement, give up
+		if(time_since_best_cost >= 5)
+			break;
 		
 		//Try to optimize the placement more
 		if(!OptimizePlacement(verbose))
@@ -80,18 +96,25 @@ bool PAREngine::PlaceAndRoute(bool verbose)
 /**
 	@brief Update the scores for the current netlist and then print the result
  */
-void PAREngine::ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration)
+uint32_t PAREngine::ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration)
 {
+	uint32_t ucost = ComputeUnroutableCost(unroutes);
+	uint32_t ccost = ComputeCongestionCost();
+	uint32_t tcost = ComputeTimingCost();
+	uint32_t cost = ComputeCost();
+	
 	unroutes.clear();
 	printf(
 		"\nOptimizing placement (iteration %d)\n"
 		"    unroutability cost %d, congestion cost %d, timing cost %d (total %d)\n",
 		iteration,
-		ComputeUnroutableCost(unroutes),
-		ComputeCongestionCost(),
-		ComputeTimingCost(),
-		ComputeCost()
+		ucost,
+		ccost,
+		tcost,
+		cost
 		);
+		
+	return cost;
 }
 
 void PAREngine::PrintUnroutes(std::vector<PARGraphEdge*>& /*unroutes*/)
@@ -186,8 +209,22 @@ void PAREngine::InitialPlacement(bool verbose)
  */
 bool PAREngine::OptimizePlacement(bool verbose)
 {
+	//If temperature hits zero, we can't optimize any further
+	if(m_temperature == 0)
+		return false;
+	
+	/*
+		Since xbpar targets small netlists, only move one primitive at a time
+		
+		Step 1: Find a primitive that's not in an optimal location
+		Step 2: Move it to a random site in the other half of the device
+		Step 3: If new score is better, or worse by less than temperature, keep it else revert
+		Step 4: Decrement temperature
+	 */
+	
 	//For now, give up and just live with whatever the initial placement was because we're lazy :p	
-	return false;
+	
+	return true;
 }
 
 /**
