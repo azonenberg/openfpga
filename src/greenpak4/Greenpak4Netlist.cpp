@@ -160,14 +160,9 @@ void Greenpak4Netlist::IndexNets()
 	for(auto it = m_topModule->port_begin(); it != m_topModule->port_end(); it ++)
 	{
 		Greenpak4NetlistPort* port = it->second;
-		//printf("    Port %s connects to:\n", it->first.c_str());
-		
-		for(size_t i=0; i<port->m_nodes.size(); i++)
-		{
-			Greenpak4NetlistNode* node = port->m_nodes[i];
-			//printf("        node %s\n", node->m_name.c_str());
-			node->m_ports.push_back(port);
-		}
+		printf("    Port %s connects to:\n", it->first.c_str());
+		printf("        node %s\n", port->m_node->m_name.c_str());
+		port->m_node->m_ports.push_back(port);
 	}
 	
 	//Loop over all of our cells and add their connections

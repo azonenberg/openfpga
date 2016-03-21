@@ -30,6 +30,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 	, m_module(module)
 	, m_name(name)
 	, m_net(NULL)
+	, m_node(NULL)
 	, m_parnode(NULL)
 {	
 	json_object_iterator end = json_object_iter_end(object);
@@ -87,8 +88,17 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 					exit(-1);
 				}
 				
-				//Add the net				
-				m_nodes.push_back(module->GetNode(json_object_get_int(jnode)));
+				//Add the net
+				if(m_node != NULL)
+				{
+					fprintf(
+						stderr,
+						"ERROR: Port %s on module %s is a vector (should split nets during synthesis)\n",
+						module->GetName().c_str(),
+						name.c_str());
+					exit(-1);
+				}		
+				m_node = module->GetNode(json_object_get_int(jnode));
 			}
 		}
 		

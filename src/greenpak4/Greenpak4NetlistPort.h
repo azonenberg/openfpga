@@ -57,7 +57,7 @@ public:
 	std::vector<Greenpak4NetlistPort*> m_ports;
 };
 
-//A module port (may contain one or more nodes)
+//A module port (attached to a single node)
 class Greenpak4NetlistPort : public Greenpak4NetlistEntity
 {
 public:
@@ -78,12 +78,10 @@ public:
 	
 	Greenpak4NetlistNet* m_net;
 	
-	std::vector<Greenpak4NetlistNode*> m_nodes;
+	//The netlist node we're attached to
+	Greenpak4NetlistNode* m_node;
 	
-	//Assigned IOB (only valid after ParIOBs())
-	//TODO: Support vectors here
-	//Greenpak4IOB* m_iob;
-	
+	//The graph node for this IOB (only valid during place-and-route)
 	PARGraphNode* m_parnode;
 };
 
