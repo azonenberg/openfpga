@@ -161,7 +161,20 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		//Must always allocate from both graphs at the same time (TODO: paired allocation somehow?)
 		uint32_t label = ngraph->AllocateLabel();
 		dgraph->AllocateLabel();
-				
+		
+		//If the IOB already has a custom label, we constrained two nets to the same place!
+		PARGraphNode* ipnode = iob->GetPARNode();
+		if(ipnode->GetLabel() != iob_label)
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" is constrained to pin \"%s\" but another port is already constrained "
+				"to this pin.\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
 		//Create the node
 		//TODO: Support buses here (for now, point to the entire port)
 		PARGraphNode* netnode = new PARGraphNode(label, port);
@@ -169,7 +182,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		ngraph->AddNode(netnode);
 		
 		//Re-label the assigned IOB so we get a proper match to it
-		iob->GetPARNode()->Relabel(label);
+		ipnode->Relabel(label);
 	}
 	
 	//Make device nodes for each type of LUT
