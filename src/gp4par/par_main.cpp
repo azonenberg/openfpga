@@ -304,6 +304,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 	for(auto it = netlist->nodebegin(); it != netlist->nodeend(); it ++)
 	{
 		Greenpak4NetlistNode* node = *it;
+			
 		//printf("    Node %s is sourced by:\n", node->m_name.c_str());
 		
 		PARGraphNode* source = NULL;

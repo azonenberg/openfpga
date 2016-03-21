@@ -230,41 +230,35 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 			}
 
 			//Walk the array
-			//TODO: verify bit ordering is correct (does this even matter as long as we're consistent?)
 			int len = json_object_array_length(child);
-			for(int i=0; i<len; i++)
+			if(len != 1)
 			{
-				json_object* jnode = json_object_array_get_idx(child, i);
-				if(!json_object_is_type(jnode, json_type_int))
-				{
-					fprintf(stderr, "ERROR: Net number should be of type integer but isn't\n");
-					exit(-1);
-				}
-				
-				//TODO: Support arrays
-				if(len != 1)
-				{
-					fprintf(stderr, "ERROR: Arrays not implemented in net name block\n");
-					exit(-1);
-				}
-				
-				//Name the net (TODO support arrays with []'s or something)
-				//How to handle multiple names for the same net??
-				Greenpak4NetlistNode* node = GetNode(json_object_get_int(jnode));
-				if(node->m_net != NULL)
-				{
-					//printf("WARNING: replacing node %s net %s with net %s\n",
-					//	node->m_name.c_str(), node->m_net->m_name.c_str(), net->m_name.c_str());
-				}
-				
-				//Don't insert net if it's already in the list from before?
-				else
-					net->m_nodes.push_back(node);
-			
-				//Set up name etc
-				node->m_name = name;
-				node->m_net = net;
+				fprintf(stderr, "ERROR: Vectors must be split during synthesis; PAR cannot handle vector nets\n");
+				exit(-1);
 			}
+			
+			json_object* jnode = json_object_array_get_idx(child, 0);
+			if(!json_object_is_type(jnode, json_type_int))
+			{
+				fprintf(stderr, "ERROR: Net number should be of type integer but isn't\n");
+				exit(-1);
+			}
+
+			//How to handle multiple names for the same net??
+			Greenpak4NetlistNode* node = GetNode(json_object_get_int(jnode));
+			if(node->m_net != NULL)
+			{
+				//printf("WARNING: replacing node %s net %s with net %s\n",
+				//	node->m_name.c_str(), node->m_net->m_name.c_str(), net->m_name.c_str());
+			}
+			
+			//Don't insert net if it's already in the list from before?
+			else
+				net->m_node = node;
+		
+			//Set up name etc
+			node->m_name = name;
+			node->m_net = net;
 		}
 		
 		//Attributes - array of name-value pairs
@@ -388,25 +382,20 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 		}
 
 		//Walk the array
-		//TODO: verify bit ordering is correct (does this even matter as long as we're consistent?)
 		int len = json_object_array_length(child);
 		if(len != 1)
 		{
 			fprintf(stderr, "ERROR: Arrays not implemented in cell connections\n");
 			exit(-1);
 		}
-		for(int i=0; i<len; i++)
+		json_object* jnode = json_object_array_get_idx(child, 0);
+		if(!json_object_is_type(jnode, json_type_int))
 		{
-			json_object* jnode = json_object_array_get_idx(child, i);
-			if(!json_object_is_type(jnode, json_type_int))
-			{
-				fprintf(stderr, "ERROR: Net number should be of type integer but isn't\n");
-				exit(-1);
-			}
-			
-			//Name the net (TODO support arrays with []'s or something)
-			Greenpak4NetlistNode* node = GetNode(json_object_get_int(jnode));
-			net->m_nodes.push_back(node);
+			fprintf(stderr, "ERROR: Net number should be of type integer but isn't\n");
+			exit(-1);
 		}
+			
+		//Name the net
+		net->m_node = GetNode(json_object_get_int(jnode));
 	}
 }

@@ -34,12 +34,12 @@ public:
 	virtual ~Greenpak4NetlistEntity();
 };
 
-//A single named net in the netlist (may be one or multiple bits)
+//A single named net in the netlist (must be one bit wide, vectors are split externally)
 class Greenpak4NetlistNet
 {
 public:
 	std::string m_name;
-	std::vector<Greenpak4NetlistNode*> m_nodes;
+	Greenpak4NetlistNode* m_node;
 	std::map<std::string, std::string> m_attributes;
 	
 	bool HasAttribute(std::string name)

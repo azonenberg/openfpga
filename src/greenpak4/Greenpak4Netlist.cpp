@@ -160,8 +160,8 @@ void Greenpak4Netlist::IndexNets()
 	for(auto it = m_topModule->port_begin(); it != m_topModule->port_end(); it ++)
 	{
 		Greenpak4NetlistPort* port = it->second;
-		printf("    Port %s connects to:\n", it->first.c_str());
-		printf("        node %s\n", port->m_node->m_name.c_str());
+		//printf("    Port %s connects to:\n", it->first.c_str());
+		//printf("        node %s\n", port->m_node->m_name.c_str());
 		port->m_node->m_ports.push_back(port);
 	}
 	
@@ -172,9 +172,7 @@ void Greenpak4Netlist::IndexNets()
 		//printf("    Cell %s connects to:\n", it->first.c_str());
 		for(auto jt : cell->m_connections)
 		{
-			Greenpak4NetlistNet* net = jt.second;
-			//TODO: support vectors
-			Greenpak4NetlistNode* node = net->m_nodes[0];
+			Greenpak4NetlistNode* node = jt.second->m_node;
 			//printf("        %s: net %s\n", jt.first.c_str(), node->m_name.c_str());
 			node->m_nodeports.push_back(Greenpak4NetlistNodePoint(cell, jt.first));
 		}
@@ -183,9 +181,12 @@ void Greenpak4Netlist::IndexNets()
 	//Make a set of the nodes to avoid duplication
 	for(auto it = m_topModule->net_begin(); it != m_topModule->net_end(); it ++)
 	{
-		Greenpak4NetlistNet* net = it->second;
-		for(auto node : net->m_nodes)
-			m_nodes.insert(node);
+		if(it->second->m_node == NULL)
+		{
+			//printf("Got null node %s during dedup\n", it->second->m_name.c_str());
+		}
+		else
+			m_nodes.insert(it->second->m_node);
 	}
 	
 	//Print them out

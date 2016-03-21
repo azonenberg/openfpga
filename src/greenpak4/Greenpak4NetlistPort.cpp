@@ -77,29 +77,25 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 			}
 
 			//Walk the array
-			//TODO: verify bit ordering is correct (does this even matter as long as we're consistent?)
 			int len = json_object_array_length(child);
-			for(int i=0; i<len; i++)
+			if(len != 1)
 			{
-				json_object* jnode = json_object_array_get_idx(child, i);
-				if(!json_object_is_type(jnode, json_type_int))
-				{
-					fprintf(stderr, "ERROR: Net number should be of type integer but isn't\n");
-					exit(-1);
-				}
-				
-				//Add the net
-				if(m_node != NULL)
-				{
-					fprintf(
-						stderr,
-						"ERROR: Port %s on module %s is a vector (should split nets during synthesis)\n",
-						module->GetName().c_str(),
-						name.c_str());
-					exit(-1);
-				}		
-				m_node = module->GetNode(json_object_get_int(jnode));
+				fprintf(
+					stderr,
+					"ERROR: Port %s on module %s is a vector (should split nets during synthesis)\n",
+					module->GetName().c_str(),
+					name.c_str());
+				exit(-1);
 			}
+			
+			json_object* jnode = json_object_array_get_idx(child, 0);
+			if(!json_object_is_type(jnode, json_type_int))
+			{
+				fprintf(stderr, "ERROR: Net number should be of type integer but isn't\n");
+				exit(-1);
+			}
+
+			m_node = module->GetNode(json_object_get_int(jnode));
 		}
 		
 		//Garbage
