@@ -41,13 +41,71 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 	
 	//Final DRC to make sure the placement is sane
 	PostPARDRC(ngraph, dgraph);
+		
+	//Copy the netlist over
+	unsigned int num_routes_used[2];
+	CommitChanges(dgraph, device, num_routes_used);
 	
-	//Copy the netlist over, then clean up
-	CommitChanges(ngraph, dgraph, device);
+	//Print device utilization report
+	PrintUtilizationReport(ngraph, device, num_routes_used);
+	
+	//Final cleanup
 	delete ngraph;
 	delete dgraph;
 	return true;
 }
+
+/**
+	@brief Print the report showing how many resources were used
+ */
+void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned int* num_routes_used)
+{
+	//Get resource counts from the whole device
+	unsigned int lut_counts[5] =
+	{
+		0,	//no LUT0
+		0,	//no LUT1
+		device->GetLUT2Count(),
+		device->GetLUT3Count(),
+		device->GetLUT4Count()
+	};
+	unsigned int iob_count = device->GetIOBCount();
+	
+	//Loop over nodes, find how many of each type were used
+	unsigned int luts_used[5] = {0};
+	unsigned int iobs_used = 0;
+	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
+	{
+		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
+		auto iob = dynamic_cast<Greenpak4IOB*>(entity);
+		auto lut = dynamic_cast<Greenpak4LUT*>(entity);
+		if(lut)
+			luts_used[lut->GetOrder()] ++;
+		if(iob)
+			iobs_used ++;
+	}
+	
+	//Print the actual report
+	printf("\nDevice utilization:\n");
+	unsigned int total_luts_used = luts_used[2] + luts_used[3] + luts_used[4];
+	unsigned int total_lut_count = lut_counts[2] + lut_counts[3] + lut_counts[4];
+	printf("    IOB:    %2d/%2d (%d %%)\n", iobs_used, iob_count, iobs_used*100 / iob_count);
+	printf("    LUT:    %2d/%2d (%d %%)\n", total_luts_used, total_lut_count, total_luts_used*100 / total_lut_count);
+	for(unsigned int i=2; i<=4; i++)
+	{
+		unsigned int used = luts_used[i];
+		unsigned int count = lut_counts[i];
+		unsigned int percent = 0;
+		if(count)
+			percent = 100*used / count;
+		printf("      LUT%d: %2d/%2d (%d %%)\n", i, used, count, percent);
+	}
+	unsigned int total_routes_used = num_routes_used[0] + num_routes_used[1];
+	printf("    X-conn: %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);
+	printf("      East: %2d/10 (%d %%)\n", num_routes_used[0], num_routes_used[0]*100 / 10);
+	printf("      West: %2d/10 (%d %%)\n", num_routes_used[1], num_routes_used[1]*100 / 10);
+}
+
 
 /**
 	@brief Do various sanity checks after the design is routed
@@ -371,7 +429,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 /**
 	@brief After a successful PAR, copy all of the data from the unplaced to placed nodes
  */
-void CommitChanges(PARGraph* /*netlist*/, PARGraph* device, Greenpak4Device* pdev)
+void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
 {
 	printf("\nBuilding final post-route netlist...\n");
 	
@@ -405,7 +463,7 @@ void CommitChanges(PARGraph* /*netlist*/, PARGraph* device, Greenpak4Device* pde
 	
 	//Done configuring all of the nodes!
 	//Configure routes between them
-	CommitRouting(device, pdev);
+	CommitRouting(device, pdev, num_routes_used);
 }
 
 /**
@@ -529,10 +587,11 @@ void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut)
 /**
 	@brief Commit post-PAR results from the netlist to the routing matrix
  */
-void CommitRouting(PARGraph* device, Greenpak4Device* pdev)
+void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
 {
-	unsigned int xcindex[2] = {0};
-	
+	num_routes_used[0] = 0;
+	num_routes_used[1] = 0;
+		
 	//Map of source node to cross-connection output
 	std::map<Greenpak4BitstreamEntity*, Greenpak4BitstreamEntity*> nodemap;
 	
@@ -567,7 +626,7 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev)
 				{				
 					//We need to jump from one matrix to another!
 					//Make sure we have a free cross-connection to use
-					if(xcindex[srcmatrix] >= 10)
+					if(num_routes_used[srcmatrix] >= 10)
 					{
 						printf(
 							"ERROR: More than 100%% of device resources are used "
@@ -577,8 +636,8 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev)
 					}
 					
 					//Save our cross-connection and mark it as used
-					auto xconn = pdev->GetCrossConnection(srcmatrix, xcindex[srcmatrix]);
-					xcindex[srcmatrix] ++;
+					auto xconn = pdev->GetCrossConnection(srcmatrix, num_routes_used[srcmatrix]);
+					num_routes_used[srcmatrix] ++;
 					
 					//Insert the cross-connection into the path
 					xconn->SetInput(src);

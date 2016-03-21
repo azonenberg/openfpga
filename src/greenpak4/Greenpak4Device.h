@@ -60,6 +60,9 @@ public:
 	iobmap::iterator iobend()
 	{ return m_iobs.end(); }
 	
+	unsigned int GetIOBCount()
+	{ return m_iobs.size(); }
+	
 	unsigned int GetMatrixBits()
 	{ return m_matrixBits; }
 	
@@ -71,6 +74,9 @@ public:
 	
 	unsigned int GetLUT3Count()
 	{ return m_lut3s.size(); }
+	
+	unsigned int GetLUT4Count()
+	{ return m_lut4s.size(); }
 	
 	unsigned int GetMatrixBase(unsigned int matrix);
 	
