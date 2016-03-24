@@ -121,14 +121,6 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: Create the LUT4s (this is special because both have alternate functions)
 	
-	//Add LUT2-3-4s to the LUT list
-	for(auto x : m_lut2s)
-		m_luts.push_back(x);
-	for(auto x : m_lut3s)
-		m_luts.push_back(x);
-	for(auto x : m_lut4s)
-		m_luts.push_back(x);
-	
 	//Create the Type-A IOBs (with output enable)
 	m_iobs[2] =  new Greenpak4IOBTypeA(this, 2,  0, -1, 24, 941, Greenpak4IOB::IOB_FLAG_INPUTONLY);
 	m_iobs[3] =  new Greenpak4IOBTypeA(this, 3,  0, 56, 25, 946);
@@ -151,7 +143,19 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_iobs[17] = new Greenpak4IOBTypeB(this, 17, 1, 64, 29, 1947);
 	m_iobs[20] = new Greenpak4IOBTypeB(this, 20, 1, 69, 32, 1968);
 	
-	//TODO: DFF/latches
+	//DFF/latches
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 0,  true,  0, 36, 14, 677));
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 1,  true,  0, 39, 15, 681));
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 2,  true,  0, 42, 16, 685));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 3,  false, 0, 45, 17, 689));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 4,  false, 0, 47, 18, 692));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 5,  false, 0, 49, 19, 709));
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 6,  true,  1, 36, 14, 794));
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 7,  true,  1, 39, 15, 798));
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 8,  true,  1, 42, 16, 802));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 9,  false, 1, 45, 17, 806));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 10, false, 1, 47, 18, 809));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 11, false, 1, 49, 19, 812));
 	
 	//TODO: Pipe delays
 	
@@ -185,6 +189,13 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: IO pad precharge? what does this involve?
 	
+	//Total length of our bitstream
+	m_bitlen = 2048;
+	
+	//Initialize matrix base addresses
+	m_matrixBase[0] = 0;
+	m_matrixBase[1] = 1024;
+	
 	//Create cross connections
 	for(unsigned int matrix=0; matrix<2; matrix++)
 	{
@@ -202,8 +213,30 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		}
 	}
 	
+	//Do final initialization
+	CreateDevice_common();	
+}
+
+void Greenpak4Device::CreateDevice_common()
+{
+	//Add LUT2-3-4s to the LUT list
+	for(auto x : m_lut2s)
+		m_luts.push_back(x);
+	for(auto x : m_lut3s)
+		m_luts.push_back(x);
+	for(auto x : m_lut4s)
+		m_luts.push_back(x);
+		
+	//Add both kinds of FFs to the FF list
+	for(auto x : m_dffs)
+		m_dffAll.push_back(x);
+	for(auto x : m_dffsr)
+		m_dffAll.push_back(x);
+	
 	//Finally, put everything in bitstuff so we can walk the whole bitstream and not care about details
 	for(auto x : m_luts)
+		m_bitstuff.push_back(x);
+	for(auto x : m_dffAll)
 		m_bitstuff.push_back(x);
 	for(auto x : m_iobs)
 		m_bitstuff.push_back(x.second);
@@ -212,16 +245,11 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		m_bitstuff.push_back(m_constantZero[i]);
 		m_bitstuff.push_back(m_constantOne[i]);
 	}
+	
+	//TODO: this might be device specific
 	for(unsigned int matrix=0; matrix<2; matrix++)
 		for(unsigned int i=0; i<10; i++)
 			m_bitstuff.push_back(m_crossConnections[matrix][i]);
-	
-	//Total length of our bitstream
-	m_bitlen = 2048;
-	
-	//Initialize matrix base addresses
-	m_matrixBase[0] = 0;
-	m_matrixBase[1] = 1024;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -60,6 +60,9 @@ public:
 	std::string m_name;
 	std::string m_type;
 	
+	bool HasParameter(std::string att)
+	{ return m_parameters.find(att) != m_parameters.end(); }
+	
 	std::map<std::string, std::string> m_parameters;
 	std::map<std::string, std::string> m_attributes;
 	
@@ -115,6 +118,12 @@ public:
 		
 protected:
 	Greenpak4Netlist* m_parent;
+	
+	///Internal power/ground nets
+	Greenpak4NetlistNet* m_vdd;
+	Greenpak4NetlistNet* m_vss;
+	
+	void CreatePowerNets();
 	
 	std::string m_name;
 	

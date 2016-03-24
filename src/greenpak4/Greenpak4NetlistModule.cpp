@@ -22,6 +22,9 @@
 
 using namespace std;
 
+#define VDD_NETNUM 1
+#define VSS_NETNUM 0
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
@@ -29,6 +32,8 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 	: m_parent(parent)
 	, m_name(name)
 {
+	CreatePowerNets();
+	
 	printf("    %s\n", name.c_str());
 	
 	json_object_iterator end = json_object_iter_end(object);
@@ -124,6 +129,44 @@ Greenpak4NetlistModule::~Greenpak4NetlistModule()
 	for(auto x : m_nodes)
 		delete x.second;
 	m_nodes.clear();
+}
+
+void Greenpak4NetlistModule::CreatePowerNets()
+{
+	string vdd = "GP4_VDD";
+	string vss = "GP4_VSS";
+	
+	//Create power/ground nets
+	m_vdd = new Greenpak4NetlistNet;
+	m_vdd->m_name = vdd;
+	m_vdd->m_node = new Greenpak4NetlistNode;
+	m_vdd->m_node->m_net = m_vdd;
+	m_vdd->m_node->m_name = vdd;
+
+	m_vss = new Greenpak4NetlistNet;
+	m_vss->m_name = vss;
+	m_vss->m_node = new Greenpak4NetlistNode;
+	m_vss->m_node->m_net = m_vss;
+	m_vss->m_node->m_name = vss;
+	
+	m_nodes[VDD_NETNUM] = m_vdd->m_node;
+	m_nodes[VSS_NETNUM] = m_vss->m_node;
+	
+	m_nets[vdd] = m_vdd;
+	m_nets[vss] = m_vss;
+	
+	//Create driver cells for them
+	Greenpak4NetlistCell* vcell = new Greenpak4NetlistCell;
+	vcell->m_name = vdd;
+	vcell->m_type = vdd;
+	vcell->m_connections["OUT"] = m_vdd;
+	m_cells[vdd] = vcell;
+	
+	Greenpak4NetlistCell* gcell = new Greenpak4NetlistCell;
+	gcell->m_name = vss;
+	gcell->m_type = vss;
+	gcell->m_connections["OUT"] = m_vss;
+	m_cells[vss] = gcell;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -389,9 +432,22 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 			exit(-1);
 		}
 		json_object* jnode = json_object_array_get_idx(child, 0);
-		if(!json_object_is_type(jnode, json_type_int))
+		
+		//If it's a string, it's a constant one or zero
+		if(json_object_is_type(jnode, json_type_string))
 		{
-			fprintf(stderr, "ERROR: Net number should be of type integer but isn't\n");
+			string s = json_object_get_string(jnode);
+			if(s == "1")
+				net->m_node = m_vdd->m_node;
+			else
+				net->m_node = m_vss->m_node;
+			continue;
+		}
+		
+		//Otherwise it has to be an integer
+		else if(!json_object_is_type(jnode, json_type_int))
+		{
+			fprintf(stderr, "ERROR: Net number for cell should be of type integer but isn't\n");
 			exit(-1);
 		}
 			

@@ -15,36 +15,73 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
+ 
+#ifndef Greenpak4Flipflop_h
+#define Greenpak4Flipflop_h
 
-#ifndef gp4par_h
-#define gp4par_h
+/**
+	@brief A single flipflop/latch (TODO: support latch mode)
+ */ 
+class Greenpak4Flipflop : public Greenpak4BitstreamEntity
+{
+public:
 
-#include "../greenpak4/Greenpak4.h"
-#include "../xbpar/xbpar.h"
-#include "Greenpak4PAREngine.h"
-#include <stdio.h>
-#include <string>
+	//Construction / destruction
+	Greenpak4Flipflop(
+		Greenpak4Device* device,
+		unsigned int ffnum,
+		bool has_sr,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	virtual ~Greenpak4Flipflop();
+	
+	bool HasSetReset()
+	{ return m_hasSR; }
+	
+	void SetInitValue(bool b)
+	{ m_initValue = b; }
+	
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
+	
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
+	
+	//Set inputs
+	void SetSRMode(bool mode)
+	{ m_srmode = mode; }
+	virtual void SetInputSignal(Greenpak4BitstreamEntity* sig);
+	virtual void SetClockSignal(Greenpak4BitstreamEntity* sig);
+	virtual void SetNSRSignal(Greenpak4BitstreamEntity* sig);
+	
+	unsigned int GetFlipflopIndex()
+	{ return m_ffnum; }
 
-//Console help
-void ShowUsage();
-void ShowVersion();
-
-//Setup
-void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& ngraph, PARGraph*& dgraph);
-void ApplyLocConstraints(Greenpak4Netlist* netlist, PARGraph* ngraph, PARGraph* dgraph);
-
-//PAR core
-bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
-
-//DRC
-void PostPARDRC(PARGraph* netlist, PARGraph* device);
-
-//Committing
-void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
-void CommitIOBChanges(Greenpak4NetlistPort* niob, Greenpak4IOB* iob);
-void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut);
-void CommitFFChanges(Greenpak4NetlistCell* ncell, Greenpak4Flipflop* ff);
-void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
-void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned int* num_routes_used);
+protected:
+	
+	///Index of our flipflop
+	unsigned int m_ffnum;
+	
+	///True if we have a set/reset input
+	bool m_hasSR;
+	
+	///Power-on reset value
+	bool m_initValue;
+	
+	///Set/reset mode (1=set, 0=reset)
+	bool m_srmode;
+	
+	///Input signal
+	Greenpak4BitstreamEntity* m_input;
+	
+	///Clock signal
+	Greenpak4BitstreamEntity* m_clock;
+	
+	///Negative set/reset signal
+	Greenpak4BitstreamEntity* m_nsr;
+};
 
 #endif

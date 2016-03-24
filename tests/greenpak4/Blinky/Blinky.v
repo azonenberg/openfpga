@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-module Blinky(a, b, o, a_copy);
+module Blinky(a, clk, o);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -29,19 +29,15 @@ module Blinky(a, b, o, a_copy);
 	(* SCHMITT_TRIGGER *)
 	(* PULLDOWN = "10k" *)
 	(* LOC = "P19" *)
-	input wire b;
+	input wire clk;
 	
 	(* LOC = "P18" *)
-	output wire o;
-	
-	(* LOC = "P3" *)
-	output wire a_copy;
-
+	output reg o = 0;
+		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Internal logic
 	
-	assign o = a | b;
-	
-	assign a_copy = a;
+	always @(posedge clk)
+		o <= a;
 
 endmodule

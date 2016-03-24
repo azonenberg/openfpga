@@ -44,13 +44,17 @@ public:
 	//Write to a bitfile
 	bool WriteToFile(std::string fname);
 	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// POWER RAILS
+	
 	//Get the power rail for a binary constant
 	Greenpak4BitstreamEntity* GetPowerRail(unsigned int matrix, bool rail);
 	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// IOBS
+	
 	//Get the IO buffer for a given pin number
 	Greenpak4IOB* GetIOB(unsigned int pin);
-	
-	//Accessors
 	
 	typedef std::map<unsigned int, Greenpak4IOB*> iobmap;
 	
@@ -63,8 +67,19 @@ public:
 	unsigned int GetIOBCount()
 	{ return m_iobs.size(); }
 	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// GLOBAL ROUTING
+	
 	unsigned int GetMatrixBits()
 	{ return m_matrixBits; }
+	
+	unsigned int GetMatrixBase(unsigned int matrix);
+	
+	Greenpak4CrossConnection* GetCrossConnection(unsigned int src_matrix, unsigned int index)
+	{ return m_crossConnections[src_matrix][index]; }
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// LUTS
 	
 	Greenpak4LUT* GetLUT2(unsigned int i);
 	Greenpak4LUT* GetLUT3(unsigned int i);
@@ -78,14 +93,28 @@ public:
 	unsigned int GetLUT4Count()
 	{ return m_lut4s.size(); }
 	
-	unsigned int GetMatrixBase(unsigned int matrix);
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// FLIPFLOPS
 	
-	Greenpak4CrossConnection* GetCrossConnection(unsigned int src_matrix, unsigned int index)
-	{ return m_crossConnections[src_matrix][index]; }
+	unsigned int GetTotalFFCount()
+	{ return m_dffAll.size(); }
+	
+	unsigned int GetDFFCount()
+	{ return m_dffs.size(); }
+	
+	unsigned int GetDFFSRCount()
+	{ return m_dffsr.size(); }
+
+	Greenpak4Flipflop* GetFlipflopByIndex(unsigned int i)
+	{ return m_dffAll[i]; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// OTHER
 
 protected:
 
 	void CreateDevice_SLG46620();
+	void CreateDevice_common();
 
 	///The part number
 	GREENPAK4_PART m_part;
@@ -114,6 +143,15 @@ protected:
 	
 	///I/O pins (map from pin numbers to IOBs)
 	iobmap m_iobs;
+	
+	///Flipflops of all types
+	std::vector<Greenpak4Flipflop*> m_dffAll;
+	
+	///Flipflops WITHOUT set/reset
+	std::vector<Greenpak4Flipflop*> m_dffs;
+	
+	///Flipflops WITH set/reset
+	std::vector<Greenpak4Flipflop*> m_dffsr;
 	
 	///Constant digital 1 for each matrix
 	Greenpak4PowerRail* m_constantOne[2];

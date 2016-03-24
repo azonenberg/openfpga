@@ -56,8 +56,13 @@ uint32_t Greenpak4PAREngine::ComputeCongestionCost()
 		for(uint32_t i=0; i<netnode->GetEdgeCount(); i++)
 		{
 			auto edge = netnode->GetEdgeByIndex(i);
-			uint32_t sm = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData())->GetMatrix();
+			auto src = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
+			uint32_t sm = src->GetMatrix();
 			uint32_t dm = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData())->GetMatrix();
+			
+			//If the source is a power rail, don't count this in the cost
+			if(dynamic_cast<Greenpak4PowerRail*>(src) != NULL)
+				continue;
 			
 			if(sm != dm)
 				costs[sm] ++;
@@ -159,6 +164,10 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 					nodes.insert(edge->m_sourcenode);
 				if(dynamic_cast<Greenpak4IOB*>(dst) == NULL)
 					nodes.insert(edge->m_destnode);
+					
+				//Power rails are always in optimal locations (because they're everywhere)
+				if(dynamic_cast<Greenpak4PowerRail*>(src) == NULL)
+					nodes.insert(edge->m_sourcenode);
 			}
 		}
 	}

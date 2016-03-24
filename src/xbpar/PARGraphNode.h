@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <string>
+#include <set>
 
 class PARGraphEdge
 {
@@ -76,6 +77,9 @@ public:
 	void* GetData()
 	{ return m_pData; }
 
+	void AddAlternateLabel(uint32_t alt)
+	{ m_alternateLabels.insert(alt); }
+
 protected:
 	
 	/**
@@ -87,6 +91,13 @@ protected:
 		Labels range from 0 to a given maximum in a particular graph.
 	 */
 	uint32_t m_label;
+	
+	/**
+		@brief Set of alternate labels that this node can map to.
+		
+		Only used in netlist graphs (not device graphs).
+	 */
+	std::set<uint32_t> m_alternateLabels;
 	
 	/**
 		@brief Pointer to the external node (netlist or device entity) associated with this PAR node

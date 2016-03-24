@@ -74,23 +74,40 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	//Loop over nodes, find how many of each type were used
 	unsigned int luts_used[5] = {0};
 	unsigned int iobs_used = 0;
+	unsigned int dff_used = 0;
+	unsigned int dffsr_used = 0;
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
 		auto iob = dynamic_cast<Greenpak4IOB*>(entity);
 		auto lut = dynamic_cast<Greenpak4LUT*>(entity);
+		auto ff = dynamic_cast<Greenpak4Flipflop*>(entity);
 		if(lut)
 			luts_used[lut->GetOrder()] ++;
-		if(iob)
+		else if(iob)
 			iobs_used ++;
+		else if(ff)
+		{
+			if(ff->HasSetReset())
+				dffsr_used ++;
+			else
+				dff_used ++;
+		}
 	}
 	
 	//Print the actual report
 	printf("\nDevice utilization:\n");
 	unsigned int total_luts_used = luts_used[2] + luts_used[3] + luts_used[4];
 	unsigned int total_lut_count = lut_counts[2] + lut_counts[3] + lut_counts[4];
-	printf("    IOB:    %2d/%2d (%d %%)\n", iobs_used, iob_count, iobs_used*100 / iob_count);
-	printf("    LUT:    %2d/%2d (%d %%)\n", total_luts_used, total_lut_count, total_luts_used*100 / total_lut_count);
+	unsigned int total_ff = device->GetTotalFFCount();
+	unsigned int total_dff = device->GetDFFCount();
+	unsigned int total_dffsr = device->GetDFFSRCount();
+	unsigned int total_dff_used = dff_used + dffsr_used;
+	printf("    FF:      %2d/%2d (%d %%)\n", total_dff_used, total_ff, total_dff_used*100 / total_ff);
+	printf("      DFF:   %2d/%2d (%d %%)\n", dff_used, total_dff, dff_used*100 / total_dff);
+	printf("      DFFSR: %2d/%2d (%d %%)\n", dffsr_used, total_dffsr, dffsr_used*100 / total_dffsr);
+	printf("    IOB:     %2d/%2d (%d %%)\n", iobs_used, iob_count, iobs_used*100 / iob_count);
+	printf("    LUT:     %2d/%2d (%d %%)\n", total_luts_used, total_lut_count, total_luts_used*100 / total_lut_count);
 	for(unsigned int i=2; i<=4; i++)
 	{
 		unsigned int used = luts_used[i];
@@ -98,12 +115,12 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		unsigned int percent = 0;
 		if(count)
 			percent = 100*used / count;
-		printf("      LUT%d: %2d/%2d (%d %%)\n", i, used, count, percent);
+		printf("      LUT%d:  %2d/%2d (%d %%)\n", i, used, count, percent);
 	}
 	unsigned int total_routes_used = num_routes_used[0] + num_routes_used[1];
-	printf("    X-conn: %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);
-	printf("      East: %2d/10 (%d %%)\n", num_routes_used[0], num_routes_used[0]*100 / 10);
-	printf("      West: %2d/10 (%d %%)\n", num_routes_used[1], num_routes_used[1]*100 / 10);
+	printf("    X-conn:  %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);
+	printf("      East:  %2d/10 (%d %%)\n", num_routes_used[0], num_routes_used[0]*100 / 10);
+	printf("      West:  %2d/10 (%d %%)\n", num_routes_used[1], num_routes_used[1]*100 / 10);
 }
 
 
@@ -266,7 +283,41 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 	}
 	//TODO: LUT4s
 	
+	//Make device nodes for each type of flipflop
+	uint32_t dff_label = ngraph->AllocateLabel();
+	dgraph->AllocateLabel();
+	uint32_t dffsr_label = ngraph->AllocateLabel();
+	dgraph->AllocateLabel();
+	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
+	{
+		Greenpak4Flipflop* flop = device->GetFlipflopByIndex(i);
+		PARGraphNode* fnode = NULL;
+		if(flop->HasSetReset())
+			fnode = new PARGraphNode(dffsr_label, flop);
+		else
+			fnode = new PARGraphNode(dff_label, flop);
+		flop->SetPARNode(fnode);
+		dgraph->AddNode(fnode);
+	}
+	
 	//TODO: make nodes for all of the other hard IP
+	
+	//Power nets
+	uint32_t vdd_label = ngraph->AllocateLabel();
+	dgraph->AllocateLabel();
+	uint32_t vss_label = ngraph->AllocateLabel();
+	dgraph->AllocateLabel();
+	for(unsigned int matrix = 0; matrix<2; matrix++)
+	{
+		auto vdd = device->GetPowerRail(matrix, true);
+		auto vss = device->GetPowerRail(matrix, false);
+		PARGraphNode* vnode = new PARGraphNode(vdd_label, vdd);
+		PARGraphNode* gnode = new PARGraphNode(vss_label, vss);
+		vdd->SetPARNode(vnode);
+		vss->SetPARNode(gnode);
+		dgraph->AddNode(vnode);
+		dgraph->AddNode(gnode);
+	}
 	
 	//Make netlist nodes for cells
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
@@ -283,6 +334,19 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 			label = lut3_label;
 		else if(cell->m_type == "GP_4LUT")
 			label = lut4_label;
+		else if(cell->m_type == "GP_DFF")
+		{
+			//TODO: see if the node has set/reset and if not use dff_label
+			//TODO: allow DFF to be mapped to DFFSR
+			label = dffsr_label;
+		}
+		
+		//Power nets
+		else if(cell->m_type == "GP4_VDD")
+			label = vdd_label;
+		else if(cell->m_type == "GP4_VSS")
+			label = vss_label;
+		
 		else
 		{
 			fprintf(
@@ -392,8 +456,15 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 	for(unsigned int i=0; i<device->GetLUT3Count(); i++)
 		device_nodes.push_back(device->GetLUT3(i)->GetPARNode());
 	//TODO: LUT4s
+	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
+		device_nodes.push_back(device->GetFlipflopByIndex(i)->GetPARNode());
 	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
 		device_nodes.push_back(it->second->GetPARNode());
+	for(unsigned int i=0; i<2; i++)
+	{
+		device_nodes.push_back(device->GetPowerRail(i, true)->GetPARNode());
+		device_nodes.push_back(device->GetPowerRail(i, false)->GetPARNode());
+	}
 	//TODO: hard IP
 	
 	//Add the O(n^2) edges between the main fabric nodes
@@ -403,9 +474,10 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		{
 			if(x != y)
 			{
-				//If the destination is a LUT, add paths to every input
+				//Add paths to individual cell pins
 				auto entity = static_cast<Greenpak4BitstreamEntity*>(y->GetData());
 				auto lut = dynamic_cast<Greenpak4LUT*>(entity);
+				auto ff = dynamic_cast<Greenpak4Flipflop*>(entity);
 				if(lut)
 				{
 					x->AddEdge(y, "IN0");
@@ -414,6 +486,19 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 						x->AddEdge(y, "IN2");
 					if(lut->GetOrder() > 3)
 						x->AddEdge(y, "IN3");
+				}
+				else if(ff)
+				{
+					x->AddEdge(y, "D");
+					x->AddEdge(y, "CLK");
+					if(ff->HasSetReset())
+					{
+						//allow all ports and we figure out which to use later
+						x->AddEdge(y, "nSR");
+						x->AddEdge(y, "nSET");
+						x->AddEdge(y, "nRST");
+					}
+					x->AddEdge(y, "Q");
 				}
 				
 				//no, just add path to the node in general
@@ -448,12 +533,20 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		auto bnode = static_cast<Greenpak4BitstreamEntity*>(node->GetData());
 		auto iob = dynamic_cast<Greenpak4IOB*>(bnode);
 		auto lut = dynamic_cast<Greenpak4LUT*>(bnode);
+		auto ff = dynamic_cast<Greenpak4Flipflop*>(bnode);
+		auto pwr = dynamic_cast<Greenpak4PowerRail*>(bnode);
 			
 		//Configure nodes of known type
 		if(iob)
 			CommitIOBChanges(static_cast<Greenpak4NetlistPort*>(mate->GetData()), iob);		
 		else if(lut)
 			CommitLUTChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), lut);
+		else if(ff)
+			CommitFFChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), ff);
+			
+		//Ignore power rails, they have no configuration
+		else if(pwr)
+		{}
 		
 		//No idea what it is
 		else
@@ -521,6 +614,11 @@ void CommitIOBChanges(Greenpak4NetlistPort* niob, Greenpak4IOB* iob)
 				iob->SetPullStrength(Greenpak4IOB::PULL_1M);
 		}
 		
+		//Ignore flipflop initialization, that's handled elsewhere
+		else if(x.first == "init")
+		{
+		}
+		
 		//TODO: 
 		
 		else
@@ -586,6 +684,32 @@ void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut)
 }
 
 /**
+	@brief Commit post-PAR results from the netlist to a single flipflop
+ */
+void CommitFFChanges(Greenpak4NetlistCell* ncell, Greenpak4Flipflop* ff)
+{
+	printf("    Configuring flipflop %s\n", ncell->m_name.c_str());
+
+	if(ncell->HasParameter("SRMODE"))
+	{
+		if(ncell->m_parameters["SRMODE"] == "1")
+			ff->SetSRMode(true);
+		else
+			ff->SetSRMode(false);
+	}
+	
+	if(ncell->HasParameter("INIT"))
+	{
+		if(ncell->m_parameters["INIT"] == "1")
+			ff->SetInitValue(true);
+		else
+			ff->SetInitValue(false);
+	}
+		
+	//TODO: support initialization values and set/reset mode
+}
+
+/**
 	@brief Commit post-PAR results from the netlist to the routing matrix
  */
 void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
@@ -613,7 +737,15 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			auto dst = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
 			auto iob = dynamic_cast<Greenpak4IOB*>(dst);
 			auto lut = dynamic_cast<Greenpak4LUT*>(dst);
-						
+			auto ff = dynamic_cast<Greenpak4Flipflop*>(dst);
+			auto pwr = dynamic_cast<Greenpak4PowerRail*>(dst);
+			auto spwr = dynamic_cast<Greenpak4PowerRail*>(src);
+			
+			//If the source node is power, patch the topology so that everything comes from the right matrix.
+			//We don't want to waste cross-connections on power nets
+			if(spwr)
+				src = pdev->GetPowerRail(dst->GetMatrix(), spwr->GetDigitalValue());
+			
 			//Cross connections
 			unsigned int srcmatrix = src->GetMatrix();
 			if(srcmatrix != dst->GetMatrix())
@@ -662,6 +794,34 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 				}
 				
 				lut->SetInputSignal(nport, src);
+			}
+			
+			//Destination is a flipflop - multiple ports, figure out which one
+			else if(ff)
+			{
+				if(edge->m_destport == "CLK")
+					ff->SetClockSignal(src);
+				else if(edge->m_destport == "D")
+					ff->SetInputSignal(src);
+				
+				//multiple set/reset modes possible
+				else if(edge->m_destport == "nSR")
+					ff->SetNSRSignal(src);
+				else if(edge->m_destport == "nSET")
+				{
+					ff->SetSRMode(true);
+					ff->SetNSRSignal(src);
+				}
+				else if(edge->m_destport == "nRST")
+				{
+					ff->SetSRMode(false);
+					ff->SetNSRSignal(src);
+				}
+			}
+			
+			else if(pwr)
+			{
+				printf("WARNING: Power rail should not be driven\n");
 			}
 
 			//Don't know what to do
