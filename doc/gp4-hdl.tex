@@ -30,7 +30,7 @@ azonenberg@drawersteak.com}
 \maketitle
 
 \begin{abstract}
-This document is the primary reference manual for \emph{gp4par}, Andrew Zonenberg's place-and-route tool for Silego 
+This document is the primary reference manual for gp4par, Andrew Zonenberg's place-and-route tool for Silego 
 GreenPak4 devices. As of this writing, the toolchain is NOT officially supported or endorsed by Silego and not all 
 GreenPak4 devices are supported. It is under active development and should be considered alpha quality.
 \end{abstract}
@@ -82,8 +82,8 @@ RTL & Register Transfer Level \\
 
 \subsection{Design Flow}
 
-\emph{gp4par} is NOT a synthesis tool and cannot be run directly on HDL source code. Your HDL must be synthesized to
-a JSON netlist by a separate tool before \emph{gp4par} may be invoked. The recommended synthesis tool is 
+gp4par is NOT a synthesis tool and cannot be run directly on HDL source code. Your HDL must be synthesized to
+a JSON netlist by a separate tool before gp4par may be invoked. The recommended synthesis tool is 
 \emph{yosys}, which may be obtained from the Yosys website (\url{http://www.clifford.at/yosys/}). The flow of data 
 between components is shown in Figure. \ref{flow}.
 
@@ -115,7 +115,7 @@ TODO: Include coding examples for inferring various hard IP? Or does this belong
 \pagebreak
 \section{gp4par Limitations}
 
-The following legal Verilog-2001 features are not supported by \emph{gp4par} as of this writing:
+The following legal Verilog-2001 features are not supported by gp4par as of this writing:
 
 \begin{itemize}
 \item {\bfseries Bidirectional or tri-state top-level module ports}\\All ports on top-level modules must be input or 
@@ -124,7 +124,7 @@ push-pull outputs. There is no support for tri-state or bidirectional outputs.
 may be used at lower levels of the hierarchy without restriction.
 \end{itemize}
 
-The following GreenPak4 device features are not supported by \emph{gp4par} as of this writing:
+The following GreenPak4 device features are not supported by gp4par as of this writing:
 
 \begin{itemize}
 \item All analog / mixed signal hard IP
@@ -154,7 +154,7 @@ reg[3:0] foobar = 0;
 \pagebreak
 \subsection{Physical Location (LOC)}
 
-The LOC constraint instructs \emph{gp4par} to place the constrained net or primitive at a specific physical site of the 
+The LOC constraint instructs gp4par to place the constrained net or primitive at a specific physical site of the 
 device.
 
 \subsubsection{Applicable Elements}
@@ -165,7 +165,7 @@ As of this writing, the LOC constraint may only be used on top-level module port
 \item {\bfseries Top-level module port}\\
 Text string ``Pn" where \texttt{n} is the pin number of the device. Example: ``P3", ``P17".
 \item {\bfseries Other} \\
-This constraint may not be used on any other entity. Future versions of \emph{gp4par} may allow use of this constraint 
+This constraint may not be used on any other entity. Future versions of gp4par may allow use of this constraint 
 to lock LUTs, flipflops, and hard IP to specific locations.
 \end{itemize}
 
@@ -199,7 +199,7 @@ endmodule
 \pagebreak
 \subsection{Pull-Down Resistor (PULLDOWN)}
 
-The PULLDOWN constraint instructs \emph{gp4par} to enable the pull-down resistor on the specified input. The exact resistor 
+The PULLDOWN constraint instructs gp4par to enable the pull-down resistor on the specified input. The exact resistor 
 value ranges may be found in the device datasheet.
 
 \subsubsection{Applicable Elements}
@@ -242,7 +242,7 @@ endmodule
 \pagebreak
 \subsection{Pull-Up Resistor (PULLUP)}
 
-The PULLUP constraint instructs \emph{gp4par} to enable the pull-up resistor on the specified input. The exact resistor 
+The PULLUP constraint instructs gp4par to enable the pull-up resistor on the specified input. The exact resistor 
 value ranges may be found in the device datasheet.
 
 \subsubsection{Applicable Elements}
@@ -285,7 +285,7 @@ endmodule
 \pagebreak
 \subsection{Schmitt Trigger (SCHMITT\_TRIGGER)}
 
-The SCHMITT\_TRIGGER constraint instructs \emph{gp4par} to enable the Schmitt trigger on the specified input. The level 
+The SCHMITT\_TRIGGER constraint instructs gp4par to enable the Schmitt trigger on the specified input. The level 
 of hysterisis provided may be found in the device datasheet.
 
 \subsubsection{Applicable Elements}
@@ -331,10 +331,236 @@ endmodule
 
 Static timing analysis is not yet implemented, thus this section is currently blank.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Primitives
+
 \pagebreak
 \section{gp4par Verilog Primitives}
 
-TODO: Document device-specific hard IP primitive wrappers here
+When possible, we recommend inferring design elements to maximize design portability. In some cases, such as for hard 
+IP blocks or when exact control over synthesis results is required, it may be necessary to manually instantiate device 
+primitives. Pay careful attention to port names and descriptions as these may not exactly match the Silego primitives.
+
+\subsection{GP\_DFF}
+\subsection{GP\_DFFR}
+\subsection{GP\_DFFS}
+\subsection{GP\_DFFSR}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_2LUT
+
+\pagebreak
+\subsection{GP\_2LUT: 2-Input Lookup Table}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single 2-input lookup table. It can implement any combinatorial function of two 
+inputs and one output.
+
+This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we 
+recommend inferring logic.
+
+The LUT output is the \{IN1, IN0\}'th bit of the truth table supplied in the INIT attribute..
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+IN0 & Input & 1 & Least significant input bit \\
+\hline
+IN1 & Input & 1 & Input bit \\
+\hline
+OUT & Output & 1 & Lookup table output \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+INIT & Integer & 4 & LUT truth table \\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-lut2-example} sets \emph{o} to the bitwise AND of \emph{a} and \emph{b}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire a;
+wire b;
+wire o;
+GP_LUT2 #(
+	.INIT(4'h4)
+) lut(
+	.IN0(a),
+	.IN1(b),
+	.OUT(o)
+);
+\end{lstlisting}
+\caption{Example usage of GP\_LUT2}
+\label{gp-lut2-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_3LUT
+
+\pagebreak
+\subsection{GP\_3LUT: 3-Input Lookup Table}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single 3-input lookup table. It can implement any combinatorial function of three 
+inputs and one output.
+
+This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we 
+recommend inferring logic.
+
+The LUT output is the \{IN2, IN1, IN0\}'th bit of the truth table supplied in the INIT attribute..
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+IN0 & Input & 1 & Least significant input bit \\
+\hline
+IN1 & Input & 1 & Input bit \\
+\hline
+IN2 & Input & 1 & Most significant input bit \\
+\hline
+OUT & Output & 1 & Lookup table output \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+INIT & Integer & 8 & LUT truth table \\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-lut3-example} sets \emph{o} to the bitwise AND of \emph{a}, \emph{b}, and \emph{c}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire a;
+wire b;
+wire c;
+wire o;
+GP_LUT3 #(
+	.INIT(8'h80)
+) lut(
+	.IN0(a),
+	.IN1(b),
+	.IN2(c),
+	.OUT(o)
+);
+\end{lstlisting}
+\caption{Example usage of GP\_LUT3}
+\label{gp-lut3-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_4LUT
+
+\pagebreak
+\subsection{GP\_4LUT: 4-Input Lookup Table}
+
+TODO
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP4_VDD
+
+\pagebreak
+\subsection{GP4\_VDD: Power Connection}
+
+\subsubsection{Introduction}
+This design element is internally used by gp4par as the source for all nets tied to a constant ``1" value. It does not 
+correspond to a hard IP block in the device.
+
+It is documented here for completeness but should never be instantiated. If a constant ``1" value is needed in a 
+design, simply use the value 1'b1.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+OUT & Output & 1 & Constant value ``1" \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+None.
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-vdd-example} ties the signal ``foo" high.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire foo;
+GP4_VDD vdd(
+	.OUT(foo)
+);
+\end{lstlisting}
+\caption{Example usage of GP4\_VDD}
+\label{gp-vdd-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP4_VSS
+
+\pagebreak
+\subsection{GP4\_VSS: Ground Connection}
+
+\subsubsection{Introduction}
+This design element is internally used by gp4par as the source for all nets tied to a constant ``0" value. It does not 
+correspond to a hard IP block in the device.
+
+It is documented here for completeness but should never be instantiated. If a constant ``0" value is needed in a 
+design, simply use the value 1'b0.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+OUT & Output & 1 & Constant value ``0" \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+None.
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-vss-example} ties the signal ``foo" low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire foo;
+GP4_VSS vss(
+	.OUT(foo)
+);
+\end{lstlisting}
+\caption{Example usage of GP4\_VSS}
+\label{gp-vss-example}
+\end{figure}
 
 \pagebreak
 \section{gp4par Command Line Arguments}
