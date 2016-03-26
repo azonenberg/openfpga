@@ -80,7 +80,7 @@ bool Greenpak4LUT::Save(bool* bitstream)
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LUT CONTENTS
-	
+		
 	unsigned int nmax = GetConfigLen();
 	for(unsigned int i=0; i<nmax; i++)
 		bitstream[m_configBase + i] = m_truthtable[i];

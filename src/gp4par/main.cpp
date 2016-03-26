@@ -143,9 +143,9 @@ int main(int argc, char* argv[])
 	
 	//Print configuration
 	printf("\nDevice configuration:\n");
-	printf("Target device: SLG46620V\n");
-	printf("VCC range: not yet implemented\n");
-	printf("Unused pins: ");
+	printf("    Target device: SLG46620V\n");
+	printf("    VCC range: not yet implemented\n");
+	printf("    Unused pins: ");
 	switch(unused_pull)
 	{
 		case Greenpak4IOB::PULL_NONE:

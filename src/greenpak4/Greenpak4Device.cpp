@@ -119,6 +119,16 @@ void Greenpak4Device::CreateDevice_SLG46620()
 			3));		//this is a LUT3
 	}
 	
+	//Create the first LUT4 (no special functionality)
+	m_lut4s.push_back(new Greenpak4LUT(
+		this,
+		0,
+		1,		//Attached to crossbar #1
+		32,		//LUT4 base is row 32
+		13,		//we come after the last LUT3
+		778,	//LUT4s start at bitstream offset 778, 2^4 bits per LUT
+		4));	//this is a LUT4
+	
 	//TODO: Create the LUT4s (this is special because both have alternate functions)
 	
 	//Create the Type-A IOBs (with output enable)
@@ -144,12 +154,16 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_iobs[20] = new Greenpak4IOBTypeB(this, 20, 1, 69, 32, 1968);
 	
 	//DFF/latches
+	//NOTE: Datasheet bug
+	//Figure 42 of SLG46620_DS_r075 (page 97) says DFF5 config range is bits 708-710
+	//but this collides with LUT2_7 and does not reflect actual silicon behavior.
+	//Actual range is bits 695-697 (listed on page 151)
 	m_dffsr.push_back(new Greenpak4Flipflop(this, 0,  true,  0, 36, 14, 677));
 	m_dffsr.push_back(new Greenpak4Flipflop(this, 1,  true,  0, 39, 15, 681));
 	m_dffsr.push_back(new Greenpak4Flipflop(this, 2,  true,  0, 42, 16, 685));
 	m_dffs.push_back( new Greenpak4Flipflop(this, 3,  false, 0, 45, 17, 689));
 	m_dffs.push_back( new Greenpak4Flipflop(this, 4,  false, 0, 47, 18, 692));
-	m_dffs.push_back( new Greenpak4Flipflop(this, 5,  false, 0, 49, 19, 709));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 5,  false, 0, 49, 19, 695));	
 	m_dffsr.push_back(new Greenpak4Flipflop(this, 6,  true,  1, 36, 14, 794));
 	m_dffsr.push_back(new Greenpak4Flipflop(this, 7,  true,  1, 39, 15, 798));
 	m_dffsr.push_back(new Greenpak4Flipflop(this, 8,  true,  1, 42, 16, 802));
@@ -273,6 +287,13 @@ Greenpak4IOB* Greenpak4Device::GetIOB(unsigned int pin)
 	return m_iobs[pin];
 }
 
+Greenpak4LUT* Greenpak4Device::GetLUT(unsigned int i)
+{
+	if(i >= m_luts.size())
+		return NULL;
+	return m_luts[i];
+}
+
 Greenpak4LUT* Greenpak4Device::GetLUT2(unsigned int i)
 {
 	if(i >= m_lut2s.size())
@@ -285,6 +306,13 @@ Greenpak4LUT* Greenpak4Device::GetLUT3(unsigned int i)
 	if(i >= m_lut3s.size())
 		return NULL;
 	return m_lut3s[i];
+}
+
+Greenpak4LUT* Greenpak4Device::GetLUT4(unsigned int i)
+{
+	if(i >= m_lut4s.size())
+		return NULL;
+	return m_lut4s[i];
 }
 
 unsigned int Greenpak4Device::GetMatrixBase(unsigned int matrix)

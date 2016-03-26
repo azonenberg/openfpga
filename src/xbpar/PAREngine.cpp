@@ -58,6 +58,7 @@ bool PAREngine::PlaceAndRoute(bool verbose, uint32_t seed)
 	InitialPlacement(verbose);
 		
 	//Converge until we get a passing placement
+	printf("\nOptimizing placement...\n");
 	uint32_t iteration = 0;
 	std::vector<PARGraphEdge*> unroutes;
 	uint32_t best_cost = 1000000;
@@ -109,8 +110,7 @@ uint32_t PAREngine::ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, u
 	
 	unroutes.clear();
 	printf(
-		"\nOptimizing placement (iteration %d)\n"
-		"    unroutability cost %d, congestion cost %d, timing cost %d (total %d)\n",
+		"    Iteration %d: unroutability %d, congestion %d, timing %d (total cost %d)\n",
 		iteration,
 		ucost,
 		ccost,

@@ -121,6 +121,19 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	printf("    X-conn:  %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);
 	printf("      East:  %2d/10 (%d %%)\n", num_routes_used[0], num_routes_used[0]*100 / 10);
 	printf("      West:  %2d/10 (%d %%)\n", num_routes_used[1], num_routes_used[1]*100 / 10);
+	
+	//Print the detailed map report (TODO separate function)
+	printf("\nCell mapping:\n");
+	for(unsigned int i=0; i<device->GetLUTCount(); i++)
+	{
+		Greenpak4LUT* lut = device->GetLUT(i);
+		PARGraphNode* mate = lut->GetPARNode()->GetMate();
+		if(!mate)
+			continue;
+		Greenpak4NetlistCell* cell = static_cast<Greenpak4NetlistCell*>(mate->GetData());
+			
+		printf("    LUT%d_%d: %s\n", lut->GetOrder(), lut->GetLutIndex(), cell->m_name.c_str());
+	}
 }
 
 
@@ -281,8 +294,13 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		lut->SetPARNode(lnode);
 		dgraph->AddNode(lnode);
 	}
-	//TODO: LUT4s
-	
+	for(unsigned int i=0; i<device->GetLUT4Count(); i++)
+	{
+		Greenpak4LUT* lut = device->GetLUT4(i);
+		PARGraphNode* lnode = new PARGraphNode(lut4_label, lut);
+		lut->SetPARNode(lnode);
+		dgraph->AddNode(lnode);
+	}	
 	//Make device nodes for each type of flipflop
 	uint32_t dff_label = ngraph->AllocateLabel();
 	dgraph->AllocateLabel();
@@ -458,7 +476,8 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		device_nodes.push_back(device->GetLUT2(i)->GetPARNode());
 	for(unsigned int i=0; i<device->GetLUT3Count(); i++)
 		device_nodes.push_back(device->GetLUT3(i)->GetPARNode());
-	//TODO: LUT4s
+	for(unsigned int i=0; i<device->GetLUT4Count(); i++)
+		device_nodes.push_back(device->GetLUT4(i)->GetPARNode());
 	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
 		device_nodes.push_back(device->GetFlipflopByIndex(i)->GetPARNode());
 	for(auto it = device->iobbegin(); it != device->iobend(); it ++)

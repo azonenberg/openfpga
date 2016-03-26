@@ -81,8 +81,13 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LUTS
 	
+	Greenpak4LUT* GetLUT(unsigned int i);
 	Greenpak4LUT* GetLUT2(unsigned int i);
 	Greenpak4LUT* GetLUT3(unsigned int i);
+	Greenpak4LUT* GetLUT4(unsigned int i);
+	
+	unsigned int GetLUTCount()
+	{ return m_luts.size(); }
 	
 	unsigned int GetLUT2Count()
 	{ return m_lut2s.size(); }

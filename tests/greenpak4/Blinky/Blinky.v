@@ -37,7 +37,7 @@ module Blinky(a, clk, o);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Internal logic
 	
-	parameter COUNT_DEPTH = 2;
+	parameter COUNT_DEPTH = 4;
 	
 	//Shift register
 	reg[COUNT_DEPTH-1:0] count = 0;
