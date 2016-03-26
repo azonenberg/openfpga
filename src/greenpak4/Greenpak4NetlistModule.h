@@ -27,11 +27,17 @@ class Greenpak4Netlist;
 class Greenpak4NetlistPort;
 class Greenpak4NetlistNode;
 
-//only for RTTI support
+//only for RTTI support and naming
 class Greenpak4NetlistEntity
 {
 public:
+	Greenpak4NetlistEntity(std::string name = "")
+	: m_name(name)
+	{}
+
 	virtual ~Greenpak4NetlistEntity();
+	
+	std::string m_name;
 };
 
 //A single named net in the netlist (must be one bit wide, vectors are split externally)
@@ -57,7 +63,6 @@ public:
 	{ m_parnode = NULL; }
 	virtual ~Greenpak4NetlistCell();
 
-	std::string m_name;
 	std::string m_type;
 	
 	bool HasParameter(std::string att)

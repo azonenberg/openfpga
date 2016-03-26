@@ -95,34 +95,26 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 /**
 	@brief Print the report showing which cells in the netlist got placed where
  */
-void PrintPlacementReport(PARGraph* /*netlist*/, Greenpak4Device* device)
+void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* /*device*/)
 {
 	printf("\nPlacement report:\n");
+	printf("    +----------------------------------------------------+-----------------+\n");
+	printf("    | %-50s | %-15s |\n", "Node", "Site");
 	
-	//TODO: loop over netlist nodes and print what they mapped to?
-	
-	//Flipflops
-	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
+	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
-		Greenpak4Flipflop* ff = device->GetFlipflopByIndex(i);
-		PARGraphNode* mate = ff->GetPARNode()->GetMate();
-		if(!mate)
+		auto nnode = netlist->GetNodeByIndex(i);
+		auto src = static_cast<Greenpak4NetlistEntity*>(nnode->GetData());
+		auto dnode = nnode->GetMate();
+		
+		//unplaced, ignore it for now
+		if(dnode == NULL)
 			continue;
-		printf("    FF%-2d:    %s\n",
-			ff->GetFlipflopIndex(),
-			static_cast<Greenpak4NetlistCell*>(mate->GetData())->m_name.c_str());
+		auto dst = static_cast<Greenpak4BitstreamEntity*>(dnode->GetData());
+			
+		printf("    | %-50s | %-15s |\n", src->m_name.c_str(), dst->GetDescription().c_str());
+		
 	}
 	
-	//LUTs
-	for(unsigned int i=0; i<device->GetLUTCount(); i++)
-	{
-		Greenpak4LUT* lut = device->GetLUT(i);
-		PARGraphNode* mate = lut->GetPARNode()->GetMate();
-		if(!mate)
-			continue;
-		printf("    LUT%d_%-2d: %s\n",
-			lut->GetOrder(),
-			lut->GetLutIndex(),
-			static_cast<Greenpak4NetlistCell*>(mate->GetData())->m_name.c_str());
-	}
+	printf("    +----------------------------------------------------+-----------------+\n");
 }

@@ -26,9 +26,9 @@ using namespace std;
 // Construction / destruction
 
 Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::string name, json_object* object)
-	: m_direction(DIR_INPUT)
+	: Greenpak4NetlistEntity(name)
+	, m_direction(DIR_INPUT)
 	, m_module(module)
-	, m_name(name)
 	, m_net(NULL)
 	, m_node(NULL)
 	, m_parnode(NULL)

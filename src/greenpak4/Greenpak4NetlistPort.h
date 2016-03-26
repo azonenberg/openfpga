@@ -74,8 +74,6 @@ public:
 	
 	Greenpak4NetlistModule* m_module;
 	
-	std::string m_name;
-	
 	Greenpak4NetlistNet* m_net;
 	
 	//The netlist node we're attached to
