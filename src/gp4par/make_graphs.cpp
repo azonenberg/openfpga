@@ -20,6 +20,15 @@
 
 using namespace std;
 
+void MakeIOBNodes(
+	Greenpak4NetlistModule* module,
+	Greenpak4Device* device,
+	PARGraph*& ngraph,
+	PARGraph*& dgraph,
+	labelmap& lmap,
+	uint32_t iob_label
+	);
+
 /**
 	@brief Build the graphs
  */
@@ -48,104 +57,7 @@ void BuildGraphs(
 	}
 	
 	//Create netlist nodes for the IOBs
-	for(auto it = module->port_begin(); it != module->port_end(); it ++)
-	{
-		Greenpak4NetlistPort* port = it->second;
-		
-		if(!module->HasNet(it->first))
-		{
-			fprintf(stderr, "INTERNAL ERROR: Netlist has a port named \"%s\" but no corresponding net\n",
-				it->first.c_str());
-			exit(-1);
-		}
-		
-		//Look up the net and make sure there's a LOC
-		Greenpak4NetlistNet* net = module->GetNet(it->first);
-		if(!net->HasAttribute("LOC"))
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level port \"%s\" does not have a constrained location (LOC attribute).\n"
-				"       In order to ensure proper device functionality all IO pins must be constrained.\n",
-				it->first.c_str());
-			exit(-1);
-		}
-		
-		//Look up the matching IOB
-		int pin_num;
-		string sloc = net->GetAttribute("LOC");
-		if(1 != sscanf(sloc.c_str(), "P%d", &pin_num))
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level port \"%s\" has an invalid LOC constraint \"%s\" (expected P3, P5, etc)\n",
-				it->first.c_str(),
-				sloc.c_str());
-			exit(-1);
-		}
-		Greenpak4IOB* iob = device->GetIOB(pin_num);
-		if(iob == NULL)
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level port \"%s\" has an invalid LOC constraint \"%s\" (no such pin, or not a GPIO)\n",
-				it->first.c_str(),
-				sloc.c_str());
-			exit(-1);
-		}
-		
-		//Type B IOBs cannot be used for inout
-		if( (port->m_direction == Greenpak4NetlistPort::DIR_INOUT) &&
-			(dynamic_cast<Greenpak4IOBTypeB*>(iob) != NULL) )
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level inout port \"%s\" is constrained to a pin \"%s\" which does "
-					"not support bidirectional IO\n",
-				it->first.c_str(),
-				sloc.c_str());
-			exit(-1);
-		}
-		
-		//Input-only pins cannot be used for IO or output
-		if( (port->m_direction != Greenpak4NetlistPort::DIR_INPUT) &&
-			iob->IsInputOnly() )
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level port \"%s\" is constrained to an input-only pin \"%s\" but is not "
-					"declared as an input\n",
-				it->first.c_str(),
-				sloc.c_str());
-			exit(-1);
-		}
-		
-		//Allocate a new graph label for these IOBs
-		string sname = string("Constrained IOB ") + it->first;
-		uint32_t label = AllocateLabel(ngraph, dgraph, lmap, sname);
-		
-		//If the IOB already has a custom label, we constrained two nets to the same place!
-		PARGraphNode* ipnode = iob->GetPARNode();
-		if(ipnode->GetLabel() != iob_label)
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level port \"%s\" is constrained to pin \"%s\" but another port is already constrained "
-				"to this pin.\n",
-				it->first.c_str(),
-				sloc.c_str());
-			exit(-1);
-		}
-		
-		//Create the node
-		//TODO: Support buses here (for now, point to the entire port)
-		PARGraphNode* netnode = new PARGraphNode(label, port);
-		port->m_parnode = netnode;
-		ngraph->AddNode(netnode);
-		
-		//Re-label the assigned IOB so we get a proper match to it
-		ipnode->Relabel(label);
-	}
+	MakeIOBNodes(module, device, ngraph, dgraph, lmap, iob_label);
 	
 	//Make device nodes for each type of LUT
 	uint32_t lut2_label = AllocateLabel(ngraph, dgraph, lmap, "GP_2LUT");
@@ -171,7 +83,8 @@ void BuildGraphs(
 		PARGraphNode* lnode = new PARGraphNode(lut4_label, lut);
 		lut->SetPARNode(lnode);
 		dgraph->AddNode(lnode);
-	}	
+	}
+	
 	//Make device nodes for each type of flipflop
 	uint32_t dff_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFF");
 	uint32_t dffsr_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFFSR");
@@ -410,4 +323,116 @@ void BuildGraphs(
 	
 	//TODO: add dedicated routing between hard IP etc
 	
+}
+
+/**
+	@brief Make netlist nodes for the IOBs
+ */
+void MakeIOBNodes(
+	Greenpak4NetlistModule* module,
+	Greenpak4Device* device,
+	PARGraph*& ngraph,
+	PARGraph*& dgraph,
+	labelmap& lmap,
+	uint32_t iob_label
+	)
+{
+	for(auto it = module->port_begin(); it != module->port_end(); it ++)
+	{
+		Greenpak4NetlistPort* port = it->second;
+		
+		if(!module->HasNet(it->first))
+		{
+			fprintf(stderr, "INTERNAL ERROR: Netlist has a port named \"%s\" but no corresponding net\n",
+				it->first.c_str());
+			exit(-1);
+		}
+		
+		//Look up the net and make sure there's a LOC
+		Greenpak4NetlistNet* net = module->GetNet(it->first);
+		if(!net->HasAttribute("LOC"))
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" does not have a constrained location (LOC attribute).\n"
+				"       In order to ensure proper device functionality all IO pins must be constrained.\n",
+				it->first.c_str());
+			exit(-1);
+		}
+		
+		//Look up the matching IOB
+		int pin_num;
+		string sloc = net->GetAttribute("LOC");
+		if(1 != sscanf(sloc.c_str(), "P%d", &pin_num))
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" has an invalid LOC constraint \"%s\" (expected P3, P5, etc)\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		Greenpak4IOB* iob = device->GetIOB(pin_num);
+		if(iob == NULL)
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" has an invalid LOC constraint \"%s\" (no such pin, or not a GPIO)\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
+		//Type B IOBs cannot be used for inout
+		if( (port->m_direction == Greenpak4NetlistPort::DIR_INOUT) &&
+			(dynamic_cast<Greenpak4IOBTypeB*>(iob) != NULL) )
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level inout port \"%s\" is constrained to a pin \"%s\" which does "
+					"not support bidirectional IO\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
+		//Input-only pins cannot be used for IO or output
+		if( (port->m_direction != Greenpak4NetlistPort::DIR_INPUT) &&
+			iob->IsInputOnly() )
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" is constrained to an input-only pin \"%s\" but is not "
+					"declared as an input\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
+		//Allocate a new graph label for these IOBs
+		string sname = string("Constrained IOB ") + it->first;
+		uint32_t label = AllocateLabel(ngraph, dgraph, lmap, sname);
+		
+		//If the IOB already has a custom label, we constrained two nets to the same place!
+		PARGraphNode* ipnode = iob->GetPARNode();
+		if(ipnode->GetLabel() != iob_label)
+		{
+			fprintf(
+				stderr,
+				"ERROR: Top-level port \"%s\" is constrained to pin \"%s\" but another port is already constrained "
+				"to this pin.\n",
+				it->first.c_str(),
+				sloc.c_str());
+			exit(-1);
+		}
+		
+		//Create the node
+		//TODO: Support buses here (for now, point to the entire port)
+		PARGraphNode* netnode = new PARGraphNode(label, port);
+		port->m_parnode = netnode;
+		ngraph->AddNode(netnode);
+		
+		//Re-label the assigned IOB so we get a proper match to it
+		ipnode->Relabel(label);
+	}
 }
