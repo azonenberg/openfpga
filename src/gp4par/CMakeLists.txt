@@ -1,5 +1,7 @@
 add_executable(gp4par
 	main.cpp
+	
+	commit.cpp
 	make_graphs.cpp
 	par_main.cpp
 	par_reporting.cpp
