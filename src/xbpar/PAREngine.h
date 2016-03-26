@@ -50,7 +50,7 @@ protected:
 
 	virtual bool SanityCheck(bool verbose);
 	virtual void InitialPlacement(bool verbose);
-	virtual bool OptimizePlacement(bool verbose);
+	virtual bool OptimizePlacement(std::vector<PARGraphNode*>& badnodes, bool verbose);
 
 	PARGraph* m_netlist;
 	PARGraph* m_device;

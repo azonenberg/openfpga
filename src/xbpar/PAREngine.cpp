@@ -63,23 +63,41 @@ bool PAREngine::PlaceAndRoute(bool verbose, uint32_t seed)
 	std::vector<PARGraphEdge*> unroutes;
 	uint32_t best_cost = 1000000;
 	uint32_t time_since_best_cost = 0;
+	bool made_change = true;
+	uint32_t newcost = 0;
 	while(m_temperature > 0)
 	{
-		//Figure out how good we are now
-		uint32_t newcost = ComputeAndPrintScore(unroutes, iteration);
+		//Figure out how good we are now.
+		//Don't recompute the cost if we didn't accept the last iteration's changes
+		if(made_change)
+			newcost = ComputeAndPrintScore(unroutes, iteration);
 		time_since_best_cost ++;
 		iteration ++;
 		
-		//If the new placement is better, make a note of that
+		//If cost is zero, stop now - we found a satisfactory placement!
+		if(newcost == 0)
+			break;
+		
+		//If the new placement is better than our previous record, make a note of that
 		if(newcost < best_cost)
 		{
 			best_cost = newcost;
 			time_since_best_cost = 0;
 		}
 		
-		//Try to optimize the placement more
-		if(!OptimizePlacement(verbose))
+		//If we failed to improve placement after ten iterations it's hopeless, give up
+		//if(time_since_best_cost > 10)
+		//	break;
+		
+		//Find the set of nodes in the netlist that we can optimize
+		//If none were found, give up
+		std::vector<PARGraphNode*> badnodes;
+		FindSubOptimalPlacements(badnodes);
+		if(badnodes.empty())
 			break;
+		
+		//Try to optimize the placement more
+		made_change = OptimizePlacement(badnodes, verbose);
 			
 		//Cool the system down
 		//TODO: Decide on a good rate for this?
@@ -209,30 +227,19 @@ void PAREngine::InitialPlacement(bool verbose)
 	
 	Calculate a cost function for the current placement, then optimize
 	
-	@return True if further optimization is necessary/possible, false otherwise
+	@return True if we made changes to the netlist, false if nothing was done
  */
-bool PAREngine::OptimizePlacement(bool /*verbose*/)
+bool PAREngine::OptimizePlacement(std::vector<PARGraphNode*>& badnodes, bool /*verbose*/)
 {
-	//If temperature hits zero, we can't optimize any further
-	if(m_temperature == 0)
-		return false;
-		
-	//Find the set of nodes in the netlist that we can optimize
-	//If none were found, give up
-	std::vector<PARGraphNode*> badnodes;
-	FindSubOptimalPlacements(badnodes);
-	if(badnodes.empty())
-		return false;
-		
-	//Pick one of those nodes at random as our pivot node
+	//Pick one of the nodes at random as our pivot node
 	PARGraphNode* pivot = badnodes[rand() % badnodes.size()];
 	
 	//Find a new site for the pivot node (but remember the old site)
-	//If nothing was found, skip it but don't abort the whole PAR
+	//If nothing was found, bail out
 	PARGraphNode* old_mate = pivot->GetMate();
 	PARGraphNode* new_mate = GetNewPlacementForNode(pivot);
 	if(new_mate == NULL)
-		return true;
+		return false;
 	
 	//Do the swap, and measure the old/new scores
 	uint32_t original_cost = ComputeCost();
@@ -245,7 +252,7 @@ bool PAREngine::OptimizePlacement(bool /*verbose*/)
 	//	printf("    Original cost %u, new cost %u\n", original_cost, new_cost);
 
 	//If new cost is less, or greater with probability temperature, accept it
-	//TODO: make probability depend on delta cost
+	//TODO: make probability depend on dCost?
 	if(new_cost < original_cost)
 		return true;
 	if( (rand() % 100) < (int)m_temperature )
@@ -253,7 +260,7 @@ bool PAREngine::OptimizePlacement(bool /*verbose*/)
 		
 	//If we don't like the change, revert
 	MoveNode(pivot, old_mate);
-	return true;
+	return false;
 }
 
 /**
