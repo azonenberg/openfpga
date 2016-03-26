@@ -46,5 +46,6 @@ void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut);
 void CommitFFChanges(Greenpak4NetlistCell* ncell, Greenpak4Flipflop* ff);
 void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
 void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned int* num_routes_used);
+void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* device);
 
 #endif

@@ -46,8 +46,9 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 	unsigned int num_routes_used[2];
 	CommitChanges(dgraph, device, num_routes_used);
 	
-	//Print device utilization report
+	//Print reports
 	PrintUtilizationReport(ngraph, device, num_routes_used);
+	PrintPlacementReport(ngraph, device);
 	
 	//Final cleanup
 	delete ngraph;
@@ -121,21 +122,39 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	printf("    X-conn:  %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);
 	printf("      East:  %2d/10 (%d %%)\n", num_routes_used[0], num_routes_used[0]*100 / 10);
 	printf("      West:  %2d/10 (%d %%)\n", num_routes_used[1], num_routes_used[1]*100 / 10);
+}
+
+/**
+	@brief Print the report showing which cells in the netlist got placed where
+ */
+void PrintPlacementReport(PARGraph* /*netlist*/, Greenpak4Device* device)
+{
+	//Flipflops
+	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
+	{
+		Greenpak4Flipflop* ff = device->GetFlipflopByIndex(i);
+		PARGraphNode* mate = ff->GetPARNode()->GetMate();
+		if(!mate)
+			continue;
+		printf("    FF%-2d:    %s\n",
+			ff->GetFlipflopIndex(),
+			static_cast<Greenpak4NetlistCell*>(mate->GetData())->m_name.c_str());
+	}
 	
-	//Print the detailed map report (TODO separate function)
-	printf("\nCell mapping:\n");
+	//LUTs
+	printf("\nPlacement report:\n");
 	for(unsigned int i=0; i<device->GetLUTCount(); i++)
 	{
 		Greenpak4LUT* lut = device->GetLUT(i);
 		PARGraphNode* mate = lut->GetPARNode()->GetMate();
 		if(!mate)
 			continue;
-		Greenpak4NetlistCell* cell = static_cast<Greenpak4NetlistCell*>(mate->GetData());
-			
-		printf("    LUT%d_%d: %s\n", lut->GetOrder(), lut->GetLutIndex(), cell->m_name.c_str());
+		printf("    LUT%d_%-2d: %s\n",
+			lut->GetOrder(),
+			lut->GetLutIndex(),
+			static_cast<Greenpak4NetlistCell*>(mate->GetData())->m_name.c_str());
 	}
 }
-
 
 /**
 	@brief Do various sanity checks after the design is routed
