@@ -405,6 +405,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		device_nodes.push_back(device->GetPowerRail(i, true)->GetPARNode());
 		device_nodes.push_back(device->GetPowerRail(i, false)->GetPARNode());
 	}
+	device_nodes.push_back(device->GetLFOscillator()->GetPARNode());
 	//TODO: hard IP
 	
 	//Add the O(n^2) edges between the main fabric nodes
@@ -418,6 +419,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 				auto entity = static_cast<Greenpak4BitstreamEntity*>(y->GetData());
 				auto lut = dynamic_cast<Greenpak4LUT*>(entity);
 				auto ff = dynamic_cast<Greenpak4Flipflop*>(entity);
+				auto lfosc = dynamic_cast<Greenpak4LFOscillator*>(entity);
+				
 				if(lut)
 				{
 					x->AddEdge(y, "IN0");
@@ -440,8 +443,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 					}
 					x->AddEdge(y, "Q");
 				}
-				
-				//TODO: add paths to oscillator
+				else if(lfosc)
+					x->AddEdge(y, "PWRDN");
 				
 				//no, just add path to the node in general
 				else
