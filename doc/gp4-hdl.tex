@@ -4,6 +4,7 @@
 \usepackage{url}
 \usepackage{tabularx}
 \usepackage{graphicx}
+\usepackage{placeins}
 
 % configuration of source code examples
 \usepackage{listings}
@@ -478,10 +479,75 @@ GP_LUT3 #(
 TODO
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% GP4_VDD
+% GP_LFOSC
 
 \pagebreak
-\subsection{GP4\_VDD: Power Connection}
+\subsection{GP\_LFOSC: Low Frequency Oscillator}
+
+\subsubsection{Introduction}
+This primitive represents the low-frequency (1730 Hz) oscillator block.
+
+Note that all of the oscillator blocks in GreenPak4 internally share the PWRDN input. As a result, all oscillator 
+blocks in the design that have PWRDN\_EN set to 1 must have PWRDN connected to the same source. Failure to follow this 
+rule will result in a physical DRC failure.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+PWRDN & Input & 1 &
+	{\bfseries PWRDN\_EN = 1:} \newline Bring this signal high to power down the oscillator. \newline
+	{\bfseries PWRDN\_EN = 0:} \newline Ignored, tie to 1'b0\\
+\hline
+CLKOUT & Output & 1 & 1730 Hz (nominal) clock signal \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+AUTO\_PWRDN & Boolean & 1 & 
+	{\bfseries When 1: } \newline Automatically power down the oscillator when all loads are powered down. \newline
+	{\bfseries When 0: } \newline Automatic power-down is disabled. The PWRDN\_EN and PWRDN inputs are unaffected.\\
+\hline
+OUT\_DIV & Integer & 8 &
+	Output divider. Legal values: \newline
+	{\bfseries 1:} 1730 Hz output \newline
+	{\bfseries 2:} 865 Hz output \newline
+	{\bfseries 4:} 432 Hz output \newline
+	{\bfseries 16:} 108 Hz output
+\\
+\hline
+PWRDN\_EN & Boolean & 1 & Set to 1 to enable the PWRDN pin, or 0 to disable. \\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-lfosc-example} xx.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire foo;
+GP_VDD vdd(
+	.OUT(foo)
+);
+\end{lstlisting}
+\caption{Example usage of GP\_LFOSC}
+\label{gp-lfosc-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP4_VDD
+
+\FloatBarrier
+\pagebreak
+\subsection{GP\_VDD: Power Connection}
 
 \subsubsection{Introduction}
 This design element is internally used by gp4par as the source for all nets tied to a constant ``1" value. It does not 
@@ -511,11 +577,11 @@ The example shown in figure \ref{gp-vdd-example} ties the signal ``foo" high.
 \begin{figure}[h]
 \begin{lstlisting}
 wire foo;
-GP4_VDD vdd(
+GP_VDD vdd(
 	.OUT(foo)
 );
 \end{lstlisting}
-\caption{Example usage of GP4\_VDD}
+\caption{Example usage of GP\_VDD}
 \label{gp-vdd-example}
 \end{figure}
 
@@ -523,7 +589,7 @@ GP4_VDD vdd(
 % GP4_VSS
 
 \pagebreak
-\subsection{GP4\_VSS: Ground Connection}
+\subsection{GP\_VSS: Ground Connection}
 
 \subsubsection{Introduction}
 This design element is internally used by gp4par as the source for all nets tied to a constant ``0" value. It does not 
@@ -553,11 +619,11 @@ The example shown in figure \ref{gp-vss-example} ties the signal ``foo" low.
 \begin{figure}[h]
 \begin{lstlisting}
 wire foo;
-GP4_VSS vss(
+GP_VSS vss(
 	.OUT(foo)
 );
 \end{lstlisting}
-\caption{Example usage of GP4\_VSS}
+\caption{Example usage of GP\_VSS}
 \label{gp-vss-example}
 \end{figure}
 

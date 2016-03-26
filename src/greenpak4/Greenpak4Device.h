@@ -114,6 +114,12 @@ public:
 	{ return m_dffAll[i]; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// OSCILLATORS
+	
+	Greenpak4LFOscillator* GetLFOscillator()
+	{ return m_lfosc; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// OTHER
 
 protected:
@@ -163,6 +169,9 @@ protected:
 	
 	///Constant digital 0
 	Greenpak4PowerRail* m_constantZero[2];
+	
+	//Low-frequency oscillator
+	Greenpak4LFOscillator* m_lfosc;
 	
 	/**
 		@brief Cross-connections between our matrices

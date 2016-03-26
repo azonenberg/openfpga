@@ -16,28 +16,68 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#include "Greenpak4.h"
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
- 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
+Greenpak4LFOscillator::Greenpak4LFOscillator(
+	Greenpak4Device* device,
+	unsigned int matrix,
+	unsigned int ibase,
+	unsigned int oword,
+	unsigned int cbase)
+	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
+{
 
-#include "Greenpak4Device.h"
+}
 
-#endif
+Greenpak4LFOscillator::~Greenpak4LFOscillator()
+{
+	
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Bitfile metadata
+
+unsigned int Greenpak4LFOscillator::GetConfigLen()
+{
+	return 0;
+	//return 1 << m_order;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization of the truth table
+
+bool Greenpak4LFOscillator::Load(bool* /*bitstream*/)
+{
+	printf("Greenpak4LFOscillator::Load() not yet implemented\n");
+	return false;
+}
+
+bool Greenpak4LFOscillator::Save(bool* bitstream)
+{
+	printf("Greenpak4LFOscillator::Save() not yet implemented\n");
+	
+	/*
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+	
+	for(unsigned int i=0; i<m_order; i++)
+	{
+		if(!WriteMatrixSelector(bitstream, m_inputBaseWord + i, m_inputs[i]))
+			return false;
+	}
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// LFOscillator CONTENTS
+		
+	unsigned int nmax = GetConfigLen();
+	for(unsigned int i=0; i<nmax; i++)
+		bitstream[m_configBase + i] = m_truthtable[i];
+	*/
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors

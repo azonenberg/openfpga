@@ -16,28 +16,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#ifndef Greenpak4LFOscillator_h
+#define Greenpak4LFOscillator_h
 
 /**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
- 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
+	@brief A single LFOscillator
+ */ 
+class Greenpak4LFOscillator : public Greenpak4BitstreamEntity
+{
+public:
 
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
+	//Construction / destruction
+	Greenpak4LFOscillator(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	virtual ~Greenpak4LFOscillator();
+		
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
+	
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
 
-#include "Greenpak4Device.h"
+	
+protected:
+};
 
 #endif

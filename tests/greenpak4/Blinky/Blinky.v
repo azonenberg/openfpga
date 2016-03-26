@@ -37,12 +37,23 @@ module Blinky(a, clk, o);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Internal logic
 	
+	//The 1730 Hz oscillator
+	wire clk_108hz;
+	GP_LFOSC #(
+		.PWRDN_EN(0),
+		.AUTO_PWRDN(0),
+		.OUT_DIV(16)
+	) lfosc (
+		.PWRDN(1'b0),
+		.CLKOUT(clk_108hz)
+	);
+	
 	parameter COUNT_DEPTH = 4;
 	
 	//Shift register
 	reg[COUNT_DEPTH-1:0] count = 0;
 	
-	always @(posedge clk) begin
+	always @(posedge clk_108hz) begin
 		count	<= count + 1'd1;
 		if(count == 0)
 			o	<= ~o;

@@ -346,6 +346,11 @@ void BuildGraphs(
 	}
 	
 	//Make device nodes for the low-frequency oscillator
+	uint32_t lfosc_label = AllocateLabel(ngraph, dgraph, lmap, "GP_LFOSC");
+	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();
+	PARGraphNode* lfnode = new PARGraphNode(lfosc_label, lfosc);
+	lfosc->SetPARNode(lfnode);
+	dgraph->AddNode(lfnode);
 	
 	//TODO: make nodes for all of the other hard IP
 	
@@ -383,11 +388,13 @@ void BuildGraphs(
 			label = dff_label;
 		else if( (cell->m_type == "GP_DFFR") || (cell->m_type == "GP_DFFS") || (cell->m_type == "GP_DFFSR") )
 			label = dffsr_label;
+		else if(cell->m_type == "GP_LFOSC")
+			label = lfosc_label;
 		
-		//Power nets
-		else if(cell->m_type == "GP4_VDD")
+		//Power nets are virtual cells we use internally
+		else if(cell->m_type == "GP_VDD")
 			label = vdd_label;
-		else if(cell->m_type == "GP4_VSS")
+		else if(cell->m_type == "GP_VSS")
 			label = vss_label;
 		
 		else
@@ -545,6 +552,8 @@ void BuildGraphs(
 					x->AddEdge(y, "Q");
 				}
 				
+				//TODO: add paths to oscillator
+				
 				//no, just add path to the node in general
 				else
 					x->AddEdge(y);
@@ -578,6 +587,7 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		auto iob = dynamic_cast<Greenpak4IOB*>(bnode);
 		auto lut = dynamic_cast<Greenpak4LUT*>(bnode);
 		auto ff = dynamic_cast<Greenpak4Flipflop*>(bnode);
+		auto lfosc = dynamic_cast<Greenpak4LFOscillator*>(bnode);
 		auto pwr = dynamic_cast<Greenpak4PowerRail*>(bnode);
 			
 		//Configure nodes of known type
@@ -587,6 +597,10 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			CommitLUTChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), lut);
 		else if(ff)
 			CommitFFChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), ff);
+		else if(lfosc)
+		{
+			printf("LFOsc commit changes not implemented\n");
+		}
 			
 		//Ignore power rails, they have no configuration
 		else if(pwr)
@@ -595,7 +609,7 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		//No idea what it is
 		else
 		{
-			printf("WARNING: Node at config base %d has unrecognized entity type\n", bnode->GetConfigBase());
+			fprintf(stderr, "WARNING: Node at config base %d has unrecognized entity type\n", bnode->GetConfigBase());
 		}
 	}
 	
@@ -780,11 +794,18 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			auto ff = dynamic_cast<Greenpak4Flipflop*>(dst);
 			auto pwr = dynamic_cast<Greenpak4PowerRail*>(dst);
 			auto spwr = dynamic_cast<Greenpak4PowerRail*>(src);
+			auto dosc = dynamic_cast<Greenpak4LFOscillator*>(dst);
+			auto sosc = dynamic_cast<Greenpak4LFOscillator*>(src);
 			
 			//If the source node is power, patch the topology so that everything comes from the right matrix.
 			//We don't want to waste cross-connections on power nets
 			if(spwr)
 				src = pdev->GetPowerRail(dst->GetMatrix(), spwr->GetDigitalValue());
+				
+			else if(sosc)
+			{
+				printf("TODO: how to handle lfosc src\n");
+			}
 			
 			//Cross connections
 			unsigned int srcmatrix = src->GetMatrix();
@@ -857,6 +878,12 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 					ff->SetSRMode(false);
 					ff->SetNSRSignal(src);
 				}
+			}
+			
+			//Destination is the low-frequency oscillator
+			else if(dosc)
+			{
+				printf("Don't know how to configure LFOsc inputs\n");
 			}
 			
 			else if(pwr)

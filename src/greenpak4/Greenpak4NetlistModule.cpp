@@ -133,8 +133,8 @@ Greenpak4NetlistModule::~Greenpak4NetlistModule()
 
 void Greenpak4NetlistModule::CreatePowerNets()
 {
-	string vdd = "GP4_VDD";
-	string vss = "GP4_VSS";
+	string vdd = "GP_VDD";
+	string vss = "GP_VSS";
 	
 	//Create power/ground nets
 	m_vdd = new Greenpak4NetlistNet;
