@@ -44,6 +44,8 @@ public:
 	bool GetDigitalValue()
 	{ return (m_outputBaseWord != 0); }
 	
+	virtual std::string GetDescription();
+	
 protected:
 };
 

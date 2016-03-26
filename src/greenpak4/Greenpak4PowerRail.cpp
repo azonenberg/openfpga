@@ -18,6 +18,8 @@
  
 #include "Greenpak4.h"
 
+using namespace std;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
@@ -55,4 +57,15 @@ bool Greenpak4PowerRail::Load(bool* /*bitstream*/)
 bool Greenpak4PowerRail::Save(bool* /*bitstream*/)
 {
 	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+string Greenpak4PowerRail::GetDescription()
+{
+	if(GetDigitalValue())
+		return "power";
+	else
+		return "ground";
 }

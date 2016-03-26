@@ -18,6 +18,8 @@
  
 #include "Greenpak4.h"
 
+using namespace std;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
@@ -111,6 +113,13 @@ Greenpak4BitstreamEntity* Greenpak4LUT::GetInputSignal(unsigned int n)
 	}
 	
 	return m_inputs[n];
+}
+
+string Greenpak4LUT::GetDescription()
+{
+	char buf[128];
+	snprintf(buf, sizeof(buf), "LUT%d_%d", m_order, m_lutnum);
+	return string(buf);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

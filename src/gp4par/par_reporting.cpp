@@ -99,6 +99,8 @@ void PrintPlacementReport(PARGraph* /*netlist*/, Greenpak4Device* device)
 {
 	printf("\nPlacement report:\n");
 	
+	//TODO: loop over netlist nodes and print what they mapped to?
+	
 	//Flipflops
 	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
 	{

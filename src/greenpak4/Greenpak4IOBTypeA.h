@@ -43,7 +43,8 @@ public:
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-
+	
+	virtual std::string GetDescription();
 };
 
 #endif

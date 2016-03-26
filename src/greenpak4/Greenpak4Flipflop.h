@@ -60,6 +60,8 @@ public:
 	unsigned int GetFlipflopIndex()
 	{ return m_ffnum; }
 
+	virtual std::string GetDescription();
+
 protected:
 	
 	///Index of our flipflop

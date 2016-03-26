@@ -102,17 +102,13 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 		printf(" to ");
 		if(dcell != NULL)
 		{
-			printf("cell %s (mapped to ", dcell->m_name.c_str());
-			
-			//Figure out what we got mapped to
 			auto entity = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
-			auto lut = dynamic_cast<Greenpak4LUT*>(entity);
-			if(lut != NULL)
-				printf("LUT%u_%u", lut->GetOrder(), lut->GetLutIndex());
-			else
-				printf("unknown site");
-			
-			printf(") pin %s\n", edge->m_destport.c_str());
+			printf(
+				"cell %s (mapped to %s) pin %s\n",
+				dcell->m_name.c_str(),
+				entity->GetDescription().c_str(),
+				edge->m_destport.c_str()
+				);
 		}
 		else if(dport != NULL)
 			printf("port %s\n", dport->m_name.c_str());

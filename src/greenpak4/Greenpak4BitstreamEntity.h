@@ -22,6 +22,8 @@
 class Greenpak4Device;
 class PARGraphNode;
 
+#include <string>
+
 /**
 	@brief An entity which is serialized to/from the bitstream
  */ 
@@ -73,6 +75,11 @@ public:
 	
 	Greenpak4Device* GetDevice()
 	{ return m_device; }
+	
+	/**
+		@brief Returns a human-readable description of this node (like LUT3_1)
+	 */
+	virtual std::string GetDescription() =0;
 	
 protected:
 

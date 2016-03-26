@@ -44,6 +44,8 @@ public:
 	
 	void SetInput(Greenpak4BitstreamEntity* input);
 	
+	virtual std::string GetDescription();
+	
 protected:
 	Greenpak4BitstreamEntity* m_input;
 };

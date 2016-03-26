@@ -65,6 +65,8 @@ public:
 	unsigned int GetLutIndex()
 	{ return m_lutnum; }
 	
+	virtual std::string GetDescription();
+	
 protected:
 
 	///Index of our LUT

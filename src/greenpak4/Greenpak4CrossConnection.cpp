@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+using namespace std;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
@@ -50,6 +52,13 @@ unsigned int Greenpak4CrossConnection::GetConfigLen()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
+
+string Greenpak4CrossConnection::GetDescription()
+{
+	char buf[128];
+	snprintf(buf, sizeof(buf), "XCONN_%d_%d", m_matrix, m_inputBaseWord);
+	return string(buf);
+}
 
 void Greenpak4CrossConnection::SetInput(Greenpak4BitstreamEntity* input)
 {
