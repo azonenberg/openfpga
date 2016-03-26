@@ -129,6 +129,8 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
  */
 void PrintPlacementReport(PARGraph* /*netlist*/, Greenpak4Device* device)
 {
+	printf("\nPlacement report:\n");
+	
 	//Flipflops
 	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
 	{
@@ -142,7 +144,6 @@ void PrintPlacementReport(PARGraph* /*netlist*/, Greenpak4Device* device)
 	}
 	
 	//LUTs
-	printf("\nPlacement report:\n");
 	for(unsigned int i=0; i<device->GetLUTCount(); i++)
 	{
 		Greenpak4LUT* lut = device->GetLUT(i);
