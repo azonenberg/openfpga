@@ -28,6 +28,9 @@ void MakeIOBNodes(
 	labelmap& lmap,
 	uint32_t iob_label
 	);
+	
+void MakeNetlistEdges(Greenpak4Netlist* netlist);
+void MakeDeviceEdges(Greenpak4Device* device);
 
 /**
 	@brief Build the graphs
@@ -175,154 +178,10 @@ void BuildGraphs(
 	
 	//Create edges in the netlist.
 	//This requires breaking point-to-multipoint nets into multiple point-to-point links.
-	for(auto it = netlist->nodebegin(); it != netlist->nodeend(); it ++)
-	{
-		Greenpak4NetlistNode* node = *it;
-			
-		//printf("    Node %s is sourced by:\n", node->m_name.c_str());
+	MakeNetlistEdges(netlist);
 		
-		PARGraphNode* source = NULL;
-		
-		//See if it was sourced by a port
-		for(auto p : node->m_ports)
-		{
-			if(p->m_direction == Greenpak4NetlistPort::DIR_INPUT)
-			{
-				source = p->m_parnode;
-				//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
-				//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
-			}
-			
-			else if(p->m_direction == Greenpak4NetlistPort::DIR_INOUT)
-			{
-				fprintf(
-					stderr,
-					"ERROR: Tristates not implemented\n");
-				exit(-1);
-			}
-		}
-		
-		//See if it was sourced by a node
-		for(auto c : node->m_nodeports)
-		{
-			Greenpak4NetlistModule* module = netlist->GetModule(c.m_cell->m_type);
-			Greenpak4NetlistPort* port = module->GetPort(c.m_portname);
-			
-			if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
-				continue;
-			else if(port->m_direction == Greenpak4NetlistPort::DIR_INOUT)
-			{
-				fprintf(
-					stderr,
-					"ERROR: Tristates not implemented\n");
-				exit(-1);
-			}
-			
-			//TODO: Get the graph node for this port
-			//For now, the entire cell has a single node as its output
-			source = c.m_cell->m_parnode;
-			//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
-		}
-		
-		//printf("        and drives\n");
-		
-		//DRC fail if undriven net
-		if(source == NULL)
-		{
-			fprintf(
-				stderr,
-				"ERROR: Net \"%s\" has loads, but no driver\n",
-				node->m_name.c_str());
-			exit(-1);	
-		}
-		
-		//Create edges from this source node to all sink nodes
-		for(auto p : node->m_ports)
-		{
-			if(p->m_parnode != source)
-			{
-				source->AddEdge(p->m_parnode);
-				//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
-				//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
-			}
-		}
-		for(auto c : node->m_nodeports)
-		{
-			if(c.m_cell->m_parnode != source)
-			{
-				source->AddEdge(c.m_cell->m_parnode, c.m_portname);
-				//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
-			}
-		}
-	}
-	
-	//Create edges in the device. This is easy as we know a priori what connections are legal
-	//TODO: do more hard IP
-	
-	//Make a list of all nodes in each half of the device connected to general fabric routing
-	std::vector<PARGraphNode*> device_nodes;
-	for(unsigned int i=0; i<device->GetLUT2Count(); i++)
-		device_nodes.push_back(device->GetLUT2(i)->GetPARNode());
-	for(unsigned int i=0; i<device->GetLUT3Count(); i++)
-		device_nodes.push_back(device->GetLUT3(i)->GetPARNode());
-	for(unsigned int i=0; i<device->GetLUT4Count(); i++)
-		device_nodes.push_back(device->GetLUT4(i)->GetPARNode());
-	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
-		device_nodes.push_back(device->GetFlipflopByIndex(i)->GetPARNode());
-	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
-		device_nodes.push_back(it->second->GetPARNode());
-	for(unsigned int i=0; i<2; i++)
-	{
-		device_nodes.push_back(device->GetPowerRail(i, true)->GetPARNode());
-		device_nodes.push_back(device->GetPowerRail(i, false)->GetPARNode());
-	}
-	//TODO: hard IP
-	
-	//Add the O(n^2) edges between the main fabric nodes
-	for(auto x : device_nodes)
-	{
-		for(auto y : device_nodes)
-		{
-			if(x != y)
-			{
-				//Add paths to individual cell pins
-				auto entity = static_cast<Greenpak4BitstreamEntity*>(y->GetData());
-				auto lut = dynamic_cast<Greenpak4LUT*>(entity);
-				auto ff = dynamic_cast<Greenpak4Flipflop*>(entity);
-				if(lut)
-				{
-					x->AddEdge(y, "IN0");
-					x->AddEdge(y, "IN1");
-					if(lut->GetOrder() > 2)
-						x->AddEdge(y, "IN2");
-					if(lut->GetOrder() > 3)
-						x->AddEdge(y, "IN3");
-				}
-				else if(ff)
-				{
-					x->AddEdge(y, "D");
-					x->AddEdge(y, "CLK");
-					if(ff->HasSetReset())
-					{
-						//allow all ports and we figure out which to use later
-						x->AddEdge(y, "nSR");
-						x->AddEdge(y, "nSET");
-						x->AddEdge(y, "nRST");
-					}
-					x->AddEdge(y, "Q");
-				}
-				
-				//TODO: add paths to oscillator
-				
-				//no, just add path to the node in general
-				else
-					x->AddEdge(y);
-			}
-		}
-	}
-	
-	//TODO: add dedicated routing between hard IP etc
-	
+	//Create edges in the device. This is static for all designs (TODO cache somehow?)
+	MakeDeviceEdges(device);
 }
 
 /**
@@ -435,4 +294,161 @@ void MakeIOBNodes(
 		//Re-label the assigned IOB so we get a proper match to it
 		ipnode->Relabel(label);
 	}
+}
+
+/**
+	@brief Make all of the edges in the netlist
+ */
+void MakeNetlistEdges(Greenpak4Netlist* netlist)
+{
+	for(auto it = netlist->nodebegin(); it != netlist->nodeend(); it ++)
+	{
+		Greenpak4NetlistNode* node = *it;
+			
+		//printf("    Node %s is sourced by:\n", node->m_name.c_str());
+		
+		PARGraphNode* source = NULL;
+		
+		//See if it was sourced by a port
+		for(auto p : node->m_ports)
+		{
+			if(p->m_direction == Greenpak4NetlistPort::DIR_INPUT)
+			{
+				source = p->m_parnode;
+				//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
+				//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+			}
+			
+			else if(p->m_direction == Greenpak4NetlistPort::DIR_INOUT)
+			{
+				fprintf(
+					stderr,
+					"ERROR: Tristates not implemented\n");
+				exit(-1);
+			}
+		}
+		
+		//See if it was sourced by a node
+		for(auto c : node->m_nodeports)
+		{
+			Greenpak4NetlistModule* module = netlist->GetModule(c.m_cell->m_type);
+			Greenpak4NetlistPort* port = module->GetPort(c.m_portname);
+			
+			if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
+				continue;
+			else if(port->m_direction == Greenpak4NetlistPort::DIR_INOUT)
+			{
+				fprintf(
+					stderr,
+					"ERROR: Tristates not implemented\n");
+				exit(-1);
+			}
+			
+			//TODO: Get the graph node for this port
+			//For now, the entire cell has a single node as its output
+			source = c.m_cell->m_parnode;
+			//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+		}
+		
+		//printf("        and drives\n");
+		
+		//DRC fail if undriven net
+		if(source == NULL)
+		{
+			fprintf(
+				stderr,
+				"ERROR: Net \"%s\" has loads, but no driver\n",
+				node->m_name.c_str());
+			exit(-1);	
+		}
+		
+		//Create edges from this source node to all sink nodes
+		for(auto p : node->m_ports)
+		{
+			if(p->m_parnode != source)
+			{
+				source->AddEdge(p->m_parnode);
+				//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
+				//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+			}
+		}
+		for(auto c : node->m_nodeports)
+		{
+			if(c.m_cell->m_parnode != source)
+			{
+				source->AddEdge(c.m_cell->m_parnode, c.m_portname);
+				//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+			}
+		}
+	}
+}
+
+/**
+	@brief Make all of the edges for the device graph (list of all possible connections)
+ */
+void MakeDeviceEdges(Greenpak4Device* device)
+{
+	//Make a list of all nodes in each half of the device connected to general fabric routing
+	std::vector<PARGraphNode*> device_nodes;
+	for(unsigned int i=0; i<device->GetLUT2Count(); i++)
+		device_nodes.push_back(device->GetLUT2(i)->GetPARNode());
+	for(unsigned int i=0; i<device->GetLUT3Count(); i++)
+		device_nodes.push_back(device->GetLUT3(i)->GetPARNode());
+	for(unsigned int i=0; i<device->GetLUT4Count(); i++)
+		device_nodes.push_back(device->GetLUT4(i)->GetPARNode());
+	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
+		device_nodes.push_back(device->GetFlipflopByIndex(i)->GetPARNode());
+	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
+		device_nodes.push_back(it->second->GetPARNode());
+	for(unsigned int i=0; i<2; i++)
+	{
+		device_nodes.push_back(device->GetPowerRail(i, true)->GetPARNode());
+		device_nodes.push_back(device->GetPowerRail(i, false)->GetPARNode());
+	}
+	//TODO: hard IP
+	
+	//Add the O(n^2) edges between the main fabric nodes
+	for(auto x : device_nodes)
+	{
+		for(auto y : device_nodes)
+		{
+			if(x != y)
+			{
+				//Add paths to individual cell pins
+				auto entity = static_cast<Greenpak4BitstreamEntity*>(y->GetData());
+				auto lut = dynamic_cast<Greenpak4LUT*>(entity);
+				auto ff = dynamic_cast<Greenpak4Flipflop*>(entity);
+				if(lut)
+				{
+					x->AddEdge(y, "IN0");
+					x->AddEdge(y, "IN1");
+					if(lut->GetOrder() > 2)
+						x->AddEdge(y, "IN2");
+					if(lut->GetOrder() > 3)
+						x->AddEdge(y, "IN3");
+				}
+				else if(ff)
+				{
+					x->AddEdge(y, "D");
+					x->AddEdge(y, "CLK");
+					if(ff->HasSetReset())
+					{
+						//allow all ports and we figure out which to use later
+						x->AddEdge(y, "nSR");
+						x->AddEdge(y, "nSET");
+						x->AddEdge(y, "nRST");
+					}
+					x->AddEdge(y, "Q");
+				}
+				
+				//TODO: add paths to oscillator
+				
+				//no, just add path to the node in general
+				else
+					x->AddEdge(y);
+			}
+		}
+	}
+	
+	//TODO: add dedicated routing between hard IP etc
 }
