@@ -62,7 +62,7 @@ bool PAREngine::PlaceAndRoute(bool verbose, uint32_t seed)
 	std::vector<PARGraphEdge*> unroutes;
 	uint32_t best_cost = 1000000;
 	uint32_t time_since_best_cost = 0;
-	while(true)
+	while(m_temperature > 0)
 	{
 		//Figure out how good we are now
 		uint32_t newcost = ComputeAndPrintScore(unroutes, iteration);
@@ -76,15 +76,12 @@ bool PAREngine::PlaceAndRoute(bool verbose, uint32_t seed)
 			time_since_best_cost = 0;
 		}
 		
-		//If several iterations have gone by without improving placement, give up
-		if(time_since_best_cost >= 5)
-			break;
-		
 		//Try to optimize the placement more
 		if(!OptimizePlacement(verbose))
 			break;
 			
 		//Cool the system down
+		//TODO: Decide on a good rate for this?
 		m_temperature --;
 	}
 	
@@ -150,8 +147,8 @@ bool PAREngine::SanityCheck(bool verbose)
 	}
 		
 	//Cache the node count for both
-	m_netlist->CountLabels();
-	m_device->CountLabels();
+	m_netlist->IndexNodesByLabel();
+	m_device->IndexNodesByLabel();
 	
 	//For each legal label, verify we have enough nodes to map to
 	for(uint32_t label = 0; label <= nmax_net; label ++)
@@ -256,7 +253,7 @@ bool PAREngine::OptimizePlacement(bool /*verbose*/)
 		
 	//If we don't like the change, revert
 	MoveNode(pivot, old_mate);
-	return false;
+	return true;
 }
 
 /**
@@ -270,7 +267,7 @@ bool PAREngine::OptimizePlacement(bool /*verbose*/)
 void PAREngine::MoveNode(PARGraphNode* node, PARGraphNode* newpos)
 {
 	//Verify the labels match
-	if(node->GetLabel() != newpos->GetLabel())
+	if(!newpos->MatchesLabel(node->GetLabel()))
 	{
 		fprintf(stderr, "INTERNAL ERROR: tried to assign node to illegal site\n");
 		exit(-1);

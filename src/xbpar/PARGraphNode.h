@@ -78,7 +78,15 @@ public:
 	{ return m_pData; }
 
 	void AddAlternateLabel(uint32_t alt)
-	{ m_alternateLabels.insert(alt); }
+	{ m_alternateLabels.push_back(alt); }
+	
+	uint32_t GetAlternateLabelCount()
+	{ return m_alternateLabels.size(); }
+
+	uint32_t GetAlternateLabel(uint32_t i)
+	{ return m_alternateLabels[i]; }
+	
+	bool MatchesLabel(uint32_t target);
 
 protected:
 	
@@ -93,11 +101,11 @@ protected:
 	uint32_t m_label;
 	
 	/**
-		@brief Set of alternate labels that this node can map to.
+		@brief Set of alternate labels that can be mapped to this node.
 		
-		Only used in netlist graphs (not device graphs).
+		Only used in device graphs (not netlist graphs).
 	 */
-	std::set<uint32_t> m_alternateLabels;
+	std::vector<uint32_t> m_alternateLabels;
 	
 	/**
 		@brief Pointer to the external node (netlist or device entity) associated with this PAR node

@@ -37,7 +37,15 @@ module Blinky(a, clk, o);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Internal logic
 	
-	always @(posedge clk)
-		o <= a;
+	parameter COUNT_DEPTH = 2;
+	
+	//Shift register
+	reg[COUNT_DEPTH-1:0] count = 0;
+	
+	always @(posedge clk) begin
+		count	<= count + 1'd1;
+		if(count == 0)
+			o	<= ~o;
+	end
 
 endmodule

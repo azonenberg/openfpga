@@ -293,7 +293,12 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		Greenpak4Flipflop* flop = device->GetFlipflopByIndex(i);
 		PARGraphNode* fnode = NULL;
 		if(flop->HasSetReset())
+		{
 			fnode = new PARGraphNode(dffsr_label, flop);
+			
+			//It's legal to map a DFF to a DFFSR site, so add that as an alternate
+			fnode->AddAlternateLabel(dff_label);
+		}
 		else
 			fnode = new PARGraphNode(dff_label, flop);
 		flop->SetPARNode(fnode);
@@ -335,11 +340,9 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		else if(cell->m_type == "GP_4LUT")
 			label = lut4_label;
 		else if(cell->m_type == "GP_DFF")
-		{
-			//TODO: see if the node has set/reset and if not use dff_label
-			//TODO: allow DFF to be mapped to DFFSR
+			label = dff_label;
+		else if( (cell->m_type == "GP_DFFR") || (cell->m_type == "GP_DFFS") || (cell->m_type == "GP_DFFSR") )
 			label = dffsr_label;
-		}
 		
 		//Power nets
 		else if(cell->m_type == "GP4_VDD")
@@ -688,8 +691,6 @@ void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut)
  */
 void CommitFFChanges(Greenpak4NetlistCell* ncell, Greenpak4Flipflop* ff)
 {
-	printf("    Configuring flipflop %s\n", ncell->m_name.c_str());
-
 	if(ncell->HasParameter("SRMODE"))
 	{
 		if(ncell->m_parameters["SRMODE"] == "1")
@@ -705,8 +706,6 @@ void CommitFFChanges(Greenpak4NetlistCell* ncell, Greenpak4Flipflop* ff)
 		else
 			ff->SetInitValue(false);
 	}
-		
-	//TODO: support initialization values and set/reset mode
 }
 
 /**

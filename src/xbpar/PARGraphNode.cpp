@@ -70,3 +70,15 @@ PARGraphEdge* PARGraphNode::GetEdgeByIndex(uint32_t index)
 {
 	return m_edges[index];
 }
+
+bool PARGraphNode::MatchesLabel(uint32_t target)
+{
+	if(m_label == target)
+		return true;
+	for(auto x : m_alternateLabels)
+	{
+		if(x == target)
+			return true;
+	}
+	return false;
+}

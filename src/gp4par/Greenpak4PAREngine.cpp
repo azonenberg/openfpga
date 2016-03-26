@@ -145,9 +145,7 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 		PARGraphNode* netnode = node->GetMate();
 		if(netnode == NULL)
 			continue;
-			
-		//Commit changes to all edges.
-		//Iterate over the NETLIST graph, not the DEVICE graph, but then transfer to the device graph
+		
 		for(uint32_t i=0; i<netnode->GetEdgeCount(); i++)
 		{
 			auto edge = netnode->GetEdgeByIndex(i);
@@ -158,16 +156,20 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 			unsigned int srcmatrix = src->GetMatrix();
 			if(srcmatrix != dst->GetMatrix())
 			{
-				//If either node is an IOB, do NOT add to the sub-optimal list
-				//because the IOB is constrained and can't move
-				if(dynamic_cast<Greenpak4IOB*>(src) == NULL)
-					nodes.insert(edge->m_sourcenode);
-				if(dynamic_cast<Greenpak4IOB*>(dst) == NULL)
-					nodes.insert(edge->m_destnode);
-					
+				//If source node is an IOB, do NOT add it to the sub-optimal list
+				//because the IOB is constrained and can't move.
+				//It's OK if the destination node is an IOB, moving its source is OK
+				if(dynamic_cast<Greenpak4IOB*>(src) != NULL)
+					continue;
+
 				//Power rails are always in optimal locations (because they're everywhere)
-				if(dynamic_cast<Greenpak4PowerRail*>(src) == NULL)
-					nodes.insert(edge->m_sourcenode);
+				if(dynamic_cast<Greenpak4PowerRail*>(src) != NULL)
+					continue;
+					
+				//TODO: other exclusions?
+					
+				//Add the node
+				nodes.insert(edge->m_sourcenode);
 			}
 		}
 	}
@@ -187,19 +189,35 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	auto current_site = static_cast<Greenpak4BitstreamEntity*>(current_node->GetData());
 	uint32_t current_matrix = current_site->GetMatrix();
 	uint32_t label = current_node->GetLabel();
-	uint32_t ncandidates = m_device->GetNumNodesWithLabel(label);
+	uint32_t target_matrix = 1 - current_matrix;
 	
-	//Pick a random node of the same label that's in the correct half of the device
-	PARGraphNode* newmate = NULL;
-	Greenpak4BitstreamEntity* newsite = NULL;
-	for(int i=0; i<20; i++)
+	//Make the list of candidate placements
+	std::set<PARGraphNode*> temp_candidates;
+	for(uint32_t i=0; i<m_device->GetNumNodesWithLabel(label); i++)
 	{
-		newmate = m_device->GetNodeByLabelAndIndex(label, rand() % ncandidates);
-		newsite = static_cast<Greenpak4BitstreamEntity*>(newmate->GetData());
-		if(newsite->GetMatrix() != current_matrix)
-			return newmate;
+		PARGraphNode* node = m_device->GetNodeByLabelAndIndex(label, i);
+		Greenpak4BitstreamEntity* entity = static_cast<Greenpak4BitstreamEntity*>(node->GetData());
+		if(entity->GetMatrix() == target_matrix)
+			temp_candidates.insert(node);
 	}
-		
-	//Nothing found, give up
-	return NULL;
+	//TODO: search alternate labels too
+	
+	//Move to a vector for random access
+	std::vector<PARGraphNode*> candidates;
+	for(auto x : temp_candidates)
+		candidates.push_back(x);
+	uint32_t ncandidates = candidates.size();
+	if(ncandidates == 0)
+		return NULL;
+	
+	//Search for an unused node, return the first one we find (since they're indistinguishable, right?)
+	//TODO: how do we handle non-indistinguishable nodes (hard IP with dedicated connections)
+	for(auto x : candidates)
+	{
+		if(x->GetMate() == NULL)
+			return x;
+	}
+	
+	//All nodes are used, we have to swap anyway. Pick one at random
+	return candidates[rand() % ncandidates];
 }

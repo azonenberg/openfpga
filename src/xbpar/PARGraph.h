@@ -37,7 +37,6 @@ public:
 	uint32_t GetMaxLabel();
 	
 	//Label indexing helpers
-	void CountLabels();
 	uint32_t GetNumNodesWithLabel(uint32_t label);
 	void IndexNodesByLabel();
 	PARGraphNode* GetNodeByLabelAndIndex(uint32_t label, uint32_t index);

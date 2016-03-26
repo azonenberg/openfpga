@@ -84,29 +84,14 @@ void PARGraph::AddNode(PARGraphNode* node)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Label counting helpers
 
-/** 
-	@brief Get the number of labels 
- */
-void PARGraph::CountLabels()
-{
-	//Rebuild the label table
-	m_labelCount.clear();
-	for(uint32_t i=0; i<m_nextLabel; i++)
-		m_labelCount.push_back(0);
-	
-	//Do the count
-	for(auto x : m_nodes)
-		m_labelCount[x->GetLabel()] ++;
-}
-
 /**
 	@brief Look up how many nodes have a given label.
 	
-	Value is cached by CountLabels();
+	Value is cached by IndexNodesByLabel();
  */
 uint32_t PARGraph::GetNumNodesWithLabel(uint32_t label)
 {
-	return m_labelCount[label];
+	return m_labeledNodes[label].size();
 }
 
 /**
@@ -119,9 +104,16 @@ void PARGraph::IndexNodesByLabel()
 	for(uint32_t i=0; i<m_nextLabel; i++)
 		m_labeledNodes.push_back(NodeVector());
 		
-	//Do the indexing
+	//Do the indexing for primary labels first
 	for(auto x : m_nodes)
 		m_labeledNodes[x->GetLabel()].push_back(x);
+	
+	//Add secondary labels last (so lower priority
+	for(auto x : m_nodes)
+	{
+		for(uint32_t i = 0; i<x->GetAlternateLabelCount(); i++)
+			m_labeledNodes[x->GetAlternateLabel(i)].push_back(x);
+	}
 }
 
 /**
