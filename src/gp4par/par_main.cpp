@@ -25,11 +25,13 @@ using namespace std;
  */
 bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 {
+	labelmap lmap;
+	
 	//Create the graphs
 	printf("\nCreating netlist graphs...\n");
 	PARGraph* ngraph = NULL;
 	PARGraph* dgraph = NULL;
-	BuildGraphs(netlist, device, ngraph, dgraph);
+	BuildGraphs(netlist, device, ngraph, dgraph, lmap);
 
 	//Create and run the PAR engine
 	Greenpak4PAREngine engine(ngraph, dgraph);
@@ -167,12 +169,19 @@ void PostPARDRC(PARGraph* /*netlist*/, PARGraph* /*device*/)
 	//TODO: check floating inputs etc
 	
 	//TODO: check invalid IOB configuration (driving an input-only pin etc)
+	
+	//TODO: Check for multiple oscillators with power-down enabled but not the same source
 }
 
 /**
 	@brief Build the graphs
  */
-void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& ngraph, PARGraph*& dgraph)
+void BuildGraphs(
+	Greenpak4Netlist* netlist,
+	Greenpak4Device* device,
+	PARGraph*& ngraph,
+	PARGraph*& dgraph,
+	labelmap& lmap)
 {
 	//Create the graphs
 	ngraph = new PARGraph;
@@ -182,8 +191,7 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
 	
 	//Create device entries for the IOBs
-	uint32_t iob_label = ngraph->AllocateLabel();
-	dgraph->AllocateLabel();
+	uint32_t iob_label = AllocateLabel(ngraph, dgraph, lmap, "Unconstrained IOB");
 	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
 	{
 		Greenpak4IOB* iob = it->second;
@@ -266,9 +274,8 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		}
 		
 		//Allocate a new graph label for these IOBs
-		//Must always allocate from both graphs at the same time (TODO: paired allocation somehow?)
-		uint32_t label = ngraph->AllocateLabel();
-		dgraph->AllocateLabel();
+		string sname = string("Constrained IOB ") + it->first;
+		uint32_t label = AllocateLabel(ngraph, dgraph, lmap, sname);
 		
 		//If the IOB already has a custom label, we constrained two nets to the same place!
 		PARGraphNode* ipnode = iob->GetPARNode();
@@ -294,12 +301,9 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 	}
 	
 	//Make device nodes for each type of LUT
-	uint32_t lut2_label = ngraph->AllocateLabel();
-	dgraph->AllocateLabel();
-	uint32_t lut3_label = ngraph->AllocateLabel();
-	dgraph->AllocateLabel();
-	uint32_t lut4_label = ngraph->AllocateLabel();
-	dgraph->AllocateLabel();
+	uint32_t lut2_label = AllocateLabel(ngraph, dgraph, lmap, "GP_2LUT");
+	uint32_t lut3_label = AllocateLabel(ngraph, dgraph, lmap, "GP_3LUT");
+	uint32_t lut4_label = AllocateLabel(ngraph, dgraph, lmap, "GP_4LUT");
 	for(unsigned int i=0; i<device->GetLUT2Count(); i++)
 	{
 		Greenpak4LUT* lut = device->GetLUT2(i);
@@ -322,10 +326,8 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		dgraph->AddNode(lnode);
 	}	
 	//Make device nodes for each type of flipflop
-	uint32_t dff_label = ngraph->AllocateLabel();
-	dgraph->AllocateLabel();
-	uint32_t dffsr_label = ngraph->AllocateLabel();
-	dgraph->AllocateLabel();
+	uint32_t dff_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFF");
+	uint32_t dffsr_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFFSR");
 	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
 	{
 		Greenpak4Flipflop* flop = device->GetFlipflopByIndex(i);
@@ -343,13 +345,13 @@ void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& 
 		dgraph->AddNode(fnode);
 	}
 	
+	//Make device nodes for the low-frequency oscillator
+	
 	//TODO: make nodes for all of the other hard IP
 	
 	//Power nets
-	uint32_t vdd_label = ngraph->AllocateLabel();
-	dgraph->AllocateLabel();
-	uint32_t vss_label = ngraph->AllocateLabel();
-	dgraph->AllocateLabel();
+	uint32_t vdd_label = AllocateLabel(ngraph, dgraph, lmap, "GP_VDD");
+	uint32_t vss_label = AllocateLabel(ngraph, dgraph, lmap, "GP_VSS");
 	for(unsigned int matrix = 0; matrix<2; matrix++)
 	{
 		auto vdd = device->GetPowerRail(matrix, true);
@@ -867,4 +869,22 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 				printf("WARNING: Node at config base %d has unrecognized entity type\n", dst->GetConfigBase());
 		}
 	}
+}
+
+/**
+	@brief Allocate and name a graph label
+ */
+uint32_t AllocateLabel(PARGraph*& ngraph, PARGraph*& dgraph, labelmap& lmap, std::string description)
+{
+	uint32_t nlabel = ngraph->AllocateLabel();
+	uint32_t dlabel = dgraph->AllocateLabel();
+	if(nlabel != dlabel)
+	{
+		fprintf(stderr, "INTERNAL ERROR: labels were allocated at the same time but don't match up\n");
+		exit(-1);
+	}
+	
+	lmap[nlabel] = description;
+	
+	return nlabel;
 }

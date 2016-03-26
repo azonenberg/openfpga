@@ -30,7 +30,18 @@ void ShowUsage();
 void ShowVersion();
 
 //Setup
-void BuildGraphs(Greenpak4Netlist* netlist, Greenpak4Device* device, PARGraph*& ngraph, PARGraph*& dgraph);
+typedef std::map<uint32_t, std::string> labelmap;
+uint32_t AllocateLabel(
+	PARGraph*& ngraph,
+	PARGraph*& dgraph,
+	labelmap& lmap,
+	std::string description);
+void BuildGraphs(
+	Greenpak4Netlist* netlist,
+	Greenpak4Device* device,
+	PARGraph*& ngraph,
+	PARGraph*& dgraph,
+	labelmap& lmap);
 void ApplyLocConstraints(Greenpak4Netlist* netlist, PARGraph* ngraph, PARGraph* dgraph);
 
 //PAR core
