@@ -65,7 +65,7 @@ bool Greenpak4PowerRail::Save(bool* /*bitstream*/)
 string Greenpak4PowerRail::GetDescription()
 {
 	if(GetDigitalValue())
-		return "power";
+		return "VDD0";
 	else
-		return "ground";
+		return "VSS0";
 }

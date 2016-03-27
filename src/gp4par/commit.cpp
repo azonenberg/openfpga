@@ -200,20 +200,10 @@ void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut)
 void CommitFFChanges(Greenpak4NetlistCell* ncell, Greenpak4Flipflop* ff)
 {
 	if(ncell->HasParameter("SRMODE"))
-	{
-		if(ncell->m_parameters["SRMODE"] == "1")
-			ff->SetSRMode(true);
-		else
-			ff->SetSRMode(false);
-	}
-	
+		ff->SetSRMode(ncell->m_parameters["SRMODE"] == "1");
+
 	if(ncell->HasParameter("INIT"))
-	{
-		if(ncell->m_parameters["INIT"] == "1")
-			ff->SetInitValue(true);
-		else
-			ff->SetInitValue(false);
-	}
+		ff->SetInitValue(ncell->m_parameters["INIT"] == "1");
 }
 
 /**
@@ -221,7 +211,14 @@ void CommitFFChanges(Greenpak4NetlistCell* ncell, Greenpak4Flipflop* ff)
  */
 void CommitLFOscChanges(Greenpak4NetlistCell* ncell, Greenpak4LFOscillator* osc)
 {
-	printf("TODO: commit LFOsc\n");
+	if(ncell->HasParameter("PWRDN_EN"))
+		osc->SetPowerDownEn(ncell->m_parameters["PWRDN_EN"] == "1");
+		
+	if(ncell->HasParameter("AUTO_PWRDN"))
+		osc->SetAutoPowerDown(ncell->m_parameters["AUTO_PWRDN"] == "1");
+		
+	if(ncell->HasParameter("OUT_DIV"))
+		osc->SetOutputDivider(atoi(ncell->m_parameters["OUT_DIV"].c_str()));
 }
 
 /**
@@ -262,10 +259,12 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			//We don't want to waste cross-connections on power nets
 			if(spwr)
 				src = pdev->GetPowerRail(dst->GetMatrix(), spwr->GetDigitalValue());
-				
+			
+			//If the source node is an oscillator, use the secondary output if needed
 			else if(sosc)
 			{
-				printf("TODO: how to handle lfosc src\n");
+				if(dst->GetMatrix() != sosc->GetMatrix())
+					src = sosc->GetDual();
 			}
 			
 			//Cross connections
@@ -339,12 +338,25 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 					ff->SetSRMode(false);
 					ff->SetNSRSignal(src);
 				}
+				
+				else
+				{
+					printf("WARNING: Ignoring connection to unknown FF input %s\n", edge->m_destport.c_str());
+					continue;
+				}
 			}
 			
 			//Destination is the low-frequency oscillator
 			else if(dosc)
 			{
-				printf("Don't know how to configure LFOsc inputs\n");
+				if(edge->m_destport == "PWRDN")
+					dosc->SetPowerDown(src);
+				
+				else
+				{
+					printf("WARNING: Ignoring connection to unknown oscillator input %s\n", edge->m_destport.c_str());
+					continue;
+				}
 			}
 			
 			else if(pwr)

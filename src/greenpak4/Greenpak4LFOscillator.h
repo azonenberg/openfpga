@@ -20,7 +20,7 @@
 #define Greenpak4LFOscillator_h
 
 /**
-	@brief A single LFOscillator
+	@brief The low frequency (1.73 kHz) oscillator
  */ 
 class Greenpak4LFOscillator : public Greenpak4BitstreamEntity
 {
@@ -44,7 +44,43 @@ public:
 	
 	virtual std::string GetDescription();
 	
+	//Get our opposite matrix output
+	Greenpak4DualEntity* GetDual()
+	{ return &m_dual; }
+	
+	//Set our power-down input
+	void SetPowerDown(Greenpak4BitstreamEntity* pwrdn);
+	
+	//Get the power-down input (used for DRC)
+	Greenpak4BitstreamEntity* GetPowerDown()
+	{ return m_powerDown; }
+	
+	//Enable accessors
+	void SetPowerDownEn(bool en)
+	{ m_powerDownEn = en; }
+	
+	void SetAutoPowerDown(bool en)
+	{ m_autoPowerDown = en; }
+	
+	//Divider
+	void SetOutputDivider(int div);
+	
 protected:
+
+	///Output to the opposite matrix
+	Greenpak4DualEntity m_dual;
+	
+	///Power-down input (if implemented)
+	Greenpak4BitstreamEntity* m_powerDown;
+	
+	///Power-down enable
+	bool m_powerDownEn;
+	
+	///Auto power-down
+	bool m_autoPowerDown;
+	
+	///Output divider
+	int m_outDiv;
 };
 
 #endif

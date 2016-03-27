@@ -60,8 +60,10 @@ uint32_t Greenpak4PAREngine::ComputeCongestionCost()
 			uint32_t sm = src->GetMatrix();
 			uint32_t dm = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData())->GetMatrix();
 			
-			//If the source is a power rail, don't count this in the cost
+			//If the source is a power rail or oscillator, don't count this in the cost
 			if(dynamic_cast<Greenpak4PowerRail*>(src) != NULL)
+				continue;
+			if(dynamic_cast<Greenpak4LFOscillator*>(src) != NULL)
 				continue;
 			
 			if(sm != dm)
@@ -160,6 +162,12 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 
 				//Power rails are always in optimal locations (because they're everywhere)
 				if(dynamic_cast<Greenpak4PowerRail*>(src) != NULL)
+					continue;
+					
+				//Oscillators rails are always in optimal locations (because they can't move)
+				if(dynamic_cast<Greenpak4LFOscillator*>(src) != NULL)
+					continue;
+				if(dynamic_cast<Greenpak4LFOscillator*>(dst) != NULL)
 					continue;
 					
 				//TODO: other exclusions?

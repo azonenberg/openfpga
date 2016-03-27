@@ -15,79 +15,34 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
-
-#include "gp4par.h"
-
-using namespace std;
+ 
+#ifndef Greenpak4DualEntity_h
+#define Greenpak4DualEntity_h
 
 /**
-	@brief The main place-and-route logic
- */
-bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
+	@brief The "dual entity" of a node that connects to both matrices.
+	
+	The dual is a skeleton net source that lives on the opposite half of the device and has no configuration or inputs.
+ */ 
+class Greenpak4DualEntity : public Greenpak4BitstreamEntity
 {
-	labelmap lmap;
-	
-	//Create the graphs
-	printf("\nCreating netlist graphs...\n");
-	PARGraph* ngraph = NULL;
-	PARGraph* dgraph = NULL;
-	BuildGraphs(netlist, device, ngraph, dgraph, lmap);
+public:
 
-	//Create and run the PAR engine
-	Greenpak4PAREngine engine(ngraph, dgraph);
-	if(!engine.PlaceAndRoute(true))
-	{
-		printf("PAR failed\n");
-		return false;
-	}
-	
-	//Final DRC to make sure the placement is sane
-	PostPARDRC(ngraph, dgraph);
+	//Construction / destruction
+	Greenpak4DualEntity(Greenpak4BitstreamEntity* dual);
+	virtual ~Greenpak4DualEntity();
 		
-	//Copy the netlist over
-	unsigned int num_routes_used[2];
-	CommitChanges(dgraph, device, num_routes_used);
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
 	
-	//Print reports
-	PrintUtilizationReport(ngraph, device, num_routes_used);
-	PrintPlacementReport(ngraph, device);
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
 	
-	//Final cleanup
-	delete ngraph;
-	delete dgraph;
-	return true;
-}
+	virtual std::string GetDescription();
+	
+protected:
+	Greenpak4BitstreamEntity* m_dual;
+};
 
-/**
-	@brief Do various sanity checks after the design is routed
- */
-void PostPARDRC(PARGraph* /*netlist*/, PARGraph* /*device*/)
-{
-	printf("\nPost-PAR design rule checks\n");
-	
-	//TODO: Check for nodes in the netlist that have no load
-	
-	//TODO: check floating inputs etc
-	
-	//TODO: check invalid IOB configuration (driving an input-only pin etc) - is this possible?
-	
-	//TODO: Check for multiple oscillators with power-down enabled but not the same source
-}
-
-/**
-	@brief Allocate and name a graph label
- */
-uint32_t AllocateLabel(PARGraph*& ngraph, PARGraph*& dgraph, labelmap& lmap, std::string description)
-{
-	uint32_t nlabel = ngraph->AllocateLabel();
-	uint32_t dlabel = dgraph->AllocateLabel();
-	if(nlabel != dlabel)
-	{
-		fprintf(stderr, "INTERNAL ERROR: labels were allocated at the same time but don't match up\n");
-		exit(-1);
-	}
-	
-	lmap[nlabel] = description;
-	
-	return nlabel;
-}
+#endif

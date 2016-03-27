@@ -26,6 +26,7 @@
  
 #include "Greenpak4BitstreamEntity.h"
 #include "Greenpak4CrossConnection.h"
+#include "Greenpak4DualEntity.h"
 #include "Greenpak4Flipflop.h"
 #include "Greenpak4IOB.h"
 #include "Greenpak4IOBTypeA.h"

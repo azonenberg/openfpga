@@ -3,6 +3,7 @@ ADD_LIBRARY(greenpak4 SHARED
 	# Post-PAR netlist
 	Greenpak4BitstreamEntity.cpp
 	Greenpak4CrossConnection.cpp
+	Greenpak4DualEntity.cpp
 	Greenpak4Device.cpp
 	Greenpak4Flipflop.cpp
 	Greenpak4IOB.cpp

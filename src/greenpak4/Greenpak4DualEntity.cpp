@@ -23,23 +23,19 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4LFOscillator::Greenpak4LFOscillator(
-	Greenpak4Device* device,
-	unsigned int matrix,
-	unsigned int ibase,
-	unsigned int oword,
-	unsigned int cbase)
-	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
-	, m_dual(this)
-	, m_powerDown(device->GetPowerRail(matrix, 0))	//default to auto powerdown only
-	, m_powerDownEn(false)
-	, m_autoPowerDown(true)
-	, m_outDiv(1)
+Greenpak4DualEntity::Greenpak4DualEntity(Greenpak4BitstreamEntity* dual)
+	: Greenpak4BitstreamEntity(
+		dual->GetDevice(),
+		1 - dual->GetMatrix(),
+		0,	//no inputs
+		dual->GetOutputBase(),
+		0)	//no configuration
+	, m_dual(dual)
 {
 
 }
 
-Greenpak4LFOscillator::~Greenpak4LFOscillator()
+Greenpak4DualEntity::~Greenpak4DualEntity()
 {
 	
 }
@@ -47,100 +43,28 @@ Greenpak4LFOscillator::~Greenpak4LFOscillator()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bitfile metadata
 
-unsigned int Greenpak4LFOscillator::GetConfigLen()
+unsigned int Greenpak4DualEntity::GetConfigLen()
 {
-	return 4;
+	return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-string Greenpak4LFOscillator::GetDescription()
+string Greenpak4DualEntity::GetDescription()
 {
-	return "LFOSC0";
-}
-
-void Greenpak4LFOscillator::SetPowerDown(Greenpak4BitstreamEntity* pwrdn)
-{
-	m_powerDown = pwrdn;
-}
-
-void Greenpak4LFOscillator::SetOutputDivider(int div)
-{
-	if(	(div == 1) || (div == 2) || (div == 4) || (div == 16) )
-		m_outDiv = div;
-
-	else
-	{
-		fprintf(stderr, "ERROR: GP4_LFOSC output divider must be 1, 2, 4, or 16\n");
-		exit(1);
-	}
+	return m_dual->GetDescription();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4LFOscillator::Load(bool* /*bitstream*/)
+bool Greenpak4DualEntity::Load(bool* /*bitstream*/)
 {
-	printf("Greenpak4LFOscillator::Load() not yet implemented\n");
-	return false;
+	return true;
 }
 
-bool Greenpak4LFOscillator::Save(bool* bitstream)
+bool Greenpak4DualEntity::Save(bool* /*bitstream*/)
 {
-	//Optimize PWRDN = 1'b0 and PWRDN_EN = 1 to PWRDN = dontcare and PWRDN_EN = 0
-	bool real_pwrdn_en = m_powerDownEn;
-	Greenpak4PowerRail* rail = dynamic_cast<Greenpak4PowerRail*>(m_powerDown);
-	if( (rail != NULL) && (rail->GetDigitalValue() == 0) )
-		real_pwrdn_en = false;
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// INPUT BUS
-	
-	//Write the power-down input iff we have power-down enabled.
-	if(real_pwrdn_en)
-	{
-		if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_powerDown))
-			return false;
-	}
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Configuration
-	
-	//Enable power-down if we have it hooked up.
-	bitstream[m_configBase + 0] = real_pwrdn_en;
-	
-	//Auto power-down
-	bitstream[m_configBase + 1] = !m_autoPowerDown;
-	
-	//Output clock divider
-	switch(m_outDiv)
-	{
-		case 1:
-			bitstream[m_configBase + 3] = false;
-			bitstream[m_configBase + 2] = false;
-			break;
-			
-		case 2:
-			bitstream[m_configBase + 3] = false;
-			bitstream[m_configBase + 2] = true;
-			break;
-			
-		case 4:
-			bitstream[m_configBase + 3] = true;
-			bitstream[m_configBase + 2] = false;
-			break;
-			
-		case 16:
-			bitstream[m_configBase + 3] = true;
-			bitstream[m_configBase + 2] = true;
-			break;
-			
-		default:
-			fprintf(stderr, "INTERNAL ERROR: GP4_LFOSC output divider must be 1, 2, 4, or 16\n");
-			exit(1);
-			break;
-	}
-
 	return true;
 }
