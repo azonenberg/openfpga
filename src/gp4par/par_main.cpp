@@ -86,6 +86,12 @@ void PostPARDRC(PARGraph* netlist, PARGraph* /*device*/)
 		//Do not warn if power rails have no load, that's perfectly normal
 		if(dynamic_cast<Greenpak4PowerRail*>(dst) != NULL)
 			continue;
+			
+		//If the node is an IOB configured as an output, there's no internal load for its output.
+		//This is perfectly normal, obviously.
+		Greenpak4NetlistPort* port = dynamic_cast<Greenpak4NetlistPort*>(src);
+		if( (port != NULL) && (port->m_direction == Greenpak4NetlistPort::DIR_OUTPUT) )
+			continue;
 		
 		//If we have no loads, warn
 		if(node->GetEdgeCount() == 0)
