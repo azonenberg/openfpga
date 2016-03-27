@@ -16,26 +16,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-module Blinky(a, clk, o);
+module Blinky(out_lfosc_ff);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 	
-	(* SCHMITT_TRIGGER *)
-	(* PULLDOWN = "10k" *)
 	(* LOC = "P20" *)
-	input wire a;
-	
-	(* SCHMITT_TRIGGER *)
-	(* PULLDOWN = "10k" *)
-	(* LOC = "P19" *)
-	input wire clk;
-	
-	(* LOC = "P18" *)
-	output reg o = 0;
+	output reg out_lfosc_ff = 0;
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Internal logic
+	// Oscillators
 	
 	//The 1730 Hz oscillator
 	wire clk_108hz;
@@ -48,7 +38,10 @@ module Blinky(a, clk, o);
 		.CLKOUT(clk_108hz)
 	);
 	
-	parameter COUNT_DEPTH = 4;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// LED driven by low-frequency oscillator and post-divider in flipflops
+	
+	parameter COUNT_DEPTH = 3;
 	
 	//Shift register
 	reg[COUNT_DEPTH-1:0] count = 0;
@@ -56,7 +49,7 @@ module Blinky(a, clk, o);
 	always @(posedge clk_108hz) begin
 		count	<= count + 1'd1;
 		if(count == 0)
-			o	<= ~o;
+			out_lfosc_ff	<= ~out_lfosc_ff;
 	end
 
 endmodule
