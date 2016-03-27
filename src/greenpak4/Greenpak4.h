@@ -25,6 +25,7 @@
  */
  
 #include "Greenpak4BitstreamEntity.h"
+#include "Greenpak4Counter.h"
 #include "Greenpak4CrossConnection.h"
 #include "Greenpak4DualEntity.h"
 #include "Greenpak4Flipflop.h"

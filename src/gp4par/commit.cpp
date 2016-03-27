@@ -44,6 +44,7 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		auto ff = dynamic_cast<Greenpak4Flipflop*>(bnode);
 		auto lfosc = dynamic_cast<Greenpak4LFOscillator*>(bnode);
 		auto pwr = dynamic_cast<Greenpak4PowerRail*>(bnode);
+		auto count = dynamic_cast<Greenpak4Counter*>(bnode);
 			
 		//Configure nodes of known type
 		if(iob)
@@ -54,6 +55,8 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			CommitFFChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), ff);
 		else if(lfosc)
 			CommitLFOscChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), lfosc);
+		else if(count)
+			printf("    WARNING: Commit counter not implemented\n");
 			
 		//Ignore power rails, they have no configuration
 		else if(pwr)
@@ -247,13 +250,16 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			auto edge = netnode->GetEdgeByIndex(i);
 			auto src = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
 			auto dst = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
+			
+			//Try casting to every primitive type known to mankind!
 			auto iob = dynamic_cast<Greenpak4IOB*>(dst);
-			auto lut = dynamic_cast<Greenpak4LUT*>(dst);
+			auto lut = dynamic_cast<Greenpak4LUT*>(dst);			
 			auto ff = dynamic_cast<Greenpak4Flipflop*>(dst);
 			auto pwr = dynamic_cast<Greenpak4PowerRail*>(dst);
 			auto spwr = dynamic_cast<Greenpak4PowerRail*>(src);
 			auto dosc = dynamic_cast<Greenpak4LFOscillator*>(dst);
 			auto sosc = dynamic_cast<Greenpak4LFOscillator*>(src);
+			auto count = dynamic_cast<Greenpak4Counter*>(dst);
 			
 			//If the source node is power, patch the topology so that everything comes from the right matrix.
 			//We don't want to waste cross-connections on power nets
@@ -357,6 +363,12 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 					printf("WARNING: Ignoring connection to unknown oscillator input %s\n", edge->m_destport.c_str());
 					continue;
 				}
+			}
+			
+			//Destination is a counter
+			else if(count)
+			{
+				printf("    WARNING: Commit counter routing not implemented\n");
 			}
 			
 			else if(pwr)

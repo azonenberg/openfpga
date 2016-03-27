@@ -115,6 +115,31 @@ void BuildGraphs(
 	lfosc->SetPARNode(lfnode);
 	dgraph->AddNode(lfnode);
 	
+	//Make device nodes for the counters
+	uint32_t count8_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8");
+	uint32_t count14_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT14");
+	for(unsigned int i=0; i<device->GetCounterCount(); i++)
+	{
+		auto counter = device->GetCounter(i);
+		
+		//Decide on primary label
+		PARGraphNode* node = NULL;
+		if(counter->GetDepth() == 14)
+		{
+			node = new PARGraphNode(count14_label, counter);
+			
+			//It's legal to map a COUNT8 to a COUNT14 site, so add that as an alternate
+			node->AddAlternateLabel(count8_label);
+		}
+		else
+			node = new PARGraphNode(count8_label, counter);
+			
+		//Add secondary labels for alternate functionality
+		
+		counter->SetPARNode(node);
+		dgraph->AddNode(node);	
+	}
+	
 	//TODO: make nodes for all of the other hard IP
 	
 	//Power nets
@@ -153,6 +178,10 @@ void BuildGraphs(
 			label = dffsr_label;
 		else if(cell->m_type == "GP_LFOSC")
 			label = lfosc_label;
+		else if(cell->m_type == "GP_COUNT8")
+			label = count8_label;
+		else if(cell->m_type == "GP_COUNT14")
+			label = count14_label;
 		
 		//Power nets are virtual cells we use internally
 		else if(cell->m_type == "GP_VDD")
@@ -406,6 +435,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		device_nodes.push_back(device->GetPowerRail(i, false)->GetPARNode());
 	}
 	device_nodes.push_back(device->GetLFOscillator()->GetPARNode());
+	for(unsigned int i=0; i<device->GetCounterCount(); i++)
+		device_nodes.push_back(device->GetCounter(i)->GetPARNode());
 	//TODO: hard IP
 	
 	//Add the O(n^2) edges between the main fabric nodes
@@ -420,6 +451,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 				auto lut = dynamic_cast<Greenpak4LUT*>(entity);
 				auto ff = dynamic_cast<Greenpak4Flipflop*>(entity);
 				auto lfosc = dynamic_cast<Greenpak4LFOscillator*>(entity);
+				auto count = dynamic_cast<Greenpak4Counter*>(entity);
 				
 				if(lut)
 				{
@@ -441,10 +473,16 @@ void MakeDeviceEdges(Greenpak4Device* device)
 						x->AddEdge(y, "nSET");
 						x->AddEdge(y, "nRST");
 					}
-					x->AddEdge(y, "Q");
 				}
 				else if(lfosc)
 					x->AddEdge(y, "PWRDN");
+				else if(count)
+				{
+					x->AddEdge(y, "CLK");
+					x->AddEdge(y, "RST");
+					
+					//TODO: add other ports
+				}
 				
 				//no, just add path to the node in general
 				else

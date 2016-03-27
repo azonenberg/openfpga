@@ -41,12 +41,16 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int iobs_used = 0;
 	unsigned int dff_used = 0;
 	unsigned int dffsr_used = 0;
+	unsigned int counters_8_used = 0;
+	unsigned int counters_14_used = 0;
+	unsigned int lfosc_used = 0;
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
 		auto iob = dynamic_cast<Greenpak4IOB*>(entity);
 		auto lut = dynamic_cast<Greenpak4LUT*>(entity);
 		auto ff = dynamic_cast<Greenpak4Flipflop*>(entity);
+		auto count = dynamic_cast<Greenpak4Counter*>(entity);
 		if(lut)
 			luts_used[lut->GetOrder()] ++;
 		else if(iob)
@@ -58,8 +62,14 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 			else
 				dff_used ++;
 		}
+		else if(count)
+		{
+			if(count->GetDepth() == 8)
+				counters_8_used ++;
+			else
+				counters_14_used ++;
+		}
 	}
-	unsigned int lfosc_used = 0;
 	if(device->GetLFOscillator()->GetPARNode()->GetMate() != NULL)
 		lfosc_used = 1;
 	
@@ -71,12 +81,22 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int total_dff = device->GetDFFCount();
 	unsigned int total_dffsr = device->GetDFFSRCount();
 	unsigned int total_dff_used = dff_used + dffsr_used;
-	printf("    FF:      %2d/%2d (%d %%)\n", total_dff_used, total_ff, total_dff_used*100 / total_ff);
-	printf("      DFF:   %2d/%2d (%d %%)\n", dff_used, total_dff, dff_used*100 / total_dff);
-	printf("      DFFSR: %2d/%2d (%d %%)\n", dffsr_used, total_dffsr, dffsr_used*100 / total_dffsr);
-	printf("    IOB:     %2d/%2d (%d %%)\n", iobs_used, iob_count, iobs_used*100 / iob_count);
-	printf("    LFOSC:   %2d/%2d (%d %%)\n", lfosc_used, 1, lfosc_used*100);
-	printf("    LUT:     %2d/%2d (%d %%)\n", total_luts_used, total_lut_count, total_luts_used*100 / total_lut_count);
+	unsigned int total_counters_used = counters_8_used + counters_14_used;
+	unsigned int total_counters = device->GetCounterCount();
+	unsigned int total_counters_8 = device->Get8BitCounterCount();
+	unsigned int total_counters_14 = device->Get14BitCounterCount();
+	printf("    COUNT:     %2d/%2d (%d %%)\n",
+		total_counters_used, total_counters, total_counters_used*100 / total_counters);
+	printf("      COUNT8:  %2d/%2d (%d %%)\n",
+		counters_8_used, total_counters_8, counters_8_used*100 / total_counters_8);
+	//printf("      COUNT14: %2d/%2d (%d %%)\n",
+	//	counters_14_used, total_counters_14, counters_14_used*100 / total_counters_14);
+	printf("    FF:        %2d/%2d (%d %%)\n", total_dff_used, total_ff, total_dff_used*100 / total_ff);
+	printf("      DFF:     %2d/%2d (%d %%)\n", dff_used, total_dff, dff_used*100 / total_dff);
+	printf("      DFFSR:   %2d/%2d (%d %%)\n", dffsr_used, total_dffsr, dffsr_used*100 / total_dffsr);
+	printf("    IOB:       %2d/%2d (%d %%)\n", iobs_used, iob_count, iobs_used*100 / iob_count);
+	printf("    LFOSC:     %2d/%2d (%d %%)\n", lfosc_used, 1, lfosc_used*100);
+	printf("    LUT:       %2d/%2d (%d %%)\n", total_luts_used, total_lut_count, total_luts_used*100 / total_lut_count);
 	for(unsigned int i=2; i<=4; i++)
 	{
 		unsigned int used = luts_used[i];
@@ -84,12 +104,12 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		unsigned int percent = 0;
 		if(count)
 			percent = 100*used / count;
-		printf("      LUT%d:  %2d/%2d (%d %%)\n", i, used, count, percent);
+		printf("      LUT%d:    %2d/%2d (%d %%)\n", i, used, count, percent);
 	}
 	unsigned int total_routes_used = num_routes_used[0] + num_routes_used[1];
-	printf("    X-conn:  %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);
-	printf("      East:  %2d/10 (%d %%)\n", num_routes_used[0], num_routes_used[0]*100 / 10);
-	printf("      West:  %2d/10 (%d %%)\n", num_routes_used[1], num_routes_used[1]*100 / 10);
+	printf("    X-conn:    %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);
+	printf("      East:    %2d/10 (%d %%)\n", num_routes_used[0], num_routes_used[0]*100 / 10);
+	printf("      West:    %2d/10 (%d %%)\n", num_routes_used[1], num_routes_used[1]*100 / 10);
 }
 
 /**

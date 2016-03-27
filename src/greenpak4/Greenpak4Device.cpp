@@ -189,9 +189,17 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		50,		//output word (plus dedicated routing to counters etc)
 		1652);	//bitstream location
 	
-	//TODO: Other Oscillators
+	//TODO: Other oscillators
 	
-	//TODO: Counters
+	//Counters
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth 
+		4,		//counter number
+		1,		//matrix
+		77,		//ibase
+		38,		//oword,
+		1828));	//cbase
 	
 	//TODO: Slave SPI
 	
@@ -254,11 +262,19 @@ void Greenpak4Device::CreateDevice_common()
 		m_dffAll.push_back(x);
 	for(auto x : m_dffsr)
 		m_dffAll.push_back(x);
+		
+	//Add all counters to counter list
+	for(auto x : m_counters8bit)
+		m_counters.push_back(x);
+	for(auto x : m_counters14bit)
+		m_counters.push_back(x);
 	
 	//Finally, put everything in bitstuff so we can walk the whole bitstream and not care about details
 	for(auto x : m_luts)
 		m_bitstuff.push_back(x);
 	for(auto x : m_dffAll)
+		m_bitstuff.push_back(x);
+	for(auto x : m_counters)
 		m_bitstuff.push_back(x);
 	for(auto x : m_iobs)
 		m_bitstuff.push_back(x.second);

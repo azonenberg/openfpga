@@ -132,6 +132,9 @@ may be used at lower levels of the hierarchy without restriction as long as the 
 The following GreenPak4 device features are not supported by gp4par as of this writing:
 
 \begin{itemize}
+\item Storage elements: output inverter, latch mode
+\item Counters: Delay, FSM, edge detector, PWM, wake-sleep mode, counter cascading
+\item Inverters
 \item ADC
 \item DAC
 \item ACMP
@@ -357,11 +360,6 @@ When possible, we recommend inferring design elements to maximize design portabi
 IP blocks or when exact control over synthesis results is required, it may be necessary to manually instantiate device 
 primitives. Pay careful attention to port names and descriptions as these may not exactly match the Silego primitives.
 
-\subsection{GP\_DFF}
-\subsection{GP\_DFFR}
-\subsection{GP\_DFFS}
-\subsection{GP\_DFFSR}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_2LUT
 
@@ -554,6 +552,94 @@ GP_LUT3 #(
 \caption{Example usage of GP\_LUT4}
 \label{gp-lut4-example}
 \end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_COUNT8
+
+\pagebreak
+\subsection{GP\_COUNT8: 8-Bit Resettable Down Counter}
+
+\subsubsection{Introduction}
+This primitive represents an 8-bit down counter.
+
+Note that this primitive does \emph{not} always map to a hard IP block with \emph{exactly} 8 bit depth. The technology 
+mapper may map GP\_COUNT8 cells to unused 14-bit counters in order to relieve routing pressure. In this case, the high 
+6 bits of the counter will always be zero.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+CLK & Input & 1 & The input clock signal\\
+\hline
+RST & Input & 1 & Reset input (polarity depends on RESET\_MODE). When triggered, resets the count register to zero. \\
+\hline
+OUT & Output & 1 & Counter underflow output. High whenever the count register equals zero. \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+CLKIN\_DIVIDE & Integer & 8 &
+	Input clock divider. Legal values depend on what source CLK is driven by, see device datasheet.\\
+\hline
+COUNT\_TO & Integer & 8 & Value to set the counter to on underflow. \\
+\hline
+RESET\_MODE & String &  & 
+	{\bfseries RISING: } \newline Resets the counter on a rising edge of RST. \newline
+	{\bfseries FALLING: } \newline Resets the counter on a falling edge of RST. \newline
+	{\bfseries BOTH: } \newline Resets the counter on any edge of RST. \newline
+	{\bfseries LEVEL: } \newline Resets the counter when RST is high. \\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-count8-example} needs to be written!
+
+\begin{figure}[h]
+\begin{lstlisting}
+x
+\end{lstlisting}
+\caption{Example usage of GP\_COUNT8}
+\label{gp-count8-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_COUNT14
+
+\pagebreak
+\subsection{GP\_COUNT14: 14-Bit Resettable Down Counter}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DFF
+
+\pagebreak
+\subsection{GP\_DFF: Positive Edge Triggered D Flipflop}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DFFR
+
+\pagebreak
+\subsection{GP\_DFFR: Positive Edge Triggered D Flipflop with Reset}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DFFS
+
+\pagebreak
+\subsection{GP\_DFFS: Positive Edge Triggered D Flipflop with Set}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DFFSR
+
+\pagebreak
+\subsection{GP\_DFFSR: Positive Edge Triggered D Flipflop with Set/Reset}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_LFOSC

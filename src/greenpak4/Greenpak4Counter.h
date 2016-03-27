@@ -16,56 +16,49 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-module Blinky(out_lfosc_ff, out_lfosc_count);
+#ifndef Greenpak4Counter_h
+#define Greenpak4Counter_h
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// I/O declarations
-	
-	(* LOC = "P20" *)
-	output reg out_lfosc_ff = 0;
-	
-	(* LOC = "P19" *)
-	output wire out_lfosc_count;
+/**
+	@brief A hard counter block (may also have alternate functions)
+ */ 
+class Greenpak4Counter : public Greenpak4BitstreamEntity
+{
+public:
+
+	//Construction / destruction
+	Greenpak4Counter(
+		Greenpak4Device* device,
+		unsigned int depth,
+		unsigned int countnum,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	virtual ~Greenpak4Counter();
 		
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Oscillators
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
 	
-	//The 1730 Hz oscillator
-	wire clk_108hz;
-	GP_LFOSC #(
-		.PWRDN_EN(0),
-		.AUTO_PWRDN(0),
-		.OUT_DIV(16)
-	) lfosc (
-		.PWRDN(1'b0),
-		.CLKOUT(clk_108hz)
-	);
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
 	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LED driven by low-frequency oscillator and post-divider in flipflops
+	virtual std::string GetDescription();
 	
-	parameter COUNT_DEPTH = 3;
+	unsigned int GetDepth()
+	{ return m_depth; }
 	
-	//Shift register
-	reg[COUNT_DEPTH-1:0] count = 0;
+	unsigned int GetCounterIndex()
+	{ return m_countnum; }
 	
-	always @(posedge clk_108hz) begin
-		count	<= count + 1'd1;
-		if(count == 0)
-			out_lfosc_ff	<= ~out_lfosc_ff;
-	end
+protected:
 	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LED driven by low-frequency oscillator and post-divider in hard counter
+	///Bit depth of this counter
+	unsigned int m_depth;
 	
-	GP_COUNT8 #(
-		.RESET_MODE("RISING"),
-		.COUNT_TO(7),
-		.CLKIN_DIVIDE(1)
-	) hard_counter (
-		.CLK(clk_108hz),
-		.RST(1'b0),
-		.OUT(out_lfosc_count)
-	);
+	///Device index of this counter
+	unsigned int m_countnum;
+};
 
-endmodule
+#endif

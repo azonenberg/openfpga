@@ -120,6 +120,27 @@ public:
 	{ return m_lfosc; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// COUNTERS
+	
+	unsigned int Get8BitCounterCount()
+	{ return m_counters8bit.size(); }
+	
+	unsigned int Get14BitCounterCount()
+	{ return m_counters14bit.size(); }
+	
+	Greenpak4Counter* Get8BitCounter(unsigned int i)
+	{ return m_counters8bit[i]; }
+	
+	Greenpak4Counter* Get14BitCounter(unsigned int i)
+	{ return m_counters14bit[i]; }
+	
+	unsigned int GetCounterCount()
+	{ return m_counters.size(); }
+	
+	Greenpak4Counter* GetCounter(unsigned int i)
+	{ return m_counters[i]; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// OTHER
 
 protected:
@@ -163,6 +184,15 @@ protected:
 	
 	///Flipflops WITH set/reset
 	std::vector<Greenpak4Flipflop*> m_dffsr;
+	
+	///8-bit counters
+	std::vector<Greenpak4Counter*> m_counters8bit;
+	
+	///14-bit counters
+	std::vector<Greenpak4Counter*> m_counters14bit;
+	
+	///Counters of all types
+	std::vector<Greenpak4Counter*> m_counters;
 	
 	///Constant digital 1 for each matrix
 	Greenpak4PowerRail* m_constantOne[2];

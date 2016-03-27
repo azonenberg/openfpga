@@ -16,56 +16,81 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-module Blinky(out_lfosc_ff, out_lfosc_count);
+#include "Greenpak4.h"
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// I/O declarations
-	
-	(* LOC = "P20" *)
-	output reg out_lfosc_ff = 0;
-	
-	(* LOC = "P19" *)
-	output wire out_lfosc_count;
-		
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Oscillators
-	
-	//The 1730 Hz oscillator
-	wire clk_108hz;
-	GP_LFOSC #(
-		.PWRDN_EN(0),
-		.AUTO_PWRDN(0),
-		.OUT_DIV(16)
-	) lfosc (
-		.PWRDN(1'b0),
-		.CLKOUT(clk_108hz)
-	);
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LED driven by low-frequency oscillator and post-divider in flipflops
-	
-	parameter COUNT_DEPTH = 3;
-	
-	//Shift register
-	reg[COUNT_DEPTH-1:0] count = 0;
-	
-	always @(posedge clk_108hz) begin
-		count	<= count + 1'd1;
-		if(count == 0)
-			out_lfosc_ff	<= ~out_lfosc_ff;
-	end
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LED driven by low-frequency oscillator and post-divider in hard counter
-	
-	GP_COUNT8 #(
-		.RESET_MODE("RISING"),
-		.COUNT_TO(7),
-		.CLKIN_DIVIDE(1)
-	) hard_counter (
-		.CLK(clk_108hz),
-		.RST(1'b0),
-		.OUT(out_lfosc_count)
-	);
+using namespace std;
 
-endmodule
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
+
+Greenpak4Counter::Greenpak4Counter(
+	Greenpak4Device* device,
+	unsigned int depth,
+	unsigned int countnum,
+	unsigned int matrix,
+	unsigned int ibase,
+	unsigned int oword,
+	unsigned int cbase)
+	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)	
+	, m_depth(depth)
+	, m_countnum(countnum)
+{
+
+}
+
+Greenpak4Counter::~Greenpak4Counter()
+{
+	
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Bitfile metadata
+
+unsigned int Greenpak4Counter::GetConfigLen()
+{
+	return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+string Greenpak4Counter::GetDescription()
+{
+	char buf[128];
+	snprintf(buf, sizeof(buf), "COUNT%d_%d", m_depth, m_countnum);
+	return string(buf);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization
+
+bool Greenpak4Counter::Load(bool* /*bitstream*/)
+{
+	printf("Greenpak4Counter::Load() not yet implemented\n");
+	return false;
+}
+
+bool Greenpak4Counter::Save(bool* bitstream)
+{
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+	
+	/*
+	//Write the power-down input iff we have power-down enabled.
+	if(real_pwrdn_en)
+	{
+		if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_powerDown))
+			return false;
+	}
+	*/
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Configuration
+	
+	/*
+	//Enable power-down if we have it hooked up.
+	bitstream[m_configBase + 0] = real_pwrdn_en;
+	*/
+
+	return true;
+}

@@ -217,6 +217,8 @@ void PAREngine::InitialPlacement(bool verbose)
 		{
 			PARGraphNode* netnode = m_netlist->GetNodeByLabelAndIndex(label, net);
 			PARGraphNode* devnode = m_device->GetNodeByLabelAndIndex(label, net);
+			if(devnode->GetMate() != NULL)
+				printf("INTERNAL ERROR: Hit the same node twice\n");
 			netnode->MateWith(devnode);
 		}
 	}
