@@ -61,11 +61,41 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 /**
 	@brief Do various sanity checks after the design is routed
  */
-void PostPARDRC(PARGraph* /*netlist*/, PARGraph* /*device*/)
+void PostPARDRC(PARGraph* netlist, PARGraph* /*device*/)
 {
 	printf("\nPost-PAR design rule checks\n");
-	
-	//TODO: Check for nodes in the netlist that have no load
+		
+	//Check for nodes in the netlist that have no load
+	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
+	{
+		auto node = netlist->GetNodeByIndex(i);
+		auto src = static_cast<Greenpak4NetlistEntity*>(node->GetData());
+		auto mate = node->GetMate();
+		auto dst = static_cast<Greenpak4BitstreamEntity*>(mate->GetData());
+		
+		//Sanity check - must be fully PAR'd
+		if(mate == NULL)
+		{
+			fprintf(
+				stderr,
+				"    ERROR: Node \"%s\" is not mapped to any site in the device\n",
+				src->m_name.c_str());
+			exit(-1);
+		}
+		
+		//Do not warn if power rails have no load, that's perfectly normal
+		if(dynamic_cast<Greenpak4PowerRail*>(dst) != NULL)
+			continue;
+		
+		//If we have no loads, warn
+		if(node->GetEdgeCount() == 0)
+		{
+			printf(
+				"    WARNING: Node \"%s\" has no loads\n",
+				src->m_name.c_str());
+		}
+		
+	}
 	
 	//TODO: check floating inputs etc
 	
