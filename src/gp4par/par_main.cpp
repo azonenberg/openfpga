@@ -91,7 +91,7 @@ void PostPARDRC(PARGraph* netlist, PARGraph* /*device*/)
 		if(node->GetEdgeCount() == 0)
 		{
 			printf(
-				"    WARNING: Node \"%s\" has no loads\n",
+				"    WARNING: Node \"%s\" has no load\n",
 				src->m_name.c_str());
 		}
 		

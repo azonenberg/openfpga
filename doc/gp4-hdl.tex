@@ -105,13 +105,16 @@ cover synthesis commands; please see the online documentation for \emph{yosys} f
 \begin{lstlisting}[language=sh]
 #!/usr/bin/env yosys
 read_verilog Blinky.v
-synth_greenpak4 -top BlinkyTop -part SLG46620V -json /tmp/Blinky.json
+synth_greenpak4 -top BlinkyTop -part SLG46620V
+splitnets
+write_json /tmp/Blinky.json
 \end{lstlisting}
 \caption{Example synthesis script}
 \label{yscript}
 \end{figure}
 
-TODO: Include coding examples for inferring various hard IP? Or does this belong in the Yosys docs?
+TODO: Include coding examples for inferring various hard IP once this is added to Yosys?
+Or does this belong in the Yosys docs?
 
 \pagebreak
 \section{gp4par Limitations}
@@ -121,17 +124,30 @@ The following legal Verilog-2001 features are not supported by gp4par as of this
 \begin{itemize}
 \item {\bfseries Bidirectional or tri-state top-level module ports}\\All ports on top-level modules must be input or 
 push-pull outputs. There is no support for tri-state or bidirectional outputs.
-\item {\bfseries Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector ports 
-may be used at lower levels of the hierarchy without restriction.
+\item {\bfseries Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector nets 
+may be used at lower levels of the hierarchy without restriction as long as the synthesis script includes a
+``splitnets" command to convert these to single bit nets.
 \end{itemize}
 
 The following GreenPak4 device features are not supported by gp4par as of this writing:
 
 \begin{itemize}
-\item All analog / mixed signal hard IP
-\item All digital hard IP
+\item ADC
+\item DAC
+\item ACMP
+\item VREF
+\item LUT4/CFM
+\item Wake-Sleep
+\item DCMP/PWM
+\item CNT/DELAY
+\item Pipe delay
+\item Programmble delay line
+\item RC OSC
+\item Ring osc
+\item Slave SPI
 \end{itemize}
 
+\pagebreak
 \section{gp4par HDL Constraints}
 
 There is only one supported constraint entry format at this time, Verilog attributes. There is currently no support for 
@@ -476,7 +492,68 @@ GP_LUT3 #(
 \pagebreak
 \subsection{GP\_4LUT: 4-Input Lookup Table}
 
-TODO
+\subsubsection{Introduction}
+This primitive corresponds to a single 4-input lookup table. It can implement any combinatorial function of four 
+inputs and one output.
+
+This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we 
+recommend inferring logic.
+
+The LUT output is the \{IN3, IN2, IN1, IN0\}'th bit of the truth table supplied in the INIT attribute..
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+IN0 & Input & 1 & Least significant input bit \\
+\hline
+IN1 & Input & 1 & Input bit \\
+\hline
+IN2 & Input & 1 & Input bit \\
+\hline
+IN3 & Input & 1 & Most significant input bit \\
+\hline
+OUT & Output & 1 & Lookup table output \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+INIT & Integer & 16 & LUT truth table \\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-lut4-example} sets \emph{o} to the bitwise AND of \emph{a}, \emph{b}, \emph{c},
+and \emph{d}
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire a;
+wire b;
+wire c;
+wire d;
+wire o;
+GP_LUT3 #(
+	.INIT(16'h8000)
+) lut(
+	.IN0(a),
+	.IN1(b),
+	.IN2(c),
+	.IN3(d)
+	.OUT(o)
+);
+\end{lstlisting}
+\caption{Example usage of GP\_LUT4}
+\label{gp-lut4-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_LFOSC
@@ -529,13 +606,19 @@ PWRDN\_EN & Boolean & 1 & Set to 1 to enable the PWRDN pin, or 0 to disable. \\
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-lfosc-example} xx.
+The example shown in figure \ref{gp-lfosc-example} drives a 108 Hz clock onto clk\_108hz. All power management features 
+are disabled.
 
 \begin{figure}[h]
 \begin{lstlisting}
-wire foo;
-GP_VDD vdd(
-	.OUT(foo)
+wire clk_108hz;
+GP_LFOSC #(
+	.PWRDN_EN(0),
+	.AUTO_PWRDN(0),
+	.OUT_DIV(16)
+) lfosc (
+	.PWRDN(1'b0),
+	.CLKOUT(clk_108hz)
 );
 \end{lstlisting}
 \caption{Example usage of GP\_LFOSC}
