@@ -120,7 +120,7 @@ protected:
 	PARGraphNode* m_mate;
 	
 	/**
-		@brief List of all outbound edges from this node (TODO have more metadata on them?)
+		@brief List of all outbound edges from this node
 	 */
 	std::vector<PARGraphEdge*> m_edges;
 };
