@@ -153,24 +153,12 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 			//Cross connections
 			unsigned int srcmatrix = src->GetMatrix();
 			if(srcmatrix != dst->GetMatrix())
-			{
-				//If source node is an IOB, do NOT add it to the sub-optimal list
-				//because the IOB is constrained and can't move.
-				//It's OK if the destination node is an IOB, moving its source is OK
-				if(dynamic_cast<Greenpak4IOB*>(src) != NULL)
+			{			
+				//If there's nothing we can do about it, skip
+				if(CantMoveSrc(src))
 					continue;
-
-				//Power rails are always in optimal locations (because they're everywhere)
-				if(dynamic_cast<Greenpak4PowerRail*>(src) != NULL)
+				if(CantMoveDst(dst))
 					continue;
-					
-				//Oscillators rails are always in optimal locations (because they can't move)
-				if(dynamic_cast<Greenpak4LFOscillator*>(src) != NULL)
-					continue;
-				if(dynamic_cast<Greenpak4LFOscillator*>(dst) != NULL)
-					continue;
-					
-				//TODO: other exclusions?
 					
 				//Add the node
 				nodes.insert(edge->m_sourcenode);
@@ -178,9 +166,55 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 		}
 	}
 	
+	//Find all nodes that are on one end of an unroutable edge
+	std::vector<PARGraphEdge*> unroutes;
+	for(auto edge : unroutes)
+	{
+		if(!CantMoveSrc(static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetData())))
+			nodes.insert(edge->m_sourcenode);
+		if(!CantMoveDst(static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetData())))
+			nodes.insert(edge->m_destnode);
+	}	
+	
 	//Push into the final output list
 	for(auto x : nodes)
 		bad_nodes.push_back(x);
+}
+
+/**
+	@brief Returns true if the given source node cannot be moved
+ */
+bool Greenpak4PAREngine::CantMoveSrc(Greenpak4BitstreamEntity* src)
+{
+	//If source node is an IOB, do NOT add it to the sub-optimal list
+	//because the IOB is constrained and can't move.
+	//It's OK if the destination node is an IOB, moving its source is OK
+	if(dynamic_cast<Greenpak4IOB*>(src) != NULL)
+		return true;
+
+	//Power rails are always in optimal locations (because they're everywhere)
+	if(dynamic_cast<Greenpak4PowerRail*>(src) != NULL)
+		return true;
+		
+	//Oscillators are always in optimal locations (because they're everywhere)
+	if(dynamic_cast<Greenpak4LFOscillator*>(src) != NULL)
+		return true;
+		
+	//nope, it's movable
+	return false;
+}
+
+/**
+	@brief Returns true if the given destination node cannot be moved
+ */
+bool Greenpak4PAREngine::CantMoveDst(Greenpak4BitstreamEntity* /*dst*/)
+{
+	//Oscillator as destination?
+	//if(dynamic_cast<Greenpak4LFOscillator*>(dst) != NULL)
+	//	return true;
+	
+	//nope, it's movable	
+	return false;
 }
 
 /**
@@ -193,6 +227,8 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	auto current_site = static_cast<Greenpak4BitstreamEntity*>(current_node->GetData());
 	uint32_t current_matrix = current_site->GetMatrix();
 	uint32_t label = current_node->GetLabel();
+	
+	//TODO: Decide value for this based on whether routing pressure was the reason for the move
 	uint32_t target_matrix = 1 - current_matrix;
 	
 	//Make the list of candidate placements
@@ -201,10 +237,23 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	{
 		PARGraphNode* node = m_device->GetNodeByLabelAndIndex(label, i);
 		Greenpak4BitstreamEntity* entity = static_cast<Greenpak4BitstreamEntity*>(node->GetData());
+		
+		//TODO: Check if candidate placement is routable
+		
 		if(entity->GetMatrix() == target_matrix)
 			temp_candidates.insert(node);
 	}
-	//TODO: search alternate labels too
+		
+	//If no routable candidates found in the optimal matrix, check the other matrix too
+	if(temp_candidates.empty())
+	{
+		for(uint32_t i=0; i<m_device->GetNumNodesWithLabel(label); i++)
+		{
+			PARGraphNode* node = m_device->GetNodeByLabelAndIndex(label, i);
+			//TODO: check if candidate placement is routable
+			temp_candidates.insert(node);
+		}
+	}
 	
 	//Move to a vector for random access
 	std::vector<PARGraphNode*> candidates;

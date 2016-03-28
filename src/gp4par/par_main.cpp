@@ -37,6 +37,9 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 	Greenpak4PAREngine engine(ngraph, dgraph);
 	if(!engine.PlaceAndRoute(true))
 	{
+		//Print the placement we have so far
+		PrintPlacementReport(ngraph, device);
+		
 		printf("PAR failed\n");
 		return false;
 	}

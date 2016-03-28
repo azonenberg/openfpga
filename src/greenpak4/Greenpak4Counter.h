@@ -32,6 +32,7 @@ public:
 		unsigned int depth,
 		bool has_fsm,
 		bool has_wspwrdn,
+		bool has_edgedetect,
 		unsigned int countnum,
 		unsigned int matrix,
 		unsigned int ibase,
@@ -105,6 +106,9 @@ protected:
 	
 	///Indicates if we have a wake-sleep power down mode
 	bool m_hasWakeSleepPowerDown;
+	
+	///Indicates if we have an edge detector
+	bool m_hasEdgeDetect;
 };
 
 #endif

@@ -499,7 +499,9 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		PARGraphNode* cnodes[] =
 		{
 			device->GetCounter(0)->GetPARNode(),
-			device->GetCounter(1)->GetPARNode()
+			device->GetCounter(1)->GetPARNode()/*,
+			device->GetCounter(2)->GetPARNode(),
+			device->GetCounter(3)->GetPARNode()*/
 		};
 		
 		//TODO: RCOSC, counter end, ring osc, matrix 0 output 72
@@ -507,5 +509,11 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		
 		//TODO: RCOSC, counter end, ring osc, matrix 1 output 74
 		lfosc->AddEdge(cnodes[1], "CLK");
+		
+		//TODO: RCOSC, counter end, ring osc, matrix 0 output 72, FSM clock, PWM clock, matrix 0 output 83
+		//lfosc->AddEdge(cnodes[2], "CLK");
+		
+		//TODO: RCOSC, counter end, ring osc, matrix 1 output 74
+		//lfosc->AddEdge(cnodes[3], "CLK");
 	}
 }

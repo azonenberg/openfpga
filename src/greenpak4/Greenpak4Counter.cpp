@@ -28,6 +28,7 @@ Greenpak4Counter::Greenpak4Counter(
 	unsigned int depth,
 	bool has_fsm,
 	bool has_wspwrdn,
+	bool has_edgedetect,
 	unsigned int countnum,
 	unsigned int matrix,
 	unsigned int ibase,
@@ -43,6 +44,7 @@ Greenpak4Counter::Greenpak4Counter(
 	, m_preDivide(1)
 	, m_resetMode(BOTH_EDGE)						//default reset mode is both edges
 	, m_hasWakeSleepPowerDown(has_wspwrdn)
+	, m_hasEdgeDetect(has_edgedetect)
 {
 
 }
@@ -57,30 +59,13 @@ Greenpak4Counter::~Greenpak4Counter()
 
 unsigned int Greenpak4Counter::GetConfigLen()
 {
-	if(m_depth == 14)
-	{
-		if(m_hasFSM)
-		{
-		}
-		
-		//14 counter bits + 7 config bits + W/S
-		else
-			return 14 + 7 + (m_hasWakeSleepPowerDown ? 1 : 0);
-	}
+	//Counter bits + 10 config bits + edge detect
+	if(m_hasFSM)
+		return m_depth + 10 + (m_hasEdgeDetect ? 1 : 0);
 	
+	//Counter bits + 7 config bits + W/S
 	else
-	{
-		//8 counter bits + 10 config bits
-		if(m_hasFSM)
-			return 8 + 10;
-		
-		else
-		{
-			
-		}
-	}
-	
-	return 0;
+		return m_depth + 7 + (m_hasWakeSleepPowerDown ? 1 : 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,40 +95,29 @@ bool Greenpak4Counter::Save(bool* bitstream)
 	//COUNTER MODE
 	if(true)
 	{
-		if(m_depth == 8)
+		if(m_hasFSM)
 		{
-			if(m_hasFSM)
-			{
-				//Reset input
-				if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_reset))
-					return false;
-					
-				//KEEP (ignored)
-				if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(m_matrix, false)))
-					return false;
-					
-				//UP (ignored)
-				if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(m_matrix, false)))
-					return false;
-			}
+			//Reset input
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_reset))
+				return false;
+				
+			//KEEP (ignored)
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(m_matrix, false)))
+				return false;
+				
+			//UP (ignored)
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(m_matrix, false)))
+				return false;
 		}
 		
 		else
 		{
-			if(m_hasFSM)
-			{
-			}
-			
-			//14 bit, no FSM
-			else
-			{
-				//Reset input
-				if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_reset))
-					return false;
-					
-				//Counter clock (matrix 0 output 72, or matrix 1 output 74 in SLG46620)
-			}
+			//Reset input
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_reset))
+				return false;
 		}
+		
+		//TODO: dedicated input clock matrix stuff
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,37 +195,64 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					m_clock->GetDescription().c_str());
 				return false;
 			}
+			nbase += 4;
 			
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// Reset mode
 			
-			bitstream[nbase + 5] = (m_resetMode & 2) ? true : false;
-			bitstream[nbase + 4] = (m_resetMode & 1) ? true : false;
+			bitstream[nbase + 1] = (m_resetMode & 2) ? true : false;
+			bitstream[nbase + 0] = (m_resetMode & 1) ? true : false;
 			
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// Block function
 			
-			//if unused, go to delay mode instead
-			if(unused)
-				bitstream[nbase + 6] = false;
+			nbase += 2;
 			
-			//Counter / FSM / PWM mode selected
+			if(m_hasEdgeDetect)
+			{
+				//if unused, go to delay mode
+				if(unused)
+				{
+					bitstream[nbase + 1] = false;
+					bitstream[nbase + 0] = false;
+				}
+				
+				//Counter / FSM / PWM mode selected
+				else
+				{
+					bitstream[nbase + 1] = false;
+					bitstream[nbase + 0] = true;
+				}
+				
+				nbase += 2;
+			}
+			
 			else
-				bitstream[nbase + 6] = true;
+			{
+				//if unused, go to delay mode
+				if(unused)
+					bitstream[nbase + 0] = false;
+				
+				//Counter / FSM / PWM mode selected
+				else
+					bitstream[nbase + 0] = true;
+					
+				nbase ++;
+			}
 			
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// FSM input data source (not implemented for now)
 			
-			//NVM data (reset to max count)
-			bitstream[nbase + 7] = false;
-			bitstream[nbase + 8] = false;
+			//NVM data (FSM data = max count)
+			bitstream[nbase + 0] = false;
+			bitstream[nbase + 1] = false;
 			
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// Value control
 			
-			//Reset to count=0
+			//Reset count to zero
 			//TODO: make this configurable
-			bitstream[nbase + 9] = false;
+			bitstream[nbase + 2] = false;
 		}
 		
 		//Not FSM capable (see CNT/DLY0)

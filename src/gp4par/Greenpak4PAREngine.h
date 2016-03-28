@@ -35,6 +35,9 @@ protected:
 	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot);
 	
 	virtual uint32_t ComputeCongestionCost();
+	
+	bool CantMoveSrc(Greenpak4BitstreamEntity* src);
+	bool CantMoveDst(Greenpak4BitstreamEntity* dst);
 };
 
 #endif

@@ -192,27 +192,52 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//TODO: Other oscillators
 	
 	//Counters
+	/*
 	m_counters14bit.push_back(new Greenpak4Counter(
 		this,
 		14,		//depth
 		false,	//no FSM mode
 		true,	//wake-sleep powerdown bit
+		false,	//no edge detector
 		0,		//counter number
 		0,		//matrix
 		74,		//ibase
 		36,		//oword
 		1731));	//cbase
-		
 	m_counters14bit.push_back(new Greenpak4Counter(
 		this,
 		14,		//depth
 		false,	//no FSM mode
 		false,	//no wake-sleep powerdown
+		false,	//no edge detector
 		1,		//counter number
 		1,		//matrix
 		75,		//ibase
 		36,		//oword
 		1753));	//cbase
+		*/
+	m_counters14bit.push_back(new Greenpak4Counter(
+		this,
+		14,		//depth
+		true,	//we have FSM mode
+		false,	//no wake-sleep powerdown
+		true,	//we have edge detector
+		2,		//counter number
+		0,		//matrix
+		75,		//ibase
+		37,		//oword
+		1774));	//cbase
+	m_counters14bit.push_back(new Greenpak4Counter(
+		this,
+		14,		//depth
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		3,		//counter number
+		1,		//matrix
+		76,		//ibase
+		37,		//oword
+		1799));	//cbase
 	
 	/*
 	m_counters8bit.push_back(new Greenpak4Counter(
