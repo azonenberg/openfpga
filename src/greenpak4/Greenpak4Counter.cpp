@@ -29,6 +29,7 @@ Greenpak4Counter::Greenpak4Counter(
 	bool has_fsm,
 	bool has_wspwrdn,
 	bool has_edgedetect,
+	bool has_pwm,
 	unsigned int countnum,
 	unsigned int matrix,
 	unsigned int ibase,
@@ -45,6 +46,7 @@ Greenpak4Counter::Greenpak4Counter(
 	, m_resetMode(BOTH_EDGE)						//default reset mode is both edges
 	, m_hasWakeSleepPowerDown(has_wspwrdn)
 	, m_hasEdgeDetect(has_edgedetect)
+	, m_hasPWM(has_pwm)
 {
 
 }
@@ -62,6 +64,10 @@ unsigned int Greenpak4Counter::GetConfigLen()
 	//Counter bits + 10 config bits + edge detect
 	if(m_hasFSM)
 		return m_depth + 10 + (m_hasEdgeDetect ? 1 : 0);
+		
+	//Counter bits + 7 config bits
+	else if(m_hasPWM)
+		return m_depth + 7;
 	
 	//Counter bits + 7 config bits + W/S
 	else
@@ -153,176 +159,198 @@ bool Greenpak4Counter::Save(bool* bitstream)
 	if(dynamic_cast<Greenpak4PowerRail*>(clk) != NULL)
 		unused = true;
 	
-	//COUNTER MODE
-	if(true)
-	{
-		//FSM capable (see CNT/DLY4)
-		if(m_hasFSM)
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Input clock
+	
+	//FSM/PWM have 4-bit clock selector
+	if(m_hasFSM || m_hasPWM)
+	{			
+		//Low-frequency oscillator
+		if(dynamic_cast<Greenpak4LFOscillator*>(clk) != NULL)
 		{
-			////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// Input clock
-			
-			//Low-frequency oscillator
-			if(dynamic_cast<Greenpak4LFOscillator*>(clk) != NULL)
-			{
-				if(m_preDivide != 1)
-				{
-					fprintf(
-						stderr,
-						"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by LF osc\n",
-						m_countnum);
-					return false;
-				}
-				
-				//4'b1010
-				bitstream[nbase + 3] = true;
-				bitstream[nbase + 2] = false;
-				bitstream[nbase + 1] = true;
-				bitstream[nbase + 0] = false;
-			}
-			//TODO: RCOSC with dividers
-			//TODO: Matrix outputs
-			//TODO: ring oscillator
-			//TODO: SPI clock
-			//TODO: FSM clock
-			//TODO: PWM clock
-			else if(!unused)
+			if(m_preDivide != 1)
 			{
 				fprintf(
 					stderr,
-					"ERROR: Counter %d input from %s not implemented\n",
-					m_countnum,
-					m_clock->GetDescription().c_str());
+					"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by LF osc\n",
+					m_countnum);
 				return false;
 			}
-			nbase += 4;
 			
-			////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// Reset mode
-			
-			bitstream[nbase + 1] = (m_resetMode & 2) ? true : false;
-			bitstream[nbase + 0] = (m_resetMode & 1) ? true : false;
-			
-			////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// Block function
-			
-			nbase += 2;
-			
-			if(m_hasEdgeDetect)
-			{
-				//if unused, go to delay mode
-				if(unused)
-				{
-					bitstream[nbase + 1] = false;
-					bitstream[nbase + 0] = false;
-				}
-				
-				//Counter / FSM / PWM mode selected
-				else
-				{
-					bitstream[nbase + 1] = false;
-					bitstream[nbase + 0] = true;
-				}
-				
-				nbase += 2;
-			}
-			
-			else
-			{
-				//if unused, go to delay mode
-				if(unused)
-					bitstream[nbase + 0] = false;
-				
-				//Counter / FSM / PWM mode selected
-				else
-					bitstream[nbase + 0] = true;
-					
-				nbase ++;
-			}
-			
-			////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// FSM input data source (not implemented for now)
-			
-			//NVM data (FSM data = max count)
-			bitstream[nbase + 0] = false;
-			bitstream[nbase + 1] = false;
-			
-			////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// Value control
-			
-			//Reset count to zero
-			//TODO: make this configurable
+			//4'b1010
+			bitstream[nbase + 3] = true;
 			bitstream[nbase + 2] = false;
+			bitstream[nbase + 1] = true;
+			bitstream[nbase + 0] = false;
 		}
-		
-		//Not FSM capable (see CNT/DLY0)
-		else
+		//TODO: RCOSC with dividers
+		//TODO: Matrix outputs
+		//TODO: ring oscillator
+		//TODO: SPI clock
+		//TODO: FSM clock
+		//TODO: PWM clock
+		else if(!unused)
 		{
-			////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// Input clock
-			
-			//Low-frequency oscillator
-			if(dynamic_cast<Greenpak4LFOscillator*>(m_clock->GetRealEntity()) != NULL)
+			fprintf(
+				stderr,
+				"ERROR: Counter %d input from %s not implemented\n",
+				m_countnum,
+				m_clock->GetDescription().c_str());
+			return false;
+		}
+		nbase += 4;
+	}
+	
+	//others have 3-bit selector
+	else
+	{
+		//Low-frequency oscillator
+		if(dynamic_cast<Greenpak4LFOscillator*>(m_clock->GetRealEntity()) != NULL)
+		{
+			if(m_preDivide != 1)
 			{
-				if(m_preDivide != 1)
-				{
-					fprintf(
-						stderr,
-						"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by LF osc\n",
-						m_countnum);
-					return false;
-				}
-				
-				//3'b100
-				bitstream[nbase + 2] = true;
+				fprintf(
+					stderr,
+					"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by LF osc\n",
+					m_countnum);
+				return false;
+			}
+			
+			//3'b100
+			bitstream[nbase + 2] = true;
+			bitstream[nbase + 1] = false;
+			bitstream[nbase + 0] = false;
+		}
+		//TODO: RCOSC with dividers
+		//TODO: cascading
+		//TODO: Matrix outputs
+		//TODO: ring oscillator
+		else if(!unused)
+		{
+			fprintf(
+				stderr,
+				"ERROR: Counter %d input from %s not implemented\n",
+				m_countnum,
+				m_clock->GetDescription().c_str());
+			return false;
+		}
+	
+		nbase += 3;
+	}
+		
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Main counter logic
+	
+	//FSM capable (see CNT/DLY4)
+	if(m_hasFSM)
+	{			
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Reset mode
+		
+		bitstream[nbase + 1] = (m_resetMode & 2) ? true : false;
+		bitstream[nbase + 0] = (m_resetMode & 1) ? true : false;
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Block function
+		
+		nbase += 2;
+		
+		if(m_hasEdgeDetect)
+		{
+			//if unused, go to delay mode
+			if(unused)
+			{
 				bitstream[nbase + 1] = false;
 				bitstream[nbase + 0] = false;
 			}
-			//TODO: RCOSC with dividers
-			//TODO: cascading
-			//TODO: Matrix outputs
-			//TODO: ring oscillator
-			else if(!unused)
+			
+			//Counter / FSM / PWM mode selected
+			else
 			{
-				fprintf(
-					stderr,
-					"ERROR: Counter %d input from %s not implemented\n",
-					m_countnum,
-					m_clock->GetDescription().c_str());
-				return false;
+				bitstream[nbase + 1] = false;
+				bitstream[nbase + 0] = true;
 			}
 			
-			////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// Reset mode
+			nbase += 2;
+		}
+		
+		else
+		{
+			//if unused, go to delay mode
+			if(unused)
+				bitstream[nbase + 0] = false;
 			
-			bitstream[nbase + 4] = (m_resetMode & 2) ? true : false;
-			bitstream[nbase + 3] = (m_resetMode & 1) ? true : false;
+			//Counter / FSM / PWM mode selected
+			else
+				bitstream[nbase + 0] = true;
+				
+			nbase ++;
+		}
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// FSM input data source (not implemented for now)
+		
+		//NVM data (FSM data = max count)
+		bitstream[nbase + 0] = false;
+		bitstream[nbase + 1] = false;
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Value control
+		
+		//Reset count to zero
+		//TODO: make this configurable
+		bitstream[nbase + 2] = false;
+	}
+		
+	//Not FSM capable (see CNT/DLY0)
+	else
+	{			
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Reset mode
+		
+		bitstream[nbase + 1] = (m_resetMode & 2) ? true : false;
+		bitstream[nbase + 0] = (m_resetMode & 1) ? true : false;
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Block function
+		
+		//PWM mode is only 1 bit (see CNT/DLY80
+		if(m_hasPWM)
+		{
+			//if unused, 1'b0 = delay
+			if(unused)
+				bitstream[nbase + 2] = false;
 			
-			////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// Block function
-			
+			//1'b1 = CNT
+			else
+				bitstream[nbase + 2] = true;
+		}
+		
+		//Not PWM capable (see CNT/DLY0)
+		else
+		{		
 			//if unused, 2'b00 = delay
 			if(unused)
 			{
-				bitstream[nbase + 6] = false;
-				bitstream[nbase + 5] = false;
+				bitstream[nbase + 3] = false;
+				bitstream[nbase + 2] = false;
 			}
 			
 			//2'b01 = CNT
 			else
 			{
-				bitstream[nbase + 6] = false;
-				bitstream[nbase + 5] = true;
+				bitstream[nbase + 3] = false;
+				bitstream[nbase + 2] = true;
 			}
-			
-			////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// Wake/sleep power down
-			
-			//For now, always run normally
-			if(m_hasWakeSleepPowerDown && !unused)
-				bitstream[nbase + 7] = true;
-			
 		}
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Wake/sleep power down
+		
+		//For now, always run normally
+		if(m_hasWakeSleepPowerDown && !unused)
+			bitstream[nbase + 4] = true;
+		
 	}
 
 	return true;

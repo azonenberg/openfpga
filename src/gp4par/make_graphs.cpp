@@ -499,21 +499,45 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		PARGraphNode* cnodes[] =
 		{
 			device->GetCounter(0)->GetPARNode(),
-			device->GetCounter(1)->GetPARNode()/*,
+			device->GetCounter(1)->GetPARNode(),
 			device->GetCounter(2)->GetPARNode(),
-			device->GetCounter(3)->GetPARNode()*/
+			device->GetCounter(3)->GetPARNode(),
+			device->GetCounter(4)->GetPARNode(),
+			device->GetCounter(5)->GetPARNode(),
+			device->GetCounter(6)->GetPARNode(),
+			device->GetCounter(7)->GetPARNode(),
+			device->GetCounter(8)->GetPARNode(),
+			device->GetCounter(9)->GetPARNode()
 		};
 		
-		//TODO: RCOSC, counter end, ring osc, matrix 0 output 72
+		//TODO: other clock sources
 		lfosc->AddEdge(cnodes[0], "CLK");
 		
-		//TODO: RCOSC, counter end, ring osc, matrix 1 output 74
+		//TODO: other clock sources
 		lfosc->AddEdge(cnodes[1], "CLK");
 		
-		//TODO: RCOSC, counter end, ring osc, matrix 0 output 72, FSM clock, PWM clock, matrix 0 output 83
-		//lfosc->AddEdge(cnodes[2], "CLK");
+		//TODO: other clock sources
+		lfosc->AddEdge(cnodes[2], "CLK");
 		
-		//TODO: RCOSC, counter end, ring osc, matrix 1 output 74
-		//lfosc->AddEdge(cnodes[3], "CLK");
+		//TODO: other clock sources
+		lfosc->AddEdge(cnodes[3], "CLK");
+		
+		//TODO: other clock sources
+		lfosc->AddEdge(cnodes[4], "CLK");
+		
+		//TODO: other clock sources
+		lfosc->AddEdge(cnodes[5], "CLK");
+		
+		//TODO: other clock sources
+		lfosc->AddEdge(cnodes[6], "CLK");
+		
+		//TODO: other clock sources
+		lfosc->AddEdge(cnodes[7], "CLK");
+		
+		//TODO: other clock sources
+		lfosc->AddEdge(cnodes[8], "CLK");
+		
+		//TODO: other clock sources
+		lfosc->AddEdge(cnodes[9], "CLK");
 	}
 }

@@ -33,6 +33,7 @@ public:
 		bool has_fsm,
 		bool has_wspwrdn,
 		bool has_edgedetect,
+		bool has_pwm,
 		unsigned int countnum,
 		unsigned int matrix,
 		unsigned int ibase,
@@ -109,6 +110,9 @@ protected:
 	
 	///Indicates if we have an edge detector
 	bool m_hasEdgeDetect;
+	
+	///Indicates if we have a PWM mode
+	bool m_hasPWM;
 };
 
 #endif

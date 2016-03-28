@@ -192,13 +192,13 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//TODO: Other oscillators
 	
 	//Counters
-	/*
 	m_counters14bit.push_back(new Greenpak4Counter(
 		this,
 		14,		//depth
 		false,	//no FSM mode
 		true,	//wake-sleep powerdown bit
 		false,	//no edge detector
+		false,	//no PWM
 		0,		//counter number
 		0,		//matrix
 		74,		//ibase
@@ -210,18 +210,19 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		false,	//no FSM mode
 		false,	//no wake-sleep powerdown
 		false,	//no edge detector
+		false,	//no PWM
 		1,		//counter number
 		1,		//matrix
 		75,		//ibase
 		36,		//oword
 		1753));	//cbase
-		*/
 	m_counters14bit.push_back(new Greenpak4Counter(
 		this,
 		14,		//depth
 		true,	//we have FSM mode
 		false,	//no wake-sleep powerdown
 		true,	//we have edge detector
+		false,	//no PWM
 		2,		//counter number
 		0,		//matrix
 		75,		//ibase
@@ -233,23 +234,84 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		false,	//no FSM mode
 		false,	//no wake-sleep powerdown
 		false,	//no edge detector
+		false,	//no PWM
 		3,		//counter number
 		1,		//matrix
 		76,		//ibase
 		37,		//oword
-		1799));	//cbase
-	
-	/*
+		1799));	//cbase (datasheet has a typo, this is correct)
 	m_counters8bit.push_back(new Greenpak4Counter(
 		this,
 		8,		//depth 
 		true,	//we have FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		false,	//no PWM
 		4,		//counter number
 		1,		//matrix
 		77,		//ibase
 		38,		//oword,
 		1820));	//cbase
-	*/
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth 
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		false,	//no PWM
+		5,		//counter number
+		0,		//matrix
+		78,		//ibase
+		38,		//oword,
+		1838));	//cbase
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth 
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		false,	//no PWM
+		6,		//counter number
+		0,		//matrix
+		79,		//ibase
+		39,		//oword,
+		1852));	//cbase
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth 
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		false,	//no PWM
+		7,		//counter number
+		1,		//matrix (datasheet has a typo, this is correct)
+		80,		//ibase
+		39,		//oword,
+		1866));	//cbase
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth 
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		true,	//PWM mode
+		8,		//counter number
+		1,		//matrix
+		81,		//ibase
+		40,		//oword,
+		1880));	//cbase
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth 
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		true,	//PWM mode
+		9,		//counter number
+		0,		//matrix
+		80,		//ibase
+		40,		//oword,
+		1895));	//cbase
 	
 	//TODO: Slave SPI
 	
