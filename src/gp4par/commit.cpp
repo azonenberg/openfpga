@@ -56,7 +56,7 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		else if(lfosc)
 			CommitLFOscChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), lfosc);
 		else if(count)
-			printf("    WARNING: Commit counter not implemented\n");
+			CommitCounterChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), count);
 			
 		//Ignore power rails, they have no configuration
 		else if(pwr)
@@ -225,7 +225,44 @@ void CommitLFOscChanges(Greenpak4NetlistCell* ncell, Greenpak4LFOscillator* osc)
 }
 
 /**
+	@brief Commit post-PAR results from the netlist to a counter
+ */
+void CommitCounterChanges(Greenpak4NetlistCell* ncell, Greenpak4Counter* count)
+{
+	if(ncell->HasParameter("RESET_MODE"))
+	{
+		Greenpak4Counter::ResetMode mode = Greenpak4Counter::RISING_EDGE;
+		string p = ncell->m_parameters["RESET_MODE"];
+		if(p == "RISING")
+			mode = Greenpak4Counter::RISING_EDGE;
+		else if(p == "FALLING")
+			mode = Greenpak4Counter::FALLING_EDGE;
+		else if(p == "BOTH")
+			mode = Greenpak4Counter::BOTH_EDGE;
+		else if(p == "LEVEL")
+			mode = Greenpak4Counter::HIGH_LEVEL;
+		else
+		{
+			fprintf(
+				stderr,
+				"ERROR: Counter \"%s\" has illegal reset mode \"%s\" (must be RISING, FALLING, BOTH, or LEVEL)\n",
+				ncell->m_name.c_str(),
+				p.c_str());
+		}
+		count->SetResetMode(mode);
+	}
+	
+	if(ncell->HasParameter("COUNT_TO"))
+		count->SetCounterValue(atoi(ncell->m_parameters["COUNT_TO"].c_str()));
+	
+	if(ncell->HasParameter("CLKIN_DIVIDE"))
+		count->SetPreDivide(atoi(ncell->m_parameters["CLKIN_DIVIDE"].c_str()));
+}
+
+/**
 	@brief Commit post-PAR results from the netlist to the routing matrix
+	
+	TODO: refactor a lot of this stuff to be in the BitstreamEntity derived class
  */
 void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
 {
@@ -368,7 +405,16 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			//Destination is a counter
 			else if(count)
 			{
-				printf("    WARNING: Commit counter routing not implemented\n");
+				if(edge->m_destport == "CLK")
+					count->SetClock(src);
+				else if(edge->m_destport == "RST")
+					count->SetReset(src);
+				
+				else
+				{
+					printf("WARNING: Ignoring connection to unknown counter input %s\n", edge->m_destport.c_str());
+					continue;
+				}
 			}
 			
 			else if(pwr)

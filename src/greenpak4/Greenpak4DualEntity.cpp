@@ -40,6 +40,11 @@ Greenpak4DualEntity::~Greenpak4DualEntity()
 	
 }
 
+Greenpak4BitstreamEntity* Greenpak4DualEntity::GetRealEntity()
+{
+	return m_dual;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bitfile metadata
 

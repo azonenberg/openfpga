@@ -15,7 +15,9 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
+`default_nettype none
+
 module Blinky(out_lfosc_ff, out_lfosc_count);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,7 +27,7 @@ module Blinky(out_lfosc_ff, out_lfosc_count);
 	output reg out_lfosc_ff = 0;
 	
 	(* LOC = "P19" *)
-	output wire out_lfosc_count;
+	output reg out_lfosc_count = 0;
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Oscillators
@@ -46,11 +48,14 @@ module Blinky(out_lfosc_ff, out_lfosc_count);
 	
 	parameter COUNT_DEPTH = 3;
 	
-	//Shift register
-	reg[COUNT_DEPTH-1:0] count = 0;
-	
+	//Fabric post-divider
+	reg[COUNT_DEPTH-1:0] count = 7;
 	always @(posedge clk_108hz) begin
-		count	<= count + 1'd1;
+		count	<= count - 1'd1;
+	end
+	
+	//Toggle the output every time the counter underflows
+	always @(posedge clk_108hz) begin
 		if(count == 0)
 			out_lfosc_ff	<= ~out_lfosc_ff;
 	end
@@ -58,6 +63,8 @@ module Blinky(out_lfosc_ff, out_lfosc_count);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LED driven by low-frequency oscillator and post-divider in hard counter
 	
+	//Hard IP post-divider
+	wire out_lfosc_raw;
 	GP_COUNT8 #(
 		.RESET_MODE("RISING"),
 		.COUNT_TO(7),
@@ -65,7 +72,13 @@ module Blinky(out_lfosc_ff, out_lfosc_count);
 	) hard_counter (
 		.CLK(clk_108hz),
 		.RST(1'b0),
-		.OUT(out_lfosc_count)
+		.OUT(out_lfosc_raw)
 	);
+	
+	//Toggle the output every time the counter underflows
+	always @(posedge clk_108hz) begin
+		if(out_lfosc_raw)
+			out_lfosc_count <= ~out_lfosc_count;
+	end
 
 endmodule

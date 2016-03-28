@@ -46,6 +46,11 @@ Greenpak4BitstreamEntity::~Greenpak4BitstreamEntity()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Load/save helpers
 
+Greenpak4BitstreamEntity* Greenpak4BitstreamEntity::GetRealEntity()
+{
+	return this;
+}
+
 bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	bool* bitstream,
 	unsigned int wordpos,

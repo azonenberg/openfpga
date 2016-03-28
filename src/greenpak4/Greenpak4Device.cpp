@@ -195,11 +195,12 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_counters8bit.push_back(new Greenpak4Counter(
 		this,
 		8,		//depth 
+		true,	//we have FSM mode
 		4,		//counter number
 		1,		//matrix
 		77,		//ibase
 		38,		//oword,
-		1828));	//cbase
+		1820));	//cbase
 	
 	//TODO: Slave SPI
 	

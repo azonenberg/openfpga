@@ -283,7 +283,7 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 			json_object* jnode = json_object_array_get_idx(child, 0);
 			if(!json_object_is_type(jnode, json_type_int))
 			{
-				fprintf(stderr, "ERROR: Net number should be of type integer but isn't\n");
+				fprintf(stderr, "ERROR: Net number in module should be of type integer but isn't\n");
 				exit(-1);
 			}
 

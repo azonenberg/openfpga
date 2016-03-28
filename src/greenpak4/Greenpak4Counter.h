@@ -30,6 +30,7 @@ public:
 	Greenpak4Counter(
 		Greenpak4Device* device,
 		unsigned int depth,
+		bool has_fsm,
 		unsigned int countnum,
 		unsigned int matrix,
 		unsigned int ibase,
@@ -52,6 +53,29 @@ public:
 	unsigned int GetCounterIndex()
 	{ return m_countnum; }
 	
+	void SetReset(Greenpak4BitstreamEntity* reset)
+	{ m_reset = reset; }
+	
+	void SetClock(Greenpak4BitstreamEntity* clock)
+	{ m_clock = clock; }
+	
+	void SetCounterValue(unsigned int val)
+	{ m_countVal = val; }
+	
+	void SetPreDivide(unsigned int val)
+	{ m_preDivide = val; }
+	
+	enum ResetMode
+	{
+		BOTH_EDGE,
+		FALLING_EDGE,
+		RISING_EDGE,
+		HIGH_LEVEL
+	};
+	
+	void SetResetMode(ResetMode mode)
+	{ m_resetMode = mode; }
+	
 protected:
 	
 	///Bit depth of this counter
@@ -59,6 +83,24 @@ protected:
 	
 	///Device index of this counter
 	unsigned int m_countnum;
+	
+	///Reset input
+	Greenpak4BitstreamEntity* m_reset;
+	
+	///Clock input
+	Greenpak4BitstreamEntity* m_clock;
+		
+	///FSM-present flag
+	bool m_hasFSM;
+	
+	///Counter value
+	unsigned int m_countVal;
+	
+	///Pre-divider value (not all values legal for all clock sources)
+	unsigned int m_preDivide;
+	
+	///Reset mode
+	ResetMode m_resetMode;
 };
 
 #endif

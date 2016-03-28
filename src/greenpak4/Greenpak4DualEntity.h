@@ -41,6 +41,8 @@ public:
 	
 	virtual std::string GetDescription();
 	
+	virtual Greenpak4BitstreamEntity* GetRealEntity();
+	
 protected:
 	Greenpak4BitstreamEntity* m_dual;
 };

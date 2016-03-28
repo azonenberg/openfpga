@@ -91,7 +91,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 			json_object* jnode = json_object_array_get_idx(child, 0);
 			if(!json_object_is_type(jnode, json_type_int))
 			{
-				fprintf(stderr, "ERROR: Net number should be of type integer but isn't\n");
+				fprintf(stderr, "ERROR: Net number of port should be of type integer but isn't\n");
 				exit(-1);
 			}
 

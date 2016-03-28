@@ -81,6 +81,11 @@ public:
 	 */
 	virtual std::string GetDescription() =0;
 	
+	/**
+		@brief Returns the real entity if we have a dual
+	 */
+	virtual Greenpak4BitstreamEntity* GetRealEntity();
+	
 protected:
 
 	/**
