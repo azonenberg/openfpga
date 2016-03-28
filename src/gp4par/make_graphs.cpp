@@ -478,10 +478,10 @@ void MakeDeviceEdges(Greenpak4Device* device)
 					x->AddEdge(y, "PWRDN");
 				else if(count)
 				{
-					x->AddEdge(y, "CLK");
+					//Counter reset is freely routable
 					x->AddEdge(y, "RST");
 					
-					//TODO: add other ports
+					//TODO: add other ports for FSM stuff etc?
 				}
 				
 				//no, just add path to the node in general
@@ -491,5 +491,21 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		}
 	}
 	
-	//TODO: add dedicated routing between hard IP etc
+	//Add dedicated routing between hard IP
+	if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
+	{
+		auto lfosc = device->GetLFOscillator()->GetPARNode();
+		
+		PARGraphNode* cnodes[] =
+		{
+			device->GetCounter(0)->GetPARNode(),
+			device->GetCounter(1)->GetPARNode()
+		};
+		
+		//TODO: RCOSC, counter end, ring osc, matrix 0 output 72
+		lfosc->AddEdge(cnodes[0], "CLK");
+		
+		//TODO: RCOSC, counter end, ring osc, matrix 1 output 74
+		lfosc->AddEdge(cnodes[1], "CLK");
+	}
 }

@@ -192,6 +192,29 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//TODO: Other oscillators
 	
 	//Counters
+	m_counters14bit.push_back(new Greenpak4Counter(
+		this,
+		14,		//depth
+		false,	//no FSM mode
+		true,	//wake-sleep powerdown bit
+		0,		//counter number
+		0,		//matrix
+		74,		//ibase
+		36,		//oword
+		1731));	//cbase
+		
+	m_counters14bit.push_back(new Greenpak4Counter(
+		this,
+		14,		//depth
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		1,		//counter number
+		1,		//matrix
+		75,		//ibase
+		36,		//oword
+		1753));	//cbase
+	
+	/*
 	m_counters8bit.push_back(new Greenpak4Counter(
 		this,
 		8,		//depth 
@@ -201,6 +224,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		77,		//ibase
 		38,		//oword,
 		1820));	//cbase
+	*/
 	
 	//TODO: Slave SPI
 	

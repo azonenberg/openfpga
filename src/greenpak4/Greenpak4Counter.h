@@ -31,6 +31,7 @@ public:
 		Greenpak4Device* device,
 		unsigned int depth,
 		bool has_fsm,
+		bool has_wspwrdn,
 		unsigned int countnum,
 		unsigned int matrix,
 		unsigned int ibase,
@@ -67,10 +68,10 @@ public:
 	
 	enum ResetMode
 	{
-		BOTH_EDGE,
-		FALLING_EDGE,
-		RISING_EDGE,
-		HIGH_LEVEL
+		BOTH_EDGE = 0,
+		FALLING_EDGE = 1,
+		RISING_EDGE = 2,
+		HIGH_LEVEL = 3
 	};
 	
 	void SetResetMode(ResetMode mode)
@@ -101,6 +102,9 @@ protected:
 	
 	///Reset mode
 	ResetMode m_resetMode;
+	
+	///Indicates if we have a wake-sleep power down mode
+	bool m_hasWakeSleepPowerDown;
 };
 
 #endif

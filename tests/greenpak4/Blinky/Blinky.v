@@ -18,7 +18,7 @@
 
 `default_nettype none
 
-module Blinky(out_lfosc_ff, out_lfosc_count);
+module Blinky(out_lfosc_ff, out_lfosc_count, out_lfosc_count2);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -28,6 +28,9 @@ module Blinky(out_lfosc_ff, out_lfosc_count);
 	
 	(* LOC = "P19" *)
 	output reg out_lfosc_count = 0;
+	
+	(* LOC = "P3" *)
+	output reg out_lfosc_count2 = 0;
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Oscillators
@@ -61,7 +64,7 @@ module Blinky(out_lfosc_ff, out_lfosc_count);
 	end
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LED driven by low-frequency oscillator and post-divider in hard counter
+	// LED driven by low-frequency oscillator and post-divider in hard counter on right side of device
 	
 	//Hard IP post-divider
 	wire out_lfosc_raw;
@@ -79,6 +82,27 @@ module Blinky(out_lfosc_ff, out_lfosc_count);
 	always @(posedge clk_108hz) begin
 		if(out_lfosc_raw)
 			out_lfosc_count <= ~out_lfosc_count;
+	end
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// LED driven by low-frequency oscillator and post-divider in hard counter on left side of device
+	
+	//Hard IP post-divider
+	wire out_lfosc_raw2;
+	GP_COUNT8 #(
+		.RESET_MODE("RISING"),
+		.COUNT_TO(7),
+		.CLKIN_DIVIDE(1)
+	) hard_counter2 (
+		.CLK(clk_108hz),
+		.RST(1'b0),
+		.OUT(out_lfosc_raw2)
+	);
+	
+	//Toggle the output every time the counter underflows
+	always @(posedge clk_108hz) begin
+		if(out_lfosc_raw2)
+			out_lfosc_count2 <= ~out_lfosc_count2;
 	end
 
 endmodule

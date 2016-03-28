@@ -27,6 +27,7 @@ Greenpak4Counter::Greenpak4Counter(
 	Greenpak4Device* device,
 	unsigned int depth,
 	bool has_fsm,
+	bool has_wspwrdn,
 	unsigned int countnum,
 	unsigned int matrix,
 	unsigned int ibase,
@@ -35,12 +36,13 @@ Greenpak4Counter::Greenpak4Counter(
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)	
 	, m_depth(depth)
 	, m_countnum(countnum)
-	, m_reset(device->GetPowerRail(matrix, false))
+	, m_reset(device->GetPowerRail(matrix, false))	//default reset is ground
 	, m_clock(device->GetPowerRail(matrix, false))
 	, m_hasFSM(has_fsm)
 	, m_countVal(0)
 	, m_preDivide(1)
-	, m_resetMode(RISING_EDGE)
+	, m_resetMode(BOTH_EDGE)						//default reset mode is both edges
+	, m_hasWakeSleepPowerDown(has_wspwrdn)
 {
 
 }
@@ -55,6 +57,29 @@ Greenpak4Counter::~Greenpak4Counter()
 
 unsigned int Greenpak4Counter::GetConfigLen()
 {
+	if(m_depth == 14)
+	{
+		if(m_hasFSM)
+		{
+		}
+		
+		//14 counter bits + 7 config bits + W/S
+		else
+			return 14 + 7 + (m_hasWakeSleepPowerDown ? 1 : 0);
+	}
+	
+	else
+	{
+		//8 counter bits + 10 config bits
+		if(m_hasFSM)
+			return 8 + 10;
+		
+		else
+		{
+			
+		}
+	}
+	
 	return 0;
 }
 
@@ -85,31 +110,54 @@ bool Greenpak4Counter::Save(bool* bitstream)
 	//COUNTER MODE
 	if(true)
 	{
-		if(m_hasFSM)
+		if(m_depth == 8)
 		{
-			//Reset input
-			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_reset))
-				return false;
-				
-			//KEEP (ignored)
-			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(m_matrix, false)))
-				return false;
-				
-			//UP (ignored)
-			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(m_matrix, false)))
-				return false;
+			if(m_hasFSM)
+			{
+				//Reset input
+				if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_reset))
+					return false;
+					
+				//KEEP (ignored)
+				if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(m_matrix, false)))
+					return false;
+					
+				//UP (ignored)
+				if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(m_matrix, false)))
+					return false;
+			}
+		}
+		
+		else
+		{
+			if(m_hasFSM)
+			{
+			}
+			
+			//14 bit, no FSM
+			else
+			{
+				//Reset input
+				if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_reset))
+					return false;
+					
+				//Counter clock (matrix 0 output 72, or matrix 1 output 74 in SLG46620)
+			}
 		}
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration
 	
-	//Count value (the same in all modes)
-	//TODO: 14-bit mode
+	//Count value (the same in all modes, just varies with depth)
 	if(m_depth > 8)
 	{
-		fprintf( stderr, "ERROR: 14-bit counters not implemented yet\n");
-		return false;
+		bitstream[m_configBase + 13] = (m_countVal & 0x2000) ? true : false;
+		bitstream[m_configBase + 12] = (m_countVal & 0x1000) ? true : false;
+		bitstream[m_configBase + 11] = (m_countVal & 0x0800) ? true : false;
+		bitstream[m_configBase + 10] = (m_countVal & 0x0400) ? true : false;
+		bitstream[m_configBase + 9]  = (m_countVal & 0x0200) ? true : false;
+		bitstream[m_configBase + 8]  = (m_countVal & 0x0100) ? true : false;
 	}
 	bitstream[m_configBase + 7] = (m_countVal & 0x80) ? true : false;
 	bitstream[m_configBase + 6] = (m_countVal & 0x40) ? true : false;
@@ -123,25 +171,25 @@ bool Greenpak4Counter::Save(bool* bitstream)
 	//Base for remaining configuration data
 	uint32_t nbase = m_configBase + m_depth;
 	
+	//Get the real clock node (even if in the wrong matrix) for RTTI
+	Greenpak4BitstreamEntity* clk = m_clock->GetRealEntity();
+	bool unused = false;
+	
+	//Check if we're unused
+	if(dynamic_cast<Greenpak4PowerRail*>(clk) != NULL)
+		unused = true;
+	
 	//COUNTER MODE
 	if(true)
 	{
-		//Special bits if we have FSM
+		//FSM capable (see CNT/DLY4)
 		if(m_hasFSM)
 		{
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// Input clock
 			
-			/*
-			printf("clock = %s %p\n",
-				m_clock->GetDescription().c_str(),
-				dynamic_cast<Greenpak4LFOscillator*>(m_clock)
-				);
-			asm("int3");
-			*/
-			
 			//Low-frequency oscillator
-			if(dynamic_cast<Greenpak4LFOscillator*>(m_clock->GetRealEntity()) != NULL)
+			if(dynamic_cast<Greenpak4LFOscillator*>(clk) != NULL)
 			{
 				if(m_preDivide != 1)
 				{
@@ -158,7 +206,13 @@ bool Greenpak4Counter::Save(bool* bitstream)
 				bitstream[nbase + 1] = true;
 				bitstream[nbase + 0] = false;
 			}
-			else
+			//TODO: RCOSC with dividers
+			//TODO: Matrix outputs
+			//TODO: ring oscillator
+			//TODO: SPI clock
+			//TODO: FSM clock
+			//TODO: PWM clock
+			else if(!unused)
 			{
 				fprintf(
 					stderr,
@@ -177,8 +231,13 @@ bool Greenpak4Counter::Save(bool* bitstream)
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// Block function
 			
-			//Counter / FSM mode selected
-			bitstream[nbase + 6] = true;
+			//if unused, go to delay mode instead
+			if(unused)
+				bitstream[nbase + 6] = false;
+			
+			//Counter / FSM / PWM mode selected
+			else
+				bitstream[nbase + 6] = true;
 			
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// FSM input data source (not implemented for now)
@@ -195,13 +254,73 @@ bool Greenpak4Counter::Save(bool* bitstream)
 			bitstream[nbase + 9] = false;
 		}
 		
+		//Not FSM capable (see CNT/DLY0)
 		else
 		{
-			fprintf(
-				stderr,
-				"ERROR: Counter %d non-FSM bitstream not implemented\n",
-				m_countnum);
-			return false;
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// Input clock
+			
+			//Low-frequency oscillator
+			if(dynamic_cast<Greenpak4LFOscillator*>(m_clock->GetRealEntity()) != NULL)
+			{
+				if(m_preDivide != 1)
+				{
+					fprintf(
+						stderr,
+						"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by LF osc\n",
+						m_countnum);
+					return false;
+				}
+				
+				//3'b100
+				bitstream[nbase + 2] = true;
+				bitstream[nbase + 1] = false;
+				bitstream[nbase + 0] = false;
+			}
+			//TODO: RCOSC with dividers
+			//TODO: cascading
+			//TODO: Matrix outputs
+			//TODO: ring oscillator
+			else if(!unused)
+			{
+				fprintf(
+					stderr,
+					"ERROR: Counter %d input from %s not implemented\n",
+					m_countnum,
+					m_clock->GetDescription().c_str());
+				return false;
+			}
+			
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// Reset mode
+			
+			bitstream[nbase + 4] = (m_resetMode & 2) ? true : false;
+			bitstream[nbase + 3] = (m_resetMode & 1) ? true : false;
+			
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// Block function
+			
+			//if unused, 2'b00 = delay
+			if(unused)
+			{
+				bitstream[nbase + 6] = false;
+				bitstream[nbase + 5] = false;
+			}
+			
+			//2'b01 = CNT
+			else
+			{
+				bitstream[nbase + 6] = false;
+				bitstream[nbase + 5] = true;
+			}
+			
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// Wake/sleep power down
+			
+			//For now, always run normally
+			if(m_hasWakeSleepPowerDown && !unused)
+				bitstream[nbase + 7] = true;
+			
 		}
 	}
 

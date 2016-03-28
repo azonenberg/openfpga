@@ -87,10 +87,10 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int total_counters_14 = device->Get14BitCounterCount();
 	printf("    COUNT:     %2d/%2d (%d %%)\n",
 		total_counters_used, total_counters, total_counters_used*100 / total_counters);
-	printf("      COUNT8:  %2d/%2d (%d %%)\n",
-		counters_8_used, total_counters_8, counters_8_used*100 / total_counters_8);
-	//printf("      COUNT14: %2d/%2d (%d %%)\n",
-	//	counters_14_used, total_counters_14, counters_14_used*100 / total_counters_14);
+	//printf("      COUNT8:  %2d/%2d (%d %%)\n",
+	//	counters_8_used, total_counters_8, counters_8_used*100 / total_counters_8);
+	printf("      COUNT14: %2d/%2d (%d %%)\n",
+		counters_14_used, total_counters_14, counters_14_used*100 / total_counters_14);
 	printf("    FF:        %2d/%2d (%d %%)\n", total_dff_used, total_ff, total_dff_used*100 / total_ff);
 	printf("      DFF:     %2d/%2d (%d %%)\n", dff_used, total_dff, dff_used*100 / total_dff);
 	printf("      DFFSR:   %2d/%2d (%d %%)\n", dffsr_used, total_dffsr, dffsr_used*100 / total_dffsr);
