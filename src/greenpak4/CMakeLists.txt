@@ -13,6 +13,7 @@ ADD_LIBRARY(greenpak4 SHARED
 	Greenpak4LFOscillator.cpp
 	Greenpak4LUT.cpp
 	Greenpak4PowerRail.cpp
+	Greenpak4SystemReset.cpp
 	
 	# Unplaced (but techmapped) netlist
 	Greenpak4Netlist.cpp

@@ -18,7 +18,7 @@
 
 `default_nettype none
 
-module Blinky(out_lfosc_ff, out_lfosc_count, out_lfosc_count2);
+module Blinky(out_lfosc_ff, out_lfosc_count, out_lfosc_count2, rst);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -31,6 +31,21 @@ module Blinky(out_lfosc_ff, out_lfosc_count, out_lfosc_count2);
 	
 	(* LOC = "P3" *)
 	output reg out_lfosc_count2 = 0;
+	
+	(* LOC = "P2" *)
+	(* PULLDOWN = "10k" *)
+	(* SCHMITT_TRIGGER *)
+	input wire rst;
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// System reset
+	
+	//Level-triggered asynchronous system reset
+	GP_SYSRESET #(
+		.RESET_MODE("LEVEL")
+	) reset_ctrl (
+		.RST(rst)
+	);
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Oscillators

@@ -108,12 +108,19 @@ void BuildGraphs(
 		dgraph->AddNode(fnode);
 	}
 	
-	//Make device nodes for the low-frequency oscillator
+	//Make device node for the low-frequency oscillator
 	uint32_t lfosc_label = AllocateLabel(ngraph, dgraph, lmap, "GP_LFOSC");
 	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();
 	PARGraphNode* lfnode = new PARGraphNode(lfosc_label, lfosc);
 	lfosc->SetPARNode(lfnode);
 	dgraph->AddNode(lfnode);
+	
+	//Make device node for the reset block
+	uint32_t sysrst_label = AllocateLabel(ngraph, dgraph, lmap, "GP_SYSRST");
+	Greenpak4SystemReset* sysrst = device->GetSystemReset();
+	PARGraphNode* rstnode = new PARGraphNode(sysrst_label, sysrst);
+	sysrst->SetPARNode(rstnode);
+	dgraph->AddNode(rstnode);
 	
 	//Make device nodes for the counters
 	uint32_t count8_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8");
@@ -182,6 +189,8 @@ void BuildGraphs(
 			label = count8_label;
 		else if(cell->m_type == "GP_COUNT14")
 			label = count14_label;
+		else if(cell->m_type == "GP_SYSRESET")
+			label = sysrst_label;
 		
 		//Power nets are virtual cells we use internally
 		else if(cell->m_type == "GP_VDD")
@@ -496,6 +505,9 @@ void MakeDeviceEdges(Greenpak4Device* device)
 	{
 		auto lfosc = device->GetLFOscillator()->GetPARNode();
 		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// CLOCK INPUTS TO COUNTERS
+		
 		PARGraphNode* cnodes[] =
 		{
 			device->GetCounter(0)->GetPARNode(),
@@ -539,5 +551,15 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		
 		//TODO: other clock sources
 		lfosc->AddEdge(cnodes[9], "CLK");
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// SYSTEM RESET
+		
+		//Can drive reset with ground or pin 2 only
+		auto sysrst = device->GetSystemReset()->GetPARNode();
+		auto pin2 = device->GetIOB(2)->GetPARNode();
+		auto gnd = device->GetPowerRail(0, false)->GetPARNode();
+		pin2->AddEdge(sysrst, "RST");
+		gnd->AddEdge(sysrst, "RST");
 	}
 }

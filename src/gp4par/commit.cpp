@@ -45,6 +45,7 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		auto lfosc = dynamic_cast<Greenpak4LFOscillator*>(bnode);
 		auto pwr = dynamic_cast<Greenpak4PowerRail*>(bnode);
 		auto count = dynamic_cast<Greenpak4Counter*>(bnode);
+		auto rst = dynamic_cast<Greenpak4SystemReset*>(bnode);
 			
 		//Configure nodes of known type
 		if(iob)
@@ -57,6 +58,8 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			CommitLFOscChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), lfosc);
 		else if(count)
 			CommitCounterChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), count);
+		else if(rst)
+			CommitResetChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), rst);
 			
 		//Ignore power rails, they have no configuration
 		else if(pwr)
@@ -260,6 +263,33 @@ void CommitCounterChanges(Greenpak4NetlistCell* ncell, Greenpak4Counter* count)
 }
 
 /**
+	@brief Commit post-PAR results from the netlist to a counter
+ */
+void CommitResetChanges(Greenpak4NetlistCell* ncell, Greenpak4SystemReset* rst)
+{
+	if(ncell->HasParameter("RESET_MODE"))
+	{
+		Greenpak4SystemReset::ResetMode mode = Greenpak4SystemReset::RISING_EDGE;
+		string p = ncell->m_parameters["RESET_MODE"];
+		if(p == "RISING")
+			mode = Greenpak4SystemReset::RISING_EDGE;
+		else if(p == "FALLING")
+			mode = Greenpak4SystemReset::FALLING_EDGE;
+		else if(p == "LEVEL")
+			mode = Greenpak4SystemReset::HIGH_LEVEL;
+		else
+		{
+			fprintf(
+				stderr,
+				"ERROR: Reset \"%s\" has illegal reset mode \"%s\" (must be RISING, FALLING, or LEVEL)\n",
+				ncell->m_name.c_str(),
+				p.c_str());
+		}
+		rst->SetResetMode(mode);
+	}
+}
+
+/**
 	@brief Commit post-PAR results from the netlist to the routing matrix
 	
 	TODO: refactor a lot of this stuff to be in the BitstreamEntity derived class
@@ -297,6 +327,7 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			auto dosc = dynamic_cast<Greenpak4LFOscillator*>(dst);
 			auto sosc = dynamic_cast<Greenpak4LFOscillator*>(src);
 			auto count = dynamic_cast<Greenpak4Counter*>(dst);
+			auto rst = dynamic_cast<Greenpak4SystemReset*>(dst);
 			
 			//If the source node is power, patch the topology so that everything comes from the right matrix.
 			//We don't want to waste cross-connections on power nets
@@ -413,6 +444,19 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 				else
 				{
 					printf("WARNING: Ignoring connection to unknown counter input %s\n", edge->m_destport.c_str());
+					continue;
+				}
+			}
+			
+			//Destination is the system reset
+			else if(rst)
+			{
+				if(edge->m_destport == "RST")
+					rst->SetReset(src);
+				
+				else
+				{
+					printf("WARNING: Ignoring connection to unknown reset input %s\n", edge->m_destport.c_str());
 					continue;
 				}
 			}

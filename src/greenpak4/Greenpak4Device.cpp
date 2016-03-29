@@ -331,6 +331,9 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: IO pad precharge? what does this involve?
 	
+	//System reset BLOCK
+	m_sysrst = new Greenpak4SystemReset(this, 0, 24, -1, 2018);
+	
 	//Total length of our bitstream
 	m_bitlen = 2048;
 	
@@ -396,6 +399,7 @@ void Greenpak4Device::CreateDevice_common()
 		m_bitstuff.push_back(m_constantOne[i]);
 	}
 	m_bitstuff.push_back(m_lfosc);
+	m_bitstuff.push_back(m_sysrst);
 	
 	//TODO: this might be device specific
 	for(unsigned int matrix=0; matrix<2; matrix++)

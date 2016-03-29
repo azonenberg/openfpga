@@ -144,6 +144,12 @@ public:
 	{ return m_counters[i]; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// RESET
+
+	Greenpak4SystemReset* GetSystemReset()
+	{ return m_sysrst; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// OTHER
 
 protected:
@@ -203,8 +209,11 @@ protected:
 	///Constant digital 0
 	Greenpak4PowerRail* m_constantZero[2];
 	
-	//Low-frequency oscillator
+	///Low-frequency oscillator
 	Greenpak4LFOscillator* m_lfosc;
+	
+	///System reset
+	Greenpak4SystemReset* m_sysrst;
 	
 	/**
 		@brief Cross-connections between our matrices

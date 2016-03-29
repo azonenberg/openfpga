@@ -86,8 +86,10 @@ void PostPARDRC(PARGraph* netlist, PARGraph* /*device*/)
 			exit(-1);
 		}
 		
-		//Do not warn if power rails have no load, that's perfectly normal
+		//Do not warn if power rails or resets have no load, that's perfectly normal
 		if(dynamic_cast<Greenpak4PowerRail*>(dst) != NULL)
+			continue;
+		if(dynamic_cast<Greenpak4SystemReset*>(dst) != NULL)
 			continue;
 			
 		//If the node is an IOB configured as an output, there's no internal load for its output.

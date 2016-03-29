@@ -661,7 +661,7 @@ rule will result in a physical DRC failure.
 \hline
 PWRDN & Input & 1 &
 	{\bfseries PWRDN\_EN = 1:} \newline Bring this signal high to power down the oscillator. \newline
-	{\bfseries PWRDN\_EN = 0:} \newline Ignored, tie to 1'b0\\
+	{\bfseries PWRDN\_EN = 0:} \newline Ignored, tie to 1'b0.\\
 \hline
 CLKOUT & Output & 1 & 1730 Hz (nominal) clock signal \\
 \hline
@@ -711,7 +711,57 @@ GP_LFOSC #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% GP4_VDD
+% GP_SYSRESET
+
+\pagebreak
+\clearpage
+\subsection{GP\_SYSRESET: System Reset}
+
+\subsubsection{Introduction}
+This primitive represents the system reset block. This is an asynchronous global reset of most on-chip logic (see the
+device datasheet for exact functionality) and is independent of the power-on reset, which cannot be configured.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+RST & Input & 1 & System reset input. Must connect directly to to pin 2 of the device.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+RESET\_MODE & String & 1 & 
+	{\bfseries RISING: } \newline One-shot reset on rising edge of RST. \newline
+	{\bfseries FALLING: } \newline One-shot reset on falling edge of RST. \newline
+	{\bfseries LEVEL: } \newline System is held in reset while RST is high.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-sysreset-example} resets the device when foo is high.
+
+\begin{figure}[h]
+\begin{lstlisting}
+GP_SYSRESET #(
+	.RESET_MODE("LEVEL")
+) reset_ctrl (
+	.RST(rst)
+);
+\end{lstlisting}
+\caption{Example usage of GP\_SYSRESET}
+\label{gp-sysreset-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_VDD
 
 \FloatBarrier
 \pagebreak
@@ -754,7 +804,7 @@ GP_VDD vdd(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% GP4_VSS
+% GP_VSS
 
 \pagebreak
 \subsection{GP\_VSS: Ground Connection}

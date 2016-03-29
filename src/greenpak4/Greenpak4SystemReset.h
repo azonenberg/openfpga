@@ -15,51 +15,55 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
+ 
+#ifndef Greenpak4SystemReset_h
+#define Greenpak4SystemReset_h
 
-#ifndef gp4par_h
-#define gp4par_h
+/**
+	@brief The system-wide warm reset block
+ */ 
+class Greenpak4SystemReset : public Greenpak4BitstreamEntity
+{
+public:
 
-#include "../greenpak4/Greenpak4.h"
-#include "../xbpar/xbpar.h"
-#include "Greenpak4PAREngine.h"
-#include <stdio.h>
-#include <string>
+	//Construction / destruction
+	Greenpak4SystemReset(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	virtual ~Greenpak4SystemReset();
+		
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
+	
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
+	
+	virtual std::string GetDescription();
 
-//Console help
-void ShowUsage();
-void ShowVersion();
-
-//Setup
-typedef std::map<uint32_t, std::string> labelmap;
-uint32_t AllocateLabel(
-	PARGraph*& ngraph,
-	PARGraph*& dgraph,
-	labelmap& lmap,
-	std::string description);
-void BuildGraphs(
-	Greenpak4Netlist* netlist,
-	Greenpak4Device* device,
-	PARGraph*& ngraph,
-	PARGraph*& dgraph,
-	labelmap& lmap);
-void ApplyLocConstraints(Greenpak4Netlist* netlist, PARGraph* ngraph, PARGraph* dgraph);
-
-//PAR core
-bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
-
-//DRC
-void PostPARDRC(PARGraph* netlist, PARGraph* device);
-
-//Committing
-void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
-void CommitIOBChanges(Greenpak4NetlistPort* niob, Greenpak4IOB* iob);
-void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut);
-void CommitFFChanges(Greenpak4NetlistCell* ncell, Greenpak4Flipflop* ff);
-void CommitLFOscChanges(Greenpak4NetlistCell* ncell, Greenpak4LFOscillator* osc);
-void CommitCounterChanges(Greenpak4NetlistCell* ncell, Greenpak4Counter* count);
-void CommitResetChanges(Greenpak4NetlistCell* ncell, Greenpak4SystemReset* rst);
-void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
-void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned int* num_routes_used);
-void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* device);
+	enum ResetMode
+	{
+		RISING_EDGE,
+		FALLING_EDGE,
+		HIGH_LEVEL
+	};
+	
+	void SetResetMode(ResetMode mode)
+	{ m_resetMode = mode; }
+	
+	void SetReset(Greenpak4BitstreamEntity* reset)
+	{ m_reset = reset; }
+	
+protected:
+	
+	///Configuration for the reset
+	ResetMode m_resetMode;
+	
+	///The reset signal itself
+	Greenpak4BitstreamEntity* m_reset;
+};
 
 #endif

@@ -35,6 +35,7 @@
 #include "Greenpak4LFOscillator.h"
 #include "Greenpak4LUT.h"
 #include "Greenpak4PowerRail.h"
+#include "Greenpak4SystemReset.h"
 
 #include "Greenpak4Netlist.h"
 #include "Greenpak4NetlistModule.h"
