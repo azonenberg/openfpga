@@ -349,14 +349,102 @@ endmodule
 Static timing analysis is not yet implemented, thus this section is currently blank.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Coding Techniques
+
+\pagebreak
+\section{gp4par HDL Coding Techniques}
+
+When possible, we recommend inferring design elements to maximize design portability. In some cases, such as for hard 
+IP blocks or when exact control over synthesis results is required, it may be necessary to manually instantiate device 
+primitives.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Counters
+
+\subsection{Counters}
+
+Yosys provides limited inference capability for counters which match the capabilities of the hard macro counters 
+(GP\_COUNT8 and GP\_COUNT14) in the device. Not all hard macro capabilities (such as reset) are currently supported for 
+inference; if these capabilities are required then use explicit primitive instantiation. Future software releases will 
+expand the set of counter features which may be inferred.
+
+\subsubsection{Inference Requirements}
+
+In order to be inferred, a counter must:
+
+\begin{itemize}
+\item Be less than 14 bits in width
+\item Count down only
+\item Not have a runtime reset
+\item Be initialized to the same value by both underflow and by power-on reset
+\item Not have any logic use the internal counter value. Only the ``underflow" signal may be used by surrounding logic.
+\end{itemize}
+
+\subsubsection{Counter Related Constraints}
+
+As of now, there is no way to disable counter inference for a single register. The ``greenpak4\_counters" pass will 
+attempt to infer a counter macro for every counter matching the requirements. A future toolchain version will likely 
+include a ``no counter extraction" constraint which may be applied to the count register if fabric logic implementation 
+is desired.
+
+\clearpage
+\subsubsection{Verilog Usage Example}
+
+The example in Figure \ref{gp-countinfer-example} shows an example of how to infer a non-resettable down counter.
+
+\begin{figure}[h]
+\begin{lstlisting}
+//The actual counter
+localparam COUNT_MAX = 7;
+reg[2:0] count = COUNT_MAX;
+always @(posedge clk) begin
+	count		<= count - 1'd1;
+	if(count == 0)
+		count	<= COUNT_MAX;	
+end
+
+//Toggle the LED every time the counter underflows
+output reg led = 0;
+always @(posedge clk) begin
+	if(count == 0)
+		led <= ~led;
+end
+\end{lstlisting}
+\caption{Example for counter inference}
+\label{gp-countinfer-example}
+\end{figure}
+
+\subsubsection{Reporting}
+
+In order to determine whether a given counter was extracted, look at the synthesis report. Figure 
+\ref{counter-extraction} shows an example synthesis report with a single inferred counter.
+
+\begin{figure}[h]
+{\small
+\begin{verbatim}
+2.7.
+Executing GREENPAK4_COUNTERS pass (mapping counters to hard IP blocks).
+  Found 3-bit non-resettable down counter (from 7) for register count
+    declared at Blinky.v:93
+Extracted 1 counters
+\end{verbatim}
+}
+\caption{Sample extraction report}
+\label{counter-extraction}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Primitives
 
 \pagebreak
 \section{gp4par Verilog Primitives}
 
-When possible, we recommend inferring design elements to maximize design portability. In some cases, such as for hard 
-IP blocks or when exact control over synthesis results is required, it may be necessary to manually instantiate device 
-primitives. Pay careful attention to port names and descriptions as these may not exactly match the Silego primitives.
+This section lists all of the device-dependent primitives wrapping hard IP blocks in the device. These may be used for 
+features which are not yet supported by inference, or when exact control over synthesis results is needed.
+
+Pay careful attention to port names and descriptions as these may not exactly match the Silego primitives; some have 
+been changed in order to allow cleaner and more modular HDL. For example, the single ``oscillator" block is represented 
+in Verilog by a separate block for each of the three internal oscillators.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_2LUT
