@@ -105,9 +105,7 @@ cover synthesis commands; please see the online documentation for \emph{yosys} f
 \begin{lstlisting}[language=sh]
 #!/usr/bin/env yosys
 read_verilog Blinky.v
-synth_greenpak4 -top BlinkyTop -part SLG46620V
-splitnets
-write_json /tmp/Blinky.json
+synth_greenpak4 -top BlinkyTop -part SLG46620V -json /tmp/Blinky.json
 \end{lstlisting}
 \caption{Example synthesis script}
 \label{yscript}
@@ -126,7 +124,8 @@ The following legal Verilog-2001 features are not supported by gp4par as of this
 push-pull outputs. There is no support for tri-state or bidirectional outputs.
 \item {\bfseries Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector nets 
 may be used at lower levels of the hierarchy without restriction as long as the synthesis script includes a
-``splitnets" command to convert these to single bit nets.
+``splitnets" command to convert these to single bit nets. (The synth\_greenpak4 Yosys command includes this command by 
+default.)
 \end{itemize}
 
 The following GreenPak4 device features are not supported by gp4par as of this writing:
@@ -559,7 +558,9 @@ GP_LUT3 #(
 \subsection{GP\_COUNT8: 8-Bit Resettable Down Counter}
 
 \subsubsection{Introduction}
-This primitive represents an 8-bit down counter.
+This primitive represents an 8-bit down counter. The count register is initialized to COUNT\_TO at power-on reset, and 
+to 0 by the reset pin. (Some of the hard IP blocks support resetting to COUNT\_TO with the reset pin and/or counting 
+up, but this is not supported by the current gp4par tool.)
 
 Note that this primitive does \emph{not} always map to a hard IP block with \emph{exactly} 8 bit depth. The technology 
 mapper may map GP\_COUNT8 cells to unused 14-bit counters in order to relieve routing pressure. In this case, the high 
@@ -615,6 +616,60 @@ x
 
 \pagebreak
 \subsection{GP\_COUNT14: 14-Bit Resettable Down Counter}
+
+\subsubsection{Introduction}
+This primitive represents an 14-bit down counter. The count register is initialized to COUNT\_TO at power-on reset, and 
+to 0 by the reset pin. (Some of the hard IP blocks support resetting to COUNT\_TO with the reset pin and/or counting 
+up, but this is not supported by the current gp4par tool.)
+
+In the current software, this primitive currently will always map to a 14-bit counter cell in the device. A planned 
+future optimization will allow the technology mapper to map 14-bit counters in the netlist to 8-bit counter cells if 
+the provided count value is less than 256.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+CLK & Input & 1 & The input clock signal\\
+\hline
+RST & Input & 1 & Reset input (polarity depends on RESET\_MODE). When triggered, resets the count register to zero. \\
+\hline
+OUT & Output & 1 & Counter underflow output. High whenever the count register equals zero. \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+CLKIN\_DIVIDE & Integer & 8 &
+	Input clock divider. Legal values depend on what source CLK is driven by, see device datasheet.\\
+\hline
+COUNT\_TO & Integer & 14 & Value to set the counter to on underflow. \\
+\hline
+RESET\_MODE & String &  & 
+	{\bfseries RISING: } \newline Resets the counter on a rising edge of RST. \newline
+	{\bfseries FALLING: } \newline Resets the counter on a falling edge of RST. \newline
+	{\bfseries BOTH: } \newline Resets the counter on any edge of RST. \newline
+	{\bfseries LEVEL: } \newline Resets the counter when RST is high. \\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-count14-example} needs to be written!
+
+\begin{figure}[h]
+\begin{lstlisting}
+x
+\end{lstlisting}
+\caption{Example usage of GP\_COUNT14}
+\label{gp-count14-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DFF

@@ -1,5 +1,3 @@
 #!/usr/bin/env yosys
 read_verilog Blinky.v
-synth_greenpak4 -top Blinky -part SLG46620V
-splitnets
-write_json /tmp/Blinky.json
+synth_greenpak4 -top Blinky -part SLG46620V -json /tmp/Blinky.json

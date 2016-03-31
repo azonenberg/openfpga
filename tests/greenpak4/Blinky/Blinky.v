@@ -18,7 +18,9 @@
 
 `default_nettype none
 
-module Blinky(out_lfosc_ff, out_lfosc_count, out_lfosc_count2, rst);
+module Blinky(
+	out_lfosc_ff, out_lfosc_count, out_lfosc_count2,
+	sys_rst, count_rst);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -29,24 +31,29 @@ module Blinky(out_lfosc_ff, out_lfosc_count, out_lfosc_count2, rst);
 	(* LOC = "P19" *)
 	output reg out_lfosc_count = 0;
 	
-	(* LOC = "P3" *)
+	(* LOC = "P4" *)
 	output reg out_lfosc_count2 = 0;
 	
 	(* LOC = "P2" *)
 	(* PULLDOWN = "10k" *)
 	(* SCHMITT_TRIGGER *)
-	input wire rst;
+	input wire sys_rst;
+	
+	(* LOC = "P3" *)
+	(* PULLDOWN = "10k" *)
+	(* SCHMITT_TRIGGER *)
+	input wire count_rst;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset
-	
+
 	//Level-triggered asynchronous system reset
 	GP_SYSRESET #(
 		.RESET_MODE("LEVEL")
 	) reset_ctrl (
-		.RST(rst)
+		.RST(sys_rst)
 	);
-		
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Oscillators
 	
@@ -62,14 +69,40 @@ module Blinky(out_lfosc_ff, out_lfosc_count, out_lfosc_count2, rst);
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LED driven by low-frequency oscillator and post-divider in flipflops
+	// Detect rising edges on count_rst and synchronize to clk_108hz domain
+		
+	reg rst_ff = 0;
+	reg rst_ff2 = 0;
 	
-	parameter COUNT_DEPTH = 3;
-	
-	//Fabric post-divider
-	reg[COUNT_DEPTH-1:0] count = 7;
 	always @(posedge clk_108hz) begin
-		count	<= count - 1'd1;
+		rst_ff	<= count_rst;
+		rst_ff2	<= rst_ff;
+	end
+	
+	wire count_rst_edge = (rst_ff && !rst_ff2);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Counter configuration
+	
+	localparam COUNT_MAX = 7;
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// LED driven by low-frequency oscillator and post-divider in flipflops
+
+	//Fabric post-divider
+	reg[2:0] count = COUNT_MAX;
+	always @(posedge clk_108hz) begin
+		
+		//actual counter
+		count		<= count - 1'd1;
+		if(count == 0)
+			count	<= COUNT_MAX;
+			
+		/*
+		//sync reset
+		if(count_rst_edge)
+			count	<= 0;
+		*/
 	end
 	
 	//Toggle the output every time the counter underflows
@@ -77,7 +110,7 @@ module Blinky(out_lfosc_ff, out_lfosc_count, out_lfosc_count2, rst);
 		if(count == 0)
 			out_lfosc_ff	<= ~out_lfosc_ff;
 	end
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LED driven by low-frequency oscillator and post-divider in hard counter on right side of device
 	
@@ -85,11 +118,11 @@ module Blinky(out_lfosc_ff, out_lfosc_count, out_lfosc_count2, rst);
 	wire out_lfosc_raw;
 	GP_COUNT8 #(
 		.RESET_MODE("RISING"),
-		.COUNT_TO(7),
+		.COUNT_TO(COUNT_MAX),
 		.CLKIN_DIVIDE(1)
 	) hard_counter (
 		.CLK(clk_108hz),
-		.RST(1'b0),
+		.RST(count_rst_edge),
 		.OUT(out_lfosc_raw)
 	);
 	
@@ -106,11 +139,11 @@ module Blinky(out_lfosc_ff, out_lfosc_count, out_lfosc_count2, rst);
 	wire out_lfosc_raw2;
 	GP_COUNT8 #(
 		.RESET_MODE("RISING"),
-		.COUNT_TO(7),
+		.COUNT_TO(COUNT_MAX),
 		.CLKIN_DIVIDE(1)
 	) hard_counter2 (
 		.CLK(clk_108hz),
-		.RST(1'b0),
+		.RST(count_rst_edge),
 		.OUT(out_lfosc_raw2)
 	);
 	
