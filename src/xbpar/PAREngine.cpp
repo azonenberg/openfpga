@@ -40,7 +40,7 @@ PAREngine::~PAREngine()
 	
 	@return true on success, fail if design could not be routed
  */
-bool PAREngine::PlaceAndRoute(bool verbose, uint32_t seed)
+bool PAREngine::PlaceAndRoute(std::map<uint32_t, std::string> label_names, bool verbose, uint32_t seed)
 {
 	if(verbose)
 		printf("\nXBPAR initializing...\n");
@@ -51,7 +51,7 @@ bool PAREngine::PlaceAndRoute(bool verbose, uint32_t seed)
 	srand(seed);
 		
 	//Detect obviously impossible-to-route designs
-	if(!SanityCheck(verbose))
+	if(!SanityCheck(label_names, verbose))
 		return false;
 		
 	//Do an initial valid, but not necessarily routable, placement
@@ -148,7 +148,7 @@ void PAREngine::PrintUnroutes(std::vector<PARGraphEdge*>& /*unroutes*/)
 	
 	As of now, we only check for the condition where the netlist has more nodes with a given label than the device.
  */
-bool PAREngine::SanityCheck(bool verbose)
+bool PAREngine::SanityCheck(std::map<uint32_t, std::string> label_names, bool verbose)
 {
 	if(verbose)
 		printf("Initial design feasibility check...\n");
@@ -178,8 +178,8 @@ bool PAREngine::SanityCheck(bool verbose)
 		if(nnet > ndev)
 		{
 			printf("ERROR: Design is too big for the device "
-				"(netlist has %d nodes with label %d, device only has %d)\n",
-				nnet, label, ndev);
+				"(netlist has %d nodes of type %s, device only has %d)\n",
+				nnet, label_names[label].c_str(), ndev);
 			return false;
 		}
 	}

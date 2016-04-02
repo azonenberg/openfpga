@@ -7,6 +7,7 @@ ADD_LIBRARY(greenpak4 SHARED
 	Greenpak4DualEntity.cpp
 	Greenpak4Device.cpp
 	Greenpak4Flipflop.cpp
+	Greenpak4Inverter.cpp
 	Greenpak4IOB.cpp
 	Greenpak4IOBTypeA.cpp
 	Greenpak4IOBTypeB.cpp

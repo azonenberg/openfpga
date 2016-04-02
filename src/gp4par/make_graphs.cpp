@@ -91,6 +91,16 @@ void BuildGraphs(
 		dgraph->AddNode(lnode);
 	}
 	
+	//Make device nodes for the inverters
+	uint32_t inv_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_INV");
+	for(unsigned int i=0; i<device->GetInverterCount(); i++)
+	{
+		Greenpak4Inverter* inv = device->GetInverter(i);
+		PARGraphNode* inode = new PARGraphNode(inv_label, inv);
+		inv->SetPARNode(inode);
+		dgraph->AddNode(inode);
+	}
+	
 	//Make device nodes for each type of flipflop
 	uint32_t dff_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFF");
 	uint32_t dffsr_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFFSR");
@@ -194,6 +204,8 @@ void BuildGraphs(
 			label = count14_label;
 		else if(cell->m_type == "GP_SYSRESET")
 			label = sysrst_label;
+		else if(cell->m_type == "GP_INV")
+			label = inv_label;
 		
 		//Power nets are virtual cells we use internally
 		else if(cell->m_type == "GP_VDD")
@@ -431,6 +443,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 {
 	//Make a list of all nodes in each half of the device connected to general fabric routing
 	std::vector<PARGraphNode*> device_nodes;
+	for(unsigned int i=0; i<device->GetInverterCount(); i++)
+		device_nodes.push_back(device->GetInverter(i)->GetPARNode());
 	for(unsigned int i=0; i<device->GetLUT2Count(); i++)
 		device_nodes.push_back(device->GetLUT2(i)->GetPARNode());
 	for(unsigned int i=0; i<device->GetLUT3Count(); i++)
@@ -464,6 +478,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 				auto ff = dynamic_cast<Greenpak4Flipflop*>(entity);
 				auto lfosc = dynamic_cast<Greenpak4LFOscillator*>(entity);
 				auto count = dynamic_cast<Greenpak4Counter*>(entity);
+				auto inv = dynamic_cast<Greenpak4Inverter*>(entity);
 				
 				if(lut)
 				{
@@ -495,6 +510,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 					
 					//TODO: add other ports for FSM stuff etc?
 				}
+				else if(inv)
+					x->AddEdge(y, "IN");
 				
 				//no, just add path to the node in general
 				else

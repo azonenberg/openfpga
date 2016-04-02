@@ -102,6 +102,15 @@ public:
 	{ return m_lut4s.size(); }
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INVERTERS
+	
+	Greenpak4Inverter* GetInverter(unsigned int i)
+	{ return m_inverters[i]; }
+	
+	unsigned int GetInverterCount()
+	{ return m_inverters.size(); }
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// FLIPFLOPS
 	
 	unsigned int GetTotalFFCount()
@@ -165,6 +174,9 @@ protected:
 
 	///One vector with everything in the bistream
 	std::vector<Greenpak4BitstreamEntity*> m_bitstuff;
+	
+	///The inverters
+	std::vector<Greenpak4Inverter*> m_inverters;
 	
 	/**
 		@brief Just the LUTs (all sizes)

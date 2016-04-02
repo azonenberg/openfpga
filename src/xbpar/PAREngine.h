@@ -20,6 +20,7 @@
 #define PAREngine_h
 
 #include <vector>
+#include <map>
 
 /**
 	@brief The core place-and-route engine
@@ -30,7 +31,7 @@ public:
 	PAREngine(PARGraph* netlist, PARGraph* device);
 	virtual ~PAREngine();
 	
-	virtual bool PlaceAndRoute(bool verbose = true, uint32_t seed = 0);
+	virtual bool PlaceAndRoute(std::map<uint32_t, std::string> label_names, bool verbose = true, uint32_t seed = 0);
 	
 	virtual uint32_t ComputeCost();
 	
@@ -48,7 +49,7 @@ protected:
 	virtual uint32_t ComputeTimingCost();
 	virtual uint32_t ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes);
 
-	virtual bool SanityCheck(bool verbose);
+	virtual bool SanityCheck(std::map<uint32_t, std::string> label_names, bool verbose);
 	virtual void InitialPlacement(bool verbose);
 	virtual bool OptimizePlacement(std::vector<PARGraphNode*>& badnodes, bool verbose);
 

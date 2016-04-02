@@ -15,33 +15,69 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
-#ifndef Greenpak4_h
-#define Greenpak4_h
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
- 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4Counter.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4DualEntity.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4SystemReset.h"
+#include "Greenpak4.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
+using namespace std;
 
-#include "Greenpak4Device.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-#endif
+Greenpak4Inverter::Greenpak4Inverter(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword)
+		: Greenpak4BitstreamEntity(device, matrix, ibase, oword, -1)
+		, m_input(device->GetPowerRail(matrix, 0))
+{
+}
+
+Greenpak4Inverter::~Greenpak4Inverter()
+{
+	
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Bitfile metadata
+
+unsigned int Greenpak4Inverter::GetConfigLen()
+{
+	//no configuration other than the inputs
+	return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+string Greenpak4Inverter::GetDescription()
+{
+	char buf[128];
+	snprintf(buf, sizeof(buf), "INV_%d_%d", m_matrix, m_inputBaseWord);
+	return string(buf);
+}
+
+void Greenpak4Inverter::SetInput(Greenpak4BitstreamEntity* input)
+{
+	m_input = input;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization of the truth table
+
+bool Greenpak4Inverter::Load(bool* /*bitstream*/)
+{
+	//TODO: Do our inputs
+	fprintf(stderr, "unimplemented\n");
+	return false;
+}
+
+bool Greenpak4Inverter::Save(bool* bitstream)
+{
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input))
+		return false;
+		
+	return true;
+}

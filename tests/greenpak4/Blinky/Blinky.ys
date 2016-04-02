@@ -1,3 +1,4 @@
-#!/usr/bin/env yosys
+#!/nfs4/home/azonenberg/code/3rdparty/yosys/yosys
+##!/usr/bin/env yosys
 read_verilog Blinky.v
 synth_greenpak4 -top Blinky -part SLG46620V -json /tmp/Blinky.json

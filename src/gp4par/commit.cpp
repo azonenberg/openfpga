@@ -46,6 +46,7 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		auto pwr = dynamic_cast<Greenpak4PowerRail*>(bnode);
 		auto count = dynamic_cast<Greenpak4Counter*>(bnode);
 		auto rst = dynamic_cast<Greenpak4SystemReset*>(bnode);
+		auto inv = dynamic_cast<Greenpak4Inverter*>(bnode);
 			
 		//Configure nodes of known type
 		if(iob)
@@ -61,8 +62,10 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		else if(rst)
 			CommitResetChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), rst);
 			
-		//Ignore power rails, they have no configuration
+		//Ignore power rails and inverters, they have no configuration
 		else if(pwr)
+		{}
+		else if(inv)
 		{}
 		
 		//No idea what it is
@@ -330,6 +333,7 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			auto sosc = dynamic_cast<Greenpak4LFOscillator*>(src);
 			auto count = dynamic_cast<Greenpak4Counter*>(dst);
 			auto rst = dynamic_cast<Greenpak4SystemReset*>(dst);
+			auto inv = dynamic_cast<Greenpak4Inverter*>(dst);
 			
 			//If the source node is power, patch the topology so that everything comes from the right matrix.
 			//We don't want to waste cross-connections on power nets
@@ -459,6 +463,19 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 				else
 				{
 					printf("WARNING: Ignoring connection to unknown reset input %s\n", edge->m_destport.c_str());
+					continue;
+				}
+			}
+			
+			//Destination is an inverter
+			else if(inv)
+			{
+				if(edge->m_destport == "IN")
+					inv->SetInput(src);
+				
+				else
+				{
+					printf("WARNING: Ignoring connection to unknown inverter input %s\n", edge->m_destport.c_str());
 					continue;
 				}
 			}
