@@ -62,6 +62,8 @@ document, as well as source code for the place-and-route tool, may be found on G
 The syntax examples in this guide show how to use constraints and options. The examples are comprehensive; only the 
 described syntax for a particular constraint or option is guaranteed to work.
 
+All Verilog attributes and values are case sensitive unless otherwise noted.
+
 \subsection{Acronyms}
 
 \begin{tabularx}{4in}{|l|X|}
@@ -111,9 +113,6 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json /tmp/Blinky.json
 \label{yscript}
 \end{figure}
 
-TODO: Include coding examples for inferring various hard IP once this is added to Yosys?
-Or does this belong in the Yosys docs?
-
 \pagebreak
 \section{gp4par Limitations}
 
@@ -132,7 +131,7 @@ The following GreenPak4 device features are not supported by gp4par as of this w
 
 \begin{itemize}
 \item Storage elements: output inverter, latch mode
-\item Counters: Delay, FSM, edge detector, PWM, wake-sleep mode, counter cascading. All clock sources other than LFOSC
+\item Counters: Delay, FSM, edge detector, PWM, wake-sleep mode, counter cascading. All clock sources other than LFOSC.
 \item Inverters
 \item ADC
 \item DAC
@@ -163,6 +162,65 @@ reg[3:0] foobar = 0;
 \end{lstlisting}
 \caption{Example Verilog attribute constraint}
 \label{constraint}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% COUNT_EXTRACT
+
+\pagebreak
+\subsection{Counter Extraction (COUNT\_EXTRACT)}
+\label{count-extract}
+
+The COUNT\_EXTRACT constraint controls inference of GP\_COUNT8 and GP\_COUNT14 cells from behavioral Verilog. It can be 
+used to ensure that a given counter in behavioral logic will, or will not be, mapped to a hard macro.
+
+\subsubsection{Applicable Elements}
+The COUNT\_EXTRACT constraint may only be used on vector registers.
+
+\subsubsection{Constraint Values}
+\begin{itemize}
+\item {\bfseries Vector register}\\
+One of the following:
+\begin{itemize}
+\item AUTO: Same behavior as not specifying any constraint. Counters will be inferred where possible.
+\item NO: Do not infer a counter even if the logic matches a supported inference structure.
+\item FORCE: Always infer a counter. If a supported inference structure is not found, a synthesis error is produced.
+\end{itemize}
+\item {\bfseries Other} \\
+This constraint will be silently ignored if used on any other entity.
+\end{itemize}
+
+\clearpage
+\subsubsection{Verilog Usage Example}
+
+Figure \ref{constraint-count-extract} is an example of a 5-bit down counter with a positive level triggered reset, 
+configured to force counter inference.
+
+\begin{figure}[h]
+\begin{lstlisting}
+(* COUNT_EXTRACT = "FORCE" *)
+reg[4:0] count = COUNT_MAX;
+wire out = (count == 0);
+always @(posedge clk, posedge count_rst) begin
+	
+	//level triggered reset
+	if(count_rst)
+		count		<= 0;
+	
+	//counter
+	else begin
+
+		if(count == 0)
+			count	<= COUNT_MAX;
+		else
+			count	<= count - 1'd1;
+
+	end
+	
+end
+\end{lstlisting}
+\caption{Example for COUNT\_EXTRACT constraint}
+\label{constraint-count-extract}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -364,9 +422,9 @@ primitives.
 \subsection{Counters}
 
 Yosys provides limited inference capability for counters which match the capabilities of the hard macro counters 
-(GP\_COUNT8 and GP\_COUNT14) in the device. Not all hard macro capabilities (such as reset) are currently supported for 
-inference; if these capabilities are required then use explicit primitive instantiation. Future software releases will 
-expand the set of counter features which may be inferred.
+(GP\_COUNT8 and GP\_COUNT14) in the device. Not all hard macro capabilities are currently supported for inference; if 
+these capabilities are required then use explicit primitive instantiation. Future software releases will expand the set 
+of counter features which may be inferred.
 
 \subsubsection{Inference Requirements}
 
@@ -375,39 +433,41 @@ In order to be inferred, a counter must:
 \begin{itemize}
 \item Be less than 14 bits in width
 \item Count down only
-\item Not have a runtime reset
-\item Be initialized to the same value by both underflow and by power-on reset
-\item Not have any logic use the internal counter value. Only the ``underflow" signal may be used by surrounding logic.
+\item Be initialized to the same (maximum) value by both underflow and by power-on reset
+\item Have either no reset, or a positive level triggered reset to zero
+\item Not have any logic use the internal counter register. Only the ``underflow" signal may be used by surrounding logic.
 \end{itemize}
 
 \subsubsection{Counter Related Constraints}
 
-As of now, there is no way to disable counter inference for a single register. The ``greenpak4\_counters" pass will 
-attempt to infer a counter macro for every counter matching the requirements. A future toolchain version will likely 
-include a ``no counter extraction" constraint which may be applied to the count register if fabric logic implementation 
-is desired.
+By default, the ``greenpak4\_counters" pass will attempt to infer a counter macro for every counter matching the 
+requirements. If this is not desired, use the COUNT\_EXTRACT constraint (Section \ref{count-extract}) to control 
+inference behavior.
 
 \clearpage
 \subsubsection{Verilog Usage Example}
 
-The example in Figure \ref{gp-countinfer-example} shows an example of how to infer a non-resettable down counter.
+The example in Figure \ref{gp-countinfer-example} shows an example of how to infer a resettable down counter.
 
 \begin{figure}[h]
 \begin{lstlisting}
-//The actual counter
-localparam COUNT_MAX = 7;
-reg[2:0] count = COUNT_MAX;
-always @(posedge clk) begin
-	count		<= count - 1'd1;
-	if(count == 0)
-		count	<= COUNT_MAX;	
-end
+localparam COUNT_MAX = 31;
+reg[4:0] count = COUNT_MAX;
+wire underflow_out = (count == 0);
+always @(posedge clk, posedge count_rst) begin
+	
+	if(count_rst)
+		count			<= 0;
+	
+	else begin
 
-//Toggle the LED every time the counter underflows
-output reg led = 0;
-always @(posedge clk) begin
-	if(count == 0)
-		led <= ~led;
+		if(count == 0)
+			count		<= COUNT_MAX;
+		else
+			count		<= count - 1'd1;
+
+	end
+	
 end
 \end{lstlisting}
 \caption{Example for counter inference}
@@ -863,6 +923,10 @@ GP_LFOSC #(
 \subsubsection{Introduction}
 This primitive represents the system reset block. This is an asynchronous global reset of most on-chip logic (see the
 device datasheet for exact functionality) and is independent of the power-on reset, which cannot be configured.
+
+Use of this block is not recommended if exact control of resets is required, since its behavior differs from both 
+power-on reset and the module reset pin in some cases. A future version of the toolchain may produce a synthesis-time 
+DRC warning if these cases are detected.
 
 \subsubsection{Port Descriptions}
 
