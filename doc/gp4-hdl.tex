@@ -844,6 +844,51 @@ x
 \subsection{GP\_DFFSR: Positive Edge Triggered D Flipflop with Set/Reset}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_INV
+
+\pagebreak
+\subsection{GP\_INV: Inverter}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single NOT gate.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+IN & Input & 1 & Input bit \\
+\hline
+OUT & Output & 1 & Inverted signal \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+No parameters.
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-inv-example} sets \emph{o} to the complement of \emph{a}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire a;
+wire o;
+GP_INV inv(
+	.IN(a),
+	.OUT(o)
+);
+\end{lstlisting}
+\caption{Example usage of GP\_INV}
+\label{gp-inv-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_LFOSC
 
 \pagebreak
