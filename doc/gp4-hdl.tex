@@ -137,7 +137,7 @@ The following GreenPak4 device features are not supported by gp4par as of this w
 \item DAC
 \item ACMP
 \item VREF
-\item LUT4/CFM
+\item 4LUT/CFM
 \item Wake-Sleep
 \item DCMP/PWM
 \item Pipe delay
@@ -547,14 +547,14 @@ INIT & Integer & 4 & LUT truth table \\
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-lut2-example} sets \emph{o} to the bitwise AND of \emph{a} and \emph{b}.
+The example shown in figure \ref{gp-2LUT-example} sets \emph{o} to the bitwise AND of \emph{a} and \emph{b}.
 
 \begin{figure}[h]
 \begin{lstlisting}
 wire a;
 wire b;
 wire o;
-GP_LUT2 #(
+GP_2LUT #(
 	.INIT(4'h4)
 ) lut(
 	.IN0(a),
@@ -562,8 +562,8 @@ GP_LUT2 #(
 	.OUT(o)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_LUT2}
-\label{gp-lut2-example}
+\caption{Example usage of GP\_2LUT}
+\label{gp-2LUT-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -609,7 +609,7 @@ INIT & Integer & 8 & LUT truth table \\
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-lut3-example} sets \emph{o} to the bitwise AND of \emph{a}, \emph{b}, and \emph{c}.
+The example shown in figure \ref{gp-3LUT-example} sets \emph{o} to the bitwise AND of \emph{a}, \emph{b}, and \emph{c}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -617,7 +617,7 @@ wire a;
 wire b;
 wire c;
 wire o;
-GP_LUT3 #(
+GP_3LUT #(
 	.INIT(8'h80)
 ) lut(
 	.IN0(a),
@@ -626,8 +626,8 @@ GP_LUT3 #(
 	.OUT(o)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_LUT3}
-\label{gp-lut3-example}
+\caption{Example usage of GP\_3LUT}
+\label{gp-3LUT-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -675,7 +675,7 @@ INIT & Integer & 16 & LUT truth table \\
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-lut4-example} sets \emph{o} to the bitwise AND of \emph{a}, \emph{b}, \emph{c},
+The example shown in figure \ref{gp-4LUT-example} sets \emph{o} to the bitwise AND of \emph{a}, \emph{b}, \emph{c},
 and \emph{d}.
 
 \begin{figure}[h]
@@ -685,7 +685,7 @@ wire b;
 wire c;
 wire d;
 wire o;
-GP_LUT3 #(
+GP_3LUT #(
 	.INIT(16'h8000)
 ) lut(
 	.IN0(a),
@@ -695,8 +695,8 @@ GP_LUT3 #(
 	.OUT(o)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_LUT4}
-\label{gp-lut4-example}
+\caption{Example usage of GP\_4LUT}
+\label{gp-4LUT-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
