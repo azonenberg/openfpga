@@ -251,6 +251,7 @@ void CommitCounterChanges(Greenpak4NetlistCell* ncell, Greenpak4Counter* count)
 				"ERROR: Counter \"%s\" has illegal reset mode \"%s\" (must be RISING, FALLING, BOTH, or LEVEL)\n",
 				ncell->m_name.c_str(),
 				p.c_str());
+			exit(-1);
 		}
 		count->SetResetMode(mode);
 	}
@@ -284,6 +285,7 @@ void CommitResetChanges(Greenpak4NetlistCell* ncell, Greenpak4SystemReset* rst)
 				"ERROR: Reset \"%s\" has illegal reset mode \"%s\" (must be RISING, FALLING, or LEVEL)\n",
 				ncell->m_name.c_str(),
 				p.c_str());
+			exit(-1);
 		}
 		rst->SetResetMode(mode);
 	}
