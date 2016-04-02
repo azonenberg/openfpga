@@ -77,6 +77,7 @@ void BuildGraphs(
 	{
 		Greenpak4LUT* lut = device->GetLUT3(i);
 		PARGraphNode* lnode = new PARGraphNode(lut3_label, lut);
+		lnode->AddAlternateLabel(lut2_label);
 		lut->SetPARNode(lnode);
 		dgraph->AddNode(lnode);
 	}
@@ -84,6 +85,8 @@ void BuildGraphs(
 	{
 		Greenpak4LUT* lut = device->GetLUT4(i);
 		PARGraphNode* lnode = new PARGraphNode(lut4_label, lut);
+		lnode->AddAlternateLabel(lut2_label);
+		lnode->AddAlternateLabel(lut3_label);
 		lut->SetPARNode(lnode);
 		dgraph->AddNode(lnode);
 	}
