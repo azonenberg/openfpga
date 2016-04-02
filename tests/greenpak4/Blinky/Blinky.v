@@ -19,8 +19,7 @@
 `default_nettype none
 
 module Blinky(
-	out_lfosc_ff, out_lfosc_count, out_lfosc_count2,
-	sys_rst, count_rst);
+	out_lfosc_ff, out_lfosc_count, sys_rst, count_rst, dbg1, dbg2);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -31,18 +30,21 @@ module Blinky(
 	(* LOC = "P19" *)
 	output reg out_lfosc_count = 0;
 	
-	(* LOC = "P4" *)
-	output reg out_lfosc_count2 = 0;
-	
 	(* LOC = "P2" *)
 	(* PULLDOWN = "10k" *)
 	(* SCHMITT_TRIGGER *)
-	input wire sys_rst;
+	input wire sys_rst;			//Full chip reset.
 	
 	(* LOC = "P3" *)
 	(* PULLDOWN = "10k" *)
 	(* SCHMITT_TRIGGER *)
-	input wire count_rst;
+	input wire count_rst;		//logic reset
+	
+	(* LOC = "P18" *)
+	output wire dbg1;
+	
+	(* LOC = "P17" *)
+	output wire dbg2;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset
@@ -69,88 +71,69 @@ module Blinky(
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Detect rising edges on count_rst and synchronize to clk_108hz domain
-		
-	reg rst_ff = 0;
-	reg rst_ff2 = 0;
-	
-	always @(posedge clk_108hz) begin
-		rst_ff	<= count_rst;
-		rst_ff2	<= rst_ff;
-	end
-	
-	wire count_rst_edge = (rst_ff && !rst_ff2);
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Counter configuration
 	
-	localparam COUNT_MAX = 7;
+	localparam COUNT_MAX = 31;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LED driven by low-frequency oscillator and post-divider in flipflops
+	// Low-frequency oscillator and post-divider in behavioral logic, extracted to a hard IP block by synthesis
+	
+	//NOTE: GP_SYSRESET reset causes un-extracted RTL counters to clear to zero and glitch! No obvious workaround.
+	//The un-extracted counter behaves identically to hard IP in POR or count_rst modes.
 
 	//Fabric post-divider
-	reg[2:0] count = COUNT_MAX;
-	always @(posedge clk_108hz) begin
+	reg[4:0] count = COUNT_MAX;
+	wire out_fabric_raw = (count == 0);
+	always @(posedge clk_108hz, posedge count_rst) begin
 		
-		//actual counter
-		count		<= count - 1'd1;
-		if(count == 0)
-			count	<= COUNT_MAX;
-			
-		/*
-		//sync reset
-		if(count_rst_edge)
-			count	<= 0;
-		*/
+		//level triggered reset
+		if(count_rst)
+			count			<= 0;
+		
+		//counter
+		else begin
+
+			if(count == 0)
+				count		<= COUNT_MAX;
+			else
+				count		<= count - 1'd1;
+
+		end
+		
 	end
 	
-	//Toggle the output every time the counter underflows
-	always @(posedge clk_108hz) begin
-		if(count == 0)
-			out_lfosc_ff	<= ~out_lfosc_ff;
-	end
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LED driven by low-frequency oscillator and post-divider in hard counter on right side of device
+	// Low-frequency oscillator and post-divider in hard counter
 	
 	//Hard IP post-divider
 	wire out_lfosc_raw;
 	GP_COUNT8 #(
-		.RESET_MODE("RISING"),
+		.RESET_MODE("LEVEL"),
 		.COUNT_TO(COUNT_MAX),
 		.CLKIN_DIVIDE(1)
 	) hard_counter (
 		.CLK(clk_108hz),
-		.RST(count_rst_edge),
+		.RST(count_rst),
 		.OUT(out_lfosc_raw)
 	);
 	
-	//Toggle the output every time the counter underflows
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// LED toggling
+	
+	//Toggle the output every time the counters underflow
 	always @(posedge clk_108hz) begin
+	
+		if(out_fabric_raw)
+			out_lfosc_ff	<= ~out_lfosc_ff;
 		if(out_lfosc_raw)
 			out_lfosc_count <= ~out_lfosc_count;
+
 	end
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LED driven by low-frequency oscillator and post-divider in hard counter on left side of device
+	// Test stuff
 	
-	//Hard IP post-divider
-	wire out_lfosc_raw2;
-	GP_COUNT8 #(
-		.RESET_MODE("RISING"),
-		.COUNT_TO(COUNT_MAX),
-		.CLKIN_DIVIDE(1)
-	) hard_counter2 (
-		.CLK(clk_108hz),
-		.RST(count_rst_edge),
-		.OUT(out_lfosc_raw2)
-	);
+	assign dbg1 = out_fabric_raw;
+	assign dbg2 = out_lfosc_raw;
 	
-	//Toggle the output every time the counter underflows
-	always @(posedge clk_108hz) begin
-		if(out_lfosc_raw2)
-			out_lfosc_count2 <= ~out_lfosc_count2;
-	end
-
 endmodule
