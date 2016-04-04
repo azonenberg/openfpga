@@ -31,7 +31,7 @@ Greenpak4Inverter::Greenpak4Inverter(
 		unsigned int ibase,
 		unsigned int oword)
 		: Greenpak4BitstreamEntity(device, matrix, ibase, oword, -1)
-		, m_input(device->GetPowerRail(matrix, 0))
+		, m_input(device->GetPowerRail(false))
 {
 }
 

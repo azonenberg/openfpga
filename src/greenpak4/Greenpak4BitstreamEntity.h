@@ -21,6 +21,7 @@
 
 class Greenpak4Device;
 class PARGraphNode;
+class Greenpak4DualEntity;
 
 #include <string>
 
@@ -82,9 +83,13 @@ public:
 	virtual std::string GetDescription() =0;
 	
 	/**
-		@brief Returns the real entity if we have a dual
+		@brief Returns the real entity if we are a dual, or us if we're not
 	 */
 	virtual Greenpak4BitstreamEntity* GetRealEntity();
+	
+	//Return our dual, or NULL if we don't have one
+	Greenpak4DualEntity* GetDual()
+	{ return m_dual; }
 	
 protected:
 
@@ -123,6 +128,9 @@ protected:
 	
 	///The graph node used for place-and-route
 	PARGraphNode* m_parnode;
+	
+	///Our dual entity (if we have one)
+	Greenpak4DualEntity* m_dual;
 };
 
 #endif

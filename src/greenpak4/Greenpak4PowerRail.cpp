@@ -30,7 +30,7 @@ Greenpak4PowerRail::Greenpak4PowerRail(
 	: Greenpak4BitstreamEntity(device, matrix, 0, oword, 0)
 	//Give garbage values to ibase and cbase since we have no inputs or configuration
 {
-	
+	m_dual = new Greenpak4DualEntity(this);
 }
 
 Greenpak4PowerRail::~Greenpak4PowerRail()

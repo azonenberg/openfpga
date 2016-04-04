@@ -172,17 +172,14 @@ void BuildGraphs(
 	//Power nets
 	uint32_t vdd_label = AllocateLabel(ngraph, dgraph, lmap, "GP_VDD");
 	uint32_t vss_label = AllocateLabel(ngraph, dgraph, lmap, "GP_VSS");
-	for(unsigned int matrix = 0; matrix<2; matrix++)
-	{
-		auto vdd = device->GetPowerRail(matrix, true);
-		auto vss = device->GetPowerRail(matrix, false);
-		PARGraphNode* vnode = new PARGraphNode(vdd_label, vdd);
-		PARGraphNode* gnode = new PARGraphNode(vss_label, vss);
-		vdd->SetPARNode(vnode);
-		vss->SetPARNode(gnode);
-		dgraph->AddNode(vnode);
-		dgraph->AddNode(gnode);
-	}
+	auto vdd = device->GetPowerRail(true);
+	auto vss = device->GetPowerRail(false);
+	PARGraphNode* vnode = new PARGraphNode(vdd_label, vdd);
+	PARGraphNode* gnode = new PARGraphNode(vss_label, vss);
+	vdd->SetPARNode(vnode);
+	vss->SetPARNode(gnode);
+	dgraph->AddNode(vnode);
+	dgraph->AddNode(gnode);
 	
 	//Make netlist nodes for cells
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
@@ -464,11 +461,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		device_nodes.push_back(device->GetFlipflopByIndex(i)->GetPARNode());
 	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
 		device_nodes.push_back(it->second->GetPARNode());
-	for(unsigned int i=0; i<2; i++)
-	{
-		device_nodes.push_back(device->GetPowerRail(i, true)->GetPARNode());
-		device_nodes.push_back(device->GetPowerRail(i, false)->GetPARNode());
-	}
+	device_nodes.push_back(device->GetPowerRail(true)->GetPARNode());
+	device_nodes.push_back(device->GetPowerRail(false)->GetPARNode());
 	device_nodes.push_back(device->GetLFOscillator()->GetPARNode());
 	for(unsigned int i=0; i<device->GetCounterCount(); i++)
 		device_nodes.push_back(device->GetCounter(i)->GetPARNode());
@@ -600,7 +594,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		//Can drive reset with ground or pin 2 only
 		auto sysrst = device->GetSystemReset()->GetPARNode();
 		auto pin2 = device->GetIOB(2)->GetPARNode();
-		auto gnd = device->GetPowerRail(0, false)->GetPARNode();
+		auto gnd = device->GetPowerRail(false)->GetPARNode();
 		pin2->AddEdge(sysrst, "RST");
 		gnd->AddEdge(sysrst, "RST");
 	}

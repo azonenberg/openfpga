@@ -37,8 +37,8 @@ Greenpak4IOB::Greenpak4IOB(
 	, m_driveStrength(DRIVE_1X)
 	, m_driveType(DRIVE_PUSHPULL)
 	, m_inputThreshold(THRESHOLD_NORMAL)
-	, m_outputEnable(device->GetPowerRail(matrix, 0))
-	, m_outputSignal(device->GetPowerRail(matrix, 0))
+	, m_outputEnable(device->GetPowerRail(0))
+	, m_outputSignal(device->GetPowerRail(0))
 	, m_flags(flags)
 {
 	
@@ -134,10 +134,10 @@ Greenpak4BitstreamEntity* Greenpak4IOB::GetOutputSignal()
 
 void Greenpak4IOB::SetOutputEnable(bool b)
 {
-	m_outputEnable = m_device->GetPowerRail(m_matrix, b);
+	m_outputEnable = m_device->GetPowerRail(b);
 }
 
 void Greenpak4IOB::SetOutputSignal(bool b)
 {
-	m_outputSignal = m_device->GetPowerRail(m_matrix, b);
+	m_outputSignal = m_device->GetPowerRail(b);
 }

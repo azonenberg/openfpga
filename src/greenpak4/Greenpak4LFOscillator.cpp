@@ -30,13 +30,12 @@ Greenpak4LFOscillator::Greenpak4LFOscillator(
 	unsigned int oword,
 	unsigned int cbase)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
-	, m_dual(this)
-	, m_powerDown(device->GetPowerRail(matrix, 0))	//default to auto powerdown only
+	, m_powerDown(device->GetPowerRail(0))	//default to auto powerdown only
 	, m_powerDownEn(false)
 	, m_autoPowerDown(true)
 	, m_outDiv(1)
 {
-
+	m_dual = new Greenpak4DualEntity(this);
 }
 
 Greenpak4LFOscillator::~Greenpak4LFOscillator()

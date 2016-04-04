@@ -36,10 +36,10 @@ Greenpak4Flipflop::Greenpak4Flipflop(
 	, m_hasSR(has_sr)
 	, m_initValue(false)
 {
-	m_input = device->GetPowerRail(matrix, 0);
-	m_clock = device->GetPowerRail(matrix, 0);
+	m_input = device->GetPowerRail(0);
+	m_clock = device->GetPowerRail(0);
 	
-	m_nsr = device->GetPowerRail(matrix, 1);
+	m_nsr = device->GetPowerRail(1);
 }
 
 Greenpak4Flipflop::~Greenpak4Flipflop()
@@ -105,9 +105,9 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 		//Set/reset defaults to constant 1 if not hooked up
 		//but if we have set/reset then use that.
 		//If we're totally unused, hold us in reset
-		Greenpak4BitstreamEntity* sr = m_device->GetPowerRail(m_matrix, 1);
+		Greenpak4BitstreamEntity* sr = m_device->GetPowerRail(true);
 		if(unused)
-			sr = m_device->GetPowerRail(m_matrix, 0);
+			sr = m_device->GetPowerRail(false);
 		else if(has_sr)
 			sr = m_nsr;
 		if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, sr))

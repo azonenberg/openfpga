@@ -31,7 +31,7 @@ Greenpak4SystemReset::Greenpak4SystemReset(
 	unsigned int cbase)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 	, m_resetMode(RISING_EDGE)
-	, m_reset(device->GetPowerRail(m_matrix, 0))
+	, m_reset(device->GetPowerRail(0))
 {
 
 }

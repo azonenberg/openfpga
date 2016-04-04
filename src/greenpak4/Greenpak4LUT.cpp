@@ -38,7 +38,7 @@ Greenpak4LUT::Greenpak4LUT(
 	for(unsigned int i=0; i<16; i++)
 		m_truthtable[i] = false;
 	for(unsigned int i=0; i<4; i++)
-		m_inputs[i] = device->GetPowerRail(matrix, 0);
+		m_inputs[i] = device->GetPowerRail(0);
 }
 
 Greenpak4LUT::~Greenpak4LUT()

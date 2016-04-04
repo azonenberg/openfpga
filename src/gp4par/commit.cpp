@@ -328,23 +328,17 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			auto lut = dynamic_cast<Greenpak4LUT*>(dst);			
 			auto ff = dynamic_cast<Greenpak4Flipflop*>(dst);
 			auto pwr = dynamic_cast<Greenpak4PowerRail*>(dst);
-			auto spwr = dynamic_cast<Greenpak4PowerRail*>(src);
-			auto dosc = dynamic_cast<Greenpak4LFOscillator*>(dst);
-			auto sosc = dynamic_cast<Greenpak4LFOscillator*>(src);
+			auto osc = dynamic_cast<Greenpak4LFOscillator*>(dst);
 			auto count = dynamic_cast<Greenpak4Counter*>(dst);
 			auto rst = dynamic_cast<Greenpak4SystemReset*>(dst);
 			auto inv = dynamic_cast<Greenpak4Inverter*>(dst);
-			
-			//If the source node is power, patch the topology so that everything comes from the right matrix.
-			//We don't want to waste cross-connections on power nets
-			if(spwr)
-				src = pdev->GetPowerRail(dst->GetMatrix(), spwr->GetDigitalValue());
-			
-			//If the source node is an oscillator, use the secondary output if needed
-			else if(sosc)
+				
+			//If the source node has a dual, use the secondary output if needed
+			//so we don't waste cross connections
+			if(src->GetDual())
 			{
-				if(dst->GetMatrix() != sosc->GetMatrix())
-					src = sosc->GetDual();
+				if(dst->GetMatrix() != src->GetMatrix())
+					src = src->GetDual();
 			}
 			
 			//Cross connections
@@ -427,10 +421,10 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			}
 			
 			//Destination is the low-frequency oscillator
-			else if(dosc)
+			else if(osc)
 			{
 				if(edge->m_destport == "PWRDN")
-					dosc->SetPowerDown(src);
+					osc->SetPowerDown(src);
 				
 				else
 				{

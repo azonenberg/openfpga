@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#include "Greenpak4CrossConnection.h"
+#include "Greenpak4.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -62,7 +62,18 @@ string Greenpak4CrossConnection::GetDescription()
 
 void Greenpak4CrossConnection::SetInput(Greenpak4BitstreamEntity* input)
 {
-	if(input->GetMatrix() == m_matrix)
+	//Don't complain if input is a power rail, those are the sole exception
+	if(dynamic_cast<Greenpak4PowerRail*>(input) != NULL)
+	{}
+	
+	//Complain if input has a dual, they should never go through the cross connections
+	else if(input->GetDual() != NULL)
+	{
+		fprintf(stderr, "INTERNAL ERROR: tried to set cross-connection input from node with dual\n");
+		exit(-1);
+	}
+	
+	else if(input->GetMatrix() == m_matrix)
 	{
 		fprintf(stderr, "INTERNAL ERROR: tried to set cross-connection input from wrong matrix\n");
 		exit(-1);

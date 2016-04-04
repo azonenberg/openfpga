@@ -38,8 +38,8 @@ Greenpak4Counter::Greenpak4Counter(
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)	
 	, m_depth(depth)
 	, m_countnum(countnum)
-	, m_reset(device->GetPowerRail(matrix, false))	//default reset is ground
-	, m_clock(device->GetPowerRail(matrix, false))
+	, m_reset(device->GetPowerRail(false))	//default reset is ground
+	, m_clock(device->GetPowerRail(false))
 	, m_hasFSM(has_fsm)
 	, m_countVal(0)
 	, m_preDivide(1)
@@ -108,11 +108,11 @@ bool Greenpak4Counter::Save(bool* bitstream)
 				return false;
 				
 			//KEEP (ignored)
-			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(m_matrix, false)))
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(false)))
 				return false;
 				
 			//UP (ignored)
-			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(m_matrix, false)))
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(false)))
 				return false;
 		}
 		

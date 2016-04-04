@@ -51,7 +51,7 @@ public:
 	// POWER RAILS
 	
 	//Get the power rail for a binary constant
-	Greenpak4BitstreamEntity* GetPowerRail(unsigned int matrix, bool rail);
+	Greenpak4BitstreamEntity* GetPowerRail(bool rail);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// IOBS
@@ -221,11 +221,11 @@ protected:
 	///Counters of all types
 	std::vector<Greenpak4Counter*> m_counters;
 	
-	///Constant digital 1 for each matrix
-	Greenpak4PowerRail* m_constantOne[2];
+	///Constant digital 1
+	Greenpak4PowerRail* m_constantOne;
 	
 	///Constant digital 0
-	Greenpak4PowerRail* m_constantZero[2];
+	Greenpak4PowerRail* m_constantZero;
 	
 	///Low-frequency oscillator
 	Greenpak4LFOscillator* m_lfosc;

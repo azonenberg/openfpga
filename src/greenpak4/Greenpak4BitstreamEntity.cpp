@@ -34,13 +34,18 @@ Greenpak4BitstreamEntity::Greenpak4BitstreamEntity(
 	, m_outputBaseWord(obase)
 	, m_configBase(cbase)
 	, m_parnode(NULL)
+	, m_dual(NULL)
 {
 	
 }
 
 Greenpak4BitstreamEntity::~Greenpak4BitstreamEntity()
 {
-	
+	if(m_dual)
+	{
+		delete m_dual;
+		m_dual = NULL;
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,15 +66,25 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	//cross connections use opposite, though
 	if(cross_matrix)
 	{
-		if(m_matrix == signal->GetMatrix())
+		//Do not do check if the signal is a power rail (this is the case for unused cross connections)
+		if(dynamic_cast<Greenpak4PowerRail*>(signal) != NULL)
+		{}
+		
+		//No other signal, dual or not, should do this
+		else if(m_matrix == signal->GetMatrix())
 		{
 			fprintf(stderr, "DRC fail: tried to write signal from same matrix through a cross connection\n");
 			return false;
 		}
 	}
-	else
+	else if(m_matrix != signal->GetMatrix())
 	{
-		if(m_matrix != signal->GetMatrix())
+		//If we have a dual, use that
+		if(signal->GetDual() != NULL)
+			signal = signal->GetDual();
+		
+		//otherwise something is fishy
+		else
 		{
 			fprintf(stderr, "DRC fail: tried to write signal from opposite matrix without using a cross connection\n");
 			return false;

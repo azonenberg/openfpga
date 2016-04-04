@@ -44,10 +44,6 @@ public:
 	
 	virtual std::string GetDescription();
 	
-	//Get our opposite matrix output
-	Greenpak4DualEntity* GetDual()
-	{ return &m_dual; }
-	
 	//Set our power-down input
 	void SetPowerDown(Greenpak4BitstreamEntity* pwrdn);
 	
@@ -67,9 +63,6 @@ public:
 	
 protected:
 
-	///Output to the opposite matrix
-	Greenpak4DualEntity m_dual;
-	
 	///Power-down input (if implemented)
 	Greenpak4BitstreamEntity* m_powerDown;
 	

@@ -30,11 +30,10 @@ Greenpak4Bandgap::Greenpak4Bandgap(
 	unsigned int oword,
 	unsigned int cbase)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
-	, m_dual(this)
 	//, m_powerDownEn(false)
 	//, m_autoPowerDown(true)
 {
-
+	m_dual = new Greenpak4DualEntity(this);
 }
 
 Greenpak4Bandgap::~Greenpak4Bandgap()

@@ -63,13 +63,10 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//64 inputs per routing matrix
 	m_matrixBits = 6;
 	
-	//Create power rails (need one for each matrix).
+	//Create power rails
 	//These have to come first, since all other devices will refer to these during construction
-	for(int i=0; i<2; i++)
-	{
-		m_constantZero[i] = new Greenpak4PowerRail(this, i, 0);
-		m_constantOne[i] = new Greenpak4PowerRail(this, i, 63);
-	}
+	m_constantZero = new Greenpak4PowerRail(this, 0, 0);
+	m_constantOne = new Greenpak4PowerRail(this, 0, 63);
 	
 	//Create the LUT2s (4 per device half)
 	for(int i=0; i<4; i++)
@@ -356,7 +353,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 				52 + i,		//oword
 				0			//cbase is invalid, we have no configuration at all
 				);
-			cc->SetInput(m_constantZero[matrix]);
+			cc->SetInput(m_constantZero);
 			m_crossConnections[matrix][i] = cc;
 		}
 	}
@@ -398,11 +395,8 @@ void Greenpak4Device::CreateDevice_common()
 		m_bitstuff.push_back(x);
 	for(auto x : m_iobs)
 		m_bitstuff.push_back(x.second);
-	for(unsigned int i=0; i<2; i++)
-	{
-		m_bitstuff.push_back(m_constantZero[i]);
-		m_bitstuff.push_back(m_constantOne[i]);
-	}
+	m_bitstuff.push_back(m_constantZero);
+	m_bitstuff.push_back(m_constantOne);
 	m_bitstuff.push_back(m_lfosc);
 	m_bitstuff.push_back(m_sysrst);
 	m_bitstuff.push_back(m_bandgap);
@@ -416,15 +410,12 @@ void Greenpak4Device::CreateDevice_common()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-Greenpak4BitstreamEntity* Greenpak4Device::GetPowerRail(unsigned int matrix, bool rail)
+Greenpak4BitstreamEntity* Greenpak4Device::GetPowerRail(bool rail)
 {
-	if(matrix > 1)
-		return NULL;
-	
 	if(rail)
-		return m_constantOne[matrix];
+		return m_constantOne;
 	else
-		return m_constantZero[matrix];
+		return m_constantZero;
 }
 
 Greenpak4IOB* Greenpak4Device::GetIOB(unsigned int pin)

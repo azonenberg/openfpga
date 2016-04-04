@@ -60,12 +60,11 @@ uint32_t Greenpak4PAREngine::ComputeCongestionCost()
 			uint32_t sm = src->GetMatrix();
 			uint32_t dm = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData())->GetMatrix();
 			
-			//If the source is a power rail or oscillator, don't count this in the cost
-			if(dynamic_cast<Greenpak4PowerRail*>(src) != NULL)
-				continue;
-			if(dynamic_cast<Greenpak4LFOscillator*>(src) != NULL)
+			//If the source has a dual, don't count this in the cost since it can route anywhere
+			if(src->GetDual() != NULL)
 				continue;
 			
+			//If matrices don't match, bump cost
 			if(sm != dm)
 				costs[sm] ++;
 		}
@@ -195,12 +194,10 @@ bool Greenpak4PAREngine::CantMoveSrc(Greenpak4BitstreamEntity* src)
 	if(dynamic_cast<Greenpak4IOB*>(src) != NULL)
 		return true;
 
-	//Power rails are always in optimal locations (because they're everywhere)
-	if(dynamic_cast<Greenpak4PowerRail*>(src) != NULL)
-		return true;
+	//TODO: if it has a LOC constraint, don't add it
 		
-	//Oscillators are always in optimal locations (because they're everywhere)
-	if(dynamic_cast<Greenpak4LFOscillator*>(src) != NULL)
+	//Anything with a dual is always in optimal locations (because they're everywhere)
+	if(src->GetDual() != NULL)
 		return true;
 		
 	//nope, it's movable
