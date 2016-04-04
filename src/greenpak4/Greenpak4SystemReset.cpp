@@ -67,7 +67,7 @@ vector<string> Greenpak4SystemReset::GetInputPorts()
 vector<string> Greenpak4SystemReset::GetOutputPorts()
 {
 	vector<string> r;
-	r.push_back("OUT");
+	//no output ports
 	return r;
 }
 
