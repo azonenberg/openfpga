@@ -538,7 +538,7 @@ OUT & Output & 1 & Lookup table output \\
 
 \begin{tabularx}{4in}{|l|l|l|X|}
 \hline
-{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
 INIT & Integer & 4 & LUT truth table \\
 \hline
@@ -600,7 +600,7 @@ OUT & Output & 1 & Lookup table output \\
 
 \begin{tabularx}{4in}{|l|l|l|X|}
 \hline
-{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
 INIT & Integer & 8 & LUT truth table \\
 \hline
@@ -666,7 +666,7 @@ OUT & Output & 1 & Lookup table output \\
 
 \begin{tabularx}{4in}{|l|l|l|X|}
 \hline
-{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
 INIT & Integer & 16 & LUT truth table \\
 \hline
@@ -696,6 +696,100 @@ GP_3LUT #(
 \end{lstlisting}
 \caption{Example usage of GP\_4LUT}
 \label{gp-4LUT-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_ACMP
+
+\pagebreak
+\subsection{GP\_ACMP: Analog Comparator (NOT IMPLEMENTED)}
+
+\subsubsection{Introduction}
+This primitive represents an analog comparator.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+FIXME & Input & 1 & The input clock signal\\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+HYSTERESIS & Integer & 8 &
+	Hysteresis, in mV. Legal values are 0/25/50/200.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-acmp-example} needs to be written!
+
+\begin{figure}[h]
+\begin{lstlisting}
+x
+\end{lstlisting}
+\caption{Example usage of GP\_ACMP}
+\label{gp-acmp-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_BANDGAP
+
+\pagebreak
+\clearpage
+\subsection{GP\_BANDGAP: Bandgap Voltage Reference}
+
+\subsubsection{Introduction}
+This primitive represents the bandgap voltage reference.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+OK & Output & 1 & Goes high when bandgap voltage reference is stable. \\
+\hline
+VOUT & Output & 1 & 1.0V reference voltage \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+AUTO\_PWRDN & Boolean & 1 &
+	{\bfseries When 1: } \newline Automatically power down bandgap when all loads are powered down. \newline
+	{\bfseries When 0: } \newline Automatic power-down is disabled. The bandgap is always on.\\
+\hline
+CHOPPER\_EN & Boolean & 1 &
+	Specify whether to enable the chopper stabilization for the bandgap op-amp. Should always be 1. \\
+\hline
+OUT\_DELAY & Integer & 1 &
+	Time, in microseconds, to wait after bandgap startup before asserting OK. Legal values are 100 or 550.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-bandgap-example} isn't written yet.
+
+\begin{figure}[h]
+\begin{lstlisting}
+FIXME
+\end{lstlisting}
+\caption{Example usage of GP\_BANDGAP}
+\label{gp-bandgap-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -731,7 +825,7 @@ OUT & Output & 1 & Counter underflow output. High whenever the count register eq
 
 \begin{tabularx}{5in}{|l|l|l|X|}
 \hline
-{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
 CLKIN\_DIVIDE & Integer & 8 &
 	Input clock divider. Legal values depend on what source CLK is driven by, see device datasheet.\\
@@ -791,7 +885,7 @@ OUT & Output & 1 & Counter underflow output. High whenever the count register eq
 
 \begin{tabularx}{5in}{|l|l|l|X|}
 \hline
-{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
 CLKIN\_DIVIDE & Integer & 8 &
 	Input clock divider. Legal values depend on what source CLK is driven by, see device datasheet.\\
@@ -918,7 +1012,7 @@ CLKOUT & Output & 1 & 1730 Hz (nominal) clock signal \\
 
 \begin{tabularx}{5in}{|l|l|l|X|}
 \hline
-{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
 AUTO\_PWRDN & Boolean & 1 & 
 	{\bfseries When 1: } \newline Automatically power down the oscillator when all loads are powered down. \newline
@@ -972,6 +1066,8 @@ Use of this block is not recommended if exact control of resets is required, sin
 power-on reset and the module reset pin in some cases. A future version of the toolchain may produce a synthesis-time 
 DRC warning if these cases are detected.
 
+TODO: Figure out actual behavior and document better?
+
 \subsubsection{Port Descriptions}
 
 \begin{tabularx}{5in}{|l|l|l|X|}
@@ -986,7 +1082,7 @@ RST & Input & 1 & System reset input. Must connect directly to to pin 2 of the d
 
 \begin{tabularx}{5in}{|l|l|l|X|}
 \hline
-{\bfseries Attribute} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
 RESET\_MODE & String & 1 & 
 	{\bfseries RISING: } \newline One-shot reset on rising edge of RST. \newline
@@ -1052,6 +1148,74 @@ GP_VDD vdd(
 \end{lstlisting}
 \caption{Example usage of GP\_VDD}
 \label{gp-vdd-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_VREF
+
+\pagebreak
+\subsection{GP\_VREF: Voltage Reference}
+
+\subsubsection{Introduction}
+This primitive represents one output channel from the device's voltage reference.
+
+In the internal device architecture, each GP\_VREF block has a dedicated output to one comparator. Some (but not all) 
+of these blocks can also drive reference voltage output pins.
+
+From the HDL designer's viewpoint, this complex architecture is invisible. Any number of GP\_VREF blocks (up to a 
+maximum of one per comparator) may be instantiated. One GP\_VREF can drive multiple comparators with the same voltage; 
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+VIN & Input & 1 & Input voltage, if required. Connect depending on the source of the reference:
+	\begin{itemize}
+		\item Constant voltage: Do not connect
+		\item Vdd: 1'b1
+		\item DAC: DAC output signal
+		\item Off die: Analog input from IOB
+	\end{itemize}
+\\
+\hline
+VOUT & Output & 1 & The generated reference voltage \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+VIN\_DIV & Integer & 4 &
+	Divider for input voltage. Legal values depend on the source of the reference:
+	\begin{itemize}
+		\item Constant voltage: 1
+		\item Vdd: 3 or 4
+		\item DAC: 1
+		\item Off die: 1 or 2
+	\end{itemize}
+\\
+\hline 
+VOUT & Integer & 16 &
+	Constant output voltage, in mV. Legal values range from 50 to 1200 in 50 mV increments.
+	If output voltage is not constant, do not specify this parameter.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-vref-example} needs to be written!
+
+\begin{figure}[h]
+\begin{lstlisting}
+x
+\end{lstlisting}
+\caption{Example usage of GP\_VREF}
+\label{gp-vref-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

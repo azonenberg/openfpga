@@ -157,6 +157,12 @@ public:
 
 	Greenpak4SystemReset* GetSystemReset()
 	{ return m_sysrst; }
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// BANDGAP
+	
+	Greenpak4Bandgap* GetBandgap()
+	{ return m_bandgap; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// OTHER
@@ -226,6 +232,9 @@ protected:
 	
 	///System reset
 	Greenpak4SystemReset* m_sysrst;
+	
+	///Bandgap reference
+	Greenpak4Bandgap* m_bandgap;
 	
 	/**
 		@brief Cross-connections between our matrices

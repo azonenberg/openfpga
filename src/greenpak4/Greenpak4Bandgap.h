@@ -16,34 +16,62 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#ifndef Greenpak4Bandgap_h
+#define Greenpak4Bandgap_h
 
 /**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
+	@brief The bandgap voltage reference
+ */ 
+class Greenpak4Bandgap : public Greenpak4BitstreamEntity
+{
+public:
 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4DualEntity.h"
+	//Construction / destruction
+	Greenpak4Bandgap(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	virtual ~Greenpak4Bandgap();
+		
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
+	
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
+	
+	virtual std::string GetDescription();
+	
+	//Get our opposite matrix output
+	Greenpak4DualEntity* GetDual()
+	{ return &m_dual; }
+	
+	/*
+	//Enable accessors
+	void SetPowerDownEn(bool en)
+	{ m_powerDownEn = en; }
+	
+	void SetAutoPowerDown(bool en)
+	{ m_autoPowerDown = en; }
+	*/
+	
+protected:
 
-#include "Greenpak4Bandgap.h" 
-#include "Greenpak4Counter.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4SystemReset.h"
-
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
-
-#include "Greenpak4Device.h"
+	///Output to the opposite matrix
+	Greenpak4DualEntity m_dual;
+	
+	///Power-down input (if implemented)
+	Greenpak4BitstreamEntity* m_powerDown;
+	
+	/*
+	///Power-down enable
+	bool m_powerDownEn;
+	
+	///Auto power-down
+	bool m_autoPowerDown;
+	*/
+};
 
 #endif

@@ -323,7 +323,8 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: DAC
 	
-	//TODO: Bandgap reference
+	//Bandgap reference
+	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923);
 	
 	//TODO: Reserved bits
 	
@@ -404,8 +405,9 @@ void Greenpak4Device::CreateDevice_common()
 	}
 	m_bitstuff.push_back(m_lfosc);
 	m_bitstuff.push_back(m_sysrst);
+	m_bitstuff.push_back(m_bandgap);
 	
-	//TODO: this might be device specific
+	//TODO: this might be device specific - not all parts have exactly two matrices and ten cross connections
 	for(unsigned int matrix=0; matrix<2; matrix++)
 		for(unsigned int i=0; i<10; i++)
 			m_bitstuff.push_back(m_crossConnections[matrix][i]);

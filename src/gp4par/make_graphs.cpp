@@ -121,19 +121,26 @@ void BuildGraphs(
 		dgraph->AddNode(fnode);
 	}
 	
-	//Make device node for the low-frequency oscillator
+	//Make a device node for the low-frequency oscillator
 	uint32_t lfosc_label = AllocateLabel(ngraph, dgraph, lmap, "GP_LFOSC");
 	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();
 	PARGraphNode* lfnode = new PARGraphNode(lfosc_label, lfosc);
 	lfosc->SetPARNode(lfnode);
 	dgraph->AddNode(lfnode);
 	
-	//Make device node for the reset block
+	//Make a device node for the reset block
 	uint32_t sysrst_label = AllocateLabel(ngraph, dgraph, lmap, "GP_SYSRST");
 	Greenpak4SystemReset* sysrst = device->GetSystemReset();
 	PARGraphNode* rstnode = new PARGraphNode(sysrst_label, sysrst);
 	sysrst->SetPARNode(rstnode);
 	dgraph->AddNode(rstnode);
+	
+	//Make a device node for the bandgap
+	uint32_t bandgap_label = AllocateLabel(ngraph, dgraph, lmap, "GP_BANDGAP");
+	Greenpak4Bandgap* bandgap = device->GetBandgap();
+	PARGraphNode* bgnode = new PARGraphNode(bandgap_label, bandgap);
+	bandgap->SetPARNode(bgnode);
+	dgraph->AddNode(bgnode);
 	
 	//Make device nodes for the counters
 	uint32_t count8_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8");
@@ -206,6 +213,8 @@ void BuildGraphs(
 			label = sysrst_label;
 		else if(cell->m_type == "GP_INV")
 			label = inv_label;
+		else if(cell->m_type == "GP_BANDGAP")
+			label = bandgap_label;
 		
 		//Power nets are virtual cells we use internally
 		else if(cell->m_type == "GP_VDD")
@@ -463,11 +472,13 @@ void MakeDeviceEdges(Greenpak4Device* device)
 	device_nodes.push_back(device->GetLFOscillator()->GetPARNode());
 	for(unsigned int i=0; i<device->GetCounterCount(); i++)
 		device_nodes.push_back(device->GetCounter(i)->GetPARNode());
-	//TODO: hard IP
+	device_nodes.push_back(device->GetBandgap()->GetPARNode());
 	
 	//Add the O(n^2) edges between the main fabric nodes
 	for(auto x : device_nodes)
 	{
+		//TODO: Named output ports, not just inputs
+		
 		for(auto y : device_nodes)
 		{
 			if(x != y)
@@ -479,6 +490,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 				auto lfosc = dynamic_cast<Greenpak4LFOscillator*>(entity);
 				auto count = dynamic_cast<Greenpak4Counter*>(entity);
 				auto inv = dynamic_cast<Greenpak4Inverter*>(entity);
+				auto bg = dynamic_cast<Greenpak4Bandgap*>(entity);
+				auto iob = dynamic_cast<Greenpak4IOB*>(entity);
 				
 				if(lut)
 				{
@@ -512,10 +525,19 @@ void MakeDeviceEdges(Greenpak4Device* device)
 				}
 				else if(inv)
 					x->AddEdge(y, "IN");
-				
-				//no, just add path to the node in general
-				else
+					
+				//IOB currently has no named ports, just send stuff directly to it
+				//TODO: change that and use IOB cells
+				else if(iob)
 					x->AddEdge(y);
+					
+				//Bandgap has no inputs, create no edges to it
+				else if(bg)
+				{}
+				
+				//no, just add path to the node in general (TODO: does anything actually use this?
+				//else
+				//	x->AddEdge(y);
 			}
 		}
 	}

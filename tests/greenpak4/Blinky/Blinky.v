@@ -19,7 +19,7 @@
 `default_nettype none
 
 module Blinky(
-	out_lfosc_ff, out_lfosc_count, sys_rst, count_rst, dbg1, dbg2);
+	out_lfosc_ff, out_lfosc_count, sys_rst, count_rst, bg_ok, dbg1);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -41,10 +41,10 @@ module Blinky(
 	input wire count_rst;		//logic reset
 	
 	(* LOC = "P18" *)
-	output wire dbg1;
+	output wire bg_ok;
 	
 	(* LOC = "P17" *)
-	output wire dbg2;
+	output wire dbg1;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset
@@ -68,6 +68,18 @@ module Blinky(
 	) lfosc (
 		.PWRDN(1'b0),
 		.CLKOUT(clk_108hz)
+	);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Bandgap voltage reference (used by a lot of the hard IP)
+	
+	GP_BANDGAP #(
+		.AUTO_PWRDN(0),
+		.CHOPPER_EN(1),
+		.OUT_DELAY(550)
+	) bandgap (
+		.OK(bg_ok),
+		.VOUT(dbg1)
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,11 +141,5 @@ module Blinky(
 			out_lfosc_count <= ~out_lfosc_count;
 
 	end
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Test stuff
-	
-	assign dbg1 = out_fabric_raw;
-	assign dbg2 = out_lfosc_raw;
 	
 endmodule
