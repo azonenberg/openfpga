@@ -87,6 +87,11 @@ string Greenpak4Counter::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+void Greenpak4Counter::CommitChanges()
+{
+	//TODO
+}
+
 vector<string> Greenpak4Counter::GetInputPorts()
 {
 	vector<string> r;

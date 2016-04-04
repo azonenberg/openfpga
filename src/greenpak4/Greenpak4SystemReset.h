@@ -60,6 +60,8 @@ public:
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
 	
+	virtual void CommitChanges();
+	
 protected:
 	
 	///Configuration for the reset

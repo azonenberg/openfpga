@@ -74,6 +74,11 @@ vector<string> Greenpak4DualEntity::GetOutputPorts()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+void Greenpak4DualEntity::CommitChanges()
+{
+	//no action needed, we have no input pins to drive and no configuration
+}
+
 bool Greenpak4DualEntity::Load(bool* /*bitstream*/)
 {
 	return true;

@@ -71,7 +71,8 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		//No idea what it is
 		else
 		{
-			fprintf(stderr, "WARNING: Node at config base %d has unrecognized entity type\n", bnode->GetConfigBase());
+			fprintf(stderr, "WARNING: Node %s at config base %d has unrecognized entity type\n",
+				bnode->GetDescription().c_str(), bnode->GetConfigBase());
 		}
 	}
 	
@@ -481,7 +482,10 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 
 			//Don't know what to do
 			else
-				printf("WARNING: Node at config base %d has unrecognized entity type\n", dst->GetConfigBase());
+			{
+				printf("WARNING: Node %s at config base %d has unrecognized entity type\n",
+					dst->GetDescription().c_str(), dst->GetConfigBase());
+			}
 		}
 	}
 }

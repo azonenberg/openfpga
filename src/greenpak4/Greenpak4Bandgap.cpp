@@ -76,6 +76,11 @@ vector<string> Greenpak4Bandgap::GetOutputPorts()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+void Greenpak4Bandgap::CommitChanges()
+{
+	//TODO
+}
+
 bool Greenpak4Bandgap::Load(bool* /*bitstream*/)
 {
 	printf("Greenpak4Bandgap::Load() not yet implemented\n");

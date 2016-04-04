@@ -126,7 +126,16 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		778,	//LUT4s start at bitstream offset 778, 2^4 bits per LUT
 		4));	//this is a LUT4
 	
-	//TODO: Create the LUT4s (this is special because both have alternate functions)
+	//Create the second LUT4 (pattern generator capable)
+	//For now, no PGEN support, only usable as a LUT
+	m_lut4s.push_back(new Greenpak4LUTPgen(
+		this,
+		1,
+		0,		//Attached to crossbar #0
+		32,		//LUT4 base is row 32
+		13,		//we come after the last LUT3
+		656,	//LUT4 starts after last LUT3
+		4));	//this is a LUT4
 	
 	//Create the Type-A IOBs (with output enable)
 	m_iobs[2] =  new Greenpak4IOBTypeA(this, 2,  0, -1, 24, 941, Greenpak4IOB::IOB_FLAG_INPUTONLY);

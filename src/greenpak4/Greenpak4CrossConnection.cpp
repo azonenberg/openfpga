@@ -85,6 +85,11 @@ void Greenpak4CrossConnection::SetInput(Greenpak4BitstreamEntity* input)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization of the truth table
 
+void Greenpak4CrossConnection::CommitChanges()
+{
+	//nothing to do here, we have no configuration to modify
+}
+
 vector<string> Greenpak4CrossConnection::GetInputPorts()
 {
 	vector<string> r;

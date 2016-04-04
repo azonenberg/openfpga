@@ -16,75 +16,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#include "Greenpak4.h"
+#ifndef Greenpak4LUTPgen_h
+#define Greenpak4LUTPgen_h
 
-using namespace std;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Construction / destruction
-
-Greenpak4PowerRail::Greenpak4PowerRail(
-	Greenpak4Device* device,
-	unsigned int matrix,
-	unsigned int oword)
-	: Greenpak4BitstreamEntity(device, matrix, 0, oword, 0)
-	//Give garbage values to ibase and cbase since we have no inputs or configuration
+/**
+	@brief A single LUT with pattern-generator mode
+ */ 
+class Greenpak4LUTPgen : public Greenpak4LUT
 {
-	m_dual = new Greenpak4DualEntity(this);
-}
+public:
 
-Greenpak4PowerRail::~Greenpak4PowerRail()
-{
+	//Construction / destruction
+	Greenpak4LUTPgen(
+		Greenpak4Device* device,
+		unsigned int lutnum,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase,
+		unsigned int order);
+	virtual ~Greenpak4LUTPgen();
+		
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
 	
-}
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
+	
+protected:
+};
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Bitfile metadata
-
-unsigned int Greenpak4PowerRail::GetConfigLen()
-{
-	return 1;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Dummy serialization placeholders (nothing to do, we have no data)
-
-void Greenpak4PowerRail::CommitChanges()
-{
-	//no action needed, we have no input pins to drive and no configuration
-}
-
-bool Greenpak4PowerRail::Load(bool* /*bitstream*/)
-{
-	return true;
-}
-
-bool Greenpak4PowerRail::Save(bool* /*bitstream*/)
-{
-	return true;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Accessors
-
-vector<string> Greenpak4PowerRail::GetInputPorts()
-{
-	vector<string> r;
-	//no inputs
-	return r;
-}
-
-vector<string> Greenpak4PowerRail::GetOutputPorts()
-{
-	vector<string> r;
-	r.push_back("OUT");
-	return r;
-}
-
-string Greenpak4PowerRail::GetDescription()
-{
-	if(GetDigitalValue())
-		return "VDD0";
-	else
-		return "VSS0";
-}
+#endif

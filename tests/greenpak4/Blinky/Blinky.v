@@ -42,7 +42,7 @@ module Blinky(
 	
 	(* LOC = "P18" *)
 	output wire bg_ok;
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset
 
@@ -68,7 +68,7 @@ module Blinky(
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Bandgap voltage reference (used by a lot of the hard IP)
+	// Bandgap voltage reference (used by a lot of the mixed signal IP)
 	
 	wire bandgap_vout;
 	GP_BANDGAP #(
@@ -79,21 +79,17 @@ module Blinky(
 		.OK(bg_ok),
 		.VOUT(bandgap_vout)
 	);
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Counter configuration
-	
-	localparam COUNT_MAX = 31;
-	
+		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Low-frequency oscillator and post-divider in behavioral logic, extracted to a hard IP block by synthesis
 	
 	//NOTE: GP_SYSRESET reset causes un-extracted RTL counters to clear to zero and glitch! No obvious workaround.
 	//The un-extracted counter behaves identically to hard IP in POR or count_rst modes.
 
+	localparam COUNT_MAX = 31;
+
 	//Fabric post-divider
 	reg[4:0] count = COUNT_MAX;
-	wire out_fabric_raw = (count == 0);
 	always @(posedge clk_108hz, posedge count_rst) begin
 		
 		//level triggered reset
@@ -111,6 +107,9 @@ module Blinky(
 		end
 		
 	end
+	
+	//Output bit
+	wire out_fabric_raw = (count == 0);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Low-frequency oscillator and post-divider in hard counter

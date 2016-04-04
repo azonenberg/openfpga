@@ -81,6 +81,11 @@ void Greenpak4Inverter::SetInput(Greenpak4BitstreamEntity* input)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization of the truth table
 
+void Greenpak4Inverter::CommitChanges()
+{
+	//TODO
+}
+
 bool Greenpak4Inverter::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs

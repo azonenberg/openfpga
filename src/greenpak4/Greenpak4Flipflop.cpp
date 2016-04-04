@@ -92,6 +92,11 @@ string Greenpak4Flipflop::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+void Greenpak4Flipflop::CommitChanges()
+{
+	//TODO
+}
+
 bool Greenpak4Flipflop::Load(bool* /*bitstream*/)
 {
 	printf("Greenpak4Flipflop::Load() not yet implemented\n");

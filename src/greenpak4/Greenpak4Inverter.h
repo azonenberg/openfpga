@@ -48,6 +48,8 @@ public:
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
 	
+	virtual void CommitChanges();
+	
 protected:
 	Greenpak4BitstreamEntity* m_input;
 };

@@ -93,6 +93,11 @@ bool Greenpak4LUT::Save(bool* bitstream)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
+void Greenpak4LUT::CommitChanges()
+{
+	//TODO
+}
+
 vector<string> Greenpak4LUT::GetInputPorts()
 {
 	vector<string> r;

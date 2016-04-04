@@ -14,6 +14,7 @@ ADD_LIBRARY(greenpak4 SHARED
 	Greenpak4IOBTypeB.cpp
 	Greenpak4LFOscillator.cpp
 	Greenpak4LUT.cpp
+	Greenpak4LUTPgen.cpp
 	Greenpak4PowerRail.cpp
 	Greenpak4SystemReset.cpp
 	

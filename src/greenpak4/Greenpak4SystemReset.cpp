@@ -74,6 +74,11 @@ vector<string> Greenpak4SystemReset::GetOutputPorts()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+void Greenpak4SystemReset::CommitChanges()
+{
+	//TODO
+}
+
 bool Greenpak4SystemReset::Load(bool* /*bitstream*/)
 {
 	printf("Greenpak4SystemReset::Load() not yet implemented\n");

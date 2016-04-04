@@ -93,6 +93,11 @@ void Greenpak4LFOscillator::SetOutputDivider(int div)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+void Greenpak4LFOscillator::CommitChanges()
+{
+	//TODO
+}
+
 bool Greenpak4LFOscillator::Load(bool* /*bitstream*/)
 {
 	printf("Greenpak4LFOscillator::Load() not yet implemented\n");

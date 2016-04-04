@@ -23,17 +23,20 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4PowerRail::Greenpak4PowerRail(
+Greenpak4LUTPgen::Greenpak4LUTPgen(
 	Greenpak4Device* device,
+	unsigned int lutnum,
 	unsigned int matrix,
-	unsigned int oword)
-	: Greenpak4BitstreamEntity(device, matrix, 0, oword, 0)
-	//Give garbage values to ibase and cbase since we have no inputs or configuration
+	unsigned int ibase,
+	unsigned int oword,
+	unsigned int cbase,
+	unsigned int order)
+	: Greenpak4LUT(device, lutnum, matrix, ibase, oword, cbase, order)
 {
-	m_dual = new Greenpak4DualEntity(this);
+
 }
 
-Greenpak4PowerRail::~Greenpak4PowerRail()
+Greenpak4LUTPgen::~Greenpak4LUTPgen()
 {
 	
 }
@@ -41,50 +44,31 @@ Greenpak4PowerRail::~Greenpak4PowerRail()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bitfile metadata
 
-unsigned int Greenpak4PowerRail::GetConfigLen()
+unsigned int Greenpak4LUTPgen::GetConfigLen()
 {
-	return 1;
+	return Greenpak4LUT::GetConfigLen() + 5;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Dummy serialization placeholders (nothing to do, we have no data)
+// Serialization of the truth table
 
-void Greenpak4PowerRail::CommitChanges()
+bool Greenpak4LUTPgen::Load(bool* bitstream)
 {
-	//no action needed, we have no input pins to drive and no configuration
+	//TODO: load Pgen stuff
+	return Greenpak4LUT::Load(bitstream);
 }
 
-bool Greenpak4PowerRail::Load(bool* /*bitstream*/)
+bool Greenpak4LUTPgen::Save(bool* bitstream)
 {
-	return true;
-}
-
-bool Greenpak4PowerRail::Save(bool* /*bitstream*/)
-{
-	return true;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Accessors
-
-vector<string> Greenpak4PowerRail::GetInputPorts()
-{
-	vector<string> r;
-	//no inputs
-	return r;
-}
-
-vector<string> Greenpak4PowerRail::GetOutputPorts()
-{
-	vector<string> r;
-	r.push_back("OUT");
-	return r;
-}
-
-string Greenpak4PowerRail::GetDescription()
-{
-	if(GetDigitalValue())
-		return "VDD0";
-	else
-		return "VSS0";
+	//4-bit counter data in (TODO)
+	bitstream[m_configBase + 16] = false;
+	bitstream[m_configBase + 17] = false;
+	bitstream[m_configBase + 18] = false;
+	bitstream[m_configBase + 19] = false;
+	
+	//Mode (for now, always LUT4)
+	bitstream[m_configBase + 20] = false;
+	
+	//Save LUT stuff
+	return Greenpak4LUT::Save(bitstream);
 }

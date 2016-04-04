@@ -37,6 +37,7 @@
 #include "Greenpak4IOBTypeB.h"
 #include "Greenpak4LFOscillator.h"
 #include "Greenpak4LUT.h"
+#include "Greenpak4LUTPgen.h"
 #include "Greenpak4PowerRail.h"
 #include "Greenpak4SystemReset.h"
 

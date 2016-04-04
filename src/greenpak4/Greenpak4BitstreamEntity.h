@@ -98,6 +98,9 @@ public:
 	//Get a list of output ports on this node that connect to general fabric routing (may be empty)
 	virtual std::vector<std::string> GetOutputPorts() =0;
 	
+	//Commit changes from the assigned PAR graph node to us
+	virtual void CommitChanges() =0;
+	
 protected:
 
 	/**
