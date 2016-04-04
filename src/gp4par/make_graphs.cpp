@@ -448,26 +448,14 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
  */
 void MakeDeviceEdges(Greenpak4Device* device)
 {
-	//Make a list of all nodes in each half of the device connected to general fabric routing
-	std::vector<PARGraphNode*> device_nodes;
-	for(unsigned int i=0; i<device->GetInverterCount(); i++)
-		device_nodes.push_back(device->GetInverter(i)->GetPARNode());
-	for(unsigned int i=0; i<device->GetLUT2Count(); i++)
-		device_nodes.push_back(device->GetLUT2(i)->GetPARNode());
-	for(unsigned int i=0; i<device->GetLUT3Count(); i++)
-		device_nodes.push_back(device->GetLUT3(i)->GetPARNode());
-	for(unsigned int i=0; i<device->GetLUT4Count(); i++)
-		device_nodes.push_back(device->GetLUT4(i)->GetPARNode());
-	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
-		device_nodes.push_back(device->GetFlipflopByIndex(i)->GetPARNode());
-	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
-		device_nodes.push_back(it->second->GetPARNode());
-	device_nodes.push_back(device->GetPowerRail(true)->GetPARNode());
-	device_nodes.push_back(device->GetPowerRail(false)->GetPARNode());
-	device_nodes.push_back(device->GetLFOscillator()->GetPARNode());
-	for(unsigned int i=0; i<device->GetCounterCount(); i++)
-		device_nodes.push_back(device->GetCounter(i)->GetPARNode());
-	device_nodes.push_back(device->GetBandgap()->GetPARNode());
+	//Get all of the nodes in the device
+	vector<PARGraphNode*> device_nodes;
+	for(unsigned int i=0; i<device->GetEntityCount(); i++)
+	{
+		PARGraphNode* pnode = device->GetEntity(i)->GetPARNode();
+		if(pnode)
+			device_nodes.push_back(pnode);
+	}
 	
 	//Add the O(n^2) edges between the main fabric nodes
 	for(auto x : device_nodes)
@@ -477,7 +465,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		{		
 			for(auto y : device_nodes)
 			{
-				//Do not add edges to ourself (TODO: allow outputs to feed inputs?)
+				//Do not add edges to ourself (TODO: allow outputs of cell to feed its inputs?)
 				if(x == y)
 					continue;
 					
