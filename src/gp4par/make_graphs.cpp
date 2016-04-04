@@ -129,7 +129,7 @@ void BuildGraphs(
 	dgraph->AddNode(lfnode);
 	
 	//Make a device node for the reset block
-	uint32_t sysrst_label = AllocateLabel(ngraph, dgraph, lmap, "GP_SYSRST");
+	uint32_t sysrst_label = AllocateLabel(ngraph, dgraph, lmap, "GP_SYSRESET");
 	Greenpak4SystemReset* sysrst = device->GetSystemReset();
 	PARGraphNode* rstnode = new PARGraphNode(sysrst_label, sysrst);
 	sysrst->SetPARNode(rstnode);
@@ -181,6 +181,15 @@ void BuildGraphs(
 	dgraph->AddNode(vnode);
 	dgraph->AddNode(gnode);
 	
+	//Build inverse label map
+	map<string, uint32_t> ilmap;
+	for(auto it : lmap)
+		ilmap[it.second] = it.first;
+	
+	//Add aliases for different primitive names that map to the same node type
+	ilmap["GP_DFFR"] = dffsr_label;
+	ilmap["GP_DFFSR"] = dffsr_label;
+	
 	//Make netlist nodes for cells
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
 	{
@@ -190,35 +199,8 @@ void BuildGraphs(
 		//Figure out the type of node
 		Greenpak4NetlistCell* cell = it->second;
 		uint32_t label = 0;
-		if(cell->m_type == "GP_2LUT")
-			label = lut2_label;
-		else if(cell->m_type == "GP_3LUT")
-			label = lut3_label;
-		else if(cell->m_type == "GP_4LUT")
-			label = lut4_label;
-		else if(cell->m_type == "GP_DFF")
-			label = dff_label;
-		else if( (cell->m_type == "GP_DFFR") || (cell->m_type == "GP_DFFS") || (cell->m_type == "GP_DFFSR") )
-			label = dffsr_label;
-		else if(cell->m_type == "GP_LFOSC")
-			label = lfosc_label;
-		else if(cell->m_type == "GP_COUNT8")
-			label = count8_label;
-		else if(cell->m_type == "GP_COUNT14")
-			label = count14_label;
-		else if(cell->m_type == "GP_SYSRESET")
-			label = sysrst_label;
-		else if(cell->m_type == "GP_INV")
-			label = inv_label;
-		else if(cell->m_type == "GP_BANDGAP")
-			label = bandgap_label;
-		
-		//Power nets are virtual cells we use internally
-		else if(cell->m_type == "GP_VDD")
-			label = vdd_label;
-		else if(cell->m_type == "GP_VSS")
-			label = vss_label;
-		
+		if(ilmap.find(cell->m_type) != ilmap.end())
+			label = ilmap[cell->m_type];
 		else
 		{
 			fprintf(
@@ -228,8 +210,7 @@ void BuildGraphs(
 			exit(-1);			
 		}
 		
-		//Create a node for the cell's output
-		//TODO: handle cells with multiple outputs
+		//Create a node for the cell
 		PARGraphNode* nnode = new PARGraphNode(label, cell);
 		cell->m_parnode = nnode;
 		ngraph->AddNode(nnode);
