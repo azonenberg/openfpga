@@ -72,6 +72,13 @@ vector<string> Greenpak4Flipflop::GetInputPorts()
 	return r;
 }
 
+vector<string> Greenpak4Flipflop::GetOutputPorts()
+{
+	vector<string> r;
+	r.push_back("Q");
+	return r;
+}
+
 string Greenpak4Flipflop::GetDescription()
 {
 	char buf[128];

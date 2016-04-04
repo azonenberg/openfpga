@@ -66,6 +66,11 @@ vector<string> Greenpak4DualEntity::GetInputPorts()
 	return m_dual->GetInputPorts();
 }
 
+vector<string> Greenpak4DualEntity::GetOutputPorts()
+{
+	return m_dual->GetOutputPorts();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

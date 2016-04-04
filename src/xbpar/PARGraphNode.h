@@ -27,22 +27,24 @@ class PARGraphEdge
 {
 public:
 	
-	PARGraphEdge(PARGraphNode* source, PARGraphNode* dest, std::string port)
+	PARGraphEdge(PARGraphNode* source, std::string srcport, PARGraphNode* dest, std::string dstport)
 		: m_sourcenode(source)
+		, m_sourceport(srcport)
 		, m_destnode(dest)
-		, m_destport(port)
+		, m_destport(dstport)
 	{
 	}
 
 	//the source node
 	PARGraphNode* m_sourcenode;
 	
-	//todo: port name for source
+	//output port name on the source node
+	std::string m_sourceport;
 
 	//the destination node
 	PARGraphNode* m_destnode;
 	
-	//port name (if multiple ports in target)
+	//input port name on the destination node
 	std::string m_destport;
 };
 
@@ -71,8 +73,8 @@ public:
 	uint32_t GetEdgeCount();
 	PARGraphEdge* GetEdgeByIndex(uint32_t index);
 
-	void AddEdge(PARGraphNode* sink, std::string port = "")
-	{ m_edges.push_back(new PARGraphEdge(this, sink, port)); }
+	void AddEdge(std::string srcport, PARGraphNode* sink, std::string dstport = "")
+	{ m_edges.push_back(new PARGraphEdge(this, srcport, sink, dstport)); }
 
 	void* GetData()
 	{ return m_pData; }

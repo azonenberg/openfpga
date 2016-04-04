@@ -62,6 +62,7 @@ public:
 	void SetOutputDivider(int div);
 
 	virtual std::vector<std::string> GetInputPorts();
+	virtual std::vector<std::string> GetOutputPorts();
 	
 protected:
 

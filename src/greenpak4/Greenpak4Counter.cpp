@@ -94,6 +94,13 @@ vector<string> Greenpak4Counter::GetInputPorts()
 	return r;
 }
 
+vector<string> Greenpak4Counter::GetOutputPorts()
+{
+	vector<string> r;
+	r.push_back("OUT");
+	return r;
+}
+
 bool Greenpak4Counter::Load(bool* /*bitstream*/)
 {
 	printf("Greenpak4Counter::Load() not yet implemented\n");

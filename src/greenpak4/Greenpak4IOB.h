@@ -141,6 +141,7 @@ public:
 	{ return m_pinNumber; }
 	
 	virtual std::vector<std::string> GetInputPorts();
+	virtual std::vector<std::string> GetOutputPorts();
 	
 protected:
 

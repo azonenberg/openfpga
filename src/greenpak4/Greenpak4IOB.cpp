@@ -62,6 +62,14 @@ vector<string> Greenpak4IOB::GetInputPorts()
 	return r;
 }
 
+vector<string> Greenpak4IOB::GetOutputPorts()
+{
+	vector<string> r;
+	//r.push_back("I");
+	r.push_back("");		//for now, input port has no name (TODO: do proper IOB techmapping)
+	return r;
+}
+
 void Greenpak4IOB::SetSchmittTrigger(bool enabled)
 {
 	m_schmittTrigger = enabled;

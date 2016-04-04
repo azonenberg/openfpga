@@ -65,6 +65,14 @@ vector<string> Greenpak4Bandgap::GetInputPorts()
 	return r;
 }
 
+vector<string> Greenpak4Bandgap::GetOutputPorts()
+{
+	vector<string> r;
+	r.push_back("OK");
+	//VOUT is not general fabric routing
+	return r;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

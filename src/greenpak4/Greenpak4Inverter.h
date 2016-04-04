@@ -46,6 +46,7 @@ public:
 	virtual std::string GetDescription();
 	
 	virtual std::vector<std::string> GetInputPorts();
+	virtual std::vector<std::string> GetOutputPorts();
 	
 protected:
 	Greenpak4BitstreamEntity* m_input;

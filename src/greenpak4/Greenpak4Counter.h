@@ -80,6 +80,7 @@ public:
 	{ m_resetMode = mode; }
 	
 	virtual std::vector<std::string> GetInputPorts();
+	virtual std::vector<std::string> GetOutputPorts();
 	
 protected:
 	

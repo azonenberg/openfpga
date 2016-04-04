@@ -93,7 +93,11 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 		if(scell != NULL)
 		{
 			auto entity = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
-			printf("    from cell %s (mapped to %s) ", scell->m_name.c_str(), entity->GetDescription().c_str());
+			printf("    from cell %s (mapped to %s) port %s ",
+				scell->m_name.c_str(),
+				entity->GetDescription().c_str(),
+				edge->m_sourceport.c_str()
+				);
 		}
 		else if(sport != NULL)
 		{		

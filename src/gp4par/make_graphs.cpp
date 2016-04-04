@@ -367,6 +367,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 		//printf("    Node %s is sourced by:\n", node->m_name.c_str());
 		
 		PARGraphNode* source = NULL;
+		string sourceport = "";
 		
 		//See if it was sourced by a port
 		for(auto p : node->m_ports)
@@ -403,9 +404,8 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 				exit(-1);
 			}
 			
-			//TODO: Get the graph node for this port
-			//For now, the entire cell has a single node as its output
 			source = c.m_cell->m_parnode;
+			sourceport = c.m_portname;
 			//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 		}
 		
@@ -426,7 +426,8 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 		{
 			if(p->m_parnode != source)
 			{
-				source->AddEdge(p->m_parnode);
+				//TODO: IOB port names
+				source->AddEdge(sourceport, p->m_parnode);
 				//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
 				//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
 			}
@@ -435,7 +436,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 		{
 			if(c.m_cell->m_parnode != source)
 			{
-				source->AddEdge(c.m_cell->m_parnode, c.m_portname);
+				source->AddEdge(sourceport, c.m_cell->m_parnode, c.m_portname);
 				//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 			}
 		}
@@ -471,18 +472,20 @@ void MakeDeviceEdges(Greenpak4Device* device)
 	//Add the O(n^2) edges between the main fabric nodes
 	for(auto x : device_nodes)
 	{
-		//TODO: Named output ports, not just inputs
-		
-		for(auto y : device_nodes)
-		{
-			//Do not add edges to ourself (TODO: allow outputs to feed inputs?)
-			if(x == y)
-				continue;
-				
-			//Add paths to each cell input
-			auto iports = static_cast<Greenpak4BitstreamEntity*>(y->GetData())->GetInputPorts();
-			for(auto ip : iports)
-				x->AddEdge(y, ip);
+		auto oports = static_cast<Greenpak4BitstreamEntity*>(x->GetData())->GetOutputPorts();
+		for(auto srcport : oports)
+		{		
+			for(auto y : device_nodes)
+			{
+				//Do not add edges to ourself (TODO: allow outputs to feed inputs?)
+				if(x == y)
+					continue;
+					
+				//Add paths to each cell input
+				auto iports = static_cast<Greenpak4BitstreamEntity*>(y->GetData())->GetInputPorts();
+				for(auto ip : iports)
+					x->AddEdge(srcport, y, ip);
+			}
 		}
 	}
 	
@@ -509,34 +512,34 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		};
 		
 		//TODO: other clock sources
-		lfosc->AddEdge(cnodes[0], "CLK");
+		lfosc->AddEdge("CLKOUT", cnodes[0], "CLK");
 		
 		//TODO: other clock sources
-		lfosc->AddEdge(cnodes[1], "CLK");
+		lfosc->AddEdge("CLKOUT", cnodes[1], "CLK");
 		
 		//TODO: other clock sources
-		lfosc->AddEdge(cnodes[2], "CLK");
+		lfosc->AddEdge("CLKOUT", cnodes[2], "CLK");
 		
 		//TODO: other clock sources
-		lfosc->AddEdge(cnodes[3], "CLK");
+		lfosc->AddEdge("CLKOUT", cnodes[3], "CLK");
 		
 		//TODO: other clock sources
-		lfosc->AddEdge(cnodes[4], "CLK");
+		lfosc->AddEdge("CLKOUT", cnodes[4], "CLK");
 		
 		//TODO: other clock sources
-		lfosc->AddEdge(cnodes[5], "CLK");
+		lfosc->AddEdge("CLKOUT", cnodes[5], "CLK");
 		
 		//TODO: other clock sources
-		lfosc->AddEdge(cnodes[6], "CLK");
+		lfosc->AddEdge("CLKOUT", cnodes[6], "CLK");
 		
 		//TODO: other clock sources
-		lfosc->AddEdge(cnodes[7], "CLK");
+		lfosc->AddEdge("CLKOUT", cnodes[7], "CLK");
 		
 		//TODO: other clock sources
-		lfosc->AddEdge(cnodes[8], "CLK");
+		lfosc->AddEdge("CLKOUT", cnodes[8], "CLK");
 		
 		//TODO: other clock sources
-		lfosc->AddEdge(cnodes[9], "CLK");
+		lfosc->AddEdge("CLKOUT", cnodes[9], "CLK");
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// SYSTEM RESET
@@ -545,7 +548,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		auto sysrst = device->GetSystemReset()->GetPARNode();
 		auto pin2 = device->GetIOB(2)->GetPARNode();
 		auto gnd = device->GetPowerRail(false)->GetPARNode();
-		pin2->AddEdge(sysrst, "RST");
-		gnd->AddEdge(sysrst, "RST");
+		pin2->AddEdge("", sysrst, "RST");
+		gnd->AddEdge("", sysrst, "RST");
 	}
 }

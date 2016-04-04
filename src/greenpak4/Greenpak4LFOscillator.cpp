@@ -61,6 +61,13 @@ vector<string> Greenpak4LFOscillator::GetInputPorts()
 	return r;
 }
 
+vector<string> Greenpak4LFOscillator::GetOutputPorts()
+{
+	vector<string> r;
+	r.push_back("CLKOUT");
+	return r;
+}
+
 string Greenpak4LFOscillator::GetDescription()
 {
 	return "LFOSC0";

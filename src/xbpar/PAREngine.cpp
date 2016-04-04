@@ -333,6 +333,7 @@ uint32_t PAREngine::ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes)
 				PARGraphEdge* dedge = devsrc->GetEdgeByIndex(k);
 				if(
 					(dedge->m_destnode == devdst) &&
+					(dedge->m_sourceport == nedge->m_sourceport) &&
 					(dedge->m_destport == nedge->m_destport)
 					)
 				{

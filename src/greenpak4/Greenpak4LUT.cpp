@@ -108,6 +108,13 @@ vector<string> Greenpak4LUT::GetInputPorts()
 	return r;
 }
 
+vector<string> Greenpak4LUT::GetOutputPorts()
+{
+	vector<string> r;
+	r.push_back("OUT");
+	return r;
+}
+
 void Greenpak4LUT::SetInputSignal(unsigned int n, Greenpak4BitstreamEntity* sig)
 {
 	if(n >= m_order)

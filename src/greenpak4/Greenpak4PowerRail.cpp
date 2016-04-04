@@ -69,6 +69,13 @@ vector<string> Greenpak4PowerRail::GetInputPorts()
 	return r;
 }
 
+vector<string> Greenpak4PowerRail::GetOutputPorts()
+{
+	vector<string> r;
+	r.push_back("OUT");
+	return r;
+}
+
 string Greenpak4PowerRail::GetDescription()
 {
 	if(GetDigitalValue())

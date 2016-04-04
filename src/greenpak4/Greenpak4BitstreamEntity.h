@@ -95,6 +95,9 @@ public:
 	//Get a list of input ports on this node that connect to general fabric routing (may be empty)
 	virtual std::vector<std::string> GetInputPorts() =0;
 	
+	//Get a list of output ports on this node that connect to general fabric routing (may be empty)
+	virtual std::vector<std::string> GetOutputPorts() =0;
+	
 protected:
 
 	/**

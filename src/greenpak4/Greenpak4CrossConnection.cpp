@@ -92,6 +92,13 @@ vector<string> Greenpak4CrossConnection::GetInputPorts()
 	return r;
 }
 
+vector<string> Greenpak4CrossConnection::GetOutputPorts()
+{
+	vector<string> r;
+	r.push_back("O");
+	return r;
+}
+
 bool Greenpak4CrossConnection::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs

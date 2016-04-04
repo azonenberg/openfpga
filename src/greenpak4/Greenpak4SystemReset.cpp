@@ -64,6 +64,13 @@ vector<string> Greenpak4SystemReset::GetInputPorts()
 	return r;
 }
 
+vector<string> Greenpak4SystemReset::GetOutputPorts()
+{
+	vector<string> r;
+	r.push_back("OUT");
+	return r;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
