@@ -53,6 +53,8 @@ public:
 	{ m_autoPowerDown = en; }
 	*/
 	
+	virtual std::vector<std::string> GetInputPorts();
+	
 protected:
 	
 	///Power-down input (if implemented)

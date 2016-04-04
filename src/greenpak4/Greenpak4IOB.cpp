@@ -18,6 +18,8 @@
  
 #include "Greenpak4.h"
 
+using namespace std;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
@@ -51,6 +53,14 @@ Greenpak4IOB::~Greenpak4IOB()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
+
+vector<string> Greenpak4IOB::GetInputPorts()
+{
+	vector<string> r;
+	//r.push_back("I");
+	r.push_back("");		//for now, input port has no name (TODO: do proper IOB techmapping)
+	return r;
+}
 
 void Greenpak4IOB::SetSchmittTrigger(bool enabled)
 {

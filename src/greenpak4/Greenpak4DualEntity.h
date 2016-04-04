@@ -43,6 +43,8 @@ public:
 	
 	virtual Greenpak4BitstreamEntity* GetRealEntity();
 	
+	virtual std::vector<std::string> GetInputPorts();
+	
 protected:
 	Greenpak4BitstreamEntity* m_dual;
 };

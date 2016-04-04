@@ -475,64 +475,14 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		
 		for(auto y : device_nodes)
 		{
-			if(x != y)
-			{
-				//Add paths to individual cell pins
-				auto entity = static_cast<Greenpak4BitstreamEntity*>(y->GetData());
-				auto lut = dynamic_cast<Greenpak4LUT*>(entity);
-				auto ff = dynamic_cast<Greenpak4Flipflop*>(entity);
-				auto lfosc = dynamic_cast<Greenpak4LFOscillator*>(entity);
-				auto count = dynamic_cast<Greenpak4Counter*>(entity);
-				auto inv = dynamic_cast<Greenpak4Inverter*>(entity);
-				auto bg = dynamic_cast<Greenpak4Bandgap*>(entity);
-				auto iob = dynamic_cast<Greenpak4IOB*>(entity);
+			//Do not add edges to ourself (TODO: allow outputs to feed inputs?)
+			if(x == y)
+				continue;
 				
-				if(lut)
-				{
-					x->AddEdge(y, "IN0");
-					x->AddEdge(y, "IN1");
-					if(lut->GetOrder() > 2)
-						x->AddEdge(y, "IN2");
-					if(lut->GetOrder() > 3)
-						x->AddEdge(y, "IN3");
-				}
-				else if(ff)
-				{
-					x->AddEdge(y, "D");
-					x->AddEdge(y, "CLK");
-					if(ff->HasSetReset())
-					{
-						//allow all ports and we figure out which to use later
-						x->AddEdge(y, "nSR");
-						x->AddEdge(y, "nSET");
-						x->AddEdge(y, "nRST");
-					}
-				}
-				else if(lfosc)
-					x->AddEdge(y, "PWRDN");
-				else if(count)
-				{
-					//Counter reset is freely routable
-					x->AddEdge(y, "RST");
-					
-					//TODO: add other ports for FSM stuff etc?
-				}
-				else if(inv)
-					x->AddEdge(y, "IN");
-					
-				//IOB currently has no named ports, just send stuff directly to it
-				//TODO: change that and use IOB cells
-				else if(iob)
-					x->AddEdge(y);
-					
-				//Bandgap has no inputs, create no edges to it
-				else if(bg)
-				{}
-				
-				//no, just add path to the node in general (TODO: does anything actually use this?
-				//else
-				//	x->AddEdge(y);
-			}
+			//Add paths to each cell input
+			auto iports = static_cast<Greenpak4BitstreamEntity*>(y->GetData())->GetInputPorts();
+			for(auto ip : iports)
+				x->AddEdge(y, ip);
 		}
 	}
 	

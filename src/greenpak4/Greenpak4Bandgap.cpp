@@ -58,6 +58,13 @@ string Greenpak4Bandgap::GetDescription()
 	return "BANDGAP0";
 }
 
+vector<string> Greenpak4Bandgap::GetInputPorts()
+{
+	vector<string> r;
+	//no inputs
+	return r;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

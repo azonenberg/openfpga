@@ -24,6 +24,7 @@ class PARGraphNode;
 class Greenpak4DualEntity;
 
 #include <string>
+#include <vector>
 
 /**
 	@brief An entity which is serialized to/from the bitstream
@@ -90,6 +91,9 @@ public:
 	//Return our dual, or NULL if we don't have one
 	Greenpak4DualEntity* GetDual()
 	{ return m_dual; }
+	
+	//Get a list of input ports on this node that connect to general fabric routing (may be empty)
+	virtual std::vector<std::string> GetInputPorts() =0;
 	
 protected:
 

@@ -87,6 +87,13 @@ string Greenpak4Counter::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+vector<string> Greenpak4Counter::GetInputPorts()
+{
+	vector<string> r;
+	r.push_back("RST");
+	return r;
+}
+
 bool Greenpak4Counter::Load(bool* /*bitstream*/)
 {
 	printf("Greenpak4Counter::Load() not yet implemented\n");

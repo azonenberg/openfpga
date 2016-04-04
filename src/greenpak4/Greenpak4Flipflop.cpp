@@ -62,6 +62,16 @@ unsigned int Greenpak4Flipflop::GetConfigLen()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
+vector<string> Greenpak4Flipflop::GetInputPorts()
+{
+	vector<string> r;
+	r.push_back("D");
+	r.push_back("CLK");
+	if(m_hasSR)
+		r.push_back("nSR");
+	return r;
+}
+
 string Greenpak4Flipflop::GetDescription()
 {
 	char buf[128];

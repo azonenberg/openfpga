@@ -57,6 +57,13 @@ string Greenpak4SystemReset::GetDescription()
 	return "SYSRST0";
 }
 
+vector<string> Greenpak4SystemReset::GetInputPorts()
+{
+	vector<string> r;
+	r.push_back("RST");
+	return r;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

@@ -57,6 +57,8 @@ public:
 	void SetReset(Greenpak4BitstreamEntity* reset)
 	{ m_reset = reset; }
 	
+	virtual std::vector<std::string> GetInputPorts();
+	
 protected:
 	
 	///Configuration for the reset

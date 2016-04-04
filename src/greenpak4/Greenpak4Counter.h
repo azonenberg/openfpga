@@ -79,6 +79,8 @@ public:
 	void SetResetMode(ResetMode mode)
 	{ m_resetMode = mode; }
 	
+	virtual std::vector<std::string> GetInputPorts();
+	
 protected:
 	
 	///Bit depth of this counter

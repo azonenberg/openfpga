@@ -59,6 +59,13 @@ string Greenpak4Inverter::GetDescription()
 	return string(buf);
 }
 
+vector<string> Greenpak4Inverter::GetInputPorts()
+{
+	vector<string> r;
+	r.push_back("IN");
+	return r;
+}
+
 void Greenpak4Inverter::SetInput(Greenpak4BitstreamEntity* input)
 {
 	m_input = input;

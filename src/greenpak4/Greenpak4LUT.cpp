@@ -93,6 +93,21 @@ bool Greenpak4LUT::Save(bool* bitstream)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
+vector<string> Greenpak4LUT::GetInputPorts()
+{
+	vector<string> r;
+	switch(m_order)
+	{
+		case 4: r.push_back("IN3");
+		case 3: r.push_back("IN2");
+		case 2: r.push_back("IN1");
+		case 1: r.push_back("IN0");
+		default:
+			break;
+	}
+	return r;
+}
+
 void Greenpak4LUT::SetInputSignal(unsigned int n, Greenpak4BitstreamEntity* sig)
 {
 	if(n >= m_order)

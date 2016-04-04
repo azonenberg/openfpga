@@ -62,6 +62,13 @@ bool Greenpak4PowerRail::Save(bool* /*bitstream*/)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
+vector<string> Greenpak4PowerRail::GetInputPorts()
+{
+	vector<string> r;
+	//no inputs
+	return r;
+}
+
 string Greenpak4PowerRail::GetDescription()
 {
 	if(GetDigitalValue())

@@ -61,6 +61,8 @@ public:
 	{ return m_ffnum; }
 
 	virtual std::string GetDescription();
+	
+	virtual std::vector<std::string> GetInputPorts();
 
 protected:
 	

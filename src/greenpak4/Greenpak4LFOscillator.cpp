@@ -54,6 +54,13 @@ unsigned int Greenpak4LFOscillator::GetConfigLen()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
+vector<string> Greenpak4LFOscillator::GetInputPorts()
+{
+	vector<string> r;
+	r.push_back("PWRDN");
+	return r;
+}
+
 string Greenpak4LFOscillator::GetDescription()
 {
 	return "LFOSC0";

@@ -60,6 +60,8 @@ public:
 	
 	//Divider
 	void SetOutputDivider(int div);
+
+	virtual std::vector<std::string> GetInputPorts();
 	
 protected:
 
