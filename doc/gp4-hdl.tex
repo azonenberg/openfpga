@@ -1087,11 +1087,16 @@ POR\_TIME & Integer & 16 & Delay, in microseconds, from power-good to release of
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-por-example} FIXME.
+The example shown in figure \ref{gp-por-example} sets por\_done high 500us after initialization is complete.
 
 \begin{figure}[h]
 \begin{lstlisting}
-xx
+wire por_done;
+GP_POR #(
+	.POR_TIME(500)
+) por (
+	.RST_DONE(por_done)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_POR}
 \label{gp-por-example}
