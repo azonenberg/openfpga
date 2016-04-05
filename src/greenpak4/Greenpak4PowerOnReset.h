@@ -16,36 +16,41 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#ifndef Greenpak4PowerOnReset_h
+#define Greenpak4PowerOnReset_h
 
 /**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
+	@brief The power-on reset block
+ */ 
+class Greenpak4PowerOnReset : public Greenpak4BitstreamEntity
+{
+public:
 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4DualEntity.h"
-
-#include "Greenpak4Bandgap.h" 
-#include "Greenpak4Counter.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4LUTPgen.h"
-#include "Greenpak4PowerOnReset.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4SystemReset.h"
-
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
-
-#include "Greenpak4Device.h"
+	//Construction / destruction
+	Greenpak4PowerOnReset(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	virtual ~Greenpak4PowerOnReset();
+		
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
+	
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
+	
+	virtual std::string GetDescription();
+	
+	virtual std::vector<std::string> GetInputPorts();
+	virtual std::vector<std::string> GetOutputPorts();
+	
+	virtual void CommitChanges();
+	
+protected:
+	unsigned int m_resetDelay;
+};
 
 #endif

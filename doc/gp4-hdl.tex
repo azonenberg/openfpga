@@ -144,6 +144,7 @@ The following GreenPak4 device features are not supported by gp4par as of this w
 \item RC OSC
 \item Ring osc
 \item Slave SPI
+\item Pin 8 reset output
 \end{itemize}
 
 \pagebreak
@@ -1052,6 +1053,99 @@ GP_LFOSC #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_POR
+
+\pagebreak
+\clearpage
+\subsection{GP\_POR: Power-On Reset}
+
+\subsubsection{Introduction}
+This primitive represents the power-on reset. It may be used in user logic to gate signals that can toggle early in the 
+startup process in order to avoid glitches.
+
+%(Resetb_matrix, 62).
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+RST\_DONE & Output & 1 & Reset-done output. Goes high when the device has finished initializing.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+POR\_TIME & Integer & 16 & Delay, in microseconds, from power-good to release of RST\_DONE. Legal values are 4, 500.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-por-example} FIXME.
+
+\begin{figure}[h]
+\begin{lstlisting}
+xx
+\end{lstlisting}
+\caption{Example usage of GP\_POR}
+\label{gp-por-example}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_PWRCTL
+
+\pagebreak
+\clearpage
+\subsection{GP\_PWRCTL: Power Controol}
+
+\subsubsection{Introduction}
+This primitive represents the system power control block. TODO
+
+%FIXME: POR_TIME = bit 2009
+
+TODO
+Bit 2010: Disable power detector for charge pump
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+PWRDET & Output & 1 & Power-detect output. High when Vdd is less than 2.7V.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+POR\_TIME & Integer & 16 & Delay, in microseconds, from power-good to release of POR. Legal values are 4, 500.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-pwrctl-example} FIXME.
+
+\begin{figure}[h]
+\begin{lstlisting}
+xx
+\end{lstlisting}
+\caption{Example usage of GP\_PWRCTL}
+\label{gp-pwrctl-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_SYSRESET
 
 \pagebreak
@@ -1062,11 +1156,9 @@ GP_LFOSC #(
 This primitive represents the system reset block. This is an asynchronous global reset of most on-chip logic (see the
 device datasheet for exact functionality) and is independent of the power-on reset, which cannot be configured.
 
-Use of this block is not recommended if exact control of resets is required, since its behavior differs from both 
-power-on reset and the module reset pin in some cases. A future version of the toolchain may produce a synthesis-time 
-DRC warning if these cases are detected.
-
-TODO: Figure out actual behavior and document better?
+Note that this block has slightly different timing than the power-on reset, which may cause glitches in some designs. 
+To ensure consistent behavior between the runtime reset and boot, it may be necessary to use instantiate the GP\_POR 
+block and gate glitching signals with RST_DONE.
 
 \subsubsection{Port Descriptions}
 

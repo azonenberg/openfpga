@@ -153,10 +153,13 @@ public:
 	{ return m_counters[i]; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// RESET
+	// RESETS
 
 	Greenpak4SystemReset* GetSystemReset()
 	{ return m_sysrst; }
+	
+	Greenpak4PowerOnReset* GetPowerOnReset()
+	{ return m_por; }
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// BANDGAP
@@ -244,6 +247,9 @@ protected:
 	
 	///Bandgap reference
 	Greenpak4Bandgap* m_bandgap;
+	
+	///Power-on reset
+	Greenpak4PowerOnReset* m_por;
 	
 	/**
 		@brief Cross-connections between our matrices

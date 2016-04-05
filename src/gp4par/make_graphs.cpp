@@ -142,6 +142,13 @@ void BuildGraphs(
 	bandgap->SetPARNode(bgnode);
 	dgraph->AddNode(bgnode);
 	
+	//Make a device node for the power-on reset
+	uint32_t por_label = AllocateLabel(ngraph, dgraph, lmap, "GP_POR");
+	Greenpak4PowerOnReset* por = device->GetPowerOnReset();
+	PARGraphNode* pornode = new PARGraphNode(por_label, por);
+	por->SetPARNode(pornode);
+	dgraph->AddNode(pornode);
+	
 	//Make device nodes for the counters
 	uint32_t count8_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8");
 	uint32_t count14_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT14");

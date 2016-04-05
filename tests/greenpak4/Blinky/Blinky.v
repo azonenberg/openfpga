@@ -44,13 +44,21 @@ module Blinky(
 	output wire bg_ok;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// System reset
+	// System reset stuff
 
-	//Level-triggered asynchronous system reset
+	//Level-triggered asynchronous system reset input
 	GP_SYSRESET #(
 		.RESET_MODE("LEVEL")
 	) reset_ctrl (
 		.RST(sys_rst)
+	);
+	
+	//Power-on reset
+	wire por_done;
+	GP_POR #(
+		.POR_TIME(500)
+	) por (
+		.RST_DONE(por_done)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,9 +90,6 @@ module Blinky(
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Low-frequency oscillator and post-divider in behavioral logic, extracted to a hard IP block by synthesis
-	
-	//NOTE: GP_SYSRESET reset causes un-extracted RTL counters to clear to zero and glitch! No obvious workaround.
-	//The un-extracted counter behaves identically to hard IP in POR or count_rst modes.
 
 	localparam COUNT_MAX = 31;
 
@@ -132,10 +137,16 @@ module Blinky(
 	//Toggle the output every time the counters underflow
 	always @(posedge clk_108hz) begin
 	
-		if(out_fabric_raw)
-			out_lfosc_ff	<= ~out_lfosc_ff;
-		if(out_lfosc_raw)
-			out_lfosc_count <= ~out_lfosc_count;
+		//Gate toggle signals with POR to prevent glitches
+		//caused by blocks resetting at different times during boot
+		if(por_done) begin
+		
+			if(out_fabric_raw)
+				out_lfosc_ff	<= ~out_lfosc_ff;
+			if(out_lfosc_raw)
+				out_lfosc_count <= ~out_lfosc_count;
+				
+		end
 
 	end
 	

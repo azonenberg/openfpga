@@ -37,6 +37,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int iob_count = device->GetIOBCount();
 	
 	//Loop over nodes, find how many of each type were used
+	//TODO: use PAR labels for this?
 	unsigned int luts_used[5] = {0};
 	unsigned int iobs_used = 0;
 	unsigned int dff_used = 0;
@@ -46,17 +47,17 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int lfosc_used = 0;
 	unsigned int sysrst_used = 0;
 	unsigned int inv_used = 0;
+	unsigned int bandgap_used = 0;
+	unsigned int por_used = 0;
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
-		auto iob = dynamic_cast<Greenpak4IOB*>(entity);
 		auto lut = dynamic_cast<Greenpak4LUT*>(entity);
 		auto ff = dynamic_cast<Greenpak4Flipflop*>(entity);
 		auto count = dynamic_cast<Greenpak4Counter*>(entity);
-		auto inv = dynamic_cast<Greenpak4Inverter*>(entity);
 		if(lut)
 			luts_used[lut->GetOrder()] ++;
-		else if(iob)
+		else if(dynamic_cast<Greenpak4IOB*>(entity) != NULL)
 			iobs_used ++;
 		else if(ff)
 		{
@@ -72,8 +73,12 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 			else
 				counters_14_used ++;
 		}
-		else if(inv)
+		else if(dynamic_cast<Greenpak4Inverter*>(entity))
 			inv_used ++;
+		else if(dynamic_cast<Greenpak4Bandgap*>(entity))
+			bandgap_used ++;
+		else if(dynamic_cast<Greenpak4PowerOnReset*>(entity))
+			por_used ++;
 	}
 	if(device->GetLFOscillator()->GetPARNode()->GetMate() != NULL)
 		lfosc_used = 1;
@@ -93,6 +98,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int total_counters_8 = device->Get8BitCounterCount();
 	unsigned int total_counters_14 = device->Get14BitCounterCount();
 	unsigned int total_invs = device->GetInverterCount();
+	printf("    BANDGAP:   %2d/%2d (%d %%)\n", bandgap_used, 1, bandgap_used*100);
 	printf("    COUNT:     %2d/%2d (%d %%)\n",
 		total_counters_used, total_counters, total_counters_used*100 / total_counters);
 	printf("      COUNT8:  %2d/%2d (%d %%)\n",
@@ -116,6 +122,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		unsigned int percent = 100*used / count;
 		printf("      LUT%d:    %2d/%2d (%d %%)\n", i, used, count, percent);
 	}
+	printf("    POR:       %2d/%2d (%d %%)\n", por_used, 1, por_used*100);
 	printf("    SYSRST:    %2d/%2d (%d %%)\n", sysrst_used, 1, sysrst_used*100);
 	unsigned int total_routes_used = num_routes_used[0] + num_routes_used[1];
 	printf("    X-conn:    %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);

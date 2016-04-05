@@ -116,25 +116,25 @@ void Greenpak4Device::CreateDevice_SLG46620()
 			3));		//this is a LUT3
 	}
 	
-	//Create the first LUT4 (no special functionality)
-	m_lut4s.push_back(new Greenpak4LUT(
-		this,
-		0,
-		1,		//Attached to crossbar #1
-		32,		//LUT4 base is row 32
-		13,		//we come after the last LUT3
-		778,	//LUT4s start at bitstream offset 778, 2^4 bits per LUT
-		4));	//this is a LUT4
-	
-	//Create the second LUT4 (pattern generator capable)
+	//Create the first LUT4 (pattern generator capable)
 	//For now, no PGEN support, only usable as a LUT
 	m_lut4s.push_back(new Greenpak4LUTPgen(
 		this,
-		1,
+		0,
 		0,		//Attached to crossbar #0
 		32,		//LUT4 base is row 32
 		13,		//we come after the last LUT3
 		656,	//LUT4 starts after last LUT3
+		4));	//this is a LUT4
+	
+	//Create the second LUT4 (no special functionality)
+	m_lut4s.push_back(new Greenpak4LUT(
+		this,
+		1,
+		1,		//Attached to crossbar #1
+		32,		//LUT4 base is row 32
+		13,		//we come after the last LUT3
+		778,	//LUT4s start at bitstream offset 778, 2^4 bits per LUT
 		4));	//this is a LUT4
 	
 	//Create the Type-A IOBs (with output enable)
@@ -336,7 +336,8 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: Vdd bypass
 	
-	//TODO: Configuration/boot stuff
+	//Power-on reset
+	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 2009);
 	
 	//TODO: IO pad precharge? what does this involve?
 	
@@ -409,6 +410,7 @@ void Greenpak4Device::CreateDevice_common()
 	m_bitstuff.push_back(m_lfosc);
 	m_bitstuff.push_back(m_sysrst);
 	m_bitstuff.push_back(m_bandgap);
+	m_bitstuff.push_back(m_por);
 	
 	//TODO: this might be device specific - not all parts have exactly two matrices and ten cross connections
 	for(unsigned int matrix=0; matrix<2; matrix++)
