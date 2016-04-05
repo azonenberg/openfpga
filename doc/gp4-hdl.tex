@@ -1081,13 +1081,13 @@ RST\_DONE & Output & 1 & Reset-done output. Goes high when the device has finish
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-POR\_TIME & Integer & 16 & Delay, in microseconds, from power-good to release of RST\_DONE. Legal values are 4, 500.\\
+POR\_TIME & Integer & 16 & Delay, in $\mu s$, from power-good to release of RST\_DONE. Legal values are 4, 500.\\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-por-example} sets por\_done high 500us after initialization is complete.
+The example shown in figure \ref{gp-por-example} sets por\_done high $500 \mu s$ after initialization is complete.
 
 \begin{figure}[h]
 \begin{lstlisting}
