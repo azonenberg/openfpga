@@ -17,6 +17,7 @@
  **********************************************************************************************************************/
  
 #include "Greenpak4.h"
+#include "../xbpar/xbpar.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
@@ -46,6 +47,17 @@ Greenpak4BitstreamEntity::~Greenpak4BitstreamEntity()
 		delete m_dual;
 		m_dual = NULL;
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Commit helpers
+
+Greenpak4NetlistEntity* Greenpak4BitstreamEntity::GetNetlistEntity()
+{
+	PARGraphNode* mate = m_parnode->GetMate();
+	if(mate == NULL)
+		return NULL;
+	return static_cast<Greenpak4NetlistEntity*>(mate->GetData());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

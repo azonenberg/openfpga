@@ -22,6 +22,7 @@
 class Greenpak4Device;
 class PARGraphNode;
 class Greenpak4DualEntity;
+class Greenpak4NetlistEntity;
 
 #include <string>
 #include <vector>
@@ -102,6 +103,9 @@ public:
 	virtual void CommitChanges() =0;
 	
 protected:
+
+	///Return our assigned netlist entity, if we have one (or NULL if not)
+	Greenpak4NetlistEntity* GetNetlistEntity();
 
 	/**
 		@brief Writes a matrix select value to the bitstream

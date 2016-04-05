@@ -43,16 +43,7 @@ public:
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-	
-	//TODO: Normal accessors to truth table
-	
-	//Quick and dirty helpers to initialize the LUT to a standard Boolean function
-	void MakeOR();
-	void MakeAND();
-	void MakeNOR();
-	void MakeNAND();
-	//TODO: XOR
-	
+		
 	void SetBit(bool val, bool a0, bool a1, bool a2 = 0, bool a3 = 0);
 	
 	//Set inputs

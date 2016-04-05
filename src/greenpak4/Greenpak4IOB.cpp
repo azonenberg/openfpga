@@ -56,7 +56,92 @@ Greenpak4IOB::~Greenpak4IOB()
 
 void Greenpak4IOB::CommitChanges()
 {
-	//TODO
+	//Get our cell, or bail if we're unassigned
+	auto niob = dynamic_cast<Greenpak4NetlistPort*>(GetNetlistEntity());
+	if(niob == NULL)
+		return;
+	
+	//TODO: support array nets
+	auto net = niob->m_net;
+			
+	//printf("    Configuring IOB %d\n", iob->GetPinNumber());
+
+	//Apply attributes to configure the net
+	for(auto x : net->m_attributes)
+	{
+		//do nothing, only for debugging
+		if(x.first == "src")
+		{}
+		
+		//already PAR'd, useless now
+		else if(x.first == "LOC")
+		{}
+		
+		//IO schmitt trigger
+		else if(x.first == "SCHMITT_TRIGGER")
+		{
+			if(x.second == "0")
+				SetSchmittTrigger(false);
+			else
+				SetSchmittTrigger(true);
+		}
+		
+		//Pullup strength/direction
+		else if(x.first == "PULLUP")
+		{
+			SetPullDirection(Greenpak4IOB::PULL_UP);
+			if(x.second == "10k")
+				SetPullStrength(Greenpak4IOB::PULL_10K);
+			else if(x.second == "100k")
+				SetPullStrength(Greenpak4IOB::PULL_100K);
+			else if(x.second == "1M")
+				SetPullStrength(Greenpak4IOB::PULL_1M);
+		}
+		
+		//Pulldown strength/direction
+		else if(x.first == "PULLDOWN")
+		{
+			SetPullDirection(Greenpak4IOB::PULL_DOWN);
+			if(x.second == "10k")
+				SetPullStrength(Greenpak4IOB::PULL_10K);
+			else if(x.second == "100k")
+				SetPullStrength(Greenpak4IOB::PULL_100K);
+			else if(x.second == "1M")
+				SetPullStrength(Greenpak4IOB::PULL_1M);
+		}
+		
+		//Ignore flipflop initialization, that's handled elsewhere
+		else if(x.first == "init")
+		{
+		}
+		
+		//TODO: 
+		
+		else
+		{
+			printf("WARNING: Top-level port \"%s\" has unrecognized attribute %s, ignoring\n",
+				niob->m_name.c_str(), x.first.c_str());
+		}
+		
+		//printf("        %s = %s\n", x.first.c_str(), x.second.c_str());
+	}
+	
+	//Configure output enable
+	switch(niob->m_direction)
+	{
+		case Greenpak4NetlistPort::DIR_OUTPUT:
+			SetOutputEnable(true);
+			break;
+			
+		case Greenpak4NetlistPort::DIR_INPUT:
+			SetOutputEnable(false);
+			break;
+			
+		case Greenpak4NetlistPort::DIR_INOUT:
+		default:
+			printf("ERROR: Requested invalid output configuration (or inout, which isn't implemented)\n");
+			break;
+	}
 }
 
 vector<string> Greenpak4IOB::GetInputPorts()

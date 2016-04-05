@@ -48,11 +48,14 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		auto rst = dynamic_cast<Greenpak4SystemReset*>(bnode);
 		auto inv = dynamic_cast<Greenpak4Inverter*>(bnode);
 			
+		//Commit changes
+		bnode->CommitChanges();
+			
 		//Configure nodes of known type
 		if(iob)
 			CommitIOBChanges(static_cast<Greenpak4NetlistPort*>(mate->GetData()), iob);		
 		else if(lut)
-			CommitLUTChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), lut);
+		{}
 		else if(ff)
 			CommitFFChanges(static_cast<Greenpak4NetlistCell*>(mate->GetData()), ff);
 		else if(lfosc)
@@ -86,122 +89,7 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
  */
 void CommitIOBChanges(Greenpak4NetlistPort* niob, Greenpak4IOB* iob)
 {
-	//TODO: support array nets
-	auto net = niob->m_net;
-			
-	//printf("    Configuring IOB %d\n", iob->GetPinNumber());
-
-	//Apply attributes to configure the net
-	for(auto x : net->m_attributes)
-	{
-		//do nothing, only for debugging
-		if(x.first == "src")
-		{}
-		
-		//already PAR'd, useless now
-		else if(x.first == "LOC")
-		{}
-		
-		//IO schmitt trigger
-		else if(x.first == "SCHMITT_TRIGGER")
-		{
-			if(x.second == "0")
-				iob->SetSchmittTrigger(false);
-			else
-				iob->SetSchmittTrigger(true);
-		}
-		
-		//Pullup strength/direction
-		else if(x.first == "PULLUP")
-		{
-			iob->SetPullDirection(Greenpak4IOB::PULL_UP);
-			if(x.second == "10k")
-				iob->SetPullStrength(Greenpak4IOB::PULL_10K);
-			else if(x.second == "100k")
-				iob->SetPullStrength(Greenpak4IOB::PULL_100K);
-			else if(x.second == "1M")
-				iob->SetPullStrength(Greenpak4IOB::PULL_1M);
-		}
-		
-		//Pulldown strength/direction
-		else if(x.first == "PULLDOWN")
-		{
-			iob->SetPullDirection(Greenpak4IOB::PULL_DOWN);
-			if(x.second == "10k")
-				iob->SetPullStrength(Greenpak4IOB::PULL_10K);
-			else if(x.second == "100k")
-				iob->SetPullStrength(Greenpak4IOB::PULL_100K);
-			else if(x.second == "1M")
-				iob->SetPullStrength(Greenpak4IOB::PULL_1M);
-		}
-		
-		//Ignore flipflop initialization, that's handled elsewhere
-		else if(x.first == "init")
-		{
-		}
-		
-		//TODO: 
-		
-		else
-		{
-			printf("WARNING: Top-level port \"%s\" has unrecognized attribute %s, ignoring\n",
-				niob->m_name.c_str(), x.first.c_str());
-		}
-		
-		//printf("        %s = %s\n", x.first.c_str(), x.second.c_str());
-	}
 	
-	//Configure output enable
-	switch(niob->m_direction)
-	{
-		case Greenpak4NetlistPort::DIR_OUTPUT:
-			iob->SetOutputEnable(true);
-			break;
-			
-		case Greenpak4NetlistPort::DIR_INPUT:
-			iob->SetOutputEnable(false);
-			break;
-			
-		case Greenpak4NetlistPort::DIR_INOUT:
-		default:
-			printf("ERROR: Requested invalid output configuration (or inout, which isn't implemented)\n");
-			break;
-	}
-}
-
-/**
-	@brief Commit post-PAR results from the netlist to a single LUT
- */
-void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut)
-{
-	//printf("    Configuring LUT %s\n", ncell->m_name.c_str() );
-	
-	for(auto x : ncell->m_parameters)
-	{
-		//LUT initialization value, as decimal
-		if(x.first == "INIT")
-		{
-			//convert to bit array format for the bitstream library
-			uint32_t truth_table = atoi(x.second.c_str());
-			unsigned int nbits = 1 << lut->GetOrder();
-			for(unsigned int i=0; i<nbits; i++)
-			{
-				bool a3 = (i & 8) ? true : false;
-				bool a2 = (i & 4) ? true : false;
-				bool a1 = (i & 2) ? true : false;
-				bool a0 = (i & 1) ? true : false;
-				bool nbit = (truth_table & (1 << i)) ? true : false;
-				//printf("        inputs %d %d %d %d: %d\n", a3, a2, a1, a0, nbit);
-				lut->SetBit(nbit, a0, a1, a2, a3);
-			}
-		}
-		
-		else
-		{
-			printf("WARNING: Cell\"%s\" has unrecognized parameter %s, ignoring\n",
-				ncell->m_name.c_str(), x.first.c_str());
-		}
-	}
 }
 
 /**

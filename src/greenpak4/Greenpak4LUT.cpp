@@ -95,7 +95,37 @@ bool Greenpak4LUT::Save(bool* bitstream)
 
 void Greenpak4LUT::CommitChanges()
 {
-	//TODO
+	//Get our cell, or bail if we're unassigned
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell == NULL)
+		return;
+	
+	for(auto x : ncell->m_parameters)
+	{
+		//LUT initialization value, as decimal
+		if(x.first == "INIT")
+		{
+			//convert to bit array format for the bitstream library
+			uint32_t truth_table = atoi(x.second.c_str());
+			unsigned int nbits = 1 << m_order;
+			for(unsigned int i=0; i<nbits; i++)
+			{
+				bool a3 = (i & 8) ? true : false;
+				bool a2 = (i & 4) ? true : false;
+				bool a1 = (i & 2) ? true : false;
+				bool a0 = (i & 1) ? true : false;
+				bool nbit = (truth_table & (1 << i)) ? true : false;
+				//printf("        inputs %d %d %d %d: %d\n", a3, a2, a1, a0, nbit);
+				SetBit(nbit, a0, a1, a2, a3);
+			}
+		}
+		
+		else
+		{
+			printf("WARNING: Cell\"%s\" has unrecognized parameter %s, ignoring\n",
+				ncell->m_name.c_str(), x.first.c_str());
+		}
+	}
 }
 
 vector<string> Greenpak4LUT::GetInputPorts()
@@ -151,72 +181,6 @@ string Greenpak4LUT::GetDescription()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Initialization helpers
-
-void Greenpak4LUT::MakeOR()
-{
-	//Set input 0 (all inputs false) to false
-	m_truthtable[0] = false;
-	
-	//everything else true
-	for(unsigned int i=1; i<16; i++)
-		m_truthtable[i] = true;
-}
-
-void Greenpak4LUT::MakeAND()
-{
-	//Default to false
-	for(unsigned int i=0; i<16; i++)
-		m_truthtable[i] = false;
-		
-	//True depending on our order
-	switch(m_order)
-	{
-		case 2:
-			m_truthtable[3] = true;
-			break;
-			
-		case 3:
-			m_truthtable[7] = true;
-			break;
-			
-		case 4:
-			m_truthtable[15] = true;
-			break;
-	}
-}
-
-void Greenpak4LUT::MakeNOR()
-{
-	//Set input 0 (all inputs false) to true
-	m_truthtable[0] = true;
-	
-	//everything else false
-	for(unsigned int i=1; i<16; i++)
-		m_truthtable[i] = false;
-}
-
-void Greenpak4LUT::MakeNAND()
-{
-	//Default to true
-	for(unsigned int i=0; i<16; i++)
-		m_truthtable[i] = true;
-		
-	//False depending on our order
-	switch(m_order)
-	{
-		case 2:
-			m_truthtable[3] = false;
-			break;
-			
-		case 3:
-			m_truthtable[7] = false;
-			break;
-			
-		case 4:
-			m_truthtable[15] = false;
-			break;
-	}
-}
 
 void Greenpak4LUT::SetBit(bool val, bool a0, bool a1, bool a2, bool a3)
 {
