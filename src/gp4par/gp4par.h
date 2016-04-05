@@ -52,12 +52,6 @@ void PostPARDRC(PARGraph* netlist, PARGraph* device);
 
 //Committing
 void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
-void CommitIOBChanges(Greenpak4NetlistPort* niob, Greenpak4IOB* iob);
-void CommitLUTChanges(Greenpak4NetlistCell* ncell, Greenpak4LUT* lut);
-void CommitFFChanges(Greenpak4NetlistCell* ncell, Greenpak4Flipflop* ff);
-void CommitLFOscChanges(Greenpak4NetlistCell* ncell, Greenpak4LFOscillator* osc);
-void CommitCounterChanges(Greenpak4NetlistCell* ncell, Greenpak4Counter* count);
-void CommitResetChanges(Greenpak4NetlistCell* ncell, Greenpak4SystemReset* rst);
 void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
 void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned int* num_routes_used);
 void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* device);

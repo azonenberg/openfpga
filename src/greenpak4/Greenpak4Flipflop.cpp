@@ -94,7 +94,16 @@ string Greenpak4Flipflop::GetDescription()
 
 void Greenpak4Flipflop::CommitChanges()
 {
-	//TODO
+	//Get our cell, or bail if we're unassigned
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell == NULL)
+		return;
+	
+	if(ncell->HasParameter("SRMODE"))
+		SetSRMode(ncell->m_parameters["SRMODE"] == "1");
+
+	if(ncell->HasParameter("INIT"))
+		SetInitValue(ncell->m_parameters["INIT"] == "1");
 }
 
 bool Greenpak4Flipflop::Load(bool* /*bitstream*/)

@@ -95,7 +95,19 @@ void Greenpak4LFOscillator::SetOutputDivider(int div)
 
 void Greenpak4LFOscillator::CommitChanges()
 {
-	//TODO
+	//Get our cell, or bail if we're unassigned
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell == NULL)
+		return;
+	
+	if(ncell->HasParameter("PWRDN_EN"))
+		SetPowerDownEn(ncell->m_parameters["PWRDN_EN"] == "1");
+		
+	if(ncell->HasParameter("AUTO_PWRDN"))
+		SetAutoPowerDown(ncell->m_parameters["AUTO_PWRDN"] == "1");
+		
+	if(ncell->HasParameter("OUT_DIV"))
+		SetOutputDivider(atoi(ncell->m_parameters["OUT_DIV"].c_str()));
 }
 
 bool Greenpak4LFOscillator::Load(bool* /*bitstream*/)

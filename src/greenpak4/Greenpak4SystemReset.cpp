@@ -76,7 +76,32 @@ vector<string> Greenpak4SystemReset::GetOutputPorts()
 
 void Greenpak4SystemReset::CommitChanges()
 {
-	//TODO
+	//Get our cell, or bail if we're unassigned
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell == NULL)
+		return;
+		
+	if(ncell->HasParameter("RESET_MODE"))
+	{
+		Greenpak4SystemReset::ResetMode mode = Greenpak4SystemReset::RISING_EDGE;
+		string p = ncell->m_parameters["RESET_MODE"];
+		if(p == "RISING")
+			mode = Greenpak4SystemReset::RISING_EDGE;
+		else if(p == "FALLING")
+			mode = Greenpak4SystemReset::FALLING_EDGE;
+		else if(p == "LEVEL")
+			mode = Greenpak4SystemReset::HIGH_LEVEL;
+		else
+		{
+			fprintf(
+				stderr,
+				"ERROR: Reset \"%s\" has illegal reset mode \"%s\" (must be RISING, FALLING, or LEVEL)\n",
+				ncell->m_name.c_str(),
+				p.c_str());
+			exit(-1);
+		}
+		SetResetMode(mode);
+	}
 }
 
 bool Greenpak4SystemReset::Load(bool* /*bitstream*/)

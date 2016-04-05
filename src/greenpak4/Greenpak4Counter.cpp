@@ -89,7 +89,40 @@ string Greenpak4Counter::GetDescription()
 
 void Greenpak4Counter::CommitChanges()
 {
-	//TODO
+	//Get our cell, or bail if we're unassigned
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell == NULL)
+		return;
+		
+	if(ncell->HasParameter("RESET_MODE"))
+	{
+		Greenpak4Counter::ResetMode mode = Greenpak4Counter::RISING_EDGE;
+		string p = ncell->m_parameters["RESET_MODE"];
+		if(p == "RISING")
+			mode = Greenpak4Counter::RISING_EDGE;
+		else if(p == "FALLING")
+			mode = Greenpak4Counter::FALLING_EDGE;
+		else if(p == "BOTH")
+			mode = Greenpak4Counter::BOTH_EDGE;
+		else if(p == "LEVEL")
+			mode = Greenpak4Counter::HIGH_LEVEL;
+		else
+		{
+			fprintf(
+				stderr,
+				"ERROR: Counter \"%s\" has illegal reset mode \"%s\" (must be RISING, FALLING, BOTH, or LEVEL)\n",
+				ncell->m_name.c_str(),
+				p.c_str());
+			exit(-1);
+		}
+		SetResetMode(mode);
+	}
+	
+	if(ncell->HasParameter("COUNT_TO"))
+		SetCounterValue(atoi(ncell->m_parameters["COUNT_TO"].c_str()));
+	
+	if(ncell->HasParameter("CLKIN_DIVIDE"))
+		SetPreDivide(atoi(ncell->m_parameters["CLKIN_DIVIDE"].c_str()));
 }
 
 vector<string> Greenpak4Counter::GetInputPorts()
