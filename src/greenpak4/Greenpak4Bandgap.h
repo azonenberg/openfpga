@@ -44,15 +44,6 @@ public:
 	
 	virtual std::string GetDescription();
 	
-	/*
-	//Enable accessors
-	void SetPowerDownEn(bool en)
-	{ m_powerDownEn = en; }
-	
-	void SetAutoPowerDown(bool en)
-	{ m_autoPowerDown = en; }
-	*/
-	
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
 	
@@ -63,13 +54,14 @@ protected:
 	///Power-down input (if implemented)
 	Greenpak4BitstreamEntity* m_powerDown;
 	
-	/*
-	///Power-down enable
-	bool m_powerDownEn;
-	
 	///Auto power-down
 	bool m_autoPowerDown;
-	*/
+	
+	///Chopper enable
+	bool m_chopperEn;
+	
+	///Delay from bandgap startup to output stable
+	int m_outDelay;
 };
 
 #endif

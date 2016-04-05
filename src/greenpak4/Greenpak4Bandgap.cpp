@@ -30,8 +30,9 @@ Greenpak4Bandgap::Greenpak4Bandgap(
 	unsigned int oword,
 	unsigned int cbase)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
-	//, m_powerDownEn(false)
-	//, m_autoPowerDown(true)
+	, m_autoPowerDown(true)
+	, m_chopperEn(true)
+	, m_outDelay(100)
 {
 	m_dual = new Greenpak4DualEntity(this);
 }
@@ -78,7 +79,45 @@ vector<string> Greenpak4Bandgap::GetOutputPorts()
 
 void Greenpak4Bandgap::CommitChanges()
 {
-	//TODO
+	//Get our cell, or bail if we're unassigned
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell == NULL)
+		return;
+		
+	if(ncell->HasParameter("AUTO_PWRDN"))
+	{
+		string p = ncell->m_parameters["AUTO_PWRDN"];
+		if(p == "1")
+			m_autoPowerDown = true;
+		else
+			m_autoPowerDown = false;
+	}
+	
+	if(ncell->HasParameter("CHOPPER_EN"))
+	{
+		string p = ncell->m_parameters["CHOPPER_EN"];
+		if(p == "1")
+			m_chopperEn = true;
+		else
+			m_chopperEn = false;
+	}
+	
+	if(ncell->HasParameter("OUT_DELAY"))
+	{
+		string p = ncell->m_parameters["OUT_DELAY"];
+		if(p == "100")
+			m_outDelay = 100;
+		else if(p == "550")
+			m_outDelay = 550;
+		else
+		{
+			fprintf(
+				stderr,
+				"ERROR: Bandgap has illegal reset delay \"%s\" (must be 100 or 550)\n",
+				p.c_str());
+			exit(-1);
+		}
+	}
 }
 
 bool Greenpak4Bandgap::Load(bool* /*bitstream*/)
@@ -89,60 +128,23 @@ bool Greenpak4Bandgap::Load(bool* /*bitstream*/)
 
 bool Greenpak4Bandgap::Save(bool* bitstream)
 {
-	/*
-	//Optimize PWRDN = 1'b0 and PWRDN_EN = 1 to PWRDN = dontcare and PWRDN_EN = 0
-	bool real_pwrdn_en = m_powerDownEn;
-	Greenpak4PowerRail* rail = dynamic_cast<Greenpak4PowerRail*>(m_powerDown);
-	if( (rail != NULL) && (rail->GetDigitalValue() == 0) )
-		real_pwrdn_en = false;
+	//Startup delay
+	if(m_outDelay == 100)
+		bitstream[m_configBase + 0] = true;
+	else
+		bitstream[m_configBase + 0] = false;
+		
+	//Power-down 936
+	if(m_autoPowerDown)
+		bitstream[m_configBase + 13] = false;
+	else
+		bitstream[m_configBase + 13] = true;
+		
+	//Chopper enable flag
+	if(m_chopperEn)
+		bitstream[m_configBase + 15] = true;
+	else
+		bitstream[m_configBase + 15] = false;
 	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// INPUT BUS
-	
-	//Write the power-down input iff we have power-down enabled.
-	if(real_pwrdn_en)
-	{
-		if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_powerDown))
-			return false;
-	}
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Configuration
-	
-	//Enable power-down if we have it hooked up.
-	bitstream[m_configBase + 0] = real_pwrdn_en;
-	
-	//Auto power-down
-	bitstream[m_configBase + 1] = !m_autoPowerDown;
-	
-	//Output clock divider
-	switch(m_outDiv)
-	{
-		case 1:
-			bitstream[m_configBase + 3] = false;
-			bitstream[m_configBase + 2] = false;
-			break;
-			
-		case 2:
-			bitstream[m_configBase + 3] = false;
-			bitstream[m_configBase + 2] = true;
-			break;
-			
-		case 4:
-			bitstream[m_configBase + 3] = true;
-			bitstream[m_configBase + 2] = false;
-			break;
-			
-		case 16:
-			bitstream[m_configBase + 3] = true;
-			bitstream[m_configBase + 2] = true;
-			break;
-			
-		default:
-			fprintf(stderr, "INTERNAL ERROR: GP4_LFOSC output divider must be 1, 2, 4, or 16\n");
-			exit(1);
-			break;
-	}
-	*/
 	return true;
 }

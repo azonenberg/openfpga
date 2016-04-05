@@ -759,7 +759,8 @@ This primitive represents the bandgap voltage reference.
 \hline
 OK & Output & 1 & Goes high when bandgap voltage reference is stable. \\
 \hline
-VOUT & Output & 1 & 1.0V reference voltage \\
+VOUT & Output & 1 & 1.0V reference voltage.
+	Dedicated connection to mixed signal hard IP, does not connect to general fabric routing. \\
 \hline
 \end{tabularx}
 
@@ -777,17 +778,27 @@ CHOPPER\_EN & Boolean & 1 &
 	Specify whether to enable the chopper stabilization for the bandgap op-amp. Should always be 1. \\
 \hline
 OUT\_DELAY & Integer & 1 &
-	Time, in microseconds, to wait after bandgap startup before asserting OK. Legal values are 100 or 550.\\
+	Time, in $\mu s$, to wait after bandgap startup before asserting OK. Legal values are 100 or 550.\\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-bandgap-example} isn't written yet.
+The example shown in figure \ref{gp-bandgap-example} sets bg\_ok high $550 \mu s$ after reset. bandgap\_vout is a 1.0V 
+analog reference voltage for use by other mixed signal blocks.
 
 \begin{figure}[h]
 \begin{lstlisting}
-FIXME
+wire bg_ok;
+wire bandgap_vout;
+GP_BANDGAP #(
+	.AUTO_PWRDN(0),
+	.CHOPPER_EN(1),
+	.OUT_DELAY(550)
+) bandgap (
+	.OK(bg_ok),
+	.VOUT(bandgap_vout)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_BANDGAP}
 \label{gp-bandgap-example}
