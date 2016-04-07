@@ -27,7 +27,5 @@ using namespace std;
 
 Greenpak4NetlistCell::~Greenpak4NetlistCell()
 {
-	for(auto x : m_connections)
-		delete x.second;
-	m_connections.clear();
+	//do not delete wires, module dtor handles that
 }
