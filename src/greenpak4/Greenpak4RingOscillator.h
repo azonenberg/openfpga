@@ -16,37 +16,73 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#ifndef Greenpak4RingOscillator_h
+#define Greenpak4RingOscillator_h
 
 /**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
+	@brief The ring (27 MHz) oscillator
+ */ 
+class Greenpak4RingOscillator : public Greenpak4BitstreamEntity
+{
+public:
 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4DualEntity.h"
+	//Construction / destruction
+	Greenpak4RingOscillator(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	virtual ~Greenpak4RingOscillator();
+		
+	//Bitfile metadata
+	virtual unsigned int GetConfigLen();
+	
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
+	
+	virtual std::string GetDescription();
+	
+	//Set our power-down input
+	void SetPowerDown(Greenpak4BitstreamEntity* pwrdn);
+	
+	//Get the power-down input (used for DRC)
+	Greenpak4BitstreamEntity* GetPowerDown()
+	{ return m_powerDown; }
+	
+	//Enable accessors
+	void SetPowerDownEn(bool en)
+	{ m_powerDownEn = en; }
+	
+	void SetAutoPowerDown(bool en)
+	{ m_autoPowerDown = en; }
+	
+	//Divider
+	void SetPostDivider(int div);
+	void SetPreDivider(int div);
 
-#include "Greenpak4Bandgap.h" 
-#include "Greenpak4Counter.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4LUTPgen.h"
-#include "Greenpak4PowerOnReset.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4RingOscillator.h"
-#include "Greenpak4SystemReset.h"
+	virtual std::vector<std::string> GetInputPorts();
+	virtual std::vector<std::string> GetOutputPorts();
+	
+	virtual void CommitChanges();
+	
+protected:
 
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
-
-#include "Greenpak4Device.h"
+	///Power-down input (if implemented)
+	Greenpak4BitstreamEntity* m_powerDown;
+	
+	///Power-down enable
+	bool m_powerDownEn;
+	
+	///Auto power-down
+	bool m_autoPowerDown;
+	
+	///Output pre-divider
+	int m_preDiv;
+	
+	///Output post-divider
+	int m_postDiv;
+};
 
 #endif

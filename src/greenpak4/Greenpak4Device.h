@@ -130,6 +130,9 @@ public:
 	
 	Greenpak4LFOscillator* GetLFOscillator()
 	{ return m_lfosc; }
+	
+	Greenpak4RingOscillator* GetRingOscillator()
+	{ return m_ringosc; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// COUNTERS
@@ -241,6 +244,9 @@ protected:
 	
 	///Low-frequency oscillator
 	Greenpak4LFOscillator* m_lfosc;
+	
+	///Ring oscillator
+	Greenpak4RingOscillator* m_ringosc;
 	
 	///System reset
 	Greenpak4SystemReset* m_sysrst;

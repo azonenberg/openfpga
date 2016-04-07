@@ -45,6 +45,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int counters_8_used = 0;
 	unsigned int counters_14_used = 0;
 	unsigned int lfosc_used = 0;
+	unsigned int ringosc_used = 0;
 	unsigned int sysrst_used = 0;
 	unsigned int inv_used = 0;
 	unsigned int bandgap_used = 0;
@@ -82,10 +83,13 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	}
 	if(device->GetLFOscillator()->GetPARNode()->GetMate() != NULL)
 		lfosc_used = 1;
+	if(device->GetRingOscillator()->GetPARNode()->GetMate() != NULL)
+		ringosc_used = 1;
 	if(device->GetSystemReset()->GetPARNode()->GetMate() != NULL)
 		sysrst_used = 1;
 	
 	//Print the actual report
+
 	printf("\nDevice utilization:\n");
 	unsigned int total_luts_used = luts_used[2] + luts_used[3] + luts_used[4];
 	unsigned int total_lut_count = lut_counts[2] + lut_counts[3] + lut_counts[4];
@@ -123,6 +127,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		printf("      LUT%d:    %2d/%2d (%d %%)\n", i, used, count, percent);
 	}
 	printf("    POR:       %2d/%2d (%d %%)\n", por_used, 1, por_used*100);
+	printf("    RINGOSC:   %2d/%2d (%d %%)\n", ringosc_used, 1, ringosc_used*100);
 	printf("    SYSRST:    %2d/%2d (%d %%)\n", sysrst_used, 1, sysrst_used*100);
 	unsigned int total_routes_used = num_routes_used[0] + num_routes_used[1];
 	printf("    X-conn:    %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);

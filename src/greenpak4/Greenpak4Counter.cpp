@@ -237,7 +237,26 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		}
 		//TODO: RCOSC with dividers
 		//TODO: Matrix outputs
-		//TODO: ring oscillator
+		
+		//Ring oscillator
+		else if(dynamic_cast<Greenpak4RingOscillator*>(clk) != NULL)
+		{
+			if(m_preDivide != 1)
+			{
+				fprintf(
+					stderr,
+					"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by ring osc\n",
+					m_countnum);
+				return false;
+			}
+			
+			//4'b1000
+			bitstream[nbase + 3] = true;
+			bitstream[nbase + 2] = false;
+			bitstream[nbase + 1] = false;
+			bitstream[nbase + 0] = false;
+		}
+		
 		//TODO: SPI clock
 		//TODO: FSM clock
 		//TODO: PWM clock
@@ -273,10 +292,28 @@ bool Greenpak4Counter::Save(bool* bitstream)
 			bitstream[nbase + 1] = false;
 			bitstream[nbase + 0] = false;
 		}
+		
+		//Ring oscillator
+		else if(dynamic_cast<Greenpak4RingOscillator*>(m_clock->GetRealEntity()) != NULL)
+		{
+			if(m_preDivide != 1)
+			{
+				fprintf(
+					stderr,
+					"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by ring osc\n",
+					m_countnum);
+				return false;
+			}
+			
+			//3'b110
+			bitstream[nbase + 2] = true;
+			bitstream[nbase + 1] = true;
+			bitstream[nbase + 0] = false;
+		}
+		
 		//TODO: RCOSC with dividers
 		//TODO: cascading
 		//TODO: Matrix outputs
-		//TODO: ring oscillator
 		else if(!unused)
 		{
 			fprintf(

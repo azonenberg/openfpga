@@ -196,8 +196,16 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		84,		//input base (single power-down input)
 		50,		//output word (plus dedicated routing to counters etc)
 		1652);	//bitstream location
+		
+	//Ring oscillator
+	m_ringosc = new Greenpak4RingOscillator(
+		this,
+		0,		//Matrix applies to inputs, we can route output globally
+		84,		//input base (single power-down input)
+		48,		//output word (plus dedicated routing to counters etc)
+		1630);	//bitstream location
 	
-	//TODO: Other oscillators
+	//TODO: RC oscillator
 	
 	//Counters
 	m_counters14bit.push_back(new Greenpak4Counter(
@@ -408,6 +416,7 @@ void Greenpak4Device::CreateDevice_common()
 	m_bitstuff.push_back(m_constantZero);
 	m_bitstuff.push_back(m_constantOne);
 	m_bitstuff.push_back(m_lfosc);
+	m_bitstuff.push_back(m_ringosc);
 	m_bitstuff.push_back(m_sysrst);
 	m_bitstuff.push_back(m_bandgap);
 	m_bitstuff.push_back(m_por);

@@ -80,6 +80,7 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			auto ff = dynamic_cast<Greenpak4Flipflop*>(dst);
 			auto pwr = dynamic_cast<Greenpak4PowerRail*>(dst);
 			auto osc = dynamic_cast<Greenpak4LFOscillator*>(dst);
+			auto rosc = dynamic_cast<Greenpak4RingOscillator*>(dst);
 			auto count = dynamic_cast<Greenpak4Counter*>(dst);
 			auto rst = dynamic_cast<Greenpak4SystemReset*>(dst);
 			auto inv = dynamic_cast<Greenpak4Inverter*>(dst);
@@ -180,6 +181,20 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 				else
 				{
 					printf("WARNING: Ignoring connection to unknown oscillator input %s\n", edge->m_destport.c_str());
+					continue;
+				}
+			}
+			
+			//Destination is the ring oscillator
+			else if(rosc)
+			{
+				if(edge->m_destport == "PWRDN")
+					rosc->SetPowerDown(src);
+				
+				else
+				{
+					printf("WARNING: Ignoring connection to unknown ring oscillator input %s\n",
+						edge->m_destport.c_str());
 					continue;
 				}
 			}

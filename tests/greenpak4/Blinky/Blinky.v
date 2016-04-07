@@ -19,7 +19,7 @@
 `default_nettype none
 
 module Blinky(
-	out_lfosc_ff, out_lfosc_count, sys_rst, count_rst, bg_ok);
+	out_lfosc_ff, out_lfosc_count, out_rosc_ff, sys_rst, count_rst, bg_ok);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -29,6 +29,9 @@ module Blinky(
 	
 	(* LOC = "P19" *)
 	output reg out_lfosc_count = 0;
+	
+	(* LOC = "P18" *)
+	output reg out_rosc_ff = 0;
 	
 	(* LOC = "P2" *)
 	(* PULLDOWN = "10k" *)
@@ -40,7 +43,7 @@ module Blinky(
 	(* SCHMITT_TRIGGER *)
 	input wire count_rst;		//logic reset
 	
-	(* LOC = "P18" *)
+	(* LOC = "P17" *)
 	output wire bg_ok;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,6 +78,20 @@ module Blinky(
 		.CLKOUT(clk_108hz)
 	);
 	
+	//The 27 MHz ring oscillator
+	wire clk_1687khz_cnt;		//dedicated output to hard IP only
+	wire clk_1687khz;			//general fabric output (used to toggle the LED)
+	GP_RINGOSC #(
+		.PWRDN_EN(0),
+		.AUTO_PWRDN(0),
+		.PRE_DIV(16),
+		.FABRIC_DIV(1)
+	) ringosc (
+		.PWRDN(1'b0),
+		.CLKOUT_PREDIV(clk_1687khz_cnt),
+		.CLKOUT_FABRIC(clk_1687khz)
+	);
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Bandgap voltage reference (used by a lot of the mixed signal IP)
 	
@@ -94,7 +111,7 @@ module Blinky(
 	localparam COUNT_MAX = 31;
 
 	//Fabric post-divider
-	reg[4:0] count = COUNT_MAX;
+	reg[7:0] count = COUNT_MAX;
 	always @(posedge clk_108hz, posedge count_rst) begin
 		
 		//level triggered reset
@@ -132,6 +149,21 @@ module Blinky(
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Ring oscillator and post-divider in hard counter
+	
+	//Hard IP post-divider
+	wire out_rosc_raw;
+	GP_COUNT14 #(
+		.RESET_MODE("LEVEL"),
+		.COUNT_TO(16383),
+		.CLKIN_DIVIDE(1)
+	) hard_counter2 (
+		.CLK(clk_1687khz_cnt),
+		.RST(count_rst),
+		.OUT(out_rosc_raw)
+	);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LED toggling
 	
 	//Toggle the output every time the counters underflow
@@ -148,6 +180,19 @@ module Blinky(
 				
 		end
 
+	end
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Ring oscillator LED toggling
+	
+	//Slow it down with a few DFFs to make it readable
+	reg[3:0] pdiv = 0;
+	always @(posedge clk_1687khz) begin
+		if(out_rosc_raw) begin
+			pdiv				<= pdiv + 1'd1;
+			if(pdiv == 0)
+				out_rosc_ff		<= ~out_rosc_ff;
+		end
 	end
 	
 endmodule
