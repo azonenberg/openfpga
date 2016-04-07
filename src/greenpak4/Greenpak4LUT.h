@@ -36,9 +36,6 @@ public:
 		unsigned int cbase,
 		unsigned int order);
 	virtual ~Greenpak4LUT();
-		
-	//Bitfile metadata
-	virtual unsigned int GetConfigLen();
 	
 	//Serialization
 	virtual bool Load(bool* bitstream);

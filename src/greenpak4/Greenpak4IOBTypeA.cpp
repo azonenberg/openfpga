@@ -42,24 +42,6 @@ Greenpak4IOBTypeA::~Greenpak4IOBTypeA()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Bitfile metadata
-
-unsigned int Greenpak4IOBTypeA::GetConfigLen()
-{
-	//2 bit input mode, 2 bit output mode, 2 bit pullup value, 1 bit pullup enable.
-	//Possibly one more bit for super driver.
-	//Input-only pins have no config 
-
-	if(m_flags & IOB_FLAG_INPUTONLY)
-		return 5;
-
-	if(m_flags & IOB_FLAG_X4DRIVE)
-		return 8;
-
-	return 7;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
 string Greenpak4IOBTypeA::GetDescription()

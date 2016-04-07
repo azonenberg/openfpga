@@ -51,11 +51,6 @@ public:
 	virtual bool Save(bool* bitstream) =0;
 	
 	/**
-		@brief Returns the length, in bits, of our configuration data
-	 */
-	virtual unsigned int GetConfigLen() =0;
-	
-	/**
 		@brief Returns the index of the routing matrix our OUTPUT is attached to
 	 */
 	unsigned int GetMatrix()

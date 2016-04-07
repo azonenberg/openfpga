@@ -34,10 +34,7 @@ public:
 		unsigned int oword,
 		unsigned int cbase);
 	virtual ~Greenpak4SystemReset();
-		
-	//Bitfile metadata
-	virtual unsigned int GetConfigLen();
-	
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);

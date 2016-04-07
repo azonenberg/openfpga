@@ -40,9 +40,6 @@ public:
 		unsigned int oword,
 		unsigned int cbase);
 	virtual ~Greenpak4Counter();
-		
-	//Bitfile metadata
-	virtual unsigned int GetConfigLen();
 	
 	//Serialization
 	virtual bool Load(bool* bitstream);

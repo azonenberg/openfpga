@@ -32,9 +32,6 @@ public:
 	Greenpak4DualEntity(Greenpak4BitstreamEntity* dual);
 	virtual ~Greenpak4DualEntity();
 		
-	//Bitfile metadata
-	virtual unsigned int GetConfigLen();
-	
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);

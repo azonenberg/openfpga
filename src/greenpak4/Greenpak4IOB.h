@@ -36,9 +36,6 @@ public:
 		unsigned int cbase,
 		unsigned int flags = IOB_FLAG_NORMAL);
 	virtual ~Greenpak4IOB();
-		
-	//Bitfile metadata
-	virtual unsigned int GetConfigLen() =0;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Accessors for format-dependent bitstream state

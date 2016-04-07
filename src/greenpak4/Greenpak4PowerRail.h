@@ -32,9 +32,6 @@ public:
 		unsigned int matrix,
 		unsigned int oword);
 	virtual ~Greenpak4PowerRail();
-		
-	//Bitfile metadata
-	virtual unsigned int GetConfigLen();
 	
 	//Serialization (no-ops)
 	virtual bool Load(bool* bitstream);

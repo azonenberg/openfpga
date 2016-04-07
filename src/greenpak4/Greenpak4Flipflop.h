@@ -43,9 +43,6 @@ public:
 	void SetInitValue(bool b)
 	{ m_initValue = b; }
 	
-	//Bitfile metadata
-	virtual unsigned int GetConfigLen();
-	
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);

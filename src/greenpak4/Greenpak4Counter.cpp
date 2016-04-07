@@ -57,24 +57,6 @@ Greenpak4Counter::~Greenpak4Counter()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Bitfile metadata
-
-unsigned int Greenpak4Counter::GetConfigLen()
-{
-	//Counter bits + 10 config bits + edge detect
-	if(m_hasFSM)
-		return m_depth + 10 + (m_hasEdgeDetect ? 1 : 0);
-		
-	//Counter bits + 7 config bits
-	else if(m_hasPWM)
-		return m_depth + 7;
-	
-	//Counter bits + 7 config bits + W/S
-	else
-		return m_depth + 7 + (m_hasWakeSleepPowerDown ? 1 : 0);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
 string Greenpak4Counter::GetDescription()

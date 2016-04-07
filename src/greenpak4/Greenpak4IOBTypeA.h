@@ -36,9 +36,6 @@ public:
 		unsigned int cbase,
 		unsigned int flags = IOB_FLAG_NORMAL);
 	virtual ~Greenpak4IOBTypeA();
-		
-	//Bitfile metadata
-	virtual unsigned int GetConfigLen();
 	
 	//Serialization
 	virtual bool Load(bool* bitstream);

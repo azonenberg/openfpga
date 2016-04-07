@@ -32,9 +32,6 @@ public:
 		unsigned int ibase,
 		unsigned int oword,
 		unsigned int cbase);
-		
-	//Bitfile metadata
-	virtual unsigned int GetConfigLen();
 	
 	//Serialization
 	virtual bool Load(bool* bitstream);

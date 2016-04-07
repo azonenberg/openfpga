@@ -31,9 +31,6 @@ public:
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword);
-		
-	//Bitfile metadata
-	virtual unsigned int GetConfigLen();
 	
 	//Serialization
 	virtual bool Load(bool* bitstream);

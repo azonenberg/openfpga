@@ -47,14 +47,6 @@ Greenpak4LUT::~Greenpak4LUT()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Bitfile metadata
-
-unsigned int Greenpak4LUT::GetConfigLen()
-{
-	return 1 << m_order;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization of the truth table
 
 bool Greenpak4LUT::Load(bool* bitstream)
@@ -62,7 +54,7 @@ bool Greenpak4LUT::Load(bool* bitstream)
 	//TODO: Do our inputs
 	
 	//Do the LUT
-	unsigned int nmax = GetConfigLen();
+	unsigned int nmax = 1 << m_order;
 	for(unsigned int i=0; i<nmax; i++)
 		m_truthtable[i] = bitstream[m_configBase + i];
 		
@@ -83,7 +75,7 @@ bool Greenpak4LUT::Save(bool* bitstream)
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LUT CONTENTS
 		
-	unsigned int nmax = GetConfigLen();
+	unsigned int nmax = 1 << m_order;
 	for(unsigned int i=0; i<nmax; i++)
 		bitstream[m_configBase + i] = m_truthtable[i];
 		
