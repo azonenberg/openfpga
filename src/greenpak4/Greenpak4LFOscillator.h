@@ -19,6 +19,8 @@
 #ifndef Greenpak4LFOscillator_h
 #define Greenpak4LFOscillator_h
 
+class Greenpak4PowerRail;
+
 /**
 	@brief The low frequency (1.73 kHz) oscillator
  */ 
@@ -51,6 +53,11 @@ public:
 	//Enable accessors
 	void SetPowerDownEn(bool en)
 	{ m_powerDownEn = en; }
+	
+	bool GetPowerDownEn()
+	{ return m_powerDownEn; }
+	
+	bool IsConstantPowerDown();
 	
 	void SetAutoPowerDown(bool en)
 	{ m_autoPowerDown = en; }

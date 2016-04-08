@@ -43,13 +43,13 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 		printf("PAR failed\n");
 		return false;
 	}
-	
-	//Final DRC to make sure the placement is sane
-	PostPARDRC(ngraph, dgraph);
 		
 	//Copy the netlist over
 	unsigned int num_routes_used[2];
 	CommitChanges(dgraph, device, num_routes_used);
+	
+	//Final DRC to make sure the placement is sane
+	PostPARDRC(ngraph, device);
 	
 	//Print reports
 	PrintUtilizationReport(ngraph, device, num_routes_used);
@@ -64,7 +64,7 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 /**
 	@brief Do various sanity checks after the design is routed
  */
-void PostPARDRC(PARGraph* netlist, PARGraph* /*device*/)
+void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 {
 	printf("\nPost-PAR design rule checks\n");
 		
@@ -114,7 +114,38 @@ void PostPARDRC(PARGraph* netlist, PARGraph* /*device*/)
 	
 	//TODO: check invalid IOB configuration (driving an input-only pin etc) - is this possible?
 	
-	//TODO: Check for multiple oscillators with power-down enabled but not the same source
+	//Check for multiple oscillators with power-down enabled but not the same source
+	typedef pair<string, Greenpak4BitstreamEntity*> spair;
+	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();
+	Greenpak4RingOscillator* rosc = device->GetRingOscillator();
+	vector<spair> powerdowns;
+	if(lfosc->IsUsed() && lfosc->GetPowerDownEn() && !lfosc->IsConstantPowerDown())
+		powerdowns.push_back(spair(lfosc->GetDescription(), lfosc->GetPowerDown()));
+	if(rosc->IsUsed() && rosc->GetPowerDownEn() && !rosc->IsConstantPowerDown())
+		powerdowns.push_back(spair(rosc->GetDescription(), rosc->GetPowerDown()));
+	//TODO: RC oscillator
+	if(!powerdowns.empty())
+	{
+		Greenpak4BitstreamEntity* src = NULL;
+		bool ok = true;
+		for(auto p : powerdowns)
+		{
+			if(src == NULL)
+				src = p.second;
+			if(src != p.second)
+				ok = false;
+		}
+		
+		if(!ok)
+		{
+			fprintf(stderr,
+				"    FAIL: Multiple oscillators have power-down enabled, but do not share the same power-down signal\n");
+			for(auto p : powerdowns)
+				printf("    Oscillator %10s powerdown is %s\n", p.first.c_str(), p.second->GetOutputName().c_str());
+			exit(-1);
+		}
+	}
+		
 }
 
 /**

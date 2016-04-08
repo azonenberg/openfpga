@@ -55,11 +55,14 @@ public:
 	{ return m_attributes[name]; }
 };
 
+class Greenpak4NetlistModule;
+
 //A single primitive cell in the netlist
 class Greenpak4NetlistCell : public Greenpak4NetlistEntity
 {
 public:
-	Greenpak4NetlistCell()
+	Greenpak4NetlistCell(Greenpak4NetlistModule* module)
+	: m_parent(module)
 	{ m_parnode = NULL; }
 	virtual ~Greenpak4NetlistCell();
 
@@ -74,6 +77,9 @@ public:
 	std::map<std::string, Greenpak4NetlistNet* > m_connections;
 	
 	PARGraphNode* m_parnode;
+	
+	//Parent module of the cell, not the module we're an instance of
+	Greenpak4NetlistModule* m_parent;	
 };
 
 /**
@@ -120,6 +126,9 @@ public:
 	
 	Greenpak4NetlistPort* GetPort(std::string name)
 	{ return m_ports[name]; }
+	
+	Greenpak4Netlist* GetNetlist()
+	{ return m_parent; }
 		
 protected:
 	Greenpak4Netlist* m_parent;

@@ -46,6 +46,11 @@ Greenpak4LFOscillator::~Greenpak4LFOscillator()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
+bool Greenpak4LFOscillator::IsConstantPowerDown()
+{
+	return (dynamic_cast<Greenpak4PowerRail*>(m_powerDown) != NULL);
+}
+
 vector<string> Greenpak4LFOscillator::GetInputPorts()
 {
 	vector<string> r;

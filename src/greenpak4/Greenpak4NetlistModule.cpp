@@ -156,13 +156,13 @@ void Greenpak4NetlistModule::CreatePowerNets()
 	m_nets[vss] = m_vss;
 	
 	//Create driver cells for them
-	Greenpak4NetlistCell* vcell = new Greenpak4NetlistCell;
+	Greenpak4NetlistCell* vcell = new Greenpak4NetlistCell(this);
 	vcell->m_name = vdd;
 	vcell->m_type = vdd;
 	vcell->m_connections["OUT"] = m_vdd;
 	m_cells[vdd] = vcell;
 	
-	Greenpak4NetlistCell* gcell = new Greenpak4NetlistCell;
+	Greenpak4NetlistCell* gcell = new Greenpak4NetlistCell(this);
 	gcell->m_name = vss;
 	gcell->m_type = vss;
 	gcell->m_connections["OUT"] = m_vss;
@@ -184,7 +184,7 @@ Greenpak4NetlistNode* Greenpak4NetlistModule::GetNode(int32_t netnum)
 
 void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
 {
-	Greenpak4NetlistCell* cell = new Greenpak4NetlistCell;
+	Greenpak4NetlistCell* cell = new Greenpak4NetlistCell(this);
 	cell->m_name = name;
 	m_cells[name] = cell;
 	

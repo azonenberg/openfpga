@@ -26,6 +26,7 @@ class Greenpak4NetlistEntity;
 
 #include <string>
 #include <vector>
+#include "../xbpar/xbpar.h"
 
 /**
 	@brief An entity which is serialized to/from the bitstream
@@ -64,6 +65,17 @@ public:
 	
 	PARGraphNode* GetPARNode()
 	{ return m_parnode; }
+	
+	/**
+		@brief Gets the net name of our output
+	 */
+	std::string GetOutputName();
+	
+	/**
+		@brief Returns true if this entity maps to a node in the netlist.
+	 */
+	bool IsUsed()
+	{ return (m_parnode->GetMate() != NULL); }
 	
 	void SetPARNode(PARGraphNode* node)
 	{ m_parnode = node; }

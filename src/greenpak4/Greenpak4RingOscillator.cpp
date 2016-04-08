@@ -47,6 +47,11 @@ Greenpak4RingOscillator::~Greenpak4RingOscillator()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
+bool Greenpak4RingOscillator::IsConstantPowerDown()
+{
+	return (dynamic_cast<Greenpak4PowerRail*>(m_powerDown) != NULL);
+}
+
 vector<string> Greenpak4RingOscillator::GetInputPorts()
 {
 	vector<string> r;

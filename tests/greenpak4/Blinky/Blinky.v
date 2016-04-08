@@ -19,7 +19,7 @@
 `default_nettype none
 
 module Blinky(
-	out_lfosc_ff, out_lfosc_count, out_rosc_ff, sys_rst, count_rst, bg_ok);
+	out_lfosc_ff, out_lfosc_count, out_rosc_ff, sys_rst, count_rst, bg_ok, osc_pwrdn);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -36,12 +36,17 @@ module Blinky(
 	(* LOC = "P2" *)
 	(* PULLDOWN = "10k" *)
 	(* SCHMITT_TRIGGER *)
-	input wire sys_rst;			//Full chip reset.
+	input wire sys_rst;			//Full chip reset
 	
 	(* LOC = "P3" *)
 	(* PULLDOWN = "10k" *)
 	(* SCHMITT_TRIGGER *)
-	input wire count_rst;		//logic reset
+	input wire count_rst;		//Logic reset
+	
+	(* LOC = "P4" *)
+	(* PULLDOWN = "10k" *)
+	(* SCHMITT_TRIGGER *)
+	input wire osc_pwrdn;		//Power-gate input to the oscillators
 	
 	(* LOC = "P17" *)
 	output wire bg_ok;
@@ -70,11 +75,11 @@ module Blinky(
 	//The 1730 Hz oscillator
 	wire clk_108hz;
 	GP_LFOSC #(
-		.PWRDN_EN(0),
+		.PWRDN_EN(1),
 		.AUTO_PWRDN(0),
 		.OUT_DIV(16)
 	) lfosc (
-		.PWRDN(1'b0),
+		.PWRDN(osc_pwrdn),
 		.CLKOUT(clk_108hz)
 	);
 	
@@ -82,12 +87,12 @@ module Blinky(
 	wire clk_1687khz_cnt;		//dedicated output to hard IP only
 	wire clk_1687khz;			//general fabric output (used to toggle the LED)
 	GP_RINGOSC #(
-		.PWRDN_EN(0),
+		.PWRDN_EN(1),
 		.AUTO_PWRDN(0),
 		.PRE_DIV(16),
 		.FABRIC_DIV(1)
 	) ringosc (
-		.PWRDN(1'b0),
+		.PWRDN(osc_pwrdn),
 		.CLKOUT_PREDIV(clk_1687khz_cnt),
 		.CLKOUT_FABRIC(clk_1687khz)
 	);
