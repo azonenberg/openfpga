@@ -97,6 +97,10 @@ between components is shown in Figure. \ref{flow}.
 \label{flow}
 \end{figure}
 
+gp4par is being developed in tandem with GreenPak support in Yosys. Most of the GreenPak features are only available in 
+the latest development version of Yosys and have not made it into a stable release yet. We recommend use of the latest 
+Yosys from GitHub for testing.
+
 \subsection{Synthesis Example}
 
 A simple synthesis script for \emph{yosys} is shown in figure \ref{yscript}. The script synthesizes a single Verilog 
@@ -422,9 +426,11 @@ primitives.
 \subsection{Counters}
 
 Yosys provides limited inference capability for counters which match the capabilities of the hard macro counters 
-(GP\_COUNT8 and GP\_COUNT14) in the device. Not all hard macro capabilities are currently supported for inference; if 
-these capabilities are required then use explicit primitive instantiation. Future software releases will expand the set 
-of counter features which may be inferred.
+(GP\_COUNT8 and GP\_COUNT14) in the device.
+
+Some hard macro capabilities (most notably input dividers) are not yet supported for inference; if these capabilities 
+are required then use explicit primitive instantiation. Future software releases will expand the set of counter 
+features which may be inferred.
 
 \subsubsection{Inference Requirements}
 
