@@ -135,6 +135,13 @@ void BuildGraphs(
 	rosc->SetPARNode(rnode);
 	dgraph->AddNode(rnode);
 	
+	//Make a device node for the RC oscillator
+	uint32_t rcosc_label = AllocateLabel(ngraph, dgraph, lmap, "GP_RCOSC");
+	Greenpak4RCOscillator* rcosc = device->GetRCOscillator();
+	PARGraphNode* rcnode = new PARGraphNode(rcosc_label, rcosc);
+	rcosc->SetPARNode(rcnode);
+	dgraph->AddNode(rcnode);
+	
 	//Make a device node for the reset block
 	uint32_t sysrst_label = AllocateLabel(ngraph, dgraph, lmap, "GP_SYSRESET");
 	Greenpak4SystemReset* sysrst = device->GetSystemReset();
@@ -477,6 +484,9 @@ void MakeDeviceEdges(Greenpak4Device* device)
 	{
 		auto lfosc = device->GetLFOscillator()->GetPARNode();
 		auto rosc = device->GetRingOscillator()->GetPARNode();
+		auto rcosc = device->GetRCOscillator()->GetPARNode();
+		
+		//TODO: Disable clock outputs to dedicated routing in matrix 1 if SPI slave is enabled?
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// CLOCK INPUTS TO COUNTERS
@@ -498,42 +508,52 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		//TODO: other clock sources
 		lfosc->AddEdge("CLKOUT", cnodes[0], "CLK");
 		rosc->AddEdge("CLKOUT_PREDIV", cnodes[0], "CLK");
+		rcosc->AddEdge("CLKOUT_PREDIV", cnodes[0], "CLK");
 		
 		//TODO: other clock sources
 		lfosc->AddEdge("CLKOUT", cnodes[1], "CLK");
 		rosc->AddEdge("CLKOUT_PREDIV", cnodes[1], "CLK");
+		rcosc->AddEdge("CLKOUT_PREDIV", cnodes[1], "CLK");
 		
 		//TODO: other clock sources
 		lfosc->AddEdge("CLKOUT", cnodes[2], "CLK");
 		rosc->AddEdge("CLKOUT_PREDIV", cnodes[2], "CLK");
+		rcosc->AddEdge("CLKOUT_PREDIV", cnodes[2], "CLK");
 		
 		//TODO: other clock sources
 		lfosc->AddEdge("CLKOUT", cnodes[3], "CLK");
 		rosc->AddEdge("CLKOUT_PREDIV", cnodes[3], "CLK");
+		rcosc->AddEdge("CLKOUT_PREDIV", cnodes[3], "CLK");
 		
 		//TODO: other clock sources
 		lfosc->AddEdge("CLKOUT", cnodes[4], "CLK");
 		rosc->AddEdge("CLKOUT_PREDIV", cnodes[4], "CLK");
+		rcosc->AddEdge("CLKOUT_PREDIV", cnodes[4], "CLK");
 		
 		//TODO: other clock sources
 		lfosc->AddEdge("CLKOUT", cnodes[5], "CLK");
 		rosc->AddEdge("CLKOUT_PREDIV", cnodes[5], "CLK");
+		rcosc->AddEdge("CLKOUT_PREDIV", cnodes[5], "CLK");
 		
 		//TODO: other clock sources
 		lfosc->AddEdge("CLKOUT", cnodes[6], "CLK");
 		rosc->AddEdge("CLKOUT_PREDIV", cnodes[6], "CLK");
+		rcosc->AddEdge("CLKOUT_PREDIV", cnodes[6], "CLK");
 		
 		//TODO: other clock sources
 		lfosc->AddEdge("CLKOUT", cnodes[7], "CLK");
 		rosc->AddEdge("CLKOUT_PREDIV", cnodes[7], "CLK");
+		rcosc->AddEdge("CLKOUT_PREDIV", cnodes[7], "CLK");
 		
 		//TODO: other clock sources
 		lfosc->AddEdge("CLKOUT", cnodes[8], "CLK");
 		rosc->AddEdge("CLKOUT_PREDIV", cnodes[8], "CLK");
+		rcosc->AddEdge("CLKOUT_PREDIV", cnodes[8], "CLK");
 		
 		//TODO: other clock sources
 		lfosc->AddEdge("CLKOUT", cnodes[9], "CLK");
 		rosc->AddEdge("CLKOUT_PREDIV", cnodes[9], "CLK");
+		rcosc->AddEdge("CLKOUT_PREDIV", cnodes[9], "CLK");
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// SYSTEM RESET

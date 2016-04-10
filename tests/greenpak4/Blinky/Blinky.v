@@ -19,7 +19,8 @@
 `default_nettype none
 
 module Blinky(
-	out_lfosc_ff, out_lfosc_count, out_rosc_ff, sys_rst, count_rst, bg_ok, osc_pwrdn);
+	out_lfosc_ff, out_lfosc_count, out_rosc_ff, out_rcosc_ff,
+	sys_rst, count_rst, bg_ok, osc_pwrdn);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -32,6 +33,9 @@ module Blinky(
 	
 	(* LOC = "P18" *)
 	output reg out_rosc_ff = 0;
+	
+	(* LOC = "P17" *)
+	output reg out_rcosc_ff = 0;
 	
 	(* LOC = "P2" *)
 	(* PULLDOWN = "10k" *)
@@ -48,7 +52,7 @@ module Blinky(
 	(* SCHMITT_TRIGGER *)
 	input wire osc_pwrdn;		//Power-gate input to the oscillators
 	
-	(* LOC = "P17" *)
+	(* LOC = "P16" *)
 	output wire bg_ok;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,6 +99,21 @@ module Blinky(
 		.PWRDN(osc_pwrdn),
 		.CLKOUT_PREDIV(clk_1687khz_cnt),
 		.CLKOUT_FABRIC(clk_1687khz)
+	);
+	
+	//The 25 kHz RC oscillator
+	wire clk_6khz_cnt;			//dedicated output to hard IP only
+	wire clk_6khz;				//general fabric output (used to toggle the LED)
+	GP_RCOSC #(
+		.PWRDN_EN(1),
+		.AUTO_PWRDN(0),
+		.OSC_FREQ("25k"),		//osc can run at 25 kHz or 2 MHz
+		.PRE_DIV(4),
+		.FABRIC_DIV(1)
+	) rcosc (
+		.PWRDN(osc_pwrdn),
+		.CLKOUT_PREDIV(clk_6khz_cnt),
+		.CLKOUT_FABRIC(clk_6khz)
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -147,7 +166,7 @@ module Blinky(
 		.RESET_MODE("LEVEL"),
 		.COUNT_TO(COUNT_MAX),
 		.CLKIN_DIVIDE(1)
-	) hard_counter (
+	) lfosc_cnt (
 		.CLK(clk_108hz),
 		.RST(count_rst),
 		.OUT(out_lfosc_raw)
@@ -162,14 +181,29 @@ module Blinky(
 		.RESET_MODE("LEVEL"),
 		.COUNT_TO(16383),
 		.CLKIN_DIVIDE(1)
-	) hard_counter2 (
+	) ringosc_cnt (
 		.CLK(clk_1687khz_cnt),
 		.RST(count_rst),
 		.OUT(out_rosc_raw)
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// LED toggling
+	// RC oscillator and post-divider in hard counter
+	
+	//Hard IP post-divider
+	wire out_rcosc_raw;
+	GP_COUNT14 #(
+		.RESET_MODE("LEVEL"),
+		.COUNT_TO(1023),
+		.CLKIN_DIVIDE(1)
+	) rcosc_cnt (
+		.CLK(clk_6khz_cnt),
+		.RST(count_rst),
+		.OUT(out_rcosc_raw)
+	);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// LF oscillator LED toggling
 	
 	//Toggle the output every time the counters underflow
 	always @(posedge clk_108hz) begin
@@ -198,6 +232,14 @@ module Blinky(
 			if(pdiv == 0)
 				out_rosc_ff		<= ~out_rosc_ff;
 		end
+	end
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Ring oscillator LED toggling
+	
+	always @(posedge clk_6khz) begin
+		if(out_rcosc_raw)
+			out_rcosc_ff		<= ~out_rcosc_ff;
 	end
 	
 endmodule

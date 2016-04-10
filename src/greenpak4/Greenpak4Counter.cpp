@@ -217,7 +217,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 			bitstream[nbase + 1] = true;
 			bitstream[nbase + 0] = false;
 		}
-		//TODO: RCOSC with dividers
+
 		//TODO: Matrix outputs
 		
 		//Ring oscillator
@@ -237,6 +237,62 @@ bool Greenpak4Counter::Save(bool* bitstream)
 			bitstream[nbase + 2] = false;
 			bitstream[nbase + 1] = false;
 			bitstream[nbase + 0] = false;
+		}
+		
+		//RC oscillator
+		//TODO: 12 is a legal value for some counters but not others, need to consider this during placement??
+		else if(dynamic_cast<Greenpak4RCOscillator*>(clk) != NULL)
+		{
+			switch(m_preDivide)
+			{
+				//4'b0000
+				case 1:
+					bitstream[nbase + 3] = false;
+					bitstream[nbase + 2] = false;
+					bitstream[nbase + 1] = false;
+					bitstream[nbase + 0] = false;
+					break;
+				
+				//4'b0001
+				case 4:
+					bitstream[nbase + 3] = false;
+					bitstream[nbase + 2] = false;
+					bitstream[nbase + 1] = false;
+					bitstream[nbase + 0] = true;
+					break;
+				
+				//4'b0010
+				case 12:
+					bitstream[nbase + 3] = false;
+					bitstream[nbase + 2] = false;
+					bitstream[nbase + 1] = true;
+					bitstream[nbase + 0] = false;
+					break;
+				
+				//4'b0011
+				case 24:
+					bitstream[nbase + 3] = false;
+					bitstream[nbase + 2] = false;
+					bitstream[nbase + 1] = true;
+					bitstream[nbase + 0] = true;
+					break;
+				
+				//4'b0100
+				case 64:
+					bitstream[nbase + 3] = false;
+					bitstream[nbase + 2] = true;
+					bitstream[nbase + 1] = false;
+					bitstream[nbase + 0] = false;
+					break;
+					
+				default:
+					fprintf(
+						stderr,
+						"ERROR: Counter %d does not support pre-divider values other than 1/4/12/24/64 "
+						"when clocked by ring osc\n",
+						m_countnum);
+					return false;
+			}
 		}
 		
 		//TODO: SPI clock
@@ -293,9 +349,52 @@ bool Greenpak4Counter::Save(bool* bitstream)
 			bitstream[nbase + 0] = false;
 		}
 		
-		//TODO: RCOSC with dividers
+		//RC oscillator
+		else if(dynamic_cast<Greenpak4RCOscillator*>(m_clock->GetRealEntity()) != NULL)
+		{
+			switch(m_preDivide)
+			{
+				//3'b000
+				case 1:
+					bitstream[nbase + 2] = false;
+					bitstream[nbase + 1] = false;
+					bitstream[nbase + 0] = false;
+					break;
+					
+				//3'b001
+				case 4:
+					bitstream[nbase + 2] = false;
+					bitstream[nbase + 1] = false;
+					bitstream[nbase + 0] = true;
+					break;
+					
+				//3'b010
+				case 24:
+					bitstream[nbase + 2] = false;
+					bitstream[nbase + 1] = true;
+					bitstream[nbase + 0] = false;
+					break;
+					
+				//3'b011
+				case 64:
+					bitstream[nbase + 2] = false;
+					bitstream[nbase + 1] = true;
+					bitstream[nbase + 0] = true;
+					break;
+					
+				default:
+					fprintf(
+						stderr,
+						"ERROR: Counter %d does not support pre-divider values other than 1/4/24/64 "
+							"when clocked by RC osc\n",
+						m_countnum);
+					return false;
+			}
+		}
+		
 		//TODO: cascading
 		//TODO: Matrix outputs
+		
 		else if(!unused)
 		{
 			fprintf(

@@ -118,12 +118,14 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 	typedef pair<string, Greenpak4BitstreamEntity*> spair;
 	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();
 	Greenpak4RingOscillator* rosc = device->GetRingOscillator();
+	Greenpak4RCOscillator* rcosc = device->GetRCOscillator();
 	vector<spair> powerdowns;
 	if(lfosc->IsUsed() && lfosc->GetPowerDownEn() && !lfosc->IsConstantPowerDown())
 		powerdowns.push_back(spair(lfosc->GetDescription(), lfosc->GetPowerDown()));
 	if(rosc->IsUsed() && rosc->GetPowerDownEn() && !rosc->IsConstantPowerDown())
 		powerdowns.push_back(spair(rosc->GetDescription(), rosc->GetPowerDown()));
-	//TODO: RC oscillator
+	if(rcosc->IsUsed() && rcosc->GetPowerDownEn() && !rcosc->IsConstantPowerDown())
+		powerdowns.push_back(spair(rcosc->GetDescription(), rcosc->GetPowerDown()));
 	if(!powerdowns.empty())
 	{
 		Greenpak4BitstreamEntity* src = NULL;

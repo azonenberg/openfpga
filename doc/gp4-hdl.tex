@@ -136,7 +136,7 @@ The following GreenPak4 device features are not supported by gp4par as of this w
 \begin{itemize}
 \item Storage elements: output inverter, latch mode
 \item Counters: Delay, FSM, edge detector, PWM, wake-sleep mode, counter cascading.
-All clock sources other than LFOSC and ring oscillator.
+All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item ADC
 \item DAC
 \item ACMP
@@ -146,7 +146,6 @@ All clock sources other than LFOSC and ring oscillator.
 \item DCMP/PWM
 \item Pipe delay
 \item Programmble delay line
-\item RC OSC
 \item Slave SPI
 \item Pin 8 reset output
 \end{itemize}
@@ -1009,7 +1008,7 @@ GP_INV inv(
 This primitive represents the low-frequency (1730 Hz) oscillator block.
 
 Note that all of the oscillator blocks in GreenPak4 internally share the PWRDN input. As a result, all oscillator 
-blocks in the design that have PWRDN\_EN set to 1 must have PWRDN connected to the same source. Failure to follow this 
+blocks in the design that have PWRDN\_EN set to 1 must have PWRDN connected to the same net. Failure to follow this 
 rule will result in a physical DRC failure.
 
 \subsubsection{Port Descriptions}
@@ -1168,6 +1167,90 @@ xx
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_RCOSC
+
+\pagebreak
+\subsection{GP\_RCOSC: RC Oscillator}
+
+\subsubsection{Introduction}
+This primitive represents the RC oscillator block. This block can be configured to oscillate at either 2 MHz or 25 kHz. 
+by setting the OSC\_FREQ parameter.
+
+The oscillator has two cascaded dividers on its output: a pre-divider and post-divider. The pre-divider output drives 
+some hard IP blocks (counters and PWM) via dedicated routing, as well as the input of the post-divider. The 
+post-divider output drives general fabric routing.
+
+Note that all of the oscillator blocks in GreenPak4 internally share the PWRDN input. As a result, all oscillator 
+blocks in the design that have PWRDN\_EN set to 1 must have PWRDN connected to the same net. Failure to follow this 
+rule will result in a physical DRC failure.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+PWRDN & Input & 1 &
+	{\bfseries PWRDN\_EN = 1:} \newline Bring this signal high to power down the oscillator. \newline
+	{\bfseries PWRDN\_EN = 0:} \newline Ignored, tie to 1'b0.\\
+\hline
+CLKOUT\_PREDIV & Output & 1 & Pre-divided clock output to hard IP.  \\
+\hline
+CLKOUT\_FABRIC & Output & 1 & Final clock signal to general fabric routing\\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+AUTO\_PWRDN & Boolean & 1 & 
+	{\bfseries When 1: } \newline Automatically power down the oscillator when all loads are powered down. \newline
+	{\bfseries When 0: } \newline Automatic power-down is disabled. The PWRDN\_EN and PWRDN inputs are unaffected.\\
+\hline
+OSC\_FREQ & String & N/A & Oscillator frequency select. Must be one of ``2M" or ``25k". \\
+\hline
+PRE\_DIV & Integer & 8 &
+	Output pre-divider for CLKOUT\_PREDIV. Legal values are 1, 2, 4, 8. \\
+\hline
+FABRIC\_DIV & Integer & 8 &
+	Output post-divider for CLKOUT\_FABRIC. Legal values are 1, 2, 3, 4, 8, 12, 24, 64. \\
+\hline
+PWRDN\_EN & Boolean & 1 & Set to 1 to enable the PWRDN pin, or 0 to disable. \\
+\hline
+\end{tabularx}
+
+\pagebreak
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-rcosc-example} drives a 6.25 kHz clock to clk\_fast and a 521 Hz clock to
+clk\_slow.
+
+All power management features are disabled.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk_fast;
+wire clk_slow;
+GP_RCOSC #(
+	.PWRDN_EN(0),
+	.AUTO_PWRDN(0),
+	.OSC_FREQ("25k"),
+	.PRE_DIV(4),
+	.FABRIC_DIV(12)
+) ringosc (
+	.PWRDN(1'b0),
+	.CLKOUT_PREDIV(clk_fast),
+	.CLKOUT_FABRIC(clk_slow)
+);
+\end{lstlisting}
+\caption{Example usage of GP\_RCOSC}
+\label{gp-rcosc-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_RINGOSC
 
 \pagebreak
@@ -1181,7 +1264,7 @@ some hard IP blocks (counters and PWM) via dedicated routing, as well as the inp
 post-divider output drives general fabric routing.
 
 Note that all of the oscillator blocks in GreenPak4 internally share the PWRDN input. As a result, all oscillator 
-blocks in the design that have PWRDN\_EN set to 1 must have PWRDN connected to the same source. Failure to follow this 
+blocks in the design that have PWRDN\_EN set to 1 must have PWRDN connected to the same net. Failure to follow this 
 rule will result in a physical DRC failure.
 
 \subsubsection{Port Descriptions}

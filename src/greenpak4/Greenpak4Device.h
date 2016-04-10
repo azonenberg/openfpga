@@ -133,6 +133,9 @@ public:
 	
 	Greenpak4RingOscillator* GetRingOscillator()
 	{ return m_ringosc; }
+	
+	Greenpak4RCOscillator* GetRCOscillator()
+	{ return m_rcosc; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// COUNTERS
@@ -247,6 +250,9 @@ protected:
 	
 	///Ring oscillator
 	Greenpak4RingOscillator* m_ringosc;
+	
+	///RC oscillator
+	Greenpak4RCOscillator* m_rcosc;
 	
 	///System reset
 	Greenpak4SystemReset* m_sysrst;

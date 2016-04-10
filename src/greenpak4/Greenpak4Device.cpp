@@ -187,7 +187,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: Comparators
 	
-	//TODO: External clock??
+	//TODO: External clocks??
 	
 	//Low-frequency oscillator
 	m_lfosc = new Greenpak4LFOscillator(
@@ -205,7 +205,13 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		48,		//output word (plus dedicated routing to counters etc)
 		1630);	//bitstream location
 	
-	//TODO: RC oscillator
+	//RC oscillator
+	m_rcosc = new Greenpak4RCOscillator(
+		this,
+		0,		//Matrix applies to inputs, we can route output globally
+		84,		//input base (single power-down input)
+		49,		//output word (plus dedicated routing to counters etc)
+		1642);	//bitstream location
 	
 	//Counters
 	m_counters14bit.push_back(new Greenpak4Counter(
@@ -417,6 +423,7 @@ void Greenpak4Device::CreateDevice_common()
 	m_bitstuff.push_back(m_constantOne);
 	m_bitstuff.push_back(m_lfosc);
 	m_bitstuff.push_back(m_ringosc);
+	m_bitstuff.push_back(m_rcosc);
 	m_bitstuff.push_back(m_sysrst);
 	m_bitstuff.push_back(m_bandgap);
 	m_bitstuff.push_back(m_por);
