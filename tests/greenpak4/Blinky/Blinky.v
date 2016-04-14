@@ -25,6 +25,8 @@ module Blinky(
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 	
+	// Put outputs all together on the 11-20 side of the device
+	
 	(* LOC = "P20" *)
 	output reg out_lfosc_ff = 0;
 	
@@ -36,6 +38,11 @@ module Blinky(
 	
 	(* LOC = "P17" *)
 	output reg out_rcosc_ff = 0;
+		
+	(* LOC = "P16" *)
+	output wire bg_ok;
+	
+	// Put inputs all together on the 1-10 side of the device
 	
 	(* LOC = "P2" *)
 	(* PULLDOWN = "10k" *)
@@ -51,9 +58,6 @@ module Blinky(
 	(* PULLDOWN = "10k" *)
 	(* SCHMITT_TRIGGER *)
 	input wire osc_pwrdn;		//Power-gate input to the oscillators
-	
-	(* LOC = "P16" *)
-	output wire bg_ok;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
