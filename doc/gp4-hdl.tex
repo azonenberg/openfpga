@@ -1340,7 +1340,7 @@ This primitive represents the system reset block. This is an asynchronous global
 device datasheet for exact functionality) and is independent of the power-on reset, which cannot be configured.
 
 Note that this block has slightly different timing than the power-on reset, which may cause glitches in some designs. 
-To ensure consistent behavior between the runtime reset and boot, it may be necessary to use instantiate the GP\_POR 
+To ensure consistent behavior between the runtime reset and boot, it may be necessary to instantiate the GP\_POR 
 block and gate glitching signals with RST\_DONE.
 
 \subsubsection{Port Descriptions}
