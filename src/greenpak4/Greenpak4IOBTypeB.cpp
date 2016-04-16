@@ -65,8 +65,7 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 {
 	//See if we're an input or output.
 	//Throw an error if OE isn't tied to a power rail, because we don't have runtime adjustable direction
-	Greenpak4PowerRail* oe = dynamic_cast<Greenpak4PowerRail*>(m_outputEnable);
-	if(oe == NULL)
+	if(!m_outputEnable.IsPowerRail())
 	{
 		fprintf(stderr, "ERROR: Tried to tie OE of a type-B IOB to something other than a power rail\n");
 		return false;
@@ -85,7 +84,7 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 	//MODE CONTROL 2:0. 2 is direction, 1:0 is type
 	
 	//OUTPUT
-	if(oe->GetDigitalValue())
+	if(m_outputEnable.GetPowerRailValue())
 	{
 		//always high for outputs
 		bitstream[m_configBase + 2] = true;

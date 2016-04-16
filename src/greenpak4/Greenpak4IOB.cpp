@@ -39,8 +39,8 @@ Greenpak4IOB::Greenpak4IOB(
 	, m_driveStrength(DRIVE_1X)
 	, m_driveType(DRIVE_PUSHPULL)
 	, m_inputThreshold(THRESHOLD_NORMAL)
-	, m_outputEnable(device->GetPowerRail(0))
-	, m_outputSignal(device->GetPowerRail(0))
+	, m_outputEnable(device->GetGround())
+	, m_outputSignal(device->GetGround())
 	, m_flags(flags)
 {
 	
@@ -81,33 +81,33 @@ void Greenpak4IOB::CommitChanges()
 		else if(x.first == "SCHMITT_TRIGGER")
 		{
 			if(x.second == "0")
-				SetSchmittTrigger(false);
+				m_schmittTrigger = false;
 			else
-				SetSchmittTrigger(true);
+				m_schmittTrigger = true;
 		}
 		
 		//Pullup strength/direction
 		else if(x.first == "PULLUP")
 		{
-			SetPullDirection(Greenpak4IOB::PULL_UP);
+			m_pullDirection = Greenpak4IOB::PULL_UP;
 			if(x.second == "10k")
-				SetPullStrength(Greenpak4IOB::PULL_10K);
+				m_pullStrength = Greenpak4IOB::PULL_10K;
 			else if(x.second == "100k")
-				SetPullStrength(Greenpak4IOB::PULL_100K);
+				m_pullStrength = Greenpak4IOB::PULL_100K;
 			else if(x.second == "1M")
-				SetPullStrength(Greenpak4IOB::PULL_1M);
+				m_pullStrength = Greenpak4IOB::PULL_1M;
 		}
 		
 		//Pulldown strength/direction
 		else if(x.first == "PULLDOWN")
 		{
-			SetPullDirection(Greenpak4IOB::PULL_DOWN);
+			m_pullDirection = Greenpak4IOB::PULL_DOWN;
 			if(x.second == "10k")
-				SetPullStrength(Greenpak4IOB::PULL_10K);
+				m_pullStrength = Greenpak4IOB::PULL_10K;
 			else if(x.second == "100k")
-				SetPullStrength(Greenpak4IOB::PULL_100K);
+				m_pullStrength = Greenpak4IOB::PULL_100K;
 			else if(x.second == "1M")
-				SetPullStrength(Greenpak4IOB::PULL_1M);
+				m_pullStrength = Greenpak4IOB::PULL_1M;
 		}
 		
 		//Ignore flipflop initialization, that's handled elsewhere
@@ -130,11 +130,11 @@ void Greenpak4IOB::CommitChanges()
 	switch(niob->m_direction)
 	{
 		case Greenpak4NetlistPort::DIR_OUTPUT:
-			SetOutputEnable(true);
+			m_outputEnable = m_device->GetPower();
 			break;
 			
 		case Greenpak4NetlistPort::DIR_INPUT:
-			SetOutputEnable(false);
+			m_outputEnable = m_device->GetGround();
 			break;
 			
 		case Greenpak4NetlistPort::DIR_INOUT:
@@ -142,6 +142,24 @@ void Greenpak4IOB::CommitChanges()
 			printf("ERROR: Requested invalid output configuration (or inout, which isn't implemented)\n");
 			break;
 	}
+}
+
+void Greenpak4IOB::SetInput(string port, Greenpak4EntityOutput src)
+{
+	//nameless port for now (TODO proper techmapping)
+	if(port == "")
+		m_outputSignal = src;
+	
+	//ignore anything else silently (should not be possible since synthesis would error out)
+}
+
+unsigned int Greenpak4IOB::GetOutputNetNumber(string port)
+{
+	//nameless port for now (TODO proper techmapping)
+	if(port == "")
+		return m_outputBaseWord;
+	else
+		return -1;
 }
 
 vector<string> Greenpak4IOB::GetInputPorts()
@@ -158,94 +176,4 @@ vector<string> Greenpak4IOB::GetOutputPorts()
 	//r.push_back("I");
 	r.push_back("");		//for now, input port has no name (TODO: do proper IOB techmapping)
 	return r;
-}
-
-void Greenpak4IOB::SetSchmittTrigger(bool enabled)
-{
-	m_schmittTrigger = enabled;
-}
-
-bool Greenpak4IOB::GetSchmittTrigger()
-{
-	return m_schmittTrigger;
-}
-
-void Greenpak4IOB::SetPullStrength(PullStrength strength)
-{
-	m_pullStrength = strength;
-}
-
-bool Greenpak4IOB::GetPullStrength()
-{
-	return m_pullStrength;
-}
-
-void Greenpak4IOB::SetPullDirection(PullDirection direction)
-{
-	m_pullDirection = direction;
-}
-
-bool Greenpak4IOB::GetPullDirection()
-{
-	return m_pullDirection;
-}
-
-void Greenpak4IOB::SetDriveStrength(DriveStrength strength)
-{
-	m_driveStrength = strength;
-}
-
-bool Greenpak4IOB::GetDriveStrength()
-{
-	return m_driveStrength;
-}
-
-void Greenpak4IOB::SetDriveType(DriveType type)
-{
-	m_driveType = type;
-}
-
-bool Greenpak4IOB::GetDriveType()
-{
-	return m_driveType;
-}
-
-void Greenpak4IOB::SetInputThreshold(InputThreshold thresh)
-{
-	m_inputThreshold = thresh;
-}
-
-bool Greenpak4IOB::GetInputThreshold()
-{
-	return m_inputThreshold;
-}
-
-void Greenpak4IOB::SetOutputEnable(Greenpak4BitstreamEntity* oe)
-{
-	m_outputEnable = oe;
-}
-
-Greenpak4BitstreamEntity* Greenpak4IOB::GetOutputEnable()
-{
-	return m_outputEnable;
-}
-
-void Greenpak4IOB::SetOutputSignal(Greenpak4BitstreamEntity* sig)
-{
-	m_outputSignal = sig;
-}
-
-Greenpak4BitstreamEntity* Greenpak4IOB::GetOutputSignal()
-{
-	return m_outputSignal;
-}
-
-void Greenpak4IOB::SetOutputEnable(bool b)
-{
-	m_outputEnable = m_device->GetPowerRail(b);
-}
-
-void Greenpak4IOB::SetOutputSignal(bool b)
-{
-	m_outputSignal = m_device->GetPowerRail(b);
 }

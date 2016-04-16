@@ -28,7 +28,7 @@ Greenpak4DualEntity::Greenpak4DualEntity(Greenpak4BitstreamEntity* dual)
 		dual->GetDevice(),
 		1 - dual->GetMatrix(),
 		0,	//no inputs
-		dual->GetOutputBase(),
+		dual->GetInternalOutputBase(),
 		0)	//no configuration
 	, m_dual(dual)
 {
@@ -61,6 +61,21 @@ vector<string> Greenpak4DualEntity::GetInputPorts()
 vector<string> Greenpak4DualEntity::GetOutputPorts()
 {
 	return m_dual->GetOutputPorts();
+}
+
+void Greenpak4DualEntity::SetInput(string port, Greenpak4EntityOutput src)
+{
+	m_dual->SetInput(port, src);
+}
+
+Greenpak4EntityOutput Greenpak4DualEntity::GetOutput(std::string port)
+{
+	return Greenpak4EntityOutput(m_dual, port, m_matrix);
+}
+
+unsigned int Greenpak4DualEntity::GetOutputNetNumber(string port)
+{
+	return m_dual->GetOutputNetNumber(port);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

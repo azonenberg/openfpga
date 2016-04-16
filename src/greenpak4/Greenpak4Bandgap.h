@@ -41,16 +41,16 @@ public:
 	
 	virtual std::string GetDescription();
 	
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
+	
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
 	
 	virtual void CommitChanges();
 	
 protected:
-	
-	///Power-down input (if implemented)
-	Greenpak4BitstreamEntity* m_powerDown;
-	
+		
 	///Auto power-down
 	bool m_autoPowerDown;
 	

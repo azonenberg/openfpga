@@ -41,6 +41,9 @@ public:
 	
 	virtual std::string GetDescription();
 	
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
+	
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
 	

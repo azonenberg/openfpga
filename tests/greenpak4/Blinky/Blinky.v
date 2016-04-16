@@ -19,7 +19,7 @@
 `default_nettype none
 
 module Blinky(
-	out_lfosc_ff, out_lfosc_count, out_rosc_ff, out_rcosc_ff,
+	led_lfosc_ff, led_lfosc_count, led_lfosc_shreg1, led_lfosc_shreg2, led_rosc_ff, led_rcosc_ff,
 	sys_rst, count_rst, bg_ok, osc_pwrdn);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,18 +28,24 @@ module Blinky(
 	// Put outputs all together on the 11-20 side of the device
 	
 	(* LOC = "P20" *)
-	output reg out_lfosc_ff = 0;
+	output reg led_lfosc_ff = 0;
 	
 	(* LOC = "P19" *)
-	output reg out_lfosc_count = 0;
+	output reg led_lfosc_count = 0;
 	
 	(* LOC = "P18" *)
-	output reg out_rosc_ff = 0;
+	output wire led_lfosc_shreg1;
 	
 	(* LOC = "P17" *)
-	output reg out_rcosc_ff = 0;
-		
+	output wire led_lfosc_shreg2;
+	
 	(* LOC = "P16" *)
+	output reg led_rosc_ff = 0;
+	
+	(* LOC = "P15" *)
+	output reg led_rcosc_ff = 0;
+	
+	(* LOC = "P14" *)
 	output wire bg_ok;
 	
 	// Put inputs all together on the 1-10 side of the device
@@ -159,13 +165,13 @@ module Blinky(
 	end
 	
 	//Output bit
-	wire out_fabric_raw = (count == 0);
+	wire led_fabric_raw = (count == 0);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Low-frequency oscillator and post-divider in hard counter
 	
 	//Hard IP post-divider
-	wire out_lfosc_raw;
+	wire led_lfosc_raw;
 	GP_COUNT8 #(
 		.RESET_MODE("LEVEL"),
 		.COUNT_TO(COUNT_MAX),
@@ -173,14 +179,14 @@ module Blinky(
 	) lfosc_cnt (
 		.CLK(clk_108hz),
 		.RST(count_rst),
-		.OUT(out_lfosc_raw)
+		.OUT(led_lfosc_raw)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring oscillator and post-divider in hard counter
 	
 	//Hard IP post-divider
-	wire out_rosc_raw;
+	wire led_rosc_raw;
 	GP_COUNT14 #(
 		.RESET_MODE("LEVEL"),
 		.COUNT_TO(16383),
@@ -188,14 +194,14 @@ module Blinky(
 	) ringosc_cnt (
 		.CLK(clk_1687khz_cnt),
 		.RST(count_rst),
-		.OUT(out_rosc_raw)
+		.OUT(led_rosc_raw)
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// RC oscillator and post-divider in hard counter
 	
 	//Hard IP post-divider
-	wire out_rcosc_raw;
+	wire led_rcosc_raw;
 	GP_COUNT14 #(
 		.RESET_MODE("LEVEL"),
 		.COUNT_TO(1023),
@@ -203,12 +209,12 @@ module Blinky(
 	) rcosc_cnt (
 		.CLK(clk_6khz_cnt),
 		.RST(count_rst),
-		.OUT(out_rcosc_raw)
+		.OUT(led_rcosc_raw)
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LF oscillator LED toggling
-	
+
 	//Toggle the output every time the counters underflow
 	always @(posedge clk_108hz) begin
 	
@@ -216,25 +222,25 @@ module Blinky(
 		//caused by blocks resetting at different times during boot
 		if(por_done) begin
 		
-			if(out_fabric_raw)
-				out_lfosc_ff	<= ~out_lfosc_ff;
-			if(out_lfosc_raw)
-				out_lfosc_count <= ~out_lfosc_count;
+			if(led_fabric_raw)
+				led_lfosc_ff	<= ~led_lfosc_ff;
+			if(led_lfosc_raw)
+				led_lfosc_count <= ~led_lfosc_count;
 				
 		end
 
 	end
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring oscillator LED toggling
 	
 	//Slow it down with a few DFFs to make it readable
 	reg[3:0] pdiv = 0;
 	always @(posedge clk_1687khz) begin
-		if(out_rosc_raw) begin
+		if(led_rosc_raw) begin
 			pdiv				<= pdiv + 1'd1;
 			if(pdiv == 0)
-				out_rosc_ff		<= ~out_rosc_ff;
+				led_rosc_ff		<= ~led_rosc_ff;
 		end
 	end
 	
@@ -242,8 +248,26 @@ module Blinky(
 	// Ring oscillator LED toggling
 	
 	always @(posedge clk_6khz) begin
-		if(out_rcosc_raw)
-			out_rcosc_ff		<= ~out_rcosc_ff;
+		if(led_rcosc_raw)
+			led_rcosc_ff		<= ~led_rcosc_ff;
 	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Shift register to delay RC oscillator outputs
+	/*
+	GP_SHREG #(
+		.OUTA_DELAY(8),
+		.OUTA_INVERT(0),
+		.OUTB_DELAY(16)
+	) shreg (
+		.nRST(1'b1),
+		.CLK(clk_108hz),
+		.IN(led_lfosc_ff),
+		.OUTA(led_lfosc_shreg1),
+		.OUTB(led_lfosc_shreg2)
+	);
+	*/
+	assign led_lfosc_shreg1 = led_lfosc_ff;
+	assign led_lfosc_shreg2 = led_lfosc_ff;
 	
 endmodule

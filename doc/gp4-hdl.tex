@@ -1329,6 +1329,63 @@ GP_RINGOSC #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_SHREG
+
+\pagebreak
+\clearpage
+\subsection{GP\_SHREG: Shift Register}
+
+\subsubsection{Introduction}
+
+This primitive represents the ``pipe delay" block, a 16-bit shift register with programmable tap position. It has two 
+major differences from most FPGA shift register blocks: there are two independent taps instead of one, and the tap 
+positions are fixed at synthesis time rather than being runtime programmable.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+nRST & Input & 1 & Active-low reset input. Clears the shift register to zero when asserted. Tie high if not used.\\
+\hline
+CLK & Input & 1 & Clock for the shift register\\
+\hline
+IN & Input & 1 & Input data for the shift register\\
+\hline
+OUTA & Output & 1 & Tap A for the shift register\\
+\hline
+OUTB & Output & 1 & Tap B for the shift register\\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+OUTA\_DELAY & Integer & 5 & Number of register stages for output A. Legal range is 1 to 16 inclusive.\\
+\hline
+OUTA\_INVERT & Boolean & 1 & Set to 1 to invert tap A's output.\\
+\hline
+OUTB\_DELAY & Integer & 5 & Number of register stages for output B. Legal range is 1 to 16 inclusive.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-shreg-example} FIXME.
+
+\begin{figure}[h]
+\begin{lstlisting}
+FIXME
+\end{lstlisting}
+\caption{Example usage of GP\_SHREG}
+\label{gp-shreg-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_SYSRESET
 
 \pagebreak

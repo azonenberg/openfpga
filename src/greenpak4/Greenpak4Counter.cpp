@@ -38,8 +38,8 @@ Greenpak4Counter::Greenpak4Counter(
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)	
 	, m_depth(depth)
 	, m_countnum(countnum)
-	, m_reset(device->GetPowerRail(false))	//default reset is ground
-	, m_clock(device->GetPowerRail(false))
+	, m_reset(device->GetGround())	//default reset is ground
+	, m_clock(device->GetGround())
 	, m_hasFSM(has_fsm)
 	, m_countVal(0)
 	, m_preDivide(1)
@@ -78,16 +78,15 @@ void Greenpak4Counter::CommitChanges()
 		
 	if(ncell->HasParameter("RESET_MODE"))
 	{
-		Greenpak4Counter::ResetMode mode = Greenpak4Counter::RISING_EDGE;
 		string p = ncell->m_parameters["RESET_MODE"];
 		if(p == "RISING")
-			mode = Greenpak4Counter::RISING_EDGE;
+			m_resetMode = Greenpak4Counter::RISING_EDGE;
 		else if(p == "FALLING")
-			mode = Greenpak4Counter::FALLING_EDGE;
+			m_resetMode = Greenpak4Counter::FALLING_EDGE;
 		else if(p == "BOTH")
-			mode = Greenpak4Counter::BOTH_EDGE;
+			m_resetMode = Greenpak4Counter::BOTH_EDGE;
 		else if(p == "LEVEL")
-			mode = Greenpak4Counter::HIGH_LEVEL;
+			m_resetMode = Greenpak4Counter::HIGH_LEVEL;
 		else
 		{
 			fprintf(
@@ -97,14 +96,13 @@ void Greenpak4Counter::CommitChanges()
 				p.c_str());
 			exit(-1);
 		}
-		SetResetMode(mode);
 	}
 	
 	if(ncell->HasParameter("COUNT_TO"))
-		SetCounterValue(atoi(ncell->m_parameters["COUNT_TO"].c_str()));
+		m_countVal = (atoi(ncell->m_parameters["COUNT_TO"].c_str()));
 	
 	if(ncell->HasParameter("CLKIN_DIVIDE"))
-		SetPreDivide(atoi(ncell->m_parameters["CLKIN_DIVIDE"].c_str()));
+		m_preDivide = (atoi(ncell->m_parameters["CLKIN_DIVIDE"].c_str()));
 }
 
 vector<string> Greenpak4Counter::GetInputPorts()
@@ -114,11 +112,29 @@ vector<string> Greenpak4Counter::GetInputPorts()
 	return r;
 }
 
+void Greenpak4Counter::SetInput(string port, Greenpak4EntityOutput src)
+{
+	if(port == "RST")
+		m_reset = src;
+	if(port == "CLK")
+		m_clock = src;
+	
+	//ignore anything else silently (should not be possible since synthesis would error out)
+}
+
 vector<string> Greenpak4Counter::GetOutputPorts()
 {
 	vector<string> r;
 	r.push_back("OUT");
 	return r;
+}
+
+unsigned int Greenpak4Counter::GetOutputNetNumber(string port)
+{
+	if(port == "OUT")
+		return m_outputBaseWord;
+	else
+		return -1;
 }
 
 bool Greenpak4Counter::Load(bool* /*bitstream*/)
@@ -142,11 +158,11 @@ bool Greenpak4Counter::Save(bool* bitstream)
 				return false;
 				
 			//KEEP (ignored)
-			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(false)))
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetGround()))
 				return false;
 				
 			//UP (ignored)
-			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetPowerRail(false)))
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetGround()))
 				return false;
 		}
 		
@@ -185,12 +201,12 @@ bool Greenpak4Counter::Save(bool* bitstream)
 	//Base for remaining configuration data
 	uint32_t nbase = m_configBase + m_depth;
 	
-	//Get the real clock node (even if in the wrong matrix) for RTTI
-	Greenpak4BitstreamEntity* clk = m_clock->GetRealEntity();
+	//Get the bitstream node for RTTI checks
+	Greenpak4BitstreamEntity* clk = m_clock.GetRealEntity();
 	bool unused = false;
 	
 	//Check if we're unused
-	if(dynamic_cast<Greenpak4PowerRail*>(clk) != NULL)
+	if(m_clock.IsPowerRail())
 		unused = true;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -304,7 +320,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 				stderr,
 				"ERROR: Counter %d input from %s not implemented\n",
 				m_countnum,
-				m_clock->GetDescription().c_str());
+				m_clock.GetDescription().c_str());
 			return false;
 		}
 		nbase += 4;
@@ -314,7 +330,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 	else
 	{
 		//Low-frequency oscillator
-		if(dynamic_cast<Greenpak4LFOscillator*>(m_clock->GetRealEntity()) != NULL)
+		if(dynamic_cast<Greenpak4LFOscillator*>(clk) != NULL)
 		{
 			if(m_preDivide != 1)
 			{
@@ -332,7 +348,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		}
 		
 		//Ring oscillator
-		else if(dynamic_cast<Greenpak4RingOscillator*>(m_clock->GetRealEntity()) != NULL)
+		else if(dynamic_cast<Greenpak4RingOscillator*>(clk) != NULL)
 		{
 			if(m_preDivide != 1)
 			{
@@ -350,7 +366,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		}
 		
 		//RC oscillator
-		else if(dynamic_cast<Greenpak4RCOscillator*>(m_clock->GetRealEntity()) != NULL)
+		else if(dynamic_cast<Greenpak4RCOscillator*>(clk) != NULL)
 		{
 			switch(m_preDivide)
 			{
@@ -401,7 +417,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 				stderr,
 				"ERROR: Counter %d input from %s not implemented\n",
 				m_countnum,
-				m_clock->GetDescription().c_str());
+				m_clock.GetDescription().c_str());
 			return false;
 		}
 	

@@ -31,7 +31,7 @@ Greenpak4SystemReset::Greenpak4SystemReset(
 	unsigned int cbase)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 	, m_resetMode(RISING_EDGE)
-	, m_reset(device->GetPowerRail(0))
+	, m_reset(device->GetGround())
 {
 
 }
@@ -61,6 +61,20 @@ vector<string> Greenpak4SystemReset::GetOutputPorts()
 	vector<string> r;
 	//no output ports
 	return r;
+}
+
+unsigned int Greenpak4SystemReset::GetOutputNetNumber(string /*port*/)
+{
+	//no output ports;
+	return -1;
+}
+
+void Greenpak4SystemReset::SetInput(string port, Greenpak4EntityOutput src)
+{
+	if(port == "RST")
+		m_reset = src;
+	
+	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,7 +149,7 @@ bool Greenpak4SystemReset::Save(bool* bitstream)
 	}
 	
 	//Reset enable if m_reset is not a power rail (ground)
-	if(dynamic_cast<Greenpak4PowerRail*>(m_reset) == NULL)
+	if(!m_reset.IsPowerRail())
 		bitstream[m_configBase + 2] = true;
 	else
 		bitstream[m_configBase + 2] = false;

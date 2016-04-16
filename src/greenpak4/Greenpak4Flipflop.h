@@ -39,25 +39,20 @@ public:
 	
 	bool HasSetReset()
 	{ return m_hasSR; }
-	
-	void SetInitValue(bool b)
-	{ m_initValue = b; }
-	
+		
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
 	
 	//Set inputs
-	void SetSRMode(bool mode)
-	{ m_srmode = mode; }
-	virtual void SetInputSignal(Greenpak4BitstreamEntity* sig);
-	virtual void SetClockSignal(Greenpak4BitstreamEntity* sig);
-	virtual void SetNSRSignal(Greenpak4BitstreamEntity* sig);
-	
+
 	unsigned int GetFlipflopIndex()
 	{ return m_ffnum; }
 
 	virtual std::string GetDescription();
+	
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
 	
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
@@ -79,13 +74,13 @@ protected:
 	bool m_srmode;
 	
 	///Input signal
-	Greenpak4BitstreamEntity* m_input;
+	Greenpak4EntityOutput m_input;
 	
 	///Clock signal
-	Greenpak4BitstreamEntity* m_clock;
+	Greenpak4EntityOutput m_clock;
 	
 	///Negative set/reset signal
-	Greenpak4BitstreamEntity* m_nsr;
+	Greenpak4EntityOutput m_nsr;
 };
 
 #endif

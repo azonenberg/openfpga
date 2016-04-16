@@ -35,11 +35,10 @@ Greenpak4Flipflop::Greenpak4Flipflop(
 	, m_ffnum(ffnum)
 	, m_hasSR(has_sr)
 	, m_initValue(false)
+	, m_input(device->GetGround())
+	, m_clock(device->GetGround())
+	, m_nsr(device->GetPower())
 {
-	m_input = device->GetPowerRail(0);
-	m_clock = device->GetPowerRail(0);
-	
-	m_nsr = device->GetPowerRail(1);
 }
 
 Greenpak4Flipflop::~Greenpak4Flipflop()
@@ -60,11 +59,43 @@ vector<string> Greenpak4Flipflop::GetInputPorts()
 	return r;
 }
 
+void Greenpak4Flipflop::SetInput(string port, Greenpak4EntityOutput src)
+{
+	if(port == "CLK")
+		m_clock = src;
+	else if(port == "D")
+		m_input = src;
+	
+	//multiple set/reset modes possible
+	else if(port == "nSR")
+		m_nsr = src;
+	else if(port == "nSET")
+	{
+		m_srmode = true;
+		m_nsr = src;
+	}
+	else if(port == "nRST")
+	{
+		m_srmode = false;
+		m_nsr = src;
+	}
+	
+	//ignore anything else silently (should not be possible since synthesis would error out)
+}
+
 vector<string> Greenpak4Flipflop::GetOutputPorts()
 {
 	vector<string> r;
 	r.push_back("Q");
 	return r;
+}
+
+unsigned int Greenpak4Flipflop::GetOutputNetNumber(string port)
+{
+	if(port == "Q")
+		return m_outputBaseWord;
+	else
+		return -1;
 }
 
 string Greenpak4Flipflop::GetDescription()
@@ -88,10 +119,10 @@ void Greenpak4Flipflop::CommitChanges()
 		return;
 	
 	if(ncell->HasParameter("SRMODE"))
-		SetSRMode(ncell->m_parameters["SRMODE"] == "1");
+		m_srmode = (ncell->m_parameters["SRMODE"] == "1");
 
 	if(ncell->HasParameter("INIT"))
-		SetInitValue(ncell->m_parameters["INIT"] == "1");
+		m_initValue = (ncell->m_parameters["INIT"] == "1");
 }
 
 bool Greenpak4Flipflop::Load(bool* /*bitstream*/)
@@ -103,17 +134,14 @@ bool Greenpak4Flipflop::Load(bool* /*bitstream*/)
 
 bool Greenpak4Flipflop::Save(bool* bitstream)
 {
-	//Sanity check: cannot have both set and reset
-	Greenpak4PowerRail* nsr = dynamic_cast<Greenpak4PowerRail*>(m_nsr);
-	bool has_sr = (nsr == NULL);
+	//Sanity check: cannot have set/reset on a DFF, only a DFFSR
+	bool has_sr = !m_nsr.IsPowerRail();
 	if(has_sr && !m_hasSR)
 		fprintf(stderr, "ERROR: Tried to configure set/reset on a DFF cell with no S/R input\n");
 	
 	//Check if we're unused (input and clock pins are tied to ground)
-	Greenpak4PowerRail* ni = dynamic_cast<Greenpak4PowerRail*>(m_input);
-	Greenpak4PowerRail* nc = dynamic_cast<Greenpak4PowerRail*>(m_clock);
-	bool no_input = ( (ni != NULL) && (ni->GetDigitalValue() == false) );
-	bool no_clock = ( (nc != NULL) && (nc->GetDigitalValue() == false) );
+	bool no_input = ( m_input.IsPowerRail() && !m_input.GetPowerRailValue() );
+	bool no_clock = ( m_input.IsPowerRail() && !m_clock.GetPowerRailValue() );
 	bool unused = (no_input && no_clock);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,9 +152,9 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 		//Set/reset defaults to constant 1 if not hooked up
 		//but if we have set/reset then use that.
 		//If we're totally unused, hold us in reset
-		Greenpak4BitstreamEntity* sr = m_device->GetPowerRail(true);
+		Greenpak4EntityOutput sr = m_device->GetPower();
 		if(unused)
-			sr = m_device->GetPowerRail(false);
+			sr = m_device->GetGround();
 		else if(has_sr)
 			sr = m_nsr;
 		if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, sr))
@@ -181,20 +209,3 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 	return true;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Accessors
-
-void Greenpak4Flipflop::SetInputSignal(Greenpak4BitstreamEntity* sig)
-{
-	m_input = sig;
-}
-
-void Greenpak4Flipflop::SetClockSignal(Greenpak4BitstreamEntity* sig)
-{
-	m_clock = sig;
-}
-
-void Greenpak4Flipflop::SetNSRSignal(Greenpak4BitstreamEntity* sig)
-{
-	m_nsr = sig;
-}

@@ -37,10 +37,11 @@ public:
 	virtual bool Save(bool* bitstream);
 		
 	virtual ~Greenpak4Inverter();
-	
-	void SetInput(Greenpak4BitstreamEntity* input);
-	
+
 	virtual std::string GetDescription();
+	
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
 	
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
@@ -48,7 +49,7 @@ public:
 	virtual void CommitChanges();
 	
 protected:
-	Greenpak4BitstreamEntity* m_input;
+	Greenpak4EntityOutput m_input;
 };
 
 #endif	//Greenpak4Inverter_h

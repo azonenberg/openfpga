@@ -28,6 +28,8 @@ class Greenpak4NetlistEntity;
 #include <vector>
 #include "../xbpar/xbpar.h"
 
+class Greenpak4EntityOutput;
+
 /**
 	@brief An entity which is serialized to/from the bitstream
  */ 
@@ -58,16 +60,27 @@ public:
 	{ return m_matrix; }
 	
 	/**
-		@brief Gets the index of the first (only, in most cases) output word
+		@brief Sets the input with the given name to the specified net
 	 */
-	unsigned int GetOutputBase()
-	{ return m_outputBaseWord; }
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src) =0;
+	 
+	/**
+		@brief Gets the net number for the given output
+	 */
+	virtual unsigned int GetOutputNetNumber(std::string port) =0;
+	
+	/**
+		@brief Gets the net number for the given output
+	 */
+	virtual Greenpak4EntityOutput GetOutput(std::string port);
 	
 	PARGraphNode* GetPARNode()
 	{ return m_parnode; }
 	
 	/**
 		@brief Gets the net name of our output
+		
+		FIXME: this is fundamentally wrong, this should be a function on EntityOutput instead
 	 */
 	std::string GetOutputName();
 	
@@ -82,6 +95,10 @@ public:
 	
 	unsigned int GetConfigBase()
 	{ return m_configBase; }
+	
+	//only used by Greenpak4DualEntity (TODO just make a friend?)
+	unsigned int GetInternalOutputBase()
+	{ return m_outputBaseWord; }
 	
 	Greenpak4Device* GetDevice()
 	{ return m_device; }
@@ -122,7 +139,7 @@ protected:
 	bool WriteMatrixSelector(
 		bool* bitstream,
 		unsigned int wordpos,
-		Greenpak4BitstreamEntity* signal,
+		Greenpak4EntityOutput signal,
 		bool cross_matrix = false);
 
 	///The device we're attached to
@@ -152,6 +169,55 @@ protected:
 	
 	///Our dual entity (if we have one)
 	Greenpak4DualEntity* m_dual;
+};
+
+/**
+	@brief A single output from a general fabric signal
+ */
+class Greenpak4EntityOutput
+{
+public:
+	Greenpak4EntityOutput(Greenpak4BitstreamEntity* src, std::string port, unsigned int matrix)
+	: m_src(src)
+	, m_port(port)
+	, m_matrix(matrix)
+	{}
+	
+	//Equality test. Do NOT check for matrix equality
+	//as both outputs of a dual-matrix node are considered equal
+	bool operator==(const Greenpak4EntityOutput& rhs) const
+	{ return (m_src == rhs.m_src) && (m_port == rhs.m_port); }
+	
+	bool operator!=(const Greenpak4EntityOutput& rhs) const
+	{ return !(rhs == *this); }
+	
+	std::string GetDescription()
+	{ return m_src->GetDescription(); }
+	
+	std::string GetOutputName()
+	{ return m_src->GetDescription() + " port " + m_port; }
+	
+	Greenpak4EntityOutput GetDual();
+	
+	Greenpak4BitstreamEntity* GetRealEntity()
+	{ return m_src->GetRealEntity(); }
+	
+	bool IsPowerRail();
+	bool GetPowerRailValue();
+	
+	bool HasDual()
+	{ return m_src->GetDual() != NULL; }
+	
+	unsigned int GetMatrix()
+	{ return m_matrix; }
+	
+	unsigned int GetNetNumber()
+	{ return m_src->GetOutputNetNumber(m_port); }
+	
+public:
+	Greenpak4BitstreamEntity* m_src;
+	std::string m_port;
+	unsigned int m_matrix;
 };
 
 #endif

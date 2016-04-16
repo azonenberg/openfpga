@@ -53,18 +53,6 @@ public:
 	unsigned int GetCounterIndex()
 	{ return m_countnum; }
 	
-	void SetReset(Greenpak4BitstreamEntity* reset)
-	{ m_reset = reset; }
-	
-	void SetClock(Greenpak4BitstreamEntity* clock)
-	{ m_clock = clock; }
-	
-	void SetCounterValue(unsigned int val)
-	{ m_countVal = val; }
-	
-	void SetPreDivide(unsigned int val)
-	{ m_preDivide = val; }
-	
 	enum ResetMode
 	{
 		BOTH_EDGE = 0,
@@ -73,8 +61,8 @@ public:
 		HIGH_LEVEL = 3
 	};
 	
-	void SetResetMode(ResetMode mode)
-	{ m_resetMode = mode; }
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
 	
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
@@ -90,10 +78,10 @@ protected:
 	unsigned int m_countnum;
 	
 	///Reset input
-	Greenpak4BitstreamEntity* m_reset;
+	Greenpak4EntityOutput m_reset;
 	
 	///Clock input
-	Greenpak4BitstreamEntity* m_clock;
+	Greenpak4EntityOutput m_clock;
 		
 	///FSM-present flag
 	bool m_hasFSM;

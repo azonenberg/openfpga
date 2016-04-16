@@ -66,11 +66,24 @@ vector<string> Greenpak4PowerRail::GetInputPorts()
 	return r;
 }
 
+void Greenpak4PowerRail::SetInput(string port, Greenpak4EntityOutput src)
+{
+	//no inputs
+}
+
 vector<string> Greenpak4PowerRail::GetOutputPorts()
 {
 	vector<string> r;
 	r.push_back("OUT");
 	return r;
+}
+
+unsigned int Greenpak4PowerRail::GetOutputNetNumber(std::string port)
+{
+	if(port == "OUT")
+		return m_outputBaseWord;
+	else
+		return -1;
 }
 
 string Greenpak4PowerRail::GetDescription()

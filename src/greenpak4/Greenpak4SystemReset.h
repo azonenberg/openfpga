@@ -51,8 +51,8 @@ public:
 	void SetResetMode(ResetMode mode)
 	{ m_resetMode = mode; }
 	
-	void SetReset(Greenpak4BitstreamEntity* reset)
-	{ m_reset = reset; }
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
 	
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
@@ -65,7 +65,7 @@ protected:
 	ResetMode m_resetMode;
 	
 	///The reset signal itself
-	Greenpak4BitstreamEntity* m_reset;
+	Greenpak4EntityOutput m_reset;
 };
 
 #endif

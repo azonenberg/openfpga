@@ -377,7 +377,6 @@ void Greenpak4Device::CreateDevice_SLG46620()
 				52 + i,		//oword
 				0			//cbase is invalid, we have no configuration at all
 				);
-			cc->SetInput(m_constantZero);
 			m_crossConnections[matrix][i] = cc;
 		}
 	}

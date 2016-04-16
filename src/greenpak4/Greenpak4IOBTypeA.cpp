@@ -70,13 +70,12 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 	if(m_flags & IOB_FLAG_INPUTONLY)
 	{
 		//Verify that they are tied sanely (output enable is ground, signal is dontcare)
-		Greenpak4PowerRail* oe = dynamic_cast<Greenpak4PowerRail*>(m_outputEnable);
-		if(oe == NULL)
+		if(!m_outputEnable.IsPowerRail())
 		{
 			fprintf(stderr, "ERROR: Tried to tie OE of an input-only pin to something other than a power rail\n");
 			return false;
 		}
-		if(oe->GetDigitalValue() != false)
+		if(m_outputEnable.GetPowerRailValue() != false)
 		{
 			fprintf(stderr, "ERROR: Tried to tie OE of an input-only pin to something other than ground\n");
 			return false;

@@ -22,6 +22,26 @@
 using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Greenpak4EntityOutput
+
+Greenpak4EntityOutput Greenpak4EntityOutput::GetDual()
+{
+	return m_src->GetDual()->GetOutput(m_port);
+}
+
+bool Greenpak4EntityOutput::IsPowerRail()
+{
+	return dynamic_cast<Greenpak4PowerRail*>(m_src) != NULL;
+}
+
+bool Greenpak4EntityOutput::GetPowerRailValue()
+{
+	if(!IsPowerRail())
+		return NULL;
+	return dynamic_cast<Greenpak4PowerRail*>(m_src)->GetDigitalValue();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
 Greenpak4BitstreamEntity::Greenpak4BitstreamEntity(
@@ -49,6 +69,14 @@ Greenpak4BitstreamEntity::~Greenpak4BitstreamEntity()
 		delete m_dual;
 		m_dual = NULL;
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Net numbering helpers
+
+Greenpak4EntityOutput Greenpak4BitstreamEntity::GetOutput(std::string port)
+{
+	return Greenpak4EntityOutput(this, port, m_matrix);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,7 +130,7 @@ Greenpak4BitstreamEntity* Greenpak4BitstreamEntity::GetRealEntity()
 bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	bool* bitstream,
 	unsigned int wordpos,
-	Greenpak4BitstreamEntity* signal,
+	Greenpak4EntityOutput signal,
 	bool cross_matrix)
 {
 	//SANITY CHECK - must be attached to the same matrix
@@ -110,21 +138,21 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	if(cross_matrix)
 	{
 		//Do not do check if the signal is a power rail (this is the case for unused cross connections)
-		if(dynamic_cast<Greenpak4PowerRail*>(signal) != NULL)
+		if(signal.IsPowerRail())
 		{}
 		
 		//No other signal, dual or not, should do this
-		else if(m_matrix == signal->GetMatrix())
+		else if(m_matrix == signal.GetMatrix())
 		{
 			fprintf(stderr, "DRC fail: tried to write signal from same matrix through a cross connection\n");
 			return false;
 		}
 	}
-	else if(m_matrix != signal->GetMatrix())
+	else if(m_matrix != signal.GetMatrix())
 	{
 		//If we have a dual, use that
-		if(signal->GetDual() != NULL)
-			signal = signal->GetDual();
+		if(signal.HasDual())
+			signal = signal.GetDual();
 		
 		//otherwise something is fishy
 		else
@@ -135,7 +163,7 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	}
 	
 	//Good to go, write it
-	unsigned int sel = signal->GetOutputBase();
+	unsigned int sel = signal.GetNetNumber();
 	
 	//Calculate right matrix for cross connections etc
 	unsigned int matrix = m_matrix;

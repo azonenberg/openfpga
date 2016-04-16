@@ -73,18 +73,6 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			auto edge = netnode->GetEdgeByIndex(i);
 			auto src = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
 			auto dst = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
-			
-			//Try casting to every primitive type known to mankind!
-			auto iob = dynamic_cast<Greenpak4IOB*>(dst);
-			auto lut = dynamic_cast<Greenpak4LUT*>(dst);			
-			auto ff = dynamic_cast<Greenpak4Flipflop*>(dst);
-			auto pwr = dynamic_cast<Greenpak4PowerRail*>(dst);
-			auto osc = dynamic_cast<Greenpak4LFOscillator*>(dst);
-			auto rosc = dynamic_cast<Greenpak4RingOscillator*>(dst);
-			auto rcosc = dynamic_cast<Greenpak4RCOscillator*>(dst);
-			auto count = dynamic_cast<Greenpak4Counter*>(dst);
-			auto rst = dynamic_cast<Greenpak4SystemReset*>(dst);
-			auto inv = dynamic_cast<Greenpak4Inverter*>(dst);
 				
 			//If the source node has a dual, use the secondary output if needed
 			//so we don't waste cross connections
@@ -121,151 +109,14 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 					num_routes_used[srcmatrix] ++;
 					
 					//Insert the cross-connection into the path
-					xconn->SetInput(src);
+					xconn->SetInput("I", src->GetOutput(edge->m_sourceport));
 					nodemap[src] = xconn;
 					src = xconn;
 				}
 			}
 			
-			//Destination is an IOB - configure the signal (TODO: output enable for tristates)
-			if(iob)
-				iob->SetOutputSignal(src);
-				
-			//Destination is a LUT - multiple ports, figure out which one
-			else if(lut)
-			{
-				unsigned int nport;
-				if(1 != sscanf(edge->m_destport.c_str(), "IN%u", &nport))
-				{
-					printf("WARNING: Ignoring connection to unknown LUT input %s\n", edge->m_destport.c_str());
-					continue;
-				}
-				
-				lut->SetInputSignal(nport, src);
-			}
-			
-			//Destination is a flipflop - multiple ports, figure out which one
-			else if(ff)
-			{
-				if(edge->m_destport == "CLK")
-					ff->SetClockSignal(src);
-				else if(edge->m_destport == "D")
-					ff->SetInputSignal(src);
-				
-				//multiple set/reset modes possible
-				else if(edge->m_destport == "nSR")
-					ff->SetNSRSignal(src);
-				else if(edge->m_destport == "nSET")
-				{
-					ff->SetSRMode(true);
-					ff->SetNSRSignal(src);
-				}
-				else if(edge->m_destport == "nRST")
-				{
-					ff->SetSRMode(false);
-					ff->SetNSRSignal(src);
-				}
-				
-				else
-				{
-					printf("WARNING: Ignoring connection to unknown FF input %s\n", edge->m_destport.c_str());
-					continue;
-				}
-			}
-			
-			//Destination is the low-frequency oscillator
-			else if(osc)
-			{
-				if(edge->m_destport == "PWRDN")
-					osc->SetPowerDown(src);
-				
-				else
-				{
-					printf("WARNING: Ignoring connection to unknown oscillator input %s\n", edge->m_destport.c_str());
-					continue;
-				}
-			}
-			
-			//Destination is the ring oscillator
-			else if(rosc)
-			{
-				if(edge->m_destport == "PWRDN")
-					rosc->SetPowerDown(src);
-				
-				else
-				{
-					printf("WARNING: Ignoring connection to unknown ring oscillator input %s\n",
-						edge->m_destport.c_str());
-					continue;
-				}
-			}
-			
-			//Destination is the RC oscillator
-			else if(rcosc)
-			{
-				if(edge->m_destport == "PWRDN")
-					rcosc->SetPowerDown(src);
-				
-				else
-				{
-					printf("WARNING: Ignoring connection to unknown RC oscillator input %s\n",
-						edge->m_destport.c_str());
-					continue;
-				}
-			}
-			
-			//Destination is a counter
-			else if(count)
-			{
-				if(edge->m_destport == "CLK")
-					count->SetClock(src);
-				else if(edge->m_destport == "RST")
-					count->SetReset(src);
-				
-				else
-				{
-					printf("WARNING: Ignoring connection to unknown counter input %s\n", edge->m_destport.c_str());
-					continue;
-				}
-			}
-			
-			//Destination is the system reset
-			else if(rst)
-			{
-				if(edge->m_destport == "RST")
-					rst->SetReset(src);
-				
-				else
-				{
-					printf("WARNING: Ignoring connection to unknown reset input %s\n", edge->m_destport.c_str());
-					continue;
-				}
-			}
-			
-			//Destination is an inverter
-			else if(inv)
-			{
-				if(edge->m_destport == "IN")
-					inv->SetInput(src);
-				
-				else
-				{
-					printf("WARNING: Ignoring connection to unknown inverter input %s\n", edge->m_destport.c_str());
-					continue;
-				}
-			}
-			
-			else if(pwr)
-			{
-				printf("WARNING: Power rail should not be driven\n");
-			}
-
-			//Don't know what to do
-			else
-			{
-				printf("WARNING: Node %s at config base %d has unrecognized entity type\n",
-					dst->GetDescription().c_str(), dst->GetConfigBase());
-			}
+			//Use new unified configuration interface here to simplify things massively
+			dst->SetInput(edge->m_destport, src->GetOutput(edge->m_sourceport));
 		}
 	}
 }

@@ -32,7 +32,7 @@ Greenpak4CrossConnection::Greenpak4CrossConnection(
 		unsigned int oword,
 		unsigned int cbase)
 		: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
-		, m_input(NULL)
+		, m_input(device->GetGround())
 {
 }
 
@@ -51,20 +51,20 @@ string Greenpak4CrossConnection::GetDescription()
 	return string(buf);
 }
 
-void Greenpak4CrossConnection::SetInput(Greenpak4BitstreamEntity* input)
+void Greenpak4CrossConnection::SetInput(std::string /*port*/, Greenpak4EntityOutput input)
 {
 	//Don't complain if input is a power rail, those are the sole exception
-	if(dynamic_cast<Greenpak4PowerRail*>(input) != NULL)
+	if(input.IsPowerRail())
 	{}
 	
 	//Complain if input has a dual, they should never go through the cross connections
-	else if(input->GetDual() != NULL)
+	else if(input.HasDual())
 	{
 		fprintf(stderr, "INTERNAL ERROR: tried to set cross-connection input from node with dual\n");
 		exit(-1);
 	}
 	
-	else if(input->GetMatrix() == m_matrix)
+	else if(input.GetMatrix() == m_matrix)
 	{
 		fprintf(stderr, "INTERNAL ERROR: tried to set cross-connection input from wrong matrix\n");
 		exit(-1);
@@ -72,9 +72,6 @@ void Greenpak4CrossConnection::SetInput(Greenpak4BitstreamEntity* input)
 	
 	m_input = input;
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Serialization of the truth table
 
 void Greenpak4CrossConnection::CommitChanges()
 {
@@ -94,6 +91,15 @@ vector<string> Greenpak4CrossConnection::GetOutputPorts()
 	r.push_back("O");
 	return r;
 }
+
+unsigned int Greenpak4CrossConnection::GetOutputNetNumber(string /*port*/)
+{
+	//we respond to any net name for convenience
+	return m_outputBaseWord;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Load/save logic
 
 bool Greenpak4CrossConnection::Load(bool* /*bitstream*/)
 {

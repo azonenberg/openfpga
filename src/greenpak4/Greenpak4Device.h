@@ -53,6 +53,15 @@ public:
 	//Get the power rail for a binary constant
 	Greenpak4BitstreamEntity* GetPowerRail(bool rail);
 	
+	Greenpak4EntityOutput GetGround()
+	{ return GetPowerRail(false)->GetOutput("OUT"); }
+	
+	Greenpak4EntityOutput GetPower()
+	{ return GetPowerRail(true)->GetOutput("OUT"); }
+	
+	Greenpak4EntityOutput GetPowerNet(bool b)
+	{ return GetPowerRail(b)->GetOutput("OUT"); }
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// IOBS
 	

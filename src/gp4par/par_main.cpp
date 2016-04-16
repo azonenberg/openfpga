@@ -115,7 +115,7 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 	//TODO: check invalid IOB configuration (driving an input-only pin etc) - is this possible?
 	
 	//Check for multiple oscillators with power-down enabled but not the same source
-	typedef pair<string, Greenpak4BitstreamEntity*> spair;
+	typedef pair<string, Greenpak4EntityOutput> spair;
 	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();
 	Greenpak4RingOscillator* rosc = device->GetRingOscillator();
 	Greenpak4RCOscillator* rcosc = device->GetRCOscillator();
@@ -128,11 +128,11 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		powerdowns.push_back(spair(rcosc->GetDescription(), rcosc->GetPowerDown()));
 	if(!powerdowns.empty())
 	{
-		Greenpak4BitstreamEntity* src = NULL;
+		Greenpak4EntityOutput src = device->GetGround();
 		bool ok = true;
 		for(auto p : powerdowns)
 		{
-			if(src == NULL)
+			if(src.IsPowerRail())
 				src = p.second;
 			if(src != p.second)
 				ok = false;
@@ -143,7 +143,7 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 			fprintf(stderr,
 				"    FAIL: Multiple oscillators have power-down enabled, but do not share the same power-down signal\n");
 			for(auto p : powerdowns)
-				printf("    Oscillator %10s powerdown is %s\n", p.first.c_str(), p.second->GetOutputName().c_str());
+				printf("    Oscillator %10s powerdown is %s\n", p.first.c_str(), p.second.GetOutputName().c_str());
 			exit(-1);
 		}
 	}

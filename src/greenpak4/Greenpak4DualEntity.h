@@ -43,6 +43,10 @@ public:
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
 	
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
+	virtual Greenpak4EntityOutput GetOutput(std::string port);
+	
 	virtual void CommitChanges();
 	
 protected:

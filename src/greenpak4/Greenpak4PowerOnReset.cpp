@@ -55,11 +55,24 @@ vector<string> Greenpak4PowerOnReset::GetInputPorts()
 	return r;
 }
 
+void Greenpak4PowerOnReset::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
+{
+	//no inputs
+}
+
 vector<string> Greenpak4PowerOnReset::GetOutputPorts()
 {
 	vector<string> r;
 	r.push_back("RST_DONE");
 	return r;
+}
+
+unsigned int Greenpak4PowerOnReset::GetOutputNetNumber(string port)
+{
+	if(port == "RST_DONE")
+		return m_outputBaseWord;
+	else
+		return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

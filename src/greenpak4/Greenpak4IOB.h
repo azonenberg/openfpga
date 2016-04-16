@@ -101,33 +101,6 @@ public:
 		IOB_FLAG_X4DRIVE = 2
 	};
 	
-	virtual void SetSchmittTrigger(bool enabled);
-	virtual bool GetSchmittTrigger();
-	
-	virtual void SetPullStrength(PullStrength strength);
-	virtual bool GetPullStrength();
-	
-	virtual void SetPullDirection(PullDirection direction);
-	virtual bool GetPullDirection();
-	
-	virtual void SetDriveStrength(DriveStrength strength);
-	virtual bool GetDriveStrength();
-	
-	virtual void SetDriveType(DriveType type);
-	virtual bool GetDriveType();
-	
-	virtual void SetInputThreshold(InputThreshold thresh);
-	virtual bool GetInputThreshold();
-	
-	virtual void SetOutputEnable(Greenpak4BitstreamEntity* oe);
-	virtual Greenpak4BitstreamEntity* GetOutputEnable();
-	
-	virtual void SetOutputSignal(Greenpak4BitstreamEntity* sig);
-	virtual Greenpak4BitstreamEntity* GetOutputSignal();
-	
-	virtual void SetOutputEnable(bool b);
-	virtual void SetOutputSignal(bool b);
-	
 	unsigned int GetFlags()
 	{ return m_flags; }
 	
@@ -140,7 +113,17 @@ public:
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
 	
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
+	
 	virtual void CommitChanges();
+	
+	//Used to set defaults in Greenpak4Device constructor
+	void SetPullDirection(PullDirection dir)
+	{ m_pullDirection = dir; }
+	
+	void SetPullStrength(PullStrength str)
+	{ m_pullStrength = str; }
 	
 protected:
 
@@ -169,10 +152,10 @@ protected:
 	InputThreshold m_inputThreshold;
 	
 	///Signal source for our output enable
-	Greenpak4BitstreamEntity* m_outputEnable;
+	Greenpak4EntityOutput m_outputEnable;
 	
 	///Signal source for our output driver
-	Greenpak4BitstreamEntity* m_outputSignal;
+	Greenpak4EntityOutput m_outputSignal;
 	
 	///Flags indicating special capabilities of this IOB
 	unsigned int m_flags;

@@ -34,11 +34,10 @@ Greenpak4LUT::Greenpak4LUT(
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 	, m_lutnum(lutnum)
 	, m_order(order)
+	, m_inputs({device->GetGround(), device->GetGround(), device->GetGround(), device->GetGround()})
 {
 	for(unsigned int i=0; i<16; i++)
 		m_truthtable[i] = false;
-	for(unsigned int i=0; i<4; i++)
-		m_inputs[i] = device->GetPowerRail(0);
 }
 
 Greenpak4LUT::~Greenpak4LUT()
@@ -106,9 +105,7 @@ void Greenpak4LUT::CommitChanges()
 				bool a2 = (i & 4) ? true : false;
 				bool a1 = (i & 2) ? true : false;
 				bool a0 = (i & 1) ? true : false;
-				bool nbit = (truth_table & (1 << i)) ? true : false;
-				//printf("        inputs %d %d %d %d: %d\n", a3, a2, a1, a0, nbit);
-				SetBit(nbit, a0, a1, a2, a3);
+				m_truthtable[a3*8 | a2*4 | a1*2 | a0] = (truth_table & (1 << i)) ? true : false;
 			}
 		}
 		
@@ -135,6 +132,20 @@ vector<string> Greenpak4LUT::GetInputPorts()
 	return r;
 }
 
+void Greenpak4LUT::SetInput(string port, Greenpak4EntityOutput src)
+{
+	if(port == "IN0")
+		m_inputs[0] = src;
+	else if(port == "IN1")
+		m_inputs[1] = src;
+	else if(port == "IN2")
+		m_inputs[2] = src;
+	else if(port == "IN3")
+		m_inputs[3] = src;
+	
+	//ignore anything else silently (should not be possible since synthesis would error out)
+}
+
 vector<string> Greenpak4LUT::GetOutputPorts()
 {
 	vector<string> r;
@@ -142,26 +153,12 @@ vector<string> Greenpak4LUT::GetOutputPorts()
 	return r;
 }
 
-void Greenpak4LUT::SetInputSignal(unsigned int n, Greenpak4BitstreamEntity* sig)
+unsigned int Greenpak4LUT::GetOutputNetNumber(string port)
 {
-	if(n >= m_order)
-	{
-		fprintf(stderr, "Tried to use input not physically present on this LUT\n");
-		return;
-	}
-	
-	m_inputs[n] = sig;
-}
-
-Greenpak4BitstreamEntity* Greenpak4LUT::GetInputSignal(unsigned int n)
-{
-	if(n >= m_order)
-	{
-		fprintf(stderr, "Tried to get input not physically present on this LUT\n");
-		return NULL;
-	}
-	
-	return m_inputs[n];
+	if(port == "OUT")
+		return m_outputBaseWord;
+	else
+		return -1;
 }
 
 string Greenpak4LUT::GetDescription()
@@ -169,12 +166,4 @@ string Greenpak4LUT::GetDescription()
 	char buf[128];
 	snprintf(buf, sizeof(buf), "LUT%d_%d", m_order, m_lutnum);
 	return string(buf);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Initialization helpers
-
-void Greenpak4LUT::SetBit(bool val, bool a0, bool a1, bool a2, bool a3)
-{
-	m_truthtable[a3*8 | a2*4 | a1*2 | a0] = val;
 }

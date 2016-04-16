@@ -41,12 +41,6 @@ public:
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
 		
-	void SetBit(bool val, bool a0, bool a1, bool a2 = 0, bool a3 = 0);
-	
-	//Set inputs
-	virtual void SetInputSignal(unsigned int n, Greenpak4BitstreamEntity* sig);
-	virtual Greenpak4BitstreamEntity* GetInputSignal(unsigned int n);
-	
 	unsigned int GetOrder()
 	{ return m_order; }
 	
@@ -54,6 +48,9 @@ public:
 	{ return m_lutnum; }
 	
 	virtual std::string GetDescription();
+	
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
 	
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
@@ -82,7 +79,7 @@ protected:
 		Statically allocate 4 per LUT to avoid the overhead of dynamic allocation.
 		Only inputs 0... (order-1) are valid.
 	 */
-	Greenpak4BitstreamEntity* m_inputs[4];
+	Greenpak4EntityOutput m_inputs[4];
 };
 
 #endif

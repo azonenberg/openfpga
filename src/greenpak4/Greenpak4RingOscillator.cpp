@@ -30,7 +30,7 @@ Greenpak4RingOscillator::Greenpak4RingOscillator(
 	unsigned int oword,
 	unsigned int cbase)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
-	, m_powerDown(device->GetPowerRail(0))	//default to auto powerdown only
+	, m_powerDown(device->GetGround())	//default to auto powerdown only
 	, m_powerDownEn(false)
 	, m_autoPowerDown(true)
 	, m_preDiv(1)
@@ -49,7 +49,7 @@ Greenpak4RingOscillator::~Greenpak4RingOscillator()
 
 bool Greenpak4RingOscillator::IsConstantPowerDown()
 {
-	return (dynamic_cast<Greenpak4PowerRail*>(m_powerDown) != NULL);
+	return m_powerDown.IsPowerRail();
 }
 
 vector<string> Greenpak4RingOscillator::GetInputPorts()
@@ -59,6 +59,14 @@ vector<string> Greenpak4RingOscillator::GetInputPorts()
 	return r;
 }
 
+void Greenpak4RingOscillator::SetInput(string port, Greenpak4EntityOutput src)
+{
+	if(port == "PWRDN")
+		m_powerDown = src;
+	
+	//ignore anything else silently (should not be possible since synthesis would error out)
+}
+
 vector<string> Greenpak4RingOscillator::GetOutputPorts()
 {
 	vector<string> r;
@@ -66,41 +74,17 @@ vector<string> Greenpak4RingOscillator::GetOutputPorts()
 	return r;
 }
 
+unsigned int Greenpak4RingOscillator::GetOutputNetNumber(string port)
+{
+	if(port == "CLKOUT_FABRIC")
+		return m_outputBaseWord;
+	else
+		return -1;
+}
+
 string Greenpak4RingOscillator::GetDescription()
 {
 	return "RINGOSC0";
-}
-
-void Greenpak4RingOscillator::SetPowerDown(Greenpak4BitstreamEntity* pwrdn)
-{
-	m_powerDown = pwrdn;
-}
-
-void Greenpak4RingOscillator::SetPreDivider(int div)
-{
-	if(	(div == 1) || (div == 4) || (div == 8) || (div == 16) )
-	{
-		m_preDiv = div;
-	}
-	else
-	{
-		fprintf(stderr, "ERROR: GP_RINGOSC pre divider must be 1, 4, 8, 16\n");
-		exit(1);
-	}
-}
-
-void Greenpak4RingOscillator::SetPostDivider(int div)
-{
-	if(	(div == 1) || (div == 2) || (div == 3) || (div == 4) || (div == 8) ||
-		(div == 12) || (div == 24) || (div == 64))
-	{
-		m_postDiv = div;
-	}
-	else
-	{
-		fprintf(stderr, "ERROR: GP_RINGOSC post divider must be 1, 2, 3, 4, 8, 12, 24, or 64\n");
-		exit(1);
-	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,16 +98,39 @@ void Greenpak4RingOscillator::CommitChanges()
 		return;
 	
 	if(ncell->HasParameter("PWRDN_EN"))
-		SetPowerDownEn(ncell->m_parameters["PWRDN_EN"] == "1");
+		m_powerDownEn = (ncell->m_parameters["PWRDN_EN"] == "1");
 		
 	if(ncell->HasParameter("AUTO_PWRDN"))
-		SetAutoPowerDown(ncell->m_parameters["AUTO_PWRDN"] == "1");
+		m_autoPowerDown = (ncell->m_parameters["AUTO_PWRDN"] == "1");
 		
 	if(ncell->HasParameter("PRE_DIV"))
-		SetPreDivider(atoi(ncell->m_parameters["PRE_DIV"].c_str()));
+	{
+		int div = atoi(ncell->m_parameters["PRE_DIV"].c_str());
+		
+		if(	(div == 1) || (div == 4) || (div == 8) || (div == 16) )
+			m_preDiv = div;
+		else
+		{
+			fprintf(stderr, "ERROR: GP_RINGOSC pre divider must be 1, 4, 8, 16\n");
+			exit(1);
+		}
+	}
 		
 	if(ncell->HasParameter("FABRIC_DIV"))
-		SetPostDivider(atoi(ncell->m_parameters["FABRIC_DIV"].c_str()));
+	{
+		int div = atoi(ncell->m_parameters["FABRIC_DIV"].c_str());
+		
+		if(	(div == 1) || (div == 2) || (div == 3) || (div == 4) || (div == 8) ||
+			(div == 12) || (div == 24) || (div == 64))
+		{
+			m_postDiv = div;
+		}
+		else
+		{
+			fprintf(stderr, "ERROR: GP_RINGOSC post divider must be 1, 2, 3, 4, 8, 12, 24, or 64\n");
+			exit(1);
+		}
+	}
 }
 
 bool Greenpak4RingOscillator::Load(bool* /*bitstream*/)
@@ -134,15 +141,17 @@ bool Greenpak4RingOscillator::Load(bool* /*bitstream*/)
 
 bool Greenpak4RingOscillator::Save(bool* bitstream)
 {
-	//Optimize PWRDN = 1'b0 and PWRDN_EN = 1 to PWRDN = dontcare and PWRDN_EN = 0
+	//Optimize PWRDN = 1'b0 and PWRDN_EN = 1 to PWRDN = dontcare and PWRDN_EN = 0.
+	//Detect constant power-down of 1 as "unused port"
 	bool real_pwrdn_en = m_powerDownEn;
-	Greenpak4PowerRail* rail = dynamic_cast<Greenpak4PowerRail*>(m_powerDown);
-	if( (rail != NULL) && (rail->GetDigitalValue() == 0) )
-		real_pwrdn_en = false;
-		
 	bool unused = false;
-	if( (rail != NULL) && (rail->GetDigitalValue() == 1) && m_powerDownEn )
-		unused = true;
+	if(m_powerDown.IsPowerRail())
+	{
+		if( !m_powerDown.GetPowerRailValue() )
+			real_pwrdn_en = false;
+		if(!m_powerDown.GetPowerRailValue() && m_powerDownEn )
+			unused = true;
+	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS

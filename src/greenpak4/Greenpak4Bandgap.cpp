@@ -57,12 +57,26 @@ vector<string> Greenpak4Bandgap::GetInputPorts()
 	return r;
 }
 
+void Greenpak4Bandgap::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
+{
+	//no inputs
+}
+
 vector<string> Greenpak4Bandgap::GetOutputPorts()
 {
 	vector<string> r;
 	r.push_back("OK");
 	//VOUT is not general fabric routing
 	return r;
+}
+
+unsigned int Greenpak4Bandgap::GetOutputNetNumber(string port)
+{
+	if(port == "OK")
+		return m_outputBaseWord;
+	//VOUT is not general fabric routing
+	else
+		return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -31,7 +31,7 @@ Greenpak4Inverter::Greenpak4Inverter(
 		unsigned int ibase,
 		unsigned int oword)
 		: Greenpak4BitstreamEntity(device, matrix, ibase, oword, -1)
-		, m_input(device->GetPowerRail(false))
+		, m_input(device->GetGround())
 {
 }
 
@@ -57,6 +57,14 @@ vector<string> Greenpak4Inverter::GetInputPorts()
 	return r;
 }
 
+void Greenpak4Inverter::SetInput(string port, Greenpak4EntityOutput src)
+{
+	if(port == "IN")
+		m_input = src;
+	
+	//ignore anything else silently (should not be possible since synthesis would error out)
+}
+
 vector<string> Greenpak4Inverter::GetOutputPorts()
 {
 	vector<string> r;
@@ -64,9 +72,12 @@ vector<string> Greenpak4Inverter::GetOutputPorts()
 	return r;
 }
 
-void Greenpak4Inverter::SetInput(Greenpak4BitstreamEntity* input)
+unsigned int Greenpak4Inverter::GetOutputNetNumber(string port)
 {
-	m_input = input;
+	if(port == "OUT")
+		return m_outputBaseWord;
+	else
+		return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

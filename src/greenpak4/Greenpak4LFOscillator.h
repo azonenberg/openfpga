@@ -43,27 +43,19 @@ public:
 	
 	virtual std::string GetDescription();
 	
-	//Set our power-down input
-	void SetPowerDown(Greenpak4BitstreamEntity* pwrdn);
-	
 	//Get the power-down input (used for DRC)
-	Greenpak4BitstreamEntity* GetPowerDown()
+	Greenpak4EntityOutput GetPowerDown()
 	{ return m_powerDown; }
 	
 	//Enable accessors
-	void SetPowerDownEn(bool en)
-	{ m_powerDownEn = en; }
 	
 	bool GetPowerDownEn()
 	{ return m_powerDownEn; }
 	
 	bool IsConstantPowerDown();
 	
-	void SetAutoPowerDown(bool en)
-	{ m_autoPowerDown = en; }
-	
-	//Divider
-	void SetOutputDivider(int div);
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
 
 	virtual std::vector<std::string> GetInputPorts();
 	virtual std::vector<std::string> GetOutputPorts();
@@ -73,7 +65,7 @@ public:
 protected:
 
 	///Power-down input (if implemented)
-	Greenpak4BitstreamEntity* m_powerDown;
+	Greenpak4EntityOutput m_powerDown;
 	
 	///Power-down enable
 	bool m_powerDownEn;
