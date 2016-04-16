@@ -66,7 +66,7 @@ vector<string> Greenpak4PowerRail::GetInputPorts()
 	return r;
 }
 
-void Greenpak4PowerRail::SetInput(string port, Greenpak4EntityOutput src)
+void Greenpak4PowerRail::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
 {
 	//no inputs
 }
