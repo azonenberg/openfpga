@@ -101,6 +101,16 @@ void BuildGraphs(
 		dgraph->AddNode(inode);
 	}
 	
+	//Make device nodes for the shift registers
+	uint32_t shreg_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_SHREG");
+	for(unsigned int i=0; i<device->GetShiftRegisterCount(); i++)
+	{
+		Greenpak4ShiftRegister* shreg = device->GetShiftRegister(i);
+		PARGraphNode* snode = new PARGraphNode(shreg_label, shreg);
+		shreg->SetPARNode(snode);
+		dgraph->AddNode(snode);
+	}
+	
 	//Make device nodes for each type of flipflop
 	uint32_t dff_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFF");
 	uint32_t dffsr_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFFSR");

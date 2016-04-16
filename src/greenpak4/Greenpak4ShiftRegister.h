@@ -15,40 +15,47 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
-#ifndef Greenpak4_h
-#define Greenpak4_h
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
+#ifndef Greenpak4ShiftRegister_h
+#define Greenpak4ShiftRegister_h
 
 #include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4DualEntity.h"
 
-#include "Greenpak4Bandgap.h" 
-#include "Greenpak4Counter.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4LUTPgen.h"
-#include "Greenpak4PowerOnReset.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4RCOscillator.h"
-#include "Greenpak4RingOscillator.h"
-#include "Greenpak4ShiftRegister.h"
-#include "Greenpak4SystemReset.h"
+class Greenpak4ShiftRegister : public Greenpak4BitstreamEntity
+{
+public:
 
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
+	//Construction / destruction
+	Greenpak4ShiftRegister(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
+		
+	virtual ~Greenpak4ShiftRegister();
 
-#include "Greenpak4Device.h"
+	virtual std::string GetDescription();
+	
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
+	
+	virtual std::vector<std::string> GetInputPorts();
+	virtual std::vector<std::string> GetOutputPorts();
+	
+	virtual void CommitChanges();
+	
+protected:
+	Greenpak4EntityOutput m_clock;
+	Greenpak4EntityOutput m_input;
+	Greenpak4EntityOutput m_reset;
+	int m_delayA;
+	int m_delayB;
+	bool m_invertA;
+};
 
-#endif
+#endif	//Greenpak4ShiftRegister_h

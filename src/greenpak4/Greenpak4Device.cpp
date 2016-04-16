@@ -177,7 +177,9 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_dffs.push_back( new Greenpak4Flipflop(this, 10, false, 1, 47, 18, 809));
 	m_dffs.push_back( new Greenpak4Flipflop(this, 11, false, 1, 49, 19, 812));
 	
-	//TODO: Pipe delays
+	//Shift registers
+	m_shregs.push_back(new Greenpak4ShiftRegister(this, 0, 51, 20, 1610));
+	m_shregs.push_back(new Greenpak4ShiftRegister(this, 1, 51, 20, 1619));
 	
 	//TODO: Edge detector/prog delays
 	
@@ -335,9 +337,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		40,		//oword,
 		1895));	//cbase
 	
-	//TODO: Slave SPI
-	
-	//TODO: Cross-connections between matrixes
+	//TODO: Slave SPI	
 	
 	//TODO: ADC
 	
@@ -355,7 +355,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: IO pad precharge? what does this involve?
 	
-	//System reset BLOCK
+	//System reset
 	m_sysrst = new Greenpak4SystemReset(this, 0, 24, -1, 2018);
 	
 	//Total length of our bitstream
@@ -418,6 +418,8 @@ void Greenpak4Device::CreateDevice_common()
 		m_bitstuff.push_back(x);
 	for(auto x : m_iobs)
 		m_bitstuff.push_back(x.second);
+	for(auto x : m_shregs)
+		m_bitstuff.push_back(x);
 	m_bitstuff.push_back(m_constantZero);
 	m_bitstuff.push_back(m_constantOne);
 	m_bitstuff.push_back(m_lfosc);
@@ -427,7 +429,7 @@ void Greenpak4Device::CreateDevice_common()
 	m_bitstuff.push_back(m_bandgap);
 	m_bitstuff.push_back(m_por);
 	
-	//TODO: this might be device specific - not all parts have exactly two matrices and ten cross connections
+	//TODO: this might be device specific - not all parts have exactly two matrices and ten cross connections?
 	for(unsigned int matrix=0; matrix<2; matrix++)
 		for(unsigned int i=0; i<10; i++)
 			m_bitstuff.push_back(m_crossConnections[matrix][i]);

@@ -254,7 +254,7 @@ module Blinky(
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Shift register to delay RC oscillator outputs
-	/*
+	
 	GP_SHREG #(
 		.OUTA_DELAY(8),
 		.OUTA_INVERT(0),
@@ -266,8 +266,5 @@ module Blinky(
 		.OUTA(led_lfosc_shreg1),
 		.OUTB(led_lfosc_shreg2)
 	);
-	*/
-	assign led_lfosc_shreg1 = led_lfosc_ff;
-	assign led_lfosc_shreg2 = led_lfosc_ff;
 	
 endmodule

@@ -181,6 +181,15 @@ public:
 	
 	Greenpak4Bandgap* GetBandgap()
 	{ return m_bandgap; }
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// SHIFT REGISTERS
+	
+	unsigned int GetShiftRegisterCount()
+	{ return m_shregs.size(); }
+	
+	Greenpak4ShiftRegister* GetShiftRegister(unsigned int i)
+	{ return m_shregs[i]; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ALL NODES
@@ -247,6 +256,9 @@ protected:
 	
 	///Counters of all types
 	std::vector<Greenpak4Counter*> m_counters;
+	
+	///Shift registers
+	std::vector<Greenpak4ShiftRegister*> m_shregs;
 	
 	///Constant digital 1
 	Greenpak4PowerRail* m_constantOne;
