@@ -973,11 +973,99 @@ x
 \pagebreak
 \subsection{GP\_DFF: Positive Edge Triggered D Flipflop}
 
+\subsubsection{Introduction}
+This primitive corresponds to a single D flipflop. It may be mapped to either a DFF or a DFFSR cell by the placer 
+depending on resource utilization and routing congestion.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+D & Input & 1 & Input data \\
+\hline
+CLK & Input & 1 & Input clock \\
+\hline
+Q & Output & 1 & Output signal \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dff-example} FIXME.
+
+\begin{figure}[h]
+\begin{lstlisting}
+FIXME
+\end{lstlisting}
+\caption{Example usage of GP\_DFF}
+\label{gp-dff-example}
+\end{figure}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DFFR
 
 \pagebreak
 \subsection{GP\_DFFR: Positive Edge Triggered D Flipflop with Reset}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D flipflop with active-low reset. It is internally remapped to a DFFSR cell by 
+the placer.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+D & Input & 1 & Input data \\
+\hline
+CLK & Input & 1 & Input clock \\
+\hline
+nRST & Input & 1 & Active-low reset \\
+\hline
+Q & Output & 1 & Output signal \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dffr-example} FIXME.
+
+\begin{figure}[h]
+\begin{lstlisting}
+FIXME
+\end{lstlisting}
+\caption{Example usage of GP\_DFFR}
+\label{gp-dffr-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DFFS
@@ -985,11 +1073,103 @@ x
 \pagebreak
 \subsection{GP\_DFFS: Positive Edge Triggered D Flipflop with Set}
 
+\subsubsection{Introduction}
+This primitive corresponds to a single D flipflop with active-low set. It is internally remapped to a DFFSR cell by 
+the placer.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+D & Input & 1 & Input data \\
+\hline
+CLK & Input & 1 & Input clock \\
+\hline
+nSET & Input & 1 & Active-low set \\
+\hline
+Q & Output & 1 & Output signal \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dffs-example} FIXME.
+
+\begin{figure}[h]
+\begin{lstlisting}
+FIXME
+\end{lstlisting}
+\caption{Example usage of GP\_DFFS}
+\label{gp-dffs-example}
+\end{figure}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DFFSR
 
 \pagebreak
-\subsection{GP\_DFFSR: Positive Edge Triggered D Flipflop with Set/Reset}
+\subsection{GP\_DFFSR: Positive Edge Triggered D Flipflop with Set or Reset}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D flipflop with active-low set or reset (but not both), selectable at synthesis 
+time by a parameter.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+D & Input & 1 & Input data \\
+\hline
+CLK & Input & 1 & Input clock \\
+\hline
+nSR & Input & 1 & Active-low set/reset \\
+\hline
+Q & Output & 1 & Output signal \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
+\hline
+SRMODE & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset \\
+\hline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dffsr-example} FIXME.
+
+\begin{figure}[h]
+\begin{lstlisting}
+FIXME
+\end{lstlisting}
+\caption{Example usage of GP\_DFFSR}
+\label{gp-dffsr-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_INV
@@ -1411,13 +1591,27 @@ OUTB\_DELAY & Integer & 5 & Number of register stages for output B. Legal range 
 \hline
 \end{tabularx}
 
+\clearpage
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-shreg-example} FIXME.
+The example shown in figure \ref{gp-shreg-example} uses both outputs of a GP\_SHREG in non-inverting mode. 
+bar\_delay1 is delayed by 8 cycles and bar\_delay2 is delayed by 16 cycles. The output inverter is off.
 
 \begin{figure}[h]
 \begin{lstlisting}
-FIXME
+wire bar_delay1;
+wire bar_delay2;
+GP_SHREG #(
+	.OUTA_DELAY(8),
+	.OUTA_INVERT(0),
+	.OUTB_DELAY(16)
+) shreg (
+	.nRST(1'b1),
+	.CLK(clk_108hz),
+	.IN(foo),
+	.OUTA(bar_delay1),
+	.OUTB(bar_delay2)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_SHREG}
 \label{gp-shreg-example}
