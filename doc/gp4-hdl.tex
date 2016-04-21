@@ -131,7 +131,7 @@ may be used at lower levels of the hierarchy without restriction as long as the 
 default.)
 \end{itemize}
 
-The following GreenPak4 device features are not supported by gp4par as of this writing:
+The following SLG46620V device features are not supported by gp4par as of this writing:
 
 \begin{itemize}
 \item Storage elements: output inverter, latch mode
@@ -1718,16 +1718,15 @@ GP_VDD vdd(
 % GP_VREF
 
 \pagebreak
-\subsection{GP\_VREF: Voltage Reference}
+\subsection{GP\_VREF: Voltage Reference (NOT IMPLEMENTED)}
 
 \subsubsection{Introduction}
-This primitive represents one output channel from the device's voltage reference.
+This primitive represents one output channel from the device's voltage reference. It buffers and optionally divides the 
+incoming voltage to drive the reference input to GP\_ACMP cells and external reference output pins.
 
-In the internal device architecture, each GP\_VREF block has a dedicated output to one comparator. Some (but not all) 
-of these blocks can also drive reference voltage output pins.
-
-From the HDL designer's viewpoint, this complex architecture is invisible. Any number of GP\_VREF blocks (up to a 
-maximum of one per comparator) may be instantiated. One GP\_VREF can drive multiple comparators with the same voltage; 
+Any number of GP\_VREF blocks (up to a maximum of one per comparator) may be instantiated. The current toolchain 
+version requires that the block be replicated manually if multiple comparators are driven by the same reference. A 
+future version will perform this replication automatically, allowing one GP\_VREF block to drive any number of loads.
 
 \subsubsection{Port Descriptions}
 
@@ -1737,9 +1736,9 @@ maximum of one per comparator) may be instantiated. One GP\_VREF can drive multi
 \hline
 VIN & Input & 1 & Input voltage, if required. Connect depending on the source of the reference:
 	\begin{itemize}
-		\item Constant voltage: Do not connect
+		\item Constant voltage: 1'b0
 		\item Vdd: 1'b1
-		\item DAC: DAC output signal
+		\item DAC: Analog output from DAC
 		\item Off die: Analog input from IOB
 	\end{itemize}
 \\
@@ -1764,12 +1763,13 @@ VIN\_DIV & Integer & 4 &
 	\end{itemize}
 \\
 \hline 
-VOUT & Integer & 16 &
+VREF & Integer & 16 &
 	Constant output voltage, in mV. Legal values range from 50 to 1200 in 50 mV increments.
 	If output voltage is not constant, do not specify this parameter.\\
 \hline
 \end{tabularx}
 
+\pagebreak
 \subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-vref-example} needs to be written!
@@ -1785,6 +1785,7 @@ x
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_VSS
 
+\clearpage
 \pagebreak
 \subsection{GP\_VSS: Ground Connection}
 
