@@ -20,7 +20,7 @@
 
 module Blinky(
 	led_lfosc_ff, led_lfosc_count, led_lfosc_shreg1, led_lfosc_shreg2, led_rosc_ff, led_rcosc_ff,
-	sys_rst, count_rst, bg_ok, osc_pwrdn);
+	sys_rst, count_rst, osc_pwrdn);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -44,10 +44,7 @@ module Blinky(
 	
 	(* LOC = "P15" *)
 	output reg led_rcosc_ff = 0;
-	
-	(* LOC = "P14" *)
-	output wire bg_ok;
-	
+
 	// Put inputs all together on the 1-10 side of the device
 	
 	(* LOC = "P2" *)
@@ -124,19 +121,6 @@ module Blinky(
 		.PWRDN(osc_pwrdn),
 		.CLKOUT_PREDIV(clk_6khz_cnt),
 		.CLKOUT_FABRIC(clk_6khz)
-	);
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Bandgap voltage reference (used by a lot of the mixed signal IP)
-	
-	wire bandgap_vout;
-	GP_BANDGAP #(
-		.AUTO_PWRDN(0),
-		.CHOPPER_EN(1),
-		.OUT_DELAY(550)
-	) bandgap (
-		.OK(bg_ok),
-		.VOUT(bandgap_vout)
 	);
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
