@@ -140,11 +140,10 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item ADC
 \item DAC
 \item ACMP
-\item VREF
 \item PGEN mode of LUT4/PGEN block
 \item Wake-Sleep
 \item DCMP/PWM
-\item Programmble delay line
+\item Programmble delay line / edge detector
 \item Slave SPI
 \item Pin 8 reset output
 \end{itemize}
@@ -534,6 +533,74 @@ Extracted 1 counters
 }
 \caption{Sample extraction report}
 \label{counter-extraction}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Shift Registers
+
+\pagebreak
+\subsection{Shift Registers}
+
+Yosys provides inference capability for shift registers matching the capabilities of the ``pipe delay" block in the 
+SLG46620/21.
+
+The internal inverter is not yet supported for inference. If this is required for your design, consider manual 
+instantiation of a GP\_SHREG primitive.
+
+\subsubsection{Inference Requirements}
+
+In order to be inferred as a single GP\_SHREG primitive, a shift register must:
+
+\begin{itemize}
+\item Be at most 16 bits in depth
+\item Be initialized to zero (FIXME: confirm with Silego)
+\item Have either no reset, or a positive level triggered reset to zero
+\item Have at most two taps in the shift register connected to external logic. If more taps are required, a second 
+shift register and/or discrete flipflops may be inferred. 
+\end{itemize}
+
+\subsubsection{Shift Register Related Constraints}
+
+As of now there are no constraints to force or disable inference of shift registers. A constraint analogous to 
+COUNT\_EXTRACT will likely be added in a future software release.
+
+\clearpage
+\subsubsection{Verilog Usage Example}
+
+The example in Figure \ref{gp-shreginfer-example} shows an example of how to infer a shift register with taps delayed 8 
+and 16 clocks from the input.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire led_in;
+reg[15:0] led_shreg = 0;
+assign led1 = led_shreg[7];
+assign led2 = led_shreg[15];
+always @(posedge clk) begin
+	led_shreg	<= {led_shreg[14:0], led_in};
+end
+\end{lstlisting}
+\caption{Example for shift register inference}
+\label{gp-shreginfer-example}
+\end{figure}
+
+\subsubsection{Reporting}
+
+In order to determine whether a given shift register was extracted, look at the synthesis report. Figure 
+\ref{shreg-extraction} shows an example synthesis report with a single inferred shift register.
+
+\begin{figure}[h]
+{\small
+\begin{verbatim}
+2.15. Executing SHREGMAP pass (map shift registers).
+Converting Blinky.$auto$simplemap.cc:373:simplemap_dff$132 ...
+  Blinky.$auto$simplemap.cc:373:simplemap_dff$147 to a shift
+  register with depth 16.
+Converted 16 dff cells into 1 shift registers.
+\end{verbatim}
+}
+\caption{Sample extraction report}
+\label{shreg-extraction}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1718,7 +1785,7 @@ GP_VDD vdd(
 % GP_VREF
 
 \pagebreak
-\subsection{GP\_VREF: Voltage Reference (NOT IMPLEMENTED)}
+\subsection{GP\_VREF: Voltage Reference}
 
 \subsubsection{Introduction}
 This primitive represents one output channel from the device's voltage reference. It buffers and optionally divides the 

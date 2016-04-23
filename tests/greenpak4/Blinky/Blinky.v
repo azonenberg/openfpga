@@ -19,7 +19,8 @@
 `default_nettype none
 
 module Blinky(
-	led_lfosc_ff, led_lfosc_count, led_lfosc_shreg1, led_lfosc_shreg2, led_rosc_ff, led_rcosc_ff,
+	led_lfosc_ff, led_lfosc_count, led_lfosc_shreg1, led_lfosc_shreg1a, led_lfosc_shreg2, led_lfosc_shreg2a,
+		led_rosc_ff, led_rcosc_ff,
 	sys_rst, count_rst, osc_pwrdn);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,12 +38,18 @@ module Blinky(
 	output wire led_lfosc_shreg1;
 	
 	(* LOC = "P17" *)
-	output wire led_lfosc_shreg2;
+	output wire led_lfosc_shreg1a;
 	
 	(* LOC = "P16" *)
-	output reg led_rosc_ff = 0;
+	output wire led_lfosc_shreg2;
 	
 	(* LOC = "P15" *)
+	output wire led_lfosc_shreg2a;
+	
+	(* LOC = "P14" *)
+	output reg led_rosc_ff = 0;
+	
+	(* LOC = "P13" *)
 	output reg led_rcosc_ff = 0;
 
 	// Put inputs all together on the 1-10 side of the device
@@ -122,7 +129,7 @@ module Blinky(
 		.CLKOUT_PREDIV(clk_6khz_cnt),
 		.CLKOUT_FABRIC(clk_6khz)
 	);
-		
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Low-frequency oscillator and post-divider in behavioral logic, extracted to a hard IP block by synthesis
 
@@ -165,7 +172,7 @@ module Blinky(
 		.RST(count_rst),
 		.OUT(led_lfosc_raw)
 	);
-
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring oscillator and post-divider in hard counter
 	
@@ -198,7 +205,7 @@ module Blinky(
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LF oscillator LED toggling
-
+	
 	//Toggle the output every time the counters underflow
 	always @(posedge clk_108hz) begin
 	
@@ -214,7 +221,7 @@ module Blinky(
 		end
 
 	end
-
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring oscillator LED toggling
 	
@@ -250,5 +257,16 @@ module Blinky(
 		.OUTA(led_lfosc_shreg1),
 		.OUTB(led_lfosc_shreg2)
 	);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Same shift register, but written using behavioral logic and extracted to a shreg cell by synthesis
+	
+	reg[15:0] led_lfosc_infreg = 0;
+	assign led_lfosc_shreg1a = led_lfosc_infreg[7];
+	assign led_lfosc_shreg2a = led_lfosc_infreg[15];
+
+	always @(posedge clk_108hz) begin
+		led_lfosc_infreg	<= {led_lfosc_infreg[14:0], led_lfosc_ff};
+	end
 	
 endmodule
