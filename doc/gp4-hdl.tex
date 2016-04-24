@@ -123,8 +123,8 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json /tmp/Blinky.json
 The following legal Verilog-2001 features are not supported by gp4par as of this writing:
 
 \begin{itemize}
-\item {\bfseries Bidirectional or tri-state top-level module ports}\\All ports on top-level modules must be input or 
-push-pull outputs. There is no support for tri-state or bidirectional outputs.
+\item {\bfseries Bidirectional or tri-state top-level module ports}\\All ports on top-level modules must be inputs, 
+push-pull, or open-drain outputs. There is no support for tri-state or bidirectional outputs.
 \item {\bfseries Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector nets 
 may be used at lower levels of the hierarchy without restriction as long as the synthesis script includes a
 ``splitnets" command to convert these to single bit nets. (The synth\_greenpak4 Yosys command includes this command by 
@@ -222,6 +222,85 @@ end
 \end{lstlisting}
 \caption{Example for COUNT\_EXTRACT constraint}
 \label{constraint-count-extract}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Drive type
+
+\pagebreak
+\subsection{Drive Type (DRIVE\_TYPE)}
+
+The DRIVE\_TYPE constraint configures the output driver on the specified I/O pin.
+
+\subsubsection{Applicable Elements}
+The DRIVE\_TYPE constraint may only be used on top-level module ports. 
+
+\subsubsection{Constraint Values}
+\begin{itemize}
+\item {\bfseries Top-level module port (IOB)}
+	\begin{itemize}
+		\item ``NMOS\_OD": Open drain NMOS pull-down driver.
+		\item ``PMOS\_OD": Open drain PMOS pull-down driver.
+		\item ``PUSHPULL": CMOS digital push-pull driver. This is the default if no constraint is specified..
+	\end{itemize}
+\item {\bfseries Other} \\
+This constraint may not be used on any other entity.
+\end{itemize}
+
+\subsubsection{Verilog Usage Example}
+
+Figure \ref{constraint-drivetype} is an example of a top-level module with two ports \texttt{a} and \texttt{b}. Port 
+\texttt{a} has a push-pull driver and port \texttt{b} has an open-drain NMOS driver.
+
+\begin{figure}[h]
+\begin{lstlisting}
+module Foo(a, b);
+
+	(* DRIVE_TYPE = "PUSHPULL" *)
+	output wire a;
+
+	(* DRIVE_TYPE = "NMOS_OD" *)
+	output wire b;
+	
+endmodule
+\end{lstlisting}
+\caption{Example for DRIVE\_TYPE constraint}
+\label{constraint-drivetype}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Input buffer type
+
+\pagebreak
+\subsection{Input Buffer Type (IBUF\_TYPE)}
+
+The IBUF\_TYPE constraint configures the input buffer on the specified I/O pin.
+
+\subsubsection{Applicable Elements}
+The IBUF\_TYPE constraint may only be used on top-level module ports. 
+
+\subsubsection{Constraint Values}
+\begin{itemize}
+\item {\bfseries Top-level module port (IOB)}
+	\begin{itemize}
+		\item ``ANALOG": Analog buffer for mixed signal IP. Analog outputs must use this setting to disable the digital 
+		input buffer.
+		\item ``LOW\_VOLTAGE": Low voltage threshold (see datasheet for exact value)
+		\item ``NORMAL": Standard threshold (see datasheet for exact value(
+	\end{itemize}
+\item {\bfseries Other} \\
+This constraint may not be used on any other entity.
+\end{itemize}
+
+\subsubsection{Verilog Usage Example}
+
+Figure \ref{constraint-ibuftype} FIXME
+
+\begin{figure}[h]
+\begin{lstlisting}
+\end{lstlisting}
+\caption{Example for IBUF\_TYPE constraint}
+\label{constraint-ibuftype}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

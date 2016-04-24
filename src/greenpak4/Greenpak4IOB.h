@@ -74,10 +74,7 @@ public:
 		DRIVE_NMOS_OPENDRAIN,
 		
 		///Pull high only
-		DRIVE_PMOS_OPENDRAIN,
-		
-		///Analog I/O (also has NMOS open-drain)
-		DRIVE_ANALOG
+		DRIVE_PMOS_OPENDRAIN
 	};
 	
 	//Input voltage threshold
@@ -125,6 +122,16 @@ public:
 	void SetPullStrength(PullStrength str)
 	{ m_pullStrength = str; }
 	
+	void SetAnalogConfigBase(unsigned int base)
+	{ m_analogConfigBase = base; }
+	
+	//Get our source (used for DRC)
+	Greenpak4EntityOutput GetOutputSignal()
+	{ return m_outputSignal; }
+	
+	bool IsAnalogIbuf()
+	{ return (m_inputThreshold == THRESHOLD_ANALOG); }
+	
 protected:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -159,6 +166,9 @@ protected:
 	
 	///Flags indicating special capabilities of this IOB
 	unsigned int m_flags;
+	
+	///Second configuration base for analog output
+	unsigned int m_analogConfigBase;
 };
 
 #endif

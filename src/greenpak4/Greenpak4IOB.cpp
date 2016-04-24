@@ -42,6 +42,7 @@ Greenpak4IOB::Greenpak4IOB(
 	, m_outputEnable(device->GetGround())
 	, m_outputSignal(device->GetGround())
 	, m_flags(flags)
+	, m_analogConfigBase(0)
 {
 	
 }
@@ -110,12 +111,36 @@ void Greenpak4IOB::CommitChanges()
 				m_pullStrength = Greenpak4IOB::PULL_1M;
 		}
 		
+		//Driver configuration
+		else if(x.first == "DRIVE_TYPE")
+		{
+			m_driveType = Greenpak4IOB::DRIVE_PUSHPULL;
+			if(x.second == "PUSHPULL")
+				m_driveType = Greenpak4IOB::DRIVE_PUSHPULL;
+			else if(x.second == "NMOS_OD")
+				m_driveType = Greenpak4IOB::DRIVE_NMOS_OPENDRAIN;
+			else if(x.second == "PMOS_OD")
+				m_driveType = Greenpak4IOB::DRIVE_PMOS_OPENDRAIN;
+		}
+		
+		//Input buffer configuration
+		else if(x.first == "IBUF_TYPE")
+		{
+			m_inputThreshold = Greenpak4IOB::THRESHOLD_NORMAL;
+			if(x.second == "NORMAL")
+				m_inputThreshold = Greenpak4IOB::THRESHOLD_NORMAL;
+			else if(x.second == "LOW_VOLTAGE")
+				m_inputThreshold = Greenpak4IOB::THRESHOLD_LOW;
+			else if(x.second == "ANALOG")
+				m_inputThreshold = Greenpak4IOB::THRESHOLD_ANALOG;
+		}
+		
 		//Ignore flipflop initialization, that's handled elsewhere
 		else if(x.first == "init")
 		{
 		}
 		
-		//TODO: 
+		//TODO other configuration
 		
 		else
 		{

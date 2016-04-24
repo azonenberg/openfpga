@@ -112,7 +112,25 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 	
 	//TODO: check floating inputs etc
 	
-	//TODO: check invalid IOB configuration (driving an input-only pin etc) - is this possible?
+	//Check invalid IOB configuration
+	//TODO: driving an input-only pin etc - is this possible?
+	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
+	{
+		Greenpak4IOB* iob = it->second;
+		
+		auto signal = iob->GetOutputSignal();
+		auto src = signal.GetRealEntity();
+		
+		//Check for analog output driving a pin not configured as analog for the input
+		if( (dynamic_cast<Greenpak4VoltageReference*>(src) != NULL) && !iob->IsAnalogIbuf())
+		{
+			fprintf(stderr, "    ERROR: Pin %d is driven by an analog source (%s) but does not have IBUF_TYPE = ANALOG\n",
+				it->first,
+				signal.GetOutputName().c_str()
+				);
+			exit(-1);
+		}
+	}
 	
 	//Check for multiple oscillators with power-down enabled but not the same source
 	typedef pair<string, Greenpak4EntityOutput> spair;
@@ -141,7 +159,7 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		if(!ok)
 		{
 			fprintf(stderr,
-				"    FAIL: Multiple oscillators have power-down enabled, but do not share the same power-down signal\n");
+				"    ERROR: Multiple oscillators have power-down enabled, but do not share the same power-down signal\n");
 			for(auto p : powerdowns)
 				printf("    Oscillator %10s powerdown is %s\n", p.first.c_str(), p.second.GetOutputName().c_str());
 			exit(-1);

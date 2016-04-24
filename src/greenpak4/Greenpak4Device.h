@@ -190,6 +190,15 @@ public:
 	
 	Greenpak4ShiftRegister* GetShiftRegister(unsigned int i)
 	{ return m_shregs[i]; }
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// VOLTAGE REFERENCE
+	
+	unsigned int GetVrefCount()
+	{ return m_vrefs.size(); }
+	
+	Greenpak4VoltageReference* GetVref(unsigned int i)
+	{ return m_vrefs[i]; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ALL NODES
@@ -259,6 +268,9 @@ protected:
 	
 	///Shift registers
 	std::vector<Greenpak4ShiftRegister*> m_shregs;
+	
+	///Voltage references
+	std::vector<Greenpak4VoltageReference*> m_vrefs;
 	
 	///Constant digital 1
 	Greenpak4PowerRail* m_constantOne;

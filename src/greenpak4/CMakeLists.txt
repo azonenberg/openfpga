@@ -21,6 +21,7 @@ ADD_LIBRARY(greenpak4 SHARED
 	Greenpak4RingOscillator.cpp
 	Greenpak4ShiftRegister.cpp
 	Greenpak4SystemReset.cpp
+	Greenpak4VoltageReference.cpp
 	
 	# Unplaced (but techmapped) netlist
 	Greenpak4Netlist.cpp

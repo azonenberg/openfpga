@@ -202,6 +202,7 @@ public:
 	Greenpak4BitstreamEntity* GetRealEntity()
 	{ return m_src->GetRealEntity(); }
 	
+	bool IsVoltageReference();
 	bool IsPowerRail();
 	bool GetPowerRailValue();
 	

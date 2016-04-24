@@ -15,41 +15,61 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
-#ifndef Greenpak4_h
-#define Greenpak4_h
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
+`default_nettype none
 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4DualEntity.h"
+module Analog(bg_ok, vref_out);
 
-#include "Greenpak4Bandgap.h" 
-#include "Greenpak4Counter.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4LUTPgen.h"
-#include "Greenpak4PowerOnReset.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4RCOscillator.h"
-#include "Greenpak4RingOscillator.h"
-#include "Greenpak4ShiftRegister.h"
-#include "Greenpak4SystemReset.h"
-#include "Greenpak4VoltageReference.h"
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// I/O declarations
+	
+	// Put outputs all together on the 11-20 side of the device
+	
+	(* LOC = "P20" *)
+	output wire bg_ok;
+	
+	(* LOC = "P19" *)
+	(* IBUF_TYPE = "ANALOG" *)
+	output wire vref_out;
+	
+	// Put inputs all together on the 1-10 side of the device
 
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// System reset stuff
 
-#include "Greenpak4Device.h"
+	//Power-on reset
+	wire por_done;
+	GP_POR #(
+		.POR_TIME(500)
+	) por (
+		.RST_DONE(por_done)
+	);
 
-#endif
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Oscillators
+		
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// 1.0V bandgap voltage reference (used by a lot of the mixed signal IP)
+	
+	wire bandgap_vout;
+	GP_BANDGAP #(
+		.AUTO_PWRDN(0),
+		.CHOPPER_EN(1),
+		.OUT_DELAY(550)
+	) bandgap (
+		.OK(bg_ok),
+		.VOUT(bandgap_vout)
+	);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Voltage reference driving a comparator (not yet used) and an external pin
+	
+	GP_VREF #(
+		.VIN_DIV(4'd1),
+		.VREF(16'd750)
+	) vref (
+		.VIN(1'b0),
+		.VOUT(vref_out)
+	);
+	
+endmodule

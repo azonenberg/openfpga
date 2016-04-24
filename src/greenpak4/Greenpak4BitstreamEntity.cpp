@@ -34,6 +34,12 @@ bool Greenpak4EntityOutput::IsPowerRail()
 	return dynamic_cast<Greenpak4PowerRail*>(m_src) != NULL;
 }
 
+bool Greenpak4EntityOutput::IsVoltageReference()
+{
+	return dynamic_cast<Greenpak4VoltageReference*>(m_src) != NULL;
+}
+
+
 bool Greenpak4EntityOutput::GetPowerRailValue()
 {
 	if(!IsPowerRail())
@@ -133,6 +139,13 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	Greenpak4EntityOutput signal,
 	bool cross_matrix)
 {
+	//Can't hook up non-routable signals
+	if(signal.GetNetNumber() > 255)
+	{
+		fprintf(stderr, "DRC fail: tried to write signal from invalid net %x\n", signal.GetNetNumber());
+		return false;
+	}
+	
 	//SANITY CHECK - must be attached to the same matrix
 	//cross connections use opposite, though
 	if(cross_matrix)

@@ -111,6 +111,16 @@ void BuildGraphs(
 		dgraph->AddNode(snode);
 	}
 	
+	//Make device nodes for the voltage references
+	uint32_t vref_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_VREF");
+	for(unsigned int i=0; i<device->GetVrefCount(); i++)
+	{
+		Greenpak4VoltageReference* vref = device->GetVref(i);
+		PARGraphNode* vnode = new PARGraphNode(vref_label, vref);
+		vref->SetPARNode(vnode);
+		dgraph->AddNode(vnode);
+	}
+	
 	//Make device nodes for each type of flipflop
 	uint32_t dff_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFF");
 	uint32_t dffsr_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFFSR");
@@ -574,5 +584,22 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		auto gnd = device->GetPowerRail(false)->GetPARNode();
 		pin2->AddEdge("", sysrst, "RST");
 		gnd->AddEdge("", sysrst, "RST");
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// REFERENCE OUT
+		
+		//VREF0/1 can drive pin 19
+		auto pin19 = device->GetIOB(19)->GetPARNode();
+		auto vref0 = device->GetVref(0)->GetPARNode();
+		auto vref1 = device->GetVref(1)->GetPARNode();
+		vref0->AddEdge("VOUT", pin19, "");
+		vref1->AddEdge("VOUT", pin19, "");
+		
+		//VREF2/3 can drive pin 18
+		auto pin18 = device->GetIOB(18)->GetPARNode();
+		auto vref2 = device->GetVref(2)->GetPARNode();
+		auto vref3 = device->GetVref(3)->GetPARNode();
+		vref2->AddEdge("VOUT", pin18, "");
+		vref3->AddEdge("VOUT", pin18, "");
 	}
 }

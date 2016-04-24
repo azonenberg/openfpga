@@ -84,10 +84,31 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 	
 	else
 	{	
-		if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_outputSignal))
-			return false;
-		if(!WriteMatrixSelector(bitstream, m_inputBaseWord+1, m_outputEnable))
-			return false;
+		//If our output is from a Vref, special processing needed
+		if(m_outputSignal.IsVoltageReference())
+		{
+			//Float the digital output buffer
+			Greenpak4EntityOutput gnd = m_device->GetGround();
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord, gnd))
+				return false;
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord+1, gnd))
+				return false;
+				
+			//Configure the analog output
+			auto vref = dynamic_cast<Greenpak4VoltageReference*>(m_outputSignal.GetRealEntity());
+			unsigned int sel = vref->GetMuxSel();
+			bitstream[m_analogConfigBase + 1] = (sel & 2) ? true : false;
+			bitstream[m_analogConfigBase + 0] = (sel & 1) ? true : false;
+		}
+		
+		//Digital output and enable
+		else
+		{
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_outputSignal))
+				return false;
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord+1, m_outputEnable))
+				return false;
+		}
 	}
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,7 +119,7 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 	{ 
 		case THRESHOLD_ANALOG:
 			bitstream[m_configBase+0] = true;
-			bitstream[m_configBase+1] = true;
+			bitstream[m_configBase+1] = true;		
 			break;
 			
 		case THRESHOLD_LOW:

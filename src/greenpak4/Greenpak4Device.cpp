@@ -150,6 +150,9 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_iobs[18] = new Greenpak4IOBTypeA(this, 18, 1, 65, 30, 1954);
 	m_iobs[19] = new Greenpak4IOBTypeA(this, 19, 1, 67, 31, 1961);
 	
+	m_iobs[19]->SetAnalogConfigBase(878);
+	m_iobs[18]->SetAnalogConfigBase(876);
+	
 	//Create the Type-B IOBs (no output enable)
 	m_iobs[4]  = new Greenpak4IOBTypeB(this,  4, 0, 58, 26, 953);
 	m_iobs[6]  = new Greenpak4IOBTypeB(this,  6, 0, 61, 28, 967);
@@ -346,6 +349,14 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//Bandgap reference
 	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923);
 	
+	//Voltage reference
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 0, 892, 1));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 1, 897, 2));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 2, 902, 1));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 3, 907, 2));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 4, 912));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 5, 917));
+	
 	//TODO: Reserved bits
 	
 	//TODO: Vdd bypass
@@ -419,6 +430,8 @@ void Greenpak4Device::CreateDevice_common()
 	for(auto x : m_iobs)
 		m_bitstuff.push_back(x.second);
 	for(auto x : m_shregs)
+		m_bitstuff.push_back(x);
+	for(auto x : m_vrefs)
 		m_bitstuff.push_back(x);
 	m_bitstuff.push_back(m_constantZero);
 	m_bitstuff.push_back(m_constantOne);
@@ -514,6 +527,21 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 	{
 		if(!x->Save(bitstream))
 			return false;
+	}
+	
+	//Write chip-wide tuning data
+	switch(m_part)
+	{
+		case GREENPAK4_SLG46620:
+		
+			//Vref fine tune, magic value from datasheet
+			bitstream[891] = true;
+			bitstream[890] = false;
+			bitstream[889] = false;
+			bitstream[888] = true;
+			bitstream[887] = false;
+		
+			break;
 	}
 		
 	//Write the bitfile (TODO comment more meaningfully?)

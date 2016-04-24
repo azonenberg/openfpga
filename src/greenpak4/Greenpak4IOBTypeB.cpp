@@ -97,6 +97,11 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 				break;
 				
 			case DRIVE_NMOS_OPENDRAIN:
+			
+				//TODO: input mode analog has different stuff
+				//bitstream[m_configBase+1] = true;
+				//bitstream[m_configBase+0] = true;
+			
 				bitstream[m_configBase+1] = false;
 				bitstream[m_configBase+0] = true;
 				break;
@@ -106,13 +111,6 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 				bitstream[m_configBase+0] = false;
 				break;
 			
-			//also may have NMOS open drain capability according to datasheet
-			//but not currently tested with this toolchian
-			case DRIVE_ANALOG:
-				bitstream[m_configBase+1] = true;
-				bitstream[m_configBase+0] = true;
-				break;
-				
 			default:
 				fprintf(stderr, "ERROR: Invalid IOB drive type\n");
 				return false;
