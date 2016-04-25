@@ -78,7 +78,7 @@ vector<string> Greenpak4VoltageReference::GetOutputPorts()
 	return r;
 }
 
-unsigned int Greenpak4VoltageReference::GetOutputNetNumber(string port)
+unsigned int Greenpak4VoltageReference::GetOutputNetNumber(string /*port*/)
 {
 	//no general fabric outputs
 	return -1;
@@ -143,7 +143,7 @@ bool Greenpak4VoltageReference::Save(bool* bitstream)
 			if(m_vinDiv != 1)
 			{
 				fprintf(stderr, "DRC error: Voltage reference %s must have divisor of 1 when using constant voltage\n",
-					GetDescription().c_str(), m_vref);
+					GetDescription().c_str());
 				return false;
 			}
 			
