@@ -356,12 +356,6 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 5, 917));
 	
 	//Analog comparators
-	//config bits:
-	// current source enable
-	// bandwidth
-	// gain
-	// vin
-	// hysteresis
 	m_acmps.push_back(new Greenpak4Comparator(this, 0, 0, 69, 33, 832, 852, 853, 855, 934));
 	m_acmps.push_back(new Greenpak4Comparator(this, 1, 1, 70, 33, 831, 861, 857, 859, 932)); 
 	m_acmps.push_back(new Greenpak4Comparator(this, 2, 1, 71, 34,  0,  862, 864, 863, 930));
@@ -369,8 +363,37 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_acmps.push_back(new Greenpak4Comparator(this, 4, 0, 70, 34,  0,  875, 871, 873, 926));
 	m_acmps.push_back(new Greenpak4Comparator(this, 5, 0, 71, 35,  0,  880,  0,   0,  924));	//TODO speed doubler
 	
-	//TODO: Figure out how to set the input mux selectors for each?
-	//maybe have a map of <node, muxsel> for each acmp?
+	//Comparator input routing
+	auto pin3 = m_iobs[3]->GetOutput("");
+	auto pin4 = m_iobs[4]->GetOutput("");
+	auto pin6 = m_iobs[6]->GetOutput("");
+	auto pin12 = m_iobs[12]->GetOutput("");
+	auto pin13 = m_iobs[13]->GetOutput("");
+	auto pin15 = m_iobs[15]->GetOutput("");
+	auto vdd = m_constantOne->GetOutput("VOUT");
+	m_acmps[0]->AddInputMuxEntry(pin6, 0);
+	//m_acmps[0]->AddInputMuxEntry(pin6_buf, 1);
+	m_acmps[0]->AddInputMuxEntry(vdd, 2);
+	m_acmps[1]->AddInputMuxEntry(pin12, 0);
+	//m_acmps[1]->AddInputMuxEntry(pga, 1);
+	m_acmps[1]->AddInputMuxEntry(pin6, 2);
+	//m_acmps[1]->AddInputMuxEntry(pin6_buf, 2);
+	m_acmps[1]->AddInputMuxEntry(vdd, 2);
+	m_acmps[2]->AddInputMuxEntry(pin13, 0);
+	m_acmps[2]->AddInputMuxEntry(pin6, 1);
+	//m_acmps[2]->AddInputMuxEntry(pin6_buf, 1);
+	m_acmps[2]->AddInputMuxEntry(vdd, 1);
+	m_acmps[3]->AddInputMuxEntry(pin15, 0);
+	m_acmps[3]->AddInputMuxEntry(pin13, 1);
+	m_acmps[3]->AddInputMuxEntry(pin6, 2);
+	//m_acmps[3]->AddInputMuxEntry(pin6_buf, 2);
+	m_acmps[3]->AddInputMuxEntry(vdd, 2);
+	m_acmps[4]->AddInputMuxEntry(pin3, 0);
+	m_acmps[4]->AddInputMuxEntry(pin15, 1);
+	m_acmps[4]->AddInputMuxEntry(pin6, 2);
+	//m_acmps[4]->AddInputMuxEntry(pin6_buf, 2);
+	m_acmps[4]->AddInputMuxEntry(vdd, 2);
+	m_acmps[5]->AddInputMuxEntry(pin4, 0);
 	
 	//TODO: Reserved bits
 	

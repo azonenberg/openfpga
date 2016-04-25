@@ -180,7 +180,7 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 				
 			default:
 				fprintf(stderr, "ERROR: Invalid ACMP attenuation (must be 1/2/3/4)\n");
-				break;
+				return false;
 		}
 	}
 	
@@ -212,11 +212,35 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 				
 			default:
 				fprintf(stderr, "ERROR: Invalid ACMP hysteresis (must be 0/25/50/200)\n");
-				break;
+				return false;
 		}
 	}
 	
-	//TODO: Input voltage mux
+	//If input is ground, then don't hook it up (we're not active)
+	if(m_vin.IsPowerRail() && !m_vin.GetPowerRailValue())
+	{}
+	
+	//Invalid input
+	else if(m_muxsels.find(m_vin) == m_muxsels.end())
+	{
+		fprintf(stderr, "ERROR: Invalid ACMP input (not a known mux configuration)\n");
+		return false;
+	}
+	
+	//Valid input, hook it up
+	else
+	{
+		unsigned int sel = m_muxsels[m_vin];
+		
+		//Bitstream is zero-cleared at start of the writing process so high zero bits don't need to be written
+		
+		//2-bit mux selector? Write the high bit
+		if(sel & 2)
+			bitstream[m_cbaseVin + 1] = true;
+			
+			//Write the low bit
+		bitstream[m_cbaseVin] = (sel & 1) ? true : false;
+	}
 	
 	return true;
 }

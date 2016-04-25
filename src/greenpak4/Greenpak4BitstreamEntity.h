@@ -191,10 +191,10 @@ public:
 	bool operator!=(const Greenpak4EntityOutput& rhs) const
 	{ return !(rhs == *this); }
 	
-	std::string GetDescription()
+	std::string GetDescription() const
 	{ return m_src->GetDescription(); }
 	
-	std::string GetOutputName()
+	std::string GetOutputName() const
 	{ return m_src->GetDescription() + " port " + m_port; }
 	
 	Greenpak4EntityOutput GetDual();
@@ -214,6 +214,10 @@ public:
 	
 	unsigned int GetNetNumber()
 	{ return m_src->GetOutputNetNumber(m_port); }
+	
+	//comparison operator for std::map
+	bool operator<(const Greenpak4EntityOutput& rhs) const
+	{ return GetOutputName() < rhs.GetOutputName(); }
 	
 public:
 	Greenpak4BitstreamEntity* m_src;

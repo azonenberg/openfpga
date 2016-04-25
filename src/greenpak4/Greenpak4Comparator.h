@@ -55,6 +55,9 @@ public:
 	
 	virtual void CommitChanges();
 	
+	void AddInputMuxEntry(Greenpak4EntityOutput net, unsigned int sel)
+	{ m_muxsels[net] = sel; }
+	
 protected:
 	Greenpak4EntityOutput m_pwren;
 	Greenpak4EntityOutput m_vin;
@@ -72,6 +75,9 @@ protected:
 	int m_vinAtten;
 	bool m_isrcEn;
 	int m_hysteresis;
+	
+	//Map of <signal, muxsel> tuples for input mux
+	std::map<Greenpak4EntityOutput, unsigned int> m_muxsels;
 };
 
 #endif	//Greenpak4Comparator_h
