@@ -61,11 +61,13 @@ void Greenpak4IOB::CommitChanges()
 	auto niob = dynamic_cast<Greenpak4NetlistPort*>(GetNetlistEntity());
 	if(niob == NULL)
 		return;
-	
-	//TODO: support array nets
 	auto net = niob->m_net;
 			
 	//printf("    Configuring IOB %d\n", iob->GetPinNumber());
+	
+	//If we get here, we're not unused.
+	//Default for USED nets, unless otherwise specced, is to float
+	m_pullDirection = PULL_NONE;
 
 	//Apply attributes to configure the net
 	for(auto x : net->m_attributes)
