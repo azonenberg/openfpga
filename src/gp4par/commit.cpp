@@ -83,8 +83,10 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			}
 			
 			//Cross connections
+			//Only use these if destination node is general fabric routing; dedicated routing can cross between
+			//the matrices freely
 			unsigned int srcmatrix = src->GetMatrix();
-			if(srcmatrix != dst->GetMatrix())
+			if( (srcmatrix != dst->GetMatrix()) && dst->IsGeneralFabricInput(edge->m_destport) )
 			{
 				//Reuse existing connections, if any
 				if(nodemap.find(src) != nodemap.end())
