@@ -370,7 +370,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	auto pin12 = m_iobs[12]->GetOutput("");
 	auto pin13 = m_iobs[13]->GetOutput("");
 	auto pin15 = m_iobs[15]->GetOutput("");
-	auto vdd = m_constantOne->GetOutput("VOUT");
+	auto vdd = m_constantOne->GetOutput("OUT");
 	m_acmps[0]->AddInputMuxEntry(pin6, 0);
 	//m_acmps[0]->AddInputMuxEntry(pin6_buf, 1);
 	m_acmps[0]->AddInputMuxEntry(vdd, 2);
