@@ -87,7 +87,7 @@ module Analog(bg_ok, vref_750, vin, cout1, cout2);
 		.VIN_ISRC_EN(1'b0),
 		.HYSTERESIS(8'd25)
 	) cmp1 (
-		.PWREN(1'b1),
+		.PWREN(por_done),
 		.OUT(cout1),
 		.VIN(vin),
 		.VREF(vref_750)
@@ -110,11 +110,11 @@ module Analog(bg_ok, vref_750, vin, cout1, cout2);
 	
 	GP_ACMP #(
 		.BANDWIDTH("LOW"),
-		.VIN_ATTEN(4'd4),
+		.VIN_ATTEN(4'd1),
 		.VIN_ISRC_EN(1'b0),
 		.HYSTERESIS(8'd25)
 	) cmp2 (
-		.PWREN(1'b1),
+		.PWREN(por_done),
 		.OUT(cout2),
 		.VIN(vin),
 		.VREF(vref_900)
