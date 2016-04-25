@@ -62,9 +62,12 @@ public:
 	Greenpak4EntityOutput GetInput()
 	{ return m_vin; }
 	
-	//Helper used by DRC to poke ACMP0's mux if necessary
+	//Helper used by DRC to poke ACMP0's config if necessary
 	void SetInput(Greenpak4EntityOutput input)
 	{ m_vin = input; }
+	
+	void SetPowerEn(Greenpak4EntityOutput pwren)
+	{ m_pwren = pwren; }
 	
 protected:
 	Greenpak4EntityOutput m_pwren;

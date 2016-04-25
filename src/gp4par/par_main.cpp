@@ -186,6 +186,18 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 					}
 					exit(-1);
 				}
+				
+				//If ACMP0 is not used, but we use its output, configure it
+				//TODO: for better power efficiency, turn on only when a downstream comparator is on?
+				if( (device->GetAcmp(0)->GetInput() == gnd) && (inputs.size() > 0) )
+				{
+					printf("    INFO: Enabling ACMP0 and configuring input mux, since output of mux is used "
+						"but ACMP0 is not instantiated\n");
+					
+					auto acmp0 = device->GetAcmp(0);
+					acmp0->SetInput(shared_input);
+					acmp0->SetPowerEn(device->GetPowerOnReset()->GetOutput("RST_DONE"));
+				}
 			}
 			break;
 		
