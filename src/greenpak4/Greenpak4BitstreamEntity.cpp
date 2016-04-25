@@ -96,6 +96,20 @@ Greenpak4NetlistEntity* Greenpak4BitstreamEntity::GetNetlistEntity()
 	return static_cast<Greenpak4NetlistEntity*>(mate->GetData());
 }
 
+/**
+	@brief Returns true if the given named port is general fabric routing
+ */
+bool Greenpak4BitstreamEntity::IsGeneralFabricInput(string port) const
+{
+	auto ports = GetInputPorts();
+	for(auto p : ports)
+	{
+		if(p == port)
+			return true;
+	}
+	return false;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Debug log helpers
 

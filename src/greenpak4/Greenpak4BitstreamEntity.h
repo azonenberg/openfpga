@@ -126,6 +126,8 @@ public:
 	//Commit changes from the assigned PAR graph node to us
 	virtual void CommitChanges() =0;
 	
+	bool IsGeneralFabricInput(std::string port) const;
+	
 protected:
 
 	///Return our assigned netlist entity, if we have one (or NULL if not)
