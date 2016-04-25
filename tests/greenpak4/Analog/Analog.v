@@ -18,7 +18,7 @@
 
 `default_nettype none
 
-module Analog(bg_ok, vref_out, vin, cout);
+module Analog(bg_ok, vref_750, vin, cout1, cout2);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -28,14 +28,17 @@ module Analog(bg_ok, vref_out, vin, cout);
 	
 	(* LOC = "P19" *)
 	(* IBUF_TYPE = "ANALOG" *)
-	output wire vref_out;
+	output wire vref_750;
 	
 	(* LOC = "P6" *)
 	(* IBUF_TYPE = "ANALOG" *)
 	input wire vin;
 	
 	(* LOC = "P18" *)
-	output wire cout;
+	output wire cout1;
+	
+	(* LOC = "P17" *)
+	output wire cout2;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
@@ -70,9 +73,9 @@ module Analog(bg_ok, vref_out, vin, cout);
 	GP_VREF #(
 		.VIN_DIV(4'd1),
 		.VREF(16'd750)
-	) vref (
+	) vr750 (
 		.VIN(1'b0),
-		.VOUT(vref_out)
+		.VOUT(vref_750)
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,14 +83,41 @@ module Analog(bg_ok, vref_out, vin, cout);
 	
 	GP_ACMP #(
 		.BANDWIDTH("LOW"),
-		.VIN_ATTEN(1'b1),
+		.VIN_ATTEN(4'd1),
 		.VIN_ISRC_EN(1'b0),
-		.HYSTERESIS(8'd50)
-	) comparator (
+		.HYSTERESIS(8'd25)
+	) cmp1 (
 		.PWREN(1'b1),
-		.OUT(cout),
+		.OUT(cout1),
 		.VIN(vin),
-		.VREF(vref_out)
+		.VREF(vref_750)
+	);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Voltage reference driving an internal comparator only
+	
+	wire vref_900;
+	GP_VREF #(
+		.VIN_DIV(4'd1),
+		.VREF(16'd900)
+	) vr900 (
+		.VIN(1'b0),
+		.VOUT(vref_900)
+	);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Comparator checking vin against the second reference
+	
+	GP_ACMP #(
+		.BANDWIDTH("LOW"),
+		.VIN_ATTEN(4'd4),
+		.VIN_ISRC_EN(1'b0),
+		.HYSTERESIS(8'd25)
+	) cmp2 (
+		.PWREN(1'b1),
+		.OUT(cout2),
+		.VIN(vin),
+		.VREF(vref_900)
 	);
 	
 endmodule

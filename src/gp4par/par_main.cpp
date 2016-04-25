@@ -132,11 +132,68 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		}
 	}
 	
-	//TODO: Check for multiple ACMPs using different settings of ACMP0's output mux
-	//TODO: this is SLG46620v specific, how to do?
+	//Check for multiple ACMPs using different settings of ACMP0's output mux
+	typedef pair<string, Greenpak4EntityOutput> spair;
+	switch(device->GetPart())
+	{
+		case Greenpak4Device::GREENPAK4_SLG46620:
+			{				
+				auto pin6 = device->GetIOB(6)->GetOutput("");
+				auto vdd = device->GetPower();
+				auto gnd = device->GetGround();
+				
+				vector<spair> inputs;
+				
+				//Loop over each ACMP that could possibly use the ACMP0 (shared) mux
+				for(unsigned int i=0; i<device->GetAcmpCount(); i++)
+				{
+					auto acmp = device->GetAcmp(i);
+					auto input = acmp->GetInput();
+					
+					//If this comparator is not using one of ACMP0's inputs, we don't care
+					//TODO: buffered pin 6 is a candidate too
+					if((input != pin6) && (input != vdd) )
+						continue;
+						
+					//Look up the instance name of the comparator. Sanity check that it's used.
+					auto mate = acmp->GetPARNode()->GetMate();
+					if(mate == NULL)
+						continue;
+					auto node = static_cast<Greenpak4NetlistEntity*>(mate->GetData());
+					inputs.push_back(spair(node->m_name, input));
+				}
+					
+				//Check the active inputs and make sure they're the same	
+				Greenpak4EntityOutput shared_input = gnd;
+				for(auto s : inputs)
+				{
+					//If the shared input isn't used, this is the new value for the mux
+					if(shared_input == gnd)
+						shared_input = s.second;
+						
+					//If the shared input is used, but has the same value, we're good - the sharing did its job
+					if(shared_input == s.second)
+						continue;
+
+					//Problem! Incompatible mux settings
+					fprintf(stderr,
+						"    ERROR: Multiple comparators tried to simultaneously use different outputs from "
+						"the ACMP0 input mux\n");
+					for(auto p : inputs)
+					{
+						printf("        Comparator %10s requested %s\n",
+							p.first.c_str(), p.second.GetOutputName().c_str());
+					}
+					exit(-1);
+				}
+			}
+			break;
+		
+		default:
+			break;
+	}
 	
 	//Check for multiple oscillators with power-down enabled but not the same source
-	typedef pair<string, Greenpak4EntityOutput> spair;
 	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();
 	Greenpak4RingOscillator* rosc = device->GetRingOscillator();
 	Greenpak4RCOscillator* rcosc = device->GetRCOscillator();
