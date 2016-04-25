@@ -50,7 +50,7 @@ string Greenpak4Bandgap::GetDescription()
 	return "BANDGAP0";
 }
 
-vector<string> Greenpak4Bandgap::GetInputPorts()
+vector<string> Greenpak4Bandgap::GetInputPorts() const
 {
 	vector<string> r;
 	//no inputs
@@ -62,7 +62,7 @@ void Greenpak4Bandgap::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
 	//no inputs
 }
 
-vector<string> Greenpak4Bandgap::GetOutputPorts()
+vector<string> Greenpak4Bandgap::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("OK");

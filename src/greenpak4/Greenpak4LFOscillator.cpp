@@ -51,7 +51,7 @@ bool Greenpak4LFOscillator::IsConstantPowerDown()
 	return m_powerDown.IsPowerRail();
 }
 
-vector<string> Greenpak4LFOscillator::GetInputPorts()
+vector<string> Greenpak4LFOscillator::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("PWRDN");
@@ -66,7 +66,7 @@ void Greenpak4LFOscillator::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4LFOscillator::GetOutputPorts()
+vector<string> Greenpak4LFOscillator::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("CLKOUT");

@@ -50,7 +50,7 @@ string Greenpak4Inverter::GetDescription()
 	return string(buf);
 }
 
-vector<string> Greenpak4Inverter::GetInputPorts()
+vector<string> Greenpak4Inverter::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("IN");
@@ -65,7 +65,7 @@ void Greenpak4Inverter::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4Inverter::GetOutputPorts()
+vector<string> Greenpak4Inverter::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("OUT");

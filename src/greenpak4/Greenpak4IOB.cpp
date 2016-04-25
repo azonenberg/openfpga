@@ -189,7 +189,7 @@ unsigned int Greenpak4IOB::GetOutputNetNumber(string port)
 		return -1;
 }
 
-vector<string> Greenpak4IOB::GetInputPorts()
+vector<string> Greenpak4IOB::GetInputPorts() const
 {
 	vector<string> r;
 	//r.push_back("I");
@@ -197,7 +197,7 @@ vector<string> Greenpak4IOB::GetInputPorts()
 	return r;
 }
 
-vector<string> Greenpak4IOB::GetOutputPorts()
+vector<string> Greenpak4IOB::GetOutputPorts() const
 {
 	vector<string> r;
 	//r.push_back("I");

@@ -56,7 +56,7 @@ string Greenpak4VoltageReference::GetDescription()
 	return string(buf);
 }
 
-vector<string> Greenpak4VoltageReference::GetInputPorts()
+vector<string> Greenpak4VoltageReference::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("VIN");
@@ -71,7 +71,7 @@ void Greenpak4VoltageReference::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4VoltageReference::GetOutputPorts()
+vector<string> Greenpak4VoltageReference::GetOutputPorts() const
 {
 	vector<string> r;
 	//no general fabric outputs

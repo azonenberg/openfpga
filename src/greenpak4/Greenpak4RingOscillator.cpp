@@ -52,7 +52,7 @@ bool Greenpak4RingOscillator::IsConstantPowerDown()
 	return m_powerDown.IsPowerRail();
 }
 
-vector<string> Greenpak4RingOscillator::GetInputPorts()
+vector<string> Greenpak4RingOscillator::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("PWRDN");
@@ -67,7 +67,7 @@ void Greenpak4RingOscillator::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4RingOscillator::GetOutputPorts()
+vector<string> Greenpak4RingOscillator::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("CLKOUT_FABRIC");

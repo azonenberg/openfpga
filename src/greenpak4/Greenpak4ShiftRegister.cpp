@@ -56,7 +56,7 @@ string Greenpak4ShiftRegister::GetDescription()
 	return string(buf);
 }
 
-vector<string> Greenpak4ShiftRegister::GetInputPorts()
+vector<string> Greenpak4ShiftRegister::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("IN");
@@ -77,7 +77,7 @@ void Greenpak4ShiftRegister::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4ShiftRegister::GetOutputPorts()
+vector<string> Greenpak4ShiftRegister::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("OUTA");

@@ -105,7 +105,7 @@ void Greenpak4Counter::CommitChanges()
 		m_preDivide = (atoi(ncell->m_parameters["CLKIN_DIVIDE"].c_str()));
 }
 
-vector<string> Greenpak4Counter::GetInputPorts()
+vector<string> Greenpak4Counter::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("RST");
@@ -122,7 +122,7 @@ void Greenpak4Counter::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4Counter::GetOutputPorts()
+vector<string> Greenpak4Counter::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("OUT");

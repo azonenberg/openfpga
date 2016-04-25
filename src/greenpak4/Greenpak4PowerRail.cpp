@@ -59,7 +59,7 @@ bool Greenpak4PowerRail::Save(bool* /*bitstream*/)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-vector<string> Greenpak4PowerRail::GetInputPorts()
+vector<string> Greenpak4PowerRail::GetInputPorts() const
 {
 	vector<string> r;
 	//no inputs
@@ -71,7 +71,7 @@ void Greenpak4PowerRail::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/
 	//no inputs
 }
 
-vector<string> Greenpak4PowerRail::GetOutputPorts()
+vector<string> Greenpak4PowerRail::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("OUT");

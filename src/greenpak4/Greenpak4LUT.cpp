@@ -117,7 +117,7 @@ void Greenpak4LUT::CommitChanges()
 	}
 }
 
-vector<string> Greenpak4LUT::GetInputPorts()
+vector<string> Greenpak4LUT::GetInputPorts() const
 {
 	vector<string> r;
 	switch(m_order)
@@ -146,7 +146,7 @@ void Greenpak4LUT::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4LUT::GetOutputPorts()
+vector<string> Greenpak4LUT::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("OUT");

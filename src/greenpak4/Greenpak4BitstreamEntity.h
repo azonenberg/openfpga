@@ -118,10 +118,10 @@ public:
 	{ return m_dual; }
 	
 	//Get a list of input ports on this node that connect to general fabric routing (may be empty)
-	virtual std::vector<std::string> GetInputPorts() =0;
+	virtual std::vector<std::string> GetInputPorts() const =0;
 	
 	//Get a list of output ports on this node that connect to general fabric routing (may be empty)
-	virtual std::vector<std::string> GetOutputPorts() =0;
+	virtual std::vector<std::string> GetOutputPorts() const =0;
 	
 	//Commit changes from the assigned PAR graph node to us
 	virtual void CommitChanges() =0;

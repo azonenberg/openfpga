@@ -69,7 +69,7 @@ string Greenpak4Comparator::GetDescription()
 	return string(buf);
 }
 
-vector<string> Greenpak4Comparator::GetInputPorts()
+vector<string> Greenpak4Comparator::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("PWREN");
@@ -88,7 +88,7 @@ void Greenpak4Comparator::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4Comparator::GetOutputPorts()
+vector<string> Greenpak4Comparator::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("OUT");
@@ -223,7 +223,8 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 	//Invalid input
 	else if(m_muxsels.find(m_vin) == m_muxsels.end())
 	{
-		fprintf(stderr, "ERROR: Invalid ACMP input (not a known mux configuration)\n");
+		fprintf(stderr, "ERROR: Invalid ACMP input (tried to feed %s to %s)\n",
+			m_vin.GetDescription().c_str(), GetDescription().c_str());
 		return false;
 	}
 	

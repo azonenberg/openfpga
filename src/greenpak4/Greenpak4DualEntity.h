@@ -40,8 +40,8 @@ public:
 	
 	virtual Greenpak4BitstreamEntity* GetRealEntity();
 	
-	virtual std::vector<std::string> GetInputPorts();
-	virtual std::vector<std::string> GetOutputPorts();
+	virtual std::vector<std::string> GetInputPorts() const;
+	virtual std::vector<std::string> GetOutputPorts() const;
 	
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);

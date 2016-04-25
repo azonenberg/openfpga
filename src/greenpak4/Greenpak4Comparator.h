@@ -50,13 +50,21 @@ public:
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
 	
-	virtual std::vector<std::string> GetInputPorts();
-	virtual std::vector<std::string> GetOutputPorts();
+	virtual std::vector<std::string> GetInputPorts() const;
+	virtual std::vector<std::string> GetOutputPorts() const;
 	
 	virtual void CommitChanges();
 	
+	//Accessors
 	void AddInputMuxEntry(Greenpak4EntityOutput net, unsigned int sel)
 	{ m_muxsels[net] = sel; }
+	
+	Greenpak4EntityOutput GetInput()
+	{ return m_vin; }
+	
+	//Helper used by DRC to poke ACMP0's mux if necessary
+	void SetInput(Greenpak4EntityOutput input)
+	{ m_vin = input; }
 	
 protected:
 	Greenpak4EntityOutput m_pwren;

@@ -49,7 +49,7 @@ Greenpak4Flipflop::~Greenpak4Flipflop()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-vector<string> Greenpak4Flipflop::GetInputPorts()
+vector<string> Greenpak4Flipflop::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("D");
@@ -83,7 +83,7 @@ void Greenpak4Flipflop::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4Flipflop::GetOutputPorts()
+vector<string> Greenpak4Flipflop::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("Q");

@@ -53,12 +53,12 @@ string Greenpak4DualEntity::GetDescription()
 	return m_dual->GetDescription();
 }
 
-vector<string> Greenpak4DualEntity::GetInputPorts()
+vector<string> Greenpak4DualEntity::GetInputPorts() const
 {
 	return m_dual->GetInputPorts();
 }
 
-vector<string> Greenpak4DualEntity::GetOutputPorts()
+vector<string> Greenpak4DualEntity::GetOutputPorts() const
 {
 	return m_dual->GetOutputPorts();
 }

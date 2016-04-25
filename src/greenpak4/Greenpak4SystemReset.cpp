@@ -49,14 +49,14 @@ string Greenpak4SystemReset::GetDescription()
 	return "SYSRST0";
 }
 
-vector<string> Greenpak4SystemReset::GetInputPorts()
+vector<string> Greenpak4SystemReset::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("RST");
 	return r;
 }
 
-vector<string> Greenpak4SystemReset::GetOutputPorts()
+vector<string> Greenpak4SystemReset::GetOutputPorts() const
 {
 	vector<string> r;
 	//no output ports

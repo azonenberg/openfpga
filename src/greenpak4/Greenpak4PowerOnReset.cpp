@@ -48,7 +48,7 @@ string Greenpak4PowerOnReset::GetDescription()
 	return "POR0";
 }
 
-vector<string> Greenpak4PowerOnReset::GetInputPorts()
+vector<string> Greenpak4PowerOnReset::GetInputPorts() const
 {
 	vector<string> r;
 	//no inputs
@@ -60,7 +60,7 @@ void Greenpak4PowerOnReset::SetInput(string /*port*/, Greenpak4EntityOutput /*sr
 	//no inputs
 }
 
-vector<string> Greenpak4PowerOnReset::GetOutputPorts()
+vector<string> Greenpak4PowerOnReset::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("RST_DONE");

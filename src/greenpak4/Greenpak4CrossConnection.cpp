@@ -78,14 +78,14 @@ void Greenpak4CrossConnection::CommitChanges()
 	//nothing to do here, we have no configuration to modify
 }
 
-vector<string> Greenpak4CrossConnection::GetInputPorts()
+vector<string> Greenpak4CrossConnection::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("I");
 	return r;
 }
 
-vector<string> Greenpak4CrossConnection::GetOutputPorts()
+vector<string> Greenpak4CrossConnection::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("O");
