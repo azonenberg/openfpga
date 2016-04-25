@@ -240,8 +240,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	uint32_t current_matrix = current_site->GetMatrix();
 	uint32_t label = current_node->GetLabel();
 	
-	bool unroutable = (m_unroutableNodes.find(pivot) != m_unroutableNodes.end());
-	
+	//bool unroutable = (m_unroutableNodes.find(pivot) != m_unroutableNodes.end());
 	//Debug log
 	//printf("        Seeking new placement for node %s (unroutable = %d)\n",
 	//	current_site->GetDescription().c_str(), unroutable);
