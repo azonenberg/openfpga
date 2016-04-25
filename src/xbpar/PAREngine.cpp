@@ -302,7 +302,7 @@ uint32_t PAREngine::ComputeCost()
 {
 	std::vector<PARGraphEdge*> unroutes;
 	return
-		ComputeUnroutableCost(unroutes) +
+		ComputeUnroutableCost(unroutes)*10 +	//weight unroutability above everything else
 		ComputeTimingCost() +
 		ComputeCongestionCost();
 }
@@ -349,6 +349,62 @@ uint32_t PAREngine::ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes)
 				unroutes.push_back(nedge);
 				cost ++;
 			}
+		}
+	}
+	
+	return cost;
+}
+
+/**
+	@brief Compute the unroutability cost for a single node and a candidate placement for it
+ */
+uint32_t PAREngine::ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode* candidate)
+{
+	uint32_t cost = 0;
+	
+	//Loop over each edge in the source netlist and try to find a matching edge in the destination.
+	//No checks for multiple signals in one place for now.
+	for(uint32_t i=0; i<m_netlist->GetNumNodes(); i++)
+	{
+		PARGraphNode* netsrc = m_netlist->GetNodeByIndex(i);
+		for(uint32_t j=0; j<netsrc->GetEdgeCount(); j++)
+		{
+			PARGraphEdge* nedge = netsrc->GetEdgeByIndex(j);
+			PARGraphNode* netdst = nedge->m_destnode;
+			
+			//If either the source or destination is not our pivot node, ignore it
+			if( (netsrc != pivot) && (netdst != pivot) )
+				continue;
+			
+			//Find the hypothetical source/dest pair
+			PARGraphNode* devsrc = netsrc->GetMate();
+			PARGraphNode* devdst = netdst->GetMate();
+			if(netsrc == pivot)
+				devsrc = candidate;
+			else
+				devdst = candidate;
+			
+			//For now, just bruteforce to find a matching edge (if there is one)
+			bool found = false;
+			for(uint32_t k=0; k<devsrc->GetEdgeCount(); k++)
+			{
+				PARGraphEdge* dedge = devsrc->GetEdgeByIndex(k);
+				if(
+					(dedge->m_destnode == devdst) &&
+					(dedge->m_sourceport == nedge->m_sourceport) &&
+					(dedge->m_destport == nedge->m_destport)
+					)
+				{
+					
+					found = true;
+					break;
+				}
+			}
+			
+			//If nothing found, add to cost
+			if(!found)
+				cost ++;
+
 		}
 	}
 	

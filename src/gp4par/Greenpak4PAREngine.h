@@ -38,6 +38,9 @@ protected:
 	
 	bool CantMoveSrc(Greenpak4BitstreamEntity* src);
 	bool CantMoveDst(Greenpak4BitstreamEntity* dst);
+	
+	//Cached list of unroutable nodes for the current iteration
+	std::set<PARGraphNode*> m_unroutableNodes;
 };
 
 #endif

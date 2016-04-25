@@ -43,6 +43,7 @@ protected:
 	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes) =0;
 
 	virtual uint32_t ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration);
+	
 	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
 
 	virtual uint32_t ComputeCongestionCost();
@@ -52,6 +53,8 @@ protected:
 	virtual bool SanityCheck(std::map<uint32_t, std::string> label_names, bool verbose);
 	virtual void InitialPlacement(bool verbose);
 	virtual bool OptimizePlacement(std::vector<PARGraphNode*>& badnodes, bool verbose);
+
+	virtual uint32_t ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode* candidate);
 
 	PARGraph* m_netlist;
 	PARGraph* m_device;

@@ -173,14 +173,22 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 	}
 	
 	//Find all nodes that are on one end of an unroutable edge
+	m_unroutableNodes.clear();
 	std::vector<PARGraphEdge*> unroutes;
+	ComputeUnroutableCost(unroutes);
 	for(auto edge : unroutes)
 	{
 		if(!CantMoveSrc(static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetData())))
+		{
+			m_unroutableNodes.insert(edge->m_sourcenode);
 			nodes.insert(edge->m_sourcenode);
+		}
 		if(!CantMoveDst(static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetData())))
+		{
+			m_unroutableNodes.insert(edge->m_destnode);
 			nodes.insert(edge->m_destnode);
-	}	
+		}
+	}
 	
 	//Push into the final output list
 	for(auto x : nodes)
@@ -232,7 +240,12 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	uint32_t current_matrix = current_site->GetMatrix();
 	uint32_t label = current_node->GetLabel();
 	
-	//TODO: Decide value for this based on whether routing pressure was the reason for the move
+	//Debug log
+	bool unroutable = (m_unroutableNodes.find(pivot) != m_unroutableNodes.end());
+	printf("        Seeking new placement for node %s (unroutable = %d)\n",
+		current_site->GetDescription().c_str(), unroutable);
+	
+	//Default to trying the opposite matrix
 	uint32_t target_matrix = 1 - current_matrix;
 	
 	//Make the list of candidate placements
@@ -242,21 +255,33 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 		PARGraphNode* node = m_device->GetNodeByLabelAndIndex(label, i);
 		Greenpak4BitstreamEntity* entity = static_cast<Greenpak4BitstreamEntity*>(node->GetData());
 		
-		//TODO: Check if candidate placement is routable
+		//Do not consider unroutable positions at this time
+		if(0 != ComputeNodeUnroutableCost(pivot, node))
+			continue;
 		
 		if(entity->GetMatrix() == target_matrix)
 			temp_candidates.insert(node);
 	}
 		
-	//If no routable candidates found in the optimal matrix, check the other matrix too
+	//If no routable candidates found in the opposite matrix, check all matrices
 	if(temp_candidates.empty())
 	{
 		for(uint32_t i=0; i<m_device->GetNumNodesWithLabel(label); i++)
 		{
 			PARGraphNode* node = m_device->GetNodeByLabelAndIndex(label, i);
-			//TODO: check if candidate placement is routable
+			
+			if(0 != ComputeNodeUnroutableCost(pivot, node))
+				continue;
+			
 			temp_candidates.insert(node);
 		}
+	}
+	
+	//If no routable candidates found anywhere, consider the entire chip and hope we can patch things up later
+	if(temp_candidates.empty())
+	{
+		for(uint32_t i=0; i<m_device->GetNumNodesWithLabel(label); i++)
+			temp_candidates.insert(m_device->GetNodeByLabelAndIndex(label, i));
 	}
 	
 	//Move to a vector for random access
@@ -268,7 +293,6 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 		return NULL;
 	
 	//Search for an unused node, return the first one we find (since they're indistinguishable, right?)
-	//TODO: how do we handle non-indistinguishable nodes (hard IP with dedicated connections)
 	for(auto x : candidates)
 	{
 		if(x->GetMate() == NULL)
