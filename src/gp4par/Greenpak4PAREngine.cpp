@@ -57,8 +57,13 @@ uint32_t Greenpak4PAREngine::ComputeCongestionCost()
 		{
 			auto edge = netnode->GetEdgeByIndex(i);
 			auto src = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
+			auto dst = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
 			uint32_t sm = src->GetMatrix();
-			uint32_t dm = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData())->GetMatrix();
+			uint32_t dm = dst->GetMatrix();
+			
+			//If we're driving a port that isn't general fabric routing, then it doesn't compete for cross connections
+			if(!dst->IsGeneralFabricInput(edge->m_destport))
+				continue;
 			
 			//If the source has a dual, don't count this in the cost since it can route anywhere
 			if(src->GetDual() != NULL)
@@ -164,6 +169,8 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 				if(CantMoveSrc(src))
 					continue;
 				if(CantMoveDst(dst))
+					continue;
+				if(!dst->IsGeneralFabricInput(edge->m_destport))
 					continue;
 					
 				//Add the node
