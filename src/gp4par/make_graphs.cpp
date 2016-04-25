@@ -673,15 +673,15 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		vdd->AddEdge("OUT", acmp0, "VIN");
 		
 		pin6->AddEdge("", acmp1, "VIN");
-		vdd->AddEdge("", acmp1, "VIN");
+		vdd->AddEdge("OUT", acmp1, "VIN");
 		
 		pin6->AddEdge("", acmp2, "VIN");
-		vdd->AddEdge("", acmp2, "VIN");
+		vdd->AddEdge("OUT", acmp2, "VIN");
 		
 		pin6->AddEdge("", acmp3, "VIN");
-		vdd->AddEdge("", acmp3, "VIN");
+		vdd->AddEdge("OUT", acmp3, "VIN");
 		
 		pin6->AddEdge("", acmp4, "VIN");
-		vdd->AddEdge("", acmp4, "VIN");
+		vdd->AddEdge("OUT", acmp4, "VIN");
 	}
 }
