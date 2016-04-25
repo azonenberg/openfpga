@@ -190,8 +190,6 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_inverters.push_back(new Greenpak4Inverter(this, 0, 55, 23));
 	m_inverters.push_back(new Greenpak4Inverter(this, 1, 55, 23));
 	
-	//TODO: Comparators
-	
 	//TODO: External clocks??
 	
 	//Low-frequency oscillator
@@ -357,6 +355,23 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 4, 912));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 5, 917));
 	
+	//Analog comparators
+	//config bits:
+	// current source enable
+	// bandwidth
+	// gain
+	// vin
+	// hysteresis
+	m_acmps.push_back(new Greenpak4Comparator(this, 0, 0, 69, 33, 832, 852, 853, 855, 934));
+	m_acmps.push_back(new Greenpak4Comparator(this, 1, 1, 70, 33, 831, 861, 857, 859, 932)); 
+	m_acmps.push_back(new Greenpak4Comparator(this, 2, 1, 71, 34,  0,  862, 864, 863, 930));
+	m_acmps.push_back(new Greenpak4Comparator(this, 3, 1, 72, 35,  0,  866, 867, 869, 928));
+	m_acmps.push_back(new Greenpak4Comparator(this, 4, 0, 70, 34,  0,  875, 871, 873, 926));
+	m_acmps.push_back(new Greenpak4Comparator(this, 5, 0, 71, 35,  0,  880,  0,   0,  924));	//TODO speed doubler
+	
+	//TODO: Figure out how to set the input mux selectors for each?
+	//maybe have a map of <node, muxsel> for each acmp?
+	
 	//TODO: Reserved bits
 	
 	//TODO: Vdd bypass
@@ -432,6 +447,8 @@ void Greenpak4Device::CreateDevice_common()
 	for(auto x : m_shregs)
 		m_bitstuff.push_back(x);
 	for(auto x : m_vrefs)
+		m_bitstuff.push_back(x);
+	for(auto x : m_acmps)
 		m_bitstuff.push_back(x);
 	m_bitstuff.push_back(m_constantZero);
 	m_bitstuff.push_back(m_constantOne);

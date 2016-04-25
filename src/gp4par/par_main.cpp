@@ -132,6 +132,9 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		}
 	}
 	
+	//TODO: Check for multiple ACMPs using different settings of ACMP0's output mux
+	//TODO: this is SLG46620v specific, how to do?
+	
 	//Check for multiple oscillators with power-down enabled but not the same source
 	typedef pair<string, Greenpak4EntityOutput> spair;
 	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();

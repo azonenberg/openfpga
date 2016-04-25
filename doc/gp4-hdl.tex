@@ -137,9 +137,10 @@ The following SLG46620V device features are not supported by gp4par as of this w
 \item Storage elements: output inverter, latch mode
 \item Counters: Delay, FSM, edge detector, PWM, wake-sleep mode, counter cascading.
 All clock sources other than on-chip oscillator. Pre-divider value of 12.
+\item Voltage reference: DAC, divided Vdd, external reference
+\item ACMP: Buffered input on pin 6, buffer bandwidth selection
 \item ADC
 \item DAC
-\item ACMP
 \item PGEN mode of LUT4/PGEN block
 \item Wake-Sleep
 \item DCMP/PWM
@@ -892,7 +893,7 @@ GP_3LUT #(
 % GP_ACMP
 
 \pagebreak
-\subsection{GP\_ACMP: Analog Comparator (NOT IMPLEMENTED)}
+\subsection{GP\_ACMP: Analog Comparator}
 
 \subsubsection{Introduction}
 This primitive represents an analog comparator.
@@ -903,7 +904,17 @@ This primitive represents an analog comparator.
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-FIXME & Input & 1 & The input clock signal\\
+PWREN & Input & 1 &
+	1: normal operation \newline
+	0: power down mode \\
+\hline
+OUT & Output & 1 &
+	1: when VIN $>$ VREF and comparator is running \newline
+	0: when VIN $<$ VREF or comparator is powered down \\
+\hline
+VIN & Input & 1 & Input voltage (Vdd or external analog input from IOB)\\
+\hline
+VREF & Input & 1 & Input reference voltage\\
 \hline
 \end{tabularx}
 
@@ -913,8 +924,18 @@ FIXME & Input & 1 & The input clock signal\\
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
+BANDWIDTH & String & N/A &
+	Comparator bandwidth. Legal values are ``LOW" and ``HIGH", see device datasheet for actual bandwidth values. \\
+\hline
+VIN\_ATTEN & Integer & 3 &
+	Attenuation for the input, represented as inverse gain. Legal values are 1/2/3/4. \\
+\hline
+VIN\_ISRC\_EN & Boolean & 1 &
+	Set to 1 to enable the $100 \mu A$ current source on the input. Note that not all comparators support the current
+	source, check device datasheet for details.\\
+\hline
 HYSTERESIS & Integer & 8 &
-	Hysteresis, in mV. Legal values are 0/25/50/200.\\
+	Hysteresis, in mV. Legal values are 0/25/50/200. See device datasheet for offset notes.\\
 \hline
 \end{tabularx}
 

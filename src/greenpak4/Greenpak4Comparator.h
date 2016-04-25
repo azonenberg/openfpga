@@ -16,78 +16,62 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-`default_nettype none
+#ifndef Greenpak4Comparator_h
+#define Greenpak4Comparator_h
 
-module Analog(bg_ok, vref_out, vin, cout);
+#include "Greenpak4BitstreamEntity.h"
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// I/O declarations
+class Greenpak4Comparator : public Greenpak4BitstreamEntity
+{
+public:
+
+	//Construction / destruction
+	Greenpak4Comparator(
+		Greenpak4Device* device,
+		unsigned int cmpnum,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase_isrc,
+		unsigned int cbase_bw,
+		unsigned int cbase_gain,
+		unsigned int cbase_vin,
+		unsigned int cbase_hyst
+		);
 	
-	(* LOC = "P20" *)
-	output wire bg_ok;
-	
-	(* LOC = "P19" *)
-	(* IBUF_TYPE = "ANALOG" *)
-	output wire vref_out;
-	
-	(* LOC = "P6" *)
-	(* IBUF_TYPE = "ANALOG" *)
-	input wire vin;
-	
-	(* LOC = "P18" *)
-	output wire cout;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// System reset stuff
-
-	//Power-on reset
-	wire por_done;
-	GP_POR #(
-		.POR_TIME(500)
-	) por (
-		.RST_DONE(por_done)
-	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Oscillators
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
 		
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// 1.0V bandgap voltage reference (used by a lot of the mixed signal IP)
+	virtual ~Greenpak4Comparator();
+
+	virtual std::string GetDescription();
 	
-	wire bandgap_vout;
-	GP_BANDGAP #(
-		.AUTO_PWRDN(0),
-		.CHOPPER_EN(1),
-		.OUT_DELAY(550)
-	) bandgap (
-		.OK(bg_ok),
-		.VOUT(bandgap_vout)
-	);
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
 	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Voltage reference driving a comparator and an external pin
+	virtual std::vector<std::string> GetInputPorts();
+	virtual std::vector<std::string> GetOutputPorts();
 	
-	GP_VREF #(
-		.VIN_DIV(4'd1),
-		.VREF(16'd750)
-	) vref (
-		.VIN(1'b0),
-		.VOUT(vref_out)
-	);
+	virtual void CommitChanges();
 	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Comparator checking vin against the reference
+protected:
+	Greenpak4EntityOutput m_pwren;
+	Greenpak4EntityOutput m_vin;
+	Greenpak4EntityOutput m_vref;
 	
-	GP_ACMP #(
-		.BANDWIDTH("LOW"),
-		.VIN_ATTEN(1'b1),
-		.VIN_ISRC_EN(1'b0),
-		.HYSTERESIS(8'd50)
-	) comparator (
-		.PWREN(1'b1),
-		.OUT(cout),
-		.VIN(vin),
-		.VREF(vref_out)
-	);
+	unsigned int m_cmpNum;
 	
-endmodule
+	unsigned int m_cbaseIsrc;
+	unsigned int m_cbaseBw;
+	unsigned int m_cbaseGain;
+	unsigned int m_cbaseVin;
+	unsigned int m_cbaseHyst;
+	
+	bool m_bandwidthHigh;
+	int m_vinAtten;
+	bool m_isrcEn;
+	int m_hysteresis;
+};
+
+#endif	//Greenpak4Comparator_h

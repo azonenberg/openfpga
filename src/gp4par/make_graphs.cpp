@@ -121,6 +121,16 @@ void BuildGraphs(
 		dgraph->AddNode(vnode);
 	}
 	
+	//Make device nodes for the comparators
+	uint32_t acmp_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_ACMP");
+	for(unsigned int i=0; i<device->GetAcmpCount(); i++)
+	{
+		Greenpak4Comparator* acmp = device->GetAcmp(i);
+		PARGraphNode* anode = new PARGraphNode(acmp_label, acmp);
+		acmp->SetPARNode(anode);
+		dgraph->AddNode(anode);
+	}
+	
 	//Make device nodes for each type of flipflop
 	uint32_t dff_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFF");
 	uint32_t dffsr_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFFSR");
@@ -509,6 +519,22 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		//TODO: Disable clock outputs to dedicated routing in matrix 1 if SPI slave is enabled?
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Cache some commonly used stuff
+		
+		auto pin2 = device->GetIOB(2)->GetPARNode();
+		auto pin3 = device->GetIOB(3)->GetPARNode();
+		auto pin4 = device->GetIOB(6)->GetPARNode();
+		auto pin6 = device->GetIOB(6)->GetPARNode();
+		auto pin12 = device->GetIOB(12)->GetPARNode();
+		auto pin13 = device->GetIOB(13)->GetPARNode();
+		auto pin15 = device->GetIOB(15)->GetPARNode();
+		auto pin18 = device->GetIOB(18)->GetPARNode();
+		auto pin19 = device->GetIOB(19)->GetPARNode();
+		
+		auto vdd = device->GetPowerRail(true)->GetPARNode();
+		auto gnd = device->GetPowerRail(false)->GetPARNode();
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// CLOCK INPUTS TO COUNTERS
 		
 		PARGraphNode* cnodes[] =
@@ -579,9 +605,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		// SYSTEM RESET
 		
 		//Can drive reset with ground or pin 2 only
-		auto sysrst = device->GetSystemReset()->GetPARNode();
-		auto pin2 = device->GetIOB(2)->GetPARNode();
-		auto gnd = device->GetPowerRail(false)->GetPARNode();
+		auto sysrst = device->GetSystemReset()->GetPARNode();		
 		pin2->AddEdge("", sysrst, "RST");
 		gnd->AddEdge("", sysrst, "RST");
 		
@@ -589,17 +613,75 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		// REFERENCE OUT
 		
 		//VREF0/1 can drive pin 19
-		auto pin19 = device->GetIOB(19)->GetPARNode();
 		auto vref0 = device->GetVref(0)->GetPARNode();
 		auto vref1 = device->GetVref(1)->GetPARNode();
 		vref0->AddEdge("VOUT", pin19, "");
 		vref1->AddEdge("VOUT", pin19, "");
 		
 		//VREF2/3 can drive pin 18
-		auto pin18 = device->GetIOB(18)->GetPARNode();
 		auto vref2 = device->GetVref(2)->GetPARNode();
 		auto vref3 = device->GetVref(3)->GetPARNode();
 		vref2->AddEdge("VOUT", pin18, "");
 		vref3->AddEdge("VOUT", pin18, "");
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// REFERENCE TO COMPARATORS
+		
+		auto acmp0 = device->GetAcmp(0)->GetPARNode();
+		auto acmp1 = device->GetAcmp(1)->GetPARNode();
+		auto acmp2 = device->GetAcmp(2)->GetPARNode();
+		auto acmp3 = device->GetAcmp(3)->GetPARNode();
+		auto acmp4 = device->GetAcmp(4)->GetPARNode();
+		auto acmp5 = device->GetAcmp(5)->GetPARNode();
+		
+		auto vref4 = device->GetVref(4)->GetPARNode();
+		auto vref5 = device->GetVref(5)->GetPARNode();
+		
+		vref0->AddEdge("VOUT", acmp0, "VREF");
+		vref1->AddEdge("VOUT", acmp1, "VREF");
+		vref2->AddEdge("VOUT", acmp2, "VREF");
+		vref3->AddEdge("VOUT", acmp3, "VREF");
+		vref4->AddEdge("VOUT", acmp4, "VREF");
+		vref5->AddEdge("VOUT", acmp5, "VREF");
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// INPUTS TO COMPARATORS
+		
+		//Dedicated inputs for ACMP0 (none)
+		
+		//Dedicated inputs for ACMP1
+		pin12->AddEdge("", acmp1, "VIN");
+		//TODO: ADC PGA out
+		
+		//Dedicated inputs for ACMP2
+		pin13->AddEdge("", acmp2, "VIN");
+		
+		//Dedicated inputs for ACMP3
+		pin15->AddEdge("", acmp3, "VIN");
+		pin13->AddEdge("", acmp3, "VIN");
+		
+		//Dedicated inputs for ACMP4
+		pin3->AddEdge("", acmp4, "VIN");
+		pin15->AddEdge("", acmp4, "VIN");
+		
+		//Dedicated inputs for ACMP5
+		pin4->AddEdge("", acmp5, "VIN");
+		
+		//acmp0 input before gain stage is fed to everything but acmp5
+		//TODO: pin 6 unity-gain buffer as well (this should be a separate module)
+		pin6->AddEdge("", acmp0, "VIN");
+		vdd->AddEdge("OUT", acmp0, "VIN");
+		
+		pin6->AddEdge("", acmp1, "VIN");
+		vdd->AddEdge("", acmp1, "VIN");
+		
+		pin6->AddEdge("", acmp2, "VIN");
+		vdd->AddEdge("", acmp2, "VIN");
+		
+		pin6->AddEdge("", acmp3, "VIN");
+		vdd->AddEdge("", acmp3, "VIN");
+		
+		pin6->AddEdge("", acmp4, "VIN");
+		vdd->AddEdge("", acmp4, "VIN");
 	}
 }

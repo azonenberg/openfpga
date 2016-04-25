@@ -29,6 +29,7 @@
 
 #include "Greenpak4Bandgap.h" 
 #include "Greenpak4Counter.h"
+#include "Greenpak4Comparator.h"
 #include "Greenpak4CrossConnection.h"
 #include "Greenpak4Flipflop.h"
 #include "Greenpak4Inverter.h"

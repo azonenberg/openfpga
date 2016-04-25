@@ -199,6 +199,15 @@ public:
 	
 	Greenpak4VoltageReference* GetVref(unsigned int i)
 	{ return m_vrefs[i]; }
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// COMPARATORS
+	
+	unsigned int GetAcmpCount()
+	{ return m_acmps.size(); }
+	
+	Greenpak4Comparator* GetAcmp(unsigned int i)
+	{ return m_acmps[i]; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ALL NODES
@@ -208,9 +217,6 @@ public:
 	
 	Greenpak4BitstreamEntity* GetEntity(unsigned int i)
 	{ return m_bitstuff[i]; }
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// OTHER
 
 protected:
 
@@ -271,6 +277,9 @@ protected:
 	
 	///Voltage references
 	std::vector<Greenpak4VoltageReference*> m_vrefs;
+	
+	///Analog comparators
+	std::vector<Greenpak4Comparator*> m_acmps;
 	
 	///Constant digital 1
 	Greenpak4PowerRail* m_constantOne;
