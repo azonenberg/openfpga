@@ -584,7 +584,7 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 			break;
 	}
 		
-	//Write the bitfile (TODO comment more meaningfully?)
+	//Write the bitfile
 	fprintf(fp, "index		value		comment\n");
 	for(unsigned int i=0; i<m_bitlen; i++)
 		fprintf(fp, "%d		%d		//\n", i, bitstream[i]);

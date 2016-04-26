@@ -624,7 +624,8 @@ Extracted 1 counters
 \subsection{Shift Registers}
 
 Yosys provides inference capability for shift registers matching the capabilities of the ``pipe delay" block in the 
-SLG46620/21.
+SLG46620/21. The shift register is automatically initialized to zero at power-up; there is no support for initializing 
+to any other value.
 
 The internal inverter is not yet supported for inference. If this is required for your design, consider manual 
 instantiation of a GP\_SHREG primitive.
@@ -635,7 +636,7 @@ In order to be inferred as a single GP\_SHREG primitive, a shift register must:
 
 \begin{itemize}
 \item Be at most 16 bits in depth
-\item Be initialized to zero (FIXME: confirm with Silego)
+\item Be initialized to zero, or uninitialized
 \item Have either no reset, or a positive level triggered reset to zero
 \item Have at most two taps in the shift register connected to external logic. If more taps are required, a second 
 shift register and/or discrete flipflops may be inferred. 
