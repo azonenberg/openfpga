@@ -196,7 +196,7 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			break;
 			
 		case MODE_PDIFF:
-			bitstream[m_configBase + 2] = false;
+			bitstream[m_configBase + 2] = true;
 			bitstream[m_configBase + 7] = true;
 			break;
 	}

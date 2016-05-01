@@ -136,7 +136,7 @@ module Analog(bg_ok, vref_750, vin, ain1, ain2, pgaout, cout1, cout2);
 	// Programmable-gain analog amplifier
 	
 	GP_PGA #(
-		.GAIN(1),
+		.GAIN(2),
 		.INPUT_MODE("SINGLE")
 	) pga (
 		.VIN_P(ain1),
