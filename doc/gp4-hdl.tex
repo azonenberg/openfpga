@@ -140,7 +140,6 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Voltage reference: DAC, divided Vdd, external references
 \item Comparators: Buffered input on pin 6, global buffer bandwidth selection, routing from PGA, speed doubler, 
 automatic replication of voltage references driving multiple loads
-\item PGA
 \item ADC
 \item DAC
 \item PGEN mode of LUT4/PGEN block
@@ -1435,6 +1434,7 @@ PWRDN\_EN & Boolean & 1 & Set to 1 to enable the PWRDN pin, or 0 to disable. \\
 \hline
 \end{tabularx}
 
+\pagebreak
 \subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-lfosc-example} drives a 108 Hz clock onto clk\_108hz. All power management features 
@@ -1454,6 +1454,80 @@ GP_LFOSC #(
 \end{lstlisting}
 \caption{Example usage of GP\_LFOSC}
 \label{gp-lfosc-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_PGA
+
+\pagebreak
+\clearpage
+\subsection{GP\_PGA: Programmable-Gain Amplifier}
+
+\subsubsection{Introduction}
+This primitive represents a programmable-gain analog amplifier.
+
+If the PGA is only used to drive the ADC, it will automatically power on when the ADC is running and otherwise sleep. 
+If the PGA's output is used by other logic, it will remain on regardless of ADC power state.
+
+Note that VIN\_SEL uses dedicated routing to an IOB (see device datasheet for pin numbering) and cannot be driven 
+by fabric logic or a constant zero.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+VIN\_P & Input & 1 & Positive differential input, or single-ended input A. Tie to 1'b0 if unused.\\
+\hline
+VIN\_N & Input & 1 & Negative differential input, or single ended input B. Tie to 1'b0 if unused.\\
+\hline
+VIN\_SEL & Input & 1 & Input mux selector. 1 = VIN\_P, 0 = VIN\_N.
+	\begin{itemize}
+		\item Differential or pseudo-differential modes: Ignored, tie to 1'b1
+		\item Single-ended mode: Tie to 1'b1 or input signal from IOB.
+	\end{itemize}\\
+\hline
+VOUT & Output & 1 & Analog output\\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+GAIN & Real & N/A &
+	Gain of the PGA. Legal values: 
+	
+	\begin{itemize}
+		\item Differential or pseudo-differential modes: 1, 2, 4, 8, 16, or 32
+		\item Single-ended mode: 0.25, 0.5, 1, 2, or 4
+	\end{itemize}\\
+	
+\hline
+INPUT\_MODE & String & N/A &
+	Input buffer configuration.
+	\begin{itemize}
+		\item ``SINGLE": single-ended input
+		\item ``DIFF": true differential input
+		\item ``PDIFF": pseudo-differential input
+	\end{itemize}\\
+\hline
+\end{tabularx}
+
+\pagebreak
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-pga-example} needs to be written!
+
+\begin{figure}[h]
+\begin{lstlisting}
+x
+\end{lstlisting}
+\caption{Example usage of GP\_PGA}
+\label{gp-pga-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
