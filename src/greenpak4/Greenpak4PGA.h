@@ -50,6 +50,16 @@ protected:
 	Greenpak4EntityOutput m_vinp;
 	Greenpak4EntityOutput m_vinn;
 	Greenpak4EntityOutput m_vinsel;
+	
+	//decimal fixed point: legal values 25, 50, 100, 200, 400, 800, 1600, 3200
+	unsigned int m_gain;
+	
+	enum InputModes
+	{
+		MODE_SINGLE,
+		MODE_DIFF,
+		MODE_PDIFF
+	} m_inputMode;
 };
 
 #endif	//Greenpak4PGA_h

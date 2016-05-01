@@ -101,6 +101,19 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 			bitstream[m_analogConfigBase + 0] = (sel & 1) ? true : false;
 		}
 		
+		//If our output is from a PGA, special processing needed
+		else if(m_outputSignal.IsPGA())
+		{
+			//Float the digital output buffer
+			Greenpak4EntityOutput gnd = m_device->GetGround();
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord, gnd))
+				return false;
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord+1, gnd))
+				return false;
+				
+			//TODO: Configure the analog output
+		}
+		
 		//Digital output and enable
 		else
 		{

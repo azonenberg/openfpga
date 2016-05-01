@@ -29,12 +29,11 @@ Greenpak4PGA::Greenpak4PGA(
 		Greenpak4Device* device,
 		unsigned int cbase)
 		: Greenpak4BitstreamEntity(device, 0, -1, -1, cbase)
-		/*, m_clock(device->GetGround())
-		, m_input(device->GetGround())
-		, m_reset(device->GetGround())	//default must be reset
-		, m_delayA(1)					//default must be 0xf so that unused ones show as unused
-		, m_delayB(1)
-		, m_invertA(false)*/
+		, m_vinp(device->GetGround())
+		, m_vinn(device->GetGround())
+		, m_vinsel(device->GetPower())
+		, m_gain(100)
+		, m_inputMode(MODE_SINGLE)
 {
 }
 
@@ -54,46 +53,33 @@ string Greenpak4PGA::GetDescription()
 vector<string> Greenpak4PGA::GetInputPorts() const
 {
 	vector<string> r;
-	/*
-	r.push_back("IN");
-	r.push_back("nRST");
-	r.push_back("CLK");
-	*/
+	//no general fabric inputs
 	return r;
 }
 
 void Greenpak4PGA::SetInput(string port, Greenpak4EntityOutput src)
 {
-	/*
-	if(port == "IN")
-		m_input = src;
-	else if(port == "nRST")
-		m_reset = src;
-	else if(port == "CLK")
-		m_clock = src;
-	*/
+	if(port == "VIN_P")
+		m_vinp = src;
+	else if(port == "VIN_N")
+		m_vinn = src;
+	else if(port == "VIN_SEL")
+		m_vinsel = src;
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
 vector<string> Greenpak4PGA::GetOutputPorts() const
 {
 	vector<string> r;
-	/*
-	r.push_back("OUTA");
-	r.push_back("OUTB");
-	*/
+	//VOUT is not general fabric routing
 	return r;
 }
 
 unsigned int Greenpak4PGA::GetOutputNetNumber(string port)
 {
-	/*
-	if(port == "OUTA")
-		return m_outputBaseWord + 1;
-	else if(port == "OUTB")
-		return m_outputBaseWord;
-	else*/
-		return -1;
+	//no general fabric outputs
+	return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,30 +92,48 @@ void Greenpak4PGA::CommitChanges()
 	if(ncell == NULL)
 		return;
 	
-	/*
-	if(ncell->HasParameter("OUTA_DELAY"))
+	if(ncell->HasParameter("GAIN"))
 	{
-		m_delayA = atoi(ncell->m_parameters["OUTA_DELAY"].c_str());
-		if( (m_delayA < 1) || (m_delayA > 16) )
+		//convert to integer so we can sanity check more easily
+		float gain = atof(ncell->m_parameters["GAIN"].c_str());
+		int igain = gain*100;
+		
+		switch(igain)
 		{
-			fprintf(stderr, "ERROR: Shift register OUTA_DELAY must be in [1, 16]\n");
-			exit(-1);
+			case 25:
+			case 50:
+			case 100:
+			case 200:
+			case 400:
+			case 800:
+			case 1600:
+			case 3200:
+				m_gain = igain;
+				break;
+				
+			default:
+				fprintf(stderr, "ERROR: PGA GAIN must be 0.25, 0.25, 1, 2, 4, 8, 16, 32\n");
+				exit(-1);
 		}
 	}
 
-	if(ncell->HasParameter("OUTB_DELAY"))
+	if(ncell->HasParameter("INPUT_MODE"))
 	{
-		m_delayB = atoi(ncell->m_parameters["OUTB_DELAY"].c_str());
-		if( (m_delayB < 1) || (m_delayB > 16) )
+		string mode = ncell->m_parameters["INPUT_MODE"];
+		
+		if(mode == "SINGLE")
+			m_inputMode = MODE_SINGLE;
+		else if(mode == "DIFF")
+			m_inputMode = MODE_DIFF;
+		else if(mode == "PDIFF")
+			m_inputMode = MODE_PDIFF;
+			
+		else
 		{
-			fprintf(stderr, "ERROR: Shift register OUTB_DELAY must be in [1, 16]\n");
+			fprintf(stderr, "ERROR: PGA INPUT_MODE must be SINGLE, DIFF, or PDIFF\n");
 			exit(-1);
 		}
 	}
-	
-	if(ncell->HasParameter("OUTA_INVERT"))
-		m_invertA = atoi(ncell->m_parameters["OUTA_INVERT"].c_str());
-		*/
 }
 
 bool Greenpak4PGA::Load(bool* /*bitstream*/)
@@ -152,26 +156,162 @@ bool Greenpak4PGA::Save(bool* bitstream)
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 2, m_reset))
 		return false;
 	
+	*/
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration
-
-	//Tap B comes first (considered output 0 in Silego docs but we flip so that A has the inverter)
-	//Note that we use 0-based tap positions, while the parameter to the shreg is 1-based delay in clocks
-	int delayB = m_delayB - 1;
-	bitstream[m_configBase + 0] = (delayB & 1) ? true : false;
-	bitstream[m_configBase + 1] = (delayB & 2) ? true : false;
-	bitstream[m_configBase + 2] = (delayB & 4) ? true : false;
-	bitstream[m_configBase + 3] = (delayB & 8) ? true : false;
 	
-	//then tap A
-	int delayA = m_delayA - 1;
-	bitstream[m_configBase + 4] = (delayA & 1) ? true : false;
-	bitstream[m_configBase + 5] = (delayA & 2) ? true : false;
-	bitstream[m_configBase + 6] = (delayA & 4) ? true : false;
-	bitstream[m_configBase + 7] = (delayA & 8) ? true : false;
+	//TODO: set true if input came from DAC0, false from anything else
+	bitstream[m_configBase + 0] = false;
 	
-	//then invert flag
-	bitstream[m_configBase + 8] = m_invertA;
-	*/
+	//If vinsel is a power rail, disable the input mux
+	if(m_vinsel.IsPowerRail())
+	{
+		if(m_vinsel.GetPowerRailValue() == false)
+		{
+			fprintf(stderr, "ERROR: PGA VIN_SEL must be connected to IOB or Vdd\n");
+			return false;
+		}
+		
+		//Pin 16 mux disabled
+		else
+			bitstream[m_configBase + 1] = false;			
+	}
+	
+	//Assume it's a the correct IOB (no other paths should be routable in the graph)
+	else
+		bitstream[m_configBase + 1] = true;	
+		
+	//Set the diff/pdiff mode bits
+	switch(m_inputMode)
+	{
+		case MODE_SINGLE:
+			bitstream[m_configBase + 2] = false;
+			bitstream[m_configBase + 7] = false;
+			break;
+			
+		case MODE_DIFF:
+			bitstream[m_configBase + 2] = true;
+			bitstream[m_configBase + 7] = false;
+			break;
+			
+		case MODE_PDIFF:
+			bitstream[m_configBase + 2] = false;
+			bitstream[m_configBase + 7] = true;
+			break;
+	}
+	
+	//Set the gain
+	if(m_inputMode == MODE_SINGLE)
+	{
+		switch(m_gain)
+		{
+			case 25:
+			case 50:
+			case 100:
+			case 200:
+			case 400:
+				break;
+				
+			default:
+				fprintf(stderr, "ERROR: PGA gain must be 0.25/0.5/1/2/4 for single ended inputs\n");
+				return false;
+		}
+	}
+	else
+	{
+		switch(m_gain)
+		{
+			case 100:
+			case 200:
+			case 400:
+			case 800:
+			case 1600:
+			case 3200:
+				break;
+				
+			default:
+				fprintf(stderr, "ERROR: PGA gain must be 1/2/4/8/16/32 for single ended inputs\n");
+				return false;
+		}
+	}
+	
+	switch(m_gain)
+	{
+		case 25:
+			bitstream[m_configBase + 5] = false;
+			bitstream[m_configBase + 4] = false;
+			bitstream[m_configBase + 3] = false;
+			break;
+			
+		case 50:
+			bitstream[m_configBase + 5] = false;
+			bitstream[m_configBase + 4] = false;
+			bitstream[m_configBase + 3] = true;
+			break;
+		
+		case 100:
+			bitstream[m_configBase + 5] = false;
+			bitstream[m_configBase + 4] = true;
+			bitstream[m_configBase + 3] = false;
+			break;
+		
+		case 200:
+			bitstream[m_configBase + 5] = false;
+			bitstream[m_configBase + 4] = true;
+			bitstream[m_configBase + 3] = true;
+			break;
+			
+		case 400:
+			bitstream[m_configBase + 5] = true;
+			bitstream[m_configBase + 4] = false;
+			bitstream[m_configBase + 3] = false;
+			break;
+		
+		case 800:
+			bitstream[m_configBase + 5] = true;
+			bitstream[m_configBase + 4] = false;
+			bitstream[m_configBase + 3] = true;
+			break;
+		
+		case 1600:
+			bitstream[m_configBase + 5] = true;
+			bitstream[m_configBase + 4] = true;
+			bitstream[m_configBase + 3] = false;
+			break;
+		
+		case 3200:
+			bitstream[m_configBase + 5] = true;
+			bitstream[m_configBase + 4] = true;
+			bitstream[m_configBase + 3] = true;
+			break;
+	}
+	
+	//Set the power-on signal if we have any loads other than the ADC
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell && (ncell->m_connections.find("VOUT") != ncell->m_connections.end()) )
+	{
+		bool has_nonadc_loads = false;
+		auto node = ncell->m_connections["VOUT"]->m_node;
+		
+		for(auto point : node->m_nodeports)
+		{
+			if(point.m_cell != ncell)
+				has_nonadc_loads = true;
+		}
+		
+		if(!node->m_ports.empty())
+			has_nonadc_loads = true;
+		
+		//Force the PGA on
+		bitstream[m_configBase + 6] = has_nonadc_loads;
+		
+		//Force the ADC on
+		bitstream[m_configBase + 70] = has_nonadc_loads;
+		
+		//Enable the PGA output to non-ADC loads
+		bitstream[m_configBase + 71] = has_nonadc_loads;
+	}
+	
 	return true;
 }

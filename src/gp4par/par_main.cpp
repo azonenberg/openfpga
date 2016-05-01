@@ -122,7 +122,12 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		auto src = signal.GetRealEntity();
 		
 		//Check for analog output driving a pin not configured as analog for the input
-		if( (dynamic_cast<Greenpak4VoltageReference*>(src) != NULL) && !iob->IsAnalogIbuf())
+		if( !iob->IsAnalogIbuf() &&
+			(
+				(dynamic_cast<Greenpak4VoltageReference*>(src) != NULL) ||
+				(dynamic_cast<Greenpak4PGA*>(src) != NULL)
+			)
+		)
 		{
 			fprintf(stderr, "    ERROR: Pin %d is driven by an analog source (%s) but does not have IBUF_TYPE = ANALOG\n",
 				it->first,

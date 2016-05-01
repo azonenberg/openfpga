@@ -43,6 +43,7 @@ module Analog(bg_ok, vref_750, vin, ain1, ain2, pgaout, cout1, cout2);
 	input wire ain2;
 	
 	(* LOC = "P7" *)
+	(* IBUF_TYPE = "ANALOG" *)
 	output wire pgaout;
 	
 	(* LOC = "P18" *)
