@@ -1520,11 +1520,22 @@ INPUT\_MODE & String & N/A &
 \pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-pga-example} needs to be written!
+The example shown in figure \ref{gp-pga-example} shows a single analog input being amplified 2x and fed to the signal 
+``pgaout".
 
 \begin{figure}[h]
 \begin{lstlisting}
-x
+wire ain1;
+wire pgaout;
+GP_PGA #(
+	.GAIN(2),
+	.INPUT_MODE("SINGLE")
+) pga (
+	.VIN_P(ain1),
+	.VIN_N(),
+	.VIN_SEL(1'b1),
+	.VOUT(pgaout)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_PGA}
 \label{gp-pga-example}
