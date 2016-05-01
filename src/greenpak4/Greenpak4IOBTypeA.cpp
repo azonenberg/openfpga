@@ -111,7 +111,7 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 			if(!WriteMatrixSelector(bitstream, m_inputBaseWord+1, gnd))
 				return false;
 				
-			//TODO: Configure the analog output
+			//No special configuration required
 		}
 		
 		//Digital output and enable
