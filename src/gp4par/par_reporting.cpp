@@ -54,6 +54,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int shreg_used = 0;
 	unsigned int vref_used = 0;
 	unsigned int acmp_used = 0;
+	unsigned int pga_used = 0;
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
@@ -90,6 +91,8 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 			vref_used ++;
 		else if(dynamic_cast<Greenpak4Comparator*>(entity))
 			acmp_used ++;
+		else if(dynamic_cast<Greenpak4PGA*>(entity))
+			pga_used ++;
 	}
 	if(device->GetLFOscillator()->GetPARNode()->GetMate() != NULL)
 		lfosc_used = 1;
@@ -142,6 +145,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		unsigned int percent = 100*used / count;
 		printf("      LUT%d:    %2d/%2d (%d %%)\n", i, used, count, percent);
 	}
+	printf("    PGA:       %2d/%2d (%d %%)\n", pga_used, 1, pga_used*100);
 	printf("    POR:       %2d/%2d (%d %%)\n", por_used, 1, por_used*100);
 	printf("    RCOSC:     %2d/%2d (%d %%)\n", rcosc_used, 1, rcosc_used*100);
 	printf("    RINGOSC:   %2d/%2d (%d %%)\n", ringosc_used, 1, ringosc_used*100);

@@ -151,6 +151,13 @@ void BuildGraphs(
 		dgraph->AddNode(fnode);
 	}
 	
+	//Make a device node for the PGA
+	uint32_t pga_label = AllocateLabel(ngraph, dgraph, lmap, "GP_PGA");
+	Greenpak4PGA* pga = device->GetPGA();
+	PARGraphNode* pganode = new PARGraphNode(pga_label, pga);
+	pga->SetPARNode(pganode);
+	dgraph->AddNode(pganode);
+	
 	//Make a device node for the low-frequency oscillator
 	uint32_t lfosc_label = AllocateLabel(ngraph, dgraph, lmap, "GP_LFOSC");
 	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();
@@ -523,11 +530,15 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		
 		auto pin2 = device->GetIOB(2)->GetPARNode();
 		auto pin3 = device->GetIOB(3)->GetPARNode();
-		auto pin4 = device->GetIOB(6)->GetPARNode();
+		auto pin4 = device->GetIOB(4)->GetPARNode();
 		auto pin6 = device->GetIOB(6)->GetPARNode();
+		auto pin7 = device->GetIOB(7)->GetPARNode();
+		auto pin8 = device->GetIOB(8)->GetPARNode();
+		auto pin9 = device->GetIOB(9)->GetPARNode();
 		auto pin12 = device->GetIOB(12)->GetPARNode();
 		auto pin13 = device->GetIOB(13)->GetPARNode();
 		auto pin15 = device->GetIOB(15)->GetPARNode();
+		auto pin16 = device->GetIOB(16)->GetPARNode();
 		auto pin18 = device->GetIOB(18)->GetPARNode();
 		auto pin19 = device->GetIOB(19)->GetPARNode();
 		
@@ -607,7 +618,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		//Can drive reset with ground or pin 2 only
 		auto sysrst = device->GetSystemReset()->GetPARNode();		
 		pin2->AddEdge("", sysrst, "RST");
-		gnd->AddEdge("", sysrst, "RST");
+		gnd->AddEdge("OUT", sysrst, "RST");
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// REFERENCE OUT
@@ -647,11 +658,13 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO COMPARATORS
 		
+		auto pga = device->GetPGA()->GetPARNode();
+		
 		//Dedicated inputs for ACMP0 (none)
 		
 		//Dedicated inputs for ACMP1
 		pin12->AddEdge("", acmp1, "VIN");
-		//TODO: ADC PGA out
+		pga->AddEdge("VOUT", acmp1, "VIN");
 		
 		//Dedicated inputs for ACMP2
 		pin13->AddEdge("", acmp2, "VIN");
@@ -683,5 +696,25 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		
 		pin6->AddEdge("", acmp4, "VIN");
 		vdd->AddEdge("OUT", acmp4, "VIN");
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// INPUTS TO PGA
+		
+		vdd->AddEdge("OUT", pga, "VIN_P");
+		pin8->AddEdge("", pga, "VIN_P");
+		
+		pin9->AddEdge("", pga, "VIN_N");
+		gnd->AddEdge("OUT", pga, "VIN_N");
+		//TODO: DAC output
+		
+		pin16->AddEdge("", pga, "VIN_SEL");
+		vdd->AddEdge("OUT", pga, "VIN_SEL");
+		
+		//TODO: Output to ADC
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// PGA to IOB
+		
+		pga->AddEdge("VOUT", pin7, "");
 	}
 }

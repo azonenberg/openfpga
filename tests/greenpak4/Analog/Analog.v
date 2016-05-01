@@ -18,7 +18,7 @@
 
 `default_nettype none
 
-module Analog(bg_ok, vref_750, vin, cout1, cout2);
+module Analog(bg_ok, vref_750, vin, ain1, ain2, pgaout, cout1, cout2);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -33,6 +33,17 @@ module Analog(bg_ok, vref_750, vin, cout1, cout2);
 	(* LOC = "P6" *)
 	(* IBUF_TYPE = "ANALOG" *)
 	input wire vin;
+	
+	(* LOC = "P8" *)
+	(* IBUF_TYPE = "ANALOG" *)
+	input wire ain1;
+	
+	(* LOC = "P9" *)
+	(* IBUF_TYPE = "ANALOG" *)
+	input wire ain2;
+	
+	(* LOC = "P7" *)
+	output wire pgaout;
 	
 	(* LOC = "P18" *)
 	output wire cout1;
@@ -118,6 +129,19 @@ module Analog(bg_ok, vref_750, vin, cout1, cout2);
 		.OUT(cout2),
 		.VIN(vin),
 		.VREF(vref_900)
+	);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Programmable-gain analog amplifier
+	
+	GP_PGA #(
+		.GAIN(1),
+		.INPUT_MODE("SINGLE")
+	) pga (
+		.VIN_P(ain1),
+		.VIN_N(ain2),
+		.VIN_SEL(1'b1),
+		.VOUT(pgaout)
 	);
 	
 endmodule

@@ -183,6 +183,12 @@ public:
 	{ return m_bandgap; }
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// PGA
+	
+	Greenpak4PGA* GetPGA()
+	{ return m_pga; }
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// SHIFT REGISTERS
 	
 	unsigned int GetShiftRegisterCount()
@@ -301,6 +307,9 @@ protected:
 	
 	///Bandgap reference
 	Greenpak4Bandgap* m_bandgap;
+	
+	///Programmable-gain amplifier
+	Greenpak4PGA* m_pga;
 	
 	///Power-on reset
 	Greenpak4PowerOnReset* m_por;

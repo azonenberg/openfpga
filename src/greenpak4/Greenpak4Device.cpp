@@ -363,6 +363,9 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_acmps.push_back(new Greenpak4Comparator(this, 4, 0, 70, 34,  0,  875, 871, 873, 926));
 	m_acmps.push_back(new Greenpak4Comparator(this, 5, 0, 71, 35,  0,  880,  0,   0,  924));	//TODO speed doubler
 	
+	//PGA
+	m_pga = new Greenpak4PGA(this, 815);
+	
 	//Comparator input routing
 	auto pin3 = m_iobs[3]->GetOutput("");
 	auto pin4 = m_iobs[4]->GetOutput("");
@@ -481,6 +484,7 @@ void Greenpak4Device::CreateDevice_common()
 	m_bitstuff.push_back(m_sysrst);
 	m_bitstuff.push_back(m_bandgap);
 	m_bitstuff.push_back(m_por);
+	m_bitstuff.push_back(m_pga);
 	
 	//TODO: this might be device specific - not all parts have exactly two matrices and ten cross connections?
 	for(unsigned int matrix=0; matrix<2; matrix++)
