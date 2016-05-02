@@ -18,7 +18,7 @@
 
 `default_nettype none
 
-module Analog(bg_ok, vref_750, vin, ain1, pgaout, cout1, cout2);
+module Analog(bg_ok, vref_750, vin, ain1, pgaout, cout1, cout2, cout3);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -47,6 +47,9 @@ module Analog(bg_ok, vref_750, vin, ain1, pgaout, cout1, cout2);
 	
 	(* LOC = "P17" *)
 	output wire cout2;
+	
+	(* LOC = "P16" *)
+	output wire cout3;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
@@ -139,6 +142,33 @@ module Analog(bg_ok, vref_750, vin, ain1, pgaout, cout1, cout2);
 		.VIN_N(),
 		.VIN_SEL(1'b1),
 		.VOUT(pgaout)
+	);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Voltage reference driving the PGA comparator
+	
+	wire vref_600;
+	GP_VREF #(
+		.VIN_DIV(4'd1),
+		.VREF(16'd600)
+	) vr600 (
+		.VIN(1'b0),
+		.VOUT(vref_600)
+	);
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Comparator checking PGA output against another reference
+
+	GP_ACMP #(
+		.BANDWIDTH("LOW"),
+		.VIN_ATTEN(4'd1),
+		.VIN_ISRC_EN(1'b0),
+		.HYSTERESIS(8'd25)
+	) cmp3 (
+		.PWREN(por_done),
+		.OUT(cout3),
+		.VIN(pgaout),
+		.VREF(vref_600)
 	);
 	
 endmodule
