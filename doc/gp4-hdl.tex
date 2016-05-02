@@ -1130,7 +1130,8 @@ up, but this is not supported by the current gp4par tool.)
 
 In the current software, this primitive currently will always map to a 14-bit counter cell in the device. A planned 
 future optimization will allow the technology mapper to map 14-bit counters in the netlist to 8-bit counter cells if 
-the provided count value is less than 256.
+the provided count value is less than 256. This should allow better packing density for parameterizable modules 
+containing counters of variable depth.
 
 \subsubsection{Port Descriptions}
 
@@ -1165,13 +1166,27 @@ RESET\_MODE & String &  &
 \hline
 \end{tabularx}
 
+\pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-count14-example} needs to be written!
+The example shown in figure \ref{gp-count14-example} begins counting from 14'd3141 down to zero, on rising edges of clk,
+as soon as the device exits POR. When the counter reaches zero underflow goes high for one clk cycle and the counter is 
+reset to 14'd3141. The counter also resets immediately to 14'd3141, and is held in reset, when count\_rst is high.
 
 \begin{figure}[h]
 \begin{lstlisting}
-x
+wire underflow;
+wire count_rst;
+wire clk;
+GP_COUNT14 #(
+	.RESET_MODE("LEVEL"),
+	.COUNT_TO(14'd3141),
+	.CLKIN_DIVIDE(1)
+) lfosc_cnt (
+	.CLK(clk),
+	.RST(count_rst),
+	.OUT(underflow)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_COUNT14}
 \label{gp-count14-example}
