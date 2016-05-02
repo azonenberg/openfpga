@@ -1231,11 +1231,20 @@ INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-dff-example} FIXME.
+The example shown in figure \ref{gp-dff-example} shows a flipflop initialized to zero at powerup.
 
 \begin{figure}[h]
 \begin{lstlisting}
-FIXME
+wire clk;
+wire din;
+wire dout;
+GP_DFF #(
+	.INIT(1'b0)
+) ff (
+	.CLK(clk),
+	.D(din),
+	.Q(dout)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_DFF}
 \label{gp-dff-example}
@@ -1282,11 +1291,23 @@ INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-dffr-example} FIXME.
+The example shown in figure \ref{gp-dffr-example} shows a flipflop initialized to zero at power-up, and cleared to zero 
+when nrst goes low.
 
 \begin{figure}[h]
 \begin{lstlisting}
-FIXME
+wire clk;
+wire din;
+wire dout;
+wire nrst;
+GP_DFFR #(
+	.INIT(1'b0)
+) ff (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nRST(nrst)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_DFFR}
 \label{gp-dffr-example}
@@ -1333,11 +1354,23 @@ INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-dffs-example} FIXME.
+The example shown in figure \ref{gp-dffs-example} shows a flipflop initialized to zero at power-up, and set to one
+when nset goes low.
 
 \begin{figure}[h]
 \begin{lstlisting}
-FIXME
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DFFS #(
+	.INIT(1'b0)
+) ff (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nSET(nset)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_DFFS}
 \label{gp-dffs-example}
@@ -1386,11 +1419,24 @@ SRMODE & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset \\
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-dffsr-example} FIXME.
+The example shown in figure \ref{gp-dffsr-example} shows a flipflop initialized to zero at power-up, and set to one
+when nset goes low.
 
 \begin{figure}[h]
 \begin{lstlisting}
-FIXME
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DFFSR #(
+	.INIT(1'b0),
+	.SRMODE(1'b1)
+) ff (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nSR(nset)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_DFFSR}
 \label{gp-dffsr-example}
@@ -1523,7 +1569,8 @@ GP_LFOSC #(
 This primitive represents a programmable-gain analog amplifier.
 
 If the PGA is only used to drive the ADC, it will automatically power on when the ADC is running and otherwise sleep. 
-If the PGA's output is used by other logic, it will remain on regardless of ADC power state.
+If the PGA's output is used by other logic, it will remain on regardless of ADC power state. There is no way to control 
+the PGA's power domain from fabric logic.
 
 Note that VIN\_SEL uses dedicated routing to an IOB (see device datasheet for pin numbering) and cannot be driven 
 by fabric logic or a constant zero.
