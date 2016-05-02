@@ -263,7 +263,9 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	PARGraphNode* current_node = pivot->GetMate();
 	auto current_site = static_cast<Greenpak4BitstreamEntity*>(current_node->GetData());
 	uint32_t current_matrix = current_site->GetMatrix();
-	uint32_t label = current_node->GetLabel();
+	
+	//BUGFIX: Use the netlist node's label, not the PAR node
+	uint32_t label = pivot->GetLabel();
 	
 	//Debug log
 	/*
