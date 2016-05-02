@@ -175,7 +175,7 @@ reg[3:0] foobar = 0;
 \label{count-extract}
 
 The COUNT\_EXTRACT constraint controls inference of GP\_COUNT8 and GP\_COUNT14 cells from behavioral Verilog. It can be 
-used to ensure that a given counter in behavioral logic will, or will not be, mapped to a hard macro.
+used to ensure that a given counter in behavioral logic will, or will not, be mapped to a hard macro.
 
 \subsubsection{Applicable Elements}
 The COUNT\_EXTRACT constraint may only be used on vector registers.
@@ -285,10 +285,10 @@ The IBUF\_TYPE constraint may only be used on top-level module ports.
 \begin{itemize}
 \item {\bfseries Top-level module port (IOB)}
 	\begin{itemize}
-		\item ``ANALOG": Analog buffer for mixed signal IP. Analog outputs must use this setting to disable the digital 
-		input buffer.
+		\item ``ANALOG": Analog buffer for mixed signal hard IP. Note that analog \emph{outputs} must use this setting
+		to disable the digital input buffer and ensure correct device operation.
 		\item ``LOW\_VOLTAGE": Low voltage threshold (see datasheet for exact value)
-		\item ``NORMAL": Standard threshold (see datasheet for exact value(
+		\item ``NORMAL": Standard threshold (see datasheet for exact value)
 	\end{itemize}
 \item {\bfseries Other} \\
 This constraint may not be used on any other entity.
@@ -296,10 +296,13 @@ This constraint may not be used on any other entity.
 
 \subsubsection{Verilog Usage Example}
 
-Figure \ref{constraint-ibuftype} FIXME
+Figure \ref{constraint-ibuftype} shows an example of how to configure a top level module input for analog signals.
 
 \begin{figure}[h]
 \begin{lstlisting}
+(* LOC = "P6" *)
+(* IBUF_TYPE = "ANALOG" *)
+input wire vin;
 \end{lstlisting}
 \caption{Example for IBUF\_TYPE constraint}
 \label{constraint-ibuftype}
