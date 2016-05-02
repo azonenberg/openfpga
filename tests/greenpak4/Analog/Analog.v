@@ -18,6 +18,40 @@
 
 `default_nettype none
 
+/**
+	INPUTS:
+		Analog "vin" on pin 6
+		Analog "ain1" on pin 8
+	
+	OUTPUTS:
+		Bandgap OK on pin 20 (should be high after reset)
+		750 mV reference on pin 19
+		PGA output on pin 7, should be 2*ain1
+		Comparator output on pin 18, true if vin > 750 mV
+		Comparator output on pin 17, true if vin > 900 mV
+		Comparator output on pin 16, true if pgaout > 600 mV
+		
+	TEST PROCEDURE:
+		Pin 6: 600 mV
+		Pin 8: 200 mV
+		Expected:
+			Pin 20: digital high
+			Pin 19: 750 mV
+			Pin 7: 400 mV
+			Pin 18: digital low
+			Pin 17: digital low
+			Pin 16: digital low
+			
+		Pin 6: 800 mV
+			Pin 18: digital high
+			
+		Pin 6: 950 mV
+			Pin 17: digital high
+			
+		Pin 8: 350 mV
+			Pin 16: digital high
+			Pin 7: 700 mV
+ */
 module Analog(bg_ok, vref_750, vin, ain1, pgaout, cout1, cout2, cout3);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
