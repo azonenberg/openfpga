@@ -169,8 +169,12 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 				if(CantMoveSrc(src))
 					continue;
 				if(CantMoveDst(dst))
-					continue;
+					continue;					
 				if(!dst->IsGeneralFabricInput(edge->m_destport))
+					continue;
+					
+				//Anything with a dual is always in an optimal location as far as congestion goes
+				if(src->GetDual() != NULL)
 					continue;
 					
 				//Add the node
@@ -185,12 +189,12 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 	ComputeUnroutableCost(unroutes);
 	for(auto edge : unroutes)
 	{
-		if(!CantMoveSrc(static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetData())))
+		if(!CantMoveSrc(static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData())))
 		{
 			m_unroutableNodes.insert(edge->m_sourcenode);
 			nodes.insert(edge->m_sourcenode);
 		}
-		if(!CantMoveDst(static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetData())))
+		if(!CantMoveDst(static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData())))
 		{
 			m_unroutableNodes.insert(edge->m_destnode);
 			nodes.insert(edge->m_destnode);
@@ -200,6 +204,14 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 	//Push into the final output list
 	for(auto x : nodes)
 		bad_nodes.push_back(x);
+	
+	//DEBUG
+	/*
+	printf("    Optimizing (%d bad nodes, %d unroutes)\n", bad_nodes.size(), unroutes.size());
+	for(auto x : bad_nodes)
+		printf("        * %s\n",
+			static_cast<Greenpak4BitstreamEntity*>(x->GetMate()->GetData())->GetDescription().c_str());
+	*/
 }
 
 /**
@@ -212,12 +224,13 @@ bool Greenpak4PAREngine::CantMoveSrc(Greenpak4BitstreamEntity* src)
 	//It's OK if the destination node is an IOB, moving its source is OK
 	if(dynamic_cast<Greenpak4IOB*>(src) != NULL)
 		return true;
+		
+	//If we have only one node of this type, we can't move it
+	auto pn = src->GetPARNode();
+	if( (pn != NULL) && (m_device->GetNumNodesWithLabel(pn->GetLabel()) == 1) )
+		return true;
 
 	//TODO: if it has a LOC constraint, don't add it
-		
-	//Anything with a dual is always in optimal locations (because they're everywhere)
-	if(src->GetDual() != NULL)
-		return true;
 		
 	//nope, it's movable
 	return false;
@@ -226,11 +239,16 @@ bool Greenpak4PAREngine::CantMoveSrc(Greenpak4BitstreamEntity* src)
 /**
 	@brief Returns true if the given destination node cannot be moved
  */
-bool Greenpak4PAREngine::CantMoveDst(Greenpak4BitstreamEntity* /*dst*/)
+bool Greenpak4PAREngine::CantMoveDst(Greenpak4BitstreamEntity* dst)
 {
 	//Oscillator as destination?
 	//if(dynamic_cast<Greenpak4LFOscillator*>(dst) != NULL)
 	//	return true;
+	
+	//If we have only one node of this type, we can't move it
+	auto pn = dst->GetPARNode();
+	if( (pn != NULL) && (m_device->GetNumNodesWithLabel(pn->GetLabel()) == 1) )
+		return true;
 	
 	//nope, it's movable	
 	return false;
@@ -247,10 +265,12 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	uint32_t current_matrix = current_site->GetMatrix();
 	uint32_t label = current_node->GetLabel();
 	
-	//bool unroutable = (m_unroutableNodes.find(pivot) != m_unroutableNodes.end());
 	//Debug log
-	//printf("        Seeking new placement for node %s (unroutable = %d)\n",
-	//	current_site->GetDescription().c_str(), unroutable);
+	/*
+	bool unroutable = (m_unroutableNodes.find(pivot) != m_unroutableNodes.end());
+	printf("        Seeking new placement for node %s (unroutable = %d)\n",
+		current_site->GetDescription().c_str(), unroutable);
+	*/
 	
 	//Default to trying the opposite matrix
 	uint32_t target_matrix = 1 - current_matrix;
@@ -287,6 +307,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	//If no routable candidates found anywhere, consider the entire chip and hope we can patch things up later
 	if(temp_candidates.empty())
 	{
+		//printf("            No routable candidates found\n");
 		for(uint32_t i=0; i<m_device->GetNumNodesWithLabel(label); i++)
 			temp_candidates.insert(m_device->GetNodeByLabelAndIndex(label, i));
 	}
@@ -298,14 +319,12 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	uint32_t ncandidates = candidates.size();
 	if(ncandidates == 0)
 		return NULL;
-	
-	//Search for an unused node, return the first one we find (since they're indistinguishable, right?)
-	for(auto x : candidates)
-	{
-		if(x->GetMate() == NULL)
-			return x;
-	}
-	
-	//All nodes are used, we have to swap anyway. Pick one at random
-	return candidates[rand() % ncandidates];
+		
+	//Pick one at random
+	auto c = candidates[rand() % ncandidates];
+	/*
+	printf("            Selected %s\n",
+		static_cast<Greenpak4BitstreamEntity*>(c->GetData())->GetDescription().c_str());
+	*/
+	return c;
 }
