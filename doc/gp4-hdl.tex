@@ -908,6 +908,9 @@ GP_3LUT #(
 \subsubsection{Introduction}
 This primitive represents an analog comparator.
 
+The comparator may not be powered on until the power-on reset process has completed. The PWREN input must be tied to 
+either the reset-done output of the GP\_POR block, or an arbitrary digital expression ANDed with the reset-done output.
+
 \subsubsection{Port Descriptions}
 
 \begin{tabularx}{5in}{|l|l|l|X|}
@@ -949,13 +952,29 @@ HYSTERESIS & Integer & 8 &
 \hline
 \end{tabularx}
 
+\pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-acmp-example} needs to be written!
+The example shown in figure \ref{gp-acmp-example} sets cout1 to true if vin is greater than vref\_750. The comparator is 
+set to have 25 mV of hysteresis and low bandwidth.
 
 \begin{figure}[h]
 \begin{lstlisting}
-x
+wire por_done;
+wire cout1;
+wire vin;
+wire vref_750;
+GP_ACMP #(
+	.BANDWIDTH("LOW"),
+	.VIN_ATTEN(4'd1),
+	.VIN_ISRC_EN(1'b0),
+	.HYSTERESIS(8'd25)
+) cmp (
+	.PWREN(por_done),
+	.OUT(cout1),
+	.VIN(vin),
+	.VREF(vref_750)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_ACMP}
 \label{gp-acmp-example}
