@@ -2130,11 +2130,18 @@ VREF & Integer & 16 &
 \pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-vref-example} needs to be written!
+The example shown in figure \ref{gp-vref-example} drives a 750 mV reference voltage onto vref\_750.
 
 \begin{figure}[h]
 \begin{lstlisting}
-x
+wire vref_750;
+GP_VREF #(
+	.VIN_DIV(4'd1),
+	.VREF(16'd750)
+) vr750 (
+	.VIN(1'b0),
+	.VOUT(vref_750)
+);
 \end{lstlisting}
 \caption{Example usage of GP\_VREF}
 \label{gp-vref-example}
