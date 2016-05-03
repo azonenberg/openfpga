@@ -76,7 +76,7 @@ vector<string> Greenpak4PGA::GetOutputPorts() const
 	return r;
 }
 
-unsigned int Greenpak4PGA::GetOutputNetNumber(string port)
+unsigned int Greenpak4PGA::GetOutputNetNumber(string /*port*/)
 {
 	//no general fabric outputs
 	return -1;
