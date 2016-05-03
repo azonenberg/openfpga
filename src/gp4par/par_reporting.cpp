@@ -55,6 +55,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int vref_used = 0;
 	unsigned int acmp_used = 0;
 	unsigned int pga_used = 0;
+	unsigned int abuf_used = 0;
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
@@ -93,6 +94,8 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 			acmp_used ++;
 		else if(dynamic_cast<Greenpak4PGA*>(entity))
 			pga_used ++;
+		else if(dynamic_cast<Greenpak4Abuf*>(entity))
+			abuf_used ++;
 	}
 	if(device->GetLFOscillator()->GetPARNode()->GetMate() != NULL)
 		lfosc_used = 1;
@@ -120,6 +123,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int total_shregs = device->GetShiftRegisterCount();
 	unsigned int total_vrefs = device->GetVrefCount();
 	unsigned int total_acmps = device->GetAcmpCount();
+	printf("    ABUF:      %2d/%2d (%d %%)\n", abuf_used, 1, abuf_used*100);
 	printf("    ACMP:      %2d/%2d (%d %%)\n", acmp_used, total_acmps, acmp_used*100 / total_acmps);
 	printf("    BANDGAP:   %2d/%2d (%d %%)\n", bandgap_used, 1, bandgap_used*100);
 	printf("    COUNT:     %2d/%2d (%d %%)\n",

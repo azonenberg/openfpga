@@ -143,7 +143,7 @@ The following SLG46620V device features are not supported by gp4par as of this w
 \item Counters: Delay, FSM, edge detector, PWM, wake-sleep mode, counter cascading.
 All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Voltage reference: DAC, divided Vdd, external references
-\item Comparators: Buffered input on pin 6, global buffer bandwidth selection, speed doubler, 
+\item Comparators: Global buffer bandwidth selection, speed doubler, 
 automatic replication of voltage references driving multiple loads
 \item ADC
 \item DAC
@@ -897,6 +897,49 @@ GP_3LUT #(
 \end{lstlisting}
 \caption{Example usage of GP\_4LUT}
 \label{gp-4LUT-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_ABUF
+
+\pagebreak
+\subsection{GP\_ABUF: Analog Buffer}
+
+\subsubsection{Introduction}
+This primitive represents an analog buffer which may be used to reduce loading on comparator inputs. Note that not all 
+comparators have buffers on the input; see device datasheet for details.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{5in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+IN & Input & 1 & Connect to analog output from IOB.\\
+\hline
+OUT & Output & 1 & Connect to VIN of a GP\_ACMP block.\\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+No parameters.
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-abuf-example} buffers the signal ``vin" to ``vin\_buf".
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire vin;
+wire vin_buf;
+GP_ABUF abuf(
+	.IN(vin),
+	.OUT(vin_buf)
+);
+\end{lstlisting}
+\caption{Example usage of GP\_ABUF}
+\label{gp-abuf-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

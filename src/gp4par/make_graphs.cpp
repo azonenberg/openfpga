@@ -158,6 +158,13 @@ void BuildGraphs(
 	pga->SetPARNode(pganode);
 	dgraph->AddNode(pganode);
 	
+	//Make a device node for the analog buffer
+	uint32_t abuf_label = AllocateLabel(ngraph, dgraph, lmap, "GP_ABUF");
+	Greenpak4Abuf* abuf = device->GetAbuf();
+	PARGraphNode* abnode = new PARGraphNode(abuf_label, abuf);
+	abuf->SetPARNode(abnode);
+	dgraph->AddNode(abnode);
+	
 	//Make a device node for the low-frequency oscillator
 	uint32_t lfosc_label = AllocateLabel(ngraph, dgraph, lmap, "GP_LFOSC");
 	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();
@@ -659,6 +666,10 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		// INPUTS TO COMPARATORS
 		
 		auto pga = device->GetPGA()->GetPARNode();
+		auto abuf = device->GetAbuf()->GetPARNode();
+		
+		//Input to buffer
+		pin6->AddEdge("", abuf, "IN");
 		
 		//Dedicated inputs for ACMP0 (none)
 		
@@ -681,21 +692,25 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		pin4->AddEdge("", acmp5, "VIN");
 		
 		//acmp0 input before gain stage is fed to everything but acmp5
-		//TODO: pin 6 unity-gain buffer as well (this should be a separate module)
 		pin6->AddEdge("", acmp0, "VIN");
 		vdd->AddEdge("OUT", acmp0, "VIN");
+		abuf->AddEdge("OUT", acmp0, "VIN");
 		
 		pin6->AddEdge("", acmp1, "VIN");
 		vdd->AddEdge("OUT", acmp1, "VIN");
+		abuf->AddEdge("OUT", acmp1, "VIN");
 		
 		pin6->AddEdge("", acmp2, "VIN");
 		vdd->AddEdge("OUT", acmp2, "VIN");
+		abuf->AddEdge("OUT", acmp2, "VIN");
 		
 		pin6->AddEdge("", acmp3, "VIN");
 		vdd->AddEdge("OUT", acmp3, "VIN");
+		abuf->AddEdge("OUT", acmp3, "VIN");
 		
 		pin6->AddEdge("", acmp4, "VIN");
 		vdd->AddEdge("OUT", acmp4, "VIN");
+		abuf->AddEdge("OUT", acmp4, "VIN");
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO PGA

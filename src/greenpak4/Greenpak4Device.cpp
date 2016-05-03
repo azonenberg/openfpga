@@ -366,6 +366,9 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//PGA
 	m_pga = new Greenpak4PGA(this, 815);
 	
+	//Analog buffer
+	m_abuf = new Greenpak4Abuf(this);
+	
 	//Comparator input routing
 	auto pin3 = m_iobs[3]->GetOutput("");
 	auto pin4 = m_iobs[4]->GetOutput("");
@@ -375,27 +378,28 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	auto pin15 = m_iobs[15]->GetOutput("");
 	auto vdd = m_constantOne->GetOutput("OUT");
 	auto pga = m_pga->GetOutput("VOUT");
+	auto pin6_buf = m_abuf->GetOutput("OUT");
 	m_acmps[0]->AddInputMuxEntry(pin6, 0);
-	//m_acmps[0]->AddInputMuxEntry(pin6_buf, 1);
+	m_acmps[0]->AddInputMuxEntry(pin6_buf, 1);
 	m_acmps[0]->AddInputMuxEntry(vdd, 2);
 	m_acmps[1]->AddInputMuxEntry(pin12, 0);
 	m_acmps[1]->AddInputMuxEntry(pga, 1);
 	m_acmps[1]->AddInputMuxEntry(pin6, 2);
-	//m_acmps[1]->AddInputMuxEntry(pin6_buf, 2);
+	m_acmps[1]->AddInputMuxEntry(pin6_buf, 2);
 	m_acmps[1]->AddInputMuxEntry(vdd, 2);
 	m_acmps[2]->AddInputMuxEntry(pin13, 0);
 	m_acmps[2]->AddInputMuxEntry(pin6, 1);
-	//m_acmps[2]->AddInputMuxEntry(pin6_buf, 1);
+	m_acmps[2]->AddInputMuxEntry(pin6_buf, 1);
 	m_acmps[2]->AddInputMuxEntry(vdd, 1);
 	m_acmps[3]->AddInputMuxEntry(pin15, 0);
 	m_acmps[3]->AddInputMuxEntry(pin13, 1);
 	m_acmps[3]->AddInputMuxEntry(pin6, 2);
-	//m_acmps[3]->AddInputMuxEntry(pin6_buf, 2);
+	m_acmps[3]->AddInputMuxEntry(pin6_buf, 2);
 	m_acmps[3]->AddInputMuxEntry(vdd, 2);
 	m_acmps[4]->AddInputMuxEntry(pin3, 0);
 	m_acmps[4]->AddInputMuxEntry(pin15, 1);
 	m_acmps[4]->AddInputMuxEntry(pin6, 2);
-	//m_acmps[4]->AddInputMuxEntry(pin6_buf, 2);
+	m_acmps[4]->AddInputMuxEntry(pin6_buf, 2);
 	m_acmps[4]->AddInputMuxEntry(vdd, 2);
 	m_acmps[5]->AddInputMuxEntry(pin4, 0);
 	
@@ -486,6 +490,7 @@ void Greenpak4Device::CreateDevice_common()
 	m_bitstuff.push_back(m_bandgap);
 	m_bitstuff.push_back(m_por);
 	m_bitstuff.push_back(m_pga);
+	m_bitstuff.push_back(m_abuf);
 	
 	//TODO: this might be device specific - not all parts have exactly two matrices and ten cross connections?
 	for(unsigned int matrix=0; matrix<2; matrix++)

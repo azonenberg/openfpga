@@ -216,6 +216,12 @@ public:
 	{ return m_acmps[i]; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ANALOG BUFFERS
+	
+	Greenpak4Abuf* GetAbuf()
+	{ return m_abuf; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ALL NODES
 	
 	unsigned int GetEntityCount()
@@ -301,6 +307,9 @@ protected:
 	
 	///RC oscillator
 	Greenpak4RCOscillator* m_rcosc;
+	
+	///Analog buffer
+	Greenpak4Abuf* m_abuf;
 	
 	///System reset
 	Greenpak4SystemReset* m_sysrst;

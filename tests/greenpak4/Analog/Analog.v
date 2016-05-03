@@ -98,6 +98,15 @@ module Analog(bg_ok, vref_750, vin, ain1, pgaout, cout1, cout2, cout3);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Oscillators
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Analog buffer on the input voltage to reduce loading since we feed it to a couple of comparators
+	
+	wire vin_buf;
+	GP_ABUF abuf(
+		.IN(vin),
+		.OUT(vin_buf)
+	);
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// 1.0V bandgap voltage reference (used by a lot of the mixed signal IP)
@@ -134,7 +143,7 @@ module Analog(bg_ok, vref_750, vin, ain1, pgaout, cout1, cout2, cout3);
 	) cmp1 (
 		.PWREN(por_done),
 		.OUT(cout1),
-		.VIN(vin),
+		.VIN(vin_buf),
 		.VREF(vref_750)
 	);
 	
@@ -161,7 +170,7 @@ module Analog(bg_ok, vref_750, vin, ain1, pgaout, cout1, cout2, cout3);
 	) cmp2 (
 		.PWREN(por_done),
 		.OUT(cout2),
-		.VIN(vin),
+		.VIN(vin_buf),
 		.VREF(vref_900)
 	);
 	
