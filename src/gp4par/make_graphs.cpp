@@ -32,6 +32,13 @@ void MakeIOBNodes(
 void MakeNetlistEdges(Greenpak4Netlist* netlist);
 void MakeDeviceEdges(Greenpak4Device* device);
 
+void MakeSingleNode(
+	string type,
+	Greenpak4BitstreamEntity* entity,
+	PARGraph* ngraph,
+	PARGraph* dgraph,
+	labelmap& lmap);
+
 /**
 	@brief Build the graphs
  */
@@ -151,61 +158,19 @@ void BuildGraphs(
 		dgraph->AddNode(fnode);
 	}
 	
-	//Make a device node for the PGA
-	uint32_t pga_label = AllocateLabel(ngraph, dgraph, lmap, "GP_PGA");
-	Greenpak4PGA* pga = device->GetPGA();
-	PARGraphNode* pganode = new PARGraphNode(pga_label, pga);
-	pga->SetPARNode(pganode);
-	dgraph->AddNode(pganode);
+	//Make device nodes for all of the single-instance cells
+	MakeSingleNode("GP_ABUF",		device->GetAbuf(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_BANDGAP",	device->GetBandgap(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_LFOSC",		device->GetLFOscillator(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_PGA",		device->GetPGA(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_POR",		device->GetPowerOnReset(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_RCOSC",		device->GetRCOscillator(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_RINGOSC",	device->GetRingOscillator(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_SYSRESET",	device->GetSystemReset(), ngraph, dgraph, lmap);
 	
-	//Make a device node for the analog buffer
-	uint32_t abuf_label = AllocateLabel(ngraph, dgraph, lmap, "GP_ABUF");
-	Greenpak4Abuf* abuf = device->GetAbuf();
-	PARGraphNode* abnode = new PARGraphNode(abuf_label, abuf);
-	abuf->SetPARNode(abnode);
-	dgraph->AddNode(abnode);
-	
-	//Make a device node for the low-frequency oscillator
-	uint32_t lfosc_label = AllocateLabel(ngraph, dgraph, lmap, "GP_LFOSC");
-	Greenpak4LFOscillator* lfosc = device->GetLFOscillator();
-	PARGraphNode* lfnode = new PARGraphNode(lfosc_label, lfosc);
-	lfosc->SetPARNode(lfnode);
-	dgraph->AddNode(lfnode);
-	
-	//Make a device node for the ring oscillator
-	uint32_t rosc_label = AllocateLabel(ngraph, dgraph, lmap, "GP_RINGOSC");
-	Greenpak4RingOscillator* rosc = device->GetRingOscillator();
-	PARGraphNode* rnode = new PARGraphNode(rosc_label, rosc);
-	rosc->SetPARNode(rnode);
-	dgraph->AddNode(rnode);
-	
-	//Make a device node for the RC oscillator
-	uint32_t rcosc_label = AllocateLabel(ngraph, dgraph, lmap, "GP_RCOSC");
-	Greenpak4RCOscillator* rcosc = device->GetRCOscillator();
-	PARGraphNode* rcnode = new PARGraphNode(rcosc_label, rcosc);
-	rcosc->SetPARNode(rcnode);
-	dgraph->AddNode(rcnode);
-	
-	//Make a device node for the reset block
-	uint32_t sysrst_label = AllocateLabel(ngraph, dgraph, lmap, "GP_SYSRESET");
-	Greenpak4SystemReset* sysrst = device->GetSystemReset();
-	PARGraphNode* rstnode = new PARGraphNode(sysrst_label, sysrst);
-	sysrst->SetPARNode(rstnode);
-	dgraph->AddNode(rstnode);
-	
-	//Make a device node for the bandgap
-	uint32_t bandgap_label = AllocateLabel(ngraph, dgraph, lmap, "GP_BANDGAP");
-	Greenpak4Bandgap* bandgap = device->GetBandgap();
-	PARGraphNode* bgnode = new PARGraphNode(bandgap_label, bandgap);
-	bandgap->SetPARNode(bgnode);
-	dgraph->AddNode(bgnode);
-	
-	//Make a device node for the power-on reset
-	uint32_t por_label = AllocateLabel(ngraph, dgraph, lmap, "GP_POR");
-	Greenpak4PowerOnReset* por = device->GetPowerOnReset();
-	PARGraphNode* pornode = new PARGraphNode(por_label, por);
-	por->SetPARNode(pornode);
-	dgraph->AddNode(pornode);
+	//Make device nodes for the power rails
+	MakeSingleNode("GP_VDD",	device->GetPowerRail(true), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_VSS",	device->GetPowerRail(false), ngraph, dgraph, lmap);
 	
 	//Make device nodes for the counters
 	uint32_t count8_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8");
@@ -233,18 +198,6 @@ void BuildGraphs(
 	}
 	
 	//TODO: make nodes for all of the other hard IP
-	
-	//Power nets
-	uint32_t vdd_label = AllocateLabel(ngraph, dgraph, lmap, "GP_VDD");
-	uint32_t vss_label = AllocateLabel(ngraph, dgraph, lmap, "GP_VSS");
-	auto vdd = device->GetPowerRail(true);
-	auto vss = device->GetPowerRail(false);
-	PARGraphNode* vnode = new PARGraphNode(vdd_label, vdd);
-	PARGraphNode* gnode = new PARGraphNode(vss_label, vss);
-	vdd->SetPARNode(vnode);
-	vss->SetPARNode(gnode);
-	dgraph->AddNode(vnode);
-	dgraph->AddNode(gnode);
 	
 	//Build inverse label map
 	map<string, uint32_t> ilmap;
@@ -487,6 +440,22 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			}
 		}
 	}
+}
+
+/**
+	@brief Make a PAR graph node and type for for a given bitstream entity, given that the device only has one
+ */
+void MakeSingleNode(
+	string type,
+	Greenpak4BitstreamEntity* entity,
+	PARGraph* ngraph,
+	PARGraph* dgraph,
+	labelmap& lmap)
+{
+	uint32_t label = AllocateLabel(ngraph, dgraph, lmap, type);
+	PARGraphNode* node = new PARGraphNode(label, entity);
+	entity->SetPARNode(node);
+	dgraph->AddNode(node);
 }
 
 /**
