@@ -38,6 +38,12 @@ void MakeSingleNode(
 	PARGraph* ngraph,
 	PARGraph* dgraph,
 	labelmap& lmap);
+	
+PARGraphNode* MakeNode(
+	uint32_t label,
+	Greenpak4BitstreamEntity* entity,
+	PARGraph* dgraph);
+
 
 /**
 	@brief Build the graphs
@@ -59,12 +65,7 @@ void BuildGraphs(
 	//Create device entries for the IOBs
 	uint32_t iob_label = AllocateLabel(ngraph, dgraph, lmap, "Unconstrained IOB");
 	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
-	{
-		Greenpak4IOB* iob = it->second;
-		PARGraphNode* inode = new PARGraphNode(iob_label, iob);
-		iob->SetPARNode(inode);
-		dgraph->AddNode(inode);
-	}
+		MakeNode(iob_label, it->second, dgraph);
 	
 	//Create netlist nodes for the IOBs
 	MakeIOBNodes(module, device, ngraph, dgraph, lmap, iob_label);
@@ -74,69 +75,38 @@ void BuildGraphs(
 	uint32_t lut3_label = AllocateLabel(ngraph, dgraph, lmap, "GP_3LUT");
 	uint32_t lut4_label = AllocateLabel(ngraph, dgraph, lmap, "GP_4LUT");
 	for(unsigned int i=0; i<device->GetLUT2Count(); i++)
-	{
-		Greenpak4LUT* lut = device->GetLUT2(i);
-		PARGraphNode* lnode = new PARGraphNode(lut2_label, lut);
-		lut->SetPARNode(lnode);
-		dgraph->AddNode(lnode);
-	}
+		MakeNode(lut2_label, device->GetLUT2(i), dgraph);
 	for(unsigned int i=0; i<device->GetLUT3Count(); i++)
 	{
-		Greenpak4LUT* lut = device->GetLUT3(i);
-		PARGraphNode* lnode = new PARGraphNode(lut3_label, lut);
-		lnode->AddAlternateLabel(lut2_label);
-		lut->SetPARNode(lnode);
-		dgraph->AddNode(lnode);
+		auto node = MakeNode(lut3_label, device->GetLUT3(i), dgraph);
+		node->AddAlternateLabel(lut2_label);
 	}
 	for(unsigned int i=0; i<device->GetLUT4Count(); i++)
 	{
-		Greenpak4LUT* lut = device->GetLUT4(i);
-		PARGraphNode* lnode = new PARGraphNode(lut4_label, lut);
-		lnode->AddAlternateLabel(lut2_label);
-		lnode->AddAlternateLabel(lut3_label);
-		lut->SetPARNode(lnode);
-		dgraph->AddNode(lnode);
+		auto node = MakeNode(lut4_label, device->GetLUT4(i), dgraph);
+		node->AddAlternateLabel(lut2_label);
+		node->AddAlternateLabel(lut3_label);
 	}
 	
 	//Make device nodes for the inverters
 	uint32_t inv_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_INV");
 	for(unsigned int i=0; i<device->GetInverterCount(); i++)
-	{
-		Greenpak4Inverter* inv = device->GetInverter(i);
-		PARGraphNode* inode = new PARGraphNode(inv_label, inv);
-		inv->SetPARNode(inode);
-		dgraph->AddNode(inode);
-	}
+		MakeNode(inv_label, device->GetInverter(i), dgraph);
 	
 	//Make device nodes for the shift registers
 	uint32_t shreg_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_SHREG");
 	for(unsigned int i=0; i<device->GetShiftRegisterCount(); i++)
-	{
-		Greenpak4ShiftRegister* shreg = device->GetShiftRegister(i);
-		PARGraphNode* snode = new PARGraphNode(shreg_label, shreg);
-		shreg->SetPARNode(snode);
-		dgraph->AddNode(snode);
-	}
+		MakeNode(shreg_label, device->GetShiftRegister(i), dgraph);
 	
 	//Make device nodes for the voltage references
 	uint32_t vref_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_VREF");
 	for(unsigned int i=0; i<device->GetVrefCount(); i++)
-	{
-		Greenpak4VoltageReference* vref = device->GetVref(i);
-		PARGraphNode* vnode = new PARGraphNode(vref_label, vref);
-		vref->SetPARNode(vnode);
-		dgraph->AddNode(vnode);
-	}
+		MakeNode(vref_label, device->GetVref(i), dgraph);
 	
 	//Make device nodes for the comparators
 	uint32_t acmp_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_ACMP");
 	for(unsigned int i=0; i<device->GetAcmpCount(); i++)
-	{
-		Greenpak4Comparator* acmp = device->GetAcmp(i);
-		PARGraphNode* anode = new PARGraphNode(acmp_label, acmp);
-		acmp->SetPARNode(anode);
-		dgraph->AddNode(anode);
-	}
+		MakeNode(acmp_label, device->GetAcmp(i), dgraph);
 	
 	//Make device nodes for each type of flipflop
 	uint32_t dff_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFF");
@@ -144,18 +114,15 @@ void BuildGraphs(
 	for(unsigned int i=0; i<device->GetTotalFFCount(); i++)
 	{
 		Greenpak4Flipflop* flop = device->GetFlipflopByIndex(i);
-		PARGraphNode* fnode = NULL;
 		if(flop->HasSetReset())
 		{
-			fnode = new PARGraphNode(dffsr_label, flop);
-			
+			auto node = MakeNode(dffsr_label, flop, dgraph);
+
 			//It's legal to map a DFF to a DFFSR site, so add that as an alternate
-			fnode->AddAlternateLabel(dff_label);
+			node->AddAlternateLabel(dff_label);
 		}
 		else
-			fnode = new PARGraphNode(dff_label, flop);
-		flop->SetPARNode(fnode);
-		dgraph->AddNode(fnode);
+			MakeNode(dff_label, flop, dgraph);
 	}
 	
 	//Make device nodes for all of the single-instance cells
@@ -180,21 +147,15 @@ void BuildGraphs(
 		auto counter = device->GetCounter(i);
 		
 		//Decide on primary label
-		PARGraphNode* node = NULL;
 		if(counter->GetDepth() == 14)
 		{
-			node = new PARGraphNode(count14_label, counter);
-			
+			auto node = MakeNode(count14_label, counter, dgraph);
+						
 			//It's legal to map a COUNT8 to a COUNT14 site, so add that as an alternate
 			node->AddAlternateLabel(count8_label);
 		}
 		else
-			node = new PARGraphNode(count8_label, counter);
-			
-		//Add secondary labels for alternate functionality
-		
-		counter->SetPARNode(node);
-		dgraph->AddNode(node);	
+			MakeNode(count8_label, counter, dgraph);
 	}
 	
 	//TODO: make nodes for all of the other hard IP
@@ -206,6 +167,7 @@ void BuildGraphs(
 	
 	//Add aliases for different primitive names that map to the same node type
 	ilmap["GP_DFFR"] = dffsr_label;
+	ilmap["GP_DFFS"] = dffsr_label;
 	ilmap["GP_DFFSR"] = dffsr_label;
 	
 	//Make netlist nodes for cells
@@ -443,7 +405,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 }
 
 /**
-	@brief Make a PAR graph node and type for for a given bitstream entity, given that the device only has one
+	@brief Make a PAR graph node and type for for a given bitstream entity, given that the device only has one of them
  */
 void MakeSingleNode(
 	string type,
@@ -453,9 +415,21 @@ void MakeSingleNode(
 	labelmap& lmap)
 {
 	uint32_t label = AllocateLabel(ngraph, dgraph, lmap, type);
+	MakeNode(label, entity, dgraph);
+}
+
+/**
+	@brief Make a PAR graph node and type for for a given bitstream entity
+ */
+PARGraphNode* MakeNode(
+	uint32_t label,
+	Greenpak4BitstreamEntity* entity,
+	PARGraph* dgraph)
+{
 	PARGraphNode* node = new PARGraphNode(label, entity);
 	entity->SetPARNode(node);
 	dgraph->AddNode(node);
+	return node;
 }
 
 /**
