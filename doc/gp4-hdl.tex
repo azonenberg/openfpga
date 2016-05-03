@@ -2191,6 +2191,59 @@ GP_VSS vss(
 \end{figure}
 
 \pagebreak
-\section{gp4par Command Line Arguments}
+\section{gp4par Command Line Usage}
+
+\subsection{Introduction}
+
+The current version of gp4par takes long-form arguments only. All argument and value names are case sensitive.
+
+The example shown in figure \ref{gp-cmd-example} runs place-and-route on the netlist Analog.json, with top-level module 
+Analog, and saves the generated bitstream to Analog-hdl.txt. Unused pins are pulled down with $10 k\Omega$ resistors.
+
+\begin{figure}[h]
+\begin{lstlisting}[language=c]
+gp4par Analog.json --top Analog --output Analog-hdl.txt --unused-pull down --unused-drive 10k
+\end{lstlisting}
+\caption{Example usage of gp4par}
+\label{gp-cmd-example}
+\end{figure}
+
+\subsection{[file name]}
+
+The netlist filename must be supplied for all place-and-route operations. It may be included anywhere in the argument 
+list, although we recommend it be the first argument for better readability of the command.
+
+\subsection{--help}
+
+The --help argument must be used alone, with no other arguments. It causes gp4par to print a usage example to the 
+console and then quit.
+
+\subsection{--output}
+
+The --output argument is required for all place-and-route operations. It must be immediately followed by the 
+filename to which the generated bitstream will be written.
+
+\subsection{--top}
+
+The --top argument is required for all place-and-route operations. It must be immediately followed by the 
+case-sensitive name of the top-level module.
+
+\subsection{--unused-drive}
+
+The --unused-drive argument is optional. If used, it must be immediately followed by ``10k", ``100k", or ``1M", to 
+specify the nominal value in ohms of the pull-up/down resistor on unused I/O pins. The default behavior if not 
+specified is ``1M".
+
+\subsection{--unused-pull}
+
+The --unused-pull argument is optional. If used, it must be immediately followed by ``down", ``up", ``none", or 
+``float", to specify which direction to pull unused I/O pins. The default behavior if not specified is ``float".
+
+The behavior of ``none" and ``float" is identical; both names are accepted for convenience.
+
+\subsection{--version}
+
+The --version argument must be used alone, with no other arguments. It causes gp4par to print the version number 
+(currently always 0.1) to the console and then quit.
 
 \end{document}
