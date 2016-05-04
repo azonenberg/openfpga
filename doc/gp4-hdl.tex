@@ -128,8 +128,6 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json /tmp/Blinky.json
 The following legal Verilog-2001 features are not supported by gp4par as of this writing:
 
 \begin{itemize}
-\item {\bfseries Bidirectional or tri-state top-level module ports}\\All ports on top-level modules must be inputs, 
-push-pull, or open-drain outputs. There is no support for tri-state or bidirectional outputs.
 \item {\bfseries Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector nets 
 may be used at lower levels of the hierarchy without restriction as long as the synthesis script includes a
 ``splitnets" command to convert these to single bit nets. (The synth\_greenpak4 Yosys command includes this command by 
@@ -323,7 +321,7 @@ The LOC constraint instructs gp4par to place the constrained net or primitive at
 device.
 
 \subsubsection{Applicable Elements}
-As of this writing, the LOC constraint may only be used on top-level module ports. 
+As of this writing, the LOC constraint may only be used on top-level module ports.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
