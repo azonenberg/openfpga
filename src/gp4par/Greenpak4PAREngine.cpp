@@ -16,9 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#include "../xbpar/xbpar.h"
-#include "../greenpak4/Greenpak4.h"
-#include "Greenpak4PAREngine.h"
+#include "gp4par.h"
 #include <math.h>
 
 using namespace std;
@@ -26,8 +24,9 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4PAREngine::Greenpak4PAREngine(PARGraph* netlist, PARGraph* device)
+Greenpak4PAREngine::Greenpak4PAREngine(PARGraph* netlist, PARGraph* device, labelmap& lmap)
 	: PAREngine(netlist, device)
+	, m_lmap(lmap)
 {
 	
 }
@@ -62,32 +61,65 @@ void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
 			fprintf(stderr, "INTERNAL ERROR: Cell in netlist is not a Greenpak4NetlistCell\n");
 			exit(-1);
 		}
-		
-		if(verbose)
-			printf("    Cell %s\n", entity->m_name.c_str());
 			
-		//Look up our module
-		auto module = cell->m_parent->GetNetlist()->GetModule(cell->m_type);
-
-		//Constraints go on the cell's output port(s)
-		//so look at all outbound edges
-		for(auto it : cell->m_connections)
+		//Search for a LOC constraint, if there is one
+		cell->FindLOC();
+		if(!cell->HasLOC())
+			continue;
+		string loc = cell->GetLOC();
+			
+		//Verify that the constrained location exists
+		if(nmap.find(loc) == nmap.end())
 		{
-			//If not an output, ignore it
-			auto port = module->GetPort(it.first);
-			//if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
-			//	continue;
-				
-			//See if this net has a LOC constraint
-			auto net = it.second;
-			//if(!net->HasAttribute("LOC"))
-			//	continue;
-			//auto loc = net->GetAttribute("LOC");
-			
-			printf("        output port %s has net %s\n", port->m_name.c_str(), net->m_name.c_str());
-			for(auto jt : net->m_attributes)
-				printf("            %s => %s\n", jt.first.c_str(), jt.second.c_str());
+			fprintf(stderr, "ERROR: Cell %s has invalid LOC constraint %s (no matching site in device)\n",
+				cell->m_name.c_str(), loc.c_str());
+			cell->ClearLOC();
+			exit(-1);
 		}
+		
+		//If it exists, is it a legal site?
+		auto site = nmap[loc];
+		auto spnode = site->GetPARNode();
+		if(!spnode->MatchesLabel(node->GetLabel()))
+		{
+			//Do not fail if the site is an IOB and we're not one, since this happens with top-level pads...
+			if( (dynamic_cast<Greenpak4IOB*>(site) != NULL) && !(
+				(cell->m_type == "GP_IBUF") ||
+				(cell->m_type == "GP_OBUF") ||
+				(cell->m_type == "GP_IOBUF"))
+				)
+			{
+				cell->ClearLOC();
+				continue;
+			}
+			
+			fprintf(
+				stderr,
+				"ERROR: Cell %s has invalid LOC constraint %s (site is of type %s, instance is of type %s)\n",
+				cell->m_name.c_str(),
+				loc.c_str(),
+				m_lmap[site->GetPARNode()->GetLabel()].c_str(),
+				m_lmap[node->GetLabel()].c_str()
+				);
+			exit(-1);
+		}
+		
+		//The site exists, is valid, and we're constrained to it.
+		//Verify that there's not already something constrained to that site
+		if(spnode->GetMate() != NULL)
+		{
+			fprintf(
+				stderr,
+				"ERROR: Cell %s has invalid LOC constraint %s (another instance is already constrained there)\n",
+				cell->m_name.c_str(), loc.c_str());
+			cell->ClearLOC();
+			exit(-1);
+		}
+		
+		//Everything is good, apply the constraint
+		if(verbose)
+			printf("    Applying LOC constraint %s to cell %s\n", loc.c_str(), cell->m_name.c_str());
+		node->MateWith(spnode);
 	}
 	
 	//For each label, mate each node in the netlist with the first legal mate in the device.
@@ -96,17 +128,50 @@ void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
 	for(uint32_t label = 0; label <= nmax_net; label ++)
 	{
 		uint32_t nnet = m_netlist->GetNumNodesWithLabel(label);
+		uint32_t nsites = m_device->GetNumNodesWithLabel(label);
+		
+		uint32_t nsite = 0;
 		for(uint32_t net = 0; net<nnet; net++)
 		{
 			PARGraphNode* netnode = m_netlist->GetNodeByLabelAndIndex(label, net);
-			PARGraphNode* devnode = m_device->GetNodeByLabelAndIndex(label, net);
-			if(devnode->GetMate() != NULL)
+			
+			//If the netlist node is already constrained, don't auto-place it
+			if(netnode->GetMate() != NULL)
+				continue;
+			
+			//Try to find a legal site
+			bool found = false;
+			while(nsite < nsites)
 			{
-				auto entity = static_cast<Greenpak4BitstreamEntity*>(devnode->GetData());
-				printf("INTERNAL ERROR: Hit the same node (%s) twice\n",
-					entity->GetDescription().c_str());
+				PARGraphNode* devnode = m_device->GetNodeByLabelAndIndex(label, nsite);
+				nsite ++;
+				
+				//If the site is used, we don't want to disturb what's already there
+				//because it was probably LOC'd
+				if(devnode->GetMate() != NULL)				
+					continue;
+				
+				//Site is unused, mate with it
+				netnode->MateWith(devnode);
+				found = true;
+				break;
 			}
-			netnode->MateWith(devnode);
+			
+			//This can happen in rare cases
+			//(for example, we constrained all of the 8-bit counters to COUNT14 sites and now have a COUNT14).
+			if(!found)
+			{
+				auto cell = static_cast<Greenpak4NetlistEntity*>(netnode->GetData());
+				
+				fprintf(
+					stderr,
+					"ERROR: Could not place netlist cell \"%s\" because we ran out of sites with type \"%s\"\n"
+					"       This can happen if you have overly restrictive LOC constraints.",
+					cell->m_name.c_str(),
+					m_lmap[label].c_str()
+					);
+				exit(1);
+			}
 		}
 	}
 }
@@ -293,18 +358,16 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
  */
 bool Greenpak4PAREngine::CantMoveSrc(Greenpak4BitstreamEntity* src)
 {
-	//If source node is an IOB, do NOT add it to the sub-optimal list
-	//because the IOB is constrained and can't move.
-	//It's OK if the destination node is an IOB, moving its source is OK
-	if(dynamic_cast<Greenpak4IOB*>(src) != NULL)
-		return true;
-		
-	//If we have only one node of this type, we can't move it
+	//If we have only one node of this type, we can't move it because there's nowhere to go
 	auto pn = src->GetPARNode();
 	if( (pn != NULL) && (m_device->GetNumNodesWithLabel(pn->GetLabel()) == 1) )
 		return true;
 
-	//TODO: if it has a LOC constraint, don't add it
+	//If it has a LOC constraint, don't move it
+	auto se = static_cast<Greenpak4NetlistEntity*>(pn->GetMate()->GetData());
+	auto netnode = dynamic_cast<Greenpak4NetlistCell*>(se);
+	if( (netnode != NULL) && netnode->HasLOC() )
+		return true;
 		
 	//nope, it's movable
 	return false;
@@ -314,14 +377,16 @@ bool Greenpak4PAREngine::CantMoveSrc(Greenpak4BitstreamEntity* src)
 	@brief Returns true if the given destination node cannot be moved
  */
 bool Greenpak4PAREngine::CantMoveDst(Greenpak4BitstreamEntity* dst)
-{
-	//Oscillator as destination?
-	//if(dynamic_cast<Greenpak4LFOscillator*>(dst) != NULL)
-	//	return true;
-	
-	//If we have only one node of this type, we can't move it
+{	
+	//If we have only one node of this type, we can't move it because there's nowhere to go
 	auto pn = dst->GetPARNode();
 	if( (pn != NULL) && (m_device->GetNumNodesWithLabel(pn->GetLabel()) == 1) )
+		return true;
+		
+	//If it has a LOC constraint, don't move it
+	auto se = static_cast<Greenpak4NetlistEntity*>(pn->GetMate()->GetData());
+	auto netnode = dynamic_cast<Greenpak4NetlistCell*>(se);
+	if( (netnode != NULL) && netnode->HasLOC() )
 		return true;
 	
 	//nope, it's movable	

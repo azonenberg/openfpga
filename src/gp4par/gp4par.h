@@ -21,7 +21,12 @@
 
 #include "../greenpak4/Greenpak4.h"
 #include "../xbpar/xbpar.h"
+
+#include <map>
+typedef std::map<uint32_t, std::string> labelmap;
+
 #include "Greenpak4PAREngine.h"
+
 #include <stdio.h>
 #include <string>
 
@@ -30,7 +35,6 @@ void ShowUsage();
 void ShowVersion();
 
 //Setup
-typedef std::map<uint32_t, std::string> labelmap;
 uint32_t AllocateLabel(
 	PARGraph*& ngraph,
 	PARGraph*& dgraph,

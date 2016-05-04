@@ -34,7 +34,7 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 	BuildGraphs(netlist, device, ngraph, dgraph, lmap);
 
 	//Create and run the PAR engine
-	Greenpak4PAREngine engine(ngraph, dgraph);
+	Greenpak4PAREngine engine(ngraph, dgraph, lmap);
 	if(!engine.PlaceAndRoute(lmap, true))
 	{
 		//Print the placement we have so far
@@ -96,8 +96,8 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 			
 		//If the node is an IOB configured as an output, there's no internal load for its output.
 		//This is perfectly normal, obviously.
-		Greenpak4NetlistPort* port = dynamic_cast<Greenpak4NetlistPort*>(src);
-		if( (port != NULL) && (port->m_direction == Greenpak4NetlistPort::DIR_OUTPUT) )
+		Greenpak4NetlistCell* cell = dynamic_cast<Greenpak4NetlistCell*>(src);
+		if( (cell != NULL) &&  ( (cell->m_type == "GP_IOBUF") || (cell->m_type == "GP_OBUF") ) )
 			continue;
 		
 		//If we have no loads, warn

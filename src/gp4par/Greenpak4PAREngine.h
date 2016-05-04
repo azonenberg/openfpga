@@ -25,7 +25,7 @@
 class Greenpak4PAREngine : public PAREngine
 {
 public:
-	Greenpak4PAREngine(PARGraph* netlist, PARGraph* device);
+	Greenpak4PAREngine(PARGraph* netlist, PARGraph* device, labelmap& lmap);
 	virtual ~Greenpak4PAREngine();
 	
 protected:
@@ -42,6 +42,9 @@ protected:
 	
 	//Cached list of unroutable nodes for the current iteration
 	std::set<PARGraphNode*> m_unroutableNodes;
+	
+	//used for error messages only
+	labelmap m_lmap;
 };
 
 #endif

@@ -47,7 +47,7 @@ Greenpak4IOBTypeA::~Greenpak4IOBTypeA()
 string Greenpak4IOBTypeA::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "IOB_A_%d", m_pinNumber);
+	snprintf(buf, sizeof(buf), "P%d", m_pinNumber);
 	return string(buf);
 }
 
@@ -72,7 +72,8 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 		//Verify that they are tied sanely (output enable is ground, signal is dontcare)
 		if(!m_outputEnable.IsPowerRail())
 		{
-			fprintf(stderr, "ERROR: Tried to tie OE of an input-only pin to something other than a power rail\n");
+			fprintf(stderr, "ERROR: Tried to tie OE of an input-only pin (%s) to something other than a power rail\n",
+				GetDescription().c_str());
 			return false;
 		}
 		if(m_outputEnable.GetPowerRailValue() != false)

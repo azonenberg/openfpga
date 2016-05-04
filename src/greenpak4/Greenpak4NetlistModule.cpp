@@ -115,10 +115,7 @@ Greenpak4NetlistModule::~Greenpak4NetlistModule()
 		delete x.second;
 	m_cells.clear();
 	
-	//nets depends on nodes but nothing depends on them after loading
-	for(auto x : m_nets)
-		delete x.second;
-	m_nets.clear();
+	//don't delete nets, it's just a re-indexing of nodes
 	
 	//ports don't depend on anything but nodes
 	for(auto x : m_ports)

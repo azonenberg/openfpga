@@ -15,45 +15,30 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
-#include "Greenpak4.h"
-#include <stdio.h>
-#include <stdlib.h>
 
-using namespace std;
+`default_nettype none
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Construction / destruction
+module Tristate(a, b, dir);
 
-Greenpak4NetlistCell::~Greenpak4NetlistCell()
-{
-	//do not delete wires, module dtor handles that
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Constraint helpers
-
-void Greenpak4NetlistCell::FindLOC()
-{
-	//Look up our module
-	auto module = m_parent->GetNetlist()->GetModule(m_type);
-
-	//Constraints go on the cell's output port(s)
-	//so look at all outbound edges
-	string loc = "";
-	for(auto it : m_connections)
-	{
-		//If not an output, ignore it
-		auto port = module->GetPort(it.first);
-		if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
-			continue;
-			
-		//See if this net has a LOC constraint
-		auto net = it.second;
-		if(!net->HasAttribute("LOC"))
-			continue;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// I/O declarations
 		
-		m_loc = net->GetAttribute("LOC");
-		return;
-	}
-}
+	(* LOC = "P19" *)
+	(* PULLDOWN = "10k" *)
+	inout wire a;
+	
+	(* LOC = "P18" *)
+	(* PULLDOWN = "10k" *)
+	inout wire b;
+	
+	(* LOC = "P15" *)
+	(* PULLDOWN = "10k" *)
+	input wire dir;
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Tristate stuff
+	
+	assign a = dir ? b : 1'bz;
+	assign b = ~dir ? a : 1'bz;
+
+endmodule

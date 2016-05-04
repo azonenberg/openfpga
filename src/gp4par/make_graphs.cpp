@@ -20,15 +20,6 @@
 
 using namespace std;
 
-void MakeIOBNodes(
-	Greenpak4NetlistModule* module,
-	Greenpak4Device* device,
-	PARGraph*& ngraph,
-	PARGraph*& dgraph,
-	labelmap& lmap,
-	uint32_t iob_label
-	);
-	
 void MakeNetlistEdges(Greenpak4Netlist* netlist);
 void MakeDeviceEdges(Greenpak4Device* device);
 
@@ -43,7 +34,6 @@ PARGraphNode* MakeNode(
 	uint32_t label,
 	Greenpak4BitstreamEntity* entity,
 	PARGraph* dgraph);
-
 
 /**
 	@brief Build the graphs
@@ -70,20 +60,25 @@ void BuildGraphs(
 	{
 		auto iob = it->second;
 		
-		//All IOBs are input capable
-		auto node = MakeNode(ibuf_label, iob, dgraph);
-		
-		//Can be an OBUF if we're not input only
-		if(!iob->IsInputOnly())
+		//Type A (and not input-only)? Can be anything
+		if( (dynamic_cast<Greenpak4IOBTypeA*>(iob) != NULL) && !iob->IsInputOnly() )
+		{
+			auto node = MakeNode(iobuf_label, iob, dgraph);
 			node->AddAlternateLabel(obuf_label);
-			
-		//Can be an IOBUF if we're type A
-		if(dynamic_cast<Greenpak4IOBTypeA*>(iob) != NULL)
-			node->AddAlternateLabel(iobuf_label);
+			node->AddAlternateLabel(ibuf_label);
+		}
+		
+		//Not input only, but type B? OBUF or IBUF but can't be IOBUF
+		else if(!iob->IsInputOnly())
+		{
+			auto node = MakeNode(obuf_label, iob, dgraph);
+			node->AddAlternateLabel(ibuf_label);
+		}
+		
+		//Nope, just an input
+		else
+			MakeNode(ibuf_label, iob, dgraph);
 	}
-	
-	//Create netlist nodes for the IOBs
-	//MakeIOBNodes(module, device, ngraph, dgraph, lmap, iob_label);
 	
 	//Make device nodes for each type of LUT
 	uint32_t lut2_label = AllocateLabel(ngraph, dgraph, lmap, "GP_2LUT");
@@ -220,118 +215,6 @@ void BuildGraphs(
 }
 
 /**
-	@brief Make netlist nodes for the IOBs
- */
-void MakeIOBNodes(
-	Greenpak4NetlistModule* module,
-	Greenpak4Device* device,
-	PARGraph*& ngraph,
-	PARGraph*& dgraph,
-	labelmap& lmap,
-	uint32_t iob_label
-	)
-{
-	for(auto it = module->port_begin(); it != module->port_end(); it ++)
-	{
-		Greenpak4NetlistPort* port = it->second;
-		
-		if(!module->HasNet(it->first))
-		{
-			fprintf(stderr, "INTERNAL ERROR: Netlist has a port named \"%s\" but no corresponding net\n",
-				it->first.c_str());
-			exit(-1);
-		}
-		
-		//Look up the net and make sure there's a LOC
-		Greenpak4NetlistNode* net = module->GetNet(it->first);
-		if(!net->HasAttribute("LOC"))
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level port \"%s\" does not have a constrained location (LOC attribute).\n"
-				"       In order to ensure proper device functionality all IO pins must be constrained.\n",
-				it->first.c_str());
-			exit(-1);
-		}
-		
-		//Look up the matching IOB
-		int pin_num;
-		string sloc = net->GetAttribute("LOC");
-		if(1 != sscanf(sloc.c_str(), "P%d", &pin_num))
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level port \"%s\" has an invalid LOC constraint \"%s\" (expected P3, P5, etc)\n",
-				it->first.c_str(),
-				sloc.c_str());
-			exit(-1);
-		}
-		Greenpak4IOB* iob = device->GetIOB(pin_num);
-		if(iob == NULL)
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level port \"%s\" has an invalid LOC constraint \"%s\" (no such pin, or not a GPIO)\n",
-				it->first.c_str(),
-				sloc.c_str());
-			exit(-1);
-		}
-		
-		//Type B IOBs cannot be used for inout
-		if( (port->m_direction == Greenpak4NetlistPort::DIR_INOUT) &&
-			(dynamic_cast<Greenpak4IOBTypeB*>(iob) != NULL) )
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level inout port \"%s\" is constrained to a pin \"%s\" which does "
-					"not support bidirectional IO\n",
-				it->first.c_str(),
-				sloc.c_str());
-			exit(-1);
-		}
-		
-		//Input-only pins cannot be used for IO or output
-		if( (port->m_direction != Greenpak4NetlistPort::DIR_INPUT) &&
-			iob->IsInputOnly() )
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level port \"%s\" is constrained to an input-only pin \"%s\" but is not "
-					"declared as an input\n",
-				it->first.c_str(),
-				sloc.c_str());
-			exit(-1);
-		}
-		
-		//Allocate a new graph label for these IOBs
-		string sname = string("Constrained IOB ") + it->first;
-		uint32_t label = AllocateLabel(ngraph, dgraph, lmap, sname);
-		
-		//If the IOB already has a custom label, we constrained two nets to the same place!
-		PARGraphNode* ipnode = iob->GetPARNode();
-		if(ipnode->GetLabel() != iob_label)
-		{
-			fprintf(
-				stderr,
-				"ERROR: Top-level port \"%s\" is constrained to pin \"%s\" but another port is already constrained "
-				"to this pin.\n",
-				it->first.c_str(),
-				sloc.c_str());
-			exit(-1);
-		}
-		
-		//Create the node
-		//TODO: Support buses here (for now, point to the entire port)
-		PARGraphNode* netnode = new PARGraphNode(label, port);
-		port->m_parnode = netnode;
-		ngraph->AddNode(netnode);
-		
-		//Re-label the assigned IOB so we get a proper match to it
-		ipnode->Relabel(label);
-	}
-}
-
-/**
 	@brief Make all of the edges in the netlist
  */
 void MakeNetlistEdges(Greenpak4Netlist* netlist)
@@ -365,13 +248,6 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			
 			if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
 				continue;
-			else if(port->m_direction == Greenpak4NetlistPort::DIR_INOUT)
-			{
-				fprintf(
-					stderr,
-					"ERROR: Tristates not implemented\n");
-				exit(-1);
-			}
 			
 			source = c.m_cell->m_parnode;
 			sourceport = c.m_portname;
@@ -612,7 +488,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		
 		//Can drive reset with ground or pin 2 only
 		auto sysrst = device->GetSystemReset()->GetPARNode();		
-		pin2->AddEdge("", sysrst, "RST");
+		pin2->AddEdge("OUT", sysrst, "RST");
 		gnd->AddEdge("OUT", sysrst, "RST");
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -621,14 +497,14 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		//VREF0/1 can drive pin 19
 		auto vref0 = device->GetVref(0)->GetPARNode();
 		auto vref1 = device->GetVref(1)->GetPARNode();
-		vref0->AddEdge("VOUT", pin19, "");
-		vref1->AddEdge("VOUT", pin19, "");
+		vref0->AddEdge("VOUT", pin19, "IN");
+		vref1->AddEdge("VOUT", pin19, "IN");
 		
 		//VREF2/3 can drive pin 18
 		auto vref2 = device->GetVref(2)->GetPARNode();
 		auto vref3 = device->GetVref(3)->GetPARNode();
-		vref2->AddEdge("VOUT", pin18, "");
-		vref3->AddEdge("VOUT", pin18, "");
+		vref2->AddEdge("VOUT", pin18, "IN");
+		vref3->AddEdge("VOUT", pin18, "IN");
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// REFERENCE TO COMPARATORS
@@ -657,46 +533,46 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		auto abuf = device->GetAbuf()->GetPARNode();
 		
 		//Input to buffer
-		pin6->AddEdge("", abuf, "IN");
+		pin6->AddEdge("OUT", abuf, "IN");
 		
 		//Dedicated inputs for ACMP0 (none)
 		
 		//Dedicated inputs for ACMP1
-		pin12->AddEdge("", acmp1, "VIN");
+		pin12->AddEdge("OUT", acmp1, "VIN");
 		pga->AddEdge("VOUT", acmp1, "VIN");
 		
 		//Dedicated inputs for ACMP2
-		pin13->AddEdge("", acmp2, "VIN");
+		pin13->AddEdge("OUT", acmp2, "VIN");
 		
 		//Dedicated inputs for ACMP3
-		pin15->AddEdge("", acmp3, "VIN");
-		pin13->AddEdge("", acmp3, "VIN");
+		pin15->AddEdge("OUT", acmp3, "VIN");
+		pin13->AddEdge("OUT", acmp3, "VIN");
 		
 		//Dedicated inputs for ACMP4
-		pin3->AddEdge("", acmp4, "VIN");
-		pin15->AddEdge("", acmp4, "VIN");
+		pin3->AddEdge("OUT", acmp4, "VIN");
+		pin15->AddEdge("OUT", acmp4, "VIN");
 		
 		//Dedicated inputs for ACMP5
-		pin4->AddEdge("", acmp5, "VIN");
+		pin4->AddEdge("OUT", acmp5, "VIN");
 		
 		//acmp0 input before gain stage is fed to everything but acmp5
-		pin6->AddEdge("", acmp0, "VIN");
+		pin6->AddEdge("OUT", acmp0, "VIN");
 		vdd->AddEdge("OUT", acmp0, "VIN");
 		abuf->AddEdge("OUT", acmp0, "VIN");
 		
-		pin6->AddEdge("", acmp1, "VIN");
+		pin6->AddEdge("OUT", acmp1, "VIN");
 		vdd->AddEdge("OUT", acmp1, "VIN");
 		abuf->AddEdge("OUT", acmp1, "VIN");
 		
-		pin6->AddEdge("", acmp2, "VIN");
+		pin6->AddEdge("OUT", acmp2, "VIN");
 		vdd->AddEdge("OUT", acmp2, "VIN");
 		abuf->AddEdge("OUT", acmp2, "VIN");
 		
-		pin6->AddEdge("", acmp3, "VIN");
+		pin6->AddEdge("OUT", acmp3, "VIN");
 		vdd->AddEdge("OUT", acmp3, "VIN");
 		abuf->AddEdge("OUT", acmp3, "VIN");
 		
-		pin6->AddEdge("", acmp4, "VIN");
+		pin6->AddEdge("OUT", acmp4, "VIN");
 		vdd->AddEdge("OUT", acmp4, "VIN");
 		abuf->AddEdge("OUT", acmp4, "VIN");
 		
@@ -704,13 +580,13 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		// INPUTS TO PGA
 		
 		vdd->AddEdge("OUT", pga, "VIN_P");
-		pin8->AddEdge("", pga, "VIN_P");
+		pin8->AddEdge("OUT", pga, "VIN_P");
 		
-		pin9->AddEdge("", pga, "VIN_N");
+		pin9->AddEdge("OUT", pga, "VIN_N");
 		gnd->AddEdge("OUT", pga, "VIN_N");
 		//TODO: DAC output
 		
-		pin16->AddEdge("", pga, "VIN_SEL");
+		pin16->AddEdge("OUT", pga, "VIN_SEL");
 		vdd->AddEdge("OUT", pga, "VIN_SEL");
 		
 		//TODO: Output to ADC
@@ -718,6 +594,6 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// PGA to IOB
 		
-		pga->AddEdge("VOUT", pin7, "");
+		pga->AddEdge("VOUT", pin7, "IN");
 	}
 }

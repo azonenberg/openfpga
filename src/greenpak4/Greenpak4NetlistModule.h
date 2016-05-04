@@ -65,6 +65,22 @@ public:
 	
 	//Parent module of the cell, not the module we're an instance of
 	Greenpak4NetlistModule* m_parent;	
+	
+	//Called by Greenpak4PAREngine::InitialPlacement_core
+	void FindLOC();
+	
+	std::string GetLOC()
+	{ return m_loc; }
+	
+	bool HasLOC()
+	{ return (m_loc != ""); }
+	
+	//Clear the LOC constraint if it's determined to be bogus (TODO: better handling of this situation)
+	void ClearLOC()
+	{ m_loc = ""; }
+	
+protected:
+	std::string m_loc;
 };
 
 /**

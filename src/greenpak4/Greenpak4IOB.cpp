@@ -57,11 +57,21 @@ Greenpak4IOB::~Greenpak4IOB()
 
 void Greenpak4IOB::CommitChanges()
 {
-	//Get our cell, or bail if we're unassigned
-	auto niob = dynamic_cast<Greenpak4NetlistPort*>(GetNetlistEntity());
-	if(niob == NULL)
+	//Get our IOB cell
+	auto cell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(cell == NULL)
 		return;
-	auto net = niob->m_net;
+	
+	//Get the net
+	Greenpak4NetlistNode* net = NULL;
+	if(cell->m_type == "GP_IBUF")
+		net = cell->m_connections["OUT"];
+	else if(cell->m_type == "GP_OBUF")
+		net = cell->m_connections["IN"];
+	else if(cell->m_type == "GP_IOBUF")
+		net = cell->m_connections["OUT"];
+	if(net == NULL)
+		return;
 			
 	//printf("    Configuring IOB %d\n", iob->GetPinNumber());
 	
@@ -147,43 +157,41 @@ void Greenpak4IOB::CommitChanges()
 		else
 		{
 			printf("WARNING: Top-level port \"%s\" has unrecognized attribute %s, ignoring\n",
-				niob->m_name.c_str(), x.first.c_str());
+				cell->m_name.c_str(), x.first.c_str());
 		}
 		
 		//printf("        %s = %s\n", x.first.c_str(), x.second.c_str());
 	}
 	
 	//Configure output enable
-	switch(niob->m_direction)
+	if(cell->m_type == "GP_OBUF")
+		m_outputEnable = m_device->GetPower();
+	else if(cell->m_type == "GP_IBUF")
+		m_outputEnable = m_device->GetGround();
+	else if(cell->m_type == "GP_IOBUF")
 	{
-		case Greenpak4NetlistPort::DIR_OUTPUT:
-			m_outputEnable = m_device->GetPower();
-			break;
-			
-		case Greenpak4NetlistPort::DIR_INPUT:
-			m_outputEnable = m_device->GetGround();
-			break;
-			
-		case Greenpak4NetlistPort::DIR_INOUT:
-		default:
-			printf("ERROR: Requested invalid output configuration (or inout, which isn't implemented)\n");
-			break;
+		//output enable will be hooked up by SetInput()
+	}
+	else
+	{
+		fprintf(stderr, "ERROR: Invalid cell type for IOB\n");
+		exit(-1);
 	}
 }
 
 void Greenpak4IOB::SetInput(string port, Greenpak4EntityOutput src)
 {
-	//nameless port for now (TODO proper techmapping)
-	if(port == "")
+	if(port == "IN")
 		m_outputSignal = src;
+	else if(port == "OE")
+		m_outputEnable = src;
 	
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
 unsigned int Greenpak4IOB::GetOutputNetNumber(string port)
 {
-	//nameless port for now (TODO proper techmapping)
-	if(port == "")
+	if(port == "OUT")
 		return m_outputBaseWord;
 	else
 		return -1;
@@ -192,15 +200,14 @@ unsigned int Greenpak4IOB::GetOutputNetNumber(string port)
 vector<string> Greenpak4IOB::GetInputPorts() const
 {
 	vector<string> r;
-	//r.push_back("I");
-	r.push_back("");		//for now, input port has no name (TODO: do proper IOB techmapping)
+	r.push_back("IN");
+	r.push_back("OE");
 	return r;
 }
 
 vector<string> Greenpak4IOB::GetOutputPorts() const
 {
 	vector<string> r;
-	//r.push_back("I");
-	r.push_back("");		//for now, input port has no name (TODO: do proper IOB techmapping)
+	r.push_back("OUT");
 	return r;
 }
