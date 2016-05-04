@@ -8,6 +8,7 @@
 \usepackage{graphicx}
 \usepackage{placeins}
 \usepackage{paralist}
+\usepackage{makecell}
 \usepackage[osf]{libertine}
 \usepackage{zi4}
 \usepackage[libertine,cmbraces]{newtxmath}
@@ -39,7 +40,12 @@
 \newcommand{\examplestyle}[1]{\textbf{\valuestyle{#1}:}}
 \newcommand{\strexamplestyle}[1]{\textbf{\strvaluestyle{#1}:}}
 \newcommand{\datastyle}[1]{\texttt{#1}}
+\newcommand{\whenstyle}[1]{{\fontseries{sb}\selectfont#1}}
 \newcommand{\tokenref}[2]{\hyperref[#2]{\tokenstyle{#1}}}
+
+% table lines
+\newcommand{\thinhline}{\Xhline{1\arrayrulewidth}}
+\newcommand{\thickhline}{\Xhline{2.5\arrayrulewidth}}
 
 % remove space after the last item in \begin{compactitem}
 \newcommand{\novspace}{\vspace*{-\baselineskip}}
@@ -89,18 +95,18 @@ All Verilog attributes and values are case sensitive unless otherwise noted.
 
 \subsection{Acronyms}
 
-\begin{tabularx}{\textwidth}{|l|X|}
-\hline
-{\bfseries Acronym} & {\bfseries Meaning} \\
-\hline
+\begin{tabularx}{10cm}{lX}
+\thinhline
+\whenstyle{Acronym} & \whenstyle{Meaning} \\
+\thickhline
 HDL & Hardware Description Language \\
-\hline
+\thinhline
 IOB & Input/Output Buffer \\
-\hline
+\thinhline
 PAR & Place And Route \\
-\hline
+\thinhline
 RTL & Register Transfer Level \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsection{Formatting}
@@ -161,7 +167,7 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json /tmp/Blinky.json
 The following legal Verilog-2001 features are not supported by \namestyle{gp4par} as of this writing:
 
 \begin{itemize}
-\item {\bfseries Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector nets
+\item \whenstyle{Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector nets
 may be used at lower levels of the hierarchy without restriction as long as the synthesis script includes a
 \tokenstyle{splitnets} command to convert these to single bit nets. (The \tokenstyle{synth\_greenpak4} \namestyle{Yosys} command includes this command by
 default.)
@@ -218,14 +224,14 @@ The \tokenstyle{COUNT\_EXTRACT} constraint may only be used on vector registers.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
-\item {\bfseries Vector register}\\
+\item \whenstyle{Vector register}\\
 One of the following:
 \begin{itemize}
 \item \strexamplestyle{AUTO} Same behavior as not specifying any constraint. Counters will be inferred where possible.
 \item \strexamplestyle{NO} Do not infer a counter even if the logic matches a supported inference structure.
 \item \strexamplestyle{FORCE} Always infer a counter. If a supported inference structure is not found, a synthesis error is produced.
 \end{itemize}
-\item {\bfseries Other} \\
+\item \whenstyle{Other} \\
 This constraint will be silently ignored if used on any other entity.
 \end{itemize}
 
@@ -274,13 +280,13 @@ The \tokenstyle{DRIVE\_TYPE} constraint may only be used on top-level module por
 
 \subsubsection{Constraint Values}
 \begin{itemize}
-\item {\bfseries Top-level module port (IOB)}
+\item \whenstyle{Top-level module port (IOB)}
 	\begin{itemize}
 		\item \strexamplestyle{NMOS\_OD} Open drain NMOS (pull-down only) driver.
 		\item \strexamplestyle{PMOS\_OD} Open drain PMOS (pull-up only) driver.
 		\item \strexamplestyle{PUSHPULL} CMOS digital push-pull driver. This is the default if no constraint is specified.
 	\end{itemize}
-\item {\bfseries Other} \\
+\item \whenstyle{Other} \\
 This constraint may not be used on any other entity.
 \end{itemize}
 
@@ -317,14 +323,14 @@ The \tokenstyle{IBUF\_TYPE} constraint may only be used on top-level module port
 
 \subsubsection{Constraint Values}
 \begin{itemize}
-\item {\bfseries Top-level module port (IOB)}
+\item \whenstyle{Top-level module port (IOB)}
 	\begin{itemize}
 		\item \strexamplestyle{ANALOG} Analog buffer for mixed signal hard IP. Note that analog \emph{outputs} must use this setting
 		to disable the digital input buffer and ensure correct device operation.
 		\item \strexamplestyle{LOW\_VOLTAGE} Low voltage threshold (see datasheet for exact value)
 		\item \strexamplestyle{NORMAL} Standard threshold (see datasheet for exact value)
 	\end{itemize}
-\item {\bfseries Other} \\
+\item \whenstyle{Other} \\
 This constraint may not be used on any other entity.
 \end{itemize}
 
@@ -356,9 +362,9 @@ As of this writing, the \tokenstyle{LOC} constraint may only be used on top-leve
 
 \subsubsection{Constraint Values}
 \begin{itemize}
-\item {\bfseries Top-level module port}\\
+\item \whenstyle{Top-level module port}\\
 Text string \strvaluestyle{Pn} where \tokenstyle{n} is the pin number of the device. Example: \strvaluestyle{P3}, \strvaluestyle{P17}.
-\item {\bfseries Other} \\
+\item \whenstyle{Other} \\
 This constraint may not be used on any other entity. Future versions of \namestyle{gp4par} may allow use of this constraint
 to lock LUTs, flipflops, and hard IP to specific locations.
 \end{itemize}
@@ -401,9 +407,9 @@ The \tokenstyle{PULLDOWN} constraint may only be used on top-level module ports.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
-\item {\bfseries Top-level module port (IOB)}\\
+\item \whenstyle{Top-level module port (IOB)}\\
 Text string \strvaluestyle{10k}, \strvaluestyle{100k}, or \strvaluestyle{1M}, case sensitive, to specify the nominal value of the pull-down resistor.
-\item {\bfseries Other} \\
+\item \whenstyle{Other} \\
 This constraint may not be used on any other entity.
 \end{itemize}
 
@@ -444,9 +450,9 @@ The \tokenstyle{PULLUP} constraint may only be used on top-level module ports.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
-\item {\bfseries Top-level module port (IOB)}\\
+\item \whenstyle{Top-level module port (IOB)}\\
 Text string \strvaluestyle{10k}, \strvaluestyle{100k}, or \strvaluestyle{1M}, case sensitive, to specify the nominal value of the pull-up resistor.
-\item {\bfseries Other} \\
+\item \whenstyle{Other} \\
 This constraint may not be used on any other entity.
 \end{itemize}
 
@@ -487,9 +493,9 @@ The \tokenstyle{SCHMITT\_TRIGGER} constraint may only be used on top-level modul
 
 \subsubsection{Constraint Values}
 \begin{itemize}
-\item {\bfseries Top-level module port (IOB)}\\
+\item \whenstyle{Top-level module port (IOB)}\\
 Any nonzero value, or no value, to enable the Schmitt trigger. Specify zero, or no constraint, to disable it.
-\item {\bfseries Other} \\
+\item \whenstyle{Other} \\
 This constraint may not be used on any other entity.
 \end{itemize}
 
@@ -532,14 +538,14 @@ The \tokenstyle{SHREG\_EXTRACT} constraint may only be used on 1-bit registers.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
-\item {\bfseries Single-bit register}\\
+\item \whenstyle{Single-bit register}\\
 One of the following:
 \begin{itemize}
 \item \strexamplestyle{AUTO} Same behavior as not specifying any constraint. Shift registers will be inferred where possible.
 \item \strexamplestyle{NO} Do not infer a shift register even if the logic matches a supported inference structure.
 \item \strexamplestyle{FORCE} Always infer a shift register. If a supported inference structure is not found, a synthesis error is produced.
 \end{itemize}
-\item {\bfseries Other} \\
+\item \whenstyle{Other} \\
 This constraint will be silently ignored if used on any other entity.
 \end{itemize}
 
@@ -746,26 +752,26 @@ The LUT output is the \{\tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{IN0} & Input & 1 & Least significant input bit \\
-\hline
+\thinhline
 \tokenstyle{IN1} & Input & 1 & Input bit \\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Lookup table output \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{INIT} & Integer & 4 & LUT truth table \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -807,28 +813,28 @@ The LUT output is the \{\tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'t
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{IN0} & Input & 1 & Least significant input bit \\
-\hline
+\thinhline
 \tokenstyle{IN1} & Input & 1 & Input bit \\
-\hline
+\thinhline
 \tokenstyle{IN2} & Input & 1 & Most significant input bit \\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Lookup table output \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{INIT} & Integer & 8 & LUT truth table \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -872,30 +878,30 @@ The LUT output is the \{\tokenstyle{IN3}, \tokenstyle{IN2}, \tokenstyle{IN1}, \t
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{IN0} & Input & 1 & Least significant input bit \\
-\hline
+\thinhline
 \tokenstyle{IN1} & Input & 1 & Input bit \\
-\hline
+\thinhline
 \tokenstyle{IN2} & Input & 1 & Input bit \\
-\hline
+\thinhline
 \tokenstyle{IN3} & Input & 1 & Most significant input bit \\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Lookup table output \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{INIT} & Integer & 16 & LUT truth table \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -937,14 +943,14 @@ comparators have buffers on the input; see device datasheet for details.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{IN} & Input & 1 & Connect to analog output from IOB.\\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Connect to \tokenstyle{VIN} of a \tokenref{GP\_ACMP}{gp-acmp} block.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
@@ -983,43 +989,43 @@ either the reset-done output of the \tokenref{GP\_POR}{gp-por} block, or an arbi
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{PWREN} & Input & 1 &
-	1: normal operation \newline
-	0: power down mode \\
-\hline
+	\whenstyle{When 1:} normal operation \newline
+	\whenstyle{When 0:} power down mode \\
+\thinhline
 \tokenstyle{OUT} & Output & 1 &
-	1: when \tokenstyle{VIN} $>$ \tokenstyle{VREF} and comparator is running \newline
-	0: when \tokenstyle{VIN} $<$ \tokenstyle{VREF} or comparator is powered down \\
-\hline
+	\whenstyle{When 1:} when \tokenstyle{VIN} $>$ \tokenstyle{VREF} and comparator is running \newline
+	\whenstyle{When 0:} when \tokenstyle{VIN} $<$ \tokenstyle{VREF} or comparator is powered down \\
+\thinhline
 \tokenstyle{VIN} & Input & 1 & Input voltage (Vdd or external analog input from IOB)\\
-\hline
+\thinhline
 \tokenstyle{VREF} & Input & 1 & Input reference voltage\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{BANDWIDTH} & String & N/A &
 	Comparator bandwidth. Legal values are \strvaluestyle{LOW} and \strvaluestyle{HIGH}, see device datasheet for actual bandwidth values. \\
-\hline
+\thinhline
 \tokenstyle{VIN\_ATTEN} & Integer & 3 &
 	Attenuation for the input, represented as inverse gain. Legal values are 1, 2, 3, 4. \\
-\hline
+\thinhline
 \tokenstyle{VIN\_ISRC\_EN} & Boolean & 1 &
 	Set to 1 to enable the $100 \mu A$ current source on the input. Note that not all comparators support the current
 	source, check device datasheet for details.\\
-\hline
+\thinhline
 \tokenstyle{HYSTERESIS} & Integer & 8 &
 	Hysteresis, in mV. Legal values are 0, 25, 50, 200. See device datasheet for offset notes.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1060,33 +1066,33 @@ This primitive represents the bandgap voltage reference.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{OK} & Output & 1 & Goes high when bandgap voltage reference is stable. \\
-\hline
+\thinhline
 \tokenstyle{VOUT} & Output & 1 & 1.0V reference voltage.
 	Dedicated connection to mixed signal hard IP, does not connect to general fabric routing. \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
-	\textbf{When 1:} \newline Automatically power down bandgap when all loads are powered down. \newline
-	\textbf{When 0:} \newline Automatic power-down is disabled. The bandgap is always on.\\
-\hline
+	\whenstyle{When 1:} \newline Automatically power down bandgap when all loads are powered down. \newline
+	\whenstyle{When 0:} \newline Automatic power-down is disabled. The bandgap is always on.\\
+\thinhline
 \tokenstyle{CHOPPER\_EN} & Boolean & 1 &
 	Specify whether to enable the chopper stabilization for the bandgap op-amp. Should always be 1. \\
-\hline
+\thinhline
 \tokenstyle{OUT\_DELAY} & Integer & 1 &
 	Time, in $\mu s$, to wait after bandgap startup before asserting OK. Legal values are 100 or 550.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1129,35 +1135,35 @@ mapper may map \tokenstyle{GP\_COUNT8} cells to unused 14-bit counters in order 
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{CLK} & Input & 1 & The input clock signal\\
-\hline
+\thinhline
 \tokenstyle{RST} & Input & 1 & Reset input (polarity depends on \tokenstyle{RESET\_MODE}). When triggered, resets the count register to zero. \\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Counter underflow output. High whenever the count register equals zero. \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{CLKIN\_DIVIDE} & Integer & 8 &
 	Input clock divider. Legal values depend on what source \tokenstyle{CLK} is driven by, see device datasheet.\\
-\hline
+\thinhline
 \tokenstyle{COUNT\_TO} & Integer & 8 & Value to set the counter to on underflow. \\
-\hline
+\thinhline
 \tokenstyle{RESET\_MODE} & String &  &
 	\strexamplestyle{RISING} Resets the counter on a rising edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{FALLING} Resets the counter on a falling edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{BOTH} Resets the counter on any edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{LEVEL} Resets the counter when \tokenstyle{RST} is high. \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1203,35 +1209,35 @@ containing counters of variable depth.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{CLK} & Input & 1 & The input clock signal\\
-\hline
+\thinhline
 \tokenstyle{RST} & Input & 1 & Reset input (polarity depends on \tokenstyle{RESET\_MODE}). When triggered, resets the count register to zero. \\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Counter underflow output. High whenever the count register equals zero. \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{CLKIN\_DIVIDE} & Integer & 8 &
 	Input clock divider. Legal values depend on what source \tokenstyle{CLK} is driven by, see device datasheet.\\
-\hline
+\thinhline
 \tokenstyle{COUNT\_TO} & Integer & 14 & Value to set the counter to on underflow. \\
-\hline
+\thinhline
 \tokenstyle{RESET\_MODE} & String &  &
 	\strexamplestyle{RISING} Resets the counter on a rising edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{FALLING} Resets the counter on a falling edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{BOTH} Resets the counter on any edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{LEVEL} Resets the counter when \tokenstyle{RST} is high. \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1273,26 +1279,26 @@ recommend inferring logic.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{D} & Input & 1 & Input data \\
-\hline
+\thinhline
 \tokenstyle{CLK} & Input & 1 & Input clock \\
-\hline
+\thinhline
 \tokenstyle{Q} & Output & 1 & Output signal \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1332,28 +1338,28 @@ recommend inferring logic.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{D} & Input & 1 & Input data \\
-\hline
+\thinhline
 \tokenstyle{CLK} & Input & 1 & Input clock \\
-\hline
+\thinhline
 \tokenstyle{nRST} & Input & 1 & Active-low reset \\
-\hline
+\thinhline
 \tokenstyle{Q} & Output & 1 & Output signal \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1396,28 +1402,28 @@ recommend inferring logic.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{D} & Input & 1 & Input data \\
-\hline
+\thinhline
 \tokenstyle{CLK} & Input & 1 & Input clock \\
-\hline
+\thinhline
 \tokenstyle{nSET} & Input & 1 & Active-low set \\
-\hline
+\thinhline
 \tokenstyle{Q} & Output & 1 & Output signal \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1460,30 +1466,30 @@ recommend inferring logic.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{D} & Input & 1 & Input data \\
-\hline
+\thinhline
 \tokenstyle{CLK} & Input & 1 & Input clock \\
-\hline
+\thinhline
 \tokenstyle{nSR} & Input & 1 & Active-low set/reset \\
-\hline
+\thinhline
 \tokenstyle{Q} & Output & 1 & Output signal \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
-\hline
+\thinhline
 \tokenstyle{SRMODE} & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1529,14 +1535,14 @@ to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{IN} & Input & 1 & Input signal from top-level module port \\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Output signal to fabric routing \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
@@ -1580,14 +1586,14 @@ recommend inferring logic.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{IN} & Input & 1 & Input bit \\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Inverted signal \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
@@ -1628,18 +1634,18 @@ Note that in the current \namestyle{gp4par} version, constraints must be attache
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{IO} & Bidirectional & 1 & I/O signal to top-level module port \\
-\hline
+\thinhline
 \tokenstyle{IN} & Input & 1 & Input signal from fabric routing \\
-\hline
+\thinhline
 \tokenstyle{OE} & Input & 1 & Tri-state output enable. When low, the output driver is disabled. \\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Output signal to fabric routing \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
@@ -1693,28 +1699,28 @@ rule will result in a physical DRC failure.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{PWRDN} & Input & 1 &
-	\textbf{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
-	\textbf{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
-\hline
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
+\thinhline
 \tokenstyle{CLKOUT} & Output & 1 & 1730 Hz (nominal) clock signal \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
-	\textbf{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
-	\textbf{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
-\hline
+	\whenstyle{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
+	\whenstyle{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
+\thinhline
 \tokenstyle{OUT\_DIV} & Integer & 8 &
 	Output divider. Legal values: \newline
 	\textbf{1:} 1730 Hz output \newline
@@ -1722,9 +1728,9 @@ rule will result in a physical DRC failure.
 	\textbf{4:} 432 Hz output \newline
 	\textbf{16:} 108 Hz output
 \\
-\hline
+\thinhline
 \tokenstyle{PWRDN\_EN} & Boolean & 1 & Set to 1 to enable the \tokenstyle{PWRDN} pin, or 0 to disable. \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1765,14 +1771,14 @@ Note that in the current \namestyle{gp4par} version, constraints must be attache
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{IN} & Input & 1 & Input signal from fabric routing \\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Output signal to top-level module port \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
@@ -1819,16 +1825,16 @@ Note that in the current \namestyle{gp4par} version, constraints must be attache
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{IN} & Input & 1 & Input signal from fabric routing \\
-\hline
+\thinhline
 \tokenstyle{OE} & Input & 1 & Output enable. When low, the output floats. \\
-\hline
+\thinhline
 \tokenstyle{OUT} & Output & 1 & Output signal to top-level module port \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
@@ -1877,45 +1883,44 @@ by fabric logic or a constant zero.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{VIN\_P} & Input & 1 & Positive differential input, or single-ended input A. Tie to \datastyle{1'b0} if unused.\\
-\hline
+\thinhline
 \tokenstyle{VIN\_N} & Input & 1 & Negative differential input, or single ended input B. Tie to \datastyle{1'b0} if unused.\\
-\hline
+\thinhline
 \tokenstyle{VIN\_SEL} & Input & 1 & Input mux selector. 1 = \tokenstyle{VIN\_P}, 0 = \tokenstyle{VIN\_N}.
 	\begin{compactitem}
 		\item Differential or pseudo-differential modes: Ignored, tie to \datastyle{1'b1}
 		\item Single-ended mode: Tie to \datastyle{1'b1} or input signal from IOB.\novspace
 	\end{compactitem}\\
-\hline
+\thinhline
 \tokenstyle{VOUT} & Output & 1 & Analog output\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{GAIN} & Real & N/A &
 	Gain of the PGA. Legal values:
 	\begin{compactitem}
 		\item Differential or pseudo-differential modes: 1, 2, 4, 8, or 16
 		\item Single-ended mode: 0.25, 0.5, 1, 2, 4, or 8\novspace
 	\end{compactitem}\\
-
-\hline
+\thinhline
 \tokenstyle{INPUT\_MODE} & String & N/A &
 	Input buffer configuration. \newline
 	\strexamplestyle{SINGLE} single-ended input \newline
 	\strexamplestyle{DIFF} true differential input \newline
 	\strexamplestyle{PDIFF} pseudo-differential input
 \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1957,22 +1962,22 @@ startup process in order to avoid glitches.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{RST\_DONE} & Output & 1 & Reset-done output. Goes high when the device has finished initializing.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{POR\_TIME} & Integer & 16 & Delay, in $\mu s$, from power-good to release of \tokenstyle{RST\_DONE}. Legal values are 4, 500.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -2011,22 +2016,22 @@ Bit 2010: Disable power detector for charge pump
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{PWRDET} & Output & 1 & Power-detect output. High when Vdd is less than 2.7V.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{POR\_TIME} & Integer & 16 & Delay, in microseconds, from power-good to release of POR. Legal values are 4, 500.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -2060,40 +2065,40 @@ Note that all of the oscillator blocks in \namestyle{GreenPak4} internally share
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{PWRDN} & Input & 1 &
-	\textbf{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
-	\textbf{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
-\hline
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
+\thinhline
 \tokenstyle{CLKOUT\_PREDIV} & Output & 1 & Pre-divided clock output to hard IP.  \\
-\hline
+\thinhline
 \tokenstyle{CLKOUT\_FABRIC} & Output & 1 & Final clock signal to general fabric routing\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
-	\textbf{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
-	\textbf{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
-\hline
+	\whenstyle{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
+	\whenstyle{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
+\thinhline
 \tokenstyle{OSC\_FREQ} & String & N/A & Oscillator frequency select. Must be one of \strvaluestyle{2M} or \strvaluestyle{25k}. \\
-\hline
+\thinhline
 \tokenstyle{PRE\_DIV} & Integer & 8 &
 	Output pre-divider for \tokenstyle{CLKOUT\_PREDIV}. Legal values are 1, 2, 4, 8. \\
-\hline
+\thinhline
 \tokenstyle{FABRIC\_DIV} & Integer & 8 &
 	Output post-divider for \tokenstyle{CLKOUT\_FABRIC}. Legal values are 1, 2, 3, 4, 8, 12, 24, 64. \\
-\hline
+\thinhline
 \tokenstyle{PWRDN\_EN} & Boolean & 1 & Set to 1 to enable the \tokenstyle{PWRDN} pin, or 0 to disable. \\
-\hline
+\thinhline
 \end{tabularx}
 
 \pagebreak
@@ -2144,38 +2149,38 @@ rule will result in a physical DRC failure.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{PWRDN} & Input & 1 &
-	\textbf{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
-	\textbf{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
-\hline
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
+\thinhline
 \tokenstyle{CLKOUT\_PREDIV} & Output & 1 & Pre-divided clock output to hard IP.  \\
-\hline
+\thinhline
 \tokenstyle{CLKOUT\_FABRIC} & Output & 1 & Final clock signal to general fabric routing\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
-	\textbf{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
-	\textbf{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
-\hline
+	\whenstyle{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
+	\whenstyle{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
+\thinhline
 \tokenstyle{PRE\_DIV} & Integer & 8 &
 	Output pre-divider for \tokenstyle{CLKOUT\_PREDIV}. Legal values are 1, 4, 8, 16. \\
-\hline
+\thinhline
 \tokenstyle{FABRIC\_DIV} & Integer & 8 &
 	Output post-divider for \tokenstyle{CLKOUT\_FABRIC}. Legal values are 1, 2, 3, 4, 8, 12, 24, 64. \\
-\hline
+\thinhline
 \tokenstyle{PWRDN\_EN} & Boolean & 1 & Set to 1 to enable the \tokenstyle{PWRDN} pin, or 0 to disable. \\
-\hline
+\thinhline
 \end{tabularx}
 
 \pagebreak
@@ -2219,34 +2224,34 @@ positions are fixed at synthesis time rather than being runtime programmable.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{nRST} & Input & 1 & Active-low reset input. Clears the shift register to zero when asserted. Tie high if not used.\\
-\hline
+\thinhline
 \tokenstyle{CLK} & Input & 1 & Clock for the shift register\\
-\hline
+\thinhline
 \tokenstyle{IN} & Input & 1 & Input data for the shift register\\
-\hline
+\thinhline
 \tokenstyle{OUTA} & Output & 1 & Tap A for the shift register\\
-\hline
+\thinhline
 \tokenstyle{OUTB} & Output & 1 & Tap B for the shift register\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{OUTA\_DELAY} & Integer & 5 & Number of register stages for output A. Legal range is 1 to 16 inclusive.\\
-\hline
+\thinhline
 \tokenstyle{OUTA\_INVERT} & Boolean & 1 & Set to 1 to invert tap A's output.\\
-\hline
+\thinhline
 \tokenstyle{OUTB\_DELAY} & Integer & 5 & Number of register stages for output B. Legal range is 1 to 16 inclusive.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -2291,25 +2296,25 @@ To ensure consistent behavior between the runtime reset and boot, it may be nece
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{RST} & Input & 1 & System reset input. Must connect directly to to pin 2 of the device.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{RESET\_MODE} & String & 1 &
 	\strexamplestyle{RISING} One-shot reset on rising edge of RST. \newline
 	\strexamplestyle{FALLING} One-shot reset on falling edge of RST. \newline
 	\strexamplestyle{LEVEL} System is held in reset while RST is high.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -2343,12 +2348,12 @@ design, simply use the value \datastyle{1'b1}.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{OUT} & Output & 1 & Constant value ``1" \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
@@ -2387,10 +2392,10 @@ future version will perform this replication automatically, allowing one \tokens
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{VIN} & Input & 1 & Input voltage, if required. Connect depending on the source of the reference:
 	\begin{compactitem}
 		\item Constant voltage: \datastyle{1'b0}
@@ -2399,17 +2404,17 @@ future version will perform this replication automatically, allowing one \tokens
 		\item Off die: Analog input from IOB\novspace
 	\end{compactitem}
 \\
-\hline
+\thinhline
 \tokenstyle{VOUT} & Output & 1 & The generated reference voltage \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{VIN\_DIV} & Integer & 4 &
 	Divider for input voltage. Legal values depend on the source of the reference:
 	\begin{compactitem}
@@ -2419,11 +2424,11 @@ future version will perform this replication automatically, allowing one \tokens
 		\item Off die: 1 or 2\novspace
 	\end{compactitem}
 \\
-\hline
+\thinhline
 \tokenstyle{VREF} & Integer & 16 &
 	Constant output voltage, in mV. Legal values range from 50 to 1200 in 50 mV increments.
 	If output voltage is not constant, do not specify this parameter.\\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -2460,12 +2465,12 @@ design, simply use the value \datastyle{1'b0}.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{\textwidth}{|l|l|l|X|}
-\hline
-{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
-\hline
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
 \tokenstyle{OUT} & Output & 1 & Constant value ``0" \\
-\hline
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
