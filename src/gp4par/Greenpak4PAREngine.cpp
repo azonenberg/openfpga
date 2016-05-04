@@ -38,6 +38,80 @@ Greenpak4PAREngine::~Greenpak4PAREngine()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Initial placement
+
+void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
+{
+	//Make a map of all nodes to their names
+	map<string, Greenpak4BitstreamEntity*> nmap;
+	for(size_t i=0; i<m_device->GetNumNodes(); i++)
+	{
+		auto entity = static_cast<Greenpak4BitstreamEntity*>(m_device->GetNodeByIndex(i)->GetData());
+		nmap[entity->GetDescription()] = entity;
+	}
+	
+	//Go over the netlist nodes, see if any have LOC constraints.
+	//If so, place those at the constrained locations
+	for(size_t i=0; i<m_netlist->GetNumNodes(); i++)
+	{
+		auto node = m_netlist->GetNodeByIndex(i);
+		auto entity = static_cast<Greenpak4NetlistEntity*>(node->GetData());
+		auto cell = dynamic_cast<Greenpak4NetlistCell*>(entity);
+		if(cell == NULL)
+		{
+			fprintf(stderr, "INTERNAL ERROR: Cell in netlist is not a Greenpak4NetlistCell\n");
+			exit(-1);
+		}
+		
+		if(verbose)
+			printf("    Cell %s\n", entity->m_name.c_str());
+			
+		//Look up our module
+		auto module = cell->m_parent->GetNetlist()->GetModule(cell->m_type);
+
+		//Constraints go on the cell's output port(s)
+		//so look at all outbound edges
+		for(auto it : cell->m_connections)
+		{
+			//If not an output, ignore it
+			auto port = module->GetPort(it.first);
+			//if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
+			//	continue;
+				
+			//See if this net has a LOC constraint
+			auto net = it.second;
+			//if(!net->HasAttribute("LOC"))
+			//	continue;
+			//auto loc = net->GetAttribute("LOC");
+			
+			printf("        output port %s has net %s\n", port->m_name.c_str(), net->m_name.c_str());
+			for(auto jt : net->m_attributes)
+				printf("%s => %s\n", jt.first.c_str(), jt.second.c_str());
+		}
+	}
+	
+	//For each label, mate each node in the netlist with the first legal mate in the device.
+	//Simple and deterministic.
+	uint32_t nmax_net = m_netlist->GetMaxLabel();
+	for(uint32_t label = 0; label <= nmax_net; label ++)
+	{
+		uint32_t nnet = m_netlist->GetNumNodesWithLabel(label);
+		for(uint32_t net = 0; net<nnet; net++)
+		{
+			PARGraphNode* netnode = m_netlist->GetNodeByLabelAndIndex(label, net);
+			PARGraphNode* devnode = m_device->GetNodeByLabelAndIndex(label, net);
+			if(devnode->GetMate() != NULL)
+			{
+				auto entity = static_cast<Greenpak4BitstreamEntity*>(devnode->GetData());
+				printf("INTERNAL ERROR: Hit the same node (%s) twice\n",
+					entity->GetDescription().c_str());
+			}
+			netnode->MateWith(devnode);
+		}
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Congestion metrics
 
 uint32_t Greenpak4PAREngine::ComputeCongestionCost()

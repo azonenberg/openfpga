@@ -63,12 +63,27 @@ void BuildGraphs(
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
 	
 	//Create device entries for the IOBs
-	uint32_t iob_label = AllocateLabel(ngraph, dgraph, lmap, "Unconstrained IOB");
+	uint32_t ibuf_label = AllocateLabel(ngraph, dgraph, lmap, "GP_IBUF");
+	uint32_t obuf_label = AllocateLabel(ngraph, dgraph, lmap, "GP_OBUF");
+	uint32_t iobuf_label = AllocateLabel(ngraph, dgraph, lmap, "GP_IOBUF");
 	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
-		MakeNode(iob_label, it->second, dgraph);
+	{
+		auto iob = it->second;
+		
+		//All IOBs are input capable
+		auto node = MakeNode(ibuf_label, iob, dgraph);
+		
+		//Can be an OBUF if we're not input only
+		if(!iob->IsInputOnly())
+			node->AddAlternateLabel(obuf_label);
+			
+		//Can be an IOBUF if we're type A
+		if(dynamic_cast<Greenpak4IOBTypeA*>(iob) != NULL)
+			node->AddAlternateLabel(iobuf_label);
+	}
 	
 	//Create netlist nodes for the IOBs
-	MakeIOBNodes(module, device, ngraph, dgraph, lmap, iob_label);
+	//MakeIOBNodes(module, device, ngraph, dgraph, lmap, iob_label);
 	
 	//Make device nodes for each type of LUT
 	uint32_t lut2_label = AllocateLabel(ngraph, dgraph, lmap, "GP_2LUT");
@@ -330,22 +345,15 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 		PARGraphNode* source = NULL;
 		string sourceport = "";
 		
-		//See if it was sourced by a port
+		//Nets sourced by port are special - no edges
+		bool sourced_by_port = false;
 		for(auto p : node->m_ports)
 		{
-			if(p->m_direction == Greenpak4NetlistPort::DIR_INPUT)
+			if(p->m_direction != Greenpak4NetlistPort::DIR_OUTPUT)
 			{
-				source = p->m_parnode;
 				//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
 				//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
-			}
-			
-			else if(p->m_direction == Greenpak4NetlistPort::DIR_INOUT)
-			{
-				fprintf(
-					stderr,
-					"ERROR: Tristates not implemented\n");
-				exit(-1);
+				sourced_by_port = true;
 			}
 		}
 		
@@ -370,10 +378,8 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 		}
 		
-		//printf("        and drives\n");
-		
 		//DRC fail if undriven net
-		if(source == NULL)
+		if( (source == NULL) && !sourced_by_port )
 		{
 			fprintf(
 				stderr,
@@ -382,23 +388,62 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			exit(-1);	
 		}
 		
-		//Create edges from this source node to all sink nodes
-		for(auto p : node->m_ports)
+		//printf("        and drives\n");
+		
+		//If node is sourced by a port, special processing needed.
+		//We can only drive IBUF/IOBUF cells
+		if(sourced_by_port)
 		{
-			if(p->m_parnode != source)
+			if(node->m_ports.size() != 1)
 			{
-				//TODO: IOB port names
-				source->AddEdge(sourceport, p->m_parnode);
-				//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
-				//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+				fprintf(
+					stderr,
+					"ERROR: Net \"%s\" is connected directly to multiple top-level ports (need an IOB)\n",
+					node->m_name.c_str());
+				exit(-1);
+			}
+			
+			for(auto c : node->m_nodeports)
+			{
+				//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+				
+				//Verify the type is IBUF/IOBUF
+				if( (c.m_cell->m_type == "GP_IBUF") || (c.m_cell->m_type == "GP_IOBUF") )
+					continue;
+				
+				fprintf(
+					stderr,
+					"ERROR: Net \"%s\" directly drives cell %s port %s (type %s, should be IOB)\n",
+					node->m_name.c_str(),
+					c.m_cell->m_name.c_str(),
+					c.m_portname.c_str(),
+					c.m_cell->m_type.c_str()
+					);
+				exit(-1);
 			}
 		}
-		for(auto c : node->m_nodeports)
+		
+		//Create edges from this source node to all sink nodes
+		else
 		{
-			if(c.m_cell->m_parnode != source)
+			/*
+			for(auto p : node->m_ports)
 			{
-				source->AddEdge(sourceport, c.m_cell->m_parnode, c.m_portname);
-				//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+				if(p->m_parnode != source)
+				{
+					source->AddEdge(sourceport, p->m_parnode);
+					//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
+					//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+				}
+			}
+			*/
+			for(auto c : node->m_nodeports)
+			{
+				if(c.m_cell->m_parnode != source)
+				{
+					//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+					source->AddEdge(sourceport, c.m_cell->m_parnode, c.m_portname);
+				}
 			}
 		}
 	}

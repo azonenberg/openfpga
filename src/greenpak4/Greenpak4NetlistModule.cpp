@@ -361,12 +361,6 @@ void Greenpak4NetlistModule::LoadCellAttributes(Greenpak4NetlistCell* cell, json
 		string cname = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
 				
-		if(!json_object_is_type(child, json_type_string))
-		{
-			fprintf(stderr, "ERROR: Cell name attribute should be of type string but isn't\n");
-			exit(-1);
-		}
-		
 		//Make sure we don't have it already
 		if(cell->m_attributes.find(cname) != cell->m_attributes.end())
 		{

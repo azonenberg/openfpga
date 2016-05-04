@@ -18,6 +18,8 @@
  
 #include "xbpar.h"
 
+using namespace std;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
@@ -40,7 +42,7 @@ PAREngine::~PAREngine()
 	
 	@return true on success, fail if design could not be routed
  */
-bool PAREngine::PlaceAndRoute(std::map<uint32_t, std::string> label_names, bool verbose, uint32_t seed)
+bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, bool verbose, uint32_t seed)
 {
 	if(verbose)
 		printf("\nXBPAR initializing...\n");
@@ -60,7 +62,7 @@ bool PAREngine::PlaceAndRoute(std::map<uint32_t, std::string> label_names, bool 
 	//Converge until we get a passing placement
 	printf("\nOptimizing placement...\n");
 	uint32_t iteration = 0;
-	std::vector<PARGraphEdge*> unroutes;
+	vector<PARGraphEdge*> unroutes;
 	uint32_t best_cost = 1000000;
 	uint32_t time_since_best_cost = 0;
 	bool made_change = true;
@@ -91,7 +93,7 @@ bool PAREngine::PlaceAndRoute(std::map<uint32_t, std::string> label_names, bool 
 		
 		//Find the set of nodes in the netlist that we can optimize
 		//If none were found, give up
-		std::vector<PARGraphNode*> badnodes;
+		vector<PARGraphNode*> badnodes;
 		FindSubOptimalPlacements(badnodes);
 		if(badnodes.empty())
 			break;
@@ -119,7 +121,7 @@ bool PAREngine::PlaceAndRoute(std::map<uint32_t, std::string> label_names, bool 
 /**
 	@brief Update the scores for the current netlist and then print the result
  */
-uint32_t PAREngine::ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration)
+uint32_t PAREngine::ComputeAndPrintScore(vector<PARGraphEdge*>& unroutes, uint32_t iteration)
 {
 	uint32_t ucost = ComputeUnroutableCost(unroutes);
 	uint32_t ccost = ComputeCongestionCost();
@@ -139,7 +141,7 @@ uint32_t PAREngine::ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, u
 	return cost;
 }
 
-void PAREngine::PrintUnroutes(std::vector<PARGraphEdge*>& /*unroutes*/)
+void PAREngine::PrintUnroutes(vector<PARGraphEdge*>& /*unroutes*/)
 {
 }
 
@@ -148,7 +150,7 @@ void PAREngine::PrintUnroutes(std::vector<PARGraphEdge*>& /*unroutes*/)
 	
 	As of now, we only check for the condition where the netlist has more nodes with a given label than the device.
  */
-bool PAREngine::SanityCheck(std::map<uint32_t, std::string> label_names, bool verbose)
+bool PAREngine::SanityCheck(map<uint32_t, string> label_names, bool verbose)
 {
 	if(verbose)
 		printf("Initial design feasibility check...\n");
@@ -207,21 +209,8 @@ void PAREngine::InitialPlacement(bool verbose)
 	m_netlist->IndexNodesByLabel();
 	m_device->IndexNodesByLabel();
 	
-	//For each label, mate each node in the netlist with the first legal mate in the device.
-	//Simple and deterministic.
-	uint32_t nmax_net = m_netlist->GetMaxLabel();
-	for(uint32_t label = 0; label <= nmax_net; label ++)
-	{
-		uint32_t nnet = m_netlist->GetNumNodesWithLabel(label);
-		for(uint32_t net = 0; net<nnet; net++)
-		{
-			PARGraphNode* netnode = m_netlist->GetNodeByLabelAndIndex(label, net);
-			PARGraphNode* devnode = m_device->GetNodeByLabelAndIndex(label, net);
-			if(devnode->GetMate() != NULL)
-				printf("INTERNAL ERROR: Hit the same node twice\n");
-			netnode->MateWith(devnode);
-		}
-	}
+	//Do the actual placement (technology specific)
+	InitialPlacement_core(verbose);
 }
 
 /**
@@ -231,7 +220,7 @@ void PAREngine::InitialPlacement(bool verbose)
 	
 	@return True if we made changes to the netlist, false if nothing was done
  */
-bool PAREngine::OptimizePlacement(std::vector<PARGraphNode*>& badnodes, bool /*verbose*/)
+bool PAREngine::OptimizePlacement(vector<PARGraphNode*>& badnodes, bool /*verbose*/)
 {
 	//Pick one of the nodes at random as our pivot node
 	PARGraphNode* pivot = badnodes[rand() % badnodes.size()];
@@ -300,7 +289,7 @@ void PAREngine::MoveNode(PARGraphNode* node, PARGraphNode* newpos)
  */
 uint32_t PAREngine::ComputeCost()
 {
-	std::vector<PARGraphEdge*> unroutes;
+	vector<PARGraphEdge*> unroutes;
 	return
 		ComputeUnroutableCost(unroutes)*10 +	//weight unroutability above everything else
 		ComputeTimingCost() +
@@ -310,7 +299,7 @@ uint32_t PAREngine::ComputeCost()
 /**
 	@brief Compute the unroutability cost (measure of how many requested routes do not exist)
  */
-uint32_t PAREngine::ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes)
+uint32_t PAREngine::ComputeUnroutableCost(vector<PARGraphEdge*>& unroutes)
 {
 	uint32_t cost = 0;
 	

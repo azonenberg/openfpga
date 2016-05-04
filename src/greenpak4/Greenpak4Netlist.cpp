@@ -190,7 +190,6 @@ void Greenpak4Netlist::IndexNets()
 	}
 	
 	//Print them out
-	/*
 	for(auto node : m_nodes)
 	{
 		printf("    Node %s connects to:\n", node->m_name.c_str());
@@ -202,7 +201,6 @@ void Greenpak4Netlist::IndexNets()
 		for(auto c : node->m_nodeports)
 			printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 	}
-	*/
 }
 
 /**
