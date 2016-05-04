@@ -131,7 +131,7 @@ the latest development version of \namestyle{Yosys} and have not made it into a 
 
 \subsection{Synthesis Example}
 
-A simple synthesis script for \namestyle{Yosys} is shown in figure \ref{yscript}. The script synthesizes a single \namestyle{Verilog} source file \texttt{Blinky.v}, with a top-level module \texttt{BlinkyTop}, to the netlist \texttt{Blinky.json} and
+A simple synthesis script for \namestyle{Yosys} is shown in figure \ref{yscript}. The script synthesizes a single Verilog source file \texttt{Blinky.v}, with a top-level module \texttt{BlinkyTop}, to the netlist \texttt{Blinky.json} and
 targets the \namestyle{SLG46620V}. This script is only a starting point and may be customized as needed. This document does not
 cover synthesis commands; please see the online documentation for \namestyle{Yosys} for command documentation.
 \begin{figure}[h]
@@ -147,7 +147,7 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json /tmp/Blinky.json
 \pagebreak
 \section{\namestyle{gp4par} Limitations}
 
-The following legal \namestyle{Verilog-2001} features are not supported by \namestyle{gp4par} as of this writing:
+The following legal Verilog-2001 features are not supported by \namestyle{gp4par} as of this writing:
 
 \begin{itemize}
 \item {\bfseries Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector nets
@@ -178,7 +178,7 @@ automatic replication of voltage references driving multiple loads
 \pagebreak
 \section{\namestyle{gp4par} HDL Constraints}
 
-There is only one supported constraint entry format at this time, \namestyle{Verilog} attributes. There is currently no support for
+There is only one supported constraint entry format at this time, Verilog attributes. There is currently no support for
 adding constraints to netlist entities via external constraint files or command line arguments. The general format of a
 constraint with name \tokenstyle{FOO} and value 42 applied to the register \wirestyle{foobar} is shown in Figure
 \ref{constraint}.
@@ -218,7 +218,7 @@ One of the following:
 This constraint will be silently ignored if used on any other entity.
 \end{itemize}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-count-extract} is an example of a 5-bit down counter with a positive level triggered reset,
 configured to force counter inference.
@@ -273,7 +273,7 @@ The \tokenstyle{DRIVE\_TYPE} constraint may only be used on top-level module por
 This constraint may not be used on any other entity.
 \end{itemize}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-drivetype} is an example of a top-level module with two ports \wirestyle{a} and \wirestyle{b}. Port \wirestyle{a} has a push-pull driver and port \wirestyle{b} has an open-drain NMOS driver.
 
@@ -317,7 +317,7 @@ The \tokenstyle{IBUF\_TYPE} constraint may only be used on top-level module port
 This constraint may not be used on any other entity.
 \end{itemize}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-ibuftype} shows an example of how to configure a top level module input for analog signals.
 
@@ -352,7 +352,7 @@ This constraint may not be used on any other entity. Future versions of \namesty
 to lock LUTs, flipflops, and hard IP to specific locations.
 \end{itemize}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-loc} is an example of a top-level module with three ports \wirestyle{a}, \wirestyle{b}, and \wirestyle{o}.
 These ports are constrained to package pins 20, 19, and 18 respectively.
@@ -396,7 +396,7 @@ Text string \strvaluestyle{10k}, \strvaluestyle{100k}, or \strvaluestyle{1M}, ca
 This constraint may not be used on any other entity.
 \end{itemize}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-pulldown} is an example of a top-level module with three ports \wirestyle{a}, \wirestyle{b}, and
 \wirestyle{o}. Ports \wirestyle{a} and \wirestyle{b} have 10k$\Omega$ pull-down resistors; port \wirestyle{o} is floating.
@@ -439,7 +439,7 @@ Text string \strvaluestyle{10k}, \strvaluestyle{100k}, or \strvaluestyle{1M}, ca
 This constraint may not be used on any other entity.
 \end{itemize}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-pullup} is an example of a top-level module with three ports \wirestyle{a}, \wirestyle{b}, and
 \wirestyle{o}. Ports \wirestyle{a} and \wirestyle{b} have 10k$\Omega$ pull-up resistors; port \wirestyle{o} is floating.
@@ -482,7 +482,7 @@ Any nonzero value, or no value, to enable the Schmitt trigger. Specify zero, or 
 This constraint may not be used on any other entity.
 \end{itemize}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-schmitt} is an example of a top-level module with three ports \wirestyle{a}, \wirestyle{b}, and
 \wirestyle{o}. The Schmitt trigger is enabled for ports  \wirestyle{a} and \wirestyle{b}, but not \wirestyle{o}.
@@ -532,7 +532,7 @@ One of the following:
 This constraint will be silently ignored if used on any other entity.
 \end{itemize}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-shreg-extract} is an example of FIXME
 
@@ -592,7 +592,7 @@ By default, the \tokenstyle{greenpak4\_counters} pass will attempt to infer a co
 requirements. If this is not desired, use the \tokenref{COUNT\_EXTRACT}{count-extract} constraint to control
 inference behavior.
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example in Figure \ref{gp-countinfer-example} shows an example of how to infer a resettable down counter.
 
@@ -666,7 +666,7 @@ shift register and/or discrete flipflops may be inferred.
 As of now there are no constraints to force or disable inference of shift registers. A constraint analogous to
 \tokenref{COUNT\_EXTRACT}{count-extract} will likely be added in a future software release.
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example in Figure \ref{gp-shreginfer-example} shows an example of how to infer a shift register with taps delayed 8
 and 16 clocks from the input.
@@ -757,7 +757,7 @@ The LUT output is the \{\tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-2LUT-example} sets \wirestyle{o} to the bitwise AND of \wirestyle{a} and \wirestyle{b}.
 
@@ -820,7 +820,7 @@ The LUT output is the \{\tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'t
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-3LUT-example} sets \wirestyle{o} to the bitwise AND of \wirestyle{a}, \wirestyle{b}, and \wirestyle{c}.
 
@@ -887,7 +887,7 @@ The LUT output is the \{\tokenstyle{IN3}, \tokenstyle{IN2}, \tokenstyle{IN1}, \t
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-4LUT-example} sets \wirestyle{o} to the bitwise AND of \wirestyle{a}, \wirestyle{b}, \wirestyle{c},
 and \wirestyle{d}.
@@ -940,7 +940,7 @@ comparators have buffers on the input; see device datasheet for details.
 
 No parameters.
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-abuf-example} buffers the signal \wirestyle{vin} to \wirestyle{vin\_buf}.
 
@@ -1011,7 +1011,7 @@ either the reset-done output of the \tokenref{GP\_POR}{gp-por} block, or an arbi
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-acmp-example} sets cout1 to true if \wirestyle{vin} is greater than \wirestyle{vref\_750}. The comparator is set to have 25 mV of hysteresis and low bandwidth.
 
@@ -1078,7 +1078,7 @@ This primitive represents the bandgap voltage reference.
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-bandgap-example} sets \wirestyle{bg\_ok} high $550 \mu s$ after reset. \wirestyle{bandgap\_vout} is a 1.0V
 analog reference voltage for use by other mixed signal blocks.
@@ -1149,7 +1149,7 @@ mapper may map \tokenstyle{GP\_COUNT8} cells to unused 14-bit counters in order 
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-count8-example} begins counting from 8'hcc down to zero, on rising edges of \wirestyle{clk}, as
 soon as the device exits power-on reset. When the counter reaches zero \wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to 8'hcc. The counter also resets immediately to 8'hcc, and is held in reset, when \wirestyle{count\_rst} is high.
@@ -1223,7 +1223,7 @@ containing counters of variable depth.
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-count14-example} begins counting from \datastyle{14'd3141} down to zero, on rising edges of \wirestyle{clk}, as soon as the device exits POR. When the counter reaches zero \wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to \datastyle{14'd3141}. The counter also resets immediately to \datastyle{14'd3141}, and is held in reset, when \wirestyle{count\_rst} is high.
 
@@ -1284,7 +1284,7 @@ recommend inferring logic.
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-dff-example} shows a flipflop initialized to zero at powerup.
 
@@ -1345,7 +1345,7 @@ recommend inferring logic.
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-dffr-example} shows a flipflop initialized to zero at power-up, and cleared to zero
 when \wirestyle{nrst} goes low.
@@ -1409,7 +1409,7 @@ recommend inferring logic.
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-dffs-example} shows a flipflop initialized to zero at power-up, and set to one
 when \wirestyle{nset} goes low.
@@ -1475,7 +1475,7 @@ recommend inferring logic.
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-dffsr-example} shows a flipflop initialized to zero at power-up, and set to one
 when \wirestyle{nset} goes low.
@@ -1532,7 +1532,7 @@ to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored
 
 No parameters.
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-ibuf-example} shows explicit instantiation of a \tokenstyle{GP\_IBUF} on a top-level port.
 
@@ -1583,7 +1583,7 @@ recommend inferring logic.
 
 No parameters.
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-inv-example} sets \wirestyle{o} to the complement of \wirestyle{a}.
 
@@ -1635,7 +1635,7 @@ Note that in the current \namestyle{gp4par} version, constraints must be attache
 
 No parameters.
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-iobuf-example} shows explicit instantiation of a \tokenstyle{GP\_IOBUF} on a top-level port.
 
@@ -1716,7 +1716,7 @@ rule will result in a physical DRC failure.
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-lfosc-example} drives a 108 Hz clock onto \wirestyle{clk\_108hz}. All power management features
 are disabled.
@@ -1768,7 +1768,7 @@ Note that in the current \namestyle{gp4par} version, constraints must be attache
 
 No parameters.
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-obuf-example} shows explicit instantiation of a \tokenstyle{GP\_OBUF} on a top-level port.
 
@@ -1824,7 +1824,7 @@ Note that in the current \namestyle{gp4par} version, constraints must be attache
 
 No parameters.
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-obuft-example} shows explicit instantiation of a \tokenstyle{GP\_OBUFT} on a top-level port.
 
@@ -1907,7 +1907,7 @@ by fabric logic or a constant zero.
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-pga-example} shows a single analog input being amplified 2x and fed to the signal
 \wirestyle{pgaout}.
@@ -1964,7 +1964,7 @@ startup process in order to avoid glitches.
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-por-example} sets \wirestyle{por\_done} high $500 \mu s$ after initialization is complete.
 
@@ -2018,7 +2018,7 @@ Bit 2010: Disable power detector for charge pump
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-pwrctl-example} FIXME.
 
@@ -2086,7 +2086,7 @@ Note that all of the oscillator blocks in \namestyle{GreenPak4} internally share
 \end{tabularx}
 
 \pagebreak
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-rcosc-example} drives a 6.25 kHz clock to \wirestyle{clk\_fast} and a 521 Hz clock to
 \wirestyle{clk\_slow}.
@@ -2168,7 +2168,7 @@ rule will result in a physical DRC failure.
 \end{tabularx}
 
 \pagebreak
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-ringosc-example} drives a 6.75 MHz clock onto \wirestyle{clk\_fast} and a 562.5 kHz clock onto
 \wirestyle{clk\_slow}. All power management features are disabled.
@@ -2238,7 +2238,7 @@ positions are fixed at synthesis time rather than being runtime programmable.
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-shreg-example} uses both outputs of a \tokenstyle{GP\_SHREG} in non-inverting mode.
 \wirestyle{bar\_delay1} is delayed by 8 cycles and \wirestyle{bar\_delay2} is delayed by 16 cycles. The output inverter is off.
@@ -2301,7 +2301,7 @@ To ensure consistent behavior between the runtime reset and boot, it may be nece
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-sysreset-example} resets the device when \wirestyle{rst} is high.
 
@@ -2344,7 +2344,7 @@ design, simply use the value \datastyle{1'b1}.
 
 None.
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-vdd-example} ties the signal \wirestyle{foo} high.
 
@@ -2415,7 +2415,7 @@ future version will perform this replication automatically, allowing one \tokens
 \hline
 \end{tabularx}
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-vref-example} drives a 750 mV reference voltage onto \wirestyle{vref\_750}.
 
@@ -2461,7 +2461,7 @@ design, simply use the value \datastyle{1'b0}.
 
 None.
 
-\subsubsection{\namestyle{Verilog} Usage Example}
+\subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-vss-example} ties the signal \wirestyle{foo} low.
 
