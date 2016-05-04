@@ -1,6 +1,6 @@
 \documentclass{article}
-\usepackage{times}
-\usepackage[hidelinks,bookmarks]{hyperref}
+%\usepackage[hidelinks,bookmarks]{hyperref}
+\usepackage[bookmarks,colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
 \usepackage{url}
 \usepackage{tabularx}
 \usepackage{graphicx}
@@ -82,8 +82,8 @@ RTL & Register Transfer Level \\
 
 \subsection{Support}
 
-If you have questions, comments, suggestions, or wish to contribute to the project please join our IRC, \#\#openfpga on 
-Freenode. This is the sole support forum available at this time.
+If you have questions, comments, suggestions, or wish to contribute to the project please join our IRC channel,
+\#\#openfpga on Freenode. This is the sole support forum available at this time.
 
 \pagebreak
 \section{Synthesizing a Netlist}
@@ -91,7 +91,7 @@ Freenode. This is the sole support forum available at this time.
 \subsection{Design Flow}
 
 gp4par is NOT a synthesis tool and cannot be run directly on HDL source code. Your HDL must be synthesized to
-a JSON netlist by a separate tool before gp4par may be invoked. The recommended synthesis tool is 
+a JSON netlist by a separate tool before gp4par is be invoked. The recommended synthesis tool is 
 \emph{yosys}, which may be obtained from the Yosys website (\url{http://www.clifford.at/yosys/}). The flow of data 
 between components is shown in Figure. \ref{flow}.
 
@@ -2472,7 +2472,7 @@ The example shown in figure \ref{gp-cmd-example} runs place-and-route on the net
 Analog, and saves the generated bitstream to Analog-hdl.txt. Unused pins are pulled down with $10 k\Omega$ resistors.
 
 \begin{figure}[h]
-\begin{lstlisting}[language=c]
+\begin{lstlisting}[language=sh]
 gp4par Analog.json --top Analog --output Analog-hdl.txt --unused-pull down --unused-drive 10k
 \end{lstlisting}
 \caption{Example usage of gp4par}
@@ -2484,35 +2484,35 @@ gp4par Analog.json --top Analog --output Analog-hdl.txt --unused-pull down --unu
 The netlist filename must be supplied for all place-and-route operations. It may be included anywhere in the argument 
 list, although we recommend it be the first argument for better readability of the command.
 
-\subsection{--help}
+\subsection{\texttt{--help}}
 
 The --help argument must be used alone, with no other arguments. It causes gp4par to print a usage example to the 
 console and then quit.
 
-\subsection{--output}
+\subsection{\texttt{--output}}
 
 The --output argument is required for all place-and-route operations. It must be immediately followed by the 
 filename to which the generated bitstream will be written.
 
-\subsection{--top}
+\subsection{\texttt{--top}}
 
 The --top argument is required for all place-and-route operations. It must be immediately followed by the 
 case-sensitive name of the top-level module.
 
-\subsection{--unused-drive}
+\subsection{\texttt{--unused-drive}}
 
 The --unused-drive argument is optional. If used, it must be immediately followed by ``10k", ``100k", or ``1M", to 
 specify the nominal value in ohms of the pull-up/down resistor on unused I/O pins. The default behavior if not 
 specified is ``1M".
 
-\subsection{--unused-pull}
+\subsection{\texttt{--unused-pull}}
 
 The --unused-pull argument is optional. If used, it must be immediately followed by ``down", ``up", ``none", or 
 ``float", to specify which direction to pull unused I/O pins. The default behavior if not specified is ``float".
 
 The behavior of ``none" and ``float" is identical; both names are accepted for convenience.
 
-\subsection{--version}
+\subsection{\texttt{--version}}
 
 The --version argument must be used alone, with no other arguments. It causes gp4par to print the version number 
 (currently always 0.1) to the console and then quit.
