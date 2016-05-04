@@ -1484,6 +1484,59 @@ GP_DFFSR #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_IBUF
+
+\pagebreak
+\subsection{GP\_IBUF: Input Buffer}
+
+\subsubsection{Introduction}
+This primitive corresponds to a top-level input buffer (IOB).
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+recommend inferring logic.
+
+Note that in the current gp4par version, constraints must be attached to the pad wire (signal attached to IN), not 
+to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+IN & Input & 1 & Input signal from top-level module port \\
+\hline
+OUT & Output & 1 & Output signal to fabric routing \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+No parameters.
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-ibuf-example} shows explicit instantiation of a GP\_IBUF on a top-level port.
+
+\begin{figure}[h]
+\begin{lstlisting}
+module foo(a, b);
+	input wire a;
+	output wire b;
+	
+	wire a_ibuf;
+	GP_IBUF ibuf(.IN(a), .OUT(a_ibuf));
+	
+	//logic using a_ibuf
+	
+	...
+endmodule
+\end{lstlisting}
+\caption{Example usage of GP\_IBUF}
+\label{gp-ibuf-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_INV
 
 \pagebreak
@@ -1526,6 +1579,73 @@ GP_INV inv(
 \end{lstlisting}
 \caption{Example usage of GP\_INV}
 \label{gp-inv-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_IOBUF
+
+\pagebreak
+\subsection{GP\_IOBUF: Input/Output Buffer}
+
+\subsubsection{Introduction}
+This primitive corresponds to a top-level input/output buffer (IOB).
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+recommend inferring logic.
+
+Note that in the current gp4par version, constraints must be attached to the pad wire (signal attached to IO), not 
+to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+IO & Bidirectional & 1 & I/O signal to top-level module port \\
+\hline
+IN & Input & 1 & Input signal from fabric routing \\
+\hline
+OE & Input & 1 & Tri-state output enable. When low, the output driver is disabled. \\
+\hline
+OUT & Output & 1 & Output signal to fabric routing \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+No parameters.
+
+\pagebreak
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-iobuf-example} shows explicit instantiation of a GP\_IOBUF on a top-level port.
+
+\begin{figure}[h]
+\begin{lstlisting}
+module foo(a, b,c);
+	input wire a;
+	input wire b;
+	inout wire c;
+	
+	wire c_ibuf;
+	wire c_obuf;
+	wire oe;
+	GP_IOBUF iobuf(
+		.IN(c_obuf),
+		.OUT(c_ibuf),
+		.OE(oe),
+		.IO(c)
+	);
+	
+	//logic driving oe/c_obuf and using c_ibuf
+	
+	...
+	
+endmodule
+\end{lstlisting}
+\caption{Example usage of GP\_IOBUF}
+\label{gp-iobuf-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1597,6 +1717,116 @@ GP_LFOSC #(
 \end{lstlisting}
 \caption{Example usage of GP\_LFOSC}
 \label{gp-lfosc-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_OBUF
+
+\pagebreak
+\subsection{GP\_OBUF: Output Buffer}
+
+\subsubsection{Introduction}
+This primitive corresponds to a top-level output buffer (IOB).
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+recommend inferring logic.
+
+Note that in the current gp4par version, constraints must be attached to the pad wire (signal attached to OUT), not 
+to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+IN & Input & 1 & Input signal from fabric routing \\
+\hline
+OUT & Output & 1 & Output signal to top-level module port \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+No parameters.
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-obuf-example} shows explicit instantiation of a GP\_OBUF on a top-level port.
+
+\begin{figure}[h]
+\begin{lstlisting}
+module foo(a, b);
+	output wire a;
+	input wire b;
+	
+	wire a_obuf;
+	GP_OBUF obuf(.IN(a_obuf), .OUT(a));
+	
+	//logic driving a_obuf
+	
+	...
+endmodule
+\end{lstlisting}
+\caption{Example usage of GP\_OBUF}
+\label{gp-obuf-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_OBUF
+
+\pagebreak
+\subsection{GP\_OBUFT: Output Buffer with Tri-State}
+
+\subsubsection{Introduction}
+This primitive corresponds to a top-level output buffer (IOB) with tri-state control. It is logically equivalent to a 
+GP\_IOBUF with the OUT port left unconnected.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+recommend inferring logic.
+
+Note that in the current gp4par version, constraints must be attached to the pad wire (signal attached to IO), not 
+to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{4in}{|l|l|l|X|}
+\hline
+{\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
+\hline
+IN & Input & 1 & Input signal from fabric routing \\
+\hline
+OE & Input & 1 & Output enable. When low, the output floats. \\
+\hline
+OUT & Output & 1 & Output signal to top-level module port \\
+\hline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+No parameters.
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-obuft-example} shows explicit instantiation of a GP\_OBUFT on a top-level port.
+
+\begin{figure}[h]
+\begin{lstlisting}
+module foo(a, b);
+	output wire a;
+	input wire b;
+	
+	wire a_obuf;
+	wire oe;
+	GP_OBUFT obuf(.IN(a_obuf), .OUT(a), .OE(oe));
+	
+	//logic driving a_obuf and oe
+	
+	...
+endmodule
+\end{lstlisting}
+\caption{Example usage of GP\_OBUF}
+\label{gp-obuf-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
