@@ -95,9 +95,9 @@ If you have questions, comments, suggestions, or wish to contribute to the proje
 \subsection{Design Flow}
 
 gp4par is NOT a synthesis tool and cannot be run directly on HDL source code. Your HDL must be synthesized to
-a JSON netlist by a separate tool before gp4par is be invoked. The recommended synthesis tool is 
-\emph{yosys}, which may be obtained from the Yosys website (\url{http://www.clifford.at/yosys/}). The flow of data 
-between components is shown in Figure. \ref{flow}.
+a JSON netlist by a separate tool before gp4par is be invoked. The recommended synthesis tool is
+\emph{yosys}, which may be obtained from the Yosys website (\url{http://www.clifford.at/yosys/}). The flow of data
+between components is shown in Figure \ref{flow}.
 
 \begin{figure}[h]
 \centering
@@ -250,7 +250,7 @@ The DRIVE\_TYPE constraint may only be used on top-level module ports.
 	\begin{itemize}
 		\item ``NMOS\_OD": Open drain NMOS (pull-down only) driver.
 		\item ``PMOS\_OD": Open drain PMOS (pull-up only) driver.
-		\item ``PUSHPULL": CMOS digital push-pull driver. This is the default if no constraint is specified..
+		\item ``PUSHPULL": CMOS digital push-pull driver. This is the default if no constraint is specified.
 	\end{itemize}
 \item {\bfseries Other} \\
 This constraint may not be used on any other entity.
@@ -2024,10 +2024,10 @@ xx
 \subsection{GP\_RCOSC: RC Oscillator}
 
 \subsubsection{Introduction}
-This primitive represents the RC oscillator block. This block can be configured to oscillate at either 2 MHz or 25 kHz. 
+This primitive represents the RC oscillator block. This block can be configured to oscillate at either 2 MHz or 25 kHz
 by setting the OSC\_FREQ parameter.
 
-The oscillator has two cascaded dividers on its output: a pre-divider and post-divider. The pre-divider output drives 
+The oscillator has two cascaded dividers on its output: a pre-divider and post-divider. The pre-divider output drives
 some hard IP blocks (counters and PWM) via dedicated routing, as well as the input of the post-divider. The 
 post-divider output drives general fabric routing.
 
