@@ -163,7 +163,7 @@ The following \namestyle{SLG46620V} device features are not supported by \namest
 \item Counters: Delay, FSM, edge detector, PWM, wake-sleep mode, counter cascading.
 All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Voltage reference: DAC, divided Vdd, external references
-\item Comparators: Global buffer bandwidth selection, speed doubler, 
+\item Comparators: Global buffer bandwidth selection, speed doubler,
 automatic replication of voltage references driving multiple loads
 \item ADC
 \item DAC
@@ -229,11 +229,11 @@ configured to force counter inference.
 reg[4:0] count = COUNT_MAX;
 wire out = (count == 0);
 always @(posedge clk, posedge count_rst) begin
-	
+
 	//level triggered reset
 	if(count_rst)
 		count		<= 0;
-	
+
 	//counter
 	else begin
 
@@ -619,7 +619,7 @@ end
 
 \subsubsection{Reporting}
 
-In order to determine whether a given counter was extracted, look at the synthesis report. Figure 
+In order to determine whether a given counter was extracted, look at the synthesis report. Figure
 \ref{counter-extraction} shows an example synthesis report with a single inferred counter.
 
 \begin{figure}[h]
@@ -657,8 +657,8 @@ In order to be inferred as a single \tokenref{GP\_SHREG}{gp-shreg} primitive, a 
 \item Be at most 16 bits in depth
 \item Be initialized to zero, or uninitialized
 \item Have either no reset, or a positive level triggered reset to zero
-\item Have at most two taps in the shift register connected to external logic. If more taps are required, a second 
-shift register and/or discrete flipflops may be inferred. 
+\item Have at most two taps in the shift register connected to external logic. If more taps are required, a second
+shift register and/or discrete flipflops may be inferred.
 \end{itemize}
 
 \subsubsection{Shift Register Related Constraints}
@@ -687,7 +687,7 @@ end
 
 \subsubsection{Reporting}
 
-In order to determine whether a given shift register was extracted, look at the synthesis report. Figure 
+In order to determine whether a given shift register was extracted, look at the synthesis report. Figure
 \ref{shreg-extraction} shows an example synthesis report with a single inferred shift register.
 
 \begin{figure}[h]
@@ -713,8 +713,8 @@ Converted 16 dff cells into 1 shift registers.
 This section lists all of the device-dependent primitives wrapping hard IP blocks in the device. These may be used for
 features which are not yet supported by inference, or when exact control over synthesis results is needed.
 
-Pay careful attention to port names and descriptions as these may not exactly match the Silego primitives; some have 
-been changed in order to allow cleaner and more modular HDL. For example, the single ``oscillator" block is represented 
+Pay careful attention to port names and descriptions as these may not exactly match the Silego primitives; some have
+been changed in order to allow cleaner and more modular HDL. For example, the single ``oscillator" block is represented
 in Verilog by a separate block for each of the three internal oscillators.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1187,7 +1187,7 @@ up, but this is not supported by the current \namestyle{gp4par} tool.)
 
 In the current software, this primitive currently will always map to a 14-bit counter cell in the device. A planned
 future optimization will allow the technology mapper to map 14-bit counters in the netlist to 8-bit counter cells if
-the provided count value is less than 256. This should allow better packing density for parameterizable modules 
+the provided count value is less than 256. This should allow better packing density for parameterizable modules
 containing counters of variable depth.
 
 \subsubsection{Port Descriptions}
@@ -1257,7 +1257,7 @@ GP_COUNT14 #(
 This primitive corresponds to a single D flipflop. It may be mapped to either a DFF or a DFFSR cell by the placer
 depending on resource utilization and routing congestion.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
 \subsubsection{Port Descriptions}
@@ -1316,7 +1316,7 @@ GP_DFF #(
 This primitive corresponds to a single D flipflop with active-low reset. It is internally remapped to a DFFSR cell by
 the placer.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
 \subsubsection{Port Descriptions}
@@ -1380,7 +1380,7 @@ GP_DFFR #(
 This primitive corresponds to a single D flipflop with active-low set. It is internally remapped to a DFFSR cell by
 the placer.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
 \subsubsection{Port Descriptions}
@@ -1444,7 +1444,7 @@ GP_DFFS #(
 This primitive corresponds to a single D flipflop with active-low set or reset (but not both), selectable at synthesis
 time by a parameter.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
 \subsubsection{Port Descriptions}
@@ -1541,12 +1541,12 @@ The example shown in figure \ref{gp-ibuf-example} shows explicit instantiation o
 module foo(a, b);
 	input wire a;
 	output wire b;
-	
+
 	wire a_ibuf;
 	GP_IBUF ibuf(.IN(a), .OUT(a_ibuf));
-	
+
 	//logic using a_ibuf
-	
+
 	...
 endmodule
 \end{lstlisting}
@@ -1564,7 +1564,7 @@ endmodule
 \subsubsection{Introduction}
 This primitive corresponds to a single NOT gate.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
 \subsubsection{Port Descriptions}
@@ -1645,7 +1645,7 @@ module foo(a, b,c);
 	input wire a;
 	input wire b;
 	inout wire c;
-	
+
 	wire c_ibuf;
 	wire c_obuf;
 	wire oe;
@@ -1655,9 +1655,9 @@ module foo(a, b,c);
 		.OE(oe),
 		.IO(c)
 	);
-	
+
 	//logic driving oe/c_obuf and using c_ibuf
-	
+
 	...
 
 endmodule
@@ -1777,12 +1777,12 @@ The example shown in figure \ref{gp-obuf-example} shows explicit instantiation o
 module foo(a, b);
 	output wire a;
 	input wire b;
-	
+
 	wire a_obuf;
 	GP_OBUF obuf(.IN(a_obuf), .OUT(a));
-	
+
 	//logic driving a_obuf
-	
+
 	...
 endmodule
 \end{lstlisting}
@@ -1833,13 +1833,13 @@ The example shown in figure \ref{gp-obuft-example} shows explicit instantiation 
 module foo(a, b);
 	output wire a;
 	input wire b;
-	
+
 	wire a_obuf;
 	wire oe;
 	GP_OBUFT obuf(.IN(a_obuf), .OUT(a), .OE(oe));
-	
+
 	//logic driving a_obuf and oe
-	
+
 	...
 endmodule
 \end{lstlisting}
@@ -1857,7 +1857,7 @@ endmodule
 \subsubsection{Introduction}
 This primitive represents a programmable-gain analog amplifier.
 
-If the PGA is only used to drive the ADC, it will automatically power on when the ADC is running and otherwise sleep. 
+If the PGA is only used to drive the ADC, it will automatically power on when the ADC is running and otherwise sleep.
 If the PGA's output is used by other logic, it will remain on regardless of ADC power state. There is no way to control
 the PGA's power domain from fabric logic.
 
@@ -2123,7 +2123,7 @@ GP_RCOSC #(
 \subsubsection{Introduction}
 This primitive represents the ring (27 MHz) oscillator block.
 
-The oscillator has two cascaded dividers on its output: a pre-divider and post-divider. The pre-divider output drives 
+The oscillator has two cascaded dividers on its output: a pre-divider and post-divider. The pre-divider output drives
 some hard IP blocks (counters and PWM) via dedicated routing, as well as the input of the post-divider. The
 post-divider output drives general fabric routing.
 
@@ -2202,8 +2202,8 @@ GP_RINGOSC #(
 
 \subsubsection{Introduction}
 
-This primitive represents the ``pipe delay" block, a 16-bit shift register with programmable tap position. It has two 
-major differences from most FPGA shift register blocks: there are two independent taps instead of one, and the tap 
+This primitive represents the ``pipe delay" block, a 16-bit shift register with programmable tap position. It has two
+major differences from most FPGA shift register blocks: there are two independent taps instead of one, and the tap
 positions are fixed at synthesis time rather than being runtime programmable.
 
 \subsubsection{Port Descriptions}
@@ -2497,7 +2497,7 @@ gp4par Analog.json --top Analog --output Analog-hdl.txt \
 
 \subsection{[file name]}
 
-The netlist filename must be supplied for all place-and-route operations. It may be included anywhere in the argument 
+The netlist filename must be supplied for all place-and-route operations. It may be included anywhere in the argument
 list, although we recommend it be the first argument for better readability of the command.
 
 \subsection{\texttt{--help}}
@@ -2507,12 +2507,12 @@ console and then quit.
 
 \subsection{\texttt{--output}}
 
-The --output argument is required for all place-and-route operations. It must be immediately followed by the 
+The --output argument is required for all place-and-route operations. It must be immediately followed by the
 filename to which the generated bitstream will be written.
 
 \subsection{\texttt{--top}}
 
-The --top argument is required for all place-and-route operations. It must be immediately followed by the 
+The --top argument is required for all place-and-route operations. It must be immediately followed by the
 case-sensitive name of the top-level module.
 
 \subsection{\texttt{--unused-drive}}
