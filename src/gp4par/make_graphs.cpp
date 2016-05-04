@@ -243,7 +243,7 @@ void MakeIOBNodes(
 		}
 		
 		//Look up the net and make sure there's a LOC
-		Greenpak4NetlistNet* net = module->GetNet(it->first);
+		Greenpak4NetlistNode* net = module->GetNet(it->first);
 		if(!net->HasAttribute("LOC"))
 		{
 			fprintf(

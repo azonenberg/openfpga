@@ -36,19 +36,21 @@ public:
 	std::string m_portname;
 };
 
-//A single node in the netlist (may be a wire or part of a bus)
+//A single named node in the netlist (may be a wire or part of a bus)
 class Greenpak4NetlistNode
 {
 public:
 
-	Greenpak4NetlistNode()
-	: m_net(NULL)
-	{}
-
 	std::string m_name;
 	
-	//The net we're part of
-	Greenpak4NetlistNet* m_net;
+	//Attributes
+	std::map<std::string, std::string> m_attributes;
+	
+	bool HasAttribute(std::string name)
+	{ return (m_attributes.find(name) != m_attributes.end() ); }
+	
+	std::string GetAttribute(std::string name)
+	{ return m_attributes[name]; }
 	
 	//List of internal points we link to (only valid after indexing)
 	std::vector<Greenpak4NetlistNodePoint> m_nodeports;
@@ -74,7 +76,7 @@ public:
 	
 	Greenpak4NetlistModule* m_module;
 	
-	Greenpak4NetlistNet* m_net;
+	Greenpak4NetlistNode* m_net;
 	
 	//The netlist node we're attached to
 	Greenpak4NetlistNode* m_node;

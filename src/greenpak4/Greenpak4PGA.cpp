@@ -292,7 +292,7 @@ bool Greenpak4PGA::Save(bool* bitstream)
 	if(ncell && (ncell->m_connections.find("VOUT") != ncell->m_connections.end()) )
 	{
 		bool has_nonadc_loads = false;
-		auto node = ncell->m_connections["VOUT"]->m_node;
+		auto node = ncell->m_connections["VOUT"];
 		
 		for(auto point : node->m_nodeports)
 		{

@@ -40,21 +40,6 @@ public:
 	std::string m_name;
 };
 
-//A single named net in the netlist (must be one bit wide, vectors are split externally)
-class Greenpak4NetlistNet
-{
-public:
-	std::string m_name;
-	Greenpak4NetlistNode* m_node;
-	std::map<std::string, std::string> m_attributes;
-	
-	bool HasAttribute(std::string name)
-	{ return (m_attributes.find(name) != m_attributes.end() ); }
-	
-	std::string GetAttribute(std::string name)
-	{ return m_attributes[name]; }
-};
-
 class Greenpak4NetlistModule;
 
 //A single primitive cell in the netlist
@@ -74,7 +59,7 @@ public:
 	std::map<std::string, std::string> m_parameters;
 	std::map<std::string, std::string> m_attributes;
 	
-	std::map<std::string, Greenpak4NetlistNet* > m_connections;
+	std::map<std::string, Greenpak4NetlistNode* > m_connections;
 	
 	PARGraphNode* m_parnode;
 	
@@ -98,7 +83,7 @@ public:
 	
 	typedef std::map<std::string, Greenpak4NetlistPort*> portmap;
 	typedef std::map<std::string, Greenpak4NetlistCell*> cellmap;
-	typedef std::map<std::string, Greenpak4NetlistNet*> netmap;
+	typedef std::map<std::string, Greenpak4NetlistNode*> netmap;
 	
 	portmap::iterator port_begin()
 	{ return m_ports.begin(); }
@@ -121,7 +106,7 @@ public:
 	bool HasNet(std::string name)
 	{ return (m_nets.find(name) != m_nets.end()); }
 	
-	Greenpak4NetlistNet* GetNet(std::string name)
+	Greenpak4NetlistNode* GetNet(std::string name)
 	{ return m_nets[name]; }
 	
 	Greenpak4NetlistPort* GetPort(std::string name)
@@ -134,15 +119,15 @@ protected:
 	Greenpak4Netlist* m_parent;
 	
 	///Internal power/ground nets
-	Greenpak4NetlistNet* m_vdd;
-	Greenpak4NetlistNet* m_vss;
+	Greenpak4NetlistNode* m_vdd;
+	Greenpak4NetlistNode* m_vss;
 	
 	void CreatePowerNets();
 	
 	std::string m_name;
 	
 	void LoadNetName(std::string name, json_object* object);
-	void LoadNetAttributes(Greenpak4NetlistNet* net, json_object* object);
+	void LoadNetAttributes(Greenpak4NetlistNode* net, json_object* object);
 	void LoadCell(std::string name, json_object* object);
 	void LoadCellAttributes(Greenpak4NetlistCell* cell, json_object* object);
 	void LoadCellParameters(Greenpak4NetlistCell* cell, json_object* object);

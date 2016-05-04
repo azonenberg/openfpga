@@ -86,7 +86,7 @@ void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
 			
 			printf("        output port %s has net %s\n", port->m_name.c_str(), net->m_name.c_str());
 			for(auto jt : net->m_attributes)
-				printf("%s => %s\n", jt.first.c_str(), jt.second.c_str());
+				printf("            %s => %s\n", jt.first.c_str(), jt.second.c_str());
 		}
 	}
 	
