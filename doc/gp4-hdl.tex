@@ -1011,14 +1011,14 @@ either the reset-done output of the \tokenref{GP\_POR}{gp-por} block, or an arbi
 	Comparator bandwidth. Legal values are \strvaluestyle{LOW} and \strvaluestyle{HIGH}, see device datasheet for actual bandwidth values. \\
 \hline
 \tokenstyle{VIN\_ATTEN} & Integer & 3 &
-	Attenuation for the input, represented as inverse gain. Legal values are 1/2/3/4. \\
+	Attenuation for the input, represented as inverse gain. Legal values are 1, 2, 3, 4. \\
 \hline
 \tokenstyle{VIN\_ISRC\_EN} & Boolean & 1 &
 	Set to 1 to enable the $100 \mu A$ current source on the input. Note that not all comparators support the current
 	source, check device datasheet for details.\\
 \hline
 \tokenstyle{HYSTERESIS} & Integer & 8 &
-	Hysteresis, in mV. Legal values are 0/25/50/200. See device datasheet for offset notes.\\
+	Hysteresis, in mV. Legal values are 0, 25, 50, 200. See device datasheet for offset notes.\\
 \hline
 \end{tabularx}
 
