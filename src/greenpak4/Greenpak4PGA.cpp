@@ -107,12 +107,11 @@ void Greenpak4PGA::CommitChanges()
 			case 400:
 			case 800:
 			case 1600:
-			case 3200:
 				m_gain = igain;
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: PGA GAIN must be 0.25, 0.25, 1, 2, 4, 8, 16, 32\n");
+				fprintf(stderr, "ERROR: PGA GAIN must be 0.25, 0.25, 1, 2, 4, 8, 16\n");
 				exit(-1);
 		}
 	}
@@ -211,10 +210,11 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			case 100:
 			case 200:
 			case 400:
+			case 800:
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: PGA gain must be 0.25/0.5/1/2/4 for single ended inputs\n");
+				fprintf(stderr, "ERROR: PGA gain must be 0.25/0.5/1/2/4/8 for single ended inputs\n");
 				return false;
 		}
 	}
@@ -227,11 +227,10 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			case 400:
 			case 800:
 			case 1600:
-			case 3200:
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: PGA gain must be 1/2/4/8/16/32 for single ended inputs\n");
+				fprintf(stderr, "ERROR: PGA gain must be 1/2/4/8/16 for single ended inputs\n");
 				return false;
 		}
 	}
@@ -280,11 +279,15 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			bitstream[m_configBase + 3] = false;
 			break;
 		
+		/*
+		//Present in early datasheet revisions but not supported in GreenPak Designer
+		//According to discussions w/ Silego engineers, it is "not available" - possible silicon bug?
 		case 3200:
 			bitstream[m_configBase + 5] = true;
 			bitstream[m_configBase + 4] = true;
 			bitstream[m_configBase + 3] = true;
 			break;
+		*/
 	}
 	
 	//Set the power-on signal if we have any loads other than the ADC
