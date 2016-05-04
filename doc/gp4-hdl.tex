@@ -1,10 +1,16 @@
-\documentclass{article}
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in,top=0.8in,bottom=0.7in]{geometry}
 %\usepackage[hidelinks,bookmarks]{hyperref}
 \usepackage[bookmarks,colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
 \usepackage{url}
 \usepackage{tabularx}
 \usepackage{graphicx}
 \usepackage{placeins}
+\usepackage{paralist}
+\usepackage[osf]{libertine}
+\usepackage{zi4}
+\usepackage[libertine,cmbraces]{newtxmath}
 
 % configuration of source code examples
 \usepackage{listings}
@@ -12,6 +18,8 @@
 \lstset{numbers=left}
 \lstset{xleftmargin=2em}
 \lstset{framexleftmargin=2em}
+\lstset{belowskip=0em}
+\lstset{belowcaptionskip=0em}
 \lstset{tabsize=4}
 \lstset{frame=single}
 \lstset{breaklines=true}
@@ -19,21 +27,36 @@
 \lstset{showstringspaces=false}
 \lstset{showtabs=false}
 \lstset{breakatwhitespace=false}
+\lstset{basicstyle=\small\ttfamily}
+
+% our styles
+\renewcommand\emph\textbf
+\newcommand{\namestyle}[1]{\textit{#1}}
+\newcommand{\tokenstyle}[1]{\texttt{#1}}
+\newcommand{\wirestyle}[1]{\texttt{#1}}
+\newcommand{\valuestyle}[1]{\texttt{#1}}
+\newcommand{\strvaluestyle}[1]{\valuestyle{\textquotedbl#1\textquotedbl}}
+\newcommand{\examplestyle}[1]{\textbf{\valuestyle{#1}:}}
+\newcommand{\strexamplestyle}[1]{\textbf{\strvaluestyle{#1}:}}
+\newcommand{\datastyle}[1]{\texttt{#1}}
+\newcommand{\tokenref}[2]{\hyperref[#2]{\tokenstyle{#1}}}
+
+% remove space after the last item in \begin{compactitem}
+\newcommand{\novspace}{\vspace*{-\baselineskip}}
 
 \setcounter{tocdepth}{2}
 
 \begin{document}
 
-\title{GreenPak4 HDL Place-And-Route User Guide}
+\title{\namestyle{GreenPak4} HDL Place-And-Route User Guide}
 \author{Andrew Zonenberg\\
 azonenberg@drawersteak.com}
 \date{\today}
 \maketitle
 
 \begin{abstract}
-This document is the primary reference manual for gp4par, Andrew Zonenberg's place-and-route tool for Silego 
-GreenPak4 devices. As of this writing, the toolchain is NOT officially supported by Silego, and only works with the 
-SLG46620V. It is under active development and should be considered alpha quality.
+This document is the primary reference manual for \namestyle{gp4par}, Andrew Zonenberg's place-and-route tool for \namestyle{Silego GreenPak4} devices. As of this writing, the toolchain is \emph{not} officially supported by \namestyle{Silego}, and only works with the
+\namestyle{SLG46620V}. It is under active development and should be considered alpha quality.
 \end{abstract}
 
 \pagebreak
@@ -50,23 +73,23 @@ SLG46620V. It is under active development and should be considered alpha quality
 \section{Introduction}
 
 \subsection{Architecture Support}
-This guide will eventually apply to all Silego GreenPak4 devices. As of this writing the toolchain is still under early
-development and only the SLG46620V is supported.
+This guide will eventually apply to all \namestyle{Silego GreenPak4} devices. As of this writing the toolchain is still under early
+development and only the \namestyle{SLG46620V} is supported.
 
 \subsection{Coding Examples}
-The coding examples in this guide are accurate as of the date of publication. The most up-to-date version of this 
-document, as well as source code for the place-and-route tool, may be found on GitHub at 
-\url{https://github.com/azonenberg/openfpga/}.
+The coding examples in this guide are accurate as of the date of publication. The most up-to-date version of this
+document, as well as source code for the place-and-route tool, may be found on GitHub at
+\mbox{\url{https://github.com/azonenberg/openfpga/}}.
 
 \subsection{Syntax Examples}
-The syntax examples in this guide show how to use constraints and options. The examples are comprehensive; only the 
+The syntax examples in this guide show how to use constraints and options. The examples are comprehensive; only the
 described syntax for a particular constraint or option is guaranteed to work.
 
 All Verilog attributes and values are case sensitive unless otherwise noted.
 
 \subsection{Acronyms}
 
-\begin{tabularx}{4in}{|l|X|}
+\begin{tabularx}{\textwidth}{|l|X|}
 \hline
 {\bfseries Acronym} & {\bfseries Meaning} \\
 \hline
@@ -80,6 +103,17 @@ RTL & Register Transfer Level \\
 \hline
 \end{tabularx}
 
+\subsection{Formatting}
+This guide uses several distinct text styles for:
+\begin{itemize}
+	\item Proper names, such as \namestyle{Silego GreenPak4};
+	\item Well-known names, such as \tokenstyle{AUTO\_PWRDN};
+	\item References, such as \tokenref{GP\_IBUF}{gp-ibuf};
+	\item Signal names, such as \wirestyle{out};
+	\item Property values, such as \strvaluestyle{\textbf{YES}};
+	\item Numeric literals, such as \datastyle{6b'101010}.
+\end{itemize}
+
 \subsection{Support}
 
 If you have questions, comments, suggestions, or wish to contribute to the project please join our IRC channel,
@@ -90,10 +124,10 @@ If you have questions, comments, suggestions, or wish to contribute to the proje
 
 \subsection{Design Flow}
 
-gp4par is NOT a synthesis tool and cannot be run directly on HDL source code. Your HDL must be synthesized to
-a JSON netlist by a separate tool before gp4par is be invoked. The recommended synthesis tool is 
-\emph{yosys}, which may be obtained from the Yosys website (\url{http://www.clifford.at/yosys/}). The flow of data 
-between components is shown in Figure. \ref{flow}.
+\namestyle{gp4par} is \emph{not} a synthesis tool and cannot be run directly on HDL source code. Your HDL must be synthesized to
+a JSON netlist by a separate tool before \namestyle{gp4par} is be invoked. The recommended synthesis tool is
+\namestyle{Yosys}, which may be obtained from the \namestyle{Yosys} website, \mbox{\url{http://www.clifford.at/yosys/}}. The flow of data
+between components is shown in Figure \ref{flow}.
 
 \begin{figure}[h]
 \centering
@@ -102,16 +136,15 @@ between components is shown in Figure. \ref{flow}.
 \label{flow}
 \end{figure}
 
-gp4par is being developed in tandem with GreenPak support in Yosys. Most of the GreenPak features are only available in 
-the latest development version of Yosys and have not made it into a stable release yet. We recommend use of the latest 
-Yosys from GitHub for testing.
+\namestyle{gp4par} is being developed in tandem with \namestyle{GreenPak} support in \namestyle{Yosys}. Most of the \namestyle{GreenPak} features are only available in
+the latest development version of \namestyle{Yosys} and have not made it into a stable release yet. We recommend use of the latest
+\namestyle{Yosys} from GitHub for testing.
 
 \subsection{Synthesis Example}
 
-A simple synthesis script for \emph{yosys} is shown in figure \ref{yscript}. The script synthesizes a single Verilog 
-source file \texttt{Blinky.v}, with a top-level module \texttt{BlinkyTop}, to the netlist \texttt{Blinky.json} and 
-targets the SLG46620V. This script is only a starting point and may be customized as needed. This document does not
-cover synthesis commands; please see the online documentation for \emph{yosys} for command documentation.
+A simple synthesis script for \namestyle{Yosys} is shown in figure \ref{yscript}. The script synthesizes a single Verilog source file \texttt{Blinky.v}, with a top-level module \texttt{BlinkyTop}, to the netlist \texttt{Blinky.json} and
+targets the \namestyle{SLG46620V}. This script is only a starting point and may be customized as needed. This document does not
+cover synthesis commands; please see the online documentation for \namestyle{Yosys} for command documentation.
 \begin{figure}[h]
 \begin{lstlisting}[language=sh]
 #!/usr/bin/env yosys
@@ -123,25 +156,25 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json /tmp/Blinky.json
 \end{figure}
 
 \pagebreak
-\section{gp4par Limitations}
+\section{\namestyle{gp4par} Limitations}
 
-The following legal Verilog-2001 features are not supported by gp4par as of this writing:
+The following legal Verilog-2001 features are not supported by \namestyle{gp4par} as of this writing:
 
 \begin{itemize}
-\item {\bfseries Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector nets 
+\item {\bfseries Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector nets
 may be used at lower levels of the hierarchy without restriction as long as the synthesis script includes a
-``splitnets" command to convert these to single bit nets. (The synth\_greenpak4 Yosys command includes this command by 
+\tokenstyle{splitnets} command to convert these to single bit nets. (The \tokenstyle{synth\_greenpak4} \namestyle{Yosys} command includes this command by
 default.)
 \end{itemize}
 
-The following SLG46620V device features are not supported by gp4par as of this writing:
+The following \namestyle{SLG46620V} device features are not supported by \namestyle{gp4par} as of this writing:
 
 \begin{itemize}
 \item Storage elements: output inverter, latch mode
 \item Counters: Delay, FSM, edge detector, PWM, wake-sleep mode, counter cascading.
 All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Voltage reference: DAC, divided Vdd, external references
-\item Comparators: Global buffer bandwidth selection, speed doubler, 
+\item Comparators: Global buffer bandwidth selection, speed doubler,
 automatic replication of voltage references driving multiple loads
 \item ADC
 \item DAC
@@ -154,11 +187,11 @@ automatic replication of voltage references driving multiple loads
 \end{itemize}
 
 \pagebreak
-\section{gp4par HDL Constraints}
+\section{\namestyle{gp4par} HDL Constraints}
 
-There is only one supported constraint entry format at this time, Verilog attributes. There is currently no support for 
-adding constraints to netlist entities via external constraint files or command line arguments. The general format of a 
-constraint with name \texttt{FOO} and value 42 applied to the register \texttt{foobar} is shown in Figure 
+There is only one supported constraint entry format at this time, Verilog attributes. There is currently no support for
+adding constraints to netlist entities via external constraint files or command line arguments. The general format of a
+constraint with name \tokenstyle{FOO} and value 42 applied to the register \wirestyle{foobar} is shown in Figure
 \ref{constraint}.
 
 \begin{figure}[h]
@@ -174,32 +207,31 @@ reg[3:0] foobar = 0;
 % COUNT_EXTRACT
 
 \pagebreak
-\subsection{Counter Extraction (COUNT\_EXTRACT)}
+\subsection{Counter Extraction (\tokenstyle{COUNT\_EXTRACT})}
 \label{count-extract}
 
-The COUNT\_EXTRACT constraint controls inference of GP\_COUNT8 and GP\_COUNT14 cells from behavioral Verilog. It can be 
+The \tokenstyle{COUNT\_EXTRACT} constraint controls inference of \tokenref{GP\_COUNT8}{gp-count8} and \tokenref{GP\_COUNT14}{gp-count14} cells from behavioral Verilog. It can be
 used to ensure that a given counter in behavioral logic will, or will not, be mapped to a hard macro.
 
 \subsubsection{Applicable Elements}
-The COUNT\_EXTRACT constraint may only be used on vector registers.
+The \tokenstyle{COUNT\_EXTRACT} constraint may only be used on vector registers.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
 \item {\bfseries Vector register}\\
 One of the following:
 \begin{itemize}
-\item AUTO: Same behavior as not specifying any constraint. Counters will be inferred where possible.
-\item NO: Do not infer a counter even if the logic matches a supported inference structure.
-\item FORCE: Always infer a counter. If a supported inference structure is not found, a synthesis error is produced.
+\item \strexamplestyle{AUTO} Same behavior as not specifying any constraint. Counters will be inferred where possible.
+\item \strexamplestyle{NO} Do not infer a counter even if the logic matches a supported inference structure.
+\item \strexamplestyle{FORCE} Always infer a counter. If a supported inference structure is not found, a synthesis error is produced.
 \end{itemize}
 \item {\bfseries Other} \\
 This constraint will be silently ignored if used on any other entity.
 \end{itemize}
 
-\clearpage
 \subsubsection{Verilog Usage Example}
 
-Figure \ref{constraint-count-extract} is an example of a 5-bit down counter with a positive level triggered reset, 
+Figure \ref{constraint-count-extract} is an example of a 5-bit down counter with a positive level triggered reset,
 configured to force counter inference.
 
 \begin{figure}[h]
@@ -208,11 +240,11 @@ configured to force counter inference.
 reg[4:0] count = COUNT_MAX;
 wire out = (count == 0);
 always @(posedge clk, posedge count_rst) begin
-	
+
 	//level triggered reset
 	if(count_rst)
 		count		<= 0;
-	
+
 	//counter
 	else begin
 
@@ -222,10 +254,10 @@ always @(posedge clk, posedge count_rst) begin
 			count	<= count - 1'd1;
 
 	end
-	
+
 end
 \end{lstlisting}
-\caption{Example for COUNT\_EXTRACT constraint}
+\caption{Example for \tokenstyle{COUNT\_EXTRACT} constraint}
 \label{constraint-count-extract}
 \end{figure}
 
@@ -233,20 +265,20 @@ end
 % Drive type
 
 \pagebreak
-\subsection{Drive Type (DRIVE\_TYPE)}
+\subsection{Drive Type (\tokenstyle{DRIVE\_TYPE})}
 
-The DRIVE\_TYPE constraint configures the output driver on the specified I/O pin.
+The \tokenstyle{DRIVE\_TYPE} constraint configures the output driver on the specified I/O pin.
 
 \subsubsection{Applicable Elements}
-The DRIVE\_TYPE constraint may only be used on top-level module ports. 
+The \tokenstyle{DRIVE\_TYPE} constraint may only be used on top-level module ports.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
 \item {\bfseries Top-level module port (IOB)}
 	\begin{itemize}
-		\item ``NMOS\_OD": Open drain NMOS (pull-down only) driver.
-		\item ``PMOS\_OD": Open drain PMOS (pull-up only) driver.
-		\item ``PUSHPULL": CMOS digital push-pull driver. This is the default if no constraint is specified..
+		\item \strexamplestyle{NMOS\_OD} Open drain NMOS (pull-down only) driver.
+		\item \strexamplestyle{PMOS\_OD} Open drain PMOS (pull-up only) driver.
+		\item \strexamplestyle{PUSHPULL} CMOS digital push-pull driver. This is the default if no constraint is specified.
 	\end{itemize}
 \item {\bfseries Other} \\
 This constraint may not be used on any other entity.
@@ -254,8 +286,7 @@ This constraint may not be used on any other entity.
 
 \subsubsection{Verilog Usage Example}
 
-Figure \ref{constraint-drivetype} is an example of a top-level module with two ports \texttt{a} and \texttt{b}. Port 
-\texttt{a} has a push-pull driver and port \texttt{b} has an open-drain NMOS driver.
+Figure \ref{constraint-drivetype} is an example of a top-level module with two ports \wirestyle{a} and \wirestyle{b}. Port \wirestyle{a} has a push-pull driver and port \wirestyle{b} has an open-drain NMOS driver.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -266,10 +297,10 @@ module Foo(a, b);
 
 	(* DRIVE_TYPE = "NMOS_OD" *)
 	output wire b;
-	
+
 endmodule
 \end{lstlisting}
-\caption{Example for DRIVE\_TYPE constraint}
+\caption{Example for \tokenstyle{DRIVE\_TYPE} constraint}
 \label{constraint-drivetype}
 \end{figure}
 
@@ -277,21 +308,21 @@ endmodule
 % Input buffer type
 
 \pagebreak
-\subsection{Input Buffer Type (IBUF\_TYPE)}
+\subsection{Input Buffer Type (\tokenstyle{IBUF\_TYPE})}
 
-The IBUF\_TYPE constraint configures the input buffer on the specified I/O pin.
+The \tokenstyle{IBUF\_TYPE} constraint configures the input buffer on the specified I/O pin.
 
 \subsubsection{Applicable Elements}
-The IBUF\_TYPE constraint may only be used on top-level module ports. 
+The \tokenstyle{IBUF\_TYPE} constraint may only be used on top-level module ports.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
 \item {\bfseries Top-level module port (IOB)}
 	\begin{itemize}
-		\item ``ANALOG": Analog buffer for mixed signal hard IP. Note that analog \emph{outputs} must use this setting
+		\item \strexamplestyle{ANALOG} Analog buffer for mixed signal hard IP. Note that analog \emph{outputs} must use this setting
 		to disable the digital input buffer and ensure correct device operation.
-		\item ``LOW\_VOLTAGE": Low voltage threshold (see datasheet for exact value)
-		\item ``NORMAL": Standard threshold (see datasheet for exact value)
+		\item \strexamplestyle{LOW\_VOLTAGE} Low voltage threshold (see datasheet for exact value)
+		\item \strexamplestyle{NORMAL} Standard threshold (see datasheet for exact value)
 	\end{itemize}
 \item {\bfseries Other} \\
 This constraint may not be used on any other entity.
@@ -307,7 +338,7 @@ Figure \ref{constraint-ibuftype} shows an example of how to configure a top leve
 (* IBUF_TYPE = "ANALOG" *)
 input wire vin;
 \end{lstlisting}
-\caption{Example for IBUF\_TYPE constraint}
+\caption{Example for \tokenstyle{IBUF\_TYPE} constraint}
 \label{constraint-ibuftype}
 \end{figure}
 
@@ -315,26 +346,26 @@ input wire vin;
 % LOC
 
 \pagebreak
-\subsection{Physical Location (LOC)}
+\subsection{Physical Location (\tokenstyle{LOC})}
 
-The LOC constraint instructs gp4par to place the constrained net or primitive at a specific physical site of the 
+The \tokenstyle{LOC} constraint instructs \namestyle{gp4par} to place the constrained net or primitive at a specific physical site of the
 device.
 
 \subsubsection{Applicable Elements}
-As of this writing, the LOC constraint may only be used on top-level module ports.
+As of this writing, the \tokenstyle{LOC} constraint may only be used on top-level module ports.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
 \item {\bfseries Top-level module port}\\
-Text string ``Pn" where \texttt{n} is the pin number of the device. Example: ``P3", ``P17".
+Text string \strvaluestyle{Pn} where \tokenstyle{n} is the pin number of the device. Example: \strvaluestyle{P3}, \strvaluestyle{P17}.
 \item {\bfseries Other} \\
-This constraint may not be used on any other entity. Future versions of gp4par may allow use of this constraint 
+This constraint may not be used on any other entity. Future versions of \namestyle{gp4par} may allow use of this constraint
 to lock LUTs, flipflops, and hard IP to specific locations.
 \end{itemize}
 
 \subsubsection{Verilog Usage Example}
 
-Figure \ref{constraint-loc} is an example of a top-level module with three ports \texttt{a}, \texttt{b}, and \texttt{o}.
+Figure \ref{constraint-loc} is an example of a top-level module with three ports \wirestyle{a}, \wirestyle{b}, and \wirestyle{o}.
 These ports are constrained to package pins 20, 19, and 18 respectively.
 
 \begin{figure}[h]
@@ -349,10 +380,10 @@ module Foo(a, b, o);
 
 	(* LOC = "P18" *)
 	output wire o;
-	
+
 endmodule
 \end{lstlisting}
-\caption{Example for LOC constraint}
+\caption{Example for \tokenstyle{LOC} constraint}
 \label{constraint-loc}
 \end{figure}
 
@@ -360,26 +391,26 @@ endmodule
 % Pulldown
 
 \pagebreak
-\subsection{Pull-Down Resistor (PULLDOWN)}
+\subsection{Pull-Down Resistor (\tokenstyle{PULLDOWN})}
 
-The PULLDOWN constraint instructs gp4par to enable the pull-down resistor on the specified input. The exact resistor 
+The \tokenstyle{PULLDOWN} constraint instructs \namestyle{gp4par} to enable the pull-down resistor on the specified input. The exact resistor
 value ranges may be found in the device datasheet.
 
 \subsubsection{Applicable Elements}
-The PULLDOWN constraint may only be used on top-level module ports. 
+The \tokenstyle{PULLDOWN} constraint may only be used on top-level module ports.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
 \item {\bfseries Top-level module port (IOB)}\\
-Text string ``10k", ``100k", or ``1M", case sensitive, to specify the nominal value of the pull-down resistor.
+Text string \strvaluestyle{10k}, \strvaluestyle{100k}, or \strvaluestyle{1M}, case sensitive, to specify the nominal value of the pull-down resistor.
 \item {\bfseries Other} \\
 This constraint may not be used on any other entity.
 \end{itemize}
 
 \subsubsection{Verilog Usage Example}
 
-Figure \ref{constraint-pulldown} is an example of a top-level module with three ports \texttt{a}, \texttt{b}, and
-\texttt{o}. Ports \texttt{a} and \texttt{b} have 10k$\Omega$ pull-down resistors; port \texttt{o} is floating.
+Figure \ref{constraint-pulldown} is an example of a top-level module with three ports \wirestyle{a}, \wirestyle{b}, and
+\wirestyle{o}. Ports \wirestyle{a} and \wirestyle{b} have 10k$\Omega$ pull-down resistors; port \wirestyle{o} is floating.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -392,10 +423,10 @@ module Foo(a, b, o);
 	input wire b;
 
 	input wire o;
-	
+
 endmodule
 \end{lstlisting}
-\caption{Example for PULLDOWN constraint}
+\caption{Example for \tokenstyle{PULLDOWN} constraint}
 \label{constraint-pulldown}
 \end{figure}
 
@@ -403,26 +434,26 @@ endmodule
 % Pullup
 
 \pagebreak
-\subsection{Pull-Up Resistor (PULLUP)}
+\subsection{Pull-Up Resistor (\tokenstyle{PULLUP})}
 
-The PULLUP constraint instructs gp4par to enable the pull-up resistor on the specified input. The exact resistor 
+The \tokenstyle{PULLUP} constraint instructs \namestyle{gp4par} to enable the pull-up resistor on the specified input. The exact resistor
 value ranges may be found in the device datasheet.
 
 \subsubsection{Applicable Elements}
-The PULLUP constraint may only be used on top-level module ports. 
+The \tokenstyle{PULLUP} constraint may only be used on top-level module ports.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
 \item {\bfseries Top-level module port (IOB)}\\
-Text string ``10k", ``100k", or ``1M", case sensitive, to specify the nominal value of the pull-up resistor.
+Text string \strvaluestyle{10k}, \strvaluestyle{100k}, or \strvaluestyle{1M}, case sensitive, to specify the nominal value of the pull-up resistor.
 \item {\bfseries Other} \\
 This constraint may not be used on any other entity.
 \end{itemize}
 
 \subsubsection{Verilog Usage Example}
 
-Figure \ref{constraint-pullup} is an example of a top-level module with three ports \texttt{a}, \texttt{b}, and
-\texttt{o}. Ports \texttt{a} and \texttt{b} have 10k$\Omega$ pull-up resistors; port \texttt{o} is floating.
+Figure \ref{constraint-pullup} is an example of a top-level module with three ports \wirestyle{a}, \wirestyle{b}, and
+\wirestyle{o}. Ports \wirestyle{a} and \wirestyle{b} have 10k$\Omega$ pull-up resistors; port \wirestyle{o} is floating.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -435,10 +466,10 @@ module Foo(a, b, o);
 	input wire b;
 
 	input wire o;
-	
+
 endmodule
 \end{lstlisting}
-\caption{Example for PULLUP constraint}
+\caption{Example for \tokenstyle{PULLUP} constraint}
 \label{constraint-pullup}
 \end{figure}
 
@@ -446,13 +477,13 @@ endmodule
 % Schmitt Trigger
 
 \pagebreak
-\subsection{Schmitt Trigger (SCHMITT\_TRIGGER)}
+\subsection{Schmitt Trigger (\tokenstyle{SCHMITT\_TRIGGER})}
 
-The SCHMITT\_TRIGGER constraint instructs gp4par to enable the Schmitt trigger on the specified input. The level 
+The \tokenstyle{SCHMITT\_TRIGGER} constraint instructs \namestyle{gp4par} to enable the Schmitt trigger on the specified input. The level
 of hysterisis provided may be found in the device datasheet.
 
 \subsubsection{Applicable Elements}
-The SCHMITT\_TRIGGER constraint may only be used on top-level module ports configured in bidirectional or input mode. 
+The \tokenstyle{SCHMITT\_TRIGGER} constraint may only be used on top-level module ports configured in bidirectional or input mode.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
@@ -464,8 +495,8 @@ This constraint may not be used on any other entity.
 
 \subsubsection{Verilog Usage Example}
 
-Figure \ref{constraint-schmitt} is an example of a top-level module with three ports \texttt{a}, \texttt{b}, and
-\texttt{o}. The Schmitt trigger is enabled for ports  \texttt{a} and \texttt{b}, but not \texttt{o}.
+Figure \ref{constraint-schmitt} is an example of a top-level module with three ports \wirestyle{a}, \wirestyle{b}, and
+\wirestyle{o}. The Schmitt trigger is enabled for ports  \wirestyle{a} and \wirestyle{b}, but not \wirestyle{o}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -479,10 +510,10 @@ module Foo(a, b, o);
 
 	(* SCHMITT_TRIGGER = 0 *)
 	input wire o;
-	
+
 endmodule
 \end{lstlisting}
-\caption{Example for SCHMITT\_TRIGGER constraint}
+\caption{Example for \tokenstyle{SCHMITT\_TRIGGER} constraint}
 \label{constraint-schmitt}
 \end{figure}
 
@@ -490,29 +521,28 @@ endmodule
 % SHREG_EXTRACT
 
 \pagebreak
-\subsection{Shift Register Extraction (SHREG\_EXTRACT) \\ (NOT IMPLEMENTED)}
+\subsection{Shift Register Extraction (\tokenstyle{SHREG\_EXTRACT}) (NOT IMPLEMENTED)}
 \label{shreg-extract}
 
-The SHREG\_EXTRACT constraint controls inference of GP\_SHREG cells from behavioral Verilog. It can be 
+The \tokenstyle{SHREG\_EXTRACT} constraint controls inference of \tokenref{GP\_SHREG}{gp-shreg} cells from behavioral Verilog. It can be
 used to ensure that a given shift register in behavioral logic will, or will not be, mapped to a hard macro.
 
 \subsubsection{Applicable Elements}
-The SHREG\_EXTRACT constraint may only be used on 1-bit registers.
+The \tokenstyle{SHREG\_EXTRACT} constraint may only be used on 1-bit registers.
 
 \subsubsection{Constraint Values}
 \begin{itemize}
 \item {\bfseries Single-bit register}\\
 One of the following:
 \begin{itemize}
-\item AUTO: Same behavior as not specifying any constraint. Shift registers will be inferred where possible.
-\item NO: Do not infer a shift register even if the logic matches a supported inference structure.
-\item FORCE: Always infer a shift register. If a supported inference structure is not found, a synthesis error is produced.
+\item \strexamplestyle{AUTO} Same behavior as not specifying any constraint. Shift registers will be inferred where possible.
+\item \strexamplestyle{NO} Do not infer a shift register even if the logic matches a supported inference structure.
+\item \strexamplestyle{FORCE} Always infer a shift register. If a supported inference structure is not found, a synthesis error is produced.
 \end{itemize}
 \item {\bfseries Other} \\
 This constraint will be silently ignored if used on any other entity.
 \end{itemize}
 
-\clearpage
 \subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-shreg-extract} is an example of FIXME
@@ -521,7 +551,7 @@ Figure \ref{constraint-shreg-extract} is an example of FIXME
 \begin{lstlisting}
 FIXME
 \end{lstlisting}
-\caption{Example for SHREG\_EXTRACT constraint}
+\caption{Example for \tokenstyle{SHREG\_EXTRACT} constraint}
 \label{constraint-shreg-extract}
 \end{figure}
 
@@ -529,7 +559,7 @@ FIXME
 % Timing constraints
 
 \pagebreak
-\section{gp4par Timing Constraints}
+\section{\namestyle{gp4par} Timing Constraints}
 
 Static timing analysis is not yet implemented, thus this section is currently blank.
 
@@ -537,10 +567,10 @@ Static timing analysis is not yet implemented, thus this section is currently bl
 % Coding Techniques
 
 \pagebreak
-\section{gp4par HDL Coding Techniques}
+\section{\namestyle{gp4par} HDL Coding Techniques}
 
-When possible, we recommend inferring design elements to maximize design portability. In some cases, such as for hard 
-IP blocks or when exact control over synthesis results is required, it may be necessary to manually instantiate device 
+When possible, we recommend inferring design elements to maximize design portability. In some cases, such as for hard
+IP blocks or when exact control over synthesis results is required, it may be necessary to manually instantiate device
 primitives.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -548,11 +578,11 @@ primitives.
 
 \subsection{Counters}
 
-Yosys provides limited inference capability for counters which match the capabilities of the hard macro counters 
-(GP\_COUNT8 and GP\_COUNT14) in the device.
+\namestyle{Yosys} provides limited inference capability for counters which match the capabilities of the hard macro counters
+(\tokenref{GP\_COUNT8}{gp-count8} and \tokenref{GP\_COUNT14}{gp-count14}) in the device.
 
-Some hard macro capabilities (most notably input dividers) are not yet supported for inference; if these capabilities 
-are required then use explicit primitive instantiation. Future software releases will expand the set of counter 
+Some hard macro capabilities (most notably input dividers) are not yet supported for inference; if these capabilities
+are required then use explicit primitive instantiation. Future software releases will expand the set of counter
 features which may be inferred.
 
 \subsubsection{Inference Requirements}
@@ -569,11 +599,10 @@ In order to be inferred, a counter must:
 
 \subsubsection{Counter Related Constraints}
 
-By default, the ``greenpak4\_counters" pass will attempt to infer a counter macro for every counter matching the 
-requirements. If this is not desired, use the COUNT\_EXTRACT constraint (Section \ref{count-extract}) to control 
+By default, the \tokenstyle{greenpak4\_counters} pass will attempt to infer a counter macro for every counter matching the
+requirements. If this is not desired, use the \tokenref{COUNT\_EXTRACT}{count-extract} constraint to control
 inference behavior.
 
-\clearpage
 \subsubsection{Verilog Usage Example}
 
 The example in Figure \ref{gp-countinfer-example} shows an example of how to infer a resettable down counter.
@@ -584,19 +613,15 @@ localparam COUNT_MAX = 31;
 reg[4:0] count = COUNT_MAX;
 wire underflow_out = (count == 0);
 always @(posedge clk, posedge count_rst) begin
-	
 	if(count_rst)
 		count			<= 0;
-	
-	else begin
 
+	else begin
 		if(count == 0)
 			count		<= COUNT_MAX;
 		else
 			count		<= count - 1'd1;
-
 	end
-	
 end
 \end{lstlisting}
 \caption{Example for counter inference}
@@ -605,7 +630,7 @@ end
 
 \subsubsection{Reporting}
 
-In order to determine whether a given counter was extracted, look at the synthesis report. Figure 
+In order to determine whether a given counter was extracted, look at the synthesis report. Figure
 \ref{counter-extraction} shows an example synthesis report with a single inferred counter.
 
 \begin{figure}[h]
@@ -628,34 +653,33 @@ Extracted 1 counters
 \pagebreak
 \subsection{Shift Registers}
 
-Yosys provides inference capability for shift registers matching the capabilities of the ``pipe delay" block in the 
-SLG46620/21. The shift register is automatically initialized to zero at power-up; there is no support for initializing 
+\namestyle{Yosys} provides inference capability for shift registers matching the capabilities of the ``pipe delay" block in the
+\namestyle{SLG46620/21}. The shift register is automatically initialized to zero at power-up; there is no support for initializing
 to any other value.
 
-The internal inverter is not yet supported for inference. If this is required for your design, consider manual 
-instantiation of a GP\_SHREG primitive.
+The internal inverter is not yet supported for inference. If this is required for your design, consider manual
+instantiation of a \tokenref{GP\_SHREG}{gp-shreg} primitive.
 
 \subsubsection{Inference Requirements}
 
-In order to be inferred as a single GP\_SHREG primitive, a shift register must:
+In order to be inferred as a single \tokenref{GP\_SHREG}{gp-shreg} primitive, a shift register must:
 
 \begin{itemize}
 \item Be at most 16 bits in depth
 \item Be initialized to zero, or uninitialized
 \item Have either no reset, or a positive level triggered reset to zero
-\item Have at most two taps in the shift register connected to external logic. If more taps are required, a second 
-shift register and/or discrete flipflops may be inferred. 
+\item Have at most two taps in the shift register connected to external logic. If more taps are required, a second
+shift register and/or discrete flipflops may be inferred.
 \end{itemize}
 
 \subsubsection{Shift Register Related Constraints}
 
-As of now there are no constraints to force or disable inference of shift registers. A constraint analogous to 
-COUNT\_EXTRACT will likely be added in a future software release.
+As of now there are no constraints to force or disable inference of shift registers. A constraint analogous to
+\tokenref{COUNT\_EXTRACT}{count-extract} will likely be added in a future software release.
 
-\clearpage
 \subsubsection{Verilog Usage Example}
 
-The example in Figure \ref{gp-shreginfer-example} shows an example of how to infer a shift register with taps delayed 8 
+The example in Figure \ref{gp-shreginfer-example} shows an example of how to infer a shift register with taps delayed 8
 and 16 clocks from the input.
 
 \begin{figure}[h]
@@ -674,7 +698,7 @@ end
 
 \subsubsection{Reporting}
 
-In order to determine whether a given shift register was extracted, look at the synthesis report. Figure 
+In order to determine whether a given shift register was extracted, look at the synthesis report. Figure
 \ref{shreg-extraction} shows an example synthesis report with a single inferred shift register.
 
 \begin{figure}[h]
@@ -695,57 +719,58 @@ Converted 16 dff cells into 1 shift registers.
 % Primitives
 
 \pagebreak
-\section{gp4par Verilog Primitives}
+\section{\namestyle{gp4par} Verilog Primitives}
 
-This section lists all of the device-dependent primitives wrapping hard IP blocks in the device. These may be used for 
+This section lists all of the device-dependent primitives wrapping hard IP blocks in the device. These may be used for
 features which are not yet supported by inference, or when exact control over synthesis results is needed.
 
-Pay careful attention to port names and descriptions as these may not exactly match the Silego primitives; some have 
-been changed in order to allow cleaner and more modular HDL. For example, the single ``oscillator" block is represented 
+Pay careful attention to port names and descriptions as these may not exactly match the Silego primitives; some have
+been changed in order to allow cleaner and more modular HDL. For example, the single ``oscillator" block is represented
 in Verilog by a separate block for each of the three internal oscillators.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_2LUT
 
 \pagebreak
-\subsection{GP\_2LUT: 2-Input Lookup Table}
+\subsection{\tokenstyle{GP\_2LUT}: 2-Input Lookup Table}
+\label{gp-2lut}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single 2-input lookup table. It can implement any combinatorial function of two 
+This primitive corresponds to a single 2-input lookup table. It can implement any combinatorial function of two
 inputs and one output.
 
-This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we
 recommend inferring logic.
 
-The LUT output is the \{IN1, IN0\}'th bit of the truth table supplied in the INIT attribute.
+The LUT output is the \{\tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth table supplied in the \tokenstyle{INIT} attribute.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-IN0 & Input & 1 & Least significant input bit \\
+\tokenstyle{IN0} & Input & 1 & Least significant input bit \\
 \hline
-IN1 & Input & 1 & Input bit \\
+\tokenstyle{IN1} & Input & 1 & Input bit \\
 \hline
-OUT & Output & 1 & Lookup table output \\
+\tokenstyle{OUT} & Output & 1 & Lookup table output \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-INIT & Integer & 4 & LUT truth table \\
+\tokenstyle{INIT} & Integer & 4 & LUT truth table \\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-2LUT-example} sets \emph{o} to the bitwise AND of \emph{a} and \emph{b}.
+The example shown in figure \ref{gp-2LUT-example} sets \wirestyle{o} to the bitwise AND of \wirestyle{a} and \wirestyle{b}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -760,7 +785,7 @@ GP_2LUT #(
 	.OUT(o)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_2LUT}
+\caption{Example usage of \tokenstyle{GP\_2LUT}}
 \label{gp-2LUT-example}
 \end{figure}
 
@@ -768,46 +793,47 @@ GP_2LUT #(
 % GP_3LUT
 
 \pagebreak
-\subsection{GP\_3LUT: 3-Input Lookup Table}
+\subsection{\tokenstyle{GP\_3LUT}: 3-Input Lookup Table}
+\label{gp-3lut}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single 3-input lookup table. It can implement any combinatorial function of three 
+This primitive corresponds to a single 3-input lookup table. It can implement any combinatorial function of three
 inputs and one output.
 
-This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we
 recommend inferring logic.
 
-The LUT output is the \{IN2, IN1, IN0\}'th bit of the truth table supplied in the INIT attribute.
+The LUT output is the \{\tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth table supplied in the \tokenstyle{INIT} attribute.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-IN0 & Input & 1 & Least significant input bit \\
+\tokenstyle{IN0} & Input & 1 & Least significant input bit \\
 \hline
-IN1 & Input & 1 & Input bit \\
+\tokenstyle{IN1} & Input & 1 & Input bit \\
 \hline
-IN2 & Input & 1 & Most significant input bit \\
+\tokenstyle{IN2} & Input & 1 & Most significant input bit \\
 \hline
-OUT & Output & 1 & Lookup table output \\
+\tokenstyle{OUT} & Output & 1 & Lookup table output \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-INIT & Integer & 8 & LUT truth table \\
+\tokenstyle{INIT} & Integer & 8 & LUT truth table \\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-3LUT-example} sets \emph{o} to the bitwise AND of \emph{a}, \emph{b}, and \emph{c}.
+The example shown in figure \ref{gp-3LUT-example} sets \wirestyle{o} to the bitwise AND of \wirestyle{a}, \wirestyle{b}, and \wirestyle{c}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -824,7 +850,7 @@ GP_3LUT #(
 	.OUT(o)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_3LUT}
+\caption{Example usage of \tokenstyle{GP\_3LUT}}
 \label{gp-3LUT-example}
 \end{figure}
 
@@ -832,49 +858,50 @@ GP_3LUT #(
 % GP_4LUT
 
 \pagebreak
-\subsection{GP\_4LUT: 4-Input Lookup Table}
+\subsection{\tokenstyle{GP\_4LUT}: 4-Input Lookup Table}
+\label{gp-4lut}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single 4-input lookup table. It can implement any combinatorial function of four 
+This primitive corresponds to a single 4-input lookup table. It can implement any combinatorial function of four
 inputs and one output.
 
-This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we
 recommend inferring logic.
 
-The LUT output is the \{IN3, IN2, IN1, IN0\}'th bit of the truth table supplied in the INIT attribute.
+The LUT output is the \{\tokenstyle{IN3}, \tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth table supplied in the \tokenstyle{INIT} attribute.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-IN0 & Input & 1 & Least significant input bit \\
+\tokenstyle{IN0} & Input & 1 & Least significant input bit \\
 \hline
-IN1 & Input & 1 & Input bit \\
+\tokenstyle{IN1} & Input & 1 & Input bit \\
 \hline
-IN2 & Input & 1 & Input bit \\
+\tokenstyle{IN2} & Input & 1 & Input bit \\
 \hline
-IN3 & Input & 1 & Most significant input bit \\
+\tokenstyle{IN3} & Input & 1 & Most significant input bit \\
 \hline
-OUT & Output & 1 & Lookup table output \\
+\tokenstyle{OUT} & Output & 1 & Lookup table output \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-INIT & Integer & 16 & LUT truth table \\
+\tokenstyle{INIT} & Integer & 16 & LUT truth table \\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-4LUT-example} sets \emph{o} to the bitwise AND of \emph{a}, \emph{b}, \emph{c},
-and \emph{d}.
+The example shown in figure \ref{gp-4LUT-example} sets \wirestyle{o} to the bitwise AND of \wirestyle{a}, \wirestyle{b}, \wirestyle{c},
+and \wirestyle{d}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -893,7 +920,7 @@ GP_3LUT #(
 	.OUT(o)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_4LUT}
+\caption{Example usage of \tokenstyle{GP\_4LUT}}
 \label{gp-4LUT-example}
 \end{figure}
 
@@ -901,21 +928,22 @@ GP_3LUT #(
 % GP_ABUF
 
 \pagebreak
-\subsection{GP\_ABUF: Analog Buffer}
+\subsection{\tokenstyle{GP\_ABUF}: Analog Buffer}
+\label{gp-abuf}
 
 \subsubsection{Introduction}
-This primitive represents an analog buffer which may be used to reduce loading on comparator inputs. Note that not all 
+This primitive represents an analog buffer which may be used to reduce loading on comparator inputs. Note that not all
 comparators have buffers on the input; see device datasheet for details.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-IN & Input & 1 & Connect to analog output from IOB.\\
+\tokenstyle{IN} & Input & 1 & Connect to analog output from IOB.\\
 \hline
-OUT & Output & 1 & Connect to VIN of a GP\_ACMP block.\\
+\tokenstyle{OUT} & Output & 1 & Connect to \tokenstyle{VIN} of a \tokenref{GP\_ACMP}{gp-acmp} block.\\
 \hline
 \end{tabularx}
 
@@ -925,7 +953,7 @@ No parameters.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-abuf-example} buffers the signal ``vin" to ``vin\_buf".
+The example shown in figure \ref{gp-abuf-example} buffers the signal \wirestyle{vin} to \wirestyle{vin\_buf}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -936,7 +964,7 @@ GP_ABUF abuf(
 	.OUT(vin_buf)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_ABUF}
+\caption{Example usage of \tokenstyle{GP\_ABUF}}
 \label{gp-abuf-example}
 \end{figure}
 
@@ -944,60 +972,59 @@ GP_ABUF abuf(
 % GP_ACMP
 
 \pagebreak
-\subsection{GP\_ACMP: Analog Comparator}
+\subsection{\tokenstyle{GP\_ACMP}: Analog Comparator}
+\label{gp-acmp}
 
 \subsubsection{Introduction}
 This primitive represents an analog comparator.
 
-The comparator may not be powered on until the power-on reset process has completed. The PWREN input must be tied to 
-either the reset-done output of the GP\_POR block, or an arbitrary digital expression ANDed with the reset-done output.
+The comparator may not be powered on until the power-on reset process has completed. The \tokenstyle{PWREN} input must be tied to
+either the reset-done output of the \tokenref{GP\_POR}{gp-por} block, or an arbitrary digital expression ANDed with the reset-done output.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-PWREN & Input & 1 &
+\tokenstyle{PWREN} & Input & 1 &
 	1: normal operation \newline
 	0: power down mode \\
 \hline
-OUT & Output & 1 &
-	1: when VIN $>$ VREF and comparator is running \newline
-	0: when VIN $<$ VREF or comparator is powered down \\
+\tokenstyle{OUT} & Output & 1 &
+	1: when \tokenstyle{VIN} $>$ \tokenstyle{VREF} and comparator is running \newline
+	0: when \tokenstyle{VIN} $<$ \tokenstyle{VREF} or comparator is powered down \\
 \hline
-VIN & Input & 1 & Input voltage (Vdd or external analog input from IOB)\\
+\tokenstyle{VIN} & Input & 1 & Input voltage (Vdd or external analog input from IOB)\\
 \hline
-VREF & Input & 1 & Input reference voltage\\
+\tokenstyle{VREF} & Input & 1 & Input reference voltage\\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-BANDWIDTH & String & N/A &
-	Comparator bandwidth. Legal values are ``LOW" and ``HIGH", see device datasheet for actual bandwidth values. \\
+\tokenstyle{BANDWIDTH} & String & N/A &
+	Comparator bandwidth. Legal values are \strvaluestyle{LOW} and \strvaluestyle{HIGH}, see device datasheet for actual bandwidth values. \\
 \hline
-VIN\_ATTEN & Integer & 3 &
-	Attenuation for the input, represented as inverse gain. Legal values are 1/2/3/4. \\
+\tokenstyle{VIN\_ATTEN} & Integer & 3 &
+	Attenuation for the input, represented as inverse gain. Legal values are 1, 2, 3, 4. \\
 \hline
-VIN\_ISRC\_EN & Boolean & 1 &
+\tokenstyle{VIN\_ISRC\_EN} & Boolean & 1 &
 	Set to 1 to enable the $100 \mu A$ current source on the input. Note that not all comparators support the current
 	source, check device datasheet for details.\\
 \hline
-HYSTERESIS & Integer & 8 &
-	Hysteresis, in mV. Legal values are 0/25/50/200. See device datasheet for offset notes.\\
+\tokenstyle{HYSTERESIS} & Integer & 8 &
+	Hysteresis, in mV. Legal values are 0, 25, 50, 200. See device datasheet for offset notes.\\
 \hline
 \end{tabularx}
 
-\pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-acmp-example} sets cout1 to true if vin is greater than vref\_750. The comparator is 
-set to have 25 mV of hysteresis and low bandwidth.
+The example shown in figure \ref{gp-acmp-example} sets cout1 to true if \wirestyle{vin} is greater than \wirestyle{vref\_750}. The comparator is set to have 25 mV of hysteresis and low bandwidth.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1017,7 +1044,7 @@ GP_ACMP #(
 	.VREF(vref_750)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_ACMP}
+\caption{Example usage of \tokenstyle{GP\_ACMP}}
 \label{gp-acmp-example}
 \end{figure}
 
@@ -1026,45 +1053,45 @@ GP_ACMP #(
 
 \pagebreak
 \clearpage
-\subsection{GP\_BANDGAP: Bandgap Voltage Reference}
+\subsection{\tokenstyle{GP\_BANDGAP}: Bandgap Voltage Reference}
 
 \subsubsection{Introduction}
 This primitive represents the bandgap voltage reference.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-OK & Output & 1 & Goes high when bandgap voltage reference is stable. \\
+\tokenstyle{OK} & Output & 1 & Goes high when bandgap voltage reference is stable. \\
 \hline
-VOUT & Output & 1 & 1.0V reference voltage.
+\tokenstyle{VOUT} & Output & 1 & 1.0V reference voltage.
 	Dedicated connection to mixed signal hard IP, does not connect to general fabric routing. \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-AUTO\_PWRDN & Boolean & 1 &
-	{\bfseries When 1: } \newline Automatically power down bandgap when all loads are powered down. \newline
-	{\bfseries When 0: } \newline Automatic power-down is disabled. The bandgap is always on.\\
+\tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
+	\textbf{When 1:} \newline Automatically power down bandgap when all loads are powered down. \newline
+	\textbf{When 0:} \newline Automatic power-down is disabled. The bandgap is always on.\\
 \hline
-CHOPPER\_EN & Boolean & 1 &
+\tokenstyle{CHOPPER\_EN} & Boolean & 1 &
 	Specify whether to enable the chopper stabilization for the bandgap op-amp. Should always be 1. \\
 \hline
-OUT\_DELAY & Integer & 1 &
+\tokenstyle{OUT\_DELAY} & Integer & 1 &
 	Time, in $\mu s$, to wait after bandgap startup before asserting OK. Legal values are 100 or 550.\\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-bandgap-example} sets bg\_ok high $550 \mu s$ after reset. bandgap\_vout is a 1.0V 
+The example shown in figure \ref{gp-bandgap-example} sets \wirestyle{bg\_ok} high $550 \mu s$ after reset. \wirestyle{bandgap\_vout} is a 1.0V
 analog reference voltage for use by other mixed signal blocks.
 
 \begin{figure}[h]
@@ -1080,7 +1107,7 @@ GP_BANDGAP #(
 	.VOUT(bandgap_vout)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_BANDGAP}
+\caption{Example usage of \tokenstyle{GP\_BANDGAP}}
 \label{gp-bandgap-example}
 \end{figure}
 
@@ -1088,56 +1115,55 @@ GP_BANDGAP #(
 % GP_COUNT8
 
 \pagebreak
-\subsection{GP\_COUNT8: 8-Bit Resettable Down Counter}
+\subsection{\tokenstyle{GP\_COUNT8}: 8-Bit Resettable Down Counter}
+\label{gp-count8}
 
 \subsubsection{Introduction}
-This primitive represents an 8-bit down counter. The count register is initialized to COUNT\_TO at power-on reset, and 
-to 0 by the reset pin. (Some of the hard IP blocks support resetting to COUNT\_TO with the reset pin and/or counting 
-up, but this is not supported by the current gp4par tool.)
+This primitive represents an 8-bit down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at power-on reset, and
+to 0 by the reset pin. (Some of the hard IP blocks support resetting to \tokenstyle{COUNT\_TO} with the reset pin and/or counting
+up, but this is not supported by the current \namestyle{gp4par} tool.)
 
-Note that this primitive does \emph{not} always map to a hard IP block with \emph{exactly} 8 bit depth. The technology 
-mapper may map GP\_COUNT8 cells to unused 14-bit counters in order to relieve routing pressure. In this case, the high 
+Note that this primitive does \emph{not} always map to a hard IP block with \emph{exactly} 8 bit depth. The technology
+mapper may map \tokenstyle{GP\_COUNT8} cells to unused 14-bit counters in order to relieve routing pressure. In this case, the high
 6 bits of the counter will always be zero.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-CLK & Input & 1 & The input clock signal\\
+\tokenstyle{CLK} & Input & 1 & The input clock signal\\
 \hline
-RST & Input & 1 & Reset input (polarity depends on RESET\_MODE). When triggered, resets the count register to zero. \\
+\tokenstyle{RST} & Input & 1 & Reset input (polarity depends on \tokenstyle{RESET\_MODE}). When triggered, resets the count register to zero. \\
 \hline
-OUT & Output & 1 & Counter underflow output. High whenever the count register equals zero. \\
+\tokenstyle{OUT} & Output & 1 & Counter underflow output. High whenever the count register equals zero. \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-CLKIN\_DIVIDE & Integer & 8 &
-	Input clock divider. Legal values depend on what source CLK is driven by, see device datasheet.\\
+\tokenstyle{CLKIN\_DIVIDE} & Integer & 8 &
+	Input clock divider. Legal values depend on what source \tokenstyle{CLK} is driven by, see device datasheet.\\
 \hline
-COUNT\_TO & Integer & 8 & Value to set the counter to on underflow. \\
+\tokenstyle{COUNT\_TO} & Integer & 8 & Value to set the counter to on underflow. \\
 \hline
-RESET\_MODE & String &  & 
-	{\bfseries RISING: } \newline Resets the counter on a rising edge of RST. \newline
-	{\bfseries FALLING: } \newline Resets the counter on a falling edge of RST. \newline
-	{\bfseries BOTH: } \newline Resets the counter on any edge of RST. \newline
-	{\bfseries LEVEL: } \newline Resets the counter when RST is high. \\
+\tokenstyle{RESET\_MODE} & String &  &
+	\strexamplestyle{RISING} Resets the counter on a rising edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{FALLING} Resets the counter on a falling edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{BOTH} Resets the counter on any edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{LEVEL} Resets the counter when \tokenstyle{RST} is high. \\
 \hline
 \end{tabularx}
 
-\pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-count8-example} begins counting from 8'hcc down to zero, on rising edges of clk, as 
-soon as the device exits POR. When the counter reaches zero underflow goes high for one clk cycle and the counter is 
-reset to 8'hcc. The counter also resets immediately to 8'hcc, and is held in reset, when count\_rst is high.
+The example shown in figure \ref{gp-count8-example} begins counting from 8'hcc down to zero, on rising edges of \wirestyle{clk}, as
+soon as the device exits power-on reset. When the counter reaches zero \wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to 8'hcc. The counter also resets immediately to 8'hcc, and is held in reset, when \wirestyle{count\_rst} is high.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1154,7 +1180,7 @@ GP_COUNT8 #(
 	.OUT(underflow)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_COUNT8}
+\caption{Example usage of \tokenstyle{GP\_COUNT8}}
 \label{gp-count8-example}
 \end{figure}
 
@@ -1162,57 +1188,55 @@ GP_COUNT8 #(
 % GP_COUNT14
 
 \pagebreak
-\subsection{GP\_COUNT14: 14-Bit Resettable Down Counter}
+\subsection{\tokenstyle{GP\_COUNT14}: 14-Bit Resettable Down Counter}
+\label{gp-count14}
 
 \subsubsection{Introduction}
-This primitive represents an 14-bit down counter. The count register is initialized to COUNT\_TO at power-on reset, and 
-to 0 by the reset pin. (Some of the hard IP blocks support resetting to COUNT\_TO with the reset pin and/or counting 
-up, but this is not supported by the current gp4par tool.)
+This primitive represents an 14-bit down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at power-on reset, and
+to 0 by the reset pin. (Some of the hard IP blocks support resetting to \tokenstyle{COUNT\_TO} with the reset pin and/or counting
+up, but this is not supported by the current \namestyle{gp4par} tool.)
 
-In the current software, this primitive currently will always map to a 14-bit counter cell in the device. A planned 
-future optimization will allow the technology mapper to map 14-bit counters in the netlist to 8-bit counter cells if 
-the provided count value is less than 256. This should allow better packing density for parameterizable modules 
+In the current software, this primitive currently will always map to a 14-bit counter cell in the device. A planned
+future optimization will allow the technology mapper to map 14-bit counters in the netlist to 8-bit counter cells if
+the provided count value is less than 256. This should allow better packing density for parameterizable modules
 containing counters of variable depth.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-CLK & Input & 1 & The input clock signal\\
+\tokenstyle{CLK} & Input & 1 & The input clock signal\\
 \hline
-RST & Input & 1 & Reset input (polarity depends on RESET\_MODE). When triggered, resets the count register to zero. \\
+\tokenstyle{RST} & Input & 1 & Reset input (polarity depends on \tokenstyle{RESET\_MODE}). When triggered, resets the count register to zero. \\
 \hline
-OUT & Output & 1 & Counter underflow output. High whenever the count register equals zero. \\
+\tokenstyle{OUT} & Output & 1 & Counter underflow output. High whenever the count register equals zero. \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-CLKIN\_DIVIDE & Integer & 8 &
-	Input clock divider. Legal values depend on what source CLK is driven by, see device datasheet.\\
+\tokenstyle{CLKIN\_DIVIDE} & Integer & 8 &
+	Input clock divider. Legal values depend on what source \tokenstyle{CLK} is driven by, see device datasheet.\\
 \hline
-COUNT\_TO & Integer & 14 & Value to set the counter to on underflow. \\
+\tokenstyle{COUNT\_TO} & Integer & 14 & Value to set the counter to on underflow. \\
 \hline
-RESET\_MODE & String &  & 
-	{\bfseries RISING: } \newline Resets the counter on a rising edge of RST. \newline
-	{\bfseries FALLING: } \newline Resets the counter on a falling edge of RST. \newline
-	{\bfseries BOTH: } \newline Resets the counter on any edge of RST. \newline
-	{\bfseries LEVEL: } \newline Resets the counter when RST is high. \\
+\tokenstyle{RESET\_MODE} & String &  &
+	\strexamplestyle{RISING} Resets the counter on a rising edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{FALLING} Resets the counter on a falling edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{BOTH} Resets the counter on any edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{LEVEL} Resets the counter when \tokenstyle{RST} is high. \\
 \hline
 \end{tabularx}
 
-\pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-count14-example} begins counting from 14'd3141 down to zero, on rising edges of clk,
-as soon as the device exits POR. When the counter reaches zero underflow goes high for one clk cycle and the counter is 
-reset to 14'd3141. The counter also resets immediately to 14'd3141, and is held in reset, when count\_rst is high.
+The example shown in figure \ref{gp-count14-example} begins counting from \datastyle{14'd3141} down to zero, on rising edges of \wirestyle{clk}, as soon as the device exits POR. When the counter reaches zero \wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to \datastyle{14'd3141}. The counter also resets immediately to \datastyle{14'd3141}, and is held in reset, when \wirestyle{count\_rst} is high.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1229,7 +1253,7 @@ GP_COUNT14 #(
 	.OUT(underflow)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_COUNT14}
+\caption{Example usage of \tokenstyle{GP\_COUNT14}}
 \label{gp-count14-example}
 \end{figure}
 
@@ -1237,36 +1261,37 @@ GP_COUNT14 #(
 % GP_DFF
 
 \pagebreak
-\subsection{GP\_DFF: Positive Edge Triggered D Flipflop}
+\subsection{\tokenstyle{GP\_DFF}: Positive Edge Triggered D Flipflop}
+\label{gp-dff}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D flipflop. It may be mapped to either a DFF or a DFFSR cell by the placer 
+This primitive corresponds to a single D flipflop. It may be mapped to either a DFF or a DFFSR cell by the placer
 depending on resource utilization and routing congestion.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-D & Input & 1 & Input data \\
+\tokenstyle{D} & Input & 1 & Input data \\
 \hline
-CLK & Input & 1 & Input clock \\
+\tokenstyle{CLK} & Input & 1 & Input clock \\
 \hline
-Q & Output & 1 & Output signal \\
+\tokenstyle{Q} & Output & 1 & Output signal \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
 \hline
 \end{tabularx}
 
@@ -1287,7 +1312,7 @@ GP_DFF #(
 	.Q(dout)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_DFF}
+\caption{Example usage of \tokenstyle{GP\_DFF}}
 \label{gp-dff-example}
 \end{figure}
 
@@ -1295,45 +1320,46 @@ GP_DFF #(
 % GP_DFFR
 
 \pagebreak
-\subsection{GP\_DFFR: Positive Edge Triggered D Flipflop with Reset}
+\subsection{\tokenstyle{GP\_DFFR}: Positive Edge Triggered D Flipflop with Reset}
+\label{gp-dffr}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D flipflop with active-low reset. It is internally remapped to a DFFSR cell by 
+This primitive corresponds to a single D flipflop with active-low reset. It is internally remapped to a DFFSR cell by
 the placer.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-D & Input & 1 & Input data \\
+\tokenstyle{D} & Input & 1 & Input data \\
 \hline
-CLK & Input & 1 & Input clock \\
+\tokenstyle{CLK} & Input & 1 & Input clock \\
 \hline
-nRST & Input & 1 & Active-low reset \\
+\tokenstyle{nRST} & Input & 1 & Active-low reset \\
 \hline
-Q & Output & 1 & Output signal \\
+\tokenstyle{Q} & Output & 1 & Output signal \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-dffr-example} shows a flipflop initialized to zero at power-up, and cleared to zero 
-when nrst goes low.
+The example shown in figure \ref{gp-dffr-example} shows a flipflop initialized to zero at power-up, and cleared to zero
+when \wirestyle{nrst} goes low.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1350,7 +1376,7 @@ GP_DFFR #(
 	.nRST(nrst)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_DFFR}
+\caption{Example usage of \tokenstyle{GP\_DFFR}}
 \label{gp-dffr-example}
 \end{figure}
 
@@ -1358,45 +1384,46 @@ GP_DFFR #(
 % GP_DFFS
 
 \pagebreak
-\subsection{GP\_DFFS: Positive Edge Triggered D Flipflop with Set}
+\subsection{\tokenstyle{GP\_DFFS}: Positive Edge Triggered D Flipflop with Set}
+\label{gp-dffs}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D flipflop with active-low set. It is internally remapped to a DFFSR cell by 
+This primitive corresponds to a single D flipflop with active-low set. It is internally remapped to a DFFSR cell by
 the placer.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-D & Input & 1 & Input data \\
+\tokenstyle{D} & Input & 1 & Input data \\
 \hline
-CLK & Input & 1 & Input clock \\
+\tokenstyle{CLK} & Input & 1 & Input clock \\
 \hline
-nSET & Input & 1 & Active-low set \\
+\tokenstyle{nSET} & Input & 1 & Active-low set \\
 \hline
-Q & Output & 1 & Output signal \\
+\tokenstyle{Q} & Output & 1 & Output signal \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-dffs-example} shows a flipflop initialized to zero at power-up, and set to one
-when nset goes low.
+when \wirestyle{nset} goes low.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1413,7 +1440,7 @@ GP_DFFS #(
 	.nSET(nset)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_DFFS}
+\caption{Example usage of \tokenstyle{GP\_DFFS}}
 \label{gp-dffs-example}
 \end{figure}
 
@@ -1421,47 +1448,48 @@ GP_DFFS #(
 % GP_DFFSR
 
 \pagebreak
-\subsection{GP\_DFFSR: Positive Edge Triggered D Flipflop with Set or Reset}
+\subsection{\tokenstyle{GP\_DFFSR}: Positive Edge Triggered D Flipflop with Set or Reset}
+\label{gp-dffsr}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D flipflop with active-low set or reset (but not both), selectable at synthesis 
+This primitive corresponds to a single D flipflop with active-low set or reset (but not both), selectable at synthesis
 time by a parameter.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-D & Input & 1 & Input data \\
+\tokenstyle{D} & Input & 1 & Input data \\
 \hline
-CLK & Input & 1 & Input clock \\
+\tokenstyle{CLK} & Input & 1 & Input clock \\
 \hline
-nSR & Input & 1 & Active-low set/reset \\
+\tokenstyle{nSR} & Input & 1 & Active-low set/reset \\
 \hline
-Q & Output & 1 & Output signal \\
+\tokenstyle{Q} & Output & 1 & Output signal \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-INIT & Boolean & 1 & Power-on initialization value of the flipflop \\
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
 \hline
-SRMODE & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset \\
+\tokenstyle{SRMODE} & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset \\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-dffsr-example} shows a flipflop initialized to zero at power-up, and set to one
-when nset goes low.
+when \wirestyle{nset} goes low.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1479,7 +1507,7 @@ GP_DFFSR #(
 	.nSR(nset)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_DFFSR}
+\caption{Example usage of \tokenstyle{GP\_DFFSR}}
 \label{gp-dffsr-example}
 \end{figure}
 
@@ -1487,26 +1515,27 @@ GP_DFFSR #(
 % GP_IBUF
 
 \pagebreak
-\subsection{GP\_IBUF: Input Buffer}
+\subsection{\tokenstyle{GP\_IBUF}: Input Buffer}
+\label{gp-ibuf}
 
 \subsubsection{Introduction}
 This primitive corresponds to a top-level input buffer (IOB).
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
-Note that in the current gp4par version, constraints must be attached to the pad wire (signal attached to IN), not 
+Note that in the current \namestyle{gp4par} version, constraints must be attached to the pad wire (signal attached to \tokenstyle{IN}), not
 to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-IN & Input & 1 & Input signal from top-level module port \\
+\tokenstyle{IN} & Input & 1 & Input signal from top-level module port \\
 \hline
-OUT & Output & 1 & Output signal to fabric routing \\
+\tokenstyle{OUT} & Output & 1 & Output signal to fabric routing \\
 \hline
 \end{tabularx}
 
@@ -1516,23 +1545,23 @@ No parameters.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-ibuf-example} shows explicit instantiation of a GP\_IBUF on a top-level port.
+The example shown in figure \ref{gp-ibuf-example} shows explicit instantiation of a \tokenstyle{GP\_IBUF} on a top-level port.
 
 \begin{figure}[h]
 \begin{lstlisting}
 module foo(a, b);
 	input wire a;
 	output wire b;
-	
+
 	wire a_ibuf;
 	GP_IBUF ibuf(.IN(a), .OUT(a_ibuf));
-	
+
 	//logic using a_ibuf
-	
+
 	...
 endmodule
 \end{lstlisting}
-\caption{Example usage of GP\_IBUF}
+\caption{Example usage of \tokenstyle{GP\_IBUF}}
 \label{gp-ibuf-example}
 \end{figure}
 
@@ -1540,23 +1569,24 @@ endmodule
 % GP_INV
 
 \pagebreak
-\subsection{GP\_INV: Inverter}
+\subsection{\tokenstyle{GP\_INV}: Inverter}
+\label{gp-inv}
 
 \subsubsection{Introduction}
 This primitive corresponds to a single NOT gate.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-IN & Input & 1 & Input bit \\
+\tokenstyle{IN} & Input & 1 & Input bit \\
 \hline
-OUT & Output & 1 & Inverted signal \\
+\tokenstyle{OUT} & Output & 1 & Inverted signal \\
 \hline
 \end{tabularx}
 
@@ -1566,7 +1596,7 @@ No parameters.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-inv-example} sets \emph{o} to the complement of \emph{a}.
+The example shown in figure \ref{gp-inv-example} sets \wirestyle{o} to the complement of \wirestyle{a}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1577,7 +1607,7 @@ GP_INV inv(
 	.OUT(o)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_INV}
+\caption{Example usage of \tokenstyle{GP\_INV}}
 \label{gp-inv-example}
 \end{figure}
 
@@ -1585,30 +1615,30 @@ GP_INV inv(
 % GP_IOBUF
 
 \pagebreak
-\subsection{GP\_IOBUF: Input/Output Buffer}
+\subsection{\tokenstyle{GP\_IOBUF}: Input/Output Buffer}
+\label{gp-iobuf}
 
 \subsubsection{Introduction}
 This primitive corresponds to a top-level input/output buffer (IOB).
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
-Note that in the current gp4par version, constraints must be attached to the pad wire (signal attached to IO), not 
-to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
+Note that in the current \namestyle{gp4par} version, constraints must be attached to the pad wire (signal attached to IO), not to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-IO & Bidirectional & 1 & I/O signal to top-level module port \\
+\tokenstyle{IO} & Bidirectional & 1 & I/O signal to top-level module port \\
 \hline
-IN & Input & 1 & Input signal from fabric routing \\
+\tokenstyle{IN} & Input & 1 & Input signal from fabric routing \\
 \hline
-OE & Input & 1 & Tri-state output enable. When low, the output driver is disabled. \\
+\tokenstyle{OE} & Input & 1 & Tri-state output enable. When low, the output driver is disabled. \\
 \hline
-OUT & Output & 1 & Output signal to fabric routing \\
+\tokenstyle{OUT} & Output & 1 & Output signal to fabric routing \\
 \hline
 \end{tabularx}
 
@@ -1616,10 +1646,9 @@ OUT & Output & 1 & Output signal to fabric routing \\
 
 No parameters.
 
-\pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-iobuf-example} shows explicit instantiation of a GP\_IOBUF on a top-level port.
+The example shown in figure \ref{gp-iobuf-example} shows explicit instantiation of a \tokenstyle{GP\_IOBUF} on a top-level port.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1627,7 +1656,7 @@ module foo(a, b,c);
 	input wire a;
 	input wire b;
 	inout wire c;
-	
+
 	wire c_ibuf;
 	wire c_obuf;
 	wire oe;
@@ -1637,14 +1666,14 @@ module foo(a, b,c);
 		.OE(oe),
 		.IO(c)
 	);
-	
+
 	//logic driving oe/c_obuf and using c_ibuf
-	
+
 	...
-	
+
 endmodule
 \end{lstlisting}
-\caption{Example usage of GP\_IOBUF}
+\caption{Example usage of \tokenstyle{GP\_IOBUF}}
 \label{gp-iobuf-example}
 \end{figure}
 
@@ -1652,55 +1681,55 @@ endmodule
 % GP_LFOSC
 
 \pagebreak
-\subsection{GP\_LFOSC: Low Frequency Oscillator}
+\subsection{\tokenstyle{GP\_LFOSC}: Low Frequency Oscillator}
+\label{gp-lfosc}
 
 \subsubsection{Introduction}
 This primitive represents the low-frequency (1730 Hz) oscillator block.
 
-Note that all of the oscillator blocks in GreenPak4 internally share the PWRDN input. As a result, all oscillator 
-blocks in the design that have PWRDN\_EN set to 1 must have PWRDN connected to the same net. Failure to follow this 
+Note that all of the oscillator blocks in \namestyle{GreenPak4} internally share the \tokenstyle{PWRDN} input. As a result, all oscillator
+blocks in the design that have \tokenstyle{PWRDN\_EN} set to 1 must have \tokenstyle{PWRDN} connected to the same net. Failure to follow this
 rule will result in a physical DRC failure.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-PWRDN & Input & 1 &
-	{\bfseries PWRDN\_EN = 1:} \newline Bring this signal high to power down the oscillator. \newline
-	{\bfseries PWRDN\_EN = 0:} \newline Ignored, tie to 1'b0.\\
+\tokenstyle{PWRDN} & Input & 1 &
+	\textbf{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
+	\textbf{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
 \hline
-CLKOUT & Output & 1 & 1730 Hz (nominal) clock signal \\
+\tokenstyle{CLKOUT} & Output & 1 & 1730 Hz (nominal) clock signal \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-AUTO\_PWRDN & Boolean & 1 & 
-	{\bfseries When 1: } \newline Automatically power down the oscillator when all loads are powered down. \newline
-	{\bfseries When 0: } \newline Automatic power-down is disabled. The PWRDN\_EN and PWRDN inputs are unaffected.\\
+\tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
+	\textbf{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
+	\textbf{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
 \hline
-OUT\_DIV & Integer & 8 &
+\tokenstyle{OUT\_DIV} & Integer & 8 &
 	Output divider. Legal values: \newline
-	{\bfseries 1:} 1730 Hz output \newline
-	{\bfseries 2:} 865 Hz output \newline
-	{\bfseries 4:} 432 Hz output \newline
-	{\bfseries 16:} 108 Hz output
+	\textbf{1:} 1730 Hz output \newline
+	\textbf{2:} 865 Hz output \newline
+	\textbf{4:} 432 Hz output \newline
+	\textbf{16:} 108 Hz output
 \\
 \hline
-PWRDN\_EN & Boolean & 1 & Set to 1 to enable the PWRDN pin, or 0 to disable. \\
+\tokenstyle{PWRDN\_EN} & Boolean & 1 & Set to 1 to enable the \tokenstyle{PWRDN} pin, or 0 to disable. \\
 \hline
 \end{tabularx}
 
-\pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-lfosc-example} drives a 108 Hz clock onto clk\_108hz. All power management features 
+The example shown in figure \ref{gp-lfosc-example} drives a 108 Hz clock onto \wirestyle{clk\_108hz}. All power management features
 are disabled.
 
 \begin{figure}[h]
@@ -1715,7 +1744,7 @@ GP_LFOSC #(
 	.CLKOUT(clk_108hz)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_LFOSC}
+\caption{Example usage of \tokenstyle{GP\_LFOSC}}
 \label{gp-lfosc-example}
 \end{figure}
 
@@ -1723,26 +1752,26 @@ GP_LFOSC #(
 % GP_OBUF
 
 \pagebreak
-\subsection{GP\_OBUF: Output Buffer}
+\subsection{\tokenstyle{GP\_OBUF}: Output Buffer}
+\label{gp-obuf}
 
 \subsubsection{Introduction}
 This primitive corresponds to a top-level output buffer (IOB).
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
-Note that in the current gp4par version, constraints must be attached to the pad wire (signal attached to OUT), not 
-to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
+Note that in the current \namestyle{gp4par} version, constraints must be attached to the pad wire (signal attached to \tokenstyle{OUT}), not to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-IN & Input & 1 & Input signal from fabric routing \\
+\tokenstyle{IN} & Input & 1 & Input signal from fabric routing \\
 \hline
-OUT & Output & 1 & Output signal to top-level module port \\
+\tokenstyle{OUT} & Output & 1 & Output signal to top-level module port \\
 \hline
 \end{tabularx}
 
@@ -1752,23 +1781,23 @@ No parameters.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-obuf-example} shows explicit instantiation of a GP\_OBUF on a top-level port.
+The example shown in figure \ref{gp-obuf-example} shows explicit instantiation of a \tokenstyle{GP\_OBUF} on a top-level port.
 
 \begin{figure}[h]
 \begin{lstlisting}
 module foo(a, b);
 	output wire a;
 	input wire b;
-	
+
 	wire a_obuf;
 	GP_OBUF obuf(.IN(a_obuf), .OUT(a));
-	
+
 	//logic driving a_obuf
-	
+
 	...
 endmodule
 \end{lstlisting}
-\caption{Example usage of GP\_OBUF}
+\caption{Example usage of \tokenstyle{GP\_OBUF}}
 \label{gp-obuf-example}
 \end{figure}
 
@@ -1776,29 +1805,29 @@ endmodule
 % GP_OBUF
 
 \pagebreak
-\subsection{GP\_OBUFT: Output Buffer with Tri-State}
+\subsection{\tokenstyle{GP\_OBUFT}: Output Buffer with Tri-State}
+\label{gp-obuft}
 
 \subsubsection{Introduction}
-This primitive corresponds to a top-level output buffer (IOB) with tri-state control. It is logically equivalent to a 
-GP\_IOBUF with the OUT port left unconnected.
+This primitive corresponds to a top-level output buffer (IOB) with tri-state control. It is logically equivalent to a
+\tokenref{GP\_IOBUF}{gp-iobuf} with the \tokenstyle{OUT} port left unconnected.
 
-This primitive may be manually instantiated if exact control over packing is required, but for most applications we 
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
 
-Note that in the current gp4par version, constraints must be attached to the pad wire (signal attached to OUT), not 
-to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
+Note that in the current \namestyle{gp4par} version, constraints must be attached to the pad wire (signal attached to \tokenstyle{OUT}), not to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-IN & Input & 1 & Input signal from fabric routing \\
+\tokenstyle{IN} & Input & 1 & Input signal from fabric routing \\
 \hline
-OE & Input & 1 & Output enable. When low, the output floats. \\
+\tokenstyle{OE} & Input & 1 & Output enable. When low, the output floats. \\
 \hline
-OUT & Output & 1 & Output signal to top-level module port \\
+\tokenstyle{OUT} & Output & 1 & Output signal to top-level module port \\
 \hline
 \end{tabularx}
 
@@ -1808,24 +1837,24 @@ No parameters.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-obuft-example} shows explicit instantiation of a GP\_OBUFT on a top-level port.
+The example shown in figure \ref{gp-obuft-example} shows explicit instantiation of a \tokenstyle{GP\_OBUFT} on a top-level port.
 
 \begin{figure}[h]
 \begin{lstlisting}
 module foo(a, b);
 	output wire a;
 	input wire b;
-	
+
 	wire a_obuf;
 	wire oe;
 	GP_OBUFT obuf(.IN(a_obuf), .OUT(a), .OE(oe));
-	
+
 	//logic driving a_obuf and oe
-	
+
 	...
 endmodule
 \end{lstlisting}
-\caption{Example usage of GP\_OBUFT}
+\caption{Example usage of \tokenstyle{GP\_OBUFT}}
 \label{gp-obuft-example}
 \end{figure}
 
@@ -1834,68 +1863,65 @@ endmodule
 
 \pagebreak
 \clearpage
-\subsection{GP\_PGA: Programmable-Gain Amplifier}
+\subsection{\tokenstyle{GP\_PGA}: Programmable-Gain Amplifier}
 
 \subsubsection{Introduction}
 This primitive represents a programmable-gain analog amplifier.
 
-If the PGA is only used to drive the ADC, it will automatically power on when the ADC is running and otherwise sleep. 
-If the PGA's output is used by other logic, it will remain on regardless of ADC power state. There is no way to control 
+If the PGA is only used to drive the ADC, it will automatically power on when the ADC is running and otherwise sleep.
+If the PGA's output is used by other logic, it will remain on regardless of ADC power state. There is no way to control
 the PGA's power domain from fabric logic.
 
-Note that VIN\_SEL uses dedicated routing to an IOB (see device datasheet for pin numbering) and cannot be driven 
+Note that \tokenstyle{VIN\_SEL} uses dedicated routing to an IOB (see device datasheet for pin numbering) and cannot be driven
 by fabric logic or a constant zero.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-VIN\_P & Input & 1 & Positive differential input, or single-ended input A. Tie to 1'b0 if unused.\\
+\tokenstyle{VIN\_P} & Input & 1 & Positive differential input, or single-ended input A. Tie to \datastyle{1'b0} if unused.\\
 \hline
-VIN\_N & Input & 1 & Negative differential input, or single ended input B. Tie to 1'b0 if unused.\\
+\tokenstyle{VIN\_N} & Input & 1 & Negative differential input, or single ended input B. Tie to \datastyle{1'b0} if unused.\\
 \hline
-VIN\_SEL & Input & 1 & Input mux selector. 1 = VIN\_P, 0 = VIN\_N.
-	\begin{itemize}
-		\item Differential or pseudo-differential modes: Ignored, tie to 1'b1
-		\item Single-ended mode: Tie to 1'b1 or input signal from IOB.
-	\end{itemize}\\
+\tokenstyle{VIN\_SEL} & Input & 1 & Input mux selector. 1 = \tokenstyle{VIN\_P}, 0 = \tokenstyle{VIN\_N}.
+	\begin{compactitem}
+		\item Differential or pseudo-differential modes: Ignored, tie to \datastyle{1'b1}
+		\item Single-ended mode: Tie to \datastyle{1'b1} or input signal from IOB.\novspace
+	\end{compactitem}\\
 \hline
-VOUT & Output & 1 & Analog output\\
+\tokenstyle{VOUT} & Output & 1 & Analog output\\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-GAIN & Real & N/A &
-	Gain of the PGA. Legal values: 
-	
-	\begin{itemize}
+\tokenstyle{GAIN} & Real & N/A &
+	Gain of the PGA. Legal values:
+	\begin{compactitem}
 		\item Differential or pseudo-differential modes: 1, 2, 4, 8, or 16
-		\item Single-ended mode: 0.25, 0.5, 1, 2, 4, or 8
-	\end{itemize}\\
-	
+		\item Single-ended mode: 0.25, 0.5, 1, 2, 4, or 8\novspace
+	\end{compactitem}\\
+
 \hline
-INPUT\_MODE & String & N/A &
-	Input buffer configuration.
-	\begin{itemize}
-		\item ``SINGLE": single-ended input
-		\item ``DIFF": true differential input
-		\item ``PDIFF": pseudo-differential input
-	\end{itemize}\\
+\tokenstyle{INPUT\_MODE} & String & N/A &
+	Input buffer configuration. \newline
+	\strexamplestyle{SINGLE} single-ended input \newline
+	\strexamplestyle{DIFF} true differential input \newline
+	\strexamplestyle{PDIFF} pseudo-differential input
+\\
 \hline
 \end{tabularx}
 
-\pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-pga-example} shows a single analog input being amplified 2x and fed to the signal 
-``pgaout".
+The example shown in figure \ref{gp-pga-example} shows a single analog input being amplified 2x and fed to the signal
+\wirestyle{pgaout}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1911,7 +1937,7 @@ GP_PGA #(
 	.VOUT(pgaout)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_PGA}
+\caption{Example usage of \tokenstyle{GP\_PGA}}
 \label{gp-pga-example}
 \end{figure}
 
@@ -1920,37 +1946,38 @@ GP_PGA #(
 
 \pagebreak
 \clearpage
-\subsection{GP\_POR: Power-On Reset}
+\subsection{\tokenstyle{GP\_POR}: Power-On Reset}
+\label{gp-por}
 
 \subsubsection{Introduction}
-This primitive represents the power-on reset. It may be used in user logic to gate signals that can toggle early in the 
+This primitive represents the power-on reset. It may be used in user logic to gate signals that can toggle early in the
 startup process in order to avoid glitches.
 
 %(Resetb_matrix, 62).
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-RST\_DONE & Output & 1 & Reset-done output. Goes high when the device has finished initializing.\\
+\tokenstyle{RST\_DONE} & Output & 1 & Reset-done output. Goes high when the device has finished initializing.\\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-POR\_TIME & Integer & 16 & Delay, in $\mu s$, from power-good to release of RST\_DONE. Legal values are 4, 500.\\
+\tokenstyle{POR\_TIME} & Integer & 16 & Delay, in $\mu s$, from power-good to release of \tokenstyle{RST\_DONE}. Legal values are 4, 500.\\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-por-example} sets por\_done high $500 \mu s$ after initialization is complete.
+The example shown in figure \ref{gp-por-example} sets \wirestyle{por\_done} high $500 \mu s$ after initialization is complete.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1961,7 +1988,7 @@ GP_POR #(
 	.RST_DONE(por_done)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_POR}
+\caption{Example usage of \tokenstyle{GP\_POR}}
 \label{gp-por-example}
 \end{figure}
 
@@ -1971,7 +1998,8 @@ GP_POR #(
 
 \pagebreak
 \clearpage
-\subsection{GP\_PWRCTL: Power Control (NOT IMPLEMENTED)}
+\subsection{\tokenstyle{GP\_PWRCTL}: Power Control (NOT IMPLEMENTED)}
+\label{gp-pwrctl}
 
 \subsubsection{Introduction}
 This primitive represents the system power control block. TODO
@@ -1983,21 +2011,21 @@ Bit 2010: Disable power detector for charge pump
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-PWRDET & Output & 1 & Power-detect output. High when Vdd is less than 2.7V.\\
+\tokenstyle{PWRDET} & Output & 1 & Power-detect output. High when Vdd is less than 2.7V.\\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-POR\_TIME & Integer & 16 & Delay, in microseconds, from power-good to release of POR. Legal values are 4, 500.\\
+\tokenstyle{POR\_TIME} & Integer & 16 & Delay, in microseconds, from power-good to release of POR. Legal values are 4, 500.\\
 \hline
 \end{tabularx}
 
@@ -2009,7 +2037,7 @@ The example shown in figure \ref{gp-pwrctl-example} FIXME.
 \begin{lstlisting}
 xx
 \end{lstlisting}
-\caption{Example usage of GP\_PWRCTL}
+\caption{Example usage of \tokenstyle{GP\_PWRCTL}}
 \label{gp-pwrctl-example}
 \end{figure}
 
@@ -2017,63 +2045,62 @@ xx
 % GP_RCOSC
 
 \pagebreak
-\subsection{GP\_RCOSC: RC Oscillator}
+\subsection{\tokenstyle{GP\_RCOSC}: RC Oscillator}
+\label{gp-rcosc}
 
 \subsubsection{Introduction}
-This primitive represents the RC oscillator block. This block can be configured to oscillate at either 2 MHz or 25 kHz. 
-by setting the OSC\_FREQ parameter.
+This primitive represents the RC oscillator block. This block can be configured to oscillate at either 2 MHz or 25 kHz
+by setting the \tokenstyle{OSC\_FREQ} parameter.
 
-The oscillator has two cascaded dividers on its output: a pre-divider and post-divider. The pre-divider output drives 
-some hard IP blocks (counters and PWM) via dedicated routing, as well as the input of the post-divider. The 
+The oscillator has two cascaded dividers on its output: a pre-divider and post-divider. The pre-divider output drives
+some hard IP blocks (counters and PWM) via dedicated routing, as well as the input of the post-divider. The
 post-divider output drives general fabric routing.
 
-Note that all of the oscillator blocks in GreenPak4 internally share the PWRDN input. As a result, all oscillator 
-blocks in the design that have PWRDN\_EN set to 1 must have PWRDN connected to the same net. Failure to follow this 
-rule will result in a physical DRC failure.
+Note that all of the oscillator blocks in \namestyle{GreenPak4} internally share the \tokenstyle{PWRDN} input. As a result, all oscillator blocks in the design that have \tokenstyle{PWRDN\_EN} set to 1 must have \tokenstyle{PWRDN} connected to the same net. Failure to follow this rule will result in a physical DRC failure.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-PWRDN & Input & 1 &
-	{\bfseries PWRDN\_EN = 1:} \newline Bring this signal high to power down the oscillator. \newline
-	{\bfseries PWRDN\_EN = 0:} \newline Ignored, tie to 1'b0.\\
+\tokenstyle{PWRDN} & Input & 1 &
+	\textbf{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
+	\textbf{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
 \hline
-CLKOUT\_PREDIV & Output & 1 & Pre-divided clock output to hard IP.  \\
+\tokenstyle{CLKOUT\_PREDIV} & Output & 1 & Pre-divided clock output to hard IP.  \\
 \hline
-CLKOUT\_FABRIC & Output & 1 & Final clock signal to general fabric routing\\
+\tokenstyle{CLKOUT\_FABRIC} & Output & 1 & Final clock signal to general fabric routing\\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-AUTO\_PWRDN & Boolean & 1 & 
-	{\bfseries When 1: } \newline Automatically power down the oscillator when all loads are powered down. \newline
-	{\bfseries When 0: } \newline Automatic power-down is disabled. The PWRDN\_EN and PWRDN inputs are unaffected.\\
+\tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
+	\textbf{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
+	\textbf{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
 \hline
-OSC\_FREQ & String & N/A & Oscillator frequency select. Must be one of ``2M" or ``25k". \\
+\tokenstyle{OSC\_FREQ} & String & N/A & Oscillator frequency select. Must be one of \strvaluestyle{2M} or \strvaluestyle{25k}. \\
 \hline
-PRE\_DIV & Integer & 8 &
-	Output pre-divider for CLKOUT\_PREDIV. Legal values are 1, 2, 4, 8. \\
+\tokenstyle{PRE\_DIV} & Integer & 8 &
+	Output pre-divider for \tokenstyle{CLKOUT\_PREDIV}. Legal values are 1, 2, 4, 8. \\
 \hline
-FABRIC\_DIV & Integer & 8 &
-	Output post-divider for CLKOUT\_FABRIC. Legal values are 1, 2, 3, 4, 8, 12, 24, 64. \\
+\tokenstyle{FABRIC\_DIV} & Integer & 8 &
+	Output post-divider for \tokenstyle{CLKOUT\_FABRIC}. Legal values are 1, 2, 3, 4, 8, 12, 24, 64. \\
 \hline
-PWRDN\_EN & Boolean & 1 & Set to 1 to enable the PWRDN pin, or 0 to disable. \\
+\tokenstyle{PWRDN\_EN} & Boolean & 1 & Set to 1 to enable the \tokenstyle{PWRDN} pin, or 0 to disable. \\
 \hline
 \end{tabularx}
 
 \pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-rcosc-example} drives a 6.25 kHz clock to clk\_fast and a 521 Hz clock to
-clk\_slow.
+The example shown in figure \ref{gp-rcosc-example} drives a 6.25 kHz clock to \wirestyle{clk\_fast} and a 521 Hz clock to
+\wirestyle{clk\_slow}.
 
 All power management features are disabled.
 
@@ -2093,7 +2120,7 @@ GP_RCOSC #(
 	.CLKOUT_FABRIC(clk_slow)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_RCOSC}
+\caption{Example usage of \tokenstyle{GP\_RCOSC}}
 \label{gp-rcosc-example}
 \end{figure}
 
@@ -2101,60 +2128,61 @@ GP_RCOSC #(
 % GP_RINGOSC
 
 \pagebreak
-\subsection{GP\_RINGOSC: Ring Oscillator}
+\subsection{\tokenstyle{GP\_RINGOSC}: Ring Oscillator}
+\label{gp-ringosc}
 
 \subsubsection{Introduction}
 This primitive represents the ring (27 MHz) oscillator block.
 
-The oscillator has two cascaded dividers on its output: a pre-divider and post-divider. The pre-divider output drives 
-some hard IP blocks (counters and PWM) via dedicated routing, as well as the input of the post-divider. The 
+The oscillator has two cascaded dividers on its output: a pre-divider and post-divider. The pre-divider output drives
+some hard IP blocks (counters and PWM) via dedicated routing, as well as the input of the post-divider. The
 post-divider output drives general fabric routing.
 
-Note that all of the oscillator blocks in GreenPak4 internally share the PWRDN input. As a result, all oscillator 
-blocks in the design that have PWRDN\_EN set to 1 must have PWRDN connected to the same net. Failure to follow this 
+Note that all of the oscillator blocks in \namestyle{GreenPak4} internally share the \tokenstyle{PWRDN} input. As a result, all oscillator
+blocks in the design that have \tokenstyle{PWRDN\_EN} set to 1 must have \tokenstyle{PWRDN} connected to the same net. Failure to follow this
 rule will result in a physical DRC failure.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-PWRDN & Input & 1 &
-	{\bfseries PWRDN\_EN = 1:} \newline Bring this signal high to power down the oscillator. \newline
-	{\bfseries PWRDN\_EN = 0:} \newline Ignored, tie to 1'b0.\\
+\tokenstyle{PWRDN} & Input & 1 &
+	\textbf{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
+	\textbf{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
 \hline
-CLKOUT\_PREDIV & Output & 1 & Pre-divided clock output to hard IP.  \\
+\tokenstyle{CLKOUT\_PREDIV} & Output & 1 & Pre-divided clock output to hard IP.  \\
 \hline
-CLKOUT\_FABRIC & Output & 1 & Final clock signal to general fabric routing\\
+\tokenstyle{CLKOUT\_FABRIC} & Output & 1 & Final clock signal to general fabric routing\\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-AUTO\_PWRDN & Boolean & 1 & 
-	{\bfseries When 1: } \newline Automatically power down the oscillator when all loads are powered down. \newline
-	{\bfseries When 0: } \newline Automatic power-down is disabled. The PWRDN\_EN and PWRDN inputs are unaffected.\\
+\tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
+	\textbf{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
+	\textbf{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
 \hline
-PRE\_DIV & Integer & 8 &
-	Output pre-divider for CLKOUT\_PREDIV. Legal values are 1, 4, 8, 16. \\
+\tokenstyle{PRE\_DIV} & Integer & 8 &
+	Output pre-divider for \tokenstyle{CLKOUT\_PREDIV}. Legal values are 1, 4, 8, 16. \\
 \hline
-FABRIC\_DIV & Integer & 8 &
-	Output post-divider for CLKOUT\_FABRIC. Legal values are 1, 2, 3, 4, 8, 12, 24, 64. \\
+\tokenstyle{FABRIC\_DIV} & Integer & 8 &
+	Output post-divider for \tokenstyle{CLKOUT\_FABRIC}. Legal values are 1, 2, 3, 4, 8, 12, 24, 64. \\
 \hline
-PWRDN\_EN & Boolean & 1 & Set to 1 to enable the PWRDN pin, or 0 to disable. \\
+\tokenstyle{PWRDN\_EN} & Boolean & 1 & Set to 1 to enable the \tokenstyle{PWRDN} pin, or 0 to disable. \\
 \hline
 \end{tabularx}
 
 \pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-ringosc-example} drives a 6.75 MHz clock onto clk\_fast and a 562.5 kHz clock onto 
-clk\_slow. All power management features are disabled.
+The example shown in figure \ref{gp-ringosc-example} drives a 6.75 MHz clock onto \wirestyle{clk\_fast} and a 562.5 kHz clock onto
+\wirestyle{clk\_slow}. All power management features are disabled.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -2171,7 +2199,7 @@ GP_RINGOSC #(
 	.CLKOUT_FABRIC(clk_slow)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_RINGOSC}
+\caption{Example usage of \tokenstyle{GP\_RINGOSC}}
 \label{gp-ringosc-example}
 \end{figure}
 
@@ -2180,51 +2208,51 @@ GP_RINGOSC #(
 
 \pagebreak
 \clearpage
-\subsection{GP\_SHREG: Shift Register}
+\subsection{\tokenstyle{GP\_SHREG}: Shift Register}
+\label{gp-shreg}
 
 \subsubsection{Introduction}
 
-This primitive represents the ``pipe delay" block, a 16-bit shift register with programmable tap position. It has two 
-major differences from most FPGA shift register blocks: there are two independent taps instead of one, and the tap 
+This primitive represents the ``pipe delay" block, a 16-bit shift register with programmable tap position. It has two
+major differences from most FPGA shift register blocks: there are two independent taps instead of one, and the tap
 positions are fixed at synthesis time rather than being runtime programmable.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-nRST & Input & 1 & Active-low reset input. Clears the shift register to zero when asserted. Tie high if not used.\\
+\tokenstyle{nRST} & Input & 1 & Active-low reset input. Clears the shift register to zero when asserted. Tie high if not used.\\
 \hline
-CLK & Input & 1 & Clock for the shift register\\
+\tokenstyle{CLK} & Input & 1 & Clock for the shift register\\
 \hline
-IN & Input & 1 & Input data for the shift register\\
+\tokenstyle{IN} & Input & 1 & Input data for the shift register\\
 \hline
-OUTA & Output & 1 & Tap A for the shift register\\
+\tokenstyle{OUTA} & Output & 1 & Tap A for the shift register\\
 \hline
-OUTB & Output & 1 & Tap B for the shift register\\
+\tokenstyle{OUTB} & Output & 1 & Tap B for the shift register\\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-OUTA\_DELAY & Integer & 5 & Number of register stages for output A. Legal range is 1 to 16 inclusive.\\
+\tokenstyle{OUTA\_DELAY} & Integer & 5 & Number of register stages for output A. Legal range is 1 to 16 inclusive.\\
 \hline
-OUTA\_INVERT & Boolean & 1 & Set to 1 to invert tap A's output.\\
+\tokenstyle{OUTA\_INVERT} & Boolean & 1 & Set to 1 to invert tap A's output.\\
 \hline
-OUTB\_DELAY & Integer & 5 & Number of register stages for output B. Legal range is 1 to 16 inclusive.\\
+\tokenstyle{OUTB\_DELAY} & Integer & 5 & Number of register stages for output B. Legal range is 1 to 16 inclusive.\\
 \hline
 \end{tabularx}
 
-\clearpage
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-shreg-example} uses both outputs of a GP\_SHREG in non-inverting mode. 
-bar\_delay1 is delayed by 8 cycles and bar\_delay2 is delayed by 16 cycles. The output inverter is off.
+The example shown in figure \ref{gp-shreg-example} uses both outputs of a \tokenstyle{GP\_SHREG} in non-inverting mode.
+\wirestyle{bar\_delay1} is delayed by 8 cycles and \wirestyle{bar\_delay2} is delayed by 16 cycles. The output inverter is off.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -2242,7 +2270,7 @@ GP_SHREG #(
 	.OUTB(bar_delay2)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_SHREG}
+\caption{Example usage of \tokenstyle{GP\_SHREG}}
 \label{gp-shreg-example}
 \end{figure}
 
@@ -2251,42 +2279,42 @@ GP_SHREG #(
 
 \pagebreak
 \clearpage
-\subsection{GP\_SYSRESET: System Reset}
+\subsection{\tokenstyle{GP\_SYSRESET}: System Reset}
+\label{gp-sysreset}
 
 \subsubsection{Introduction}
 This primitive represents the system reset block. This is an asynchronous global reset of most on-chip logic (see the
 device datasheet for exact functionality) and is independent of the power-on reset, which cannot be configured.
 
-Note that this block has slightly different timing than the power-on reset, which may cause glitches in some designs. 
-To ensure consistent behavior between the runtime reset and boot, it may be necessary to instantiate the GP\_POR 
-block and gate glitching signals with RST\_DONE.
+Note that this block has slightly different timing than the power-on reset, which may cause glitches in some designs.
+To ensure consistent behavior between the runtime reset and boot, it may be necessary to instantiate the \tokenref{GP\_POR}{gp-por} block and gate glitching signals with \tokenstyle{RST\_DONE}.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-RST & Input & 1 & System reset input. Must connect directly to to pin 2 of the device.\\
+\tokenstyle{RST} & Input & 1 & System reset input. Must connect directly to to pin 2 of the device.\\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-RESET\_MODE & String & 1 & 
-	{\bfseries RISING: } \newline One-shot reset on rising edge of RST. \newline
-	{\bfseries FALLING: } \newline One-shot reset on falling edge of RST. \newline
-	{\bfseries LEVEL: } \newline System is held in reset while RST is high.\\
+\tokenstyle{RESET\_MODE} & String & 1 &
+	\strexamplestyle{RISING} One-shot reset on rising edge of RST. \newline
+	\strexamplestyle{FALLING} One-shot reset on falling edge of RST. \newline
+	\strexamplestyle{LEVEL} System is held in reset while RST is high.\\
 \hline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-sysreset-example} resets the device when rst is high.
+The example shown in figure \ref{gp-sysreset-example} resets the device when \wirestyle{rst} is high.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -2296,7 +2324,7 @@ GP_SYSRESET #(
 	.RST(rst)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_SYSRESET}
+\caption{Example usage of \tokenstyle{GP\_SYSRESET}}
 \label{gp-sysreset-example}
 \end{figure}
 
@@ -2305,22 +2333,21 @@ GP_SYSRESET #(
 
 \FloatBarrier
 \pagebreak
-\subsection{GP\_VDD: Power Connection}
+\subsection{\tokenstyle{GP\_VDD}: Power Connection}
 
 \subsubsection{Introduction}
-This design element is internally used by gp4par as the source for all nets tied to a constant ``1" value. It does not 
-correspond to a hard IP block in the device.
+This design element is internally used by \namestyle{gp4par} as the source for all nets tied to a constant ``1" value. It does not correspond to a hard IP block in the device.
 
-It is documented here for completeness but should never be instantiated. If a constant ``1" value is needed in a 
-design, simply use the value 1'b1.
+It is documented here for completeness but should never be instantiated. If a constant ``1" value is needed in a
+design, simply use the value \datastyle{1'b1}.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-OUT & Output & 1 & Constant value ``1" \\
+\tokenstyle{OUT} & Output & 1 & Constant value ``1" \\
 \hline
 \end{tabularx}
 
@@ -2330,7 +2357,7 @@ None.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-vdd-example} ties the signal ``foo" high.
+The example shown in figure \ref{gp-vdd-example} ties the signal \wirestyle{foo} high.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -2339,7 +2366,7 @@ GP_VDD vdd(
 	.OUT(foo)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_VDD}
+\caption{Example usage of \tokenstyle{GP\_VDD}}
 \label{gp-vdd-example}
 \end{figure}
 
@@ -2347,61 +2374,61 @@ GP_VDD vdd(
 % GP_VREF
 
 \pagebreak
-\subsection{GP\_VREF: Voltage Reference}
+\subsection{\tokenstyle{GP\_VREF}: Voltage Reference}
+\label{gp-vref}
 
 \subsubsection{Introduction}
-This primitive represents one output channel from the device's voltage reference. It buffers and optionally divides the 
-incoming voltage to drive the reference input to GP\_ACMP cells and external reference output pins.
+This primitive represents one output channel from the device's voltage reference. It buffers and optionally divides the
+incoming voltage to drive the reference input to \tokenref{GP\_ACMP}{gp-acmp} cells and external reference output pins.
 
-Any number of GP\_VREF blocks (up to a maximum of one per comparator) may be instantiated. The current toolchain 
-version requires that the block be replicated manually if multiple comparators are driven by the same reference. A 
-future version will perform this replication automatically, allowing one GP\_VREF block to drive any number of loads.
+Any number of \tokenstyle{GP\_VREF} blocks (up to a maximum of one per comparator) may be instantiated. The current toolchain
+version requires that the block be replicated manually if multiple comparators are driven by the same reference. A
+future version will perform this replication automatically, allowing one \tokenstyle{GP\_VREF} block to drive any number of loads.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-VIN & Input & 1 & Input voltage, if required. Connect depending on the source of the reference:
-	\begin{itemize}
-		\item Constant voltage: 1'b0
-		\item Vdd: 1'b1
+\tokenstyle{VIN} & Input & 1 & Input voltage, if required. Connect depending on the source of the reference:
+	\begin{compactitem}
+		\item Constant voltage: \datastyle{1'b0}
+		\item Vdd: \datastyle{1'b1}
 		\item DAC: Analog output from DAC
-		\item Off die: Analog input from IOB
-	\end{itemize}
+		\item Off die: Analog input from IOB\novspace
+	\end{compactitem}
 \\
 \hline
-VOUT & Output & 1 & The generated reference voltage \\
+\tokenstyle{VOUT} & Output & 1 & The generated reference voltage \\
 \hline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{5in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Parameter} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-VIN\_DIV & Integer & 4 &
+\tokenstyle{VIN\_DIV} & Integer & 4 &
 	Divider for input voltage. Legal values depend on the source of the reference:
-	\begin{itemize}
+	\begin{compactitem}
 		\item Constant voltage: 1
 		\item Vdd: 3 or 4
 		\item DAC: 1
-		\item Off die: 1 or 2
-	\end{itemize}
+		\item Off die: 1 or 2\novspace
+	\end{compactitem}
 \\
-\hline 
-VREF & Integer & 16 &
+\hline
+\tokenstyle{VREF} & Integer & 16 &
 	Constant output voltage, in mV. Legal values range from 50 to 1200 in 50 mV increments.
 	If output voltage is not constant, do not specify this parameter.\\
 \hline
 \end{tabularx}
 
-\pagebreak
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-vref-example} drives a 750 mV reference voltage onto vref\_750.
+The example shown in figure \ref{gp-vref-example} drives a 750 mV reference voltage onto \wirestyle{vref\_750}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -2414,7 +2441,7 @@ GP_VREF #(
 	.VOUT(vref_750)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_VREF}
+\caption{Example usage of \tokenstyle{GP\_VREF}}
 \label{gp-vref-example}
 \end{figure}
 
@@ -2423,22 +2450,21 @@ GP_VREF #(
 
 \clearpage
 \pagebreak
-\subsection{GP\_VSS: Ground Connection}
+\subsection{\tokenstyle{GP\_VSS}: Ground Connection}
 
 \subsubsection{Introduction}
-This design element is internally used by gp4par as the source for all nets tied to a constant ``0" value. It does not 
-correspond to a hard IP block in the device.
+This design element is internally used by \namestyle{gp4par} as the source for all nets tied to a constant ``0" value. It does not correspond to a hard IP block in the device.
 
-It is documented here for completeness but should never be instantiated. If a constant ``0" value is needed in a 
-design, simply use the value 1'b0.
+It is documented here for completeness but should never be instantiated. If a constant ``0" value is needed in a
+design, simply use the value \datastyle{1'b0}.
 
 \subsubsection{Port Descriptions}
 
-\begin{tabularx}{4in}{|l|l|l|X|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 {\bfseries Port} & {\bfseries Type} & {\bfseries Width} & {\bfseries Function} \\
 \hline
-OUT & Output & 1 & Constant value ``0" \\
+\tokenstyle{OUT} & Output & 1 & Constant value ``0" \\
 \hline
 \end{tabularx}
 
@@ -2448,7 +2474,7 @@ None.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-vss-example} ties the signal ``foo" low.
+The example shown in figure \ref{gp-vss-example} ties the signal \wirestyle{foo} low.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -2457,64 +2483,65 @@ GP_VSS vss(
 	.OUT(foo)
 );
 \end{lstlisting}
-\caption{Example usage of GP\_VSS}
+\caption{Example usage of \tokenstyle{GP\_VSS}}
 \label{gp-vss-example}
 \end{figure}
 
 \pagebreak
-\section{gp4par Command Line Usage}
+\section{\namestyle{gp4par} Command Line Usage}
 
 \subsection{Introduction}
 
-The current version of gp4par takes long-form arguments only. All argument and value names are case sensitive.
+The current version of \namestyle{gp4par} takes long-form arguments only. All argument and value names are case sensitive.
 
-The example shown in figure \ref{gp-cmd-example} runs place-and-route on the netlist Analog.json, with top-level module 
+The example shown in figure \ref{gp-cmd-example} runs place-and-route on the netlist Analog.json, with top-level module
 Analog, and saves the generated bitstream to Analog-hdl.txt. Unused pins are pulled down with $10 k\Omega$ resistors.
 
 \begin{figure}[h]
 \begin{lstlisting}[language=sh]
-gp4par Analog.json --top Analog --output Analog-hdl.txt --unused-pull down --unused-drive 10k
+gp4par Analog.json --top Analog --output Analog-hdl.txt \
+	--unused-pull down --unused-drive 10k
 \end{lstlisting}
-\caption{Example usage of gp4par}
+\caption{Example usage of \namestyle{gp4par}}
 \label{gp-cmd-example}
 \end{figure}
 
 \subsection{[file name]}
 
-The netlist filename must be supplied for all place-and-route operations. It may be included anywhere in the argument 
+The netlist filename must be supplied for all place-and-route operations. It may be included anywhere in the argument
 list, although we recommend it be the first argument for better readability of the command.
 
 \subsection{\texttt{--help}}
 
-The --help argument must be used alone, with no other arguments. It causes gp4par to print a usage example to the 
+The --help argument must be used alone, with no other arguments. It causes \namestyle{gp4par} to print a usage example to the
 console and then quit.
 
 \subsection{\texttt{--output}}
 
-The --output argument is required for all place-and-route operations. It must be immediately followed by the 
+The --output argument is required for all place-and-route operations. It must be immediately followed by the
 filename to which the generated bitstream will be written.
 
 \subsection{\texttt{--top}}
 
-The --top argument is required for all place-and-route operations. It must be immediately followed by the 
+The --top argument is required for all place-and-route operations. It must be immediately followed by the
 case-sensitive name of the top-level module.
 
 \subsection{\texttt{--unused-drive}}
 
-The --unused-drive argument is optional. If used, it must be immediately followed by ``10k", ``100k", or ``1M", to 
-specify the nominal value in ohms of the pull-up/down resistor on unused I/O pins. The default behavior if not 
-specified is ``1M".
+The --unused-drive argument is optional. If used, it must be immediately followed by ``\tokenstyle{10k}", ``\tokenstyle{100k}", or ``\tokenstyle{1M}", to
+specify the nominal value in ohms of the pull-up/down resistor on unused I/O pins. The default behavior if not
+specified is ``\tokenstyle{1M}".
 
 \subsection{\texttt{--unused-pull}}
 
-The --unused-pull argument is optional. If used, it must be immediately followed by ``down", ``up", ``none", or 
-``float", to specify which direction to pull unused I/O pins. The default behavior if not specified is ``float".
+The --unused-pull argument is optional. If used, it must be immediately followed by ``\tokenstyle{down}", ``\tokenstyle{up}", ``\tokenstyle{none}", or
+``\tokenstyle{float}", to specify which direction to pull unused I/O pins. The default behavior if not specified is ``\tokenstyle{float}".
 
-The behavior of ``none" and ``float" is identical; both names are accepted for convenience.
+The behavior of ``\tokenstyle{none}" and ``\tokenstyle{float}" is identical; both names are accepted for convenience.
 
 \subsection{\texttt{--version}}
 
-The --version argument must be used alone, with no other arguments. It causes gp4par to print the version number 
+The --version argument must be used alone, with no other arguments. It causes \namestyle{gp4par} to print the version number
 (currently always 0.1) to the console and then quit.
 
 \end{document}
