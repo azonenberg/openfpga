@@ -44,8 +44,14 @@ void Greenpak4NetlistCell::FindLOC()
 	for(auto it : m_connections)
 	{
 		//If not an output, ignore it
+		//EXCEPTION: GP_IBUF is constrained on the INPUT instead!
 		auto port = module->GetPort(it.first);
-		if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
+		if(m_type == "GP_IBUF")
+		{
+			if(port->m_direction != Greenpak4NetlistPort::DIR_INPUT)
+				continue;
+		}
+		else if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
 			continue;
 			
 		//See if this net has a LOC constraint

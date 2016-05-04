@@ -82,17 +82,6 @@ void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
 		auto spnode = site->GetPARNode();
 		if(!spnode->MatchesLabel(node->GetLabel()))
 		{
-			//Do not fail if the site is an IOB and we're not one, since this happens with top-level pads...
-			if( (dynamic_cast<Greenpak4IOB*>(site) != NULL) && !(
-				(cell->m_type == "GP_IBUF") ||
-				(cell->m_type == "GP_OBUF") ||
-				(cell->m_type == "GP_IOBUF"))
-				)
-			{
-				cell->ClearLOC();
-				continue;
-			}
-			
 			fprintf(
 				stderr,
 				"ERROR: Cell %s has invalid LOC constraint %s (site is of type %s, instance is of type %s)\n",
