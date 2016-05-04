@@ -18,7 +18,7 @@
 
 `default_nettype none
 
-module Tristate(a, b, dir);
+module Tristate(a, b, c, d, dir);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -31,6 +31,13 @@ module Tristate(a, b, dir);
 	(* PULLDOWN = "10k" *)
 	inout wire b;
 	
+	(* LOC = "P17" *)
+	(* PULLDOWN = "10k" *)
+	input wire d;
+	
+	(* LOC = "P16" *)
+	output wire c;
+	
 	(* LOC = "P15" *)
 	(* PULLDOWN = "10k" *)
 	input wire dir;
@@ -38,7 +45,8 @@ module Tristate(a, b, dir);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Tristate stuff
 	
-	assign a = dir ? b : 1'bz;
-	assign b = ~dir ? a : 1'bz;
+	assign a = dir ? b|d : 1'bz;
+	assign b = ~dir ? ~a : 1'bz;
+	assign c = dir ? a & b : 1'bz;
 
 endmodule
