@@ -1,0 +1,41 @@
+Source: openfpga
+Section: electronics
+Priority: optional
+Maintainer: whitequark <whitequark@whitequark.org>
+Build-Depends: debhelper (>= 9), cmake, texlive-latex-base, texlive-fonts-extra
+Standards-Version: 3.9.5
+Vcs-Git: git://github.com/azonenberg/openfpga
+Vcs-Browser: https://github.com/azonenberg/openfpga
+
+Package: gp4par
+Architecture: any
+Multi-Arch: foreign
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: yosys
+Description: Silego GreenPak4 HDL Place-And-Route
+ This is a place-and-route program for Silego GreenPak4 programmable logic
+ devices. It can convert register transfer level descriptions of logic and
+ hard IP into a bitstream that can be programmed into a device.
+ .
+ gp4par is designed to be used together with the Yosys synthesis suite.
+
+Package: gp4par-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: gp4par (= ${binary:Version}), ${misc:Depends}
+Description: Silego GreenPak4 HDL Place-And-Route (debugging files)
+ gp4par is a place-and-route program for Silego GreenPak4 programmable logic
+ devices.
+ .
+ This package contains the debugging symbols for gp4par.
+
+Package: gp4par-doc
+Architecture: any
+Section: doc
+Priority: extra
+Description: Silego GreenPak4 HDL Place-And-Route (documentation)
+ gp4par is a place-and-route program for Silego GreenPak4 programmable logic
+ devices.
+ .
+ This package contains the GreenPak4 HDL Place-And-Route User Guide.

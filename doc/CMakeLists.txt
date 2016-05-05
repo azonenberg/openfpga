@@ -22,3 +22,6 @@ add_custom_command(
     VERBATIM)
 add_custom_target(gp4-hdl.pdf ALL
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gp4-hdl.pdf)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gp4-hdl.pdf
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/gp4par/)

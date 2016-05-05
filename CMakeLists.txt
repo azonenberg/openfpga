@@ -3,6 +3,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 project(openfpga)
+include(GNUInstallDirs)
 
 set( EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set( LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)

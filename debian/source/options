@@ -1,0 +1,2 @@
+tar-ignore = "build*"
+tar-ignore = ".git"
