@@ -2247,11 +2247,11 @@ positions are fixed at synthesis time rather than being runtime programmable.
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{OUTA\_DELAY} & Integer & 5 & Number of register stages for output A. Legal range is 1 to 16 inclusive.\\
+\tokenstyle{OUTA\_TAP} & Integer & 5 & Number of register stages for output A. Legal range is 1 to 16 inclusive.\\
 \thinhline
 \tokenstyle{OUTA\_INVERT} & Boolean & 1 & Set to 1 to invert tap A's output.\\
 \thinhline
-\tokenstyle{OUTB\_DELAY} & Integer & 5 & Number of register stages for output B. Legal range is 1 to 16 inclusive.\\
+\tokenstyle{OUTB\_TAP} & Integer & 5 & Number of register stages for output B. Legal range is 1 to 16 inclusive.\\
 \thinhline
 \end{tabularx}
 
@@ -2265,9 +2265,9 @@ The example shown in figure \ref{gp-shreg-example} uses both outputs of a \token
 wire bar_delay1;
 wire bar_delay2;
 GP_SHREG #(
-	.OUTA_DELAY(8),
+	.OUTA_TAP(8),
 	.OUTA_INVERT(0),
-	.OUTB_DELAY(16)
+	.OUTB_TAP(16)
 ) shreg (
 	.nRST(1'b1),
 	.CLK(clk_108hz),

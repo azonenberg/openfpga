@@ -105,22 +105,22 @@ void Greenpak4ShiftRegister::CommitChanges()
 	if(ncell == NULL)
 		return;
 	
-	if(ncell->HasParameter("OUTA_DELAY"))
+	if(ncell->HasParameter("OUTA_TAP"))
 	{
-		m_delayA = atoi(ncell->m_parameters["OUTA_DELAY"].c_str());
+		m_delayA = atoi(ncell->m_parameters["OUTA_TAP"].c_str());
 		if( (m_delayA < 1) || (m_delayA > 16) )
 		{
-			fprintf(stderr, "ERROR: Shift register OUTA_DELAY must be in [1, 16]\n");
+			fprintf(stderr, "ERROR: Shift register OUTA_TAP must be in [1, 16]\n");
 			exit(-1);
 		}
 	}
 
-	if(ncell->HasParameter("OUTB_DELAY"))
+	if(ncell->HasParameter("OUTB_TAP"))
 	{
-		m_delayB = atoi(ncell->m_parameters["OUTB_DELAY"].c_str());
+		m_delayB = atoi(ncell->m_parameters["OUTB_TAP"].c_str());
 		if( (m_delayB < 1) || (m_delayB > 16) )
 		{
-			fprintf(stderr, "ERROR: Shift register OUTB_DELAY must be in [1, 16]\n");
+			fprintf(stderr, "ERROR: Shift register OUTB_TAP must be in [1, 16]\n");
 			exit(-1);
 		}
 	}

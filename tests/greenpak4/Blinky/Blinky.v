@@ -244,12 +244,12 @@ module Blinky(
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Shift register to delay RC oscillator outputs
+	// Shift register to TAP RC oscillator outputs
 	
 	GP_SHREG #(
-		.OUTA_DELAY(8),
+		.OUTA_TAP(8),
 		.OUTA_INVERT(0),
-		.OUTB_DELAY(16)
+		.OUTB_TAP(16)
 	) shreg (
 		.nRST(1'b1),
 		.CLK(clk_108hz),
