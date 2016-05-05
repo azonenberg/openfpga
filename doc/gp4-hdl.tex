@@ -1018,7 +1018,7 @@ either the reset-done output of the \tokenref{GP\_POR}{gp-por} block, or an arbi
 	Comparator bandwidth. Legal values are \strvaluestyle{LOW} and \strvaluestyle{HIGH}, see device datasheet for actual bandwidth values. \\
 \thinhline
 \tokenstyle{VIN\_ATTEN} & Integer & 3 &
-	Attenuation for the input, represented as inverse gain. Legal values are 1, 2, 3, 4. \\
+	Attenuation for the input, represented as inverse gain. Legal values are 1, 2, 3, 4. Note that not all comparators support selectable attenuation, check device datasheet for details.\\
 \thinhline
 \tokenstyle{VIN\_ISRC\_EN} & Boolean & 1 &
 	Set to 1 to enable the $100 \mu A$ current source on the input. Note that not all comparators support the current
@@ -1159,7 +1159,7 @@ mapper may map \tokenstyle{GP\_COUNT8} cells to unused 14-bit counters in order 
 \thinhline
 \tokenstyle{COUNT\_TO} & Integer & 8 & Value to set the counter to on underflow. \\
 \thinhline
-\tokenstyle{RESET\_MODE} & String &  &
+\tokenstyle{RESET\_MODE} & String & N/A &
 	\strexamplestyle{RISING} Resets the counter on a rising edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{FALLING} Resets the counter on a falling edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{BOTH} Resets the counter on any edge of \tokenstyle{RST}. \newline
@@ -1233,7 +1233,7 @@ containing counters of variable depth.
 \thinhline
 \tokenstyle{COUNT\_TO} & Integer & 14 & Value to set the counter to on underflow. \\
 \thinhline
-\tokenstyle{RESET\_MODE} & String &  &
+\tokenstyle{RESET\_MODE} & String & N/A &
 	\strexamplestyle{RISING} Resets the counter on a rising edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{FALLING} Resets the counter on a falling edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{BOTH} Resets the counter on any edge of \tokenstyle{RST}. \newline
