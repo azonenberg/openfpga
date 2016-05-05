@@ -1,6 +1,6 @@
-ADD_LIBRARY(xbpar SHARED
+ADD_LIBRARY(xbpar STATIC
 	xbpar.cpp
-	
+
 	PAREngine.cpp
 	PARGraph.cpp
 	PARGraphNode.cpp

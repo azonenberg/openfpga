@@ -47,7 +47,7 @@ bool Greenpak4EntityOutput::IsPGA()
 bool Greenpak4EntityOutput::GetPowerRailValue()
 {
 	if(!IsPowerRail())
-		return NULL;
+		return false;
 	return dynamic_cast<Greenpak4PowerRail*>(m_src)->GetDigitalValue();
 }
 

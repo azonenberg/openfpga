@@ -1,1 +1,10 @@
-build
+/build*
+/debian/tmp/
+/debian/*.log
+/debian/*.substvars
+/debian/*debhelper*
+/debian/files
+/debian/gp4par/
+/debian/gp4par-dbg/
+/debian/gp4par-doc/
+/obj-*/

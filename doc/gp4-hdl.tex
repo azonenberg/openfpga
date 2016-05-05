@@ -100,13 +100,13 @@ All Verilog attributes and values are case sensitive unless otherwise noted.
 \thinhline
 \whenstyle{Acronym} & \whenstyle{Meaning} \\
 \thickhline
-HDL & Hardware Description Language \\
+HDL & Hardware Description Language. \\
 \thinhline
-IOB & Input/Output Buffer \\
+IOB & Input/Output Buffer. \\
 \thinhline
-PAR & Place And Route \\
+PAR & Place And Route. \\
 \thinhline
-RTL & Register Transfer Level \\
+RTL & Register Transfer Level. \\
 \thinhline
 \end{tabularx}
 
@@ -757,11 +757,11 @@ The LUT output is the \{\tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{IN0} & Input & 1 & Least significant input bit \\
+\tokenstyle{IN0} & Input & 1 & Least significant input bit. \\
 \thinhline
-\tokenstyle{IN1} & Input & 1 & Input bit \\
+\tokenstyle{IN1} & Input & 1 & Input bit. \\
 \thinhline
-\tokenstyle{OUT} & Output & 1 & Lookup table output \\
+\tokenstyle{OUT} & Output & 1 & Lookup table output. \\
 \thinhline
 \end{tabularx}
 
@@ -771,7 +771,7 @@ The LUT output is the \{\tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Integer & 4 & LUT truth table \\
+\tokenstyle{INIT} & Integer & 4 & LUT truth table. \\
 \thinhline
 \end{tabularx}
 
@@ -818,13 +818,13 @@ The LUT output is the \{\tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'t
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{IN0} & Input & 1 & Least significant input bit \\
+\tokenstyle{IN0} & Input & 1 & Least significant input bit. \\
 \thinhline
-\tokenstyle{IN1} & Input & 1 & Input bit \\
+\tokenstyle{IN1} & Input & 1 & Input bit. \\
 \thinhline
-\tokenstyle{IN2} & Input & 1 & Most significant input bit \\
+\tokenstyle{IN2} & Input & 1 & Most significant input bit. \\
 \thinhline
-\tokenstyle{OUT} & Output & 1 & Lookup table output \\
+\tokenstyle{OUT} & Output & 1 & Lookup table output. \\
 \thinhline
 \end{tabularx}
 
@@ -834,7 +834,7 @@ The LUT output is the \{\tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'t
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Integer & 8 & LUT truth table \\
+\tokenstyle{INIT} & Integer & 8 & LUT truth table. \\
 \thinhline
 \end{tabularx}
 
@@ -883,15 +883,15 @@ The LUT output is the \{\tokenstyle{IN3}, \tokenstyle{IN2}, \tokenstyle{IN1}, \t
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{IN0} & Input & 1 & Least significant input bit \\
+\tokenstyle{IN0} & Input & 1 & Least significant input bit. \\
 \thinhline
-\tokenstyle{IN1} & Input & 1 & Input bit \\
+\tokenstyle{IN1} & Input & 1 & Input bit. \\
 \thinhline
-\tokenstyle{IN2} & Input & 1 & Input bit \\
+\tokenstyle{IN2} & Input & 1 & Input bit. \\
 \thinhline
-\tokenstyle{IN3} & Input & 1 & Most significant input bit \\
+\tokenstyle{IN3} & Input & 1 & Most significant input bit. \\
 \thinhline
-\tokenstyle{OUT} & Output & 1 & Lookup table output \\
+\tokenstyle{OUT} & Output & 1 & Lookup table output. \\
 \thinhline
 \end{tabularx}
 
@@ -901,7 +901,7 @@ The LUT output is the \{\tokenstyle{IN3}, \tokenstyle{IN2}, \tokenstyle{IN1}, \t
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Integer & 16 & LUT truth table \\
+\tokenstyle{INIT} & Integer & 16 & LUT truth table. \\
 \thinhline
 \end{tabularx}
 
@@ -996,15 +996,15 @@ either the reset-done output of the \tokenref{GP\_POR}{gp-por} block, or an arbi
 \thickhline
 \tokenstyle{PWREN} & Input & 1 &
 	\whenstyle{When 1:} normal operation \newline
-	\whenstyle{When 0:} power down mode \\
+	\whenstyle{When 0:} power down mode. \\
 \thinhline
 \tokenstyle{OUT} & Output & 1 &
 	\whenstyle{When 1:} when \tokenstyle{VIN} $>$ \tokenstyle{VREF} and comparator is running \newline
-	\whenstyle{When 0:} when \tokenstyle{VIN} $<$ \tokenstyle{VREF} or comparator is powered down \\
+	\whenstyle{When 0:} when \tokenstyle{VIN} $<$ \tokenstyle{VREF} or comparator is powered down. \\
 \thinhline
-\tokenstyle{VIN} & Input & 1 & Input voltage (Vdd or external analog input from IOB)\\
+\tokenstyle{VIN} & Input & 1 & Input voltage (Vdd or external analog input from IOB). \\
 \thinhline
-\tokenstyle{VREF} & Input & 1 & Input reference voltage\\
+\tokenstyle{VREF} & Input & 1 & Input reference voltage. \\
 \thinhline
 \end{tabularx}
 
@@ -1018,7 +1018,7 @@ either the reset-done output of the \tokenref{GP\_POR}{gp-por} block, or an arbi
 	Comparator bandwidth. Legal values are \strvaluestyle{LOW} and \strvaluestyle{HIGH}, see device datasheet for actual bandwidth values. \\
 \thinhline
 \tokenstyle{VIN\_ATTEN} & Integer & 3 &
-	Attenuation for the input, represented as inverse gain. Legal values are 1, 2, 3, 4. \\
+	Attenuation for the input, represented as inverse gain. Legal values are 1, 2, 3, 4. Note that not all comparators support selectable attenuation, check device datasheet for details.\\
 \thinhline
 \tokenstyle{VIN\_ISRC\_EN} & Boolean & 1 &
 	Set to 1 to enable the $100 \mu A$ current source on the input. Note that not all comparators support the current
@@ -1140,7 +1140,7 @@ mapper may map \tokenstyle{GP\_COUNT8} cells to unused 14-bit counters in order 
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{CLK} & Input & 1 & The input clock signal\\
+\tokenstyle{CLK} & Input & 1 & The input clock signal. \\
 \thinhline
 \tokenstyle{RST} & Input & 1 & Reset input (polarity depends on \tokenstyle{RESET\_MODE}). When triggered, resets the count register to zero. \\
 \thinhline
@@ -1159,7 +1159,7 @@ mapper may map \tokenstyle{GP\_COUNT8} cells to unused 14-bit counters in order 
 \thinhline
 \tokenstyle{COUNT\_TO} & Integer & 8 & Value to set the counter to on underflow. \\
 \thinhline
-\tokenstyle{RESET\_MODE} & String &  &
+\tokenstyle{RESET\_MODE} & String & N/A &
 	\strexamplestyle{RISING} Resets the counter on a rising edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{FALLING} Resets the counter on a falling edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{BOTH} Resets the counter on any edge of \tokenstyle{RST}. \newline
@@ -1214,7 +1214,7 @@ containing counters of variable depth.
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{CLK} & Input & 1 & The input clock signal\\
+\tokenstyle{CLK} & Input & 1 & The input clock signal. \\
 \thinhline
 \tokenstyle{RST} & Input & 1 & Reset input (polarity depends on \tokenstyle{RESET\_MODE}). When triggered, resets the count register to zero. \\
 \thinhline
@@ -1233,7 +1233,7 @@ containing counters of variable depth.
 \thinhline
 \tokenstyle{COUNT\_TO} & Integer & 14 & Value to set the counter to on underflow. \\
 \thinhline
-\tokenstyle{RESET\_MODE} & String &  &
+\tokenstyle{RESET\_MODE} & String & N/A &
 	\strexamplestyle{RISING} Resets the counter on a rising edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{FALLING} Resets the counter on a falling edge of \tokenstyle{RST}. \newline
 	\strexamplestyle{BOTH} Resets the counter on any edge of \tokenstyle{RST}. \newline
@@ -1284,11 +1284,11 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{D} & Input & 1 & Input data \\
+\tokenstyle{D} & Input & 1 & Input data. \\
 \thinhline
-\tokenstyle{CLK} & Input & 1 & Input clock \\
+\tokenstyle{CLK} & Input & 1 & Input clock. \\
 \thinhline
-\tokenstyle{Q} & Output & 1 & Output signal \\
+\tokenstyle{Q} & Output & 1 & Output signal. \\
 \thinhline
 \end{tabularx}
 
@@ -1298,7 +1298,7 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop. \\
 \thinhline
 \end{tabularx}
 
@@ -1343,13 +1343,13 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{D} & Input & 1 & Input data \\
+\tokenstyle{D} & Input & 1 & Input data. \\
 \thinhline
-\tokenstyle{CLK} & Input & 1 & Input clock \\
+\tokenstyle{CLK} & Input & 1 & Input clock. \\
 \thinhline
-\tokenstyle{nRST} & Input & 1 & Active-low reset \\
+\tokenstyle{nRST} & Input & 1 & Active-low reset. \\
 \thinhline
-\tokenstyle{Q} & Output & 1 & Output signal \\
+\tokenstyle{Q} & Output & 1 & Output signal. \\
 \thinhline
 \end{tabularx}
 
@@ -1359,7 +1359,7 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop. \\
 \thinhline
 \end{tabularx}
 
@@ -1407,13 +1407,13 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{D} & Input & 1 & Input data \\
+\tokenstyle{D} & Input & 1 & Input data. \\
 \thinhline
-\tokenstyle{CLK} & Input & 1 & Input clock \\
+\tokenstyle{CLK} & Input & 1 & Input clock. \\
 \thinhline
-\tokenstyle{nSET} & Input & 1 & Active-low set \\
+\tokenstyle{nSET} & Input & 1 & Active-low set. \\
 \thinhline
-\tokenstyle{Q} & Output & 1 & Output signal \\
+\tokenstyle{Q} & Output & 1 & Output signal. \\
 \thinhline
 \end{tabularx}
 
@@ -1423,7 +1423,7 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop. \\
 \thinhline
 \end{tabularx}
 
@@ -1471,13 +1471,13 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{D} & Input & 1 & Input data \\
+\tokenstyle{D} & Input & 1 & Input data. \\
 \thinhline
-\tokenstyle{CLK} & Input & 1 & Input clock \\
+\tokenstyle{CLK} & Input & 1 & Input clock. \\
 \thinhline
-\tokenstyle{nSR} & Input & 1 & Active-low set/reset \\
+\tokenstyle{nSR} & Input & 1 & Active-low set/reset. \\
 \thinhline
-\tokenstyle{Q} & Output & 1 & Output signal \\
+\tokenstyle{Q} & Output & 1 & Output signal. \\
 \thinhline
 \end{tabularx}
 
@@ -1487,9 +1487,9 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop \\
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop. \\
 \thinhline
-\tokenstyle{SRMODE} & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset \\
+\tokenstyle{SRMODE} & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset. \\
 \thinhline
 \end{tabularx}
 
@@ -1540,9 +1540,9 @@ to the IOB itself. Constraints on the IOB (if manually instantiated) are ignored
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{IN} & Input & 1 & Input signal from top-level module port \\
+\tokenstyle{IN} & Input & 1 & Input signal from top-level module port. \\
 \thinhline
-\tokenstyle{OUT} & Output & 1 & Output signal to fabric routing \\
+\tokenstyle{OUT} & Output & 1 & Output signal to fabric routing. \\
 \thinhline
 \end{tabularx}
 
@@ -1591,9 +1591,9 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{IN} & Input & 1 & Input bit \\
+\tokenstyle{IN} & Input & 1 & Input bit. \\
 \thinhline
-\tokenstyle{OUT} & Output & 1 & Inverted signal \\
+\tokenstyle{OUT} & Output & 1 & Inverted signal. \\
 \thinhline
 \end{tabularx}
 
@@ -1639,13 +1639,13 @@ Note that in the current \namestyle{gp4par} version, constraints must be attache
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{IO} & Bidirectional & 1 & I/O signal to top-level module port \\
+\tokenstyle{IO} & Bidirectional & 1 & I/O signal to top-level module port. \\
 \thinhline
-\tokenstyle{IN} & Input & 1 & Input signal from fabric routing \\
+\tokenstyle{IN} & Input & 1 & Input signal from fabric routing. \\
 \thinhline
 \tokenstyle{OE} & Input & 1 & Tri-state output enable. When low, the output driver is disabled. \\
 \thinhline
-\tokenstyle{OUT} & Output & 1 & Output signal to fabric routing \\
+\tokenstyle{OUT} & Output & 1 & Output signal to fabric routing. \\
 \thinhline
 \end{tabularx}
 
@@ -1708,7 +1708,7 @@ rule will result in a physical DRC failure.
 	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} Set high to power down the oscillator. \newline
 	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} Ignored, tie to \datastyle{1'b0}.\\
 \thinhline
-\tokenstyle{CLKOUT} & Output & 1 & 1730 Hz (nominal) clock signal \\
+\tokenstyle{CLKOUT} & Output & 1 & 1730 Hz (nominal) clock signal. \\
 \thinhline
 \end{tabularx}
 
@@ -1776,9 +1776,9 @@ Note that in the current \namestyle{gp4par} version, constraints must be attache
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{IN} & Input & 1 & Input signal from fabric routing \\
+\tokenstyle{IN} & Input & 1 & Input signal from fabric routing. \\
 \thinhline
-\tokenstyle{OUT} & Output & 1 & Output signal to top-level module port \\
+\tokenstyle{OUT} & Output & 1 & Output signal to top-level module port. \\
 \thinhline
 \end{tabularx}
 
@@ -1830,11 +1830,11 @@ Note that in the current \namestyle{gp4par} version, constraints must be attache
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{IN} & Input & 1 & Input signal from fabric routing \\
+\tokenstyle{IN} & Input & 1 & Input signal from fabric routing. \\
 \thinhline
 \tokenstyle{OE} & Input & 1 & Output enable. When low, the output floats. \\
 \thinhline
-\tokenstyle{OUT} & Output & 1 & Output signal to top-level module port \\
+\tokenstyle{OUT} & Output & 1 & Output signal to top-level module port. \\
 \thinhline
 \end{tabularx}
 
@@ -1898,7 +1898,7 @@ by fabric logic or a constant zero.
 		\item Single-ended mode: Tie to \datastyle{1'b1} or input signal from IOB.\novspace
 	\end{compactitem}\\
 \thinhline
-\tokenstyle{VOUT} & Output & 1 & Analog output\\
+\tokenstyle{VOUT} & Output & 1 & Analog output. \\
 \thinhline
 \end{tabularx}
 
@@ -2074,9 +2074,9 @@ Note that all of the oscillator blocks in \namestyle{GreenPak4} internally share
 	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} Set high to power down the oscillator. \newline
 	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} Ignored, tie to \datastyle{1'b0}.\\
 \thinhline
-\tokenstyle{CLKOUT\_PREDIV} & Output & 1 & Pre-divided clock output to hard IP.  \\
+\tokenstyle{CLKOUT\_PREDIV} & Output & 1 & Pre-divided clock output to hard IP. \\
 \thinhline
-\tokenstyle{CLKOUT\_FABRIC} & Output & 1 & Final clock signal to general fabric routing\\
+\tokenstyle{CLKOUT\_FABRIC} & Output & 1 & Final clock signal to general fabric routing. \\
 \thinhline
 \end{tabularx}
 
@@ -2158,9 +2158,9 @@ rule will result in a physical DRC failure.
 	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} Set high to power down the oscillator. \newline
 	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} Ignored, tie to \datastyle{1'b0}.\\
 \thinhline
-\tokenstyle{CLKOUT\_PREDIV} & Output & 1 & Pre-divided clock output to hard IP.  \\
+\tokenstyle{CLKOUT\_PREDIV} & Output & 1 & Pre-divided clock output to hard IP. \\
 \thinhline
-\tokenstyle{CLKOUT\_FABRIC} & Output & 1 & Final clock signal to general fabric routing\\
+\tokenstyle{CLKOUT\_FABRIC} & Output & 1 & Final clock signal to general fabric routing. \\
 \thinhline
 \end{tabularx}
 
@@ -2231,13 +2231,13 @@ positions are fixed at synthesis time rather than being runtime programmable.
 \thickhline
 \tokenstyle{nRST} & Input & 1 & Active-low reset input. Clears the shift register to zero when asserted. Tie high if not used.\\
 \thinhline
-\tokenstyle{CLK} & Input & 1 & Clock for the shift register\\
+\tokenstyle{CLK} & Input & 1 & Clock for the shift register. \\
 \thinhline
-\tokenstyle{IN} & Input & 1 & Input data for the shift register\\
+\tokenstyle{IN} & Input & 1 & Input data for the shift register. \\
 \thinhline
-\tokenstyle{OUTA} & Output & 1 & Tap A for the shift register\\
+\tokenstyle{OUTA} & Output & 1 & Tap A for the shift register. \\
 \thinhline
-\tokenstyle{OUTB} & Output & 1 & Tap B for the shift register\\
+\tokenstyle{OUTB} & Output & 1 & Tap B for the shift register. \\
 \thinhline
 \end{tabularx}
 
@@ -2353,7 +2353,7 @@ design, simply use the value \datastyle{1'b1}.
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{OUT} & Output & 1 & Constant value ``1" \\
+\tokenstyle{OUT} & Output & 1 & Constant value ``1". \\
 \thinhline
 \end{tabularx}
 
@@ -2406,7 +2406,7 @@ future version will perform this replication automatically, allowing one \tokens
 	\end{compactitem}
 \\
 \thinhline
-\tokenstyle{VOUT} & Output & 1 & The generated reference voltage \\
+\tokenstyle{VOUT} & Output & 1 & The generated reference voltage. \\
 \thinhline
 \end{tabularx}
 
@@ -2470,7 +2470,7 @@ design, simply use the value \datastyle{1'b0}.
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{OUT} & Output & 1 & Constant value ``0" \\
+\tokenstyle{OUT} & Output & 1 & Constant value ``0". \\
 \thinhline
 \end{tabularx}
 

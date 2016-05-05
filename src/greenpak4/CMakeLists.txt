@@ -1,4 +1,4 @@
-ADD_LIBRARY(greenpak4 SHARED
+ADD_LIBRARY(greenpak4 STATIC
 
 	# Post-PAR netlist
 	Greenpak4Abuf.cpp
@@ -25,7 +25,7 @@ ADD_LIBRARY(greenpak4 SHARED
 	Greenpak4ShiftRegister.cpp
 	Greenpak4SystemReset.cpp
 	Greenpak4VoltageReference.cpp
-	
+
 	# Unplaced (but techmapped) netlist
 	Greenpak4Netlist.cpp
 	Greenpak4NetlistCell.cpp
