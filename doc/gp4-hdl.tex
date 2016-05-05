@@ -1085,8 +1085,8 @@ This primitive represents the bandgap voltage reference.
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
 \tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
-	\whenstyle{When 1:} \newline Automatically power down bandgap when all loads are powered down. \newline
-	\whenstyle{When 0:} \newline Automatic power-down is disabled. The bandgap is always on.\\
+	\whenstyle{When 1:} Automatically power down bandgap when all loads are powered down. \newline
+	\whenstyle{When 0:} Automatic power-down is disabled. \newline The bandgap is always on.\\
 \thinhline
 \tokenstyle{CHOPPER\_EN} & Boolean & 1 &
 	Specify whether to enable the chopper stabilization for the bandgap op-amp. Should always be 1. \\
@@ -1272,8 +1272,8 @@ GP_COUNT14 #(
 \label{gp-dff}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D flipflop. It may be mapped to either a DFF or a DFFSR cell by the placer
-depending on resource utilization and routing congestion.
+This primitive corresponds to a single D flipflop. It may be mapped to either a \tokenref{GP\_DFF}{gp-dff} or a
+\tokenref{GP\_DFFSR}{gp-dffsr} cell by the placer depending on resource utilization and routing congestion.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
@@ -1331,8 +1331,8 @@ GP_DFF #(
 \label{gp-dffr}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D flipflop with active-low reset. It is internally remapped to a DFFSR cell by
-the placer.
+This primitive corresponds to a single D flipflop with active-low reset. It is internally remapped to a
+\tokenref{GP\_DFFSR}{gp-dffsr} cell by the placer.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
@@ -1395,8 +1395,8 @@ GP_DFFR #(
 \label{gp-dffs}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D flipflop with active-low set. It is internally remapped to a DFFSR cell by
-the placer.
+This primitive corresponds to a single D flipflop with active-low set. It is internally remapped to a
+\tokenref{GP\_DFFSR}{gp-dffsr} cell by the placer.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
 recommend inferring logic.
@@ -1705,8 +1705,8 @@ rule will result in a physical DRC failure.
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
 \tokenstyle{PWRDN} & Input & 1 &
-	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
-	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} Set high to power down the oscillator. \newline
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} Ignored, tie to \datastyle{1'b0}.\\
 \thinhline
 \tokenstyle{CLKOUT} & Output & 1 & 1730 Hz (nominal) clock signal \\
 \thinhline
@@ -1719,8 +1719,8 @@ rule will result in a physical DRC failure.
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
 \tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
-	\whenstyle{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
-	\whenstyle{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
+	\whenstyle{When 1:} Automatically power down the oscillator when all loads are powered down. \newline
+	\whenstyle{When 0:} Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
 \thinhline
 \tokenstyle{OUT\_DIV} & Integer & 8 &
 	Output divider. Legal values: \newline
@@ -1957,7 +1957,7 @@ GP_PGA #(
 
 \subsubsection{Introduction}
 This primitive represents the power-on reset. It may be used in user logic to gate signals that can toggle early in the
-startup process in order to avoid glitches.
+startup process, in order to avoid glitches.
 
 %(Resetb_matrix, 62).
 
@@ -2071,8 +2071,8 @@ Note that all of the oscillator blocks in \namestyle{GreenPak4} internally share
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
 \tokenstyle{PWRDN} & Input & 1 &
-	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
-	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} Set high to power down the oscillator. \newline
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} Ignored, tie to \datastyle{1'b0}.\\
 \thinhline
 \tokenstyle{CLKOUT\_PREDIV} & Output & 1 & Pre-divided clock output to hard IP.  \\
 \thinhline
@@ -2087,8 +2087,8 @@ Note that all of the oscillator blocks in \namestyle{GreenPak4} internally share
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
 \tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
-	\whenstyle{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
-	\whenstyle{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
+	\whenstyle{When 1:} Automatically power down the oscillator when all loads are powered down. \newline
+	\whenstyle{When 0:} Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
 \thinhline
 \tokenstyle{OSC\_FREQ} & String & N/A & Oscillator frequency select. Must be one of \strvaluestyle{2M} or \strvaluestyle{25k}. \\
 \thinhline
@@ -2120,7 +2120,7 @@ GP_RCOSC #(
 	.OSC_FREQ("25k"),
 	.PRE_DIV(4),
 	.FABRIC_DIV(12)
-) ringosc (
+) rcosc (
 	.PWRDN(1'b0),
 	.CLKOUT_PREDIV(clk_fast),
 	.CLKOUT_FABRIC(clk_slow)
@@ -2155,8 +2155,8 @@ rule will result in a physical DRC failure.
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
 \tokenstyle{PWRDN} & Input & 1 &
-	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} \newline Bring this signal high to power down the oscillator. \newline
-	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} \newline Ignored, tie to \datastyle{1'b0}.\\
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} Set high to power down the oscillator. \newline
+	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} Ignored, tie to \datastyle{1'b0}.\\
 \thinhline
 \tokenstyle{CLKOUT\_PREDIV} & Output & 1 & Pre-divided clock output to hard IP.  \\
 \thinhline
@@ -2171,8 +2171,8 @@ rule will result in a physical DRC failure.
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
 \tokenstyle{AUTO\_PWRDN} & Boolean & 1 &
-	\whenstyle{When 1:} \newline Automatically power down the oscillator when all loads are powered down. \newline
-	\whenstyle{When 0:} \newline Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
+	\whenstyle{When 1:} Automatically power down the oscillator when all loads are powered down. \newline
+	\whenstyle{When 0:} Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
 \thinhline
 \tokenstyle{PRE\_DIV} & Integer & 8 &
 	Output pre-divider for \tokenstyle{CLKOUT\_PREDIV}. Legal values are 1, 4, 8, 16. \\
