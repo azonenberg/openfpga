@@ -1,4 +1,4 @@
-ADD_LIBRARY(greenpak4 SHARED
+ADD_LIBRARY(greenpak4 STATIC
 
 	# Post-PAR netlist
 	Greenpak4Abuf.cpp
