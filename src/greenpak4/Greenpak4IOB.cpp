@@ -65,16 +65,15 @@ void Greenpak4IOB::CommitChanges()
 	//Get the net
 	Greenpak4NetlistNode* net = NULL;
 	if(cell->m_type == "GP_IBUF")
-		net = cell->m_connections["OUT"];
-	else if(cell->m_type == "GP_OBUF")
 		net = cell->m_connections["IN"];
-	else if(cell->m_type == "GP_IOBUF")
+	else if(cell->m_type == "GP_OBUF")
 		net = cell->m_connections["OUT"];
+	else if(cell->m_type == "GP_IOBUF")
+		net = cell->m_connections["IO"];
 	if(net == NULL)
 		return;
 			
-	//printf("    Configuring IOB %d\n", iob->GetPinNumber());
-	
+	//printf("    Configuring IOB %d\n", m_pinNumber);
 	//If we get here, we're not unused.
 	//Default for USED nets, unless otherwise specced, is to float
 	m_pullDirection = PULL_NONE;
