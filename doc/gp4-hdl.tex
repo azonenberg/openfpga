@@ -149,14 +149,17 @@ the latest development version of \namestyle{Yosys} and have not made it into a 
 
 \subsection{Synthesis Example}
 
-A simple synthesis script for \namestyle{Yosys} is shown in figure \ref{yscript}. The script synthesizes a single Verilog source file \texttt{Blinky.v}, with a top-level module \texttt{BlinkyTop}, to the netlist \texttt{Blinky.json} and
-targets the \namestyle{SLG46620V}. This script is only a starting point and may be customized as needed. This document does not
-cover synthesis commands; please see the online documentation for \namestyle{Yosys} for command documentation.
+A simple synthesis script for \namestyle{Yosys} is shown in figure \ref{yscript}. The script synthesizes a single 
+Verilog source file \texttt{Blinky.v}, with a top-level module \texttt{BlinkyTop}, to the netlist \texttt{Blinky.json} 
+and targets the \namestyle{SLG46620V}. This script is only a starting point and may be customized as needed. This 
+document does not cover synthesis commands; please see the online documentation for \namestyle{Yosys} for command 
+documentation.
+
 \begin{figure}[h]
 \begin{lstlisting}[language=sh]
 #!/usr/bin/env yosys
 read_verilog Blinky.v
-synth_greenpak4 -top BlinkyTop -part SLG46620V -json /tmp/Blinky.json
+synth_greenpak4 -top BlinkyTop -part SLG46620V -json Blinky.json
 \end{lstlisting}
 \caption{Example synthesis script}
 \label{yscript}
