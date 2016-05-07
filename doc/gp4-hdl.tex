@@ -1265,6 +1265,44 @@ GP_COUNT14 #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DAC
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DAC}: Digital to Analog Converter (NOT IMPLEMENTED)}
+\label{gp-dac}
+
+\subsubsection{Introduction}
+This primitive corresponds to an 8-bit digital to analog converter. The DAC operates combinatorially and does not 
+require a clock.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{DIN} & Input & 8 & Input data. Must be connected to an 8-bit constant value for now. \\
+\thinhline
+\tokenstyle{VOUT} & Output & 1 & Analog output. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+No parameters.
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dac-example} FIXME.
+
+\begin{figure}[h]
+\begin{lstlisting}
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DAC}}
+\label{gp-dac-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DFF
 
 \pagebreak
