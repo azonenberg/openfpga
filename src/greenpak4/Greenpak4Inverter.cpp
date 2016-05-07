@@ -46,7 +46,7 @@ Greenpak4Inverter::~Greenpak4Inverter()
 string Greenpak4Inverter::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "INV_%d_%d", m_matrix, m_inputBaseWord);
+	snprintf(buf, sizeof(buf), "INV_%d", m_matrix);
 	return string(buf);
 }
 
