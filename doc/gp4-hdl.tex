@@ -355,29 +355,58 @@ input wire vin;
 \pagebreak
 \subsection{Physical Location (\tokenstyle{LOC})}
 
-The \tokenstyle{LOC} constraint instructs \namestyle{gp4par} to place the constrained net or primitive at a specific physical site of the
-device.
+The \tokenstyle{LOC} constraint instructs \namestyle{gp4par} to place the constrained entity at a specific physical
+site of the device.
+
+% ERROR: Cell $abc$104$auto$blifparse.cc:347:parse_blif$106 has invalid LOC constraint LUT2_0 (site is of type GP_2LUT, instance is of type GP_3LUT)
+
+%ERROR: Multiple conflicting LOC constraints (COUNT8_2, COUNT8_4) are attached to cell "lfosc_cnt".
+%       Please remove one or more of the constraints to allow the design to be placed.
 
 \subsubsection{Applicable Elements}
-As of this writing, the \tokenstyle{LOC} constraint may only be used on top-level module ports.
+
+\begin{itemize}
+
+\item IOBs may be constrained by placing a \tokenstyle{LOC} constraint on the top-level module port declaration.
+
+\item Inferred LUTs and flipflops may be constrained by placing a \tokenstyle{LOC} constraint on the net driven by the 
+entity to be constrained. Note that complex combinatorial logic where multiple levels of LUTs are inferred cannot be 
+constrained using this approach as the constraint only applies to the last LUT in the tree; such logic must be broken 
+up in order to constrain the other LUTs.
+
+\item Instantiated primitives may be constrained by placing a \tokenstyle{LOC} constraint on the primitive declaration,
+or on any net driven by the primitive.
+
+\end{itemize}
 
 \subsubsection{Constraint Values}
 \begin{itemize}
 \item \whenstyle{Top-level module port}\\
-Text string \strvaluestyle{Pn} where \tokenstyle{n} is the pin number of the device. Example: \strvaluestyle{P3}, \strvaluestyle{P17}.
+\strvaluestyle{Pn} where \tokenstyle{n} is the pin number of the device. Example: \strvaluestyle{P3}, \strvaluestyle{P17}.
+\item \whenstyle{Inferred 1-bit register}\\
+\strvaluestyle{DFF\_n} where \tokenstyle{n} is the flipflop number. Example: \strvaluestyle{DFF\_5}
 \item \whenstyle{Other} \\
 This constraint may not be used on any other entity. Future versions of \namestyle{gp4par} may allow use of this constraint
-to lock LUTs, flipflops, and hard IP to specific locations.
+to lock LUTs and hard IP to specific locations.
 \end{itemize}
 
+\pagebreak
 \subsubsection{Verilog Usage Example}
 
-Figure \ref{constraint-loc} is an example of a top-level module with three ports \wirestyle{a}, \wirestyle{b}, and \wirestyle{o}.
-These ports are constrained to package pins 20, 19, and 18 respectively.
+Figure \ref{constraint-loc} is an example of a top-level module with four ports \wirestyle{a}, \wirestyle{b},
+\wirestyle{o}, and \wirestyle{p}. These ports are constrained to package pins 20, 19, 18, and 17 respectively.
+
+Signal \wirestyle{o} is driven by the inferred register \wirestyle{o\_int}, which is constrained to D flipflop
+number 5. Note that \wirestyle{o} could not be directly declared as \tokenstyle{output reg} because this infers both a 
+DFF and IOB cell with the same net name. The attached LOC attribute would then apply to the IOB cell and not the DFF.
+
+Signal \wirestyle(p) is driven by the inferred LUT \wirestyle{p\_int}, which is constrained to 3-input LUT number 0 
+(rather than one of the 2-input LUTs, as would normally be the case). As with \wirestyle{o}, a separate named net is 
+required in this case in order to avoid inferring both an IOB and LUT with ambiguous constraints.
 
 \begin{figure}[h]
 \begin{lstlisting}
-module Foo(a, b, o);
+module Foo(a, b, o, p);
 
 	(* LOC = "P20" *)
 	input wire a;
@@ -387,6 +416,19 @@ module Foo(a, b, o);
 
 	(* LOC = "P18" *)
 	output wire o;
+	
+	(* LOC = "P17" *)
+	output wire p;
+	
+	(* LOC = "DFF_5" *)
+	reg o_int = 0;
+	
+	assign o = o_int;
+	
+	(* LOC = "LUT3_0" *)
+	wire p_int = (a & b);
+	
+	assign p = p_int;
 
 endmodule
 \end{lstlisting}
@@ -397,6 +439,7 @@ endmodule
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Pulldown
 
+\clearpage
 \pagebreak
 \subsection{Pull-Down Resistor (\tokenstyle{PULLDOWN})}
 

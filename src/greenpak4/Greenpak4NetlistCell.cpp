@@ -38,6 +38,10 @@ void Greenpak4NetlistCell::FindLOC()
 	//Look up our module
 	auto module = m_parent->GetNetlist()->GetModule(m_type);
 
+	//Look at our attributes
+	if(m_attributes.find("LOC") != m_attributes.end())
+		m_loc = m_attributes["LOC"];
+
 	//Constraints go on the cell's output port(s)
 	//so look at all outbound edges
 	string loc = "";
@@ -58,8 +62,22 @@ void Greenpak4NetlistCell::FindLOC()
 		auto net = it.second;
 		if(!net->HasAttribute("LOC"))
 			continue;
+
+		string newloc = net->GetAttribute("LOC");
+
+		//Multiple constraints are legal iff they have the same value
+		if( (m_loc != "") && (m_loc != newloc) )
+		{
+			fprintf(
+				stderr,
+				"ERROR: Multiple conflicting LOC constraints (%s, %s) are attached to cell \"%s\".\n"
+				"       Please remove one or more of the constraints to allow the design to be placed.\n",
+				m_loc.c_str(),
+				newloc.c_str(),
+				m_name.c_str());
+			exit(-1);
+		}
 		
-		m_loc = net->GetAttribute("LOC");
-		return;
+		m_loc = newloc;
 	}
 }
