@@ -1,0 +1,4 @@
+#!/nfs4/home/azonenberg/code/3rdparty/yosys/yosys
+##!/usr/bin/env yosys
+read_verilog Location.v
+synth_greenpak4 -top Location -part SLG46620V -json /tmp/Location.json
