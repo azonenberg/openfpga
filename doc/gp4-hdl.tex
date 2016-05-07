@@ -361,7 +361,7 @@ use it to force arbitrary logic to use specific device resources.
 
 The specified location must be valid for the entity being constrained. Attempting to constrain a cell to an illegal 
 site causes the initial placement to fail with an error message. For example, figure \ref{invalid-loc} shows the 
-results of attempting to constrain a 3-input combinatorial expression to a LUT2 site.
+results of attempting to constrain a 3-input combinatorial expression to a 2LUT site.
 
 \begin{figure}[h]
 \begin{lstlisting}[language=c]
@@ -394,7 +394,7 @@ a future software release.
 
 \begin{figure}[h]
 \begin{lstlisting}[language=c]
-ERROR: Multiple conflicting LOC constraints (COUNT8_2, COUNT8_4) are
+ERROR: Multiple conflicting LOC constraints (COUNT8_5, COUNT8_4) are
 attached to cell "lfosc_cnt". Please remove one or more of the constraints
 to allow the design to be placed.
 \end{lstlisting}
@@ -402,26 +402,37 @@ to allow the design to be placed.
 \label{conflicting-loc}
 \end{figure}
 
+\pagebreak
 \subsubsection{Constraint Values}
 \begin{itemize}
-\item \whenstyle{Flipflop (DFF cell or inferred 1-bit register)}\\
-\strvaluestyle{DFF\_n} where \tokenstyle{n} is the flipflop number. Example: \strvaluestyle{DFF\_5}
-\item \whenstyle{IOB (top-level module port OR IOB primitive)}\\
-\strvaluestyle{Pn} where \tokenstyle{n} is the pin number of the device. Example: \strvaluestyle{P3}, \strvaluestyle{P17}.
-\item \whenstyle{LUT}\\
+\item \whenstyle{\tokenref{Analog comparator}{gp-acmp}}\\
+\strvaluestyle{ACMP\_n} where \tokenstyle{n} is the comparator number. Example: \strvaluestyle{ACMP\_2}.
+\item \whenstyle{\tokenref{Counter}{gp-count8}}\\
+\strvaluestyle{COUNTm\_n} where \tokenstyle{m} is the counter depth and \tokenstyle{n} is the counter number.
+Example: \strvaluestyle{COUNT8\_5}.
+\item \whenstyle{\tokenref{Flipflop}{gp-dff} (DFF cell or inferred 1-bit register)}\\
+\strvaluestyle{DFF\_n} where \tokenstyle{n} is the flipflop number. Example: \strvaluestyle{DFF\_5}.
+\item \whenstyle{\tokenref{IOB}{gp-iobuf} (top-level module port or IOB primitive)}\\
+\strvaluestyle{Pn} where \tokenstyle{n} is the pin number of the device. Example: \strvaluestyle{P3}.
+\item \whenstyle{\tokenref{LUT}{gp-2lut}}\\
 \strvaluestyle{LUTm\_n} where \tokenstyle{m} is the number of inputs for the LUT and \tokenstyle{n} is the LUT number.
 Example: \strvaluestyle{LUT3\_0}. Note that it is legal to constrain a smaller LUT to a larger site (but not vice 
-versa); for example a 2-input function may be constrained to a LUT3 or LUT4 site.
-\item \whenstyle{Shift register}\\
+versa); for example a 2-input function may be constrained to a 3LUT or 4LUT site.
+\item \whenstyle{\tokenref{Inverter}{gp-inv}}\\
+\strvaluestyle{INV\_n} where \tokenstyle{n} is the number of matrix the inverter is located in. Example:
+\strvaluestyle{INV\_0}.
+\item \whenstyle{\tokenref{Shift register}{gp-shreg}}\\
 \strvaluestyle{SHREG\_n} where \tokenstyle{n} is the number of matrix the shift register is located in. 
-Example: \strvaluestyle{SHREG\_0}
-\item \whenstyle{Voltage reference}\\
-\strvaluestyle{VREF\_n} where \tokenstyle{n} is the number of the attached comparator. Example: \strvaluestyle{VREF\_2}
+Example: \strvaluestyle{SHREG\_0}.
+\item \whenstyle{\tokenref{Voltage reference}{gp-vref}}\\
+\strvaluestyle{VREF\_n} where \tokenstyle{n} is the number of the attached comparator. Example: 
+\strvaluestyle{VREF\_2}.
 \item \whenstyle{Other} \\
 While this constraint is legal to use on primitives that only have one instance in the device, this is redundant so the 
-names of these sites are not documented.
+names of these sites are not documented here (although they may be obtained from the placement report).
 \end{itemize}
 
+\pagebreak
 \subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-loc} is an example of a top-level module with four ports \wirestyle{a}, \wirestyle{b},
@@ -431,7 +442,7 @@ Signal \wirestyle{o} is driven by the inferred register \wirestyle{o\_int}, whic
 number 5. Note that \wirestyle{o} could not be directly declared as \tokenstyle{output reg} because this infers both a 
 DFF and IOB cell with the same net name. The attached LOC attribute would then apply to the IOB cell and not the DFF.
 
-Signal \wirestyle(p) is driven by the inferred LUT \wirestyle{p\_int}, which is constrained to 3-input LUT number 0 
+Signal \wirestyle{p} is driven by the inferred LUT \wirestyle{p\_int}, which is constrained to 3-input LUT number 0 
 (rather than one of the 2-input LUTs, as would normally be the case). As with \wirestyle{o}, a separate named net is 
 required in this case in order to avoid inferring both an IOB and LUT with ambiguous constraints.
 
@@ -820,10 +831,14 @@ in Verilog by a separate block for each of the three internal oscillators.
 This primitive corresponds to a single 2-input lookup table. It can implement any combinatorial function of two
 inputs and one output.
 
+The LUT output is the \{\tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth table supplied in the \tokenstyle{INIT} attribute.
+
 This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we
 recommend inferring logic.
 
-The LUT output is the \{\tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth table supplied in the \tokenstyle{INIT} attribute.
+Note that the placer may re-map \tokenref{GP\_2LUT}{gp-2lut} primitives to 3- or 4-input LUT sites to reduce routing 
+congestion. The \tokenref{LOC}{LOC} constraint may be used to force the primitive to a specific 2-input LUT if 
+necessary.
 
 \subsubsection{Port Descriptions}
 
@@ -881,10 +896,14 @@ GP_2LUT #(
 This primitive corresponds to a single 3-input lookup table. It can implement any combinatorial function of three
 inputs and one output.
 
+The LUT output is the \{\tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth table supplied in the \tokenstyle{INIT} attribute.
+
 This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we
 recommend inferring logic.
 
-The LUT output is the \{\tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth table supplied in the \tokenstyle{INIT} attribute.
+Note that the placer may re-map \tokenref{GP\_3LUT}{gp-3lut} primitives to 4-input LUT sites to reduce routing 
+congestion. The \tokenref{LOC}{LOC} constraint may be used to force the primitive to a specific 3-input LUT if 
+necessary.
 
 \subsubsection{Port Descriptions}
 
@@ -946,10 +965,10 @@ GP_3LUT #(
 This primitive corresponds to a single 4-input lookup table. It can implement any combinatorial function of four
 inputs and one output.
 
+The LUT output is the \{\tokenstyle{IN3}, \tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth table supplied in the \tokenstyle{INIT} attribute.
+
 This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we
 recommend inferring logic.
-
-The LUT output is the \{\tokenstyle{IN3}, \tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth table supplied in the \tokenstyle{INIT} attribute.
 
 \subsubsection{Port Descriptions}
 
