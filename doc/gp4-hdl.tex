@@ -356,12 +356,21 @@ input wire vin;
 \subsection{Physical Location (\tokenstyle{LOC})}
 
 The \tokenstyle{LOC} constraint instructs \namestyle{gp4par} to place the constrained entity at a specific physical
-site of the device.
+site of the device. This is most commonly used to lock IOBs to specific pins on the package, however advanced users can 
+use it to force arbitrary logic to use specific device resources.
 
-% ERROR: Cell $abc$104$auto$blifparse.cc:347:parse_blif$106 has invalid LOC constraint LUT2_0 (site is of type GP_2LUT, instance is of type GP_3LUT)
+The specified location must be valid for the entity being constrained. Attempting to constrain a cell to an illegal 
+site causes the initial placement to fail with an error message. For example, figure \ref{invalid-loc} shows the 
+results of attempting to constrain a 3-input combinatorial expression to a LUT2 site.
 
-%ERROR: Multiple conflicting LOC constraints (COUNT8_2, COUNT8_4) are attached to cell "lfosc_cnt".
-%       Please remove one or more of the constraints to allow the design to be placed.
+\begin{figure}[h]
+\begin{lstlisting}[language=c]
+ERROR: Cell $abc$104$auto$blifparse.cc:347:parse_blif$106 has invalid LOC
+constraint LUT2_0 (site is of type GP_2LUT, instance is of type GP_3LUT)
+\end{lstlisting}
+\caption{Error message produced by invalid \tokenstyle{LOC} constraint}
+\label{invalid-loc}
+\end{figure}
 
 \subsubsection{Applicable Elements}
 
@@ -370,27 +379,49 @@ site of the device.
 \item IOBs may be constrained by placing a \tokenstyle{LOC} constraint on the top-level module port declaration.
 
 \item Inferred LUTs and flipflops may be constrained by placing a \tokenstyle{LOC} constraint on the net driven by the 
-entity to be constrained. Note that complex combinatorial logic where multiple levels of LUTs are inferred cannot be 
-constrained using this approach as the constraint only applies to the last LUT in the tree; such logic must be broken 
-up in order to constrain the other LUTs.
+entity to be constrained. This technique cannot constrain inferred multiple-bit registers or inferred 
+combinatorial logic with multiple levels of LUTs; these must be broken up or replaced with primitive instantiation.
 
-\item Instantiated primitives may be constrained by placing a \tokenstyle{LOC} constraint on the primitive declaration,
-or on any net driven by the primitive.
+\item Instantiated primitives may be constrained by placing a \tokenstyle{LOC} constraint on the primitive declaration 
+OR on any net driven by the primitive. Multiple \tokenstyle{LOC} constraints with the same value are ignored; if 
+multiple \tokenstyle{LOC} constraints with different values apply to the same element placement will fail with an error 
+message (figure \ref{conflicting-loc}).
+
+\item The \tokenstyle{LOC} constraint cannot be applied to inferred counters or shift registers. This will be fixed in 
+a future software release.
 
 \end{itemize}
+
+\begin{figure}[h]
+\begin{lstlisting}[language=c]
+ERROR: Multiple conflicting LOC constraints (COUNT8_2, COUNT8_4) are
+attached to cell "lfosc_cnt". Please remove one or more of the constraints
+to allow the design to be placed.
+\end{lstlisting}
+\caption{Error message produced by invalid \tokenstyle{LOC} constraint}
+\label{conflicting-loc}
+\end{figure}
 
 \subsubsection{Constraint Values}
 \begin{itemize}
-\item \whenstyle{Top-level module port}\\
-\strvaluestyle{Pn} where \tokenstyle{n} is the pin number of the device. Example: \strvaluestyle{P3}, \strvaluestyle{P17}.
-\item \whenstyle{Inferred 1-bit register}\\
+\item \whenstyle{Flipflop (DFF cell or inferred 1-bit register)}\\
 \strvaluestyle{DFF\_n} where \tokenstyle{n} is the flipflop number. Example: \strvaluestyle{DFF\_5}
+\item \whenstyle{IOB (top-level module port OR IOB primitive)}\\
+\strvaluestyle{Pn} where \tokenstyle{n} is the pin number of the device. Example: \strvaluestyle{P3}, \strvaluestyle{P17}.
+\item \whenstyle{LUT}\\
+\strvaluestyle{LUTm\_n} where \tokenstyle{m} is the number of inputs for the LUT and \tokenstyle{n} is the LUT number.
+Example: \strvaluestyle{LUT3\_0}. Note that it is legal to constrain a smaller LUT to a larger site (but not vice 
+versa); for example a 2-input function may be constrained to a LUT3 or LUT4 site.
+\item \whenstyle{Shift register}\\
+\strvaluestyle{SHREG\_n} where \tokenstyle{n} is the number of matrix the shift register is located in. 
+Example: \strvaluestyle{SHREG\_0}
+\item \whenstyle{Voltage reference}\\
+\strvaluestyle{VREF\_n} where \tokenstyle{n} is the number of the attached comparator. Example: \strvaluestyle{VREF\_2}
 \item \whenstyle{Other} \\
-This constraint may not be used on any other entity. Future versions of \namestyle{gp4par} may allow use of this constraint
-to lock LUTs and hard IP to specific locations.
+While this constraint is legal to use on primitives that only have one instance in the device, this is redundant so the 
+names of these sites are not documented.
 \end{itemize}
 
-\pagebreak
 \subsubsection{Verilog Usage Example}
 
 Figure \ref{constraint-loc} is an example of a top-level module with four ports \wirestyle{a}, \wirestyle{b},
