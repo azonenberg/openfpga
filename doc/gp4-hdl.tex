@@ -106,6 +106,8 @@ IOB & Input/Output Buffer. \\
 \thinhline
 PAR & Place And Route. \\
 \thinhline
+PTV & Process, Temperature, and Voltage. \\
+\thinhline
 RTL & Register Transfer Level. \\
 \thinhline
 \end{tabularx}
@@ -1396,6 +1398,50 @@ The example shown in figure \ref{gp-dac-example} FIXME.
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_DAC}}
 \label{gp-dac-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DELAY
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DELAY}: Prorgammable Digital Delay Line (NOT IMPLEMENTED)}
+\label{gp-delay}
+
+\subsubsection{Introduction}
+This primitive corresponds to a programmable digital delay line with four taps. The exact values are PTV dependent; see 
+device datasheet for values.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{IN} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{OUT} & Output & 1 & Delayed output. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{DELAY\_STEPS} & Integer & 3 & Number of delay taps (1-4) \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-delay-example} FIXME.
+
+\begin{figure}[h]
+\begin{lstlisting}
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DELAY}}
+\label{gp-delay-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
