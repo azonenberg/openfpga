@@ -44,6 +44,9 @@ public:
 	
 	virtual void CommitChanges();
 	
+	Greenpak4EntityOutput GetInput()
+	{ return m_input; }
+	
 protected:
 	Greenpak4EntityOutput m_input;
 };

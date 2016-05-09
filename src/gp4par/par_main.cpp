@@ -20,6 +20,8 @@
 
 using namespace std;
 
+void CheckAnalogIbuf(Greenpak4BitstreamEntity* load, Greenpak4IOB* iob);
+
 /**
 	@brief The main place-and-route logic
  */
@@ -120,22 +122,39 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		
 		auto signal = iob->GetOutputSignal();
 		auto src = signal.GetRealEntity();
-		
-		//Check for analog output driving a pin not configured as analog for the input
-		if( !iob->IsAnalogIbuf() &&
-			(
-				(dynamic_cast<Greenpak4VoltageReference*>(src) != NULL) ||
-				(dynamic_cast<Greenpak4PGA*>(src) != NULL)
-			)
-		)
+	
+		if(!iob->IsAnalogIbuf())
 		{
-			fprintf(stderr, "    ERROR: Pin %d is driven by an analog source (%s) but does not have IBUF_TYPE = ANALOG\n",
-				it->first,
-				signal.GetOutputName().c_str()
-				);
-			exit(-1);
+			//Check for analog output driving a pin not configured as analog for the input
+			if(	(dynamic_cast<Greenpak4VoltageReference*>(src) != NULL) ||
+				(dynamic_cast<Greenpak4PGA*>(src) != NULL) )
+			{
+				fprintf(stderr, "    ERROR: Pin %d is driven by an analog source (%s) but does not have IBUF_TYPE = ANALOG\n",
+					it->first,
+					signal.GetOutputName().c_str()
+					);
+				exit(-1);
+			}
 		}
 	}
+	
+	//Check for ACMPs with inputs driven from non-analog IOs
+	for(unsigned int i=0; i<device->GetAcmpCount(); i++)
+	{
+		auto acmp = device->GetAcmp(i);
+		CheckAnalogIbuf(acmp, dynamic_cast<Greenpak4IOB*>(acmp->GetInput().GetRealEntity()));
+	}
+	
+	//Check for ABUF with inputs driven from non-analog IOs
+	auto abuf = device->GetAbuf();
+	CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(abuf->GetInput().GetRealEntity()));
+	
+	//Check for PGA with inputs driven from non-analog IOs
+	auto pga = device->GetPGA();
+	CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(pga->GetInputP().GetRealEntity()));
+	CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(pga->GetInputN().GetRealEntity()));
+	
+	//TODO: Check for VREF with inputs driven from non-analog IOs
 	
 	//Check for multiple ACMPs using different settings of ACMP0's output mux
 	typedef pair<string, Greenpak4EntityOutput> spair;
@@ -243,6 +262,21 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		}
 	}
 		
+}
+
+void CheckAnalogIbuf(Greenpak4BitstreamEntity* load, Greenpak4IOB* iob)
+{
+	if(!iob)
+		return;
+	if(iob->IsAnalogIbuf())
+		return;
+	
+	fprintf(stderr, "    ERROR: %s is driven by IOB %s, which does not have IBUF_TYPE = ANALOG\n",
+		load->GetDescription().c_str(),
+		iob->GetDescription().c_str()
+		);
+		
+	exit(-1);
 }
 
 /**
