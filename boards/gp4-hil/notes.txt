@@ -1,0 +1,16 @@
+Hardware-in-loop test platform for gp4par
+
+Requirements:
+* Can fully replace official GreenPak dev kit
+* EEPROM-programmed MAC address (MCHP)
+* IPv6 + TCP socket based programming
+* FPGA based digital I/O on every pin
+* Analog I/O (>= 1 MHz) on every pin
+* TCP socket based LA/DSO to interface to the I/O
+* C++ -> TCP socket API to drive waveforms to the device
+* Two Vdd rails, control over both (0 to 6V)
+* Current monitoring on both Vdd rails at >10 MHz, ideally ~100
+
+Nice to have:
+* Several JTAG master ports w/ level shifters
+* Usable as testbed for MARBLE WALRUS TCP-to-JTAG core
