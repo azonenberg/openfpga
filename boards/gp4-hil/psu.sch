@@ -18,7 +18,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 2 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-09"
+Date "2016-05-10"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -28,4 +28,31 @@ Comment4 ""
 $EndDescr
 Text Notes 5200 3450 0    60   ~ 0
 Low current rails:\n* 1V25 precision reference for XADC\n\nHigh current rails (LTC3374):\n* 2V5 PHY analog\n* 1V8 FPGA VCCAUX/VCCXADC, PHY I/O\n* 1V2 PHY analog/digital core\n* 1V0 FPGA VCCINT/VCCBRAM\n\nVariable rails:\n* 7V5 Vpp\n* 0-3.4V Vdd/VCCO1\n* 0-3.4V VCCO2\n\nInput: Unregulated 5V DC
+$Comp
+L LTC3374-QFN U3
+U 1 1 5732D550
+P 2550 4200
+F 0 "U3" H 3477 4511 60  0000 L CNN
+F 1 "LTC3374-QFN" H 3477 4405 60  0000 L CNN
+F 2 "" H 2550 4200 60  0000 C CNN
+F 3 "" H 2550 4200 60  0000 C CNN
+	1    2550 4200
+	1    0    0    -1  
+$EndComp
+Text HLabel 8000 4650 0    60   Output ~ 0
+DUT_VPP
+Text HLabel 8000 4000 0    60   Output ~ 0
+2V5
+Text HLabel 8000 4100 0    60   Output ~ 0
+1V8
+Text HLabel 8000 4200 0    60   Output ~ 0
+1V2
+Text HLabel 8000 4300 0    60   Output ~ 0
+1V0
+Text HLabel 8000 5150 0    60   Output ~ 0
+GND
+Text HLabel 8000 4750 0    60   Output ~ 0
+DUT_VDD1
+Text HLabel 8000 4850 0    60   Output ~ 0
+DUT_VDD2
 $EndSCHEMATC

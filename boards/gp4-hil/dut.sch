@@ -14,11 +14,11 @@ LIBS:conn
 LIBS:gp4-hil-cache
 EELAYER 25 0
 EELAYER END
-$Descr A4 11693 8268
+$Descr A3 16535 11693
 encoding utf-8
 Sheet 5 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-09"
+Date "2016-05-10"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -27,10 +27,10 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L CONN_01X20 P?
+L CONN_01X20 P1
 U 1 1 5731797F
 P 1400 1900
-F 0 "P?" H 1478 1938 50  0000 L CNN
+F 0 "P1" H 1478 1938 50  0000 L CNN
 F 1 "CONN_01X20" H 1478 1846 50  0000 L CNN
 F 2 "" H 1400 1900 60  0000 C CNN
 F 3 "" H 1400 1900 60  0000 C CNN
@@ -127,4 +127,59 @@ Text Notes 2150 4000 0    60   ~ 0
 Total number of switches needed:\n* 18 GPIO -> FPGA\n* 15 GPIO -> DAC\n* 2 Vdd -> regulator\n\nADC is always connected\n\nNeed >8V compatible switch (in open state) for FPGA->GPIO2
 Text Label 2400 1050 0    60   ~ 0
 DUT_GPIO2
+$Comp
+L TS3A4751 U1
+U 1 1 5732B5B9
+P 1700 6000
+F 0 "U1" H 2300 6050 60  0000 C CNN
+F 1 "TS3A4751" H 1900 5950 60  0000 C CNN
+F 2 "" H 1700 6000 60  0000 C CNN
+F 3 "" H 1700 6000 60  0000 C CNN
+	1    1700 6000
+	1    0    0    -1  
+$EndComp
+$Comp
+L TS3A4751 U1
+U 2 1 5732C1D7
+P 1700 6600
+F 0 "U1" H 2300 6650 60  0000 C CNN
+F 1 "TS3A4751" H 1900 6550 60  0000 C CNN
+F 2 "" H 1700 6600 60  0000 C CNN
+F 3 "" H 1700 6600 60  0000 C CNN
+	2    1700 6600
+	1    0    0    -1  
+$EndComp
+$Comp
+L TS3A4751 U1
+U 3 1 5732C21D
+P 3200 6000
+F 0 "U1" H 3800 6050 60  0000 C CNN
+F 1 "TS3A4751" H 3400 5950 60  0000 C CNN
+F 2 "" H 3200 6000 60  0000 C CNN
+F 3 "" H 3200 6000 60  0000 C CNN
+	3    3200 6000
+	1    0    0    -1  
+$EndComp
+$Comp
+L TS3A4751 U1
+U 4 1 5732C2B5
+P 3200 6600
+F 0 "U1" H 3800 6650 60  0000 C CNN
+F 1 "TS3A4751" H 3400 6550 60  0000 C CNN
+F 2 "" H 3200 6600 60  0000 C CNN
+F 3 "" H 3200 6600 60  0000 C CNN
+	4    3200 6600
+	1    0    0    -1  
+$EndComp
+$Comp
+L TS3A4751 U4
+U 4 1 5732C31D
+P 4300 6600
+F 0 "U4" H 4900 6650 60  0000 C CNN
+F 1 "TS3A4751" H 4500 6550 60  0000 C CNN
+F 2 "" H 4300 6600 60  0000 C CNN
+F 3 "" H 4300 6600 60  0000 C CNN
+	4    4300 6600
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
