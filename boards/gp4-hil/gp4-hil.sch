@@ -10,11 +10,13 @@ LIBS:passive-azonenberg
 LIBS:power-azonenberg
 LIBS:special-azonenberg
 LIBS:xilinx-azonenberg
+LIBS:conn
+LIBS:gp4-hil-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 1 6
+Sheet 1 7
 Title "GreenPak Hardware-In-Loop Test Platform"
 Date "2016-05-09"
 Rev "0.1"
