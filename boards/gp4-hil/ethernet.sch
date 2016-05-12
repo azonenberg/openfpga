@@ -11,17 +11,18 @@ LIBS:power-azonenberg
 LIBS:special-azonenberg
 LIBS:xilinx-azonenberg
 LIBS:conn
+LIBS:device
 LIBS:gp4-hil-cache
 EELAYER 25 0
 EELAYER END
-$Descr A4 11693 8268
+$Descr A3 16535 11693
 encoding utf-8
 Sheet 3 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-10"
+Date "2016-05-11"
 Rev "0.1"
 Comp "Andrew Zonenberg"
-Comment1 ""
+Comment1 "Ethernet PHY"
 Comment2 ""
 Comment3 ""
 Comment4 ""
@@ -29,23 +30,655 @@ $EndDescr
 $Comp
 L KSZ9031RN U5
 U 1 1 57316FC3
-P 5200 5150
-F 0 "U5" H 6025 8487 60  0000 C CNN
-F 1 "KSZ9031RN" H 6025 8381 60  0000 C CNN
-F 2 "" H 5200 5150 60  0000 C CNN
-F 3 "" H 5200 5150 60  0000 C CNN
-	1    5200 5150
+P 6050 7700
+F 0 "U5" H 6875 11037 60  0000 C CNN
+F 1 "KSZ9031RN" H 6875 10931 60  0000 C CNN
+F 2 "" H 6050 7700 60  0000 C CNN
+F 3 "" H 6050 7700 60  0000 C CNN
+	1    6050 7700
 	1    0    0    -1  
 $EndComp
 $Comp
 L BEL_FUSE_0826-1G1T-23-F J1
 U 1 1 57317077
-P 1600 5250
-F 0 "J1" H 1950 5050 60  0000 L CNN
-F 1 "BEL_FUSE_0826-1G1T-23-F" H 750 4950 60  0000 L CNN
-F 2 "" H 1600 5250 60  0000 C CNN
-F 3 "" H 1600 5250 60  0000 C CNN
-	1    1600 5250
+P 1350 10500
+F 0 "J1" H 1700 10300 60  0000 L CNN
+F 1 "BEL_FUSE_0826-1G1T-23-F" H 500 10200 60  0000 L CNN
+F 2 "" H 1350 10500 60  0000 C CNN
+F 3 "" H 1350 10500 60  0000 C CNN
+	1    1350 10500
 	-1   0    0    -1  
 $EndComp
+Text HLabel 1150 800  0    60   Input ~ 0
+2V5
+Text HLabel 1150 1300 0    60   Input ~ 0
+1V8
+Text HLabel 1150 2300 0    60   Input ~ 0
+1V2
+Text HLabel 1150 1100 0    60   Input ~ 0
+GND
+$Comp
+L C C2
+U 1 1 5733F805
+P 1400 950
+F 0 "C2" H 1450 1050 50  0000 L CNN
+F 1 "0.47 uF" H 1450 850 50  0000 L CNN
+F 2 "" H 1438 800 30  0000 C CNN
+F 3 "" H 1400 950 60  0000 C CNN
+	1    1400 950 
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C8
+U 1 1 5733F8E5
+P 1750 950
+F 0 "C8" H 1800 1050 50  0000 L CNN
+F 1 "0.47 uF" H 1800 850 50  0000 L CNN
+F 2 "" H 1788 800 30  0000 C CNN
+F 3 "" H 1750 950 60  0000 C CNN
+	1    1750 950 
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C13
+U 1 1 5733F90B
+P 2100 950
+F 0 "C13" H 2150 1050 50  0000 L CNN
+F 1 "4.7 uF" H 2150 850 50  0000 L CNN
+F 2 "" H 2138 800 30  0000 C CNN
+F 3 "" H 2100 950 60  0000 C CNN
+	1    2100 950 
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1150 800  2100 800 
+Connection ~ 1400 800 
+Connection ~ 1750 800 
+Wire Wire Line
+	1150 1100 2100 1100
+Connection ~ 1750 1100
+Connection ~ 1400 1100
+$Comp
+L C C3
+U 1 1 5733FBE7
+P 1400 1450
+F 0 "C3" H 1450 1550 50  0000 L CNN
+F 1 "0.47 uF" H 1450 1350 50  0000 L CNN
+F 2 "" H 1438 1300 30  0000 C CNN
+F 3 "" H 1400 1450 60  0000 C CNN
+	1    1400 1450
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C9
+U 1 1 5733FC21
+P 1750 1450
+F 0 "C9" H 1800 1550 50  0000 L CNN
+F 1 "0.47 uF" H 1800 1350 50  0000 L CNN
+F 2 "" H 1788 1300 30  0000 C CNN
+F 3 "" H 1750 1450 60  0000 C CNN
+	1    1750 1450
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C14
+U 1 1 5733FC56
+P 2100 1450
+F 0 "C14" H 2150 1550 50  0000 L CNN
+F 1 "0.47 uF" H 2150 1350 50  0000 L CNN
+F 2 "" H 2138 1300 30  0000 C CNN
+F 3 "" H 2100 1450 60  0000 C CNN
+	1    2100 1450
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C18
+U 1 1 5733FCE5
+P 2450 1450
+F 0 "C18" H 2500 1550 50  0000 L CNN
+F 1 "4.7 uF" H 2500 1350 50  0000 L CNN
+F 2 "" H 2488 1300 30  0000 C CNN
+F 3 "" H 2450 1450 60  0000 C CNN
+	1    2450 1450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1150 1300 2450 1300
+Connection ~ 1400 1300
+Connection ~ 1750 1300
+Connection ~ 2100 1300
+Wire Wire Line
+	1150 1600 2450 1600
+Connection ~ 2100 1600
+Connection ~ 1750 1600
+Text Label 1150 1600 2    60   ~ 0
+GND
+Connection ~ 1400 1600
+$Comp
+L C C4
+U 1 1 573400FB
+P 1400 1950
+F 0 "C4" H 1450 2050 50  0000 L CNN
+F 1 "0.47 uF" H 1450 1850 50  0000 L CNN
+F 2 "" H 1438 1800 30  0000 C CNN
+F 3 "" H 1400 1950 60  0000 C CNN
+	1    1400 1950
+	1    0    0    -1  
+$EndComp
+Text Label 1150 1800 2    60   ~ 0
+A1V2_ETH
+Wire Wire Line
+	1150 1800 2100 1800
+$Comp
+L C C10
+U 1 1 57340176
+P 1750 1950
+F 0 "C10" H 1800 2050 50  0000 L CNN
+F 1 "0.47 uF" H 1800 1850 50  0000 L CNN
+F 2 "" H 1788 1800 30  0000 C CNN
+F 3 "" H 1750 1950 60  0000 C CNN
+	1    1750 1950
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C15
+U 1 1 573401B9
+P 2100 1950
+F 0 "C15" H 2150 2050 50  0000 L CNN
+F 1 "4.7 uF" H 2150 1850 50  0000 L CNN
+F 2 "" H 2138 1800 30  0000 C CNN
+F 3 "" H 2100 1950 60  0000 C CNN
+	1    2100 1950
+	1    0    0    -1  
+$EndComp
+Text Label 1150 2100 2    60   ~ 0
+GND
+Wire Wire Line
+	1150 2100 2100 2100
+Connection ~ 1400 2100
+Connection ~ 1400 1800
+Connection ~ 1750 1800
+Connection ~ 1750 2100
+$Comp
+L C C5
+U 1 1 5734061F
+P 1400 2450
+F 0 "C5" H 1450 2550 50  0000 L CNN
+F 1 "0.47 uF" H 1450 2350 50  0000 L CNN
+F 2 "" H 1438 2300 30  0000 C CNN
+F 3 "" H 1400 2450 60  0000 C CNN
+	1    1400 2450
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C11
+U 1 1 5734066A
+P 1750 2450
+F 0 "C11" H 1800 2550 50  0000 L CNN
+F 1 "0.47 uF" H 1800 2350 50  0000 L CNN
+F 2 "" H 1788 2300 30  0000 C CNN
+F 3 "" H 1750 2450 60  0000 C CNN
+	1    1750 2450
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C16
+U 1 1 573406BA
+P 2100 2450
+F 0 "C16" H 2150 2550 50  0000 L CNN
+F 1 "0.47 uF" H 2150 2350 50  0000 L CNN
+F 2 "" H 2138 2300 30  0000 C CNN
+F 3 "" H 2100 2450 60  0000 C CNN
+	1    2100 2450
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C19
+U 1 1 57340705
+P 2450 2450
+F 0 "C19" H 2500 2550 50  0000 L CNN
+F 1 "0.47 uF" H 2500 2350 50  0000 L CNN
+F 2 "" H 2488 2300 30  0000 C CNN
+F 3 "" H 2450 2450 60  0000 C CNN
+	1    2450 2450
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C21
+U 1 1 5734074F
+P 2850 2450
+F 0 "C21" H 2900 2550 50  0000 L CNN
+F 1 "0.47 uF" H 2900 2350 50  0000 L CNN
+F 2 "" H 2888 2300 30  0000 C CNN
+F 3 "" H 2850 2450 60  0000 C CNN
+	1    2850 2450
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C22
+U 1 1 5734079E
+P 3250 2450
+F 0 "C22" H 3300 2550 50  0000 L CNN
+F 1 "0.47 uF" H 3300 2350 50  0000 L CNN
+F 2 "" H 3288 2300 30  0000 C CNN
+F 3 "" H 3250 2450 60  0000 C CNN
+	1    3250 2450
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C23
+U 1 1 573407F4
+P 3650 2450
+F 0 "C23" H 3700 2550 50  0000 L CNN
+F 1 "4.7 uF" H 3700 2350 50  0000 L CNN
+F 2 "" H 3688 2300 30  0000 C CNN
+F 3 "" H 3650 2450 60  0000 C CNN
+	1    3650 2450
+	1    0    0    -1  
+$EndComp
+Text Label 1150 2600 2    60   ~ 0
+GND
+Wire Wire Line
+	1150 2300 3650 2300
+Connection ~ 1400 2300
+Connection ~ 1750 2300
+Connection ~ 2100 2300
+Connection ~ 2450 2300
+Connection ~ 2850 2300
+Connection ~ 3250 2300
+Wire Wire Line
+	1150 2600 3650 2600
+Connection ~ 3250 2600
+Connection ~ 2850 2600
+Connection ~ 2450 2600
+Connection ~ 2100 2600
+Connection ~ 1750 2600
+Connection ~ 1400 2600
+Text Label 1150 2800 2    60   ~ 0
+A1V2_ETHPLL
+$Comp
+L C C6
+U 1 1 573444FF
+P 1400 2950
+F 0 "C6" H 1450 3050 50  0000 L CNN
+F 1 "0.47 uF" H 1450 2850 50  0000 L CNN
+F 2 "" H 1438 2800 30  0000 C CNN
+F 3 "" H 1400 2950 60  0000 C CNN
+	1    1400 2950
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C12
+U 1 1 57344577
+P 1750 2950
+F 0 "C12" H 1800 3050 50  0000 L CNN
+F 1 "4.7 uF" H 1800 2850 50  0000 L CNN
+F 2 "" H 1788 2800 30  0000 C CNN
+F 3 "" H 1750 2950 60  0000 C CNN
+	1    1750 2950
+	1    0    0    -1  
+$EndComp
+Text Label 1150 3100 2    60   ~ 0
+GND
+Wire Wire Line
+	1150 3100 1750 3100
+Connection ~ 1400 3100
+Wire Wire Line
+	1150 2800 1750 2800
+Connection ~ 1400 2800
+$Comp
+L R R1
+U 1 1 57344AD9
+P 1450 3750
+F 0 "R1" V 1400 3900 50  0000 C CNN
+F 1 "10K" V 1450 3750 50  0000 C CNN
+F 2 "" V 1380 3750 30  0000 C CNN
+F 3 "" H 1450 3750 30  0000 C CNN
+	1    1450 3750
+	0    1    1    0   
+$EndComp
+Text Label 1200 3750 2    60   ~ 0
+ETH_LED1_N
+Text Label 1700 3750 0    60   ~ 0
+1V8
+Wire Wire Line
+	1200 3750 1300 3750
+Wire Wire Line
+	1700 3750 1600 3750
+$Comp
+L R R2
+U 1 1 57344F60
+P 1450 4000
+F 0 "R2" V 1400 4150 50  0000 C CNN
+F 1 "1K" V 1450 4000 50  0000 C CNN
+F 2 "" V 1380 4000 30  0000 C CNN
+F 3 "" H 1450 4000 30  0000 C CNN
+	1    1450 4000
+	0    1    1    0   
+$EndComp
+Text Label 1200 4000 2    60   ~ 0
+ETH_LED2_N
+Text Label 1700 4000 0    60   ~ 0
+GND
+Wire Wire Line
+	1700 4000 1600 4000
+Wire Wire Line
+	1300 4000 1200 4000
+Text Notes 900  4550 0    60   ~ 0
+LED strap circuits
+$Comp
+L R R3
+U 1 1 57345203
+P 1450 4200
+F 0 "R3" V 1400 4400 50  0000 C CNN
+F 1 "220" V 1450 4200 50  0000 C CNN
+F 2 "" V 1380 4200 30  0000 C CNN
+F 3 "" H 1450 4200 30  0000 C CNN
+	1    1450 4200
+	0    1    1    0   
+$EndComp
+Text Label 1200 4200 2    60   ~ 0
+ETH_LED1_P
+Text Label 1200 4400 2    60   ~ 0
+ETH_LED2_P
+Wire Wire Line
+	1300 4200 1200 4200
+$Comp
+L R R4
+U 1 1 57345687
+P 1450 4400
+F 0 "R4" V 1400 4600 50  0000 C CNN
+F 1 "220" V 1450 4400 50  0000 C CNN
+F 2 "" V 1380 4400 30  0000 C CNN
+F 3 "" H 1450 4400 30  0000 C CNN
+	1    1450 4400
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	1300 4400 1200 4400
+Text Label 1700 4200 0    60   ~ 0
+2V5
+Wire Wire Line
+	1600 4200 1700 4200
+Wire Wire Line
+	1700 4200 1700 4400
+Wire Wire Line
+	1700 4400 1600 4400
+Text Label 1800 8500 0    60   ~ 0
+ETH_LED1_P
+Text Label 1800 8600 0    60   ~ 0
+ETH_LED1_N
+Text Label 1800 8700 0    60   ~ 0
+ETH_LED2_P
+Text Label 1800 8800 0    60   ~ 0
+ETH_LED2_N
+Wire Wire Line
+	1800 8800 1650 8800
+Wire Wire Line
+	1650 8700 1800 8700
+Wire Wire Line
+	1800 8600 1650 8600
+Wire Wire Line
+	1650 8500 1800 8500
+Text Label 1800 9100 0    60   ~ 0
+CH1_TAP
+Text Label 1800 9500 0    60   ~ 0
+CH2_TAP
+Text Label 1800 9900 0    60   ~ 0
+CH3_TAP
+Text Label 1800 10300 0    60   ~ 0
+CH4_TAP
+Wire Wire Line
+	1800 10300 1650 10300
+Wire Wire Line
+	1650 9900 1800 9900
+Wire Wire Line
+	1800 9500 1650 9500
+Wire Wire Line
+	1650 9100 1800 9100
+Text Label 1800 9000 0    60   ~ 0
+ETH_A_P
+Text Label 1800 9400 0    60   ~ 0
+ETH_B_P
+Text Label 1800 9800 0    60   ~ 0
+ETH_C_P
+Text Label 1800 10200 0    60   ~ 0
+ETH_D_P
+Text Label 1800 10600 0    60   ~ 0
+GND
+Wire Wire Line
+	1800 10600 1650 10600
+Text Label 1800 9200 0    60   ~ 0
+ETH_A_N
+Text Label 1800 9600 0    60   ~ 0
+ETH_B_N
+Text Label 1800 10000 0    60   ~ 0
+ETH_C_N
+Text Label 1800 10400 0    60   ~ 0
+ETH_D_N
+Wire Wire Line
+	1800 10400 1650 10400
+Wire Wire Line
+	1800 10200 1650 10200
+Wire Wire Line
+	1650 10000 1800 10000
+Wire Wire Line
+	1800 9800 1650 9800
+Wire Wire Line
+	1650 9600 1800 9600
+Wire Wire Line
+	1800 9400 1650 9400
+Text Notes 1150 3250 0    60   ~ 0
+PHY decoupling
+Text Notes 900  5500 0    60   ~ 0
+Tap termination
+$Comp
+L C C1
+U 1 1 573471D1
+P 1150 5200
+F 0 "C1" H 1200 5300 50  0000 L CNN
+F 1 "0.1 uF" H 1200 5100 50  0000 L CNN
+F 2 "" H 1188 5050 30  0000 C CNN
+F 3 "" H 1150 5200 60  0000 C CNN
+	1    1150 5200
+	1    0    0    -1  
+$EndComp
+Text Label 1150 5050 2    60   ~ 0
+CH1_TAP
+$Comp
+L C C7
+U 1 1 573473E3
+P 1700 5200
+F 0 "C7" H 1750 5300 50  0000 L CNN
+F 1 "0.1 uF" H 1750 5100 50  0000 L CNN
+F 2 "" H 1738 5050 30  0000 C CNN
+F 3 "" H 1700 5200 60  0000 C CNN
+	1    1700 5200
+	1    0    0    -1  
+$EndComp
+Text Label 1700 5050 2    60   ~ 0
+CH2_TAP
+Text Label 2250 5050 2    60   ~ 0
+CH3_TAP
+$Comp
+L C C17
+U 1 1 57347586
+P 2250 5200
+F 0 "C17" H 2300 5300 50  0000 L CNN
+F 1 "0.1 uF" H 2300 5100 50  0000 L CNN
+F 2 "" H 2288 5050 30  0000 C CNN
+F 3 "" H 2250 5200 60  0000 C CNN
+	1    2250 5200
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C20
+U 1 1 57347606
+P 2800 5200
+F 0 "C20" H 2850 5300 50  0000 L CNN
+F 1 "0.1 uF" H 2850 5100 50  0000 L CNN
+F 2 "" H 2838 5050 30  0000 C CNN
+F 3 "" H 2800 5200 60  0000 C CNN
+	1    2800 5200
+	1    0    0    -1  
+$EndComp
+Text Label 2800 5050 2    60   ~ 0
+CH4_TAP
+Wire Wire Line
+	950  5350 2800 5350
+Connection ~ 2250 5350
+Connection ~ 1700 5350
+Text Label 950  5350 2    60   ~ 0
+GND
+Connection ~ 1150 5350
+$Comp
+L XC7AxT-xFTG256x U?
+U 3 1 57349080
+P 11200 8100
+AR Path="/57316B0C/57349080" Ref="U?"  Part="1" 
+AR Path="/57316A40/57349080" Ref="U2"  Part="3" 
+F 0 "U2" H 11200 7900 60  0000 L CNN
+F 1 "XC7A100T-1FTG256C" H 11200 8000 60  0000 L CNN
+F 2 "" H 11200 8100 60  0000 C CNN
+F 3 "" H 11200 8100 60  0000 C CNN
+	3    11200 8100
+	1    0    0    -1  
+$EndComp
+Text Notes 5900 9600 0    60   ~ 0
+TODO: 25 MHz clock for Ethernet
+Wire Wire Line
+	5650 6600 5650 6700
+Wire Wire Line
+	5450 6600 5750 6600
+Wire Wire Line
+	5650 6700 5750 6700
+Text Label 5450 6600 2    60   ~ 0
+GND
+Wire Wire Line
+	4350 5450 5750 5450
+Wire Wire Line
+	5650 5450 5650 5950
+Wire Wire Line
+	5650 5550 5750 5550
+Wire Wire Line
+	5650 5650 5750 5650
+Connection ~ 5650 5550
+Wire Wire Line
+	5650 5750 5750 5750
+Connection ~ 5650 5650
+Wire Wire Line
+	5650 5850 5750 5850
+Connection ~ 5650 5750
+Wire Wire Line
+	5650 5950 5750 5950
+Connection ~ 5650 5850
+Wire Wire Line
+	5750 5350 5650 5350
+Wire Wire Line
+	5650 5350 5650 5250
+Wire Wire Line
+	4950 5250 5750 5250
+Wire Wire Line
+	5650 5150 5750 5150
+Wire Wire Line
+	5650 4950 5650 5150
+Wire Wire Line
+	5650 5050 5750 5050
+Wire Wire Line
+	5450 4950 5750 4950
+Connection ~ 5650 5050
+Wire Wire Line
+	5650 4650 5650 4750
+Wire Wire Line
+	5650 4750 5750 4750
+Wire Wire Line
+	5450 4650 5750 4650
+Wire Wire Line
+	1800 9000 1650 9000
+Wire Wire Line
+	1650 9200 1800 9200
+Text Label 5550 6900 2    60   ~ 0
+ETH_A_P
+Text Label 5550 7000 2    60   ~ 0
+ETH_A_N
+Wire Wire Line
+	5550 6900 5750 6900
+Wire Wire Line
+	5750 7000 5550 7000
+Text Label 5550 7100 2    60   ~ 0
+ETH_B_P
+Text Label 5550 7200 2    60   ~ 0
+ETH_B_N
+Wire Wire Line
+	5550 7100 5750 7100
+Wire Wire Line
+	5750 7200 5550 7200
+Text Label 5550 7300 2    60   ~ 0
+ETH_C_P
+Text Label 5550 7400 2    60   ~ 0
+ETH_C_N
+Wire Wire Line
+	5550 7300 5750 7300
+Wire Wire Line
+	5750 7400 5550 7400
+Text Label 5550 7500 2    60   ~ 0
+ETH_D_P
+Text Label 5550 7600 2    60   ~ 0
+ETH_D_N
+Wire Wire Line
+	5550 7500 5750 7500
+Wire Wire Line
+	5750 7600 5550 7600
+NoConn ~ 5750 6300
+Text Label 5550 6050 2    60   ~ 0
+A1V2_ETHPLL
+Wire Wire Line
+	4950 6050 5750 6050
+$Comp
+L INDUCTOR_PWROUT L2
+U 1 1 5734A927
+P 4650 6050
+F 0 "L2" V 4492 6050 40  0000 C CNN
+F 1 "600R" V 4570 6050 40  0000 C CNN
+F 2 "" H 4650 6050 60  0000 C CNN
+F 3 "" H 4650 6050 60  0000 C CNN
+	1    4650 6050
+	0    1    1    0   
+$EndComp
+$Comp
+L INDUCTOR_PWROUT L1
+U 1 1 5734ABB6
+P 4650 5250
+F 0 "L1" V 4492 5250 40  0000 C CNN
+F 1 "600R" V 4570 5250 40  0000 C CNN
+F 2 "" H 4650 5250 60  0000 C CNN
+F 3 "" H 4650 5250 60  0000 C CNN
+	1    4650 5250
+	0    1    1    0   
+$EndComp
+Connection ~ 5650 5250
+Text Label 5550 5250 2    60   ~ 0
+A1V2_ETH
+Text Label 4350 5250 2    60   ~ 0
+1V2
+Wire Wire Line
+	4350 5250 4350 6050
+Connection ~ 4350 5450
+Connection ~ 5650 5450
+Text Label 5450 4950 2    60   ~ 0
+1V8
+Connection ~ 5650 4950
+Text Label 5450 4650 2    60   ~ 0
+2V5
+Connection ~ 5650 4650
+NoConn ~ 5750 4850
+Connection ~ 5650 6600
+Text Label 8200 4850 0    60   ~ 0
+ETH_LED1_N
+Wire Wire Line
+	8200 4850 8000 4850
+Text Label 8200 4750 0    60   ~ 0
+ETH_LED2_N
+Wire Wire Line
+	8200 4750 8000 4750
 $EndSCHEMATC

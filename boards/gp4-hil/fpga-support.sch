@@ -11,6 +11,7 @@ LIBS:power-azonenberg
 LIBS:special-azonenberg
 LIBS:xilinx-azonenberg
 LIBS:conn
+LIBS:device
 LIBS:gp4-hil-cache
 EELAYER 25 0
 EELAYER END
@@ -18,7 +19,7 @@ $Descr A3 16535 11693
 encoding utf-8
 Sheet 7 7
 Title ""
-Date "2016-05-10"
+Date "2016-05-11"
 Rev ""
 Comp ""
 Comment1 ""

@@ -1,4 +1,4 @@
-update=Mon 09 May 2016 11:02:22 PM PDT
+update=Wed 11 May 2016 08:24:41 PM PDT
 version=1
 last_client=kicad
 [pcbnew]
@@ -41,3 +41,4 @@ LibName9=power-azonenberg
 LibName10=special-azonenberg
 LibName11=xilinx-azonenberg
 LibName12=/nfs4/home/azonenberg/code/3rdparty/kicad-library/library/conn
+LibName13=/nfs4/home/azonenberg/code/3rdparty/kicad-library/library/device

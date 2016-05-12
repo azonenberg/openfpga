@@ -11,6 +11,7 @@ LIBS:power-azonenberg
 LIBS:special-azonenberg
 LIBS:xilinx-azonenberg
 LIBS:conn
+LIBS:device
 LIBS:gp4-hil-cache
 EELAYER 25 0
 EELAYER END
@@ -18,7 +19,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-10"
+Date "2016-05-11"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "Top level"
@@ -41,10 +42,14 @@ F8 "DUT_VDD1" O R 2550 1450 60
 F9 "DUT_VDD2" O R 2550 1550 60 
 $EndSheet
 $Sheet
-S 3000 1200 900  1250
+S 1500 2950 1050 1250
 U 57316A40
 F0 "Ethernet" 60
 F1 "ethernet.sch" 60
+F2 "2V5" I R 2550 3500 60 
+F3 "1V8" I R 2550 3600 60 
+F4 "1V2" I R 2550 3700 60 
+F5 "GND" I R 2550 4000 60 
 $EndSheet
 $Sheet
 S 4600 1200 1100 1250
