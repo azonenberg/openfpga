@@ -54,42 +54,8 @@ Text Notes 2150 4200 0    60   ~ 0
 TODO: Pass transistor to enable DUT_VDD2
 Text Notes 2150 4300 0    60   ~ 0
 TODO: Buffered indicator LEDs
-Text Label 2400 1150 0    60   ~ 0
-DUT_GPIO3
 Wire Wire Line
 	1900 1950 1600 1950
-Text Label 2400 1250 0    60   ~ 0
-DUT_GPIO4
-Text Label 2400 1350 0    60   ~ 0
-DUT_GPIO5
-Text Label 2400 1450 0    60   ~ 0
-DUT_GPIO6
-Text Label 2400 1550 0    60   ~ 0
-DUT_GPIO7
-Text Label 2400 1650 0    60   ~ 0
-DUT_GPIO8
-Text Label 2400 1750 0    60   ~ 0
-DUT_GPIO9
-Text Label 2400 1850 0    60   ~ 0
-DUT_GPIO10
-Text Label 2400 2050 0    60   ~ 0
-DUT_GPIO12
-Text Label 2400 2150 0    60   ~ 0
-DUT_GPIO13
-Text Label 2400 2250 0    60   ~ 0
-DUT_GPIO14
-Text Label 2400 2350 0    60   ~ 0
-DUT_GPIO15
-Text Label 2400 2450 0    60   ~ 0
-DUT_GPIO16
-Text Label 2400 2550 0    60   ~ 0
-DUT_GPIO17
-Text Label 2400 2650 0    60   ~ 0
-DUT_GPIO18
-Text Label 2400 2750 0    60   ~ 0
-DUT_GPIO19
-Text Label 2400 2850 0    60   ~ 0
-DUT_GPIO20
 Wire Wire Line
 	1600 1150 2400 1150
 Wire Wire Line
@@ -126,8 +92,6 @@ Wire Wire Line
 	1600 2850 2400 2850
 Text Notes 2150 4000 0    60   ~ 0
 Total number of switches needed:\n* 18 GPIO -> FPGA\n* 15 GPIO -> DAC\n* 2 Vdd -> regulator\n\nADC is always connected\n\nNeed >8V compatible switch (in open state) for FPGA->GPIO2
-Text Label 2400 1050 0    60   ~ 0
-DUT_GPIO2
 $Comp
 L TS3A4751 U1
 U 1 1 5732B5B9
@@ -183,4 +147,40 @@ F 3 "" H 4300 6600 60  0000 C CNN
 	4    4300 6600
 	1    0    0    -1  
 $EndComp
+Text HLabel 2400 1050 2    60   BiDi ~ 0
+DUT_GPIO2
+Text HLabel 2400 1150 2    60   BiDi ~ 0
+DUT_GPIO3
+Text HLabel 2400 1250 2    60   BiDi ~ 0
+DUT_GPIO4
+Text HLabel 2400 1350 2    60   BiDi ~ 0
+DUT_GPIO5
+Text HLabel 2400 1450 2    60   BiDi ~ 0
+DUT_GPIO6
+Text HLabel 2400 1550 2    60   BiDi ~ 0
+DUT_GPIO7
+Text HLabel 2400 1650 2    60   BiDi ~ 0
+DUT_GPIO8
+Text HLabel 2400 1750 2    60   BiDi ~ 0
+DUT_GPIO9
+Text HLabel 2400 1850 2    60   BiDi ~ 0
+DUT_GPIO10
+Text HLabel 2400 2050 2    60   BiDi ~ 0
+DUT_GPIO12
+Text HLabel 2400 2150 2    60   BiDi ~ 0
+DUT_GPIO13
+Text HLabel 2400 2250 2    60   BiDi ~ 0
+DUT_GPIO14
+Text HLabel 2400 2350 2    60   BiDi ~ 0
+DUT_GPIO15
+Text HLabel 2400 2450 2    60   BiDi ~ 0
+DUT_GPIO16
+Text HLabel 2400 2550 2    60   BiDi ~ 0
+DUT_GPIO17
+Text HLabel 2400 2650 2    60   BiDi ~ 0
+DUT_GPIO18
+Text HLabel 2400 2750 2    60   BiDi ~ 0
+DUT_GPIO19
+Text HLabel 2400 2850 2    60   BiDi ~ 0
+DUT_GPIO20
 $EndSCHEMATC

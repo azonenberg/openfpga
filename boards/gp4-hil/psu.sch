@@ -28,7 +28,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 Text Notes 5200 3450 0    60   ~ 0
-Low current rails:\n* 1V25 precision reference for XADC\n\nHigh current rails (LTC3374):\n* 2V5 PHY analog\n* 1V8 FPGA VCCAUX/VCCXADC, PHY I/O\n* 1V2 PHY analog/digital core\n* 1V0 FPGA VCCINT/VCCBRAM\n\nVariable rails:\n* 7V5 Vpp\n* 0-3.4V Vdd/VCCO1\n* 0-3.4V VCCO2\n\nInput: Unregulated 5V DC
+Low current rails:\n* 1V25 precision reference for XADC\n* 7V5 Vpp\n* 3V3_DUT from LDO\n* 1V8_DUT from LDO\n\nHigh current rails (LTC3374):\n* 2V5 PHY analog\n* 1V8 FPGA VCCAUX/VCCXADC, PHY I/O\n* 1V2 PHY analog/digital core\n* 1V0 FPGA VCCINT/VCCBRAM\n\nVariable rails:\n* DUT_VDD1/DUT_VDD2 muxed from 1V8/3V3_DUT\n\nInput: Unregulated 5V DC
 $Comp
 L LTC3374-QFN U3
 U 1 1 5732D550
