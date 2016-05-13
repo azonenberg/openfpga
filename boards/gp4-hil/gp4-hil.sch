@@ -19,7 +19,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-11"
+Date "2016-05-12"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "Top level"
@@ -121,7 +121,7 @@ F0 "FPGA support" 60
 F1 "fpga-support.sch" 60
 $EndSheet
 Text Notes 1500 5850 0    60   ~ 0
-Bank plan\n* 14 (1V8): Boot flash, clock, Ethernet\n* 15 (2V5): Analog stuff\n* 34 (variable): DUT bank 1\n* 35 (variable): DUT bank 2
+Bank plan\n* 14 (1V8): Boot flash, clock, Ethernet\n* 15 (2V5): ADCs\n* 34 (variable): DUT bank 1\n* 35 (variable): DUT bank 2
 Wire Wire Line
 	8100 1350 9000 1350
 Wire Wire Line
@@ -158,4 +158,6 @@ Wire Wire Line
 	8100 3050 9000 3050
 Wire Wire Line
 	9000 3150 8100 3150
+Text Notes 1500 7150 0    60   ~ 0
+Possibly the most overkill dev board ever.\n* Target device has 26 LUTs and 12 FFs\n* Support FPGA has 63,400 LUTs and 126800 FFs (if you load the 100t)\n* Has an ADC, DAC, and digital I/O on every pin of the DUT, all bridged out to TCP sockets\n* TCP programming, simply netcat a bitstream to the board to flash the DUT
 $EndSCHEMATC
