@@ -15,11 +15,11 @@ LIBS:device
 LIBS:gp4-hil-cache
 EELAYER 25 0
 EELAYER END
-$Descr A4 11693 8268
+$Descr A2 23386 16535
 encoding utf-8
-Sheet 1 7
+Sheet 4 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-12"
+Date "2016-05-13"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""

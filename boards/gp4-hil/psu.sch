@@ -15,14 +15,14 @@ LIBS:device
 LIBS:gp4-hil-cache
 EELAYER 25 0
 EELAYER END
-$Descr A4 11693 8268
+$Descr A2 23386 16535
 encoding utf-8
 Sheet 2 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-12"
+Date "2016-05-13"
 Rev "0.1"
 Comp "Andrew Zonenberg"
-Comment1 ""
+Comment1 "Power regulation"
 Comment2 ""
 Comment3 ""
 Comment4 ""
@@ -56,4 +56,6 @@ Text HLabel 8000 4750 0    60   Output ~ 0
 DUT_VDD1
 Text HLabel 8000 4850 0    60   Output ~ 0
 DUT_VDD2
+Text HLabel 8000 3900 0    60   Output ~ 0
+3V3
 $EndSCHEMATC
