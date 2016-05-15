@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 1 8
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-14"
+Date "2016-05-15"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "Top level"
@@ -28,7 +28,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Sheet
-S 1500 1200 1050 1250
+S 1500 1200 1050 1350
 U 57316A38
 F0 "Power supply" 60
 F1 "psu.sch" 60
@@ -41,6 +41,7 @@ F7 "GND" O R 2550 2350 60
 F8 "DUT_VDD1" O R 2550 1450 60 
 F9 "DUT_VDD2" O R 2550 1550 60 
 F10 "3V3" O R 2550 1750 60 
+F11 "PSU_VTEMP" O R 2550 2500 60 
 $EndSheet
 $Sheet
 S 1500 2950 1050 1250
@@ -53,7 +54,7 @@ F4 "1V2" I R 2550 3700 60
 F5 "GND" I R 2550 4000 60 
 $EndSheet
 $Sheet
-S 4600 1200 1100 1250
+S 1500 4650 1050 1250
 U 57316A4B
 F0 "JTAG masters" 60
 F1 "jtag-masters.sch" 60
@@ -87,7 +88,7 @@ F22 "DUT_GPIO19" B R 8100 3050 60
 F23 "DUT_GPIO20" B R 8100 3150 60 
 $EndSheet
 $Sheet
-S 9000 1200 900  3050
+S 9000 1200 950  3300
 U 57316A68
 F0 "Analog IO" 60
 F1 "analog-io.sch" 60
@@ -116,15 +117,16 @@ F23 "DUT_GPIO20" B L 9000 3150 60
 F24 "2V5" I L 9000 3950 60 
 F25 "1V8" I L 9000 4050 60 
 F26 "3V3" I L 9000 3850 60 
+F27 "PSU_VTEMP" I L 9000 4400 60 
 $EndSheet
 $Sheet
-S 5400 4100 900  1350
+S 1500 6450 1050 1350
 U 57316B0C
 F0 "FPGA support" 60
 F1 "fpga-support.sch" 60
 $EndSheet
-Text Notes 1500 5850 0    60   ~ 0
-Bank plan\n* 14 (1V8): Boot flash, clock, Ethernet\n* 15 (2V5): ADCs\n* 34 (variable): DUT bank 1\n* 35 (variable): DUT bank 2
+Text Notes 3250 9850 0    60   ~ 0
+Bank plan\n* 14 (1V8): Boot flash, clock, Ethernet (JTAG?)\n* 15 (2V5): ADCs\n* 34 (variable): DUT bank 1\n* 35 (variable): DUT bank 2
 Wire Wire Line
 	8100 1350 9000 1350
 Wire Wire Line
@@ -161,7 +163,7 @@ Wire Wire Line
 	8100 3050 9000 3050
 Wire Wire Line
 	9000 3150 8100 3150
-Text Notes 1500 7150 0    60   ~ 0
+Text Notes 3300 9100 0    60   ~ 0
 Possibly the most overkill dev board ever.\n* Target device has 26 LUTs and 12 FFs\n* Support FPGA has 63,400 LUTs and 126800 FFs (if you load the 100t)\n* Has an ADC, DAC, and digital I/O on every pin of the DUT, all bridged out to TCP sockets\n* TCP programming, simply netcat a bitstream to the board to flash the DUT
 Text Label 8250 1350 0    60   ~ 0
 DUT_GPIO2
@@ -223,6 +225,8 @@ F17 "DUT_GPIO17" B L 10900 2850 60
 F18 "DUT_GPIO18" B L 10900 2950 60 
 F19 "DUT_GPIO19" B L 10900 3050 60 
 F20 "DUT_GPIO20" B L 10900 3150 60 
+F21 "DUT_VDD1" I L 10900 3850 60 
+F22 "3V3" I L 10900 3700 60 
 $EndSheet
 Text Label 10250 1350 0    60   ~ 0
 DUT_GPIO2
@@ -304,4 +308,8 @@ Text Label 8800 4200 2    60   ~ 0
 GND
 Wire Wire Line
 	8800 4200 9000 4200
+Text Label 8800 4400 2    60   ~ 0
+PSU_VTEMP
+Wire Wire Line
+	8800 4400 9000 4400
 $EndSCHEMATC

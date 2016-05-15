@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 5 8
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-14"
+Date "2016-05-15"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -46,7 +46,7 @@ Wire Wire Line
 	1600 1050 2400 1050
 Text HLabel 2400 4850 2    60   Input ~ 0
 DUT_VPP
-Text HLabel 2350 4600 2    60   Input ~ 0
+Text HLabel 2400 4750 2    60   Input ~ 0
 DUT_VDD2
 Text HLabel 1900 1950 2    60   Input ~ 0
 GND
@@ -92,61 +92,6 @@ Wire Wire Line
 	1600 2850 2400 2850
 Text Notes 2150 4000 0    60   ~ 0
 Total number of switches needed:\n* 18 GPIO -> FPGA\n* 15 GPIO -> DAC\n* 2 Vdd -> regulator\n\nADC is always connected\n\nNeed >8V compatible switch (in open state) for FPGA->GPIO2
-$Comp
-L TS3A4751 U1
-U 1 1 5732B5B9
-P 1700 6000
-F 0 "U1" H 2300 6050 60  0000 C CNN
-F 1 "TS3A4751" H 1900 5950 60  0000 C CNN
-F 2 "" H 1700 6000 60  0000 C CNN
-F 3 "" H 1700 6000 60  0000 C CNN
-	1    1700 6000
-	1    0    0    -1  
-$EndComp
-$Comp
-L TS3A4751 U1
-U 2 1 5732C1D7
-P 1700 6600
-F 0 "U1" H 2300 6650 60  0000 C CNN
-F 1 "TS3A4751" H 1900 6550 60  0000 C CNN
-F 2 "" H 1700 6600 60  0000 C CNN
-F 3 "" H 1700 6600 60  0000 C CNN
-	2    1700 6600
-	1    0    0    -1  
-$EndComp
-$Comp
-L TS3A4751 U1
-U 3 1 5732C21D
-P 3200 6000
-F 0 "U1" H 3800 6050 60  0000 C CNN
-F 1 "TS3A4751" H 3400 5950 60  0000 C CNN
-F 2 "" H 3200 6000 60  0000 C CNN
-F 3 "" H 3200 6000 60  0000 C CNN
-	3    3200 6000
-	1    0    0    -1  
-$EndComp
-$Comp
-L TS3A4751 U1
-U 4 1 5732C2B5
-P 3200 6600
-F 0 "U1" H 3800 6650 60  0000 C CNN
-F 1 "TS3A4751" H 3400 6550 60  0000 C CNN
-F 2 "" H 3200 6600 60  0000 C CNN
-F 3 "" H 3200 6600 60  0000 C CNN
-	4    3200 6600
-	1    0    0    -1  
-$EndComp
-$Comp
-L TS3A4751 U4
-U 4 1 5732C31D
-P 4300 6600
-F 0 "U4" H 4900 6650 60  0000 C CNN
-F 1 "TS3A4751" H 4500 6550 60  0000 C CNN
-F 2 "" H 4300 6600 60  0000 C CNN
-F 3 "" H 4300 6600 60  0000 C CNN
-	4    4300 6600
-	1    0    0    -1  
-$EndComp
 Text HLabel 2400 1050 2    60   BiDi ~ 0
 DUT_GPIO2
 Text HLabel 2400 1150 2    60   BiDi ~ 0
@@ -183,4 +128,6 @@ Text HLabel 2400 2750 2    60   BiDi ~ 0
 DUT_GPIO19
 Text HLabel 2400 2850 2    60   BiDi ~ 0
 DUT_GPIO20
+Text Notes 6900 3300 0    60   ~ 0
+TODO: Expansion header of some sort\nTODO: Probe clips on every pin
 $EndSCHEMATC

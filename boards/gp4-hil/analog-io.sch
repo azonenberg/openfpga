@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 6 8
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-14"
+Date "2016-05-15"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -713,7 +713,6 @@ NoConn ~ 1650 6450
 NoConn ~ 1650 6550
 NoConn ~ 1650 6650
 NoConn ~ 1650 6750
-NoConn ~ 3050 6250
 NoConn ~ 3050 6350
 NoConn ~ 3050 6450
 NoConn ~ 3050 6550
@@ -1481,12 +1480,10 @@ DAC_SYNC_N
 Text Label 6250 4550 2    60   ~ 0
 DAC_SCLK
 Text Label 7800 3750 0    60   ~ 0
-GPIO2_ASIG
-Text Label 7800 3850 0    60   ~ 0
 GPIO3_ASIG
-Text Label 7800 3950 0    60   ~ 0
+Text Label 7800 3850 0    60   ~ 0
 GPIO4_ASIG
-Text Label 7800 4050 0    60   ~ 0
+Text Label 7800 3950 0    60   ~ 0
 GPIO5_ASIG
 $Comp
 L C C46
@@ -2090,13 +2087,13 @@ Text Label 6250 5700 2    60   ~ 0
 DAC_SYNC_N
 Text Label 6250 5800 2    60   ~ 0
 DAC_SCLK
-Text Label 7800 5000 0    60   ~ 0
+Text Label 7800 4050 0    60   ~ 0
 GPIO6_ASIG
-Text Label 7800 5100 0    60   ~ 0
+Text Label 7800 5000 0    60   ~ 0
 GPIO7_ASIG
-Text Label 7800 5200 0    60   ~ 0
+Text Label 7800 5100 0    60   ~ 0
 GPIO8_ASIG
-Text Label 7800 5300 0    60   ~ 0
+Text Label 7800 5200 0    60   ~ 0
 GPIO9_ASIG
 $Comp
 L C C47
@@ -2174,13 +2171,13 @@ Text Label 6250 6950 2    60   ~ 0
 DAC_SYNC_N
 Text Label 6250 7050 2    60   ~ 0
 DAC_SCLK
-Text Label 7800 6250 0    60   ~ 0
+Text Label 7800 5300 0    60   ~ 0
 GPIO10_ASIG
-Text Label 7800 6350 0    60   ~ 0
+Text Label 7800 6250 0    60   ~ 0
 GPIO12_ASIG
-Text Label 7800 6450 0    60   ~ 0
+Text Label 7800 6350 0    60   ~ 0
 GPIO13_ASIG
-Text Label 7800 6550 0    60   ~ 0
+Text Label 7800 6450 0    60   ~ 0
 GPIO14_ASIG
 $Comp
 L C C48
@@ -2258,9 +2255,9 @@ Text Label 6250 8200 2    60   ~ 0
 DAC_SYNC_N
 Text Label 6250 8300 2    60   ~ 0
 DAC_SCLK
-Text Label 7800 7500 0    60   ~ 0
+Text Label 7800 6550 0    60   ~ 0
 GPIO15_ASIG
-Text Label 7800 7600 0    60   ~ 0
+Text Label 7800 7500 0    60   ~ 0
 GPIO17_ASIG
 $Comp
 L C C49
@@ -2306,8 +2303,6 @@ Wire Wire Line
 Wire Wire Line
 	7800 7500 7650 7500
 Wire Wire Line
-	7800 7600 7650 7600
-Wire Wire Line
 	4900 7450 5550 7450
 Wire Wire Line
 	4900 7750 5550 7750
@@ -2315,4 +2310,9 @@ Connection ~ 5050 7750
 Connection ~ 5050 7450
 NoConn ~ 7650 7700
 NoConn ~ 7650 7800
+NoConn ~ 7650 7600
+Text HLabel 3150 6250 2    60   Input ~ 0
+PSU_VTEMP
+Wire Wire Line
+	3150 6250 3050 6250
 $EndSCHEMATC
