@@ -1008,4 +1008,8 @@ F 3 "" H 17300 5200 60  0000 C CNN
 	1    17300 5200
 	1    0    0    -1  
 $EndComp
+Text HLabel 13000 3750 0    60   Input ~ 0
+DUT_VDD1
+Text HLabel 13000 3850 0    60   Input ~ 0
+DUT_VDD2
 $EndSCHEMATC
