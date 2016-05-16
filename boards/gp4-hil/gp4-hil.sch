@@ -136,7 +136,7 @@ F26 "3V3" I L 9000 3850 60
 F27 "PSU_VTEMP" I L 9000 4400 60 
 $EndSheet
 $Sheet
-S 1500 6750 1050 1350
+S 1500 6750 1050 1700
 U 57316B0C
 F0 "FPGA support" 60
 F1 "fpga-support.sch" 60
@@ -146,10 +146,16 @@ F4 "1V8" I R 2550 7250 60
 F5 "2V5" I R 2550 7150 60 
 F6 "DUT_VDD1" I R 2550 7050 60 
 F7 "DUT_VDD2" I R 2550 6950 60 
+F8 "PSU_PGOOD" I R 2550 7750 60 
+F9 "FLASH_CS_N" I R 2550 7950 60 
+F10 "FLASH_DQ0" B R 2550 8050 60 
+F11 "FLASH_DQ1" B R 2550 8150 60 
+F12 "FLASH_DQ2" B R 2550 8250 60 
+F13 "FLASH_DQ3" B R 2550 8350 60 
 $EndSheet
-Text Notes 3250 9850 0    60   ~ 0
+Text Notes 1250 10500 0    60   ~ 0
 Bank plan\n* 14 (1V8): Boot flash, clock, Ethernet, JTAG\n* 15 (2V5): ADCs\n* 34 (variable): DUT bank 1\n* 35 (variable): DUT bank 2
-Text Notes 3300 9100 0    60   ~ 0
+Text Notes 1250 9750 0    60   ~ 0
 Possibly the most overkill dev board ever.\n* Target device has 26 LUTs and 12 FFs\n* Support FPGA has 63,400 LUTs and 126800 FFs (if you load the 100t)\n* Has an ADC, DAC, and digital I/O on every pin of the DUT, all bridged out to TCP sockets\n* TCP programming, simply netcat a bitstream to the board to flash the DUT
 Text Label 8250 1350 0    60   ~ 0
 DUT_GPIO2
@@ -538,4 +544,28 @@ Text Label 2800 7550 0    60   ~ 0
 GND
 Wire Wire Line
 	2800 7550 2550 7550
+Text Label 2800 7750 0    60   ~ 0
+PSU_PGOOD
+Wire Wire Line
+	2800 7750 2550 7750
+Text Label 2800 8050 0    60   ~ 0
+FLASH_DQ0
+Wire Wire Line
+	2800 7950 2550 7950
+Text Label 2800 8150 0    60   ~ 0
+FLASH_DQ1
+Wire Wire Line
+	2800 8050 2550 8050
+Text Label 2800 8250 0    60   ~ 0
+FLASH_DQ2
+Wire Wire Line
+	2800 8150 2550 8150
+Text Label 2800 8350 0    60   ~ 0
+FLASH_DQ3
+Wire Wire Line
+	2800 8250 2550 8250
+Text Label 2800 7950 0    60   ~ 0
+FLASH_CS_N
+Wire Wire Line
+	2800 8350 2550 8350
 $EndSCHEMATC

@@ -17,7 +17,7 @@ EELAYER 25 0
 EELAYER END
 $Descr A2 23386 16535
 encoding utf-8
-Sheet 8 7
+Sheet 7 7
 Title "GreenPak Hardware-In-Loop Test Platform"
 Date "2016-05-15"
 Rev "0.1"
@@ -395,8 +395,6 @@ Text Label 16000 3450 2    60   ~ 0
 GPIO19_DIO
 Text Label 16000 3550 2    60   ~ 0
 GPIO20_DIO
-Text Label 18950 2650 2    60   ~ 0
-GPIO2_DEN
 Text Label 18950 2750 2    60   ~ 0
 GPIO3_DEN
 Text Label 18950 2850 2    60   ~ 0
@@ -805,8 +803,6 @@ Wire Wire Line
 	16000 3450 16150 3450
 Wire Wire Line
 	16150 3550 16000 3550
-Wire Wire Line
-	18950 2650 19150 2650
 Wire Wire Line
 	19150 2750 18950 2750
 Wire Wire Line
@@ -1574,4 +1570,5 @@ Connection ~ 9300 11750
 Connection ~ 8500 11750
 Connection ~ 7700 11750
 Connection ~ 6900 11750
+NoConn ~ 19150 2650
 $EndSCHEMATC

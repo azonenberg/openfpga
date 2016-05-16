@@ -162,9 +162,7 @@ Text Label 3700 1650 0    60   ~ 0
 Text HLabel 3700 2050 2    60   Output ~ 0
 PSU_VTEMP
 Text Label 4050 1450 0    60   ~ 0
-2V5
-Text Notes 4050 1350 0    60   ~ 0
-TODO: what rail to pull to?
+1V8
 Text Notes 2100 2300 0    60   ~ 0
 TODO: VCC cap
 Text Label 3550 3800 0    60   ~ 0
