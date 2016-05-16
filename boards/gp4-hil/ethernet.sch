@@ -90,14 +90,6 @@ F 3 "" H 2100 950 60  0000 C CNN
 	1    2100 950 
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	1150 800  2100 800 
-Connection ~ 1400 800 
-Connection ~ 1750 800 
-Wire Wire Line
-	1150 1100 2100 1100
-Connection ~ 1750 1100
-Connection ~ 1400 1100
 $Comp
 L C C3
 U 1 1 5733FBE7
@@ -142,18 +134,8 @@ F 3 "" H 2450 1450 60  0000 C CNN
 	1    2450 1450
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	1150 1300 2450 1300
-Connection ~ 1400 1300
-Connection ~ 1750 1300
-Connection ~ 2100 1300
-Wire Wire Line
-	1150 1600 2450 1600
-Connection ~ 2100 1600
-Connection ~ 1750 1600
 Text Label 1150 1600 2    60   ~ 0
 GND
-Connection ~ 1400 1600
 $Comp
 L C C4
 U 1 1 573400FB
@@ -167,8 +149,6 @@ F 3 "" H 1400 1950 60  0000 C CNN
 $EndComp
 Text Label 1150 1800 2    60   ~ 0
 A1V2_ETH
-Wire Wire Line
-	1150 1800 2100 1800
 $Comp
 L C C10
 U 1 1 57340176
@@ -193,12 +173,6 @@ F 3 "" H 2100 1950 60  0000 C CNN
 $EndComp
 Text Label 1150 2100 2    60   ~ 0
 GND
-Wire Wire Line
-	1150 2100 2100 2100
-Connection ~ 1400 2100
-Connection ~ 1400 1800
-Connection ~ 1750 1800
-Connection ~ 1750 2100
 $Comp
 L C C5
 U 1 1 5734061F
@@ -278,22 +252,6 @@ F 3 "" H 3650 2450 60  0000 C CNN
 $EndComp
 Text Label 1150 2600 2    60   ~ 0
 GND
-Wire Wire Line
-	1150 2300 3650 2300
-Connection ~ 1400 2300
-Connection ~ 1750 2300
-Connection ~ 2100 2300
-Connection ~ 2450 2300
-Connection ~ 2850 2300
-Connection ~ 3250 2300
-Wire Wire Line
-	1150 2600 3650 2600
-Connection ~ 3250 2600
-Connection ~ 2850 2600
-Connection ~ 2450 2600
-Connection ~ 2100 2600
-Connection ~ 1750 2600
-Connection ~ 1400 2600
 Text Label 1150 2800 2    60   ~ 0
 A1V2_ETHPLL
 $Comp
@@ -320,12 +278,6 @@ F 3 "" H 1750 2950 60  0000 C CNN
 $EndComp
 Text Label 1150 3100 2    60   ~ 0
 GND
-Wire Wire Line
-	1150 3100 1750 3100
-Connection ~ 1400 3100
-Wire Wire Line
-	1150 2800 1750 2800
-Connection ~ 1400 2800
 $Comp
 L R R1
 U 1 1 57344AD9
@@ -341,10 +293,6 @@ Text Label 1200 3750 2    60   ~ 0
 ETH_LED1_N
 Text Label 1700 3750 0    60   ~ 0
 1V8
-Wire Wire Line
-	1200 3750 1300 3750
-Wire Wire Line
-	1700 3750 1600 3750
 $Comp
 L R R2
 U 1 1 57344F60
@@ -360,10 +308,6 @@ Text Label 1200 4000 2    60   ~ 0
 ETH_LED2_N
 Text Label 1700 4000 0    60   ~ 0
 GND
-Wire Wire Line
-	1700 4000 1600 4000
-Wire Wire Line
-	1300 4000 1200 4000
 Text Notes 900  4550 0    60   ~ 0
 LED strap circuits
 $Comp
@@ -381,8 +325,6 @@ Text Label 1200 4200 2    60   ~ 0
 ETH_LED1_P
 Text Label 1200 4400 2    60   ~ 0
 ETH_LED2_P
-Wire Wire Line
-	1300 4200 1200 4200
 $Comp
 L R R4
 U 1 1 57345687
@@ -394,16 +336,8 @@ F 3 "" H 1450 4400 30  0000 C CNN
 	1    1450 4400
 	0    1    1    0   
 $EndComp
-Wire Wire Line
-	1300 4400 1200 4400
 Text Label 1700 4200 0    60   ~ 0
 2V5
-Wire Wire Line
-	1600 4200 1700 4200
-Wire Wire Line
-	1700 4200 1700 4400
-Wire Wire Line
-	1700 4400 1600 4400
 Text Label 1800 8500 0    60   ~ 0
 ETH_LED1_P
 Text Label 1800 8600 0    60   ~ 0
@@ -412,14 +346,6 @@ Text Label 1800 8700 0    60   ~ 0
 ETH_LED2_P
 Text Label 1800 8800 0    60   ~ 0
 ETH_LED2_N
-Wire Wire Line
-	1800 8800 1650 8800
-Wire Wire Line
-	1650 8700 1800 8700
-Wire Wire Line
-	1800 8600 1650 8600
-Wire Wire Line
-	1650 8500 1800 8500
 Text Label 1800 9100 0    60   ~ 0
 CH1_TAP
 Text Label 1800 9500 0    60   ~ 0
@@ -428,14 +354,6 @@ Text Label 1800 9900 0    60   ~ 0
 CH3_TAP
 Text Label 1800 10300 0    60   ~ 0
 CH4_TAP
-Wire Wire Line
-	1800 10300 1650 10300
-Wire Wire Line
-	1650 9900 1800 9900
-Wire Wire Line
-	1800 9500 1650 9500
-Wire Wire Line
-	1650 9100 1800 9100
 Text Label 1800 9000 0    60   ~ 0
 ETH_A_P
 Text Label 1800 9400 0    60   ~ 0
@@ -446,8 +364,6 @@ Text Label 1800 10200 0    60   ~ 0
 ETH_D_P
 Text Label 1800 10600 0    60   ~ 0
 GND
-Wire Wire Line
-	1800 10600 1650 10600
 Text Label 1800 9200 0    60   ~ 0
 ETH_A_N
 Text Label 1800 9600 0    60   ~ 0
@@ -456,18 +372,6 @@ Text Label 1800 10000 0    60   ~ 0
 ETH_C_N
 Text Label 1800 10400 0    60   ~ 0
 ETH_D_N
-Wire Wire Line
-	1800 10400 1650 10400
-Wire Wire Line
-	1800 10200 1650 10200
-Wire Wire Line
-	1650 10000 1800 10000
-Wire Wire Line
-	1800 9800 1650 9800
-Wire Wire Line
-	1650 9600 1800 9600
-Wire Wire Line
-	1800 9400 1650 9400
 Text Notes 1150 3250 0    60   ~ 0
 PHY decoupling
 Text Notes 900  5500 0    60   ~ 0
@@ -524,101 +428,29 @@ F 3 "" H 2800 5200 60  0000 C CNN
 $EndComp
 Text Label 2800 5050 2    60   ~ 0
 CH4_TAP
-Wire Wire Line
-	950  5350 2800 5350
-Connection ~ 2250 5350
-Connection ~ 1700 5350
 Text Label 950  5350 2    60   ~ 0
 GND
-Connection ~ 1150 5350
-Wire Wire Line
-	8850 8400 8850 8500
-Wire Wire Line
-	8650 8400 8950 8400
-Wire Wire Line
-	8850 8500 8950 8500
 Text Label 8650 8400 2    60   ~ 0
 GND
-Wire Wire Line
-	7550 7250 8950 7250
-Wire Wire Line
-	8850 7250 8850 7750
-Wire Wire Line
-	8850 7350 8950 7350
-Wire Wire Line
-	8850 7450 8950 7450
-Connection ~ 8850 7350
-Wire Wire Line
-	8850 7550 8950 7550
-Connection ~ 8850 7450
-Wire Wire Line
-	8850 7650 8950 7650
-Connection ~ 8850 7550
-Wire Wire Line
-	8850 7750 8950 7750
-Connection ~ 8850 7650
-Wire Wire Line
-	8950 7150 8850 7150
-Wire Wire Line
-	8850 7150 8850 7050
-Wire Wire Line
-	8150 7050 8950 7050
-Wire Wire Line
-	8850 6950 8950 6950
-Wire Wire Line
-	8850 6750 8850 6950
-Wire Wire Line
-	8850 6850 8950 6850
-Wire Wire Line
-	8650 6750 8950 6750
-Connection ~ 8850 6850
-Wire Wire Line
-	8850 6450 8850 6550
-Wire Wire Line
-	8850 6550 8950 6550
-Wire Wire Line
-	8650 6450 8950 6450
-Wire Wire Line
-	1800 9000 1650 9000
-Wire Wire Line
-	1650 9200 1800 9200
 Text Label 8750 8700 2    60   ~ 0
 ETH_A_P
 Text Label 8750 8800 2    60   ~ 0
 ETH_A_N
-Wire Wire Line
-	8750 8700 8950 8700
-Wire Wire Line
-	8950 8800 8750 8800
 Text Label 8750 8900 2    60   ~ 0
 ETH_B_P
 Text Label 8750 9000 2    60   ~ 0
 ETH_B_N
-Wire Wire Line
-	8750 8900 8950 8900
-Wire Wire Line
-	8950 9000 8750 9000
 Text Label 8750 9100 2    60   ~ 0
 ETH_C_P
 Text Label 8750 9200 2    60   ~ 0
 ETH_C_N
-Wire Wire Line
-	8750 9100 8950 9100
-Wire Wire Line
-	8950 9200 8750 9200
 Text Label 8750 9300 2    60   ~ 0
 ETH_D_P
 Text Label 8750 9400 2    60   ~ 0
 ETH_D_N
-Wire Wire Line
-	8750 9300 8950 9300
-Wire Wire Line
-	8950 9400 8750 9400
 NoConn ~ 8950 8100
 Text Label 8750 7850 2    60   ~ 0
 A1V2_ETHPLL
-Wire Wire Line
-	8150 7850 8950 7850
 $Comp
 L INDUCTOR_PWROUT L2
 U 1 1 5734A927
@@ -641,31 +473,19 @@ F 3 "" H 7850 7050 60  0000 C CNN
 	1    7850 7050
 	0    1    1    0   
 $EndComp
-Connection ~ 8850 7050
 Text Label 8750 7050 2    60   ~ 0
 A1V2_ETH
 Text Label 7550 7050 2    60   ~ 0
 1V2
-Wire Wire Line
-	7550 7050 7550 7850
-Connection ~ 7550 7250
-Connection ~ 8850 7250
 Text Label 8650 6750 2    60   ~ 0
 1V8
-Connection ~ 8850 6750
 Text Label 8650 6450 2    60   ~ 0
 2V5
-Connection ~ 8850 6450
 NoConn ~ 8950 6650
-Connection ~ 8850 8400
 Text Label 11400 6650 0    60   ~ 0
 ETH_LED1_N
-Wire Wire Line
-	11400 6650 11200 6650
 Text Label 11400 6550 0    60   ~ 0
 ETH_LED2_N
-Wire Wire Line
-	11400 6550 11200 6550
 Text Label 11400 6950 0    60   ~ 0
 RGMII_TXD0
 Text Label 11400 7050 0    60   ~ 0
@@ -678,23 +498,9 @@ Text Label 11400 7350 0    60   ~ 0
 RGMII_TX_CLK
 Text Label 11400 7450 0    60   ~ 0
 RGMII_TX_EN
-Wire Wire Line
-	11200 6950 11400 6950
-Wire Wire Line
-	11400 7050 11200 7050
-Wire Wire Line
-	11200 7150 11400 7150
-Wire Wire Line
-	11400 7250 11200 7250
-Wire Wire Line
-	11200 7350 11400 7350
-Wire Wire Line
-	11400 7450 11200 7450
 NoConn ~ 11200 8850
 Text Label 11400 8950 0    60   ~ 0
 PHY_CLK_25MHZ
-Wire Wire Line
-	11400 8950 11200 8950
 $Comp
 L R R6
 U 1 1 5734D4A9
@@ -706,15 +512,10 @@ F 3 "" H 11400 9300 30  0000 C CNN
 	1    11400 9300
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	11200 9150 11550 9150
 Text Label 11250 9450 2    60   ~ 0
 GND
-Wire Wire Line
-	11250 9450 11400 9450
 Text Label 11550 9150 0    60   ~ 0
 RBIAS_ETH
-Connection ~ 11400 9150
 $Comp
 L OSC U7
 U 1 1 5734DACB
@@ -739,8 +540,6 @@ F 3 "" H 11550 7600 30  0000 C CNN
 	1    11550 7600
 	0    1    1    0   
 $EndComp
-Wire Wire Line
-	11400 7600 11200 7600
 $Comp
 L R R8
 U 1 1 5734E3B1
@@ -831,30 +630,8 @@ F 3 "" H 11550 8500 30  0000 C CNN
 $EndComp
 Text Label 11900 8500 0    60   ~ 0
 1V8
-Wire Wire Line
-	11700 8500 11900 8500
 Text Label 12100 8600 0    60   ~ 0
 ETH_RESET_N
-Wire Wire Line
-	12100 8600 11200 8600
-Wire Wire Line
-	11200 8500 11400 8500
-Wire Wire Line
-	11400 8400 11200 8400
-Wire Wire Line
-	11200 8300 11400 8300
-Wire Wire Line
-	11400 8100 11200 8100
-Wire Wire Line
-	11200 8000 11400 8000
-Wire Wire Line
-	11400 7900 11200 7900
-Wire Wire Line
-	11200 7800 11400 7800
-Wire Wire Line
-	11400 7700 11200 7700
-Wire Wire Line
-	12000 7600 11700 7600
 Text Label 12000 7700 0    60   ~ 0
 RGMII_RXD2
 Text Label 12000 7800 0    60   ~ 0
@@ -863,30 +640,14 @@ Text Label 12000 7900 0    60   ~ 0
 RGMII_RXD0
 Text Label 12000 8000 0    60   ~ 0
 RGMII_RX_DV
-Wire Wire Line
-	12000 7700 11700 7700
-Wire Wire Line
-	11700 7800 12000 7800
-Wire Wire Line
-	12000 7900 11700 7900
-Wire Wire Line
-	11700 8000 12000 8000
 Text Label 12000 8100 0    60   ~ 0
 RGMII_RXC
-Wire Wire Line
-	12000 8100 11700 8100
 Text Label 12000 8200 0    60   ~ 0
 PHY_MDC
 Text Label 12000 8300 0    60   ~ 0
 PHY_MDIO
-Wire Wire Line
-	12000 8300 11700 8300
 Text Label 12000 8400 0    60   ~ 0
 PHY_INT_N
-Wire Wire Line
-	12000 8400 11700 8400
-Wire Wire Line
-	11200 8200 12000 8200
 Text Label 11000 11150 0    60   ~ 0
 PHY_CLK_25MHZ
 $Comp
@@ -900,20 +661,8 @@ F 3 "" H 10650 11150 30  0000 C CNN
 	1    10650 11150
 	0    1    1    0   
 $EndComp
-Wire Wire Line
-	10500 11150 10300 11150
-Wire Wire Line
-	11000 11150 10800 11150
-Wire Wire Line
-	8950 11150 8850 11150
-Wire Wire Line
-	8850 11050 8850 11250
-Wire Wire Line
-	8850 11250 8950 11250
 Text Label 8400 11350 2    60   ~ 0
 GND
-Wire Wire Line
-	8400 11350 8950 11350
 $Comp
 L C C24
 U 1 1 57350DB7
@@ -925,13 +674,8 @@ F 3 "" H 8500 11200 60  0000 C CNN
 	1    8500 11200
 	1    0    0    -1  
 $EndComp
-Connection ~ 8500 11350
-Wire Wire Line
-	8400 11050 8850 11050
-Connection ~ 8850 11150
 Text Label 8400 11050 2    60   ~ 0
 1V8
-Connection ~ 8500 11050
 Text Label 16000 7200 2    60   ~ 0
 RGMII_RXD3
 Text Label 16000 7300 2    60   ~ 0
@@ -964,6 +708,334 @@ Text Label 16000 8200 2    60   ~ 0
 RGMII_TX_EN
 Text Label 16000 6000 2    60   ~ 0
 ETH_RESET_N
+NoConn ~ 16200 6900
+Text Notes 12050 3650 0    60   ~ 0
+TODO: FPGA core clock
+NoConn ~ 16200 5000
+Text HLabel 16000 5100 0    60   BiDi ~ 0
+FLASH_DQ0
+Text HLabel 16000 5200 0    60   BiDi ~ 0
+FLASH_DQ1
+Text HLabel 16000 5300 0    60   BiDi ~ 0
+FLASH_DQ2
+Text HLabel 16000 5400 0    60   BiDi ~ 0
+FLASH_DQ3
+Text Label 15050 5500 2    60   ~ 0
+GND
+$Comp
+L R R16
+U 1 1 5735FA71
+P 15250 5500
+F 0 "R16" V 15150 5500 50  0000 C CNN
+F 1 "1K" V 15250 5500 50  0000 C CNN
+F 2 "" V 15180 5500 30  0000 C CNN
+F 3 "" H 15250 5500 30  0000 C CNN
+	1    15250 5500
+	0    1    1    0   
+$EndComp
+Text HLabel 16000 6100 0    60   Output ~ 0
+FLASH_CS_N
+NoConn ~ 16200 6200
+Text HLabel 16050 6700 0    60   Output ~ 0
+VDD1_3V3_EN
+Text HLabel 16050 6600 0    60   Output ~ 0
+VDD1_2V5_EN
+Text HLabel 16050 6500 0    60   Output ~ 0
+VDD1_1V8_EN
+Text HLabel 16050 5800 0    60   Output ~ 0
+VDD2_3V3_EN
+Text HLabel 16050 5700 0    60   Output ~ 0
+VDD2_2V5_EN
+Text HLabel 16050 5600 0    60   Output ~ 0
+VDD2_1V8_EN
+Text HLabel 16050 6800 0    60   Output ~ 0
+VPP_EN
+NoConn ~ 16200 7600
+$Comp
+L XC7AxT-xFTG256x U?
+U 3 1 57349080
+P 16400 9900
+AR Path="/57316B0C/57349080" Ref="U?"  Part="1" 
+AR Path="/57316A40/57349080" Ref="U2"  Part="3" 
+F 0 "U2" H 16400 9700 60  0000 L CNN
+F 1 "XC7A100T-1FTG256C" H 16400 9800 60  0000 L CNN
+F 2 "" H 16400 9900 60  0000 C CNN
+F 3 "" H 16400 9900 60  0000 C CNN
+	3    16400 9900
+	1    0    0    -1  
+$EndComp
+$Comp
+L TXB0104RUT U29
+U 1 1 574FAF40
+P 17400 12350
+F 0 "U29" H 17425 13837 60  0000 C CNN
+F 1 "TXB0104RUT" H 17425 13731 60  0000 C CNN
+F 2 "" H 17400 12350 60  0000 C CNN
+F 3 "" H 17400 12350 60  0000 C CNN
+	1    17400 12350
+	1    0    0    -1  
+$EndComp
+NoConn ~ 19250 11250
+Text Label 19050 10750 2    60   ~ 0
+GND
+Text Label 19150 10650 2    60   ~ 0
+JTAGA_VCCAUX
+Wire Wire Line
+	1150 800  2100 800 
+Connection ~ 1400 800 
+Connection ~ 1750 800 
+Wire Wire Line
+	1150 1100 2100 1100
+Connection ~ 1750 1100
+Connection ~ 1400 1100
+Wire Wire Line
+	1150 1300 2450 1300
+Connection ~ 1400 1300
+Connection ~ 1750 1300
+Connection ~ 2100 1300
+Wire Wire Line
+	1150 1600 2450 1600
+Connection ~ 2100 1600
+Connection ~ 1750 1600
+Connection ~ 1400 1600
+Wire Wire Line
+	1150 1800 2100 1800
+Wire Wire Line
+	1150 2100 2100 2100
+Connection ~ 1400 2100
+Connection ~ 1400 1800
+Connection ~ 1750 1800
+Connection ~ 1750 2100
+Wire Wire Line
+	1150 2300 3650 2300
+Connection ~ 1400 2300
+Connection ~ 1750 2300
+Connection ~ 2100 2300
+Connection ~ 2450 2300
+Connection ~ 2850 2300
+Connection ~ 3250 2300
+Wire Wire Line
+	1150 2600 3650 2600
+Connection ~ 3250 2600
+Connection ~ 2850 2600
+Connection ~ 2450 2600
+Connection ~ 2100 2600
+Connection ~ 1750 2600
+Connection ~ 1400 2600
+Wire Wire Line
+	1150 3100 1750 3100
+Connection ~ 1400 3100
+Wire Wire Line
+	1150 2800 1750 2800
+Connection ~ 1400 2800
+Wire Wire Line
+	1200 3750 1300 3750
+Wire Wire Line
+	1700 3750 1600 3750
+Wire Wire Line
+	1700 4000 1600 4000
+Wire Wire Line
+	1300 4000 1200 4000
+Wire Wire Line
+	1300 4200 1200 4200
+Wire Wire Line
+	1300 4400 1200 4400
+Wire Wire Line
+	1600 4200 1700 4200
+Wire Wire Line
+	1700 4200 1700 4400
+Wire Wire Line
+	1700 4400 1600 4400
+Wire Wire Line
+	1800 8800 1650 8800
+Wire Wire Line
+	1650 8700 1800 8700
+Wire Wire Line
+	1800 8600 1650 8600
+Wire Wire Line
+	1650 8500 1800 8500
+Wire Wire Line
+	1800 10300 1650 10300
+Wire Wire Line
+	1650 9900 1800 9900
+Wire Wire Line
+	1800 9500 1650 9500
+Wire Wire Line
+	1650 9100 1800 9100
+Wire Wire Line
+	1800 10600 1650 10600
+Wire Wire Line
+	1800 10400 1650 10400
+Wire Wire Line
+	1800 10200 1650 10200
+Wire Wire Line
+	1650 10000 1800 10000
+Wire Wire Line
+	1800 9800 1650 9800
+Wire Wire Line
+	1650 9600 1800 9600
+Wire Wire Line
+	1800 9400 1650 9400
+Wire Wire Line
+	950  5350 2800 5350
+Connection ~ 2250 5350
+Connection ~ 1700 5350
+Connection ~ 1150 5350
+Wire Wire Line
+	8850 8400 8850 8500
+Wire Wire Line
+	8650 8400 8950 8400
+Wire Wire Line
+	8850 8500 8950 8500
+Wire Wire Line
+	7550 7250 8950 7250
+Wire Wire Line
+	8850 7250 8850 7750
+Wire Wire Line
+	8850 7350 8950 7350
+Wire Wire Line
+	8850 7450 8950 7450
+Connection ~ 8850 7350
+Wire Wire Line
+	8850 7550 8950 7550
+Connection ~ 8850 7450
+Wire Wire Line
+	8850 7650 8950 7650
+Connection ~ 8850 7550
+Wire Wire Line
+	8850 7750 8950 7750
+Connection ~ 8850 7650
+Wire Wire Line
+	8950 7150 8850 7150
+Wire Wire Line
+	8850 7150 8850 7050
+Wire Wire Line
+	8150 7050 8950 7050
+Wire Wire Line
+	8850 6950 8950 6950
+Wire Wire Line
+	8850 6750 8850 6950
+Wire Wire Line
+	8850 6850 8950 6850
+Wire Wire Line
+	8650 6750 8950 6750
+Connection ~ 8850 6850
+Wire Wire Line
+	8850 6450 8850 6550
+Wire Wire Line
+	8850 6550 8950 6550
+Wire Wire Line
+	8650 6450 8950 6450
+Wire Wire Line
+	1800 9000 1650 9000
+Wire Wire Line
+	1650 9200 1800 9200
+Wire Wire Line
+	8750 8700 8950 8700
+Wire Wire Line
+	8950 8800 8750 8800
+Wire Wire Line
+	8750 8900 8950 8900
+Wire Wire Line
+	8950 9000 8750 9000
+Wire Wire Line
+	8750 9100 8950 9100
+Wire Wire Line
+	8950 9200 8750 9200
+Wire Wire Line
+	8750 9300 8950 9300
+Wire Wire Line
+	8950 9400 8750 9400
+Wire Wire Line
+	8150 7850 8950 7850
+Connection ~ 8850 7050
+Wire Wire Line
+	7550 7050 7550 7850
+Connection ~ 7550 7250
+Connection ~ 8850 7250
+Connection ~ 8850 6750
+Connection ~ 8850 6450
+Connection ~ 8850 8400
+Wire Wire Line
+	11400 6650 11200 6650
+Wire Wire Line
+	11400 6550 11200 6550
+Wire Wire Line
+	11200 6950 11400 6950
+Wire Wire Line
+	11400 7050 11200 7050
+Wire Wire Line
+	11200 7150 11400 7150
+Wire Wire Line
+	11400 7250 11200 7250
+Wire Wire Line
+	11200 7350 11400 7350
+Wire Wire Line
+	11400 7450 11200 7450
+Wire Wire Line
+	11400 8950 11200 8950
+Wire Wire Line
+	11200 9150 11550 9150
+Wire Wire Line
+	11250 9450 11400 9450
+Connection ~ 11400 9150
+Wire Wire Line
+	11400 7600 11200 7600
+Wire Wire Line
+	11700 8500 11900 8500
+Wire Wire Line
+	12100 8600 11200 8600
+Wire Wire Line
+	11200 8500 11400 8500
+Wire Wire Line
+	11400 8400 11200 8400
+Wire Wire Line
+	11200 8300 11400 8300
+Wire Wire Line
+	11400 8100 11200 8100
+Wire Wire Line
+	11200 8000 11400 8000
+Wire Wire Line
+	11400 7900 11200 7900
+Wire Wire Line
+	11200 7800 11400 7800
+Wire Wire Line
+	11400 7700 11200 7700
+Wire Wire Line
+	12000 7600 11700 7600
+Wire Wire Line
+	12000 7700 11700 7700
+Wire Wire Line
+	11700 7800 12000 7800
+Wire Wire Line
+	12000 7900 11700 7900
+Wire Wire Line
+	11700 8000 12000 8000
+Wire Wire Line
+	12000 8100 11700 8100
+Wire Wire Line
+	12000 8300 11700 8300
+Wire Wire Line
+	12000 8400 11700 8400
+Wire Wire Line
+	11200 8200 12000 8200
+Wire Wire Line
+	10500 11150 10300 11150
+Wire Wire Line
+	11000 11150 10800 11150
+Wire Wire Line
+	8950 11150 8850 11150
+Wire Wire Line
+	8850 11050 8850 11250
+Wire Wire Line
+	8850 11250 8950 11250
+Wire Wire Line
+	8400 11350 8950 11350
+Connection ~ 8500 11350
+Wire Wire Line
+	8400 11050 8850 11050
+Connection ~ 8850 11150
+Connection ~ 8500 11050
 Wire Wire Line
 	16000 7500 16200 7500
 Wire Wire Line
@@ -996,31 +1068,6 @@ Wire Wire Line
 	16200 7900 16000 7900
 Wire Wire Line
 	16000 7800 16200 7800
-NoConn ~ 16200 6900
-Text Notes 12050 3650 0    60   ~ 0
-TODO: FPGA core clock
-NoConn ~ 16200 5000
-Text HLabel 16000 5100 0    60   BiDi ~ 0
-FLASH_DQ0
-Text HLabel 16000 5200 0    60   BiDi ~ 0
-FLASH_DQ1
-Text HLabel 16000 5300 0    60   BiDi ~ 0
-FLASH_DQ2
-Text HLabel 16000 5400 0    60   BiDi ~ 0
-FLASH_DQ3
-Text Label 15050 5500 2    60   ~ 0
-GND
-$Comp
-L R R16
-U 1 1 5735FA71
-P 15250 5500
-F 0 "R16" V 15150 5500 50  0000 C CNN
-F 1 "1K" V 15250 5500 50  0000 C CNN
-F 2 "" V 15180 5500 30  0000 C CNN
-F 3 "" H 15250 5500 30  0000 C CNN
-	1    15250 5500
-	0    1    1    0   
-$EndComp
 Wire Wire Line
 	15100 5500 15050 5500
 Wire Wire Line
@@ -1033,25 +1080,8 @@ Wire Wire Line
 	16000 5200 16200 5200
 Wire Wire Line
 	16200 5100 16000 5100
-Text HLabel 16000 6100 0    60   Output ~ 0
-FLASH_CS_N
 Wire Wire Line
 	16000 6100 16200 6100
-NoConn ~ 16200 6200
-Text HLabel 16050 6700 0    60   Output ~ 0
-VDD1_3V3_EN
-Text HLabel 16050 6600 0    60   Output ~ 0
-VDD1_2V5_EN
-Text HLabel 16050 6500 0    60   Output ~ 0
-VDD1_1V8_EN
-Text HLabel 16050 5800 0    60   Output ~ 0
-VDD2_3V3_EN
-Text HLabel 16050 5700 0    60   Output ~ 0
-VDD2_2V5_EN
-Text HLabel 16050 5600 0    60   Output ~ 0
-VDD2_1V8_EN
-Text HLabel 16050 6800 0    60   Output ~ 0
-VPP_EN
 Wire Wire Line
 	16200 5600 16050 5600
 Wire Wire Line
@@ -1066,18 +1096,279 @@ Wire Wire Line
 	16050 6700 16200 6700
 Wire Wire Line
 	16200 6800 16050 6800
-NoConn ~ 16200 7600
+Wire Wire Line
+	19150 11150 19250 11150
+Wire Wire Line
+	19150 10750 19150 11150
+Wire Wire Line
+	19150 11050 19250 11050
+Wire Wire Line
+	19150 10950 19250 10950
+Connection ~ 19150 11050
+Wire Wire Line
+	19150 10850 19250 10850
+Connection ~ 19150 10950
+Wire Wire Line
+	19050 10750 19250 10750
+Connection ~ 19150 10850
+Connection ~ 19150 10750
+Wire Wire Line
+	18050 10650 19250 10650
+Wire Wire Line
+	18050 10650 18050 11150
+Wire Wire Line
+	18050 11350 19250 11350
+Wire Wire Line
+	19250 11450 18050 11450
+Wire Wire Line
+	18050 11550 19250 11550
+Wire Wire Line
+	19250 11650 18050 11650
+NoConn ~ 19250 11750
+Text Label 18550 12250 0    60   ~ 0
+GND
+Wire Wire Line
+	18050 12250 18550 12250
 $Comp
-L XC7AxT-xFTG256x U?
-U 3 1 57349080
-P 16400 9900
-AR Path="/57316B0C/57349080" Ref="U?"  Part="1" 
-AR Path="/57316A40/57349080" Ref="U2"  Part="3" 
-F 0 "U2" H 16400 9700 60  0000 L CNN
-F 1 "XC7A100T-1FTG256C" H 16400 9800 60  0000 L CNN
-F 2 "" H 16400 9900 60  0000 C CNN
-F 3 "" H 16400 9900 60  0000 C CNN
-	3    16400 9900
+L C C165
+U 1 1 574FCD2C
+P 18200 12100
+F 0 "C165" H 18315 12146 50  0000 L CNN
+F 1 "0.47 uF" H 18315 12054 50  0000 L CNN
+F 2 "" H 18238 11950 30  0000 C CNN
+F 3 "" H 18200 12100 60  0000 C CNN
+	1    18200 12100
+	1    0    0    -1  
+$EndComp
+Connection ~ 18200 12250
+Text Label 18200 11950 0    60   ~ 0
+JTAGA_VCCAUX
+Text Label 18100 11350 0    60   ~ 0
+JTAGA_TMS_RAW
+Text Label 18100 11450 0    60   ~ 0
+JTAGA_TCK_RAW
+Text Label 18100 11550 0    60   ~ 0
+JTAGA_TDO_RAW
+Text Label 18100 11650 0    60   ~ 0
+JTAGA_TDI_RAW
+Text Label 16200 11150 2    60   ~ 0
+1V8
+$Comp
+L C C163
+U 1 1 574FE104
+P 16500 11000
+F 0 "C163" H 16615 11046 50  0000 L CNN
+F 1 "0.47 uF" H 16615 10954 50  0000 L CNN
+F 2 "" H 16538 10850 30  0000 C CNN
+F 3 "" H 16500 11000 60  0000 C CNN
+	1    16500 11000
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	16200 11150 16800 11150
+Connection ~ 16500 11150
+Text Label 16200 10850 2    60   ~ 0
+GND
+Wire Wire Line
+	16200 10850 16500 10850
+Text Label 16500 11350 2    60   ~ 0
+JTAGA_TMS
+Wire Wire Line
+	16500 11350 16800 11350
+Text Label 16500 11450 2    60   ~ 0
+JTAGA_TCK
+Wire Wire Line
+	16500 11450 16800 11450
+Text Label 16500 11550 2    60   ~ 0
+JTAGA_TDO
+Wire Wire Line
+	16500 11550 16800 11550
+Text Label 16500 11650 2    60   ~ 0
+JTAGA_TDI
+Wire Wire Line
+	16500 11650 16800 11650
+Text Label 16500 12250 2    60   ~ 0
+JTAGA_OE
+Wire Wire Line
+	16500 12250 16800 12250
+$Comp
+L TXB0104RUT U30
+U 1 1 574FF2AC
+P 17400 14400
+F 0 "U30" H 17425 15887 60  0000 C CNN
+F 1 "TXB0104RUT" H 17425 15781 60  0000 C CNN
+F 2 "" H 17400 14400 60  0000 C CNN
+F 3 "" H 17400 14400 60  0000 C CNN
+	1    17400 14400
+	1    0    0    -1  
+$EndComp
+NoConn ~ 19250 13300
+Text Label 19050 12800 2    60   ~ 0
+GND
+Text Label 19150 12700 2    60   ~ 0
+JTAGB_VCCAUX
+Wire Wire Line
+	19150 13200 19250 13200
+Wire Wire Line
+	19150 12800 19150 13200
+Wire Wire Line
+	19150 13100 19250 13100
+Wire Wire Line
+	19150 13000 19250 13000
+Connection ~ 19150 13100
+Wire Wire Line
+	19150 12900 19250 12900
+Connection ~ 19150 13000
+Wire Wire Line
+	19050 12800 19250 12800
+Connection ~ 19150 12900
+Connection ~ 19150 12800
+Wire Wire Line
+	18050 12700 19250 12700
+Wire Wire Line
+	18050 12700 18050 13200
+Wire Wire Line
+	18050 13400 19250 13400
+Wire Wire Line
+	19250 13500 18050 13500
+Wire Wire Line
+	18050 13600 19250 13600
+Wire Wire Line
+	19250 13700 18050 13700
+NoConn ~ 19250 13800
+Text Label 18550 14300 0    60   ~ 0
+GND
+Wire Wire Line
+	18050 14300 18550 14300
+$Comp
+L C C166
+U 1 1 574FF2CE
+P 18200 14150
+F 0 "C166" H 18315 14196 50  0000 L CNN
+F 1 "0.47 uF" H 18315 14104 50  0000 L CNN
+F 2 "" H 18238 14000 30  0000 C CNN
+F 3 "" H 18200 14150 60  0000 C CNN
+	1    18200 14150
+	1    0    0    -1  
+$EndComp
+Connection ~ 18200 14300
+Text Label 18200 14000 0    60   ~ 0
+JTAGB_VCCAUX
+Text Label 18100 13400 0    60   ~ 0
+JTAGB_TMS_RAW
+Text Label 18100 13500 0    60   ~ 0
+JTAGB_TCK_RAW
+Text Label 18100 13600 0    60   ~ 0
+JTAGB_TDO_RAW
+Text Label 18100 13700 0    60   ~ 0
+JTAGB_TDI_RAW
+Text Label 16200 13200 2    60   ~ 0
+1V8
+$Comp
+L C C164
+U 1 1 574FF2DB
+P 16500 13050
+F 0 "C164" H 16615 13096 50  0000 L CNN
+F 1 "0.47 uF" H 16615 13004 50  0000 L CNN
+F 2 "" H 16538 12900 30  0000 C CNN
+F 3 "" H 16500 13050 60  0000 C CNN
+	1    16500 13050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	16200 13200 16800 13200
+Connection ~ 16500 13200
+Text Label 16200 12900 2    60   ~ 0
+GND
+Wire Wire Line
+	16200 12900 16500 12900
+Text Label 16500 13400 2    60   ~ 0
+JTAGB_TMS
+Wire Wire Line
+	16500 13400 16800 13400
+Text Label 16500 13500 2    60   ~ 0
+JTAGB_TCK
+Wire Wire Line
+	16500 13500 16800 13500
+Text Label 16500 13600 2    60   ~ 0
+JTAGB_TDO
+Wire Wire Line
+	16500 13600 16800 13600
+Text Label 16500 13700 2    60   ~ 0
+JTAGB_TDI
+Wire Wire Line
+	16500 13700 16800 13700
+Text Label 16500 14300 2    60   ~ 0
+JTAGB_OE
+Wire Wire Line
+	16500 14300 16800 14300
+Text Label 16000 9000 2    60   ~ 0
+JTAGA_TMS
+Text Label 16000 9100 2    60   ~ 0
+JTAGA_TCK
+Text Label 16000 9200 2    60   ~ 0
+JTAGA_TDO
+Text Label 16000 9300 2    60   ~ 0
+JTAGA_TDI
+Text Label 16000 9400 2    60   ~ 0
+JTAGA_OE
+Text Label 16000 9500 2    60   ~ 0
+JTAGB_TMS
+Text Label 16000 9600 2    60   ~ 0
+JTAGB_TCK
+Text Label 16000 9700 2    60   ~ 0
+JTAGB_TDO
+Text Label 16000 9800 2    60   ~ 0
+JTAGB_TDI
+Text Label 16000 9900 2    60   ~ 0
+JTAGB_OE
+Wire Wire Line
+	16000 9000 16200 9000
+Wire Wire Line
+	16200 9100 16000 9100
+Wire Wire Line
+	16000 9200 16200 9200
+Wire Wire Line
+	16200 9300 16000 9300
+Wire Wire Line
+	16000 9400 16200 9400
+Wire Wire Line
+	16200 9500 16000 9500
+Wire Wire Line
+	16000 9600 16200 9600
+Wire Wire Line
+	16200 9700 16000 9700
+Wire Wire Line
+	16000 9800 16200 9800
+Wire Wire Line
+	16200 9900 16000 9900
+NoConn ~ 16200 8900
+NoConn ~ 16200 8800
+NoConn ~ 16200 8700
+NoConn ~ 16200 8600
+NoConn ~ 16200 8500
+NoConn ~ 16200 8400
+NoConn ~ 16200 8300
+$Comp
+L XILINX_JTAG_ICESIDE J3
+U 1 1 57504866
+P 19250 11750
+F 0 "J3" H 19969 12461 60  0000 L CNN
+F 1 "XILINX_JTAG_ICESIDE" H 19969 12355 60  0000 L CNN
+F 2 "" H 19250 11750 60  0000 C CNN
+F 3 "" H 19250 11750 60  0000 C CNN
+	1    19250 11750
+	1    0    0    -1  
+$EndComp
+$Comp
+L XILINX_JTAG_ICESIDE J4
+U 1 1 57504941
+P 19250 13800
+F 0 "J4" H 19969 14511 60  0000 L CNN
+F 1 "XILINX_JTAG_ICESIDE" H 19969 14405 60  0000 L CNN
+F 2 "" H 19250 13800 60  0000 C CNN
+F 3 "" H 19250 13800 60  0000 C CNN
+	1    19250 13800
 	1    0    0    -1  
 $EndComp
 $EndSCHEMATC

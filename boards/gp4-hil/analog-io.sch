@@ -726,8 +726,6 @@ Text HLabel 5500 750  0    60   Input ~ 0
 1V8
 Text Label 1450 8700 2    60   ~ 0
 A1V8
-Text Notes 13200 1650 0    60   ~ 0
-TODO: Vref for ADCs and DACs
 Text Label 1450 10500 2    60   ~ 0
 ADC_CS_N
 Text Label 1450 10600 2    60   ~ 0
@@ -2400,8 +2398,6 @@ Wire Wire Line
 	19750 4950 19750 5050
 Wire Wire Line
 	19750 4750 19750 4850
-Text Notes 17250 3550 0    60   ~ 0
-TODO: Can we do LVDS at VCCO=2.5?
 Wire Wire Line
 	18650 2950 18750 2950
 Connection ~ 19300 2950
@@ -2857,8 +2853,6 @@ Wire Wire Line
 	13200 3700 13650 3700
 Text Label 13200 4000 2    60   ~ 0
 GND
-Wire Wire Line
-	13200 4000 13750 4000
 $Comp
 L C C159
 U 1 1 574CFC18
@@ -2881,8 +2875,6 @@ Wire Wire Line
 	13250 5900 13700 5900
 Text Label 13250 6200 2    60   ~ 0
 GND
-Wire Wire Line
-	13250 6200 13800 6200
 $Comp
 L C C161
 U 1 1 574D0DC2
@@ -3042,8 +3034,6 @@ Wire Wire Line
 	13200 8100 13650 8100
 Text Label 13200 8400 2    60   ~ 0
 GND
-Wire Wire Line
-	13200 8400 13750 8400
 $Comp
 L C C160
 U 1 1 574D1EF4
@@ -3066,8 +3056,6 @@ Wire Wire Line
 	13250 10300 13700 10300
 Text Label 13250 10600 2    60   ~ 0
 GND
-Wire Wire Line
-	13250 10600 13800 10600
 $Comp
 L C C162
 U 1 1 574D1F01
@@ -3084,4 +3072,18 @@ Wire Wire Line
 Wire Wire Line
 	13700 10400 13800 10400
 Connection ~ 13400 10300
+Wire Wire Line
+	13200 4000 13750 4000
+Connection ~ 13350 4000
+Wire Wire Line
+	13250 6200 13800 6200
+Connection ~ 13400 6200
+Wire Wire Line
+	13200 8400 13750 8400
+Connection ~ 13350 8400
+Wire Wire Line
+	13250 10600 13800 10600
+Connection ~ 13400 10600
+Text Notes 18650 3450 0    60   ~ 0
+LVDS_25
 $EndSCHEMATC
