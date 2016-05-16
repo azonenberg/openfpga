@@ -440,19 +440,6 @@ NoConn ~ 16150 4250
 NoConn ~ 16150 4350
 NoConn ~ 16150 4450
 NoConn ~ 16150 4550
-NoConn ~ 19150 5350
-NoConn ~ 19150 5450
-NoConn ~ 19150 5550
-NoConn ~ 19150 5650
-NoConn ~ 19150 5750
-NoConn ~ 19150 5850
-NoConn ~ 19150 5950
-NoConn ~ 19150 6050
-NoConn ~ 19150 6150
-NoConn ~ 19150 6250
-NoConn ~ 19150 6350
-NoConn ~ 19150 6450
-NoConn ~ 19150 6550
 NoConn ~ 19150 6650
 NoConn ~ 19150 6750
 NoConn ~ 19150 6850
@@ -1571,4 +1558,56 @@ Connection ~ 8500 11750
 Connection ~ 7700 11750
 Connection ~ 6900 11750
 NoConn ~ 19150 2650
+Text HLabel 18950 5350 0    60   Output ~ 0
+GPIO3_AEN
+Text HLabel 18950 5450 0    60   Output ~ 0
+GPIO4_AEN
+Text HLabel 18950 5550 0    60   Output ~ 0
+GPIO5_AEN
+Text HLabel 18950 5650 0    60   Output ~ 0
+GPIO6_AEN
+Text HLabel 18950 5750 0    60   Output ~ 0
+GPIO7_AEN
+Text HLabel 18950 5850 0    60   Output ~ 0
+GPIO8_AEN
+Text HLabel 18950 5950 0    60   Output ~ 0
+GPIO9_AEN
+Text HLabel 18950 6050 0    60   Output ~ 0
+GPIO10_AEN
+Wire Wire Line
+	18950 5350 19150 5350
+Wire Wire Line
+	19150 5450 18950 5450
+Wire Wire Line
+	18950 5550 19150 5550
+Wire Wire Line
+	19150 5650 18950 5650
+Wire Wire Line
+	18950 5750 19150 5750
+Wire Wire Line
+	19150 5850 18950 5850
+Wire Wire Line
+	18950 5950 19150 5950
+Wire Wire Line
+	19150 6050 18950 6050
+Text HLabel 18950 6150 0    60   Output ~ 0
+GPIO12_AEN
+Text HLabel 18950 6250 0    60   Output ~ 0
+GPIO13_AEN
+Text HLabel 18950 6350 0    60   Output ~ 0
+GPIO14_AEN
+Text HLabel 18950 6450 0    60   Output ~ 0
+GPIO15_AEN
+Text HLabel 18950 6550 0    60   Output ~ 0
+GPIO17_AEN
+Wire Wire Line
+	19150 6150 18950 6150
+Wire Wire Line
+	18950 6250 19150 6250
+Wire Wire Line
+	19150 6350 18950 6350
+Wire Wire Line
+	18950 6450 19150 6450
+Wire Wire Line
+	18950 6550 19150 6550
 $EndSCHEMATC

@@ -28,7 +28,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 Text Notes 7200 2500 0    60   ~ 0
-Low current rails:\n* 1V25 precision reference for XADC\n* 7V5 Vpp\n\nHigh current rails (LTC3374):\n* 3V3 DUT\n* 2V5 PHY analog\n* 1V8 FPGA VCCAUX/VCCXADC, PHY I/O, DUT\n* 1V2 PHY analog/digital core\n* 1V0 FPGA VCCINT/VCCBRAM\n\nVariable rails:\n* DUT_VDD1/DUT_VDD2 muxed from 1V8/3V3\n\nInput: Unregulated 5V DC
+Low current rails:\n* 7V5 Vpp\n\nHigh current rails (LTC3374):\n* 3V3 DUT\n* 2V5 PHY analog\n* 1V8 FPGA VCCAUX/VCCXADC, PHY I/O, DUT\n* 1V2 PHY analog/digital core\n* 1V0 FPGA VCCINT/VCCBRAM\n\nVariable rails:\n* DUT_VDD1/DUT_VDD2 muxed from 1V8/3V3\n\nInput: Unregulated 5V DC
 $Comp
 L LTC3374-QFN U3
 U 2 1 5732D550
@@ -668,10 +668,6 @@ Text Notes 9150 5000 0    60   ~ 0
 vout = 1.24 * (R1 / 4700 + 1)\nR1 = 24k
 Text HLabel 4350 1750 2    60   Output ~ 0
 PSU_PGOOD
-Text HLabel 16550 3850 0    60   Output ~ 0
-1V25_REF
-Text HLabel 16550 3950 0    60   Output ~ 0
-1V0_REF
 Text Notes 7650 9800 0    60   ~ 0
 Load switching for DUT_VDDx
 Text Notes 7850 5000 0    60   ~ 0
