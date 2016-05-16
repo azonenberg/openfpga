@@ -17,7 +17,7 @@ EELAYER 25 0
 EELAYER END
 $Descr A2 23386 16535
 encoding utf-8
-Sheet 7 8
+Sheet 7 7
 Title "GreenPak Hardware-In-Loop Test Platform"
 Date "2016-05-15"
 Rev "0.1"

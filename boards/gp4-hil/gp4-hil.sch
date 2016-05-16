@@ -17,7 +17,7 @@ EELAYER 25 0
 EELAYER END
 $Descr A2 23386 16535
 encoding utf-8
-Sheet 1 8
+Sheet 1 7
 Title "GreenPak Hardware-In-Loop Test Platform"
 Date "2016-05-15"
 Rev "0.1"
@@ -54,20 +54,26 @@ F20 "VDD2_2V5_EN" I R 2550 3650 60
 F21 "VPP_EN" I R 2550 3950 60 
 $EndSheet
 $Sheet
-S 1500 4250 1050 1250
+S 1500 4350 1050 2000
 U 57316A40
-F0 "Ethernet" 60
+F0 "Ethernet + JTAG" 60
 F1 "ethernet.sch" 60
-F2 "2V5" I R 2550 4800 60 
-F3 "1V8" I R 2550 4900 60 
-F4 "1V2" I R 2550 5000 60 
+F2 "2V5" I R 2550 5000 60 
+F3 "1V8" I R 2550 5100 60 
+F4 "1V2" I R 2550 5200 60 
 F5 "GND" I R 2550 5300 60 
-$EndSheet
-$Sheet
-S 1500 5950 1050 1250
-U 57316A4B
-F0 "JTAG masters" 60
-F1 "jtag-masters.sch" 60
+F6 "FLASH_DQ0" B R 2550 4400 60 
+F7 "FLASH_DQ1" B R 2550 4500 60 
+F8 "FLASH_DQ2" B R 2550 4600 60 
+F9 "FLASH_DQ3" B R 2550 4700 60 
+F10 "FLASH_CS_N" O R 2550 4800 60 
+F11 "VDD1_3V3_EN" O R 2550 5500 60 
+F12 "VDD1_2V5_EN" O R 2550 5600 60 
+F13 "VDD1_1V8_EN" O R 2550 5700 60 
+F14 "VDD2_3V3_EN" O R 2550 5900 60 
+F15 "VDD2_2V5_EN" O R 2550 6000 60 
+F16 "VDD2_1V8_EN" O R 2550 6100 60 
+F17 "VPP_EN" O R 2550 6300 60 
 $EndSheet
 $Sheet
 S 6600 1200 1500 2000
@@ -130,55 +136,19 @@ F26 "3V3" I L 9000 3850 60
 F27 "PSU_VTEMP" I L 9000 4400 60 
 $EndSheet
 $Sheet
-S 1500 7750 1050 1350
+S 1500 6750 1050 1350
 U 57316B0C
 F0 "FPGA support" 60
 F1 "fpga-support.sch" 60
-F2 "GND" I R 2550 8550 60 
-F3 "1V0" I R 2550 8350 60 
-F4 "1V8" I R 2550 8250 60 
-F5 "2V5" I R 2550 8150 60 
-F6 "DUT_VDD1" I R 2550 8050 60 
-F7 "DUT_VDD2" I R 2550 7950 60 
+F2 "GND" I R 2550 7550 60 
+F3 "1V0" I R 2550 7350 60 
+F4 "1V8" I R 2550 7250 60 
+F5 "2V5" I R 2550 7150 60 
+F6 "DUT_VDD1" I R 2550 7050 60 
+F7 "DUT_VDD2" I R 2550 6950 60 
 $EndSheet
 Text Notes 3250 9850 0    60   ~ 0
-Bank plan\n* 14 (1V8): Boot flash, clock, Ethernet (JTAG?)\n* 15 (2V5): ADCs\n* 34 (variable): DUT bank 1\n* 35 (variable): DUT bank 2
-Wire Wire Line
-	8100 1350 9000 1350
-Wire Wire Line
-	9000 1450 8100 1450
-Wire Wire Line
-	8100 1550 9000 1550
-Wire Wire Line
-	9000 1650 8100 1650
-Wire Wire Line
-	8100 1750 9000 1750
-Wire Wire Line
-	9000 1850 8100 1850
-Wire Wire Line
-	8100 1950 9000 1950
-Wire Wire Line
-	9000 2050 8100 2050
-Wire Wire Line
-	8100 2150 9000 2150
-Wire Wire Line
-	9000 2350 8100 2350
-Wire Wire Line
-	8100 2450 9000 2450
-Wire Wire Line
-	9000 2550 8100 2550
-Wire Wire Line
-	8100 2650 9000 2650
-Wire Wire Line
-	9000 2750 8100 2750
-Wire Wire Line
-	8100 2850 9000 2850
-Wire Wire Line
-	9000 2950 8100 2950
-Wire Wire Line
-	8100 3050 9000 3050
-Wire Wire Line
-	9000 3150 8100 3150
+Bank plan\n* 14 (1V8): Boot flash, clock, Ethernet, JTAG\n* 15 (2V5): ADCs\n* 34 (variable): DUT bank 1\n* 35 (variable): DUT bank 2
 Text Notes 3300 9100 0    60   ~ 0
 Possibly the most overkill dev board ever.\n* Target device has 26 LUTs and 12 FFs\n* Support FPGA has 63,400 LUTs and 126800 FFs (if you load the 100t)\n* Has an ADC, DAC, and digital I/O on every pin of the DUT, all bridged out to TCP sockets\n* TCP programming, simply netcat a bitstream to the board to flash the DUT
 Text Label 8250 1350 0    60   ~ 0
@@ -241,8 +211,8 @@ F17 "DUT_GPIO17" B L 10900 2850 60
 F18 "DUT_GPIO18" B L 10900 2950 60 
 F19 "DUT_GPIO19" B L 10900 3050 60 
 F20 "DUT_GPIO20" B L 10900 3150 60 
-F21 "DUT_VDD1" I L 10900 3850 60 
-F22 "3V3" I L 10900 3700 60 
+F21 "DUT_VDD1" I L 10900 3550 60 
+F22 "3V3" I L 10900 3350 60 
 $EndSheet
 Text Label 10250 1350 0    60   ~ 0
 DUT_GPIO2
@@ -280,6 +250,84 @@ Text Label 10250 3050 0    60   ~ 0
 DUT_GPIO19
 Text Label 10250 3150 0    60   ~ 0
 DUT_GPIO20
+Text Label 10700 4200 2    60   ~ 0
+GND
+Text Label 8800 4200 2    60   ~ 0
+GND
+Text Label 8800 4400 2    60   ~ 0
+PSU_VTEMP
+Text Label 2800 1350 0    60   ~ 0
+DUT_VPP
+Text Label 2800 1450 0    60   ~ 0
+DUT_VDD1
+Text Label 2800 1550 0    60   ~ 0
+DUT_VDD2
+Text Label 2800 1750 0    60   ~ 0
+3V3
+Text Label 2800 1850 0    60   ~ 0
+2V5
+Text Label 2800 1950 0    60   ~ 0
+1V8
+Text Label 2800 2050 0    60   ~ 0
+1V2
+Text Label 2800 2150 0    60   ~ 0
+1V0
+Text Label 2800 2350 0    60   ~ 0
+GND
+Text Label 6450 1350 2    60   ~ 0
+DUT_VPP
+Text Label 6450 1450 2    60   ~ 0
+DUT_VDD1
+Text Label 6450 1550 2    60   ~ 0
+DUT_VDD2
+Text Label 6450 2250 2    60   ~ 0
+GND
+Text Label 2800 5300 0    60   ~ 0
+GND
+Text Label 2800 5200 0    60   ~ 0
+1V2
+Text Label 2800 5100 0    60   ~ 0
+1V8
+Text Label 2800 5000 0    60   ~ 0
+2V5
+Text Label 2800 4400 0    60   ~ 0
+FLASH_DQ0
+Wire Wire Line
+	8100 1350 9000 1350
+Wire Wire Line
+	9000 1450 8100 1450
+Wire Wire Line
+	8100 1550 9000 1550
+Wire Wire Line
+	9000 1650 8100 1650
+Wire Wire Line
+	8100 1750 9000 1750
+Wire Wire Line
+	9000 1850 8100 1850
+Wire Wire Line
+	8100 1950 9000 1950
+Wire Wire Line
+	9000 2050 8100 2050
+Wire Wire Line
+	8100 2150 9000 2150
+Wire Wire Line
+	9000 2350 8100 2350
+Wire Wire Line
+	8100 2450 9000 2450
+Wire Wire Line
+	9000 2550 8100 2550
+Wire Wire Line
+	8100 2650 9000 2650
+Wire Wire Line
+	9000 2750 8100 2750
+Wire Wire Line
+	8100 2850 9000 2850
+Wire Wire Line
+	9000 2950 8100 2950
+Wire Wire Line
+	8100 3050 9000 3050
+Wire Wire Line
+	9000 3150 8100 3150
 Wire Wire Line
 	10250 1350 10900 1350
 Wire Wire Line
@@ -316,16 +364,178 @@ Wire Wire Line
 	10900 3050 10250 3050
 Wire Wire Line
 	10250 3150 10900 3150
-Text Label 10700 4200 2    60   ~ 0
-GND
 Wire Wire Line
 	10700 4200 10900 4200
-Text Label 8800 4200 2    60   ~ 0
-GND
 Wire Wire Line
 	8800 4200 9000 4200
-Text Label 8800 4400 2    60   ~ 0
-PSU_VTEMP
 Wire Wire Line
 	8800 4400 9000 4400
+Wire Wire Line
+	2800 1350 2550 1350
+Wire Wire Line
+	2800 1450 2550 1450
+Wire Wire Line
+	2800 1550 2550 1550
+Wire Wire Line
+	2800 2350 2550 2350
+Wire Wire Line
+	2550 2150 2800 2150
+Wire Wire Line
+	2800 2050 2550 2050
+Wire Wire Line
+	2550 1950 2800 1950
+Wire Wire Line
+	2800 1850 2550 1850
+Wire Wire Line
+	2550 1750 2800 1750
+Wire Wire Line
+	6450 2250 6600 2250
+Wire Wire Line
+	6450 1550 6600 1550
+Wire Wire Line
+	6450 1450 6600 1450
+Wire Wire Line
+	6450 1350 6600 1350
+Wire Wire Line
+	2800 5300 2550 5300
+Wire Wire Line
+	2800 5200 2550 5200
+Wire Wire Line
+	2800 5100 2550 5100
+Wire Wire Line
+	2800 5000 2550 5000
+Wire Wire Line
+	2800 4400 2550 4400
+Text Label 2800 4500 0    60   ~ 0
+FLASH_DQ1
+Wire Wire Line
+	2800 4500 2550 4500
+Text Label 2800 4600 0    60   ~ 0
+FLASH_DQ2
+Wire Wire Line
+	2800 4600 2550 4600
+Text Label 2800 4700 0    60   ~ 0
+FLASH_DQ3
+Wire Wire Line
+	2800 4700 2550 4700
+Text Label 2800 4800 0    60   ~ 0
+FLASH_CS_N
+Wire Wire Line
+	2800 4800 2550 4800
+Text Label 8800 3850 2    60   ~ 0
+3V3
+Wire Wire Line
+	8800 3850 9000 3850
+Text Label 8800 3950 2    60   ~ 0
+2V5
+Wire Wire Line
+	8800 3950 9000 3950
+Text Label 8800 4050 2    60   ~ 0
+1V8
+Wire Wire Line
+	8800 4050 9000 4050
+Text Label 8800 3650 2    60   ~ 0
+DUT_VPP
+Wire Wire Line
+	8800 3650 9000 3650
+Text Label 8800 3350 2    60   ~ 0
+DUT_VDD1
+Wire Wire Line
+	8800 3350 9000 3350
+Text Label 8800 3450 2    60   ~ 0
+DUT_VDD2
+Wire Wire Line
+	8800 3450 9000 3450
+Text Label 10700 3350 2    60   ~ 0
+3V3
+Wire Wire Line
+	10700 3350 10900 3350
+Text Label 10700 3550 2    60   ~ 0
+DUT_VDD1
+Wire Wire Line
+	10700 3550 10900 3550
+Text Label 2850 3150 0    60   ~ 0
+VDD1_3V3_EN
+Wire Wire Line
+	2850 3150 2550 3150
+Text Label 2850 3250 0    60   ~ 0
+VDD1_2V5_EN
+Wire Wire Line
+	2850 3250 2550 3250
+Text Label 2850 3350 0    60   ~ 0
+VDD1_1V8_EN
+Wire Wire Line
+	2850 3350 2550 3350
+Text Label 2850 3550 0    60   ~ 0
+VDD2_3V3_EN
+Wire Wire Line
+	2850 3550 2550 3550
+Text Label 2850 3650 0    60   ~ 0
+VDD2_2V5_EN
+Wire Wire Line
+	2850 3650 2550 3650
+Text Label 2850 3750 0    60   ~ 0
+VDD2_1V8_EN
+Wire Wire Line
+	2850 3750 2550 3750
+Text Label 2850 3950 0    60   ~ 0
+VPP_EN
+Wire Wire Line
+	2850 3950 2550 3950
+Text Label 2800 5500 0    60   ~ 0
+VDD1_3V3_EN
+Text Label 2800 5600 0    60   ~ 0
+VDD1_2V5_EN
+Text Label 2800 5700 0    60   ~ 0
+VDD1_1V8_EN
+Text Label 2800 5900 0    60   ~ 0
+VDD2_3V3_EN
+Text Label 2800 6000 0    60   ~ 0
+VDD2_2V5_EN
+Text Label 2800 6100 0    60   ~ 0
+VDD2_1V8_EN
+Text Label 2800 6300 0    60   ~ 0
+VPP_EN
+Wire Wire Line
+	2550 6300 2800 6300
+Wire Wire Line
+	2800 6100 2550 6100
+Wire Wire Line
+	2550 6000 2800 6000
+Wire Wire Line
+	2800 5900 2550 5900
+Wire Wire Line
+	2550 5500 2800 5500
+Wire Wire Line
+	2800 5600 2550 5600
+Wire Wire Line
+	2550 5700 2800 5700
+Text Label 2850 2550 0    60   ~ 0
+PSU_VTEMP
+Wire Wire Line
+	2850 2550 2550 2550
+Text Label 2800 6950 0    60   ~ 0
+DUT_VDD2
+Wire Wire Line
+	2800 6950 2550 6950
+Text Label 2800 7050 0    60   ~ 0
+DUT_VDD1
+Wire Wire Line
+	2550 7050 2800 7050
+Text Label 2800 7150 0    60   ~ 0
+2V5
+Wire Wire Line
+	2800 7150 2550 7150
+Text Label 2800 7250 0    60   ~ 0
+1V8
+Wire Wire Line
+	2800 7250 2550 7250
+Text Label 2800 7350 0    60   ~ 0
+1V0
+Wire Wire Line
+	2800 7350 2550 7350
+Text Label 2800 7550 0    60   ~ 0
+GND
+Wire Wire Line
+	2800 7550 2550 7550
 $EndSCHEMATC

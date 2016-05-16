@@ -17,12 +17,12 @@ EELAYER 25 0
 EELAYER END
 $Descr A2 23386 16535
 encoding utf-8
-Sheet 3 8
+Sheet 3 7
 Title "GreenPak Hardware-In-Loop Test Platform"
 Date "2016-05-15"
 Rev "0.1"
 Comp "Andrew Zonenberg"
-Comment1 "Ethernet PHY"
+Comment1 "Ethernet PHY and JTAG masters"
 Comment2 ""
 Comment3 ""
 Comment4 ""
@@ -531,19 +531,6 @@ Connection ~ 1700 5350
 Text Label 950  5350 2    60   ~ 0
 GND
 Connection ~ 1150 5350
-$Comp
-L XC7AxT-xFTG256x U?
-U 3 1 57349080
-P 16400 9900
-AR Path="/57316B0C/57349080" Ref="U?"  Part="1" 
-AR Path="/57316A40/57349080" Ref="U2"  Part="3" 
-F 0 "U2" H 16400 9700 60  0000 L CNN
-F 1 "XC7A100T-1FTG256C" H 16400 9800 60  0000 L CNN
-F 2 "" H 16400 9900 60  0000 C CNN
-F 3 "" H 16400 9900 60  0000 C CNN
-	3    16400 9900
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	8850 8400 8850 8500
 Wire Wire Line
@@ -961,27 +948,26 @@ Text Label 16000 6300 2    60   ~ 0
 PHY_MDC
 Text Label 16000 6400 2    60   ~ 0
 PHY_MDIO
-Text Label 16000 6500 2    60   ~ 0
+Text Label 16000 5900 2    60   ~ 0
 PHY_INT_N
-Text Label 16000 8100 2    60   ~ 0
+Text Label 16000 7700 2    60   ~ 0
 RGMII_TXD0
-Text Label 16000 8200 2    60   ~ 0
+Text Label 16000 7800 2    60   ~ 0
 RGMII_TXD1
-Text Label 16000 8300 2    60   ~ 0
+Text Label 16000 7900 2    60   ~ 0
 RGMII_TXD2
-Text Label 16000 8400 2    60   ~ 0
+Text Label 16000 8000 2    60   ~ 0
 RGMII_TXD3
-Text Label 16000 8500 2    60   ~ 0
+Text Label 16000 8100 2    60   ~ 0
 RGMII_TX_CLK
-Text Label 16000 8600 2    60   ~ 0
+Text Label 16000 8200 2    60   ~ 0
 RGMII_TX_EN
-Text Label 16000 6600 2    60   ~ 0
+Text Label 16000 6000 2    60   ~ 0
 ETH_RESET_N
 Wire Wire Line
 	16000 7500 16200 7500
 Wire Wire Line
 	16000 7000 16200 7000
-NoConn ~ 16200 7600
 Wire Wire Line
 	16000 7400 16200 7400
 Wire Wire Line
@@ -995,36 +981,22 @@ Wire Wire Line
 Wire Wire Line
 	16000 6400 16200 6400
 Wire Wire Line
-	16000 6500 16200 6500
+	16000 5900 16200 5900
 Wire Wire Line
-	16000 6600 16200 6600
+	16000 6000 16200 6000
 Wire Wire Line
-	16000 8100 16200 8100
-Wire Wire Line
-	16000 8600 16200 8600
-Wire Wire Line
-	16200 8500 16000 8500
-Wire Wire Line
-	16000 8400 16200 8400
-Wire Wire Line
-	16200 8300 16000 8300
+	16000 7700 16200 7700
 Wire Wire Line
 	16000 8200 16200 8200
-NoConn ~ 16200 5900
-NoConn ~ 16200 5800
-NoConn ~ 16200 5700
-NoConn ~ 16200 5600
-NoConn ~ 16200 6700
-NoConn ~ 16200 6800
+Wire Wire Line
+	16200 8100 16000 8100
+Wire Wire Line
+	16000 8000 16200 8000
+Wire Wire Line
+	16200 7900 16000 7900
+Wire Wire Line
+	16000 7800 16200 7800
 NoConn ~ 16200 6900
-NoConn ~ 16200 9400
-NoConn ~ 16200 9300
-NoConn ~ 16200 9200
-NoConn ~ 16200 9100
-NoConn ~ 16200 9000
-NoConn ~ 16200 8900
-NoConn ~ 16200 8800
-NoConn ~ 16200 8700
 Text Notes 12050 3650 0    60   ~ 0
 TODO: FPGA core clock
 NoConn ~ 16200 5000
@@ -1065,15 +1037,47 @@ Text HLabel 16000 6100 0    60   Output ~ 0
 FLASH_CS_N
 Wire Wire Line
 	16000 6100 16200 6100
-NoConn ~ 16200 6000
 NoConn ~ 16200 6200
-NoConn ~ 16200 8000
-NoConn ~ 16200 7900
-NoConn ~ 16200 7800
-NoConn ~ 16200 7700
-NoConn ~ 16200 9500
-NoConn ~ 16200 9600
-NoConn ~ 16200 9700
-NoConn ~ 16200 9800
-NoConn ~ 16200 9900
+Text HLabel 16050 6700 0    60   Output ~ 0
+VDD1_3V3_EN
+Text HLabel 16050 6600 0    60   Output ~ 0
+VDD1_2V5_EN
+Text HLabel 16050 6500 0    60   Output ~ 0
+VDD1_1V8_EN
+Text HLabel 16050 5800 0    60   Output ~ 0
+VDD2_3V3_EN
+Text HLabel 16050 5700 0    60   Output ~ 0
+VDD2_2V5_EN
+Text HLabel 16050 5600 0    60   Output ~ 0
+VDD2_1V8_EN
+Text HLabel 16050 6800 0    60   Output ~ 0
+VPP_EN
+Wire Wire Line
+	16200 5600 16050 5600
+Wire Wire Line
+	16050 5700 16200 5700
+Wire Wire Line
+	16200 5800 16050 5800
+Wire Wire Line
+	16050 6500 16200 6500
+Wire Wire Line
+	16200 6600 16050 6600
+Wire Wire Line
+	16050 6700 16200 6700
+Wire Wire Line
+	16200 6800 16050 6800
+NoConn ~ 16200 7600
+$Comp
+L XC7AxT-xFTG256x U?
+U 3 1 57349080
+P 16400 9900
+AR Path="/57316B0C/57349080" Ref="U?"  Part="1" 
+AR Path="/57316A40/57349080" Ref="U2"  Part="3" 
+F 0 "U2" H 16400 9700 60  0000 L CNN
+F 1 "XC7A100T-1FTG256C" H 16400 9800 60  0000 L CNN
+F 2 "" H 16400 9900 60  0000 C CNN
+F 3 "" H 16400 9900 60  0000 C CNN
+	3    16400 9900
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
