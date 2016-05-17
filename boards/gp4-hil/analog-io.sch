@@ -31,8 +31,6 @@ Text Notes 1550 3350 0    60   ~ 0
 1v p-p analog input, 10 bits:\n* 4V max (attenuation of 4): 3.9 mV resolution\n* 8V max (attenuation of 8): 7.8 mV resolution\n\nWith 5k ohm split attenuator from Vin to signal,\nwe waste ~~1 mW in leakage per attenuator
 Text HLabel 1300 800  0    60   Input ~ 0
 DUT_VDD1
-Text HLabel 1300 900  0    60   Input ~ 0
-DUT_VDD2
 Text HLabel 1500 3950 0    60   Input ~ 0
 GND
 Text HLabel 1300 700  0    60   Input ~ 0
@@ -145,8 +143,6 @@ Text Label 2200 2500 0    60   ~ 0
 ADC_IN17
 Text Label 2200 2600 0    60   ~ 0
 ADC_IN18
-Text Label 2200 2700 0    60   ~ 0
-ADC_IN19
 Text Label 1500 3750 2    60   ~ 0
 A2V5
 Text Label 1550 4250 2    60   ~ 0
@@ -205,8 +201,6 @@ Text Label 3150 5950 0    60   ~ 0
 ADC_IN17
 Text Label 3150 6050 0    60   ~ 0
 ADC_IN18
-Text Label 3150 6150 0    60   ~ 0
-ADC_IN19
 $Comp
 L C C27
 U 1 1 5736A957
@@ -1064,8 +1058,6 @@ Connection ~ 1550 3750
 Wire Wire Line
 	1800 700  2900 700 
 Wire Wire Line
-	1500 700  1300 700 
-Wire Wire Line
 	3650 700  3200 700 
 Wire Wire Line
 	1800 800  2900 800 
@@ -1144,10 +1136,6 @@ Wire Wire Line
 Wire Wire Line
 	1500 2600 1300 2600
 Wire Wire Line
-	1800 2700 2900 2700
-Wire Wire Line
-	1500 2700 1300 2700
-Wire Wire Line
 	3650 700  3650 2700
 Connection ~ 3650 800 
 Connection ~ 3650 900 
@@ -1167,7 +1155,6 @@ Connection ~ 3650 2200
 Connection ~ 3650 2300
 Connection ~ 3650 2400
 Connection ~ 3650 2500
-Connection ~ 3650 2600
 Wire Wire Line
 	1550 4250 1650 4250
 Wire Wire Line
@@ -1225,7 +1212,7 @@ Wire Wire Line
 Wire Wire Line
 	3050 6050 3150 6050
 Wire Wire Line
-	3150 6150 3050 6150
+	3150 6250 3050 6250
 Wire Wire Line
 	1700 7550 2950 7550
 Wire Wire Line
@@ -1798,8 +1785,6 @@ NoConn ~ 7650 7600
 Text HLabel 3150 6250 2    60   Input ~ 0
 PSU_VTEMP
 Wire Wire Line
-	3150 6250 3050 6250
-Wire Wire Line
 	3650 800  3200 800 
 Wire Wire Line
 	3650 900  3200 900 
@@ -1837,8 +1822,6 @@ Wire Wire Line
 	3650 2500 3200 2500
 Wire Wire Line
 	3650 2600 3200 2600
-Wire Wire Line
-	3650 2700 3200 2700
 $Comp
 L C C145
 U 1 1 574A9C0E
@@ -1931,7 +1914,7 @@ Wire Wire Line
 Wire Wire Line
 	19750 4950 20650 4950
 Wire Wire Line
-	19750 4950 19750 5050
+	19750 5050 19750 4950
 Wire Wire Line
 	19750 4750 19750 4850
 Wire Wire Line
@@ -1963,7 +1946,7 @@ F 3 "" H 18900 5050 60  0000 C CNN
 	0    1    1    0   
 $EndComp
 Wire Wire Line
-	19750 5050 19050 5050
+	19050 5050 19750 5050
 Wire Wire Line
 	19050 4750 19750 4750
 $Comp
@@ -2832,17 +2815,6 @@ F 3 "" H 1650 2600 30  0000 C CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L R R37
-U 1 1 5750E582
-P 1650 2700
-F 0 "R37" V 1600 2450 50  0000 C CNN
-F 1 "30K 0.1%" V 1600 3000 50  0000 C CNN
-F 2 "" V 1580 2700 30  0000 C CNN
-F 3 "" H 1650 2700 30  0000 C CNN
-	1    1650 2700
-	0    1    1    0   
-$EndComp
-$Comp
 L R R39
 U 1 1 5750E782
 P 3050 800
@@ -3049,17 +3021,6 @@ F 1 "10K 0.1%" V 3000 2900 50  0000 C CNN
 F 2 "" V 2980 2600 30  0000 C CNN
 F 3 "" H 3050 2600 30  0000 C CNN
 	1    3050 2600
-	0    1    1    0   
-$EndComp
-$Comp
-L R R58
-U 1 1 5750FA7F
-P 3050 2700
-F 0 "R58" V 3000 2450 50  0000 C CNN
-F 1 "10K 0.1%" V 3000 3000 50  0000 C CNN
-F 2 "" V 2980 2700 30  0000 C CNN
-F 3 "" H 3050 2700 30  0000 C CNN
-	1    3050 2700
 	0    1    1    0   
 $EndComp
 $Comp
@@ -3388,4 +3349,43 @@ Text Label 8900 14450 2    60   ~ 0
 ADC_B_VIN
 Wire Wire Line
 	8900 14450 9250 14450
+Text HLabel 1300 900  0    60   Input ~ 0
+DUT_VDD2
+Text Label 2200 2700 0    60   ~ 0
+ADC_IN19
+Wire Wire Line
+	1800 2700 2900 2700
+Wire Wire Line
+	1500 2700 1300 2700
+Wire Wire Line
+	3650 2700 3200 2700
+$Comp
+L R R37
+U 1 1 57542996
+P 1650 2700
+F 0 "R37" V 1600 2450 50  0000 C CNN
+F 1 "30K 0.1%" V 1600 3000 50  0000 C CNN
+F 2 "" V 1580 2700 30  0000 C CNN
+F 3 "" H 1650 2700 30  0000 C CNN
+	1    1650 2700
+	0    1    1    0   
+$EndComp
+$Comp
+L R R58
+U 1 1 5754299C
+P 3050 2700
+F 0 "R58" V 3000 2450 50  0000 C CNN
+F 1 "10K 0.1%" V 3000 3000 50  0000 C CNN
+F 2 "" V 2980 2700 30  0000 C CNN
+F 3 "" H 3050 2700 30  0000 C CNN
+	1    3050 2700
+	0    1    1    0   
+$EndComp
+Connection ~ 3650 2600
+Text Label 3150 6150 0    60   ~ 0
+ADC_IN19
+Wire Wire Line
+	3150 6150 3050 6150
+Wire Wire Line
+	1300 700  1500 700 
 $EndSCHEMATC

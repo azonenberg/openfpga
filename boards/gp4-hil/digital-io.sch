@@ -359,8 +359,6 @@ F 3 "" H 7900 1550 60  0000 C CNN
 $EndComp
 Text Notes 1900 9250 0    60   ~ 0
 Analog isolation switching
-Text Label 18950 4450 2    60   ~ 0
-GPIO2_DIO
 Text Label 18950 4550 2    60   ~ 0
 GPIO3_DIO
 Text Label 18950 4650 2    60   ~ 0
@@ -425,8 +423,6 @@ Text Label 18950 4150 2    60   ~ 0
 GPIO18_DEN
 Text Label 18950 4250 2    60   ~ 0
 GPIO19_DEN
-Text Label 18950 4350 2    60   ~ 0
-GPIO20_DEN
 Text Label 18950 3450 2    60   ~ 0
 GPIO10_DEN
 NoConn ~ 16150 2650
@@ -825,7 +821,7 @@ Wire Wire Line
 Wire Wire Line
 	19150 4350 18950 4350
 Wire Wire Line
-	18950 4450 19150 4450
+	18400 4450 19150 4450
 Wire Wire Line
 	19150 4550 18950 4550
 Wire Wire Line
@@ -1610,4 +1606,8 @@ Wire Wire Line
 	18950 6450 19150 6450
 Wire Wire Line
 	18950 6550 19150 6550
+Text Label 18950 4350 2    60   ~ 0
+GPIO20_DEN
+Text HLabel 18400 4450 0    60   Output ~ 0
+GPIO2_DIO
 $EndSCHEMATC
