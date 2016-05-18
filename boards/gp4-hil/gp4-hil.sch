@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 1 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-16"
+Date "2016-05-17"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "Top level"
@@ -319,6 +319,181 @@ Text Label 2800 5000 0    60   ~ 0
 2V5
 Text Label 2800 4400 0    60   ~ 0
 FLASH_DQ0
+Text Label 2800 4500 0    60   ~ 0
+FLASH_DQ1
+Text Label 2800 4600 0    60   ~ 0
+FLASH_DQ2
+Text Label 2800 4700 0    60   ~ 0
+FLASH_DQ3
+Text Label 2800 4800 0    60   ~ 0
+FLASH_CS_N
+Text Label 8800 3850 2    60   ~ 0
+3V3
+Text Label 8800 3950 2    60   ~ 0
+2V5
+Text Label 8800 4050 2    60   ~ 0
+1V8
+Text Label 8800 3650 2    60   ~ 0
+DUT_VPP_RAW
+Text Label 8800 3350 2    60   ~ 0
+DUT_VDD1
+Text Label 11600 4850 2    60   ~ 0
+3V3
+Text Label 11600 4950 2    60   ~ 0
+DUT_VDD1
+Text Label 2850 3150 0    60   ~ 0
+VDD1_3V3_EN
+Text Label 2850 3250 0    60   ~ 0
+VDD1_2V5_EN
+Text Label 2850 3350 0    60   ~ 0
+VDD1_1V8_EN
+Text Label 2850 3550 0    60   ~ 0
+VDD2_3V3_EN
+Text Label 2850 3650 0    60   ~ 0
+VDD2_2V5_EN
+Text Label 2850 3750 0    60   ~ 0
+VDD2_1V8_EN
+Text Label 2850 3950 0    60   ~ 0
+VPP_EN
+Text Label 2800 5500 0    60   ~ 0
+VDD1_3V3_EN
+Text Label 2800 5600 0    60   ~ 0
+VDD1_2V5_EN
+Text Label 2800 5700 0    60   ~ 0
+VDD1_1V8_EN
+Text Label 2800 5900 0    60   ~ 0
+VDD2_3V3_EN
+Text Label 2800 6000 0    60   ~ 0
+VDD2_2V5_EN
+Text Label 2800 6100 0    60   ~ 0
+VDD2_1V8_EN
+Text Label 2800 6300 0    60   ~ 0
+VPP_EN
+Text Label 2850 2550 0    60   ~ 0
+PSU_VTEMP
+Text Label 2800 7150 0    60   ~ 0
+DUT_VDD1
+Text Label 2800 7250 0    60   ~ 0
+2V5
+Text Label 2800 7350 0    60   ~ 0
+1V8
+Text Label 2800 7450 0    60   ~ 0
+1V0
+Text Label 2800 7650 0    60   ~ 0
+GND
+Text Label 2800 7850 0    60   ~ 0
+PSU_PGOOD
+Text Label 2800 8150 0    60   ~ 0
+FLASH_DQ0
+Text Label 2800 8250 0    60   ~ 0
+FLASH_DQ1
+Text Label 2800 8350 0    60   ~ 0
+FLASH_DQ2
+Text Label 2800 8450 0    60   ~ 0
+FLASH_DQ3
+Text Label 2800 8050 0    60   ~ 0
+FLASH_CS_N
+Text Label 2850 2650 0    60   ~ 0
+PSU_PGOOD
+Text Label 2800 1350 0    60   ~ 0
+DUT_GPIO2
+Text Label 2800 7050 0    60   ~ 0
+DUT_VDD2
+Text Label 8800 3450 2    60   ~ 0
+DUT_VDD2
+Text Label 6450 1550 2    60   ~ 0
+DUT_VDD2
+Text Label 2800 1550 0    60   ~ 0
+DUT_VDD2
+Text Label 2800 6500 0    60   ~ 0
+VDD2_EN
+Text Label 6450 1750 2    60   ~ 0
+VDD2_EN
+Text Label 2800 1250 0    60   ~ 0
+DUT_VPP_RAW
+Text Label 11600 5350 2    60   ~ 0
+GPIO2_DIO
+Text Label 6450 3050 2    60   ~ 0
+GPIO2_DIO
+Text Label 6450 2150 2    60   ~ 0
+3V3
+$Comp
+L R R170
+U 1 1 575A82C3
+P 3750 3150
+F 0 "R170" V 3700 3350 50  0000 C CNN
+F 1 "1K" V 3750 3150 50  0000 C CNN
+F 2 "" V 3680 3150 30  0000 C CNN
+F 3 "" H 3750 3150 30  0000 C CNN
+	1    3750 3150
+	0    1    1    0   
+$EndComp
+$Comp
+L R R171
+U 1 1 575A97F9
+P 3750 3250
+F 0 "R171" V 3700 3450 50  0000 C CNN
+F 1 "1K" V 3750 3250 50  0000 C CNN
+F 2 "" V 3680 3250 30  0000 C CNN
+F 3 "" H 3750 3250 30  0000 C CNN
+	1    3750 3250
+	0    1    1    0   
+$EndComp
+$Comp
+L R R172
+U 1 1 575A9D37
+P 3750 3350
+F 0 "R172" V 3700 3550 50  0000 C CNN
+F 1 "1K" V 3750 3350 50  0000 C CNN
+F 2 "" V 3680 3350 30  0000 C CNN
+F 3 "" H 3750 3350 30  0000 C CNN
+	1    3750 3350
+	0    1    1    0   
+$EndComp
+$Comp
+L R R173
+U 1 1 575AA2BE
+P 3750 3550
+F 0 "R173" V 3700 3750 50  0000 C CNN
+F 1 "1K" V 3750 3550 50  0000 C CNN
+F 2 "" V 3680 3550 30  0000 C CNN
+F 3 "" H 3750 3550 30  0000 C CNN
+	1    3750 3550
+	0    1    1    0   
+$EndComp
+$Comp
+L R R174
+U 1 1 575AA2C4
+P 3750 3650
+F 0 "R174" V 3700 3850 50  0000 C CNN
+F 1 "1K" V 3750 3650 50  0000 C CNN
+F 2 "" V 3680 3650 30  0000 C CNN
+F 3 "" H 3750 3650 30  0000 C CNN
+	1    3750 3650
+	0    1    1    0   
+$EndComp
+$Comp
+L R R175
+U 1 1 575AA2CA
+P 3750 3750
+F 0 "R175" V 3700 3950 50  0000 C CNN
+F 1 "1K" V 3750 3750 50  0000 C CNN
+F 2 "" V 3680 3750 30  0000 C CNN
+F 3 "" H 3750 3750 30  0000 C CNN
+	1    3750 3750
+	0    1    1    0   
+$EndComp
+$Comp
+L R R176
+U 1 1 575AA498
+P 3750 3950
+F 0 "R176" V 3700 4150 50  0000 C CNN
+F 1 "1K" V 3750 3950 50  0000 C CNN
+F 2 "" V 3680 3950 30  0000 C CNN
+F 3 "" H 3750 3950 30  0000 C CNN
+	1    3750 3950
+	0    1    1    0   
+$EndComp
 Wire Wire Line
 	8100 1350 9000 1350
 Wire Wire Line
@@ -429,92 +604,42 @@ Wire Wire Line
 	2800 5000 2550 5000
 Wire Wire Line
 	2800 4400 2550 4400
-Text Label 2800 4500 0    60   ~ 0
-FLASH_DQ1
 Wire Wire Line
 	2800 4500 2550 4500
-Text Label 2800 4600 0    60   ~ 0
-FLASH_DQ2
 Wire Wire Line
 	2800 4600 2550 4600
-Text Label 2800 4700 0    60   ~ 0
-FLASH_DQ3
 Wire Wire Line
 	2800 4700 2550 4700
-Text Label 2800 4800 0    60   ~ 0
-FLASH_CS_N
 Wire Wire Line
 	2800 4800 2550 4800
-Text Label 8800 3850 2    60   ~ 0
-3V3
 Wire Wire Line
 	8800 3850 9000 3850
-Text Label 8800 3950 2    60   ~ 0
-2V5
 Wire Wire Line
 	8800 3950 9000 3950
-Text Label 8800 4050 2    60   ~ 0
-1V8
 Wire Wire Line
 	8800 4050 9000 4050
-Text Label 8800 3650 2    60   ~ 0
-DUT_VPP_RAW
 Wire Wire Line
 	8800 3650 9000 3650
-Text Label 8800 3350 2    60   ~ 0
-DUT_VDD1
 Wire Wire Line
 	8800 3350 9000 3350
-Text Label 11600 4850 2    60   ~ 0
-3V3
 Wire Wire Line
 	11600 4850 11800 4850
-Text Label 11600 4950 2    60   ~ 0
-DUT_VDD1
 Wire Wire Line
 	11600 4950 11800 4950
-Text Label 2850 3150 0    60   ~ 0
-VDD1_3V3_EN
 Wire Wire Line
-	2850 3150 2550 3150
-Text Label 2850 3250 0    60   ~ 0
-VDD1_2V5_EN
+	2550 3150 3600 3150
 Wire Wire Line
-	2850 3250 2550 3250
-Text Label 2850 3350 0    60   ~ 0
-VDD1_1V8_EN
+	2550 3250 3600 3250
 Wire Wire Line
-	2850 3350 2550 3350
-Text Label 2850 3550 0    60   ~ 0
-VDD2_3V3_EN
+	2550 3350 3600 3350
 Wire Wire Line
-	2850 3550 2550 3550
-Text Label 2850 3650 0    60   ~ 0
-VDD2_2V5_EN
+	2550 3550 3600 3550
 Wire Wire Line
-	2850 3650 2550 3650
-Text Label 2850 3750 0    60   ~ 0
-VDD2_1V8_EN
+	2550 3650 3600 3650
 Wire Wire Line
-	2850 3750 2550 3750
-Text Label 2850 3950 0    60   ~ 0
-VPP_EN
+	2550 3750 3600 3750
 Wire Wire Line
-	2850 3950 2550 3950
-Text Label 2800 5500 0    60   ~ 0
-VDD1_3V3_EN
-Text Label 2800 5600 0    60   ~ 0
-VDD1_2V5_EN
-Text Label 2800 5700 0    60   ~ 0
-VDD1_1V8_EN
-Text Label 2800 5900 0    60   ~ 0
-VDD2_3V3_EN
-Text Label 2800 6000 0    60   ~ 0
-VDD2_2V5_EN
-Text Label 2800 6100 0    60   ~ 0
-VDD2_1V8_EN
-Text Label 2800 6300 0    60   ~ 0
-VPP_EN
+	2550 3950 3600 3950
 Wire Wire Line
 	2550 6300 2800 6300
 Wire Wire Line
@@ -529,58 +654,32 @@ Wire Wire Line
 	2800 5600 2550 5600
 Wire Wire Line
 	2550 5700 2800 5700
-Text Label 2850 2550 0    60   ~ 0
-PSU_VTEMP
 Wire Wire Line
 	2850 2550 2550 2550
 Wire Wire Line
 	2800 7050 2550 7050
-Text Label 2800 7150 0    60   ~ 0
-DUT_VDD1
 Wire Wire Line
 	2550 7150 2800 7150
-Text Label 2800 7250 0    60   ~ 0
-2V5
 Wire Wire Line
 	2800 7250 2550 7250
-Text Label 2800 7350 0    60   ~ 0
-1V8
 Wire Wire Line
 	2800 7350 2550 7350
-Text Label 2800 7450 0    60   ~ 0
-1V0
 Wire Wire Line
 	2800 7450 2550 7450
-Text Label 2800 7650 0    60   ~ 0
-GND
 Wire Wire Line
 	2800 7650 2550 7650
-Text Label 2800 7850 0    60   ~ 0
-PSU_PGOOD
 Wire Wire Line
 	2800 7850 2550 7850
-Text Label 2800 8150 0    60   ~ 0
-FLASH_DQ0
 Wire Wire Line
 	2800 8050 2550 8050
-Text Label 2800 8250 0    60   ~ 0
-FLASH_DQ1
 Wire Wire Line
 	2800 8150 2550 8150
-Text Label 2800 8350 0    60   ~ 0
-FLASH_DQ2
 Wire Wire Line
 	2800 8250 2550 8250
-Text Label 2800 8450 0    60   ~ 0
-FLASH_DQ3
 Wire Wire Line
 	2800 8350 2550 8350
-Text Label 2800 8050 0    60   ~ 0
-FLASH_CS_N
 Wire Wire Line
 	2800 8450 2550 8450
-Text Label 2850 2650 0    60   ~ 0
-PSU_PGOOD
 Wire Wire Line
 	2850 2650 2550 2650
 Wire Wire Line
@@ -609,42 +708,58 @@ Wire Wire Line
 	10500 4350 11800 4350
 Wire Wire Line
 	11800 4250 10500 4250
-Text Label 2800 1350 0    60   ~ 0
-DUT_GPIO2
-Text Label 2800 7050 0    60   ~ 0
-DUT_VDD2
 Wire Wire Line
 	8800 3450 9000 3450
-Text Label 8800 3450 2    60   ~ 0
-DUT_VDD2
 Wire Wire Line
 	6450 1550 6600 1550
-Text Label 6450 1550 2    60   ~ 0
-DUT_VDD2
-Text Label 2800 1550 0    60   ~ 0
-DUT_VDD2
-Text Label 2800 6500 0    60   ~ 0
-VDD2_EN
 Wire Wire Line
-	2800 6500 2550 6500
-Text Label 6450 1750 2    60   ~ 0
-VDD2_EN
+	2550 6500 3550 6500
 Wire Wire Line
 	6450 1750 6600 1750
-Text Label 2800 1250 0    60   ~ 0
-DUT_VPP_RAW
 Wire Wire Line
 	2800 1250 2550 1250
-Text Label 11600 5350 2    60   ~ 0
-GPIO2_DIO
 Wire Wire Line
 	11600 5350 11800 5350
-Text Label 6450 3050 2    60   ~ 0
-GPIO2_DIO
 Wire Wire Line
 	6450 3050 6600 3050
-Text Label 6450 2150 2    60   ~ 0
-3V3
 Wire Wire Line
 	6450 2150 6600 2150
+Wire Wire Line
+	3900 3150 4200 3150
+Wire Wire Line
+	4200 3150 4200 3950
+Wire Wire Line
+	4200 3250 3900 3250
+Wire Wire Line
+	4200 3350 3900 3350
+Connection ~ 4200 3250
+Wire Wire Line
+	4200 3550 3900 3550
+Connection ~ 4200 3350
+Wire Wire Line
+	4200 3650 3900 3650
+Connection ~ 4200 3550
+Wire Wire Line
+	4200 3750 3900 3750
+Connection ~ 4200 3650
+Wire Wire Line
+	4200 3950 3900 3950
+Connection ~ 4200 3750
+Text Label 4200 3150 0    60   ~ 0
+GND
+$Comp
+L R R169
+U 1 1 575AEA7E
+P 3700 6500
+F 0 "R169" V 3650 6700 50  0000 C CNN
+F 1 "1K" V 3700 6500 50  0000 C CNN
+F 2 "" V 3630 6500 30  0000 C CNN
+F 3 "" H 3700 6500 30  0000 C CNN
+	1    3700 6500
+	0    1    1    0   
+$EndComp
+Text Label 4200 6500 0    60   ~ 0
+GND
+Wire Wire Line
+	4200 6500 3850 6500
 $EndSCHEMATC
