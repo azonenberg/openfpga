@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 4 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-18"
+Date "2016-05-19"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -128,7 +128,7 @@ L CONN_01X20 P2
 U 1 1 5754CB14
 P 1400 4350
 F 0 "P2" H 1478 4388 50  0000 L CNN
-F 1 "GPAK_ZIF" H 1478 4296 50  0000 L CNN
+F 1 "2x10 HEADER" H 1478 4296 50  0000 L CNN
 F 2 "" H 1400 4350 60  0000 C CNN
 F 3 "" H 1400 4350 60  0000 C CNN
 	1    1400 4350

@@ -19,10 +19,10 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 5 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-18"
+Date "2016-05-19"
 Rev "0.1"
 Comp "Andrew Zonenberg"
-Comment1 ""
+Comment1 "ADCs and DACs"
 Comment2 ""
 Comment3 ""
 Comment4 ""
@@ -240,12 +240,9 @@ F 3 "" H 2950 7400 60  0000 C CNN
 	1    2950 7400
 	1    0    0    -1  
 $EndComp
-NoConn ~ 1650 6350
-NoConn ~ 1650 6450
 NoConn ~ 1650 6550
 NoConn ~ 1650 6650
 NoConn ~ 1650 6750
-NoConn ~ 3050 6350
 NoConn ~ 3050 6450
 NoConn ~ 3050 6550
 NoConn ~ 3050 6650
@@ -314,8 +311,8 @@ Text Label 20550 1750 2    60   ~ 0
 MUX_WR_N
 Text Label 20550 1850 2    60   ~ 0
 MUX_EN_N
-Text Notes 18650 7600 0    60   ~ 0
-TODO: Current sensing
+Text Notes 17150 12250 0    60   ~ 0
+DUT current metering
 $Comp
 L AD9609 U9
 U 1 1 573725C5
@@ -1212,7 +1209,7 @@ Wire Wire Line
 Wire Wire Line
 	3050 6050 3150 6050
 Wire Wire Line
-	3150 6250 3050 6250
+	3050 6250 3450 6250
 Wire Wire Line
 	1700 7550 2950 7550
 Wire Wire Line
@@ -1782,7 +1779,7 @@ Connection ~ 4550 7450
 NoConn ~ 7650 7700
 NoConn ~ 7650 7800
 NoConn ~ 7650 7600
-Text HLabel 3150 6250 2    60   Input ~ 0
+Text HLabel 3450 6250 2    60   Input ~ 0
 PSU_VTEMP
 Wire Wire Line
 	3650 800  3200 800 
@@ -3388,16 +3385,199 @@ Wire Wire Line
 	3150 6150 3050 6150
 Wire Wire Line
 	1300 700  1500 700 
-Text HLabel 17300 6950 0    60   Input ~ 0
+Text HLabel 17300 9350 0    60   Input ~ 0
 VPP_SHUNT_HI
-Text HLabel 17300 7050 0    60   Input ~ 0
+Text HLabel 17300 9450 0    60   Input ~ 0
 VPP_SHUNT_LO
-Text HLabel 17300 7350 0    60   Input ~ 0
+Text HLabel 17300 10550 0    60   Input ~ 0
 VDD1_SHUNT_HI
-Text HLabel 17300 7450 0    60   Input ~ 0
+Text HLabel 17300 10650 0    60   Input ~ 0
 VDD1_SHUNT_LO
-Text HLabel 17300 7700 0    60   Input ~ 0
+Text HLabel 17300 11700 0    60   Input ~ 0
 VDD2_SHUNT_HI
-Text HLabel 17300 7800 0    60   Input ~ 0
+Text HLabel 17300 11800 0    60   Input ~ 0
 VDD2_SHUNT_LO
+$Comp
+L INA199AX-RSW U34
+U 1 1 576C8568
+P 17750 9600
+F 0 "U34" H 17750 9550 60  0000 L CNN
+F 1 "INA199A2RSW" H 18550 9550 60  0000 R CNN
+F 2 "" H 17750 9600 60  0000 C CNN
+F 3 "" H 17750 9600 60  0000 C CNN
+	1    17750 9600
+	1    0    0    -1  
+$EndComp
+Text Label 16750 8750 2    60   ~ 0
+A3V3
+Text Label 16750 9050 2    60   ~ 0
+GND
+Wire Wire Line
+	17300 9350 17450 9350
+Wire Wire Line
+	17450 9250 17350 9250
+Wire Wire Line
+	17350 9250 17350 9350
+Connection ~ 17350 9350
+Wire Wire Line
+	17300 9450 17450 9450
+Wire Wire Line
+	17450 9550 17350 9550
+Wire Wire Line
+	17350 9550 17350 9450
+Connection ~ 17350 9450
+Wire Wire Line
+	16750 9050 17450 9050
+$Comp
+L C C176
+U 1 1 576CB8B1
+P 16900 8900
+F 0 "C176" H 17015 8946 50  0000 L CNN
+F 1 "0.1 uF" H 17015 8854 50  0000 L CNN
+F 2 "" H 16938 8750 30  0000 C CNN
+F 3 "" H 16900 8900 60  0000 C CNN
+	1    16900 8900
+	1    0    0    -1  
+$EndComp
+Connection ~ 16900 9050
+Wire Wire Line
+	16750 8750 17450 8750
+Connection ~ 16900 8750
+Wire Wire Line
+	17450 8750 17450 8850
+Wire Wire Line
+	17450 8950 17350 8950
+Wire Wire Line
+	17350 8950 17350 9050
+Connection ~ 17350 9050
+Text Label 19000 9400 0    60   ~ 0
+VPP_ISENSE
+Wire Wire Line
+	19000 9400 18800 9400
+$Comp
+L INA199AX-RSW U35
+U 1 1 576D207C
+P 17750 10800
+F 0 "U35" H 17750 10750 60  0000 L CNN
+F 1 "INA199A2RSW" H 18550 10750 60  0000 R CNN
+F 2 "" H 17750 10800 60  0000 C CNN
+F 3 "" H 17750 10800 60  0000 C CNN
+	1    17750 10800
+	1    0    0    -1  
+$EndComp
+Text Label 16750 9950 2    60   ~ 0
+A3V3
+Text Label 16750 10250 2    60   ~ 0
+GND
+Wire Wire Line
+	17300 10550 17450 10550
+Wire Wire Line
+	17450 10450 17350 10450
+Wire Wire Line
+	17350 10450 17350 10550
+Connection ~ 17350 10550
+Wire Wire Line
+	17300 10650 17450 10650
+Wire Wire Line
+	17450 10750 17350 10750
+Wire Wire Line
+	17350 10750 17350 10650
+Connection ~ 17350 10650
+Wire Wire Line
+	16750 10250 17450 10250
+$Comp
+L C C177
+U 1 1 576D208D
+P 16900 10100
+F 0 "C177" H 17015 10146 50  0000 L CNN
+F 1 "0.1 uF" H 17015 10054 50  0000 L CNN
+F 2 "" H 16938 9950 30  0000 C CNN
+F 3 "" H 16900 10100 60  0000 C CNN
+	1    16900 10100
+	1    0    0    -1  
+$EndComp
+Connection ~ 16900 10250
+Wire Wire Line
+	16750 9950 17450 9950
+Connection ~ 16900 9950
+Wire Wire Line
+	17450 9950 17450 10050
+Wire Wire Line
+	17450 10150 17350 10150
+Wire Wire Line
+	17350 10150 17350 10250
+Connection ~ 17350 10250
+Text Label 19000 10600 0    60   ~ 0
+VDD1_ISENSE
+Wire Wire Line
+	19000 10600 18800 10600
+$Comp
+L INA199AX-RSW U36
+U 1 1 576D2773
+P 17750 11950
+F 0 "U36" H 17750 11900 60  0000 L CNN
+F 1 "INA199A2RSW" H 18550 11900 60  0000 R CNN
+F 2 "" H 17750 11950 60  0000 C CNN
+F 3 "" H 17750 11950 60  0000 C CNN
+	1    17750 11950
+	1    0    0    -1  
+$EndComp
+Text Label 16750 11100 2    60   ~ 0
+A3V3
+Text Label 16750 11400 2    60   ~ 0
+GND
+Wire Wire Line
+	17300 11700 17450 11700
+Wire Wire Line
+	17450 11600 17350 11600
+Wire Wire Line
+	17350 11600 17350 11700
+Connection ~ 17350 11700
+Wire Wire Line
+	17300 11800 17450 11800
+Wire Wire Line
+	17450 11900 17350 11900
+Wire Wire Line
+	17350 11900 17350 11800
+Connection ~ 17350 11800
+Wire Wire Line
+	16750 11400 17450 11400
+$Comp
+L C C178
+U 1 1 576D2784
+P 16900 11250
+F 0 "C178" H 17015 11296 50  0000 L CNN
+F 1 "0.1 uF" H 17015 11204 50  0000 L CNN
+F 2 "" H 16938 11100 30  0000 C CNN
+F 3 "" H 16900 11250 60  0000 C CNN
+	1    16900 11250
+	1    0    0    -1  
+$EndComp
+Connection ~ 16900 11400
+Wire Wire Line
+	16750 11100 17450 11100
+Connection ~ 16900 11100
+Wire Wire Line
+	17450 11100 17450 11200
+Wire Wire Line
+	17450 11300 17350 11300
+Wire Wire Line
+	17350 11300 17350 11400
+Connection ~ 17350 11400
+Text Label 19000 11750 0    60   ~ 0
+VDD2_ISENSE
+Wire Wire Line
+	19000 11750 18800 11750
+Text Label 1550 6350 2    60   ~ 0
+VPP_ISENSE
+Text Label 1550 6450 2    60   ~ 0
+VDD1_ISENSE
+Text Label 3150 6350 0    60   ~ 0
+VDD2_ISENSE
+Wire Wire Line
+	3150 6350 3050 6350
+Wire Wire Line
+	1650 6450 1550 6450
+Wire Wire Line
+	1550 6350 1650 6350
 $EndSCHEMATC
