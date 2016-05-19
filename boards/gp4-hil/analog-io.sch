@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 5 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-17"
+Date "2016-05-18"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -314,7 +314,7 @@ Text Label 20550 1750 2    60   ~ 0
 MUX_WR_N
 Text Label 20550 1850 2    60   ~ 0
 MUX_EN_N
-Text Notes 13200 1750 0    60   ~ 0
+Text Notes 18650 7600 0    60   ~ 0
 TODO: Current sensing
 $Comp
 L AD9609 U9
@@ -3388,4 +3388,16 @@ Wire Wire Line
 	3150 6150 3050 6150
 Wire Wire Line
 	1300 700  1500 700 
+Text HLabel 17300 6950 0    60   Input ~ 0
+VPP_SHUNT_HI
+Text HLabel 17300 7050 0    60   Input ~ 0
+VPP_SHUNT_LO
+Text HLabel 17300 7350 0    60   Input ~ 0
+VDD1_SHUNT_HI
+Text HLabel 17300 7450 0    60   Input ~ 0
+VDD1_SHUNT_LO
+Text HLabel 17300 7700 0    60   Input ~ 0
+VDD2_SHUNT_HI
+Text HLabel 17300 7800 0    60   Input ~ 0
+VDD2_SHUNT_LO
 $EndSCHEMATC
