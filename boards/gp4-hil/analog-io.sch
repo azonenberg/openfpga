@@ -3608,4 +3608,6 @@ F 3 "" H 1850 15500 60  0000 C CNN
 $EndComp
 Connection ~ 1350 15350
 Connection ~ 1350 15650
+Text Label 5500 1750 2    60   ~ 0
+GND
 $EndSCHEMATC
