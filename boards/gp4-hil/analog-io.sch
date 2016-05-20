@@ -143,7 +143,7 @@ Text Label 2200 2500 0    60   ~ 0
 ADC_IN17
 Text Label 2200 2600 0    60   ~ 0
 ADC_IN18
-Text Label 1500 3750 2    60   ~ 0
+Text Label 1500 3650 2    60   ~ 0
 A2V5
 Text Label 1550 4250 2    60   ~ 0
 MUX_A0
@@ -1041,17 +1041,17 @@ Wire Wire Line
 Wire Wire Line
 	1500 3950 1650 3950
 Wire Wire Line
-	1550 3950 1550 4050
+	1550 3850 1550 4050
 Wire Wire Line
 	1550 4050 1650 4050
 Connection ~ 1550 3950
 Wire Wire Line
-	1500 3750 1650 3750
+	1500 3650 1650 3650
 Wire Wire Line
-	1550 3750 1550 3850
+	1550 3650 1550 3750
 Wire Wire Line
-	1550 3850 1650 3850
-Connection ~ 1550 3750
+	1550 3750 1650 3750
+Connection ~ 1550 3650
 Wire Wire Line
 	1800 700  2900 700 
 Wire Wire Line
@@ -3580,4 +3580,6 @@ Wire Wire Line
 	1650 6450 1550 6450
 Wire Wire Line
 	1550 6350 1650 6350
+Wire Wire Line
+	1650 3850 1550 3850
 $EndSCHEMATC

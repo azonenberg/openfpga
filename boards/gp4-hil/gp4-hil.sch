@@ -774,8 +774,6 @@ Text Label 4200 6750 0    60   ~ 0
 GND
 Wire Wire Line
 	4200 6750 3850 6750
-Text Notes 6350 6550 0    60   ~ 0
-Design review completed for PSU+Ethernet+FPGA support
 Text Label 2850 4150 0    60   ~ 0
 VPP_SHUNT_HI
 Wire Wire Line
