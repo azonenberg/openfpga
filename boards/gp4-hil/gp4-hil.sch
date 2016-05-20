@@ -181,7 +181,7 @@ F12 "FLASH_DQ2" B R 2550 8600 60
 F13 "FLASH_DQ3" B R 2550 8700 60 
 $EndSheet
 Text Notes 1250 12350 0    60   ~ 0
-Bank plan\n* 14 (1V8): Boot flash, clock, Ethernet, JTAG\n* 15 (2V5): ADCs\n* 34 (variable): DUT bank 1\n* 35 (variable): DUT bank 2
+Bank plan\n* 14 (1V8): Boot flash, clock, Ethernet, JTAG\n* 15 (2V5): ADCs\n* 34 (variable): DUT bank 2\n* 35 (variable): DUT bank 1
 Text Notes 1250 11600 0    60   ~ 0
 Possibly the most overkill dev board ever.\n* Target device has 26 LUTs and 12 FFs\n* Support FPGA has 63,400 LUTs and 126800 FFs (if you load the 100t)\n* Has an ADC, DAC, and digital I/O on every pin of the DUT, all bridged out to TCP sockets\n* TCP programming, simply netcat a bitstream to the board to flash the DUT
 Text Label 8250 1350 0    60   ~ 0
