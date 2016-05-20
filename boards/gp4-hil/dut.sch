@@ -119,7 +119,7 @@ Text Label 6600 1900 2    60   ~ 0
 GND
 Text HLabel 5050 1600 0    60   Input ~ 0
 DUT_VDD2
-Text Label 7900 1600 0    60   ~ 0
+Text Label 8000 1600 0    60   ~ 0
 DUT_GPIO14
 Text HLabel 5250 2100 0    60   Input ~ 0
 DUT_VDD2_EN
@@ -1167,7 +1167,7 @@ Connection ~ 5250 1600
 Wire Wire Line
 	6550 1600 7450 1600
 Wire Wire Line
-	6600 1900 6750 1900
+	6600 1900 7900 1900
 Wire Wire Line
 	5250 2100 5550 2100
 Connection ~ 6750 1600
@@ -1404,7 +1404,7 @@ Connection ~ 5600 8150
 Connection ~ 7500 8150
 Connection ~ 6550 8150
 Wire Wire Line
-	3500 950  3250 950 
+	3250 950  3500 950 
 Wire Wire Line
 	3350 700  3350 950 
 Connection ~ 3350 950 
@@ -1427,7 +1427,7 @@ F 3 "" H 7600 1600 30  0000 C CNN
 	0    1    1    0   
 $EndComp
 Wire Wire Line
-	7900 1600 7750 1600
+	7750 1600 8000 1600
 Wire Wire Line
 	7350 1400 7350 1600
 Connection ~ 7350 1600
@@ -1438,4 +1438,33 @@ Wire Wire Line
 Connection ~ 7800 1600
 Text Notes 7350 1250 0    60   ~ 0
 1 mA = 1000 uV\nWith gain of 100, 100 mV out per mA\n\nFull scale = 1.0V, 97.6 uV/LSB\nFull scale = 100 mA so 9.7 uA / LSB
+$Comp
+L C C182
+U 1 1 577334C7
+P 1700 800
+F 0 "C182" H 1815 846 50  0000 L CNN
+F 1 "0.47 uF" H 1815 754 50  0000 L CNN
+F 2 "" H 1738 650 30  0000 C CNN
+F 3 "" H 1700 800 60  0000 C CNN
+	1    1700 800 
+	1    0    0    -1  
+$EndComp
+Connection ~ 1700 950 
+Text Label 1600 650  2    60   ~ 0
+GND
+Wire Wire Line
+	1600 650  1700 650 
+$Comp
+L C C183
+U 1 1 57734A4F
+P 7900 1750
+F 0 "C183" H 8050 1800 50  0000 L CNN
+F 1 "0.47 uF" H 8050 1700 50  0000 L CNN
+F 2 "" H 7938 1600 30  0000 C CNN
+F 3 "" H 7900 1750 60  0000 C CNN
+	1    7900 1750
+	1    0    0    -1  
+$EndComp
+Connection ~ 7900 1600
+Connection ~ 6750 1900
 $EndSCHEMATC
