@@ -506,6 +506,45 @@ F 3 "" H 3750 3950 30  0000 C CNN
 	1    3750 3950
 	0    1    1    0   
 $EndComp
+Text Label 4200 3150 0    60   ~ 0
+GND
+$Comp
+L R R169
+U 1 1 575AEA7E
+P 3700 6750
+F 0 "R169" V 3650 6950 50  0000 C CNN
+F 1 "1K" V 3700 6750 50  0000 C CNN
+F 2 "" V 3630 6750 30  0000 C CNN
+F 3 "" H 3700 6750 30  0000 C CNN
+	1    3700 6750
+	0    1    1    0   
+$EndComp
+Text Label 4200 6750 0    60   ~ 0
+GND
+Text Label 2850 4150 0    60   ~ 0
+VPP_SHUNT_HI
+Text Label 2850 4250 0    60   ~ 0
+VPP_SHUNT_LO
+Text Label 8800 4850 2    60   ~ 0
+VPP_SHUNT_HI
+Text Label 8800 4950 2    60   ~ 0
+VPP_SHUNT_LO
+Text Label 6450 2450 2    60   ~ 0
+VDD1_SHUNT_HI
+Text Label 6450 2550 2    60   ~ 0
+VDD1_SHUNT_LO
+Text Label 6450 2750 2    60   ~ 0
+VDD2_SHUNT_HI
+Text Label 6450 2850 2    60   ~ 0
+VDD2_SHUNT_LO
+Text Label 8800 5150 2    60   ~ 0
+VDD1_SHUNT_HI
+Text Label 8800 5250 2    60   ~ 0
+VDD1_SHUNT_LO
+Text Label 8800 5450 2    60   ~ 0
+VDD2_SHUNT_HI
+Text Label 8800 5550 2    60   ~ 0
+VDD2_SHUNT_LO
 Wire Wire Line
 	8100 1350 9000 1350
 Wire Wire Line
@@ -739,87 +778,53 @@ Wire Wire Line
 Wire Wire Line
 	3900 3150 4200 3150
 Wire Wire Line
-	4200 3150 4200 3950
-Wire Wire Line
 	4200 3250 3900 3250
 Wire Wire Line
 	4200 3350 3900 3350
-Connection ~ 4200 3250
 Wire Wire Line
 	4200 3550 3900 3550
-Connection ~ 4200 3350
 Wire Wire Line
 	4200 3650 3900 3650
-Connection ~ 4200 3550
 Wire Wire Line
 	4200 3750 3900 3750
-Connection ~ 4200 3650
 Wire Wire Line
 	4200 3950 3900 3950
-Connection ~ 4200 3750
-Text Label 4200 3150 0    60   ~ 0
-GND
-$Comp
-L R R169
-U 1 1 575AEA7E
-P 3700 6750
-F 0 "R169" V 3650 6950 50  0000 C CNN
-F 1 "1K" V 3700 6750 50  0000 C CNN
-F 2 "" V 3630 6750 30  0000 C CNN
-F 3 "" H 3700 6750 30  0000 C CNN
-	1    3700 6750
-	0    1    1    0   
-$EndComp
-Text Label 4200 6750 0    60   ~ 0
-GND
 Wire Wire Line
 	4200 6750 3850 6750
-Text Label 2850 4150 0    60   ~ 0
-VPP_SHUNT_HI
 Wire Wire Line
 	2850 4150 2550 4150
-Text Label 2850 4250 0    60   ~ 0
-VPP_SHUNT_LO
 Wire Wire Line
 	2850 4250 2550 4250
-Text Label 8800 4850 2    60   ~ 0
-VPP_SHUNT_HI
 Wire Wire Line
 	8800 4850 9000 4850
-Text Label 8800 4950 2    60   ~ 0
-VPP_SHUNT_LO
 Wire Wire Line
 	8800 4950 9000 4950
-Text Label 6450 2450 2    60   ~ 0
-VDD1_SHUNT_HI
-Text Label 6450 2550 2    60   ~ 0
-VDD1_SHUNT_LO
 Wire Wire Line
 	6450 2450 6600 2450
 Wire Wire Line
 	6600 2550 6450 2550
-Text Label 6450 2750 2    60   ~ 0
-VDD2_SHUNT_HI
-Text Label 6450 2850 2    60   ~ 0
-VDD2_SHUNT_LO
 Wire Wire Line
 	6450 2750 6600 2750
 Wire Wire Line
 	6600 2850 6450 2850
-Text Label 8800 5150 2    60   ~ 0
-VDD1_SHUNT_HI
-Text Label 8800 5250 2    60   ~ 0
-VDD1_SHUNT_LO
 Wire Wire Line
 	8800 5150 9000 5150
 Wire Wire Line
 	8800 5250 9000 5250
-Text Label 8800 5450 2    60   ~ 0
-VDD2_SHUNT_HI
-Text Label 8800 5550 2    60   ~ 0
-VDD2_SHUNT_LO
 Wire Wire Line
 	8800 5450 9000 5450
 Wire Wire Line
 	8800 5550 9000 5550
+Text Label 4200 3250 0    60   ~ 0
+GND
+Text Label 4200 3350 0    60   ~ 0
+1V8
+Text Label 4200 3750 0    60   ~ 0
+1V8
+Text Label 4200 3650 0    60   ~ 0
+GND
+Text Label 4200 3550 0    60   ~ 0
+GND
+Text Label 4200 3950 0    60   ~ 0
+GND
 $EndSCHEMATC
