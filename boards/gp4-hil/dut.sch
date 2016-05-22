@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 4 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-20"
+Date "2016-05-22"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -86,7 +86,7 @@ U 1 1 5753BC0B
 P 5750 2150
 F 0 "U32" H 5800 2100 60  0000 C CNN
 F 1 "SIP32408" H 6150 2100 60  0000 C CNN
-F 2 "" H 5750 2150 60  0001 C CNN
+F 2 "azonenberg_pcb:DFN_4_0.5MM_1.6x1.2MM" H 5750 2150 60  0001 C CNN
 F 3 "" H 5750 2150 60  0000 C CNN
 	1    5750 2150
 	1    0    0    -1  

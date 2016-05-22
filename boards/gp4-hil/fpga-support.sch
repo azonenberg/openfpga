@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 6 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-20"
+Date "2016-05-22"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -55,7 +55,7 @@ U 1 1 5732D74D
 P 18550 8900
 F 0 "U6" H 18550 9587 60  0000 C CNN
 F 1 "W25Q32FW" H 18550 9481 60  0000 C CNN
-F 2 "" H 18550 8900 60  0001 C CNN
+F 2 "azonenberg_pcb:DFN_8_1.27MM_6x5MM" H 18550 8900 60  0001 C CNN
 F 3 "" H 18550 8900 60  0000 C CNN
 	1    18550 8900
 	1    0    0    -1  
