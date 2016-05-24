@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 3 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-22"
+Date "2016-05-23"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "Ethernet PHY and JTAG masters"
@@ -682,29 +682,29 @@ Text Label 16000 7000 2    60   ~ 0
 RGMII_RXD2
 Text Label 16000 7100 2    60   ~ 0
 RGMII_RXD1
-Text Label 16000 6800 2    60   ~ 0
+Text Label 16000 7700 2    60   ~ 0
 RGMII_RXD0
 Text Label 16000 7200 2    60   ~ 0
 RGMII_RX_DV
 Text Label 16000 7500 2    60   ~ 0
 RGMII_RXC
-Text Label 16000 6300 2    60   ~ 0
+Text Label 16000 8200 2    60   ~ 0
 PHY_MDC
-Text Label 16000 6400 2    60   ~ 0
+Text Label 16000 7800 2    60   ~ 0
 PHY_MDIO
 Text Label 16000 5900 2    60   ~ 0
 PHY_INT_N
-Text Label 16000 7700 2    60   ~ 0
+Text Label 16000 6300 2    60   ~ 0
 RGMII_TXD0
-Text Label 16000 7800 2    60   ~ 0
+Text Label 16000 6400 2    60   ~ 0
 RGMII_TXD1
-Text Label 16000 7900 2    60   ~ 0
+Text Label 16000 6600 2    60   ~ 0
 RGMII_TXD2
-Text Label 16000 8000 2    60   ~ 0
+Text Label 16000 6500 2    60   ~ 0
 RGMII_TXD3
-Text Label 16000 8100 2    60   ~ 0
+Text Label 16000 6800 2    60   ~ 0
 RGMII_TX_CLK
-Text Label 16000 8200 2    60   ~ 0
+Text Label 16000 6700 2    60   ~ 0
 RGMII_TX_EN
 Text Label 16000 6000 2    60   ~ 0
 ETH_RESET_N
@@ -735,9 +735,9 @@ FLASH_CS_N
 NoConn ~ 16200 6200
 Text HLabel 16000 8400 0    60   Output ~ 0
 VDD1_3V3_EN
-Text HLabel 16050 6600 0    60   Output ~ 0
+Text HLabel 16000 8000 0    60   Output ~ 0
 VDD1_2V5_EN
-Text HLabel 16050 6500 0    60   Output ~ 0
+Text HLabel 16000 7900 0    60   Output ~ 0
 VDD1_1V8_EN
 Text HLabel 16050 5800 0    60   Output ~ 0
 VDD2_3V3_EN
@@ -1227,8 +1227,6 @@ Wire Wire Line
 Wire Wire Line
 	16000 8200 16200 8200
 Wire Wire Line
-	16200 8100 16000 8100
-Wire Wire Line
 	16000 8000 16200 8000
 Wire Wire Line
 	16200 7900 16000 7900
@@ -1255,9 +1253,9 @@ Wire Wire Line
 Wire Wire Line
 	16200 5800 16050 5800
 Wire Wire Line
-	16050 6500 16200 6500
+	16000 6500 16200 6500
 Wire Wire Line
-	16200 6600 16050 6600
+	16000 6600 16200 6600
 Wire Wire Line
 	16000 6800 16200 6800
 Wire Wire Line
@@ -1445,7 +1443,6 @@ Text Label 16000 7300 2    60   ~ 0
 FPGA_CLK_125MHZ
 Wire Wire Line
 	16200 6900 16000 6900
-NoConn ~ 16200 6700
 Wire Wire Line
 	16200 8400 16000 8400
 Wire Wire Line
@@ -1546,4 +1543,7 @@ Wire Wire Line
 	1700 3500 1600 3500
 Text Notes 9250 9600 0    60   ~ 0
 PHY addr = 5'b00001
+Wire Wire Line
+	16200 6700 16000 6700
+NoConn ~ 16200 8100
 $EndSCHEMATC
