@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 3 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-23"
+Date "2016-05-24"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "Ethernet PHY and JTAG masters"
@@ -49,7 +49,7 @@ F 3 "" H 1350 10500 60  0000 C CNN
 	1    1350 10500
 	-1   0    0    -1  
 $EndComp
-Text HLabel 1150 800  0    60   Input ~ 0
+Text HLabel 6800 6450 0    60   Input ~ 0
 2V5
 Text HLabel 1150 1300 0    60   Input ~ 0
 1V8
@@ -356,21 +356,21 @@ Text Label 1800 10300 0    60   ~ 0
 CH4_TAP
 Text Label 1800 9000 0    60   ~ 0
 ETH_A_P
-Text Label 1800 9400 0    60   ~ 0
+Text Label 1800 9600 0    60   ~ 0
 ETH_B_P
 Text Label 1800 9800 0    60   ~ 0
 ETH_C_P
-Text Label 1800 10200 0    60   ~ 0
+Text Label 1800 10400 0    60   ~ 0
 ETH_D_P
 Text Label 1800 10600 0    60   ~ 0
 GND
 Text Label 1800 9200 0    60   ~ 0
 ETH_A_N
-Text Label 1800 9600 0    60   ~ 0
+Text Label 1800 9400 0    60   ~ 0
 ETH_B_N
 Text Label 1800 10000 0    60   ~ 0
 ETH_C_N
-Text Label 1800 10400 0    60   ~ 0
+Text Label 1800 10200 0    60   ~ 0
 ETH_D_N
 Text Notes 1150 3250 0    60   ~ 0
 PHY decoupling
@@ -676,23 +676,23 @@ F 3 "" H 8500 11200 60  0000 C CNN
 $EndComp
 Text Label 8400 11050 2    60   ~ 0
 1V8
-Text Label 16000 6900 2    60   ~ 0
-RGMII_RXD3
 Text Label 16000 7000 2    60   ~ 0
+RGMII_RXD3
+Text Label 16000 6900 2    60   ~ 0
 RGMII_RXD2
-Text Label 16000 7100 2    60   ~ 0
+Text Label 16000 8100 2    60   ~ 0
 RGMII_RXD1
-Text Label 16000 7700 2    60   ~ 0
-RGMII_RXD0
-Text Label 16000 7200 2    60   ~ 0
-RGMII_RX_DV
-Text Label 16000 7500 2    60   ~ 0
-RGMII_RXC
 Text Label 16000 8200 2    60   ~ 0
+RGMII_RXD0
+Text Label 16000 7900 2    60   ~ 0
+RGMII_RX_DV
+Text Label 16000 7300 2    60   ~ 0
+RGMII_RXC
+Text Label 16000 7400 2    60   ~ 0
 PHY_MDC
-Text Label 16000 7800 2    60   ~ 0
+Text Label 16000 7100 2    60   ~ 0
 PHY_MDIO
-Text Label 16000 5900 2    60   ~ 0
+Text Label 16000 7200 2    60   ~ 0
 PHY_INT_N
 Text Label 16000 6300 2    60   ~ 0
 RGMII_TXD0
@@ -737,7 +737,7 @@ Text HLabel 16000 8400 0    60   Output ~ 0
 VDD1_3V3_EN
 Text HLabel 16000 8000 0    60   Output ~ 0
 VDD1_2V5_EN
-Text HLabel 16000 7900 0    60   Output ~ 0
+Text HLabel 16000 5900 0    60   Output ~ 0
 VDD1_1V8_EN
 Text HLabel 16050 5800 0    60   Output ~ 0
 VDD2_3V3_EN
@@ -1213,8 +1213,6 @@ Wire Wire Line
 Wire Wire Line
 	16000 7200 16200 7200
 Wire Wire Line
-	16200 7100 16000 7100
-Wire Wire Line
 	16000 6300 16200 6300
 Wire Wire Line
 	16000 6400 16200 6400
@@ -1223,7 +1221,7 @@ Wire Wire Line
 Wire Wire Line
 	16000 6000 16200 6000
 Wire Wire Line
-	16000 7700 16200 7700
+	16000 7400 16200 7400
 Wire Wire Line
 	16000 8200 16200 8200
 Wire Wire Line
@@ -1231,7 +1229,7 @@ Wire Wire Line
 Wire Wire Line
 	16200 7900 16000 7900
 Wire Wire Line
-	16000 7800 16200 7800
+	16000 7100 16200 7100
 Wire Wire Line
 	15100 5500 15050 5500
 Wire Wire Line
@@ -1439,7 +1437,7 @@ Wire Wire Line
 	8400 11950 8850 11950
 Connection ~ 8850 12050
 Connection ~ 8500 11950
-Text Label 16000 7300 2    60   ~ 0
+Text Label 16000 7500 2    60   ~ 0
 FPGA_CLK_125MHZ
 Wire Wire Line
 	16200 6900 16000 6900
@@ -1447,7 +1445,6 @@ Wire Wire Line
 	16200 8400 16000 8400
 Wire Wire Line
 	16000 8500 16200 8500
-NoConn ~ 16200 7400
 $Comp
 L INDUCTOR_PWROUT L13
 U 1 1 5772F580
@@ -1459,8 +1456,6 @@ F 3 "" H 7400 6450 60  0000 C CNN
 	1    7400 6450
 	0    1    1    0   
 $EndComp
-Text Label 6800 6450 2    60   ~ 0
-2V5
 $Comp
 L C C179
 U 1 1 5772F954
@@ -1545,5 +1540,12 @@ Text Notes 9250 9600 0    60   ~ 0
 PHY addr = 5'b00001
 Wire Wire Line
 	16200 6700 16000 6700
-NoConn ~ 16200 8100
+Wire Wire Line
+	16000 8100 16200 8100
+Text Label 1150 800  2    60   ~ 0
+A2V5_ETH
+NoConn ~ 16200 7700
+NoConn ~ 16200 7800
+Text Notes 2400 10550 0    60   ~ 0
+Swap P/N for routability.\nKSZ9031 can auto compensate for this\nNo register settings required
 $EndSCHEMATC
