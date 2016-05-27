@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 3 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-24"
+Date "2016-05-26"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "Ethernet PHY and JTAG masters"
@@ -733,7 +733,7 @@ $EndComp
 Text HLabel 16000 6100 0    60   Output ~ 0
 FLASH_CS_N
 NoConn ~ 16200 6200
-Text HLabel 16000 8400 0    60   Output ~ 0
+Text HLabel 16000 9600 0    60   Output ~ 0
 VDD1_3V3_EN
 Text HLabel 16000 8000 0    60   Output ~ 0
 VDD1_2V5_EN
@@ -745,7 +745,7 @@ Text HLabel 16050 5700 0    60   Output ~ 0
 VDD2_2V5_EN
 Text HLabel 16050 5600 0    60   Output ~ 0
 VDD2_1V8_EN
-Text HLabel 16000 8500 0    60   Output ~ 0
+Text HLabel 16000 9900 0    60   Output ~ 0
 VPP_EN
 NoConn ~ 16200 7600
 $Comp
@@ -891,25 +891,25 @@ Text Label 16500 13700 2    60   ~ 0
 JTAGB_TDI
 Text Label 16500 14300 2    60   ~ 0
 JTAGB_OE
-Text Label 16000 9000 2    60   ~ 0
+Text Label 16000 8400 2    60   ~ 0
 JTAGA_TMS
-Text Label 16000 9100 2    60   ~ 0
+Text Label 16000 9400 2    60   ~ 0
 JTAGA_TCK
-Text Label 16000 9200 2    60   ~ 0
+Text Label 16000 8300 2    60   ~ 0
 JTAGA_TDO
 Text Label 16000 9300 2    60   ~ 0
 JTAGA_TDI
-Text Label 16000 9400 2    60   ~ 0
+Text Label 16000 8500 2    60   ~ 0
 JTAGA_OE
-Text Label 16000 9500 2    60   ~ 0
+Text Label 16000 9200 2    60   ~ 0
 JTAGB_TMS
-Text Label 16000 9600 2    60   ~ 0
-JTAGB_TCK
-Text Label 16000 9700 2    60   ~ 0
-JTAGB_TDO
 Text Label 16000 9800 2    60   ~ 0
+JTAGB_TCK
+Text Label 16000 9100 2    60   ~ 0
+JTAGB_TDO
+Text Label 16000 9700 2    60   ~ 0
 JTAGB_TDI
-Text Label 16000 9900 2    60   ~ 0
+Text Label 16000 9000 2    60   ~ 0
 JTAGB_OE
 NoConn ~ 16200 8900
 NoConn ~ 16200 8800
@@ -937,7 +937,7 @@ F 3 "" H 19250 13800 60  0000 C CNN
 	1    19250 13800
 	1    0    0    -1  
 $EndComp
-Text HLabel 16000 8300 0    60   Output ~ 0
+Text HLabel 16000 9500 0    60   Output ~ 0
 VDD2_EN
 $Comp
 L CONN_01X01 TP22
@@ -945,7 +945,7 @@ U 1 1 57559CED
 P 12000 11150
 F 0 "TP22" H 12078 11188 50  0000 L CNN
 F 1 "TESTPOINT" H 12078 11096 50  0000 L CNN
-F 2 "azonenberg_pcb:TESTPOINT_SMT_KEYSTONE_5016" H 12000 11150 60  0001 C CNN
+F 2 "azonenberg_pcb:TESTPOINT_SMT_0.5MM" H 12000 11150 60  0001 C CNN
 F 3 "" H 12000 11150 60  0000 C CNN
 	1    12000 11150
 	1    0    0    -1  
@@ -1415,7 +1415,7 @@ U 1 1 5755A938
 P 12000 12050
 F 0 "TP23" H 12078 12088 50  0000 L CNN
 F 1 "TESTPOINT" H 12078 11996 50  0000 L CNN
-F 2 "azonenberg_pcb:TESTPOINT_SMT_KEYSTONE_5016" H 12000 12050 60  0001 C CNN
+F 2 "azonenberg_pcb:TESTPOINT_SMT_0.5MM" H 12000 12050 60  0001 C CNN
 F 3 "" H 12000 12050 60  0000 C CNN
 	1    12000 12050
 	1    0    0    -1  
