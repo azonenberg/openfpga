@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 5 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-26"
+Date "2016-05-28"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "ADCs and DACs"
@@ -681,10 +681,8 @@ Text Label 20550 5250 2    60   ~ 0
 DAC_C_DIN
 Text Label 20550 5150 2    60   ~ 0
 DAC_D_DIN
-Text Label 20550 5650 2    60   ~ 0
+Text Label 20550 5950 2    60   ~ 0
 DAC_SCLK
-NoConn ~ 20650 5950
-NoConn ~ 20650 6050
 $Comp
 L AD9609 U10
 U 1 1 57387C22
@@ -1406,7 +1404,7 @@ Wire Wire Line
 Wire Wire Line
 	20650 5550 20550 5550
 Wire Wire Line
-	20550 5650 20650 5650
+	20550 5950 20650 5950
 Wire Wire Line
 	3050 12550 3250 12550
 Wire Wire Line
@@ -2083,10 +2081,10 @@ Wire Wire Line
 	1450 14650 1650 14650
 Text Label 20550 5850 2    60   ~ 0
 ADC_B_MODE
-Text Label 20550 5750 2    60   ~ 0
+Text Label 20550 6050 2    60   ~ 0
 ADC_A_MODE
 Wire Wire Line
-	20550 5750 20650 5750
+	20550 6050 20650 6050
 Wire Wire Line
 	20650 5850 20550 5850
 Text Label 6250 4150 2    60   ~ 0
@@ -3610,4 +3608,6 @@ Connection ~ 1350 15350
 Connection ~ 1350 15650
 Text Label 5500 1750 2    60   ~ 0
 GND
+NoConn ~ 20650 5650
+NoConn ~ 20650 5750
 $EndSCHEMATC

@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 3 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-26"
+Date "2016-05-28"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "Ethernet PHY and JTAG masters"
@@ -733,19 +733,19 @@ $EndComp
 Text HLabel 16000 6100 0    60   Output ~ 0
 FLASH_CS_N
 NoConn ~ 16200 6200
-Text HLabel 16000 9600 0    60   Output ~ 0
+Text HLabel 16050 5600 0    60   Output ~ 0
 VDD1_3V3_EN
 Text HLabel 16000 8000 0    60   Output ~ 0
 VDD1_2V5_EN
 Text HLabel 16000 5900 0    60   Output ~ 0
 VDD1_1V8_EN
-Text HLabel 16050 5800 0    60   Output ~ 0
+Text HLabel 16000 9500 0    60   Output ~ 0
 VDD2_3V3_EN
-Text HLabel 16050 5700 0    60   Output ~ 0
-VDD2_2V5_EN
-Text HLabel 16050 5600 0    60   Output ~ 0
-VDD2_1V8_EN
 Text HLabel 16000 9900 0    60   Output ~ 0
+VDD2_2V5_EN
+Text HLabel 16000 9600 0    60   Output ~ 0
+VDD2_1V8_EN
+Text HLabel 16050 5700 0    60   Output ~ 0
 VPP_EN
 NoConn ~ 16200 7600
 $Comp
@@ -912,7 +912,6 @@ JTAGB_TDI
 Text Label 16000 9000 2    60   ~ 0
 JTAGB_OE
 NoConn ~ 16200 8900
-NoConn ~ 16200 8800
 NoConn ~ 16200 8700
 NoConn ~ 16200 8600
 $Comp
@@ -937,7 +936,7 @@ F 3 "" H 19250 13800 60  0000 C CNN
 	1    19250 13800
 	1    0    0    -1  
 $EndComp
-Text HLabel 16000 9500 0    60   Output ~ 0
+Text HLabel 16000 8800 0    60   Output ~ 0
 VDD2_EN
 $Comp
 L CONN_01X01 TP22
@@ -1249,8 +1248,6 @@ Wire Wire Line
 Wire Wire Line
 	16050 5700 16200 5700
 Wire Wire Line
-	16200 5800 16050 5800
-Wire Wire Line
 	16000 6500 16200 6500
 Wire Wire Line
 	16000 6600 16200 6600
@@ -1548,4 +1545,6 @@ NoConn ~ 16200 7700
 NoConn ~ 16200 7800
 Text Notes 2400 10550 0    60   ~ 0
 Swap P/N for routability.\nKSZ9031 can auto compensate for this\nNo register settings required
+Wire Wire Line
+	16200 8800 16000 8800
 $EndSCHEMATC

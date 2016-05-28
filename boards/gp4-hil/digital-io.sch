@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 7 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-26"
+Date "2016-05-28"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -65,19 +65,6 @@ Text HLabel 1500 8300 0    60   BiDi ~ 0
 DUT_GPIO19
 Text HLabel 1500 8800 0    60   BiDi ~ 0
 DUT_GPIO20
-$Comp
-L XC7AxT-xFTG256x U?
-U 5 1 573B2962
-P 16350 7550
-AR Path="/57316B0C/573B2962" Ref="U?"  Part="1" 
-AR Path="/573AABB3/573B2962" Ref="U2"  Part="5" 
-F 0 "U2" H 16350 7350 60  0000 L CNN
-F 1 "XC7A100T-1FTG256C" H 16350 7450 60  0000 L CNN
-F 2 "azonenberg_pcb:BGA_256_17x17_FULLARRAY_1MM" H 16350 7550 60  0001 C CNN
-F 3 "" H 16350 7550 60  0000 C CNN
-	5    16350 7550
-	1    0    0    -1  
-$EndComp
 $Comp
 L XC7AxT-xFTG256x U?
 U 6 1 573B2D61
@@ -383,15 +370,15 @@ Text Label 16000 2950 2    60   ~ 0
 GPIO14_DIO
 Text Label 16000 3050 2    60   ~ 0
 GPIO15_DIO
-Text Label 16000 3150 2    60   ~ 0
+Text Label 16000 4250 2    60   ~ 0
 GPIO16_DIO
-Text Label 16000 3250 2    60   ~ 0
+Text Label 16000 3950 2    60   ~ 0
 GPIO17_DIO
-Text Label 16000 3350 2    60   ~ 0
+Text Label 16000 3650 2    60   ~ 0
 GPIO18_DIO
-Text Label 16000 3450 2    60   ~ 0
-GPIO19_DIO
 Text Label 16000 3550 2    60   ~ 0
+GPIO19_DIO
+Text Label 16000 3150 2    60   ~ 0
 GPIO20_DIO
 Text Label 18950 2750 2    60   ~ 0
 GPIO3_DEN
@@ -407,34 +394,25 @@ Text Label 18950 3250 2    60   ~ 0
 GPIO8_DEN
 Text Label 18950 3350 2    60   ~ 0
 GPIO9_DEN
-Text Label 18950 3550 2    60   ~ 0
+Text Label 16000 3250 2    60   ~ 0
 GPIO12_DEN
-Text Label 18950 3650 2    60   ~ 0
+Text Label 16000 3750 2    60   ~ 0
 GPIO13_DEN
-Text Label 18950 3750 2    60   ~ 0
+Text Label 16000 3850 2    60   ~ 0
 GPIO14_DEN
-Text Label 18950 3850 2    60   ~ 0
+Text Label 16000 3350 2    60   ~ 0
 GPIO15_DEN
-Text Label 18950 3950 2    60   ~ 0
+Text Label 16000 4450 2    60   ~ 0
 GPIO16_DEN
-Text Label 18950 4050 2    60   ~ 0
+Text Label 16000 4050 2    60   ~ 0
 GPIO17_DEN
-Text Label 18950 4150 2    60   ~ 0
+Text Label 16000 3450 2    60   ~ 0
 GPIO18_DEN
-Text Label 18950 4250 2    60   ~ 0
+Text Label 16000 4350 2    60   ~ 0
 GPIO19_DEN
 Text Label 18950 3450 2    60   ~ 0
 GPIO10_DEN
 NoConn ~ 16150 2650
-NoConn ~ 16150 3650
-NoConn ~ 16150 3750
-NoConn ~ 16150 3850
-NoConn ~ 16150 3950
-NoConn ~ 16150 4050
-NoConn ~ 16150 4150
-NoConn ~ 16150 4250
-NoConn ~ 16150 4350
-NoConn ~ 16150 4450
 NoConn ~ 16150 4550
 NoConn ~ 19150 6650
 NoConn ~ 19150 6750
@@ -762,24 +740,6 @@ Wire Wire Line
 Wire Wire Line
 	18950 3450 19150 3450
 Wire Wire Line
-	19150 3550 18950 3550
-Wire Wire Line
-	18950 3650 19150 3650
-Wire Wire Line
-	19150 3750 18950 3750
-Wire Wire Line
-	18950 3850 19150 3850
-Wire Wire Line
-	19150 3950 18950 3950
-Wire Wire Line
-	18950 4050 19150 4050
-Wire Wire Line
-	19150 4150 18950 4150
-Wire Wire Line
-	18950 4250 19150 4250
-Wire Wire Line
-	19150 4350 18950 4350
-Wire Wire Line
 	18400 4450 19150 4450
 Wire Wire Line
 	19150 4550 18950 4550
@@ -890,8 +850,48 @@ Wire Wire Line
 	18950 6450 19150 6450
 Wire Wire Line
 	18950 6550 19150 6550
-Text Label 18950 4350 2    60   ~ 0
+Text Label 16000 4150 2    60   ~ 0
 GPIO20_DEN
 Text HLabel 18400 4450 0    60   Output ~ 0
 GPIO2_DIO
+NoConn ~ 19150 3550
+NoConn ~ 19150 3650
+NoConn ~ 19150 3750
+NoConn ~ 19150 3850
+NoConn ~ 19150 3950
+NoConn ~ 19150 4050
+NoConn ~ 19150 4150
+NoConn ~ 19150 4250
+NoConn ~ 19150 4350
+$Comp
+L XC7AxT-xFTG256x U?
+U 5 1 573B2962
+P 16350 7550
+AR Path="/57316B0C/573B2962" Ref="U?"  Part="1" 
+AR Path="/573AABB3/573B2962" Ref="U2"  Part="5" 
+F 0 "U2" H 16350 7350 60  0000 L CNN
+F 1 "XC7A100T-1FTG256C" H 16350 7450 60  0000 L CNN
+F 2 "azonenberg_pcb:BGA_256_17x17_FULLARRAY_1MM" H 16350 7550 60  0001 C CNN
+F 3 "" H 16350 7550 60  0000 C CNN
+	5    16350 7550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	16000 3650 16150 3650
+Wire Wire Line
+	16150 3750 16000 3750
+Wire Wire Line
+	16000 3850 16150 3850
+Wire Wire Line
+	16150 3950 16000 3950
+Wire Wire Line
+	16000 4050 16150 4050
+Wire Wire Line
+	16150 4150 16000 4150
+Wire Wire Line
+	16000 4250 16150 4250
+Wire Wire Line
+	16150 4350 16000 4350
+Wire Wire Line
+	16000 4450 16150 4450
 $EndSCHEMATC
