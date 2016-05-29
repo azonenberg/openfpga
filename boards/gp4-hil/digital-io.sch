@@ -362,13 +362,13 @@ Text Label 18950 5150 2    60   ~ 0
 GPIO9_DIO
 Text Label 18950 5250 2    60   ~ 0
 GPIO10_DIO
-Text Label 16000 2750 2    60   ~ 0
-GPIO12_DIO
-Text Label 16000 2850 2    60   ~ 0
-GPIO13_DIO
 Text Label 16000 2950 2    60   ~ 0
-GPIO14_DIO
+GPIO12_DIO
 Text Label 16000 3050 2    60   ~ 0
+GPIO13_DIO
+Text Label 16000 3150 2    60   ~ 0
+GPIO14_DIO
+Text Label 16000 3850 2    60   ~ 0
 GPIO15_DIO
 Text Label 16000 4250 2    60   ~ 0
 GPIO16_DIO
@@ -378,7 +378,7 @@ Text Label 16000 3650 2    60   ~ 0
 GPIO18_DIO
 Text Label 16000 3550 2    60   ~ 0
 GPIO19_DIO
-Text Label 16000 3150 2    60   ~ 0
+Text Label 16000 2750 2    60   ~ 0
 GPIO20_DIO
 Text Label 18950 2750 2    60   ~ 0
 GPIO3_DEN
@@ -394,13 +394,13 @@ Text Label 18950 3250 2    60   ~ 0
 GPIO8_DEN
 Text Label 18950 3350 2    60   ~ 0
 GPIO9_DEN
-Text Label 16000 3250 2    60   ~ 0
+Text Label 16000 3350 2    60   ~ 0
 GPIO12_DEN
 Text Label 16000 3750 2    60   ~ 0
 GPIO13_DEN
-Text Label 16000 3850 2    60   ~ 0
+Text Label 16000 2850 2    60   ~ 0
 GPIO14_DEN
-Text Label 16000 3350 2    60   ~ 0
+Text Label 16000 3250 2    60   ~ 0
 GPIO15_DEN
 Text Label 16000 4450 2    60   ~ 0
 GPIO16_DEN
