@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 7 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-28"
+Date "2016-05-29"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -346,21 +346,21 @@ F 3 "" H 7900 1550 60  0000 C CNN
 $EndComp
 Text Notes 1900 9250 0    60   ~ 0
 Analog isolation switching
-Text Label 18950 4550 2    60   ~ 0
+Text Label 18950 5550 2    60   ~ 0
 GPIO3_DIO
-Text Label 18950 4650 2    60   ~ 0
+Text Label 18950 5650 2    60   ~ 0
 GPIO4_DIO
-Text Label 18950 4750 2    60   ~ 0
+Text Label 18950 6850 2    60   ~ 0
 GPIO5_DIO
-Text Label 18950 4850 2    60   ~ 0
+Text Label 18950 6250 2    60   ~ 0
 GPIO6_DIO
-Text Label 18950 4950 2    60   ~ 0
+Text Label 18950 6950 2    60   ~ 0
 GPIO7_DIO
-Text Label 18950 5050 2    60   ~ 0
+Text Label 18950 7050 2    60   ~ 0
 GPIO8_DIO
 Text Label 18950 5150 2    60   ~ 0
 GPIO9_DIO
-Text Label 18950 5250 2    60   ~ 0
+Text Label 18950 6450 2    60   ~ 0
 GPIO10_DIO
 Text Label 16000 2950 2    60   ~ 0
 GPIO12_DIO
@@ -380,19 +380,19 @@ Text Label 16000 3550 2    60   ~ 0
 GPIO19_DIO
 Text Label 16000 2750 2    60   ~ 0
 GPIO20_DIO
-Text Label 18950 2750 2    60   ~ 0
+Text Label 18950 6050 2    60   ~ 0
 GPIO3_DEN
-Text Label 18950 2850 2    60   ~ 0
+Text Label 18950 4750 2    60   ~ 0
 GPIO4_DEN
-Text Label 18950 2950 2    60   ~ 0
+Text Label 18950 4650 2    60   ~ 0
 GPIO5_DEN
-Text Label 18950 3050 2    60   ~ 0
+Text Label 18950 5950 2    60   ~ 0
 GPIO6_DEN
-Text Label 18950 3150 2    60   ~ 0
+Text Label 18950 7450 2    60   ~ 0
 GPIO7_DEN
-Text Label 18950 3250 2    60   ~ 0
+Text Label 18950 6550 2    60   ~ 0
 GPIO8_DEN
-Text Label 18950 3350 2    60   ~ 0
+Text Label 18950 6650 2    60   ~ 0
 GPIO9_DEN
 Text Label 16000 3350 2    60   ~ 0
 GPIO12_DEN
@@ -410,19 +410,13 @@ Text Label 16000 3450 2    60   ~ 0
 GPIO18_DEN
 Text Label 16000 4350 2    60   ~ 0
 GPIO19_DEN
-Text Label 18950 3450 2    60   ~ 0
+Text Label 18950 7250 2    60   ~ 0
 GPIO10_DEN
 NoConn ~ 16150 2650
 NoConn ~ 16150 4550
-NoConn ~ 19150 6650
 NoConn ~ 19150 6750
-NoConn ~ 19150 6850
-NoConn ~ 19150 6950
-NoConn ~ 19150 7050
 NoConn ~ 19150 7150
-NoConn ~ 19150 7250
 NoConn ~ 19150 7350
-NoConn ~ 19150 7450
 NoConn ~ 19150 7550
 $Comp
 L TS3A4751 U16
@@ -734,11 +728,9 @@ Wire Wire Line
 Wire Wire Line
 	19150 3150 18950 3150
 Wire Wire Line
-	18950 3250 19150 3250
+	18950 7050 19150 7050
 Wire Wire Line
-	19150 3350 18950 3350
-Wire Wire Line
-	18950 3450 19150 3450
+	19150 6850 18950 6850
 Wire Wire Line
 	18400 4450 19150 4450
 Wire Wire Line
@@ -748,11 +740,11 @@ Wire Wire Line
 Wire Wire Line
 	19150 4750 18950 4750
 Wire Wire Line
-	18950 4850 19150 4850
+	18950 6650 19150 6650
 Wire Wire Line
-	19150 4950 18950 4950
+	19150 7450 18950 7450
 Wire Wire Line
-	18950 5050 19150 5050
+	18950 6950 19150 6950
 Wire Wire Line
 	19150 5150 18950 5150
 Wire Wire Line
@@ -802,17 +794,17 @@ Text HLabel 18950 5350 0    60   Output ~ 0
 GPIO3_AEN
 Text HLabel 18950 5450 0    60   Output ~ 0
 GPIO4_AEN
-Text HLabel 18950 5550 0    60   Output ~ 0
+Text HLabel 18950 4550 0    60   Output ~ 0
 GPIO5_AEN
-Text HLabel 18950 5650 0    60   Output ~ 0
+Text HLabel 18950 2950 0    60   Output ~ 0
 GPIO6_AEN
 Text HLabel 18950 5750 0    60   Output ~ 0
 GPIO7_AEN
 Text HLabel 18950 5850 0    60   Output ~ 0
 GPIO8_AEN
-Text HLabel 18950 5950 0    60   Output ~ 0
+Text HLabel 18950 3050 0    60   Output ~ 0
 GPIO9_AEN
-Text HLabel 18950 6050 0    60   Output ~ 0
+Text HLabel 18950 2750 0    60   Output ~ 0
 GPIO10_AEN
 Wire Wire Line
 	18950 5350 19150 5350
@@ -832,13 +824,13 @@ Wire Wire Line
 	19150 6050 18950 6050
 Text HLabel 18950 6150 0    60   Output ~ 0
 GPIO12_AEN
-Text HLabel 18950 6250 0    60   Output ~ 0
+Text HLabel 18950 2850 0    60   Output ~ 0
 GPIO13_AEN
 Text HLabel 18950 6350 0    60   Output ~ 0
 GPIO14_AEN
-Text HLabel 18950 6450 0    60   Output ~ 0
+Text HLabel 18950 5250 0    60   Output ~ 0
 GPIO15_AEN
-Text HLabel 18950 6550 0    60   Output ~ 0
+Text HLabel 18950 3150 0    60   Output ~ 0
 GPIO17_AEN
 Wire Wire Line
 	19150 6150 18950 6150
@@ -894,4 +886,12 @@ Wire Wire Line
 	16150 4350 16000 4350
 Wire Wire Line
 	16000 4450 16150 4450
+Wire Wire Line
+	19150 7250 18950 7250
+NoConn ~ 19150 3450
+NoConn ~ 19150 4950
+NoConn ~ 19150 5050
+NoConn ~ 19150 3250
+NoConn ~ 19150 4850
+NoConn ~ 19150 3350
 $EndSCHEMATC

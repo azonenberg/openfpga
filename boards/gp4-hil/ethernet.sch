@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 3 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-28"
+Date "2016-05-29"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "Ethernet PHY and JTAG masters"
@@ -1547,4 +1547,5 @@ Text Notes 2400 10550 0    60   ~ 0
 Swap P/N for routability.\nKSZ9031 can auto compensate for this\nNo register settings required
 Wire Wire Line
 	16200 8800 16000 8800
+NoConn ~ 16200 5800
 $EndSCHEMATC
