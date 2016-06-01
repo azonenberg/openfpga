@@ -136,13 +136,13 @@ ADC_IN14
 Text Label 2200 2200 0    60   ~ 0
 ADC_IN15
 Text Label 2200 2300 0    60   ~ 0
-ADC_IN15
-Text Label 2200 2400 0    60   ~ 0
 ADC_IN16
-Text Label 2200 2500 0    60   ~ 0
+Text Label 2200 2400 0    60   ~ 0
 ADC_IN17
-Text Label 2200 2600 0    60   ~ 0
+Text Label 2200 2500 0    60   ~ 0
 ADC_IN18
+Text Label 2200 2600 0    60   ~ 0
+ADC_IN19
 Text Label 1500 3650 2    60   ~ 0
 A2V5
 Text Label 1550 4250 2    60   ~ 0
@@ -243,7 +243,6 @@ $EndComp
 NoConn ~ 1650 6550
 NoConn ~ 1650 6650
 NoConn ~ 1650 6750
-NoConn ~ 3050 6450
 NoConn ~ 3050 6550
 NoConn ~ 3050 6650
 NoConn ~ 3050 6750
@@ -1207,7 +1206,7 @@ Wire Wire Line
 Wire Wire Line
 	3050 6050 3150 6050
 Wire Wire Line
-	3050 6250 3450 6250
+	3050 6350 3450 6350
 Wire Wire Line
 	1700 7550 2950 7550
 Wire Wire Line
@@ -1777,7 +1776,7 @@ Connection ~ 4550 7450
 NoConn ~ 7650 7700
 NoConn ~ 7650 7800
 NoConn ~ 7650 7600
-Text HLabel 3450 6250 2    60   Input ~ 0
+Text HLabel 3450 6350 2    60   Input ~ 0
 PSU_VTEMP
 Wire Wire Line
 	3650 800  3200 800 
@@ -3347,7 +3346,7 @@ Wire Wire Line
 Text HLabel 1300 900  0    60   Input ~ 0
 DUT_VDD2
 Text Label 2200 2700 0    60   ~ 0
-ADC_IN19
+ADC_IN20
 Wire Wire Line
 	1800 2700 2900 2700
 Wire Wire Line
@@ -3570,10 +3569,10 @@ Text Label 1550 6350 2    60   ~ 0
 VPP_ISENSE
 Text Label 1550 6450 2    60   ~ 0
 VDD1_ISENSE
-Text Label 3150 6350 0    60   ~ 0
+Text Label 3150 6450 0    60   ~ 0
 VDD2_ISENSE
 Wire Wire Line
-	3150 6350 3050 6350
+	3150 6450 3050 6450
 Wire Wire Line
 	1650 6450 1550 6450
 Wire Wire Line
@@ -3610,4 +3609,8 @@ Text Label 5500 1750 2    60   ~ 0
 GND
 NoConn ~ 20650 5650
 NoConn ~ 20650 5750
+Text Label 3150 6250 0    60   ~ 0
+ADC_IN20
+Wire Wire Line
+	3150 6250 3050 6250
 $EndSCHEMATC

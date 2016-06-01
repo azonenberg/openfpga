@@ -732,7 +732,7 @@ Wire Wire Line
 Wire Wire Line
 	19150 6850 18950 6850
 Wire Wire Line
-	18400 4450 19150 4450
+	18400 4350 19150 4350
 Wire Wire Line
 	19150 4550 18950 4550
 Wire Wire Line
@@ -844,7 +844,7 @@ Wire Wire Line
 	18950 6550 19150 6550
 Text Label 16000 4150 2    60   ~ 0
 GPIO20_DEN
-Text HLabel 18400 4450 0    60   Output ~ 0
+Text HLabel 18400 4350 0    60   Output ~ 0
 GPIO2_DIO
 NoConn ~ 19150 3550
 NoConn ~ 19150 3650
@@ -854,7 +854,6 @@ NoConn ~ 19150 3950
 NoConn ~ 19150 4050
 NoConn ~ 19150 4150
 NoConn ~ 19150 4250
-NoConn ~ 19150 4350
 $Comp
 L XC7AxT-xFTG256x U?
 U 5 1 573B2962
@@ -894,4 +893,5 @@ NoConn ~ 19150 5050
 NoConn ~ 19150 3250
 NoConn ~ 19150 4850
 NoConn ~ 19150 3350
+NoConn ~ 19150 4450
 $EndSCHEMATC
