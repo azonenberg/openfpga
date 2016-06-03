@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 5 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-05-29"
+Date "2016-06-01"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "ADCs and DACs"
@@ -161,45 +161,43 @@ Text Label 1550 4950 2    60   ~ 0
 MUX_WR_N
 Text Label 1550 5050 2    60   ~ 0
 MUX_EN_N
-Text Label 1550 5250 2    60   ~ 0
+Text Label 3150 5950 0    60   ~ 0
 ADC_IN0
-Text Label 1550 5350 2    60   ~ 0
+Text Label 3150 5750 0    60   ~ 0
 ADC_IN1
-Text Label 1550 5450 2    60   ~ 0
+Text Label 3150 5850 0    60   ~ 0
 ADC_IN2
-Text Label 1550 5550 2    60   ~ 0
+Text Label 3150 5650 0    60   ~ 0
 ADC_IN3
-Text Label 1550 5650 2    60   ~ 0
+Text Label 1550 5550 2    60   ~ 0
 ADC_IN4
-Text Label 1550 5750 2    60   ~ 0
+Text Label 1550 5450 2    60   ~ 0
 ADC_IN5
-Text Label 1550 5850 2    60   ~ 0
+Text Label 1550 5350 2    60   ~ 0
 ADC_IN6
-Text Label 1550 5950 2    60   ~ 0
+Text Label 1550 5250 2    60   ~ 0
 ADC_IN7
-Text Label 1550 6050 2    60   ~ 0
+Text Label 1550 6750 2    60   ~ 0
 ADC_IN8
-Text Label 1550 6150 2    60   ~ 0
+Text Label 1550 6350 2    60   ~ 0
 ADC_IN9
 Text Label 1550 6250 2    60   ~ 0
 ADC_IN10
-Text Label 3150 5250 0    60   ~ 0
+Text Label 1550 6650 2    60   ~ 0
 ADC_IN11
-Text Label 3150 5350 0    60   ~ 0
+Text Label 1550 6550 2    60   ~ 0
 ADC_IN12
-Text Label 3150 5450 0    60   ~ 0
+Text Label 1550 6150 2    60   ~ 0
 ADC_IN13
-Text Label 3150 5550 0    60   ~ 0
+Text Label 1550 6450 2    60   ~ 0
 ADC_IN14
-Text Label 3150 5650 0    60   ~ 0
+Text Label 1550 6050 2    60   ~ 0
 ADC_IN15
-Text Label 3150 5750 0    60   ~ 0
-ADC_IN15
-Text Label 3150 5850 0    60   ~ 0
+Text Label 1550 5950 2    60   ~ 0
 ADC_IN16
-Text Label 3150 5950 0    60   ~ 0
+Text Label 1550 5850 2    60   ~ 0
 ADC_IN17
-Text Label 3150 6050 0    60   ~ 0
+Text Label 1550 5750 2    60   ~ 0
 ADC_IN18
 $Comp
 L C C27
@@ -240,9 +238,6 @@ F 3 "" H 2950 7400 60  0000 C CNN
 	1    2950 7400
 	1    0    0    -1  
 $EndComp
-NoConn ~ 1650 6550
-NoConn ~ 1650 6650
-NoConn ~ 1650 6750
 NoConn ~ 3050 6550
 NoConn ~ 3050 6650
 NoConn ~ 3050 6750
@@ -1182,15 +1177,11 @@ Wire Wire Line
 Wire Wire Line
 	1650 5950 1550 5950
 Wire Wire Line
-	1650 6050 1550 6050
+	1650 6750 1550 6750
 Wire Wire Line
 	1550 6150 1650 6150
 Wire Wire Line
 	1650 6250 1550 6250
-Wire Wire Line
-	3050 5250 3150 5250
-Wire Wire Line
-	3150 5350 3050 5350
 Wire Wire Line
 	3050 5450 3150 5450
 Wire Wire Line
@@ -1202,11 +1193,7 @@ Wire Wire Line
 Wire Wire Line
 	3050 5850 3150 5850
 Wire Wire Line
-	3150 5950 3050 5950
-Wire Wire Line
-	3050 6050 3150 6050
-Wire Wire Line
-	3050 6350 3450 6350
+	3050 6050 3450 6050
 Wire Wire Line
 	1700 7550 2950 7550
 Wire Wire Line
@@ -1776,7 +1763,7 @@ Connection ~ 4550 7450
 NoConn ~ 7650 7700
 NoConn ~ 7650 7800
 NoConn ~ 7650 7600
-Text HLabel 3450 6350 2    60   Input ~ 0
+Text HLabel 3450 6050 2    60   Input ~ 0
 PSU_VTEMP
 Wire Wire Line
 	3650 800  3200 800 
@@ -3376,10 +3363,10 @@ F 3 "" H 3050 2700 30  0000 C CNN
 	0    1    1    0   
 $EndComp
 Connection ~ 3650 2600
-Text Label 3150 6150 0    60   ~ 0
+Text Label 1550 5650 2    60   ~ 0
 ADC_IN19
 Wire Wire Line
-	3150 6150 3050 6150
+	3150 5950 3050 5950
 Wire Wire Line
 	1300 700  1500 700 
 Text HLabel 17300 9350 0    60   Input ~ 0
@@ -3565,14 +3552,14 @@ Text Label 19000 11750 0    60   ~ 0
 VDD2_ISENSE
 Wire Wire Line
 	19000 11750 18800 11750
-Text Label 1550 6350 2    60   ~ 0
+Text Label 3150 5450 0    60   ~ 0
 VPP_ISENSE
-Text Label 1550 6450 2    60   ~ 0
+Text Label 3150 5550 0    60   ~ 0
 VDD1_ISENSE
-Text Label 3150 6450 0    60   ~ 0
+Text Label 3150 5250 0    60   ~ 0
 VDD2_ISENSE
 Wire Wire Line
-	3150 6450 3050 6450
+	3150 5250 3050 5250
 Wire Wire Line
 	1650 6450 1550 6450
 Wire Wire Line
@@ -3609,8 +3596,20 @@ Text Label 5500 1750 2    60   ~ 0
 GND
 NoConn ~ 20650 5650
 NoConn ~ 20650 5750
-Text Label 3150 6250 0    60   ~ 0
+Text Label 3150 5350 0    60   ~ 0
 ADC_IN20
 Wire Wire Line
-	3150 6250 3050 6250
+	3150 5350 3050 5350
+Wire Wire Line
+	1650 6650 1550 6650
+Wire Wire Line
+	1650 6550 1550 6550
+Wire Wire Line
+	1550 6050 1650 6050
+Text Notes 9850 11550 0    60   ~ 0
+FIXME: RC time constant with 100K ohm input impedance\nis WAAY too big. Need to cut this down by a LOT.
+NoConn ~ 3050 6150
+NoConn ~ 3050 6250
+NoConn ~ 3050 6350
+NoConn ~ 3050 6450
 $EndSCHEMATC
