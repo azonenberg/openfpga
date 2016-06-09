@@ -57,7 +57,7 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, bool verbose, u
 		return false;
 		
 	//Do an initial valid, but not necessarily routable, placement
-	InitialPlacement(verbose);
+	InitialPlacement(label_names, verbose);
 		
 	//Converge until we get a passing placement
 	printf("\nOptimizing placement...\n");
@@ -193,7 +193,7 @@ bool PAREngine::SanityCheck(map<uint32_t, string> label_names, bool verbose)
 /**
 	@brief Generate an initial placement that is legal, but may or may not be routable
  */
-void PAREngine::InitialPlacement(bool verbose)
+void PAREngine::InitialPlacement(map<uint32_t, string>& label_names, bool verbose)
 {
 	if(verbose)
 	{
@@ -211,6 +211,27 @@ void PAREngine::InitialPlacement(bool verbose)
 	
 	//Do the actual placement (technology specific)
 	InitialPlacement_core(verbose);
+	
+	//Post-placement sanity check
+	if(verbose)
+		printf("    Running post-placement sanity checks...\n");
+	for(uint32_t i=0; i<m_netlist->GetNumNodes(); i++)
+	{
+		PARGraphNode* node = m_netlist->GetNodeByIndex(i);
+		PARGraphNode* mate = node->GetMate();
+		
+		if(!mate->MatchesLabel(node->GetLabel()))
+		{
+			fprintf(
+				stderr,
+				"INTERNAL ERROR: Found a node during initial placement that was assigned to an illegal site.\n"
+				"    This indicates a bug in gp4par, please file a report on github.\n"
+				"    The node is type \"%s\". It was placed in a site valid for types:\n",
+				label_names[node->GetLabel()].c_str()
+				);
+			PrintNodeTypes(mate, label_names);
+		}
+	}
 }
 
 /**
@@ -221,7 +242,8 @@ void PAREngine::InitialPlacement(bool verbose)
 	@return True if we made changes to the netlist, false if nothing was done
  */
 bool PAREngine::OptimizePlacement(
-	vector<PARGraphNode*>& badnodes, map<uint32_t, string>& label_names,
+	vector<PARGraphNode*>& badnodes,
+	map<uint32_t, string>& label_names,
 	bool /*verbose*/)
 {
 	//Pick one of the nodes at random as our pivot node
@@ -233,6 +255,19 @@ bool PAREngine::OptimizePlacement(
 	PARGraphNode* new_mate = GetNewPlacementForNode(pivot);
 	if(new_mate == NULL)
 		return false;
+		
+	//SANITY CHECK: Make sure the OLD placement was legal (if not, something is seriously wrong)
+	if(!old_mate->MatchesLabel(pivot->GetLabel()))
+	{
+		fprintf(
+			stderr,
+			"INTERNAL ERROR: Found a node during optimization that was assigned to an illegal site.\n"
+			"    This indicates a bug in gp4par, please file a report on github.\n"
+			"    Our pivot is a node of type \"%s\". It was placed in a site valid for types:\n",
+			label_names[pivot->GetLabel()].c_str()
+			);
+		PrintNodeTypes(old_mate, label_names);
+	}
 	
 	//Do the swap, and measure the old/new scores
 	uint32_t original_cost = ComputeCost();
@@ -274,14 +309,14 @@ void PAREngine::MoveNode(
 	{
 		fprintf(
 			stderr,
-			"INTERNAL ERROR: tried to assign node to illegal site (forward direction)\n"
+			"INTERNAL ERROR: tried to assign node to illegal site (forward direction).\n"
 			"    This indicates a bug in gp4par, please file a report on github.\n"
 			"    We attempted to move a node of type \"%s\". The target site is valid for types:\n",
 			label_names[node->GetLabel()].c_str()
 			);
 		PrintNodeTypes(newpos, label_names);
 		
-		//asm("int3");
+		asm("int3");
 		exit(-1);
 	}
 	
@@ -296,14 +331,14 @@ void PAREngine::MoveNode(
 		{
 			fprintf(
 				stderr,
-				"INTERNAL ERROR: tried to assign node to illegal site (reverse direction)\n"
+				"INTERNAL ERROR: tried to assign node to illegal site (reverse direction).\n"
 				"    This indicates a bug in gp4par, please file a report on github.\n"
 				"    We attempted to move a node of type \"%s\". The target site is valid for types:\n",
 				label_names[other_net->GetLabel()].c_str()
 				);
 			PrintNodeTypes(old_pos, label_names);
 		
-			//asm("int3");
+			asm("int3");
 			exit(-1);
 		}
 		

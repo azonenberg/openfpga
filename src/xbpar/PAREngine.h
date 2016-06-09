@@ -51,7 +51,7 @@ protected:
 	virtual uint32_t ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes);
 
 	virtual bool SanityCheck(std::map<uint32_t, std::string> label_names, bool verbose);
-	virtual void InitialPlacement(bool verbose);
+	virtual void InitialPlacement(std::map<uint32_t, std::string>& label_names, bool verbose);
 	virtual void InitialPlacement_core(bool verbose) =0;
 	virtual bool OptimizePlacement(
 		std::vector<PARGraphNode*>& badnodes,
