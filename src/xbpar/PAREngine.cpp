@@ -326,7 +326,6 @@ void PAREngine::MoveNode(
 			);
 		PrintNodeTypes(newpos, label_names);
 		
-		//asm("int3");
 		exit(-1);
 	}
 	
@@ -347,8 +346,7 @@ void PAREngine::MoveNode(
 				label_names[other_net->GetLabel()].c_str()
 				);
 			PrintNodeTypes(old_pos, label_names);
-		
-			//asm("int3");
+
 			exit(-1);
 		}
 		
