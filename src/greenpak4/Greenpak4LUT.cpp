@@ -111,7 +111,7 @@ void Greenpak4LUT::CommitChanges()
 		
 		else
 		{
-			printf("WARNING: Cell\"%s\" has unrecognized parameter %s, ignoring\n",
+			LogWarning("Cell\"%s\" has unrecognized parameter %s, ignoring\n",
 				ncell->m_name.c_str(), x.first.c_str());
 		}
 	}

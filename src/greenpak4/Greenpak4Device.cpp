@@ -561,7 +561,7 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 	FILE* fp = fopen(fname.c_str(), "w");
 	if(!fp)
 	{
-		fprintf(stderr, "Couldn't open %s for writing\n", fname.c_str());
+		LogError("Couldn't open %s for writing\n", fname.c_str());
 		return false;
 	}
 	

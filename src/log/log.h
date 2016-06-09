@@ -15,57 +15,86 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
-#ifndef PAREngine_h
-#define PAREngine_h
 
+#ifndef log_h
+#define log_h
+
+#include <memory>
 #include <vector>
-#include <map>
 
 /**
-	@brief The core place-and-route engine
+	@brief The log sink
  */
-class PAREngine
+class LogSink
 {
 public:
-	PAREngine(PARGraph* netlist, PARGraph* device);
-	virtual ~PAREngine();
-	
-	virtual bool PlaceAndRoute(std::map<uint32_t, std::string> label_names, uint32_t seed = 0);
-	
-	virtual uint32_t ComputeCost();
-	
-protected:
+	virtual ~LogSink() {}
 
-	void MoveNode(PARGraphNode* node, PARGraphNode* newpos, std::map<uint32_t, std::string>& label_names);
+	enum Severity
+	{
+		FATAL	= 1,
+		ERROR	= 2,
+		WARNING	= 3,
+		NOTICE	= 4,
+		VERBOSE	= 5
+	};
 
-	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot) =0;
-	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes) =0;
-
-	virtual uint32_t ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration);
-	
-	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
-
-	virtual uint32_t ComputeCongestionCost();
-	virtual uint32_t ComputeTimingCost();
-	virtual uint32_t ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes);
-
-	virtual bool SanityCheck(std::map<uint32_t, std::string> label_names);
-	virtual void InitialPlacement(std::map<uint32_t, std::string>& label_names);
-	virtual void InitialPlacement_core() =0;
-	virtual bool OptimizePlacement(
-		std::vector<PARGraphNode*>& badnodes,
-		std::map<uint32_t, std::string>& label_names);
-
-	virtual uint32_t ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode* candidate);
-	
-	std::string GetNodeTypes(PARGraphNode* node, std::map<uint32_t, std::string>& label_names);
-
-	PARGraph* m_netlist;
-	PARGraph* m_device;
-	
-	uint32_t m_temperature;
+	virtual void Log(Severity severity, const std::string &msg) = 0;
+	virtual void Log(Severity severity, const char *format, va_list va) = 0;
 };
+
+/**
+	@brief The log sink writing to stdout/stderr
+ */
+class STDLogSink : public LogSink
+{
+public:
+	STDLogSink(Severity min_severity = VERBOSE);
+	~STDLogSink() override;
+
+	void Log(Severity severity, const std::string &msg) override;
+	void Log(Severity severity, const char *format, va_list va) override;
+
+protected:
+	Severity	m_min_severity;
+
+};
+/**
+	@brief The log sink writing to a FILE* file handle
+ */
+class FILELogSink : public LogSink
+{
+public:
+	FILELogSink(FILE *f, bool line_buffered = false, Severity min_severity = VERBOSE);
+	~FILELogSink() override;
+
+	void Log(Severity severity, const std::string &msg) override;
+	void Log(Severity severity, const char *format, va_list va) override;
+
+protected:
+	FILE		*m_file;
+	Severity	m_min_severity;
+
+};
+
+extern std::vector<std::unique_ptr<LogSink>> g_log_sinks;
+
+#ifdef __GNUC__
+#define ATTR_FORMAT   __attribute__((__format__ (__printf__, 1, 2)))
+#define ATTR_NORETURN __attribute__((noreturn))
+#else
+#define ATTR_FORMAT
+#define ATTR_NORETURN
+#endif
+
+ATTR_FORMAT void LogVerbose(const char *format, ...);
+ATTR_FORMAT void LogNotice(const char *format, ...);
+ATTR_FORMAT void LogWarning(const char *format, ...);
+ATTR_FORMAT void LogError(const char *format, ...);
+ATTR_FORMAT ATTR_NORETURN void LogFatal(const char *format, ...);
+
+#undef ATTR_FORMAT
+#undef ATTR_NORETURN
 
 #endif
 

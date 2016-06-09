@@ -25,7 +25,7 @@ using namespace std;
  */
 void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
 {
-	printf("\nBuilding final post-route netlist...\n");
+	LogNotice("\nBuilding final post-route netlist...\n");
 	
 	//Go over all of the nodes in the graph and configure the nodes themselves
 	//Net routing will come later!
@@ -99,8 +99,8 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 					//Make sure we have a free cross-connection to use
 					if(num_routes_used[srcmatrix] >= 10)
 					{
-						printf(
-							"ERROR: More than 100%% of device resources are used "
+						LogError(
+							"More than 100%% of device resources are used "
 							"(cross connections from matrix %d to %d)\n",
 								src->GetMatrix(),
 								dst->GetMatrix());

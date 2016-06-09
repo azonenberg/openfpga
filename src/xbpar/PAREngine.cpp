@@ -42,10 +42,9 @@ PAREngine::~PAREngine()
 	
 	@return true on success, fail if design could not be routed
  */
-bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, bool verbose, uint32_t seed)
+bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 {
-	if(verbose)
-		printf("\nXBPAR initializing...\n");
+	LogVerbose("\nXBPAR initializing...\n");
 	m_temperature = 100;
 	
 	//TODO: glibc rand sucks, replace with something a bit more random
@@ -53,14 +52,14 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, bool verbose, u
 	srand(seed);
 		
 	//Detect obviously impossible-to-route designs
-	if(!SanityCheck(label_names, verbose))
+	if(!SanityCheck(label_names))
 		return false;
 		
 	//Do an initial valid, but not necessarily routable, placement
-	InitialPlacement(label_names, verbose);
+	InitialPlacement(label_names);
 		
 	//Converge until we get a passing placement
-	printf("\nOptimizing placement...\n");
+	LogNotice("\nOptimizing placement...\n");
 	uint32_t iteration = 0;
 	vector<PARGraphEdge*> unroutes;
 	uint32_t best_cost = 1000000;
@@ -99,7 +98,7 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, bool verbose, u
 			break;
 		
 		//Try to optimize the placement more
-		made_change = OptimizePlacement(badnodes, label_names, verbose);
+		made_change = OptimizePlacement(badnodes, label_names);
 			
 		//Cool the system down
 		//TODO: Decide on a good rate for this?
@@ -110,7 +109,7 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, bool verbose, u
 	unroutes.clear();
 	if(0 != ComputeUnroutableCost(unroutes))
 	{
-		printf("ERROR: Some nets could not be completely routed!\n");
+		LogError("Some nets could not be completely routed!\n");
 		PrintUnroutes(unroutes);
 		return false;
 	}
@@ -129,7 +128,7 @@ uint32_t PAREngine::ComputeAndPrintScore(vector<PARGraphEdge*>& unroutes, uint32
 	uint32_t cost = ComputeCost();
 	
 	unroutes.clear();
-	printf(
+	LogNotice(
 		"    Iteration %d: unroutability %d, congestion %d, timing %d (total cost %d)\n",
 		iteration,
 		ucost,
@@ -150,10 +149,9 @@ void PAREngine::PrintUnroutes(vector<PARGraphEdge*>& /*unroutes*/)
 	
 	As of now, we only check for the condition where the netlist has more nodes with a given label than the device.
  */
-bool PAREngine::SanityCheck(map<uint32_t, string> label_names, bool verbose)
+bool PAREngine::SanityCheck(map<uint32_t, string> label_names)
 {
-	if(verbose)
-		printf("Initial design feasibility check...\n");
+	LogVerbose("Initial design feasibility check...\n");
 		
 	uint32_t nmax_net = m_netlist->GetMaxLabel();
 	uint32_t nmax_dev = m_device->GetMaxLabel();
@@ -161,7 +159,7 @@ bool PAREngine::SanityCheck(map<uint32_t, string> label_names, bool verbose)
 	//Make sure we'll detect if the netlist is bigger than the device
 	if(nmax_net > nmax_dev)
 	{
-		printf("ERROR: Netlist contains a node with label %d, largest in device is %d\n",
+		LogError("Netlist contains a node with label %d, largest in device is %d\n",
 			nmax_net, nmax_dev);
 		return false;
 	}
@@ -179,8 +177,8 @@ bool PAREngine::SanityCheck(map<uint32_t, string> label_names, bool verbose)
 		//TODO: error reporting by device type, not just node IDs
 		if(nnet > ndev)
 		{
-			printf("ERROR: Design is too big for the device "
-				"(netlist has %d nodes of type %s, device only has %d)\n",
+			LogError("Design is too big for the device "
+				 "(netlist has %d nodes of type %s, device only has %d)\n",
 				nnet, label_names[label].c_str(), ndev);
 			return false;
 		}
@@ -193,28 +191,24 @@ bool PAREngine::SanityCheck(map<uint32_t, string> label_names, bool verbose)
 /**
 	@brief Generate an initial placement that is legal, but may or may not be routable
  */
-void PAREngine::InitialPlacement(map<uint32_t, string>& label_names, bool verbose)
+void PAREngine::InitialPlacement(map<uint32_t, string>& label_names)
 {
-	if(verbose)
-	{
-		printf("Global placement of %d instances into %d sites...\n",
-			m_netlist->GetNumNodes(),
-			m_device->GetNumNodes());
-		printf("    %d nets, %d routing channels available\n",
-			m_netlist->GetNumEdges(),
-			m_device->GetNumEdges());
-	}
+	LogVerbose("Global placement of %d instances into %d sites...\n",
+		m_netlist->GetNumNodes(),
+		m_device->GetNumNodes());
+	LogVerbose("    %d nets, %d routing channels available\n",
+		m_netlist->GetNumEdges(),
+		m_device->GetNumEdges());
 	
 	//Cache the indexes
 	m_netlist->IndexNodesByLabel();
 	m_device->IndexNodesByLabel();
 	
 	//Do the actual placement (technology specific)
-	InitialPlacement_core(verbose);
+	InitialPlacement_core();
 	
 	//Post-placement sanity check
-	if(verbose)
-		printf("    Running post-placement sanity checks...\n");
+	LogVerbose("    Running post-placement sanity checks...\n");
 	for(uint32_t i=0; i<m_netlist->GetNumNodes(); i++)
 	{
 		PARGraphNode* node = m_netlist->GetNodeByIndex(i);
@@ -222,14 +216,13 @@ void PAREngine::InitialPlacement(map<uint32_t, string>& label_names, bool verbos
 		
 		if(!mate->MatchesLabel(node->GetLabel()))
 		{
-			fprintf(
-				stderr,
-				"INTERNAL ERROR: Found a node during initial placement that was assigned to an illegal site.\n"
-				"    This indicates a bug in gp4par, please file a report on github.\n"
-				"    The node is type \"%s\". It was placed in a site valid for types:\n",
-				label_names[node->GetLabel()].c_str()
+			std::string node_types = GetNodeTypes(mate, label_names);
+			LogFatal(
+				"Found a node during initial placement that was assigned to an illegal site.\n"
+				"    The node is type \"%s\". It was placed in a site valid for types:\n%s",
+				label_names[node->GetLabel()].c_str(),
+				node_types.c_str()
 				);
-			PrintNodeTypes(mate, label_names);
 		}
 	}
 }
@@ -243,8 +236,7 @@ void PAREngine::InitialPlacement(map<uint32_t, string>& label_names, bool verbos
  */
 bool PAREngine::OptimizePlacement(
 	vector<PARGraphNode*>& badnodes,
-	map<uint32_t, string>& label_names,
-	bool /*verbose*/)
+	map<uint32_t, string>& label_names)
 {
 	//Pick one of the nodes at random as our pivot node
 	PARGraphNode* pivot = badnodes[rand() % badnodes.size()];
@@ -259,14 +251,13 @@ bool PAREngine::OptimizePlacement(
 	//SANITY CHECK: Make sure the OLD placement was legal (if not, something is seriously wrong)
 	if(!old_mate->MatchesLabel(pivot->GetLabel()))
 	{
-		fprintf(
-			stderr,
-			"INTERNAL ERROR: Found a node during optimization that was assigned to an illegal site.\n"
-			"    This indicates a bug in gp4par, please file a report on github.\n"
-			"    Our pivot is a node of type \"%s\". It was placed in a site valid for types:\n",
-			label_names[pivot->GetLabel()].c_str()
+		std::string node_types = GetNodeTypes(old_mate, label_names);
+		LogFatal(
+		        "Found a node during optimization that was assigned to an illegal site.\n"
+			"    Our pivot is a node of type \"%s\". It was placed in a site valid for types:\n%s",
+			label_names[pivot->GetLabel()].c_str(),
+			node_types.c_str()
 			);
-		PrintNodeTypes(old_mate, label_names);
 	}
 	
 	//If the new site is already occupied, make sure the node we displace can go in our current site.
@@ -286,8 +277,7 @@ bool PAREngine::OptimizePlacement(
 	
 	//TODO: say what we swapped?
 	
-	//if(verbose)
-	//	printf("    Original cost %u, new cost %u\n", original_cost, new_cost);
+	//LogVerbose("    Original cost %u, new cost %u\n", original_cost, new_cost);
 
 	//If new cost is less, or greater with probability temperature, accept it
 	//TODO: make probability depend on dCost?
@@ -317,17 +307,13 @@ void PAREngine::MoveNode(
 	//Verify the labels match
 	if(!newpos->MatchesLabel(node->GetLabel()))
 	{
-		fprintf(
-			stderr,
-			"INTERNAL ERROR: tried to assign node to illegal site (forward direction).\n"
-			"    This indicates a bug in gp4par, please file a report on github.\n"
-			"    We attempted to move a node of type \"%s\". The target site is valid for types:\n",
-			label_names[node->GetLabel()].c_str()
+		std::string node_types = GetNodeTypes(newpos, label_names);
+		LogFatal(
+			"Tried to assign node to illegal site (forward direction).\n"
+			"    We attempted to move a node of type \"%s\". The target site is valid for types:\n%s",
+			label_names[node->GetLabel()].c_str(),
+			node_types.c_str()
 			);
-		PrintNodeTypes(newpos, label_names);
-		
-		//asm("int3");
-		exit(-1);
 	}
 	
 	//If the new position is already used by a netlist node, we have to fix that
@@ -339,17 +325,14 @@ void PAREngine::MoveNode(
 		//Verify the labels match in the reverse direction of the swap
 		if(!old_pos->MatchesLabel(other_net->GetLabel()))
 		{
-			fprintf(
-				stderr,
-				"INTERNAL ERROR: tried to assign node to illegal site (reverse direction).\n"
-				"    This indicates a bug in gp4par, please file a report on github.\n"
-				"    We attempted to move a node of type \"%s\". The target site is valid for types:\n",
-				label_names[other_net->GetLabel()].c_str()
+			std::string node_types = GetNodeTypes(old_pos, label_names);
+			LogFatal(
+				"Tried to assign node to illegal site (reverse direction).\n"
+				"    We attempted to move a node of type \"%s\". "
+				"The target site is valid for types:\n%s",
+				label_names[other_net->GetLabel()].c_str(),
+				node_types.c_str()
 				);
-			PrintNodeTypes(old_pos, label_names);
-		
-			//asm("int3");
-			exit(-1);
 		}
 		
 		other_net->MateWith(old_pos);
@@ -360,13 +343,15 @@ void PAREngine::MoveNode(
 }
 
 /**
-	@brief Prints all of the types of a given node for debugging
+	@brief Serializes all of the types of a given node for debugging
  */
-void PAREngine::PrintNodeTypes(PARGraphNode* node, std::map<uint32_t, std::string>& label_names)
+std::string PAREngine::GetNodeTypes(PARGraphNode* node, std::map<uint32_t, std::string>& label_names)
 {
-	fprintf(stderr, "    * %s\n", label_names[node->GetLabel()].c_str());
+	std::string ret;
+	ret += "    * " + label_names[node->GetLabel()] + "\n";
 	for(uint32_t i=0; i<node->GetAlternateLabelCount(); i++)
-		fprintf(stderr, "    * %s\n", label_names[node->GetAlternateLabel(i)].c_str());
+		ret += "    * " + label_names[node->GetAlternateLabel(i)] + "\n";
+	return ret;
 }
 
 /**

@@ -111,7 +111,7 @@ void Greenpak4PGA::CommitChanges()
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: PGA GAIN must be 0.25, 0.25, 1, 2, 4, 8, 16\n");
+				LogError("PGA GAIN must be 0.25, 0.25, 1, 2, 4, 8, 16\n");
 				exit(-1);
 		}
 	}
@@ -129,7 +129,7 @@ void Greenpak4PGA::CommitChanges()
 			
 		else
 		{
-			fprintf(stderr, "ERROR: PGA INPUT_MODE must be SINGLE, DIFF, or PDIFF\n");
+			LogError("PGA INPUT_MODE must be SINGLE, DIFF, or PDIFF\n");
 			exit(-1);
 		}
 	}
@@ -138,8 +138,7 @@ void Greenpak4PGA::CommitChanges()
 bool Greenpak4PGA::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	fprintf(stderr, "unimplemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4PGA::Save(bool* bitstream)
@@ -168,7 +167,7 @@ bool Greenpak4PGA::Save(bool* bitstream)
 	{
 		if(m_vinsel.GetPowerRailValue() == false)
 		{
-			fprintf(stderr, "ERROR: PGA VIN_SEL must be connected to IOB or Vdd\n");
+			LogError("PGA VIN_SEL must be connected to IOB or Vdd\n");
 			return false;
 		}
 		
@@ -214,7 +213,7 @@ bool Greenpak4PGA::Save(bool* bitstream)
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: PGA gain must be 0.25/0.5/1/2/4/8 for single ended inputs\n");
+				LogError("PGA gain must be 0.25/0.5/1/2/4/8 for single ended inputs\n");
 				return false;
 		}
 	}
@@ -230,7 +229,7 @@ bool Greenpak4PGA::Save(bool* bitstream)
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: PGA gain must be 1/2/4/8/16 for single ended inputs\n");
+				LogError("PGA gain must be 1/2/4/8/16 for single ended inputs\n");
 				return false;
 		}
 	}

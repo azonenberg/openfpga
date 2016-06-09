@@ -137,31 +137,34 @@ int main(int argc, char* argv[])
 		ShowUsage();
 		return 1;
 	}
+
+	//Set up logging
+	g_log_sinks.emplace_back(new STDLogSink());
 	
 	//Print header
 	ShowVersion();
 	
 	//Print configuration
-	printf("\nDevice configuration:\n");
-	printf("    Target device: SLG46620V\n");
-	printf("    VCC range: not yet implemented\n");
-	printf("    Unused pins: ");
+	LogNotice("\nDevice configuration:\n");
+	LogNotice("    Target device: SLG46620V\n");
+	LogNotice("    VCC range: not yet implemented\n");
+	LogNotice("    Unused pins: ");
 	switch(unused_pull)
 	{
 		case Greenpak4IOB::PULL_NONE:
-			printf("float\n");
+			LogNotice("float\n");
 			break;
 			
 		case Greenpak4IOB::PULL_DOWN:
-			printf("pull down with ");
+			LogNotice("pull down with ");
 			break;
 			
 		case Greenpak4IOB::PULL_UP:
-			printf("pull up with ");
+			LogNotice("pull up with ");
 			break;
 			
 		default:
-			printf("invalid\n");
+			LogNotice("invalid\n");
 			return 1;
 	}
 	if(unused_pull != Greenpak4IOB::PULL_NONE)
@@ -169,26 +172,26 @@ int main(int argc, char* argv[])
 		switch(unused_drive)
 		{
 			case Greenpak4IOB::PULL_10K:
-				printf("10K\n");
+				LogNotice("10K\n");
 				break;
 				
 			case Greenpak4IOB::PULL_100K:
-				printf("100K\n");
+				LogNotice("100K\n");
 				break;
 				
 			case Greenpak4IOB::PULL_1M:
-				printf("1M\n");
+				LogNotice("1M\n");
 				break;
 				
 			default:
-				printf("invalid\n");
+				LogNotice("invalid\n");
 				return 1;
 		}
 	}
 	
 	
 	//Parse the unplaced netlist
-	printf("\nLoading Yosys JSON file \"%s\", expecting top-level module \"%s\"\n",
+	LogNotice("\nLoading Yosys JSON file \"%s\", expecting top-level module \"%s\"\n",
 		fname.c_str(), top.c_str());
 	Greenpak4Netlist netlist(fname, top);
 	
@@ -200,11 +203,11 @@ int main(int argc, char* argv[])
 		return 2;
 	
 	//Write the final bitstream
-	printf("\nWriting final bitstream to output file \"%s\"\n", ofname.c_str());
+	LogNotice("\nWriting final bitstream to output file \"%s\"\n", ofname.c_str());
 	device.WriteToFile(ofname);	
 	
 	//TODO: Static timing analysis
-	printf("\nStatic timing analysis: not yet implemented\n");
+	LogNotice("\nStatic timing analysis: not yet implemented\n");
 	
 	return 0;
 }
@@ -218,7 +221,7 @@ void ShowUsage()
 
 void ShowVersion()
 {
-	printf(
+	LogNotice(
 		"Greenpak4 place-and-route by Andrew D. Zonenberg.\n"
 		"\n"
 		"License: LGPL v2.1+\n"

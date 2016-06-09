@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "../log/log.h"
+
 #include "PARGraph.h"
 #include "PARGraphNode.h"
 

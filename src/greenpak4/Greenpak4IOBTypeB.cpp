@@ -57,8 +57,7 @@ string Greenpak4IOBTypeB::GetDescription()
 bool Greenpak4IOBTypeB::Load(bool* /*bitstream*/)
 {
 	//TODO
-	fprintf(stderr, "Greenpak4IOBTypeB::Load not implemented\n");	
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4IOBTypeB::Save(bool* bitstream)
@@ -67,7 +66,7 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 	//Throw an error if OE isn't tied to a power rail, because we don't have runtime adjustable direction
 	if(!m_outputEnable.IsPowerRail())
 	{
-		fprintf(stderr, "ERROR: Tried to tie OE of a type-B IOB to something other than a power rail\n");
+		LogError("Tried to tie OE of a type-B IOB to something other than a power rail\n");
 		return false;
 	}
 	
@@ -112,7 +111,7 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 				break;
 			
 			default:
-				fprintf(stderr, "ERROR: Invalid IOB drive type\n");
+				LogError("Invalid IOB drive type\n");
 				return false;
 		}
 	}
@@ -141,7 +140,7 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: Invalid IOB threshold\n");
+				LogError("Invalid IOB threshold\n");
 				return false;
 		}
 	}
@@ -175,7 +174,7 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: Invalid pull strength\n");
+				LogError("Invalid pull strength\n");
 				return false;
 		}
 		
@@ -190,7 +189,7 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: Invalid pull direction\n");
+				LogError("Invalid pull direction\n");
 				return false;
 		}
 	}
@@ -218,13 +217,13 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 			}
 			else
 			{
-				fprintf(stderr, "ERROR: Asked for x4 drive strength on a pin without a super driver\n");
+				LogError("Asked for x4 drive strength on a pin without a super driver\n");
 				return false;
 			}
 			break;
 			
 		default:
-			fprintf(stderr, "ERROR: Invalid drive strength\n");
+			LogError("Invalid drive strength\n");
 			return false;
 	}
 	

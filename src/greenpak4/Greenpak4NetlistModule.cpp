@@ -34,7 +34,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 {
 	CreatePowerNets();
 	
-	printf("    %s\n", name.c_str());
+	LogNotice("    %s\n", name.c_str());
 	
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
@@ -48,7 +48,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 		//Whatever it is, it should be an object
 		if(!json_object_is_type(child, json_type_object))
 		{
-			fprintf(stderr, "ERROR: module child should be of type object but isn't\n");
+			LogError("module child should be of type object but isn't\n");
 			exit(-1);
 		}
 		
@@ -65,7 +65,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 			//Whatever it is, it should be an object
 			if(!json_object_is_type(cobject, json_type_object))
 			{
-				fprintf(stderr, "ERROR: module child should be of type object but isn't\n");
+				LogError("module child should be of type object but isn't\n");
 				exit(-1);
 			}
 			
@@ -75,7 +75,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 				//Make sure it doesn't exist
 				if(m_ports.find(cname) != m_ports.end())
 				{
-					fprintf(stderr, "ERROR: Attempted redeclaration of module port \"%s\"\n", name.c_str());
+					LogError("Attempted redeclaration of module port \"%s\"\n", name.c_str());
 					exit(-1);
 				}
 				
@@ -95,7 +95,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 			//Whatever it is, we don't want it
 			else
 			{
-				fprintf(stderr, "ERROR: Unknown top-level JSON object \"%s\"\n", name.c_str());
+				LogError("Unknown top-level JSON object \"%s\"\n", name.c_str());
 				exit(-1);
 			}
 		}
@@ -199,7 +199,7 @@ void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
 		{
 			if(!json_object_is_type(child, json_type_string))
 			{
-				fprintf(stderr, "ERROR: Cell type should be of type string but isn't\n");
+				LogError("Cell type should be of type string but isn't\n");
 				exit(-1);
 			}
 			
@@ -223,7 +223,7 @@ void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
 		//Unsupported
 		else
 		{
-			fprintf(stderr, "ERROR: Unknown cell child object \"%s\"\n", cname.c_str());
+			LogError("Unknown cell child object \"%s\"\n", cname.c_str());
 			exit(-1);
 		}
 	}
@@ -234,7 +234,7 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 	//Create the named net
 	if(m_nets.find(name) != m_nets.end())
 	{
-		fprintf(stderr, "ERROR: Attempted redeclaration of net \"%s\" \n", name.c_str());
+		LogError("Attempted redeclaration of net \"%s\" \n", name.c_str());
 		exit(-1);
 	}
 	
@@ -258,7 +258,7 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 		{
 			if(!json_object_is_type(child, json_type_array))
 			{
-				fprintf(stderr, "ERROR: Net name bits should be of type array but isn't\n");
+				LogError("Net name bits should be of type array but isn't\n");
 				exit(-1);
 			}
 
@@ -266,14 +266,14 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 			int len = json_object_array_length(child);
 			if(len != 1)
 			{
-				fprintf(stderr, "ERROR: Vectors must be split during synthesis; PAR cannot handle vector nets\n");
+				LogError("Vectors must be split during synthesis; PAR cannot handle vector nets\n");
 				exit(-1);
 			}
 			
 			json_object* jnode = json_object_array_get_idx(child, 0);
 			if(!json_object_is_type(jnode, json_type_int))
 			{
-				fprintf(stderr, "ERROR: Net number in module should be of type integer but isn't\n");
+				LogError("Net number in module should be of type integer but isn't\n");
 				exit(-1);
 			}
 
@@ -290,7 +290,7 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 		{
 			if(!json_object_is_type(child, json_type_object))
 			{
-				fprintf(stderr, "ERROR: Net attributes should be of type object but isn't\n");
+				LogError("Net attributes should be of type object but isn't\n");
 				exit(-1);
 			}
 			
@@ -300,7 +300,7 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 		//Unsupported
 		else
 		{
-			fprintf(stderr, "ERROR: Unknown netname child object \"%s\"\n", cname.c_str());
+			LogError("Unknown netname child object \"%s\"\n", cname.c_str());
 			exit(-1);
 		}
 	}
@@ -321,11 +321,11 @@ void Greenpak4NetlistModule::LoadNetAttributes(Greenpak4NetlistNode* net, json_o
 		//Make sure we don't have it already
 		if(net->m_attributes.find(cname) != net->m_attributes.end())
 		{
-			fprintf(stderr, "ERROR: Attempted redeclaration of net attribute \"%s\"\n", cname.c_str());
+			LogError("Attempted redeclaration of net attribute \"%s\"\n", cname.c_str());
 			exit(-1);
 		}
 		
-		//printf("    net %s attribute %s = %s\n", net->m_name.c_str(), cname.c_str(), json_object_get_string(child));
+		//LogNotice("    net %s attribute %s = %s\n", net->m_name.c_str(), cname.c_str(), json_object_get_string(child));
 		
 		//Save the attribute
 		net->m_attributes[cname] = json_object_get_string(child);
@@ -345,7 +345,7 @@ void Greenpak4NetlistModule::LoadCellAttributes(Greenpak4NetlistCell* cell, json
 		//Make sure we don't have it already
 		if(cell->m_attributes.find(cname) != cell->m_attributes.end())
 		{
-			fprintf(stderr, "ERROR: Attempted redeclaration of cell attribute \"%s\"\n", cname.c_str());
+			LogError("Attempted redeclaration of cell attribute \"%s\"\n", cname.c_str());
 			exit(-1);
 		}
 		
@@ -369,7 +369,7 @@ void Greenpak4NetlistModule::LoadCellParameters(Greenpak4NetlistCell* cell, json
 		//Make sure we don't have it already
 		if(cell->m_parameters.find(cname) != cell->m_parameters.end())
 		{
-			fprintf(stderr, "ERROR: Attempted redeclaration of cell parameter \"%s\"\n", cname.c_str());
+			LogError("Attempted redeclaration of cell parameter \"%s\"\n", cname.c_str());
 			exit(-1);
 		}
 		
@@ -390,7 +390,7 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 		
 		if(!json_object_is_type(child, json_type_array))
 		{
-			fprintf(stderr, "ERROR: Cell connection value should be of type array but isn't\n");
+			LogError("Cell connection value should be of type array but isn't\n");
 			exit(-1);
 		}
 
@@ -401,7 +401,7 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 			continue;		
 		if(len != 1)
 		{
-			fprintf(stderr, "ERROR: Arrays not implemented in cell connections\n");
+			LogError("Arrays not implemented in cell connections\n");
 			exit(-1);
 		}
 		
@@ -422,7 +422,7 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 		//Otherwise it has to be an integer
 		else if(!json_object_is_type(jnode, json_type_int))
 		{
-			fprintf(stderr, "ERROR: Net number for cell should be of type integer but isn't\n");
+			LogError("Net number for cell should be of type integer but isn't\n");
 			exit(-1);
 		}
 		

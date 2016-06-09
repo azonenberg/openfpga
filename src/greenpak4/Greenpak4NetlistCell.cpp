@@ -68,9 +68,8 @@ void Greenpak4NetlistCell::FindLOC()
 		//Multiple constraints are legal iff they have the same value
 		if( (m_loc != "") && (m_loc != newloc) )
 		{
-			fprintf(
-				stderr,
-				"ERROR: Multiple conflicting LOC constraints (%s, %s) are attached to cell \"%s\".\n"
+			LogError(
+				"Multiple conflicting LOC constraints (%s, %s) are attached to cell \"%s\".\n"
 				"       Please remove one or more of the constraints to allow the design to be placed.\n",
 				m_loc.c_str(),
 				newloc.c_str(),

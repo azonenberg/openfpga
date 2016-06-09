@@ -193,9 +193,8 @@ void BuildGraphs(
 			label = ilmap[cell->m_type];
 		else
 		{
-			fprintf(
-				stderr,
-				"ERROR: Cell \"%s\" is of type \"%s\" which is not a valid GreenPak4 primitive\n",
+			LogError(
+				"Cell \"%s\" is of type \"%s\" which is not a valid GreenPak4 primitive\n",
 				cell->m_name.c_str(), cell->m_type.c_str());
 			exit(-1);			
 		}
@@ -223,7 +222,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 	{
 		Greenpak4NetlistNode* node = *it;
 			
-		//printf("    Node %s is sourced by:\n", node->m_name.c_str());
+		//LogVerbose("    Node %s is sourced by:\n", node->m_name.c_str());
 		
 		PARGraphNode* source = NULL;
 		string sourceport = "";
@@ -235,7 +234,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			if(p->m_direction != Greenpak4NetlistPort::DIR_OUTPUT)
 			{
 				//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
-				//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+				//LogVerbose("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
 				sourced_by_port = true;
 			}
 		}
@@ -251,20 +250,19 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			
 			source = c.m_cell->m_parnode;
 			sourceport = c.m_portname;
-			//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+			//LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 		}
 		
 		//DRC fail if undriven net
 		if( (source == NULL) && !sourced_by_port )
 		{
-			fprintf(
-				stderr,
-				"ERROR: Net \"%s\" has loads, but no driver\n",
+			LogError(
+				"Net \"%s\" has loads, but no driver\n",
 				node->m_name.c_str());
 			exit(-1);	
 		}
 		
-		//printf("        and drives\n");
+		//LogVerbose("        and drives\n");
 		
 		//If node is sourced by a port, special processing needed.
 		//We can only drive IBUF/IOBUF cells
@@ -272,24 +270,22 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 		{
 			if(node->m_ports.size() != 1)
 			{
-				fprintf(
-					stderr,
-					"ERROR: Net \"%s\" is connected directly to multiple top-level ports (need an IOB)\n",
+				LogError(
+					"Net \"%s\" is connected directly to multiple top-level ports (need an IOB)\n",
 					node->m_name.c_str());
 				exit(-1);
 			}
 			
 			for(auto c : node->m_nodeports)
 			{
-				//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+				//LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 				
 				//Verify the type is IBUF/IOBUF
 				if( (c.m_cell->m_type == "GP_IBUF") || (c.m_cell->m_type == "GP_IOBUF") )
 					continue;
 				
-				fprintf(
-					stderr,
-					"ERROR: Net \"%s\" directly drives cell %s port %s (type %s, should be IOB)\n",
+				LogError(
+					"Net \"%s\" directly drives cell %s port %s (type %s, should be IOB)\n",
 					node->m_name.c_str(),
 					c.m_cell->m_name.c_str(),
 					c.m_portname.c_str(),
@@ -309,7 +305,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 				{
 					source->AddEdge(sourceport, p->m_parnode);
 					//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
-					//printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+					//LogVerbose("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
 				}
 			}
 			*/
@@ -317,7 +313,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			{
 				if(c.m_cell->m_parnode != source)
 				{
-					//printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+					//LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 					source->AddEdge(sourceport, c.m_cell->m_parnode, c.m_portname);
 				}
 			}
