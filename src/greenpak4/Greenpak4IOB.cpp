@@ -121,7 +121,18 @@ void Greenpak4IOB::CommitChanges()
 			else if(x.second == "1M")
 				m_pullStrength = Greenpak4IOB::PULL_1M;
 		}
-		
+
+		//Driver configuration
+		else if(x.first == "DRIVE_STRENGTH")
+		{
+			if(x.second == "1X")
+				m_driveStrength = Greenpak4IOB::DRIVE_1X;
+			else if(x.second == "2X")
+				m_driveStrength = Greenpak4IOB::DRIVE_2X;
+			else if(x.second == "4X")
+				m_driveStrength = Greenpak4IOB::DRIVE_4X;
+		}
+
 		//Driver configuration
 		else if(x.first == "DRIVE_TYPE")
 		{

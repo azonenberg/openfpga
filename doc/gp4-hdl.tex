@@ -274,6 +274,49 @@ end
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Drive strength
+
+\pagebreak
+\subsection{Drive Strength (\tokenstyle{DRIVE\_STRENGTH})}
+
+The \tokenstyle{DRIVE\_STRENGTH} constraint configures the output drive strength on the specified I/O pin. Drive strength refers to current sourcing or sinking capacity.
+
+\subsubsection{Applicable Elements}
+The \tokenstyle{DRIVE\_STRENGTH} constraint may only be used on top-level module ports.
+
+\subsubsection{Constraint Values}
+\begin{itemize}
+\item \whenstyle{Top-level module port (IOB)}
+	\begin{itemize}
+		\item \strexamplestyle{1X} Default drive strength. This is the default if no constraint is specified.
+		\item \strexamplestyle{2X} Two times as strong as the default drive strength.
+		\item \strexamplestyle{4X} Four times as strong as the default drive strength.
+	\end{itemize}
+\item \whenstyle{Other} \\
+This constraint may not be used on any other entity.
+\end{itemize}
+
+\subsubsection{Verilog Usage Example}
+
+Figure \ref{constraint-drivestrength} is an example of a top-level module with two ports \wirestyle{a} and \wirestyle{b}. Port \wirestyle{a} has 1X drive strength (the default) and port \wirestyle{b} has 2X drive strength.
+
+\begin{figure}[h]
+\begin{lstlisting}
+module Foo(a, b);
+
+	(* DRIVE_STRENGTH = "1X" *)
+	output wire a;
+
+	(* DRIVE_STRENGTH = "2X" *)
+	output wire b;
+
+endmodule
+\end{lstlisting}
+\caption{Example for \tokenstyle{DRIVE\_STRENGTH} constraint}
+\label{constraint-drivestrength}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Drive type
 
 \pagebreak
