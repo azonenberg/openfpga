@@ -315,8 +315,16 @@ void Greenpak4NetlistModule::LoadNetAttributes(Greenpak4NetlistNode* net, json_o
 	{
 		string cname = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
-				
+
 		//no type check, convert whatever it is to a string
+		string value = json_object_get_string(child);
+
+		//We can have multiple source locations for a single net
+		if(cname == "src")
+		{
+			net->m_src_locations.push_back(value);
+			continue;
+		}
 				
 		//Make sure we don't have it already
 		if(net->m_attributes.find(cname) != net->m_attributes.end())
@@ -328,7 +336,7 @@ void Greenpak4NetlistModule::LoadNetAttributes(Greenpak4NetlistNode* net, json_o
 		//LogNotice("    net %s attribute %s = %s\n", net->m_name.c_str(), cname.c_str(), json_object_get_string(child));
 		
 		//Save the attribute
-		net->m_attributes[cname] = json_object_get_string(child);
+		net->m_attributes[cname] = value;
 	}
 }
 
