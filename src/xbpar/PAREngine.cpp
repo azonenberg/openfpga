@@ -269,6 +269,16 @@ bool PAREngine::OptimizePlacement(
 		PrintNodeTypes(old_mate, label_names);
 	}
 	
+	//If the new site is already occupied, make sure the node we displace can go in our current site.
+	//If not, do nothing as the swap is impossible.
+	//Fixes github issue #9.
+	PARGraphNode* displaced_node = new_mate->GetMate();
+	if(displaced_node != NULL)
+	{
+		if(!old_mate->MatchesLabel(displaced_node->GetLabel()))
+			return false;
+	}
+	
 	//Do the swap, and measure the old/new scores
 	uint32_t original_cost = ComputeCost();
 	MoveNode(pivot, new_mate, label_names);
@@ -316,7 +326,7 @@ void PAREngine::MoveNode(
 			);
 		PrintNodeTypes(newpos, label_names);
 		
-		asm("int3");
+		//asm("int3");
 		exit(-1);
 	}
 	
@@ -338,7 +348,7 @@ void PAREngine::MoveNode(
 				);
 			PrintNodeTypes(old_pos, label_names);
 		
-			asm("int3");
+			//asm("int3");
 			exit(-1);
 		}
 		
