@@ -22,6 +22,8 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+	LogSink::Severity console_verbosity = LogSink::VERBOSE;
+
 	//Netlist file
 	string fname = "";
 	
@@ -52,6 +54,27 @@ int main(int argc, char* argv[])
 		{
 			ShowVersion();
 			return 0;
+		}
+		else if(s == "-q" || s == "--quiet")
+		{
+			if(console_verbosity == LogSink::VERBOSE)
+				console_verbosity = LogSink::WARNING;
+			else if(console_verbosity == LogSink::WARNING)
+				console_verbosity = LogSink::ERROR;
+		}
+		else if(s == "-l" || s == "--logfile" ||
+		        s == "-L" || s == "--logfile-lines")
+		{
+			bool line_buffered = (s == "-L" || s == "--logfile-lines");
+			if(i+1 < argc) {
+				FILE *log = fopen(argv[++i], "wt");
+				g_log_sinks.emplace_back(new FILELogSink(log, line_buffered));
+			}
+			else
+			{
+				printf("%s requires an argument\n", s.c_str());
+				return 1;
+			}
 		}
 		else if(s == "--top")
 		{
@@ -139,7 +162,7 @@ int main(int argc, char* argv[])
 	}
 
 	//Set up logging
-	g_log_sinks.emplace_back(new STDLogSink());
+	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
 	
 	//Print header
 	ShowVersion();
@@ -214,9 +237,19 @@ int main(int argc, char* argv[])
 
 void ShowUsage()
 {
-	printf("Usage: gp4par --top TopModule --output foo.txt foo.json\n");
-	printf("    --unused-pull        [down|up|float]      Specifies direction to pull unused pins\n");
-	printf("    --unused-drive       [10k|100k|1m]        Specifies strength of pullup/down resistor on unused pins\n");
+	printf(//                                                                               v 80th column
+		"Usage: gp4par --top TopModule --output foo.txt foo.json\n"
+		"    -q, --quiet\n"
+		"        Causes only warnings and errors to be written to the console.\n"
+		"        Specify twice to also silence warnings.\n"
+		"    -l, --logfile        <file>\n"
+		"        Causes log messages to be written to <file>."
+		"    -L, --logfile-lines  <file>\n"
+		"        Causes log messages to be written to <file>, flushing after each line.\n"
+		"    --unused-pull        [down|up|float]\n"
+		"        Specifies direction to pull unused pins.\n"
+		"    --unused-drive       [10k|100k|1m]\n"
+		"        Specifies strength of pullup/down resistor on unused pins.\n");
 }
 
 void ShowVersion()
