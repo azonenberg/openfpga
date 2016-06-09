@@ -99,7 +99,7 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, bool verbose, u
 			break;
 		
 		//Try to optimize the placement more
-		made_change = OptimizePlacement(badnodes, verbose);
+		made_change = OptimizePlacement(badnodes, label_names, verbose);
 			
 		//Cool the system down
 		//TODO: Decide on a good rate for this?
@@ -220,7 +220,9 @@ void PAREngine::InitialPlacement(bool verbose)
 	
 	@return True if we made changes to the netlist, false if nothing was done
  */
-bool PAREngine::OptimizePlacement(vector<PARGraphNode*>& badnodes, bool /*verbose*/)
+bool PAREngine::OptimizePlacement(
+	vector<PARGraphNode*>& badnodes, map<uint32_t, string>& label_names,
+	bool /*verbose*/)
 {
 	//Pick one of the nodes at random as our pivot node
 	PARGraphNode* pivot = badnodes[rand() % badnodes.size()];
@@ -234,7 +236,7 @@ bool PAREngine::OptimizePlacement(vector<PARGraphNode*>& badnodes, bool /*verbos
 	
 	//Do the swap, and measure the old/new scores
 	uint32_t original_cost = ComputeCost();
-	MoveNode(pivot, new_mate);
+	MoveNode(pivot, new_mate, label_names);
 	uint32_t new_cost = ComputeCost();
 	
 	//TODO: say what we swapped?
@@ -250,7 +252,7 @@ bool PAREngine::OptimizePlacement(vector<PARGraphNode*>& badnodes, bool /*verbos
 		return true;
 		
 	//If we don't like the change, revert
-	MoveNode(pivot, old_mate);
+	MoveNode(pivot, old_mate, label_names);
 	return false;
 }
 
@@ -262,12 +264,24 @@ bool PAREngine::OptimizePlacement(vector<PARGraphNode*>& badnodes, bool /*verbos
 	@param node			Netlist node to be moved
 	@param newpos		Device node with the new position
  */
-void PAREngine::MoveNode(PARGraphNode* node, PARGraphNode* newpos)
+void PAREngine::MoveNode(
+	PARGraphNode* node,
+	PARGraphNode* newpos,
+	map<uint32_t, string>& label_names)
 {
 	//Verify the labels match
 	if(!newpos->MatchesLabel(node->GetLabel()))
 	{
-		fprintf(stderr, "INTERNAL ERROR: tried to assign node to illegal site\n");
+		fprintf(
+			stderr,
+			"INTERNAL ERROR: tried to assign node to illegal site (forward direction)\n"
+			"    This indicates a bug in gp4par, please file a report on github.\n"
+			"    We attempted to move a node of type \"%s\". The target site is valid for types:\n",
+			label_names[node->GetLabel()].c_str()
+			);
+		PrintNodeTypes(newpos, label_names);
+		
+		//asm("int3");
 		exit(-1);
 	}
 	
@@ -277,11 +291,37 @@ void PAREngine::MoveNode(PARGraphNode* node, PARGraphNode* newpos)
 		PARGraphNode* other_net = newpos->GetMate();
 		PARGraphNode* old_pos = node->GetMate();
 		
+		//Verify the labels match in the reverse direction of the swap
+		if(!old_pos->MatchesLabel(other_net->GetLabel()))
+		{
+			fprintf(
+				stderr,
+				"INTERNAL ERROR: tried to assign node to illegal site (reverse direction)\n"
+				"    This indicates a bug in gp4par, please file a report on github.\n"
+				"    We attempted to move a node of type \"%s\". The target site is valid for types:\n",
+				label_names[other_net->GetLabel()].c_str()
+				);
+			PrintNodeTypes(old_pos, label_names);
+		
+			//asm("int3");
+			exit(-1);
+		}
+		
 		other_net->MateWith(old_pos);
 	}
 	
 	//Now that the new node has no mate, just hook them up
 	node->MateWith(newpos);
+}
+
+/**
+	@brief Prints all of the types of a given node for debugging
+ */
+void PAREngine::PrintNodeTypes(PARGraphNode* node, std::map<uint32_t, std::string>& label_names)
+{
+	fprintf(stderr, "    * %s\n", label_names[node->GetLabel()].c_str());
+	for(uint32_t i=0; i<node->GetAlternateLabelCount(); i++)
+		fprintf(stderr, "    * %s\n", label_names[node->GetAlternateLabel(i)].c_str());
 }
 
 /**

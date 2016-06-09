@@ -37,7 +37,7 @@ public:
 	
 protected:
 
-	void MoveNode(PARGraphNode* node, PARGraphNode* newpos);
+	void MoveNode(PARGraphNode* node, PARGraphNode* newpos, std::map<uint32_t, std::string>& label_names);
 
 	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot) =0;
 	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes) =0;
@@ -53,9 +53,14 @@ protected:
 	virtual bool SanityCheck(std::map<uint32_t, std::string> label_names, bool verbose);
 	virtual void InitialPlacement(bool verbose);
 	virtual void InitialPlacement_core(bool verbose) =0;
-	virtual bool OptimizePlacement(std::vector<PARGraphNode*>& badnodes, bool verbose);
+	virtual bool OptimizePlacement(
+		std::vector<PARGraphNode*>& badnodes,
+		std::map<uint32_t, std::string>& label_names,
+		bool verbose);
 
 	virtual uint32_t ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode* candidate);
+	
+	void PrintNodeTypes(PARGraphNode* node, std::map<uint32_t, std::string>& label_names);
 
 	PARGraph* m_netlist;
 	PARGraph* m_device;
