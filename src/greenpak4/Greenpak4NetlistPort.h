@@ -51,6 +51,9 @@ public:
 	
 	std::string GetAttribute(std::string name)
 	{ return m_attributes[name]; }
+
+	//Source locations
+	std::vector<std::string> m_src_locations;
 	
 	//List of internal points we link to (only valid after indexing)
 	std::vector<Greenpak4NetlistNodePoint> m_nodeports;

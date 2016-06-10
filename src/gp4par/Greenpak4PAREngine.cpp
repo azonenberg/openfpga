@@ -39,7 +39,7 @@ Greenpak4PAREngine::~Greenpak4PAREngine()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Initial placement
 
-void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
+void Greenpak4PAREngine::InitialPlacement_core()
 {
 	//Make a map of all nodes to their names
 	map<string, Greenpak4BitstreamEntity*> nmap;
@@ -58,8 +58,7 @@ void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
 		auto cell = dynamic_cast<Greenpak4NetlistCell*>(entity);
 		if(cell == NULL)
 		{
-			fprintf(stderr, "INTERNAL ERROR: Cell in netlist is not a Greenpak4NetlistCell\n");
-			exit(-1);
+			LogFatal("Cell in netlist is not a Greenpak4NetlistCell\n");
 		}
 			
 		//Search for a LOC constraint, if there is one
@@ -71,7 +70,7 @@ void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
 		//Verify that the constrained location exists
 		if(nmap.find(loc) == nmap.end())
 		{
-			fprintf(stderr, "ERROR: Cell %s has invalid LOC constraint %s (no matching site in device)\n",
+			LogError("Cell %s has invalid LOC constraint %s (no matching site in device)\n",
 				cell->m_name.c_str(), loc.c_str());
 			cell->ClearLOC();
 			exit(-1);
@@ -82,9 +81,8 @@ void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
 		auto spnode = site->GetPARNode();
 		if(!spnode->MatchesLabel(node->GetLabel()))
 		{
-			fprintf(
-				stderr,
-				"ERROR: Cell %s has invalid LOC constraint %s (site is of type %s, instance is of type %s)\n",
+			LogError(
+				"Cell %s has invalid LOC constraint %s (site is of type %s, instance is of type %s)\n",
 				cell->m_name.c_str(),
 				loc.c_str(),
 				m_lmap[site->GetPARNode()->GetLabel()].c_str(),
@@ -97,17 +95,15 @@ void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
 		//Verify that there's not already something constrained to that site
 		if(spnode->GetMate() != NULL)
 		{
-			fprintf(
-				stderr,
-				"ERROR: Cell %s has invalid LOC constraint %s (another instance is already constrained there)\n",
+			LogError(
+				"Cell %s has invalid LOC constraint %s (another instance is already constrained there)\n",
 				cell->m_name.c_str(), loc.c_str());
 			cell->ClearLOC();
 			exit(-1);
 		}
 		
 		//Everything is good, apply the constraint
-		if(verbose)
-			printf("    Applying LOC constraint %s to cell %s\n", loc.c_str(), cell->m_name.c_str());
+		LogVerbose("    Applying LOC constraint %s to cell %s\n", loc.c_str(), cell->m_name.c_str());
 		node->MateWith(spnode);
 	}
 	
@@ -152,9 +148,8 @@ void Greenpak4PAREngine::InitialPlacement_core(bool verbose)
 			{
 				auto cell = static_cast<Greenpak4NetlistEntity*>(netnode->GetData());
 				
-				fprintf(
-					stderr,
-					"ERROR: Could not place netlist cell \"%s\" because we ran out of sites with type \"%s\"\n"
+				LogError(
+					"Could not place netlist cell \"%s\" because we ran out of sites with type \"%s\"\n"
 					"       This can happen if you have overly restrictive LOC constraints.",
 					cell->m_name.c_str(),
 					m_lmap[label].c_str()
@@ -213,7 +208,7 @@ uint32_t Greenpak4PAREngine::ComputeCongestionCost()
 
 void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 {
-	printf("\nUnroutable nets (%zu):\n", unroutes.size());
+	LogNotice("\nUnroutable nets (%zu):\n", unroutes.size());
 	for(auto edge : unroutes)
 	{
 		auto source = static_cast<Greenpak4NetlistEntity*>(edge->m_sourcenode->GetData());
@@ -226,7 +221,7 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 		if(scell != NULL)
 		{
 			auto entity = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
-			printf("    from cell %s (mapped to %s) port %s ",
+			LogNotice("    from cell %s (mapped to %s) port %s ",
 				scell->m_name.c_str(),
 				entity->GetDescription().c_str(),
 				edge->m_sourceport.c_str()
@@ -235,16 +230,16 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 		else if(sport != NULL)
 		{		
 			auto iob = static_cast<Greenpak4IOB*>(edge->m_sourcenode->GetMate()->GetData());
-			printf("    from port %s (mapped to IOB_%d)", sport->m_name.c_str(), iob->GetPinNumber());
+			LogNotice("    from port %s (mapped to IOB_%d)", sport->m_name.c_str(), iob->GetPinNumber());
 		}
 		else
-			printf("    from [invalid] ");
+			LogNotice("    from [invalid] ");
 		
-		printf(" to ");
+		LogNotice(" to ");
 		if(dcell != NULL)
 		{
 			auto entity = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
-			printf(
+			LogNotice(
 				"cell %s (mapped to %s) pin %s\n",
 				dcell->m_name.c_str(),
 				entity->GetDescription().c_str(),
@@ -252,12 +247,12 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 				);
 		}
 		else if(dport != NULL)
-			printf("port %s\n", dport->m_name.c_str());
+			LogNotice("port %s\n", dport->m_name.c_str());
 		else
-			printf("[invalid]\n");
+			LogNotice("[invalid]\n");
 	}
 	
-	printf("\n");
+	LogNotice("\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,9 +330,9 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 	
 	//DEBUG
 	/*
-	printf("    Optimizing (%d bad nodes, %d unroutes)\n", bad_nodes.size(), unroutes.size());
+	LogVerbose("    Optimizing (%d bad nodes, %d unroutes)\n", bad_nodes.size(), unroutes.size());
 	for(auto x : bad_nodes)
-		printf("        * %s\n",
+		LogVerbose("        * %s\n",
 			static_cast<Greenpak4BitstreamEntity*>(x->GetMate()->GetData())->GetDescription().c_str());
 	*/
 }
@@ -398,7 +393,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	//Debug log
 	/*
 	bool unroutable = (m_unroutableNodes.find(pivot) != m_unroutableNodes.end());
-	printf("        Seeking new placement for node %s (unroutable = %d)\n",
+	LogVerbose("        Seeking new placement for node %s (unroutable = %d)\n",
 		current_site->GetDescription().c_str(), unroutable);
 	*/
 	
@@ -437,7 +432,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	//If no routable candidates found anywhere, consider the entire chip and hope we can patch things up later
 	if(temp_candidates.empty())
 	{
-		//printf("            No routable candidates found\n");
+		//LogVerbose("            No routable candidates found\n");
 		for(uint32_t i=0; i<m_device->GetNumNodesWithLabel(label); i++)
 			temp_candidates.insert(m_device->GetNodeByLabelAndIndex(label, i));
 	}
@@ -453,7 +448,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	//Pick one at random
 	auto c = candidates[rand() % ncandidates];
 	/*
-	printf("            Selected %s\n",
+	LogVerbose("            Selected %s\n",
 		static_cast<Greenpak4BitstreamEntity*>(c->GetData())->GetDescription().c_str());
 	*/
 	return c;

@@ -104,8 +104,7 @@ void Greenpak4VoltageReference::CommitChanges()
 bool Greenpak4VoltageReference::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	fprintf(stderr, "unimplemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4VoltageReference::Save(bool* bitstream)
@@ -128,21 +127,21 @@ bool Greenpak4VoltageReference::Save(bool* bitstream)
 		{
 			if(m_vref % 50)
 			{
-				fprintf(stderr, "DRC error: Voltage reference %s must be set to a multiple of 50 mV (requested %d)\n",
+				LogError("DRC: Voltage reference %s must be set to a multiple of 50 mV (requested %d)\n",
 					GetDescription().c_str(), m_vref);
 				return false;
 			}
 			
 			if(m_vref > 1200)
 			{
-				fprintf(stderr, "DRC error: Voltage reference %s must be set to <= 1200 mV (requested %d)\n",
+				LogError("DRC: Voltage reference %s must be set to <= 1200 mV (requested %d)\n",
 					GetDescription().c_str(), m_vref);
 				return false;
 			}
 			
 			if(m_vinDiv != 1)
 			{
-				fprintf(stderr, "DRC error: Voltage reference %s must have divisor of 1 when using constant voltage\n",
+				LogError("DRC: Voltage reference %s must have divisor of 1 when using constant voltage\n",
 					GetDescription().c_str());
 				return false;
 			}
@@ -153,7 +152,7 @@ bool Greenpak4VoltageReference::Save(bool* bitstream)
 		//Divided Vdd
 		else
 		{
-			fprintf(stderr, "ERROR: Greenpak4VoltageReference inputs for divided Vdd not implemented yet\n");
+			LogError("Greenpak4VoltageReference inputs for divided Vdd not implemented yet\n");
 			return false;
 		}
 	}
@@ -161,7 +160,7 @@ bool Greenpak4VoltageReference::Save(bool* bitstream)
 	//TODO: external Vref, DAC
 	else
 	{
-		fprintf(stderr, "ERROR: Greenpak4VoltageReference inputs other than constant not implemented yet\n");
+		LogError("Greenpak4VoltageReference inputs other than constant not implemented yet\n");
 		return false;
 	}
 

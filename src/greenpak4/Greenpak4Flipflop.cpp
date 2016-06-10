@@ -124,9 +124,7 @@ void Greenpak4Flipflop::CommitChanges()
 
 bool Greenpak4Flipflop::Load(bool* /*bitstream*/)
 {
-	printf("Greenpak4Flipflop::Load() not yet implemented\n");
-	return false;
-	//return true;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4Flipflop::Save(bool* bitstream)
@@ -134,7 +132,7 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 	//Sanity check: cannot have set/reset on a DFF, only a DFFSR
 	bool has_sr = !m_nsr.IsPowerRail();
 	if(has_sr && !m_hasSR)
-		fprintf(stderr, "ERROR: Tried to configure set/reset on a DFF cell with no S/R input\n");
+		LogError("Tried to configure set/reset on a DFF cell with no S/R input\n");
 	
 	//Check if we're unused (input and clock pins are tied to ground)
 	bool no_input = ( m_input.IsPowerRail() && !m_input.GetPowerRailValue() );

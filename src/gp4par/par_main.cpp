@@ -30,7 +30,7 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 	labelmap lmap;
 	
 	//Create the graphs
-	printf("\nCreating netlist graphs...\n");
+	LogNotice("\nCreating netlist graphs...\n");
 	PARGraph* ngraph = NULL;
 	PARGraph* dgraph = NULL;
 	BuildGraphs(netlist, device, ngraph, dgraph, lmap);
@@ -42,7 +42,7 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 		//Print the placement we have so far
 		PrintPlacementReport(ngraph, device);
 		
-		printf("PAR failed\n");
+		LogNotice("PAR failed\n");
 		return false;
 	}
 		
@@ -68,7 +68,7 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
  */
 void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 {
-	printf("\nPost-PAR design rule checks\n");
+	LogNotice("\nPost-PAR design rule checks\n");
 		
 	//Check for nodes in the netlist that have no load
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
@@ -81,9 +81,8 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		//Sanity check - must be fully PAR'd
 		if(mate == NULL)
 		{
-			fprintf(
-				stderr,
-				"    ERROR: Node \"%s\" is not mapped to any site in the device\n",
+			LogError(
+				"Node \"%s\" is not mapped to any site in the device\n",
 				src->m_name.c_str());
 			exit(-1);
 		}
@@ -105,8 +104,8 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		//If we have no loads, warn
 		if(node->GetEdgeCount() == 0)
 		{
-			printf(
-				"    WARNING: Node \"%s\" has no load\n",
+			LogWarning(
+				"Node \"%s\" has no load\n",
 				src->m_name.c_str());
 		}
 		
@@ -129,7 +128,7 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 			if(	(dynamic_cast<Greenpak4VoltageReference*>(src) != NULL) ||
 				(dynamic_cast<Greenpak4PGA*>(src) != NULL) )
 			{
-				fprintf(stderr, "    ERROR: Pin %d is driven by an analog source (%s) but does not have IBUF_TYPE = ANALOG\n",
+				LogError("Pin %d is driven by an analog source (%s) but does not have IBUF_TYPE = ANALOG\n",
 					it->first,
 					signal.GetOutputName().c_str()
 					);
@@ -200,12 +199,12 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 						continue;
 
 					//Problem! Incompatible mux settings
-					fprintf(stderr,
-						"    ERROR: Multiple comparators tried to simultaneously use different outputs from "
+					LogError(
+						"Multiple comparators tried to simultaneously use different outputs from "
 						"the ACMP0 input mux\n");
 					for(auto p : inputs)
 					{
-						printf("        Comparator %10s requested %s\n",
+						LogNotice("    Comparator %10s requested %s\n",
 							p.first.c_str(), p.second.GetOutputName().c_str());
 					}
 					exit(-1);
@@ -215,8 +214,9 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 				//TODO: for better power efficiency, turn on only when a downstream comparator is on?
 				if( (device->GetAcmp(0)->GetInput() == gnd) && (inputs.size() > 0) )
 				{
-					printf("    INFO: Enabling ACMP0 and configuring input mux, since output of mux is used "
-						"but ACMP0 is not instantiated\n");
+					LogNotice(
+						"Enabling ACMP0 and configuring input mux, since output of mux "
+						"is used but ACMP0 is not instantiated\n");
 					
 					auto acmp0 = device->GetAcmp(0);
 					acmp0->SetInput(shared_input);
@@ -254,10 +254,10 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		
 		if(!ok)
 		{
-			fprintf(stderr,
-				"    ERROR: Multiple oscillators have power-down enabled, but do not share the same power-down signal\n");
+			LogError(
+				"Multiple oscillators have power-down enabled, but do not share the same power-down signal\n");
 			for(auto p : powerdowns)
-				printf("    Oscillator %10s powerdown is %s\n", p.first.c_str(), p.second.GetOutputName().c_str());
+				LogNotice("    Oscillator %10s powerdown is %s\n", p.first.c_str(), p.second.GetOutputName().c_str());
 			exit(-1);
 		}
 	}
@@ -271,7 +271,7 @@ void CheckAnalogIbuf(Greenpak4BitstreamEntity* load, Greenpak4IOB* iob)
 	if(iob->IsAnalogIbuf())
 		return;
 	
-	fprintf(stderr, "    ERROR: %s is driven by IOB %s, which does not have IBUF_TYPE = ANALOG\n",
+	LogError("%s is driven by IOB %s, which does not have IBUF_TYPE = ANALOG\n",
 		load->GetDescription().c_str(),
 		iob->GetDescription().c_str()
 		);
@@ -288,8 +288,7 @@ uint32_t AllocateLabel(PARGraph*& ngraph, PARGraph*& dgraph, labelmap& lmap, std
 	uint32_t dlabel = dgraph->AllocateLabel();
 	if(nlabel != dlabel)
 	{
-		fprintf(stderr, "INTERNAL ERROR: labels were allocated at the same time but don't match up\n");
-		exit(-1);
+		LogFatal("Labels were allocated at the same time but don't match up\n");
 	}
 	
 	lmap[nlabel] = description;

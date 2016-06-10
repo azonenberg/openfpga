@@ -160,8 +160,7 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	//Can't hook up non-routable signals
 	if(signal.GetNetNumber() > 255)
 	{
-		fprintf(stderr, "DRC fail: tried to write signal from invalid net %x\n", signal.GetNetNumber());
-		return false;
+		LogFatal("Tried to write signal from invalid net %x\n", signal.GetNetNumber());
 	}
 	
 	//SANITY CHECK - must be attached to the same matrix
@@ -175,8 +174,7 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 		//No other signal, dual or not, should do this
 		else if(m_matrix == signal.GetMatrix())
 		{
-			fprintf(stderr, "DRC fail: tried to write signal from same matrix through a cross connection\n");
-			return false;
+			LogFatal("Tried to write signal from same matrix through a cross connection\n");
 		}
 	}
 	else if(m_matrix != signal.GetMatrix())
@@ -188,8 +186,7 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 		//otherwise something is fishy
 		else
 		{
-			fprintf(stderr, "DRC fail: tried to write signal from opposite matrix without using a cross connection\n");
-			return false;
+			LogFatal("Tried to write signal from opposite matrix without using a cross connection\n");
 		}
 	}
 	

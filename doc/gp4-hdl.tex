@@ -274,6 +274,49 @@ end
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Drive strength
+
+\pagebreak
+\subsection{Drive Strength (\tokenstyle{DRIVE\_STRENGTH})}
+
+The \tokenstyle{DRIVE\_STRENGTH} constraint configures the output drive strength on the specified I/O pin. Drive strength refers to current sourcing or sinking capacity.
+
+\subsubsection{Applicable Elements}
+The \tokenstyle{DRIVE\_STRENGTH} constraint may only be used on top-level module ports.
+
+\subsubsection{Constraint Values}
+\begin{itemize}
+\item \whenstyle{Top-level module port (IOB)}
+	\begin{itemize}
+		\item \strexamplestyle{1X} Default drive strength. This is the default if no constraint is specified.
+		\item \strexamplestyle{2X} Two times as strong as the default drive strength.
+		\item \strexamplestyle{4X} Four times as strong as the default drive strength.
+	\end{itemize}
+\item \whenstyle{Other} \\
+This constraint may not be used on any other entity.
+\end{itemize}
+
+\subsubsection{Verilog Usage Example}
+
+Figure \ref{constraint-drivestrength} is an example of a top-level module with two ports \wirestyle{a} and \wirestyle{b}. Port \wirestyle{a} has 1X drive strength (the default) and port \wirestyle{b} has 2X drive strength.
+
+\begin{figure}[h]
+\begin{lstlisting}
+module Foo(a, b);
+
+	(* DRIVE_STRENGTH = "1X" *)
+	output wire a;
+
+	(* DRIVE_STRENGTH = "2X" *)
+	output wire b;
+
+endmodule
+\end{lstlisting}
+\caption{Example for \tokenstyle{DRIVE\_STRENGTH} constraint}
+\label{constraint-drivestrength}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Drive type
 
 \pagebreak
@@ -2673,6 +2716,9 @@ GP_VSS vss(
 \label{gp-vss-example}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Command line usage
+
 \pagebreak
 \section{\namestyle{gp4par} Command Line Usage}
 
@@ -2699,35 +2745,54 @@ list, although we recommend it be the first argument for better readability of t
 
 \subsection{\texttt{--help}}
 
-The --help argument must be used alone, with no other arguments. It causes \namestyle{gp4par} to print a usage example to the
+The \texttt{--help} argument must be used alone, with no other arguments. It causes \namestyle{gp4par} to print a usage example to the
 console and then quit.
 
 \subsection{\texttt{--output}}
 
-The --output argument is required for all place-and-route operations. It must be immediately followed by the
+The \texttt{--output} argument is required for all place-and-route operations. It must be immediately followed by the
 filename to which the generated bitstream will be written.
 
 \subsection{\texttt{--top}}
 
-The --top argument is required for all place-and-route operations. It must be immediately followed by the
+The \texttt{--top} argument is required for all place-and-route operations. It must be immediately followed by the
 case-sensitive name of the top-level module.
 
 \subsection{\texttt{--unused-drive}}
 
-The --unused-drive argument is optional. If used, it must be immediately followed by ``\tokenstyle{10k}", ``\tokenstyle{100k}", or ``\tokenstyle{1M}", to
-specify the nominal value in ohms of the pull-up/down resistor on unused I/O pins. The default behavior if not
-specified is ``\tokenstyle{1M}".
+The \texttt{--unused-drive} argument is optional. If used, it must be immediately followed by ``\tokenstyle{10k}", 
+``\tokenstyle{100k}", or ``\tokenstyle{1M}", to specify the nominal value in ohms of the pull-up/down resistor on
+unused I/O pins. The default behavior if not specified is ``\tokenstyle{1M}".
 
 \subsection{\texttt{--unused-pull}}
 
-The --unused-pull argument is optional. If used, it must be immediately followed by ``\tokenstyle{down}", ``\tokenstyle{up}", ``\tokenstyle{none}", or
-``\tokenstyle{float}", to specify which direction to pull unused I/O pins. The default behavior if not specified is ``\tokenstyle{float}".
+The \texttt{--unused-pull} argument is optional. If used, it must be immediately followed by ``\tokenstyle{down}", 
+``\tokenstyle{up}", ``\tokenstyle{none}", or ``\tokenstyle{float}", to specify which direction to pull unused I/O pins.
+The default behavior if not specified is ``\tokenstyle{float}".
 
 The behavior of ``\tokenstyle{none}" and ``\tokenstyle{float}" is identical; both names are accepted for convenience.
 
+\subsection{\texttt{--quiet}, \texttt{-q}}
+
+The \texttt{--quiet} argument, which is also accepted as \texttt{-q}, is optional. When it is specified once, it
+causes \namestyle{gp4par} to only print error and warning messages to the console; when it is specified twice,
+only error messages will be printed.
+
+\subsection{\texttt{--logfile}, \texttt{-l}}
+
+The \texttt{--logfile} argument, which is also accepted as \texttt{-l}, is optional. If used, it must be immediately
+followed by a file name, where \namestyle{gp4par} will write all diagnostic messages, even those suppressed by
+\texttt{--quiet}.
+
+\subsection{\texttt{--logfile-lines}, \texttt{-L}}
+
+The \texttt{--logfile-lines} argument, which is also accepted as \texttt{-L}, is optional. It is identical to
+\texttt{--logfile}, except that the file is line-buffered, that is every message is written to the file as soon
+as it is completely emitted by \namestyle{gp4par}.
+
 \subsection{\texttt{--version}}
 
-The --version argument must be used alone, with no other arguments. It causes \namestyle{gp4par} to print the version number
+The \texttt{--version} argument must be used alone, with no other arguments. It causes \namestyle{gp4par} to print the version number
 (currently always 0.1) to the console and then quit.
 
 \end{document}

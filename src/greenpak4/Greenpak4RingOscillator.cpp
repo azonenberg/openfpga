@@ -111,7 +111,7 @@ void Greenpak4RingOscillator::CommitChanges()
 			m_preDiv = div;
 		else
 		{
-			fprintf(stderr, "ERROR: GP_RINGOSC pre divider must be 1, 4, 8, 16\n");
+			LogError("GP_RINGOSC pre divider must be 1, 4, 8, 16\n");
 			exit(1);
 		}
 	}
@@ -127,7 +127,7 @@ void Greenpak4RingOscillator::CommitChanges()
 		}
 		else
 		{
-			fprintf(stderr, "ERROR: GP_RINGOSC post divider must be 1, 2, 3, 4, 8, 12, 24, or 64\n");
+			LogError("GP_RINGOSC post divider must be 1, 2, 3, 4, 8, 12, 24, or 64\n");
 			exit(1);
 		}
 	}
@@ -135,8 +135,7 @@ void Greenpak4RingOscillator::CommitChanges()
 
 bool Greenpak4RingOscillator::Load(bool* /*bitstream*/)
 {
-	printf("Greenpak4RingOscillator::Load() not yet implemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4RingOscillator::Save(bool* bitstream)
@@ -199,8 +198,7 @@ bool Greenpak4RingOscillator::Save(bool* bitstream)
 			break;
 			
 		default:
-			fprintf(stderr, "INTERNAL ERROR: GP_RINGOSC pre divider is bogus");
-			exit(1);
+			LogFatal("GP_RINGOSC pre divider is bogus");
 			break;
 	}
 
@@ -256,8 +254,7 @@ bool Greenpak4RingOscillator::Save(bool* bitstream)
 			break;
 	
 		default:
-			fprintf(stderr, "INTERNAL ERROR: GP_RINGOSC post divider is bogus");
-			exit(1);
+			LogFatal("GP_RINGOSC post divider is bogus");
 			break;
 	}
 

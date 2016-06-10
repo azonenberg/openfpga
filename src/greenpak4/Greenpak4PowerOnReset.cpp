@@ -94,9 +94,8 @@ void Greenpak4PowerOnReset::CommitChanges()
 			m_resetDelay = 500;
 		else
 		{
-			fprintf(
-				stderr,
-				"ERROR: Power-on reset \"%s\" has illegal reset delay \"%s\" (must be 4 or 500)\n",
+			LogError(
+				"Power-on reset \"%s\" has illegal reset delay \"%s\" (must be 4 or 500)\n",
 				ncell->m_name.c_str(),
 				p.c_str());
 			exit(-1);
@@ -106,8 +105,7 @@ void Greenpak4PowerOnReset::CommitChanges()
 
 bool Greenpak4PowerOnReset::Load(bool* /*bitstream*/)
 {
-	printf("Greenpak4PowerOnReset::Load() not yet implemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4PowerOnReset::Save(bool* bitstream)

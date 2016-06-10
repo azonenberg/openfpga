@@ -7,5 +7,5 @@ ADD_LIBRARY(xbpar STATIC
 )
 
 target_link_libraries(xbpar
-	m
+	m log
 	)

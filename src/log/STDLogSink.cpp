@@ -16,99 +16,43 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#include "Greenpak4.h"
-#include <stdio.h>
-#include <stdlib.h>
-
-using namespace std;
+#include "log.h"
+#include <stdarg.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4CrossConnection::Greenpak4CrossConnection(
-		Greenpak4Device* device,
-		unsigned int matrix,
-		unsigned int ibase,
-		unsigned int oword,
-		unsigned int cbase)
-		: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
-		, m_input(device->GetGround())
+STDLogSink::STDLogSink(Severity min_severity)
+	: m_min_severity(min_severity)
 {
 }
 
-Greenpak4CrossConnection::~Greenpak4CrossConnection()
+STDLogSink::~STDLogSink()
 {
-	
+	fflush(stdout);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Accessors
+// Logging 
 
-string Greenpak4CrossConnection::GetDescription()
+void STDLogSink::Log(Severity severity, const std::string &msg)
 {
-	char buf[128];
-	snprintf(buf, sizeof(buf), "XCONN_%d_%d", m_matrix, m_inputBaseWord);
-	return string(buf);
-}
-
-void Greenpak4CrossConnection::SetInput(std::string /*port*/, Greenpak4EntityOutput input)
-{
-	//Don't complain if input is a power rail, those are the sole exception
-	if(input.IsPowerRail())
-	{}
-	
-	//Complain if input has a dual, they should never go through the cross connections
-	else if(input.HasDual())
-	{
-		LogFatal("tried to set cross-connection input from node with dual\n");
+	if(severity <= WARNING) {
+		// Prevent newer messages on stderr from appearing before older messages on stdout
+		fflush(stdout);
+		fputs(msg.c_str(), stderr);
 	}
-	
-	else if(input.GetMatrix() == m_matrix)
-	{
-		LogFatal("tried to set cross-connection input from wrong matrix\n");
+	else if(severity <= m_min_severity)
+		fputs(msg.c_str(), stdout);
+}
+
+void STDLogSink::Log(Severity severity, const char *format, va_list va) 
+{
+	if(severity <= WARNING) {
+		// See above
+		fflush(stdout);
+		vfprintf(stderr, format, va);
 	}
-	
-	m_input = input;
-}
-
-void Greenpak4CrossConnection::CommitChanges()
-{
-	//nothing to do here, we have no configuration to modify
-}
-
-vector<string> Greenpak4CrossConnection::GetInputPorts() const
-{
-	vector<string> r;
-	r.push_back("I");
-	return r;
-}
-
-vector<string> Greenpak4CrossConnection::GetOutputPorts() const
-{
-	vector<string> r;
-	r.push_back("O");
-	return r;
-}
-
-unsigned int Greenpak4CrossConnection::GetOutputNetNumber(string /*port*/)
-{
-	//we respond to any net name for convenience
-	return m_outputBaseWord;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Load/save logic
-
-bool Greenpak4CrossConnection::Load(bool* /*bitstream*/)
-{
-	//TODO: Do our inputs
-	LogFatal("Unimplemented\n");
-}
-
-bool Greenpak4CrossConnection::Save(bool* bitstream)
-{
-	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input, true))
-		return false;
-		
-	return true;
+	else if(severity <= m_min_severity)
+		vfprintf(stdout, format, va);
 }

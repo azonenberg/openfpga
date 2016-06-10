@@ -34,5 +34,5 @@ ADD_LIBRARY(greenpak4 STATIC
 )
 
 target_link_libraries(greenpak4
-	json-c xbpar
+	json-c xbpar log
 	)
