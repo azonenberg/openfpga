@@ -81,6 +81,8 @@ void Greenpak4IOB::CommitChanges()
 	//Apply attributes to configure the net
 	for(auto x : net->m_attributes)
 	{
+		bool bad_value = false;
+
 		//do nothing, only for debugging
 		if(x.first == "src")
 		{}
@@ -94,8 +96,10 @@ void Greenpak4IOB::CommitChanges()
 		{
 			if(x.second == "0")
 				m_schmittTrigger = false;
-			else
+			else if(x.second == "1" || x.second == "")
 				m_schmittTrigger = true;
+			else
+				bad_value = true;
 		}
 		
 		//Pullup strength/direction
@@ -108,8 +112,10 @@ void Greenpak4IOB::CommitChanges()
 				m_pullStrength = Greenpak4IOB::PULL_100K;
 			else if(x.second == "1M")
 				m_pullStrength = Greenpak4IOB::PULL_1M;
+			else
+				bad_value = true;
 		}
-		
+
 		//Pulldown strength/direction
 		else if(x.first == "PULLDOWN")
 		{
@@ -120,6 +126,8 @@ void Greenpak4IOB::CommitChanges()
 				m_pullStrength = Greenpak4IOB::PULL_100K;
 			else if(x.second == "1M")
 				m_pullStrength = Greenpak4IOB::PULL_1M;
+			else
+				bad_value = true;
 		}
 
 		//Driver configuration
@@ -131,6 +139,8 @@ void Greenpak4IOB::CommitChanges()
 				m_driveStrength = Greenpak4IOB::DRIVE_2X;
 			else if(x.second == "4X")
 				m_driveStrength = Greenpak4IOB::DRIVE_4X;
+			else
+				bad_value = true;
 		}
 
 		//Driver configuration
@@ -143,6 +153,8 @@ void Greenpak4IOB::CommitChanges()
 				m_driveType = Greenpak4IOB::DRIVE_NMOS_OPENDRAIN;
 			else if(x.second == "PMOS_OD")
 				m_driveType = Greenpak4IOB::DRIVE_PMOS_OPENDRAIN;
+			else
+				bad_value = true;
 		}
 		
 		//Input buffer configuration
@@ -155,6 +167,8 @@ void Greenpak4IOB::CommitChanges()
 				m_inputThreshold = Greenpak4IOB::THRESHOLD_LOW;
 			else if(x.second == "ANALOG")
 				m_inputThreshold = Greenpak4IOB::THRESHOLD_ANALOG;
+			else
+				bad_value = true;
 		}
 		
 		//Ignore flipflop initialization, that's handled elsewhere
@@ -169,7 +183,14 @@ void Greenpak4IOB::CommitChanges()
 			LogWarning("Top-level port \"%s\" has unrecognized attribute %s, ignoring\n",
 				cell->m_name.c_str(), x.first.c_str());
 		}
-		
+
+		if(bad_value)
+		{
+			LogError("Top-level port \"%s\" has attribute %s with unrecognized value \"%s\"\n",
+				cell->m_name.c_str(), x.first.c_str(), x.second.c_str());
+			exit(-1);
+		}
+
 		//LogNotice("        %s = %s\n", x.first.c_str(), x.second.c_str());
 	}
 	
