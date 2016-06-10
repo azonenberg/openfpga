@@ -73,7 +73,7 @@ void Greenpak4IOB::CommitChanges()
 	if(net == NULL)
 		return;
 			
-	//printf("    Configuring IOB %d\n", m_pinNumber);
+	//LogNotice("    Configuring IOB %d\n", m_pinNumber);
 	//If we get here, we're not unused.
 	//Default for USED nets, unless otherwise specced, is to float
 	m_pullDirection = PULL_NONE;
@@ -121,7 +121,18 @@ void Greenpak4IOB::CommitChanges()
 			else if(x.second == "1M")
 				m_pullStrength = Greenpak4IOB::PULL_1M;
 		}
-		
+
+		//Driver configuration
+		else if(x.first == "DRIVE_STRENGTH")
+		{
+			if(x.second == "1X")
+				m_driveStrength = Greenpak4IOB::DRIVE_1X;
+			else if(x.second == "2X")
+				m_driveStrength = Greenpak4IOB::DRIVE_2X;
+			else if(x.second == "4X")
+				m_driveStrength = Greenpak4IOB::DRIVE_4X;
+		}
+
 		//Driver configuration
 		else if(x.first == "DRIVE_TYPE")
 		{
@@ -155,11 +166,11 @@ void Greenpak4IOB::CommitChanges()
 		
 		else
 		{
-			printf("WARNING: Top-level port \"%s\" has unrecognized attribute %s, ignoring\n",
+			LogWarning("Top-level port \"%s\" has unrecognized attribute %s, ignoring\n",
 				cell->m_name.c_str(), x.first.c_str());
 		}
 		
-		//printf("        %s = %s\n", x.first.c_str(), x.second.c_str());
+		//LogNotice("        %s = %s\n", x.first.c_str(), x.second.c_str());
 	}
 	
 	//Configure output enable
@@ -173,7 +184,7 @@ void Greenpak4IOB::CommitChanges()
 	}
 	else
 	{
-		fprintf(stderr, "ERROR: Invalid cell type for IOB\n");
+		LogError("Invalid cell type for IOB\n");
 		exit(-1);
 	}
 }

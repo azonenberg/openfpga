@@ -110,7 +110,7 @@ void Greenpak4ShiftRegister::CommitChanges()
 		m_delayA = atoi(ncell->m_parameters["OUTA_TAP"].c_str());
 		if( (m_delayA < 1) || (m_delayA > 16) )
 		{
-			fprintf(stderr, "ERROR: Shift register OUTA_TAP must be in [1, 16]\n");
+			LogError("Shift register OUTA_TAP must be in [1, 16]\n");
 			exit(-1);
 		}
 	}
@@ -120,7 +120,7 @@ void Greenpak4ShiftRegister::CommitChanges()
 		m_delayB = atoi(ncell->m_parameters["OUTB_TAP"].c_str());
 		if( (m_delayB < 1) || (m_delayB > 16) )
 		{
-			fprintf(stderr, "ERROR: Shift register OUTB_TAP must be in [1, 16]\n");
+			LogError("Shift register OUTB_TAP must be in [1, 16]\n");
 			exit(-1);
 		}
 	}
@@ -132,8 +132,7 @@ void Greenpak4ShiftRegister::CommitChanges()
 bool Greenpak4ShiftRegister::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	fprintf(stderr, "unimplemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4ShiftRegister::Save(bool* bitstream)

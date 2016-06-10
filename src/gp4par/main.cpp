@@ -22,6 +22,8 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+	LogSink::Severity console_verbosity = LogSink::VERBOSE;
+
 	//Netlist file
 	string fname = "";
 	
@@ -52,6 +54,27 @@ int main(int argc, char* argv[])
 		{
 			ShowVersion();
 			return 0;
+		}
+		else if(s == "-q" || s == "--quiet")
+		{
+			if(console_verbosity == LogSink::VERBOSE)
+				console_verbosity = LogSink::WARNING;
+			else if(console_verbosity == LogSink::WARNING)
+				console_verbosity = LogSink::ERROR;
+		}
+		else if(s == "-l" || s == "--logfile" ||
+		        s == "-L" || s == "--logfile-lines")
+		{
+			bool line_buffered = (s == "-L" || s == "--logfile-lines");
+			if(i+1 < argc) {
+				FILE *log = fopen(argv[++i], "wt");
+				g_log_sinks.emplace_back(new FILELogSink(log, line_buffered));
+			}
+			else
+			{
+				printf("%s requires an argument\n", s.c_str());
+				return 1;
+			}
 		}
 		else if(s == "--top")
 		{
@@ -137,31 +160,34 @@ int main(int argc, char* argv[])
 		ShowUsage();
 		return 1;
 	}
+
+	//Set up logging
+	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
 	
 	//Print header
 	ShowVersion();
 	
 	//Print configuration
-	printf("\nDevice configuration:\n");
-	printf("    Target device: SLG46620V\n");
-	printf("    VCC range: not yet implemented\n");
-	printf("    Unused pins: ");
+	LogNotice("\nDevice configuration:\n");
+	LogNotice("    Target device: SLG46620V\n");
+	LogNotice("    VCC range: not yet implemented\n");
+	LogNotice("    Unused pins: ");
 	switch(unused_pull)
 	{
 		case Greenpak4IOB::PULL_NONE:
-			printf("float\n");
+			LogNotice("float\n");
 			break;
 			
 		case Greenpak4IOB::PULL_DOWN:
-			printf("pull down with ");
+			LogNotice("pull down with ");
 			break;
 			
 		case Greenpak4IOB::PULL_UP:
-			printf("pull up with ");
+			LogNotice("pull up with ");
 			break;
 			
 		default:
-			printf("invalid\n");
+			LogNotice("invalid\n");
 			return 1;
 	}
 	if(unused_pull != Greenpak4IOB::PULL_NONE)
@@ -169,26 +195,26 @@ int main(int argc, char* argv[])
 		switch(unused_drive)
 		{
 			case Greenpak4IOB::PULL_10K:
-				printf("10K\n");
+				LogNotice("10K\n");
 				break;
 				
 			case Greenpak4IOB::PULL_100K:
-				printf("100K\n");
+				LogNotice("100K\n");
 				break;
 				
 			case Greenpak4IOB::PULL_1M:
-				printf("1M\n");
+				LogNotice("1M\n");
 				break;
 				
 			default:
-				printf("invalid\n");
+				LogNotice("invalid\n");
 				return 1;
 		}
 	}
 	
 	
 	//Parse the unplaced netlist
-	printf("\nLoading Yosys JSON file \"%s\", expecting top-level module \"%s\"\n",
+	LogNotice("\nLoading Yosys JSON file \"%s\", expecting top-level module \"%s\"\n",
 		fname.c_str(), top.c_str());
 	Greenpak4Netlist netlist(fname, top);
 	
@@ -200,25 +226,35 @@ int main(int argc, char* argv[])
 		return 2;
 	
 	//Write the final bitstream
-	printf("\nWriting final bitstream to output file \"%s\"\n", ofname.c_str());
+	LogNotice("\nWriting final bitstream to output file \"%s\"\n", ofname.c_str());
 	device.WriteToFile(ofname);	
 	
 	//TODO: Static timing analysis
-	printf("\nStatic timing analysis: not yet implemented\n");
+	LogNotice("\nStatic timing analysis: not yet implemented\n");
 	
 	return 0;
 }
 
 void ShowUsage()
 {
-	printf("Usage: gp4par --top TopModule --output foo.txt foo.json\n");
-	printf("    --unused-pull        [down|up|float]      Specifies direction to pull unused pins\n");
-	printf("    --unused-drive       [10k|100k|1m]        Specifies strength of pullup/down resistor on unused pins\n");
+	printf(//                                                                               v 80th column
+		"Usage: gp4par --top TopModule --output foo.txt foo.json\n"
+		"    -q, --quiet\n"
+		"        Causes only warnings and errors to be written to the console.\n"
+		"        Specify twice to also silence warnings.\n"
+		"    -l, --logfile        <file>\n"
+		"        Causes log messages to be written to <file>."
+		"    -L, --logfile-lines  <file>\n"
+		"        Causes log messages to be written to <file>, flushing after each line.\n"
+		"    --unused-pull        [down|up|float]\n"
+		"        Specifies direction to pull unused pins.\n"
+		"    --unused-drive       [10k|100k|1m]\n"
+		"        Specifies strength of pullup/down resistor on unused pins.\n");
 }
 
 void ShowVersion()
 {
-	printf(
+	LogNotice(
 		"Greenpak4 place-and-route by Andrew D. Zonenberg.\n"
 		"\n"
 		"License: LGPL v2.1+\n"

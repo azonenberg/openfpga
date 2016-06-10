@@ -10,7 +10,7 @@ add_executable(gp4par
 )
 
 target_link_libraries(gp4par
-	greenpak4 xbpar)
+	greenpak4 xbpar log)
 
 install(TARGETS gp4par
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -47,7 +47,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 		{
 			if(!json_object_is_type(child, json_type_string))
 			{
-				fprintf(stderr, "ERROR: Port direction should be of type string but isn't\n");
+				LogError("Port direction should be of type string but isn't\n");
 				exit(-1);
 			}
 			
@@ -61,7 +61,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 				m_direction = Greenpak4NetlistPort::DIR_INOUT;
 			else
 			{
-				fprintf(stderr, "ERROR: Invalid port direction \"%s\"\n", str.c_str());
+				LogError("Invalid port direction \"%s\"\n", str.c_str());
 				exit(-1);
 			}
 		}
@@ -71,7 +71,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 		{
 			if(!json_object_is_type(child, json_type_array))
 			{
-				fprintf(stderr, "ERROR: Port bits (for module %s, port %s) should be of type array but isn't\n",
+				LogError("Port bits (for module %s, port %s) should be of type array but isn't\n",
 					module->GetName().c_str(), name.c_str());
 				exit(-1);
 			}
@@ -80,9 +80,8 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 			int len = json_object_array_length(child);
 			if(len != 1)
 			{
-				fprintf(
-					stderr,
-					"ERROR: Port %s on module %s is a vector (should split nets during synthesis)\n",
+				LogError(
+					"Port %s on module %s is a vector (should split nets during synthesis)\n",
 					module->GetName().c_str(),
 					name.c_str());
 				exit(-1);
@@ -91,7 +90,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 			json_object* jnode = json_object_array_get_idx(child, 0);
 			if(!json_object_is_type(jnode, json_type_int))
 			{
-				fprintf(stderr, "ERROR: Net number of port \"%s\" should be of type integer but isn't\n",
+				LogError("Net number of port \"%s\" should be of type integer but isn't\n",
 					m_name.c_str());
 				exit(-1);
 			}
@@ -102,7 +101,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 		//Garbage
 		else
 		{
-			fprintf(stderr, "ERROR: Unknown JSON blob \"%s\" under module port list\n", name.c_str());
+			LogError("Unknown JSON blob \"%s\" under module port list\n", name.c_str());
 			exit(-1);
 		}
 	}

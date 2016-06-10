@@ -129,8 +129,7 @@ void Greenpak4Comparator::CommitChanges()
 bool Greenpak4Comparator::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	fprintf(stderr, "unimplemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4Comparator::Save(bool* bitstream)
@@ -179,7 +178,7 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 				
 				
 			default:
-				fprintf(stderr, "ERROR: Invalid ACMP attenuation (must be 1/2/3/4)\n");
+				LogError("Invalid ACMP attenuation (must be 1/2/3/4)\n");
 				return false;
 		}
 	}
@@ -211,7 +210,7 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 				
 				
 			default:
-				fprintf(stderr, "ERROR: Invalid ACMP hysteresis (must be 0/25/50/200)\n");
+				LogError("Invalid ACMP hysteresis (must be 0/25/50/200)\n");
 				return false;
 		}
 	}
@@ -223,7 +222,7 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 	//Invalid input
 	else if(m_muxsels.find(m_vin) == m_muxsels.end())
 	{
-		fprintf(stderr, "ERROR: Invalid ACMP input (tried to feed %s to %s)\n",
+		LogError("Invalid ACMP input (tried to feed %s to %s)\n",
 			m_vin.GetDescription().c_str(), GetDescription().c_str());
 		return false;
 	}

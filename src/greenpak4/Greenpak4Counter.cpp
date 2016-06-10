@@ -89,9 +89,9 @@ void Greenpak4Counter::CommitChanges()
 			m_resetMode = Greenpak4Counter::HIGH_LEVEL;
 		else
 		{
-			fprintf(
-				stderr,
-				"ERROR: Counter \"%s\" has illegal reset mode \"%s\" (must be RISING, FALLING, BOTH, or LEVEL)\n",
+			LogError(
+				"Counter \"%s\" has illegal reset mode \"%s\" "
+				"(must be RISING, FALLING, BOTH, or LEVEL)\n",
 				ncell->m_name.c_str(),
 				p.c_str());
 			exit(-1);
@@ -139,8 +139,7 @@ unsigned int Greenpak4Counter::GetOutputNetNumber(string port)
 
 bool Greenpak4Counter::Load(bool* /*bitstream*/)
 {
-	printf("Greenpak4Counter::Load() not yet implemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4Counter::Save(bool* bitstream)
@@ -220,9 +219,8 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		{
 			if(m_preDivide != 1)
 			{
-				fprintf(
-					stderr,
-					"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by LF osc\n",
+				LogError(
+					"Counter %d does not support pre-divider values other than 1 when clocked by LF osc\n",
 					m_countnum);
 				return false;
 			}
@@ -241,9 +239,8 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		{
 			if(m_preDivide != 1)
 			{
-				fprintf(
-					stderr,
-					"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by ring osc\n",
+				LogError(
+					"Counter %d does not support pre-divider values other than 1 when clocked by ring osc\n",
 					m_countnum);
 				return false;
 			}
@@ -302,9 +299,8 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					break;
 					
 				default:
-					fprintf(
-						stderr,
-						"ERROR: Counter %d does not support pre-divider values other than 1/4/12/24/64 "
+					LogError(
+						"Counter %d does not support pre-divider values other than 1/4/12/24/64 "
 						"when clocked by ring osc\n",
 						m_countnum);
 					return false;
@@ -316,9 +312,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		//TODO: PWM clock
 		else if(!unused)
 		{
-			fprintf(
-				stderr,
-				"ERROR: Counter %d input from %s not implemented\n",
+			LogError("Counter %d input from %s not implemented\n",
 				m_countnum,
 				m_clock.GetDescription().c_str());
 			return false;
@@ -334,9 +328,8 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		{
 			if(m_preDivide != 1)
 			{
-				fprintf(
-					stderr,
-					"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by LF osc\n",
+				LogError(
+					"Counter %d does not support pre-divider values other than 1 when clocked by LF osc\n",
 					m_countnum);
 				return false;
 			}
@@ -352,9 +345,8 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		{
 			if(m_preDivide != 1)
 			{
-				fprintf(
-					stderr,
-					"ERROR: Counter %d does not support pre-divider values other than 1 when clocked by ring osc\n",
+				LogError(
+					"Counter %d does not support pre-divider values other than 1 when clocked by ring osc\n",
 					m_countnum);
 				return false;
 			}
@@ -399,9 +391,8 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					break;
 					
 				default:
-					fprintf(
-						stderr,
-						"ERROR: Counter %d does not support pre-divider values other than 1/4/24/64 "
+					LogError(
+						"Counter %d does not support pre-divider values other than 1/4/24/64 "
 							"when clocked by RC osc\n",
 						m_countnum);
 					return false;
@@ -413,9 +404,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		
 		else if(!unused)
 		{
-			fprintf(
-				stderr,
-				"ERROR: Counter %d input from %s not implemented\n",
+			LogError("Counter %d input from %s not implemented\n",
 				m_countnum,
 				m_clock.GetDescription().c_str());
 			return false;

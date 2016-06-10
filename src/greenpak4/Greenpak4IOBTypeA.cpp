@@ -57,8 +57,7 @@ string Greenpak4IOBTypeA::GetDescription()
 bool Greenpak4IOBTypeA::Load(bool* /*bitstream*/)
 {
 	//TODO
-	fprintf(stderr, "Greenpak4IOBTypeA::Load not implemented\n");	
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4IOBTypeA::Save(bool* bitstream)
@@ -72,13 +71,13 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 		//Verify that they are tied sanely (output enable is ground, signal is dontcare)
 		if(!m_outputEnable.IsPowerRail())
 		{
-			fprintf(stderr, "ERROR: Tried to tie OE of an input-only pin (%s) to something other than a power rail\n",
+			LogError("Tried to tie OE of an input-only pin (%s) to something other than a power rail\n",
 				GetDescription().c_str());
 			return false;
 		}
 		if(m_outputEnable.GetPowerRailValue() != false)
 		{
-			fprintf(stderr, "ERROR: Tried to tie OE of an input-only pin to something other than ground\n");
+			LogError("Tried to tie OE of an input-only pin to something other than ground\n");
 			return false;
 		}
 	}
@@ -147,7 +146,7 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 			break;
 			
 		default:
-			fprintf(stderr, "ERROR: Invalid IOB threshold\n");
+			LogError("Invalid IOB threshold\n");
 			return false;
 	}
 	
@@ -178,13 +177,13 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 					bitstream[m_configBase+7] = true;
 				else
 				{
-					fprintf(stderr, "ERROR: Invalid drive strength (x4 drive not present on this pin\n");
+					LogError("Invalid drive strength (x4 drive not present on this pin\n");
 					return false;
 				}
 				break;
 			
 			default:
-				fprintf(stderr, "ERROR: Invalid drive strength\n");
+				LogError("Invalid drive strength\n");
 				return false;
 		}
 	
@@ -200,7 +199,7 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: Invalid driver type\n");
+				LogError("Invalid driver type\n");
 				return false;
 		}
 		
@@ -236,7 +235,7 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: Invalid pull strength\n");
+				LogError("Invalid pull strength\n");
 				return false;
 		}
 		
@@ -251,7 +250,7 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 				break;
 				
 			default:
-				fprintf(stderr, "ERROR: Invalid pull direction\n");
+				LogError("Invalid pull direction\n");
 				return false;
 		}
 	}

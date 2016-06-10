@@ -116,9 +116,7 @@ void Greenpak4Bandgap::CommitChanges()
 			m_outDelay = 550;
 		else
 		{
-			fprintf(
-				stderr,
-				"ERROR: Bandgap has illegal reset delay \"%s\" (must be 100 or 550)\n",
+			LogError("Bandgap has illegal reset delay \"%s\" (must be 100 or 550)\n",
 				p.c_str());
 			exit(-1);
 		}
@@ -127,8 +125,7 @@ void Greenpak4Bandgap::CommitChanges()
 
 bool Greenpak4Bandgap::Load(bool* /*bitstream*/)
 {
-	printf("Greenpak4Bandgap::Load() not yet implemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4Bandgap::Save(bool* bitstream)

@@ -111,7 +111,7 @@ void Greenpak4LFOscillator::CommitChanges()
 
 		else
 		{
-			fprintf(stderr, "ERROR: GP4_LFOSC output divider must be 1, 2, 4, or 16\n");
+			LogError("GP4_LFOSC output divider must be 1, 2, 4, or 16\n");
 			exit(1);
 		}
 	}
@@ -119,8 +119,7 @@ void Greenpak4LFOscillator::CommitChanges()
 
 bool Greenpak4LFOscillator::Load(bool* /*bitstream*/)
 {
-	printf("Greenpak4LFOscillator::Load() not yet implemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4LFOscillator::Save(bool* bitstream)
@@ -173,8 +172,7 @@ bool Greenpak4LFOscillator::Save(bool* bitstream)
 			break;
 			
 		default:
-			fprintf(stderr, "INTERNAL ERROR: GP4_LFOSC output divider must be 1, 2, 4, or 16\n");
-			exit(1);
+			LogFatal("GP4_LFOSC output divider must be 1, 2, 4, or 16\n");
 			break;
 	}
 

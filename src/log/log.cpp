@@ -16,99 +16,72 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#include "Greenpak4.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "log.h"
+#include <stdarg.h>
 
-using namespace std;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Construction / destruction
-
-Greenpak4CrossConnection::Greenpak4CrossConnection(
-		Greenpak4Device* device,
-		unsigned int matrix,
-		unsigned int ibase,
-		unsigned int oword,
-		unsigned int cbase)
-		: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
-		, m_input(device->GetGround())
-{
-}
-
-Greenpak4CrossConnection::~Greenpak4CrossConnection()
-{
-	
-}
+std::vector<std::unique_ptr<LogSink>> g_log_sinks;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Accessors
+// Convenience functions that log into all configured sinks
 
-string Greenpak4CrossConnection::GetDescription()
+void LogFatal(const char *format, ...)
 {
-	char buf[128];
-	snprintf(buf, sizeof(buf), "XCONN_%d_%d", m_matrix, m_inputBaseWord);
-	return string(buf);
-}
+	va_list va;
+	for(auto &sink : g_log_sinks) {
+		sink->Log(LogSink::FATAL, "INTERNAL ERROR: ");
 
-void Greenpak4CrossConnection::SetInput(std::string /*port*/, Greenpak4EntityOutput input)
-{
-	//Don't complain if input is a power rail, those are the sole exception
-	if(input.IsPowerRail())
-	{}
-	
-	//Complain if input has a dual, they should never go through the cross connections
-	else if(input.HasDual())
-	{
-		LogFatal("tried to set cross-connection input from node with dual\n");
+		va_start(va, format);
+		sink->Log(LogSink::FATAL, format, va);
+		va_end(va);
+
+		sink->Log(LogSink::FATAL, 
+			"    This indicates a bug in gp4par, please file a report via\n"
+			"        https://github.com/azonenberg/openfpga/issues/new.\n");
 	}
-	
-	else if(input.GetMatrix() == m_matrix)
-	{
-		LogFatal("tried to set cross-connection input from wrong matrix\n");
+
+	abort();
+}
+
+void LogError(const char *format, ...)
+{
+	va_list va;
+	for(auto &sink : g_log_sinks) {
+		sink->Log(LogSink::ERROR, "ERROR: ");
+
+		va_start(va, format);
+		sink->Log(LogSink::ERROR, format, va);
+		va_end(va);
 	}
-	
-	m_input = input;
 }
 
-void Greenpak4CrossConnection::CommitChanges()
+void LogWarning(const char *format, ...)
 {
-	//nothing to do here, we have no configuration to modify
+	va_list va;
+	for(auto &sink : g_log_sinks) {
+		sink->Log(LogSink::WARNING, "WARNING: ");
+
+		va_start(va, format);
+		sink->Log(LogSink::WARNING, format, va);
+		va_end(va);
+	}
 }
 
-vector<string> Greenpak4CrossConnection::GetInputPorts() const
+void LogNotice(const char *format, ...)
 {
-	vector<string> r;
-	r.push_back("I");
-	return r;
+	va_list va;
+	for(auto &sink : g_log_sinks) {
+		va_start(va, format);
+		sink->Log(LogSink::NOTICE, format, va);
+		va_end(va);
+	}
 }
 
-vector<string> Greenpak4CrossConnection::GetOutputPorts() const
+void LogVerbose(const char *format, ...)
 {
-	vector<string> r;
-	r.push_back("O");
-	return r;
-}
-
-unsigned int Greenpak4CrossConnection::GetOutputNetNumber(string /*port*/)
-{
-	//we respond to any net name for convenience
-	return m_outputBaseWord;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Load/save logic
-
-bool Greenpak4CrossConnection::Load(bool* /*bitstream*/)
-{
-	//TODO: Do our inputs
-	LogFatal("Unimplemented\n");
-}
-
-bool Greenpak4CrossConnection::Save(bool* bitstream)
-{
-	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input, true))
-		return false;
-		
-	return true;
+	va_list va;
+	for(auto &sink : g_log_sinks) {
+		va_start(va, format);
+		sink->Log(LogSink::VERBOSE, format, va);
+		va_end(va);
+	}
 }

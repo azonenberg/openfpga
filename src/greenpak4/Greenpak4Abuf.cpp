@@ -83,8 +83,7 @@ void Greenpak4Abuf::CommitChanges()
 bool Greenpak4Abuf::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	fprintf(stderr, "unimplemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4Abuf::Save(bool* /*bitstream*/)

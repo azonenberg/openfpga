@@ -114,7 +114,7 @@ void Greenpak4RCOscillator::CommitChanges()
 		}
 		else
 		{
-			fprintf(stderr, "ERROR: GP_RCOSC pre divider must be 1, 2, 4, 8\n");
+			LogError("GP_RCOSC pre divider must be 1, 2, 4, 8\n");
 			exit(1);
 		}
 	}
@@ -130,7 +130,7 @@ void Greenpak4RCOscillator::CommitChanges()
 		}
 		else
 		{
-			fprintf(stderr, "ERROR: GP_RCOSC post divider must be 1, 2, 3, 4, 8, 12, 24, or 64\n");
+			LogError("GP_RCOSC post divider must be 1, 2, 3, 4, 8, 12, 24, or 64\n");
 			exit(1);
 		}
 	}
@@ -144,7 +144,7 @@ void Greenpak4RCOscillator::CommitChanges()
 			m_fastClock = false;
 		else
 		{
-			fprintf(stderr, "ERROR: GP_RCOSC OSC_FREQ must be \"2M\" or \"25k\"\n");
+			LogError("GP_RCOSC OSC_FREQ must be \"2M\" or \"25k\"\n");
 			exit(1);
 		}
 	}
@@ -152,8 +152,7 @@ void Greenpak4RCOscillator::CommitChanges()
 
 bool Greenpak4RCOscillator::Load(bool* /*bitstream*/)
 {
-	printf("Greenpak4RCOscillator::Load() not yet implemented\n");
-	return false;
+	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4RCOscillator::Save(bool* bitstream)
@@ -219,8 +218,7 @@ bool Greenpak4RCOscillator::Save(bool* bitstream)
 			break;
 			
 		default:
-			fprintf(stderr, "INTERNAL ERROR: GP_RCOSC pre divider is bogus");
-			exit(1);
+			LogFatal("GP_RCOSC pre divider is bogus");
 			break;
 	}
 	
@@ -276,8 +274,7 @@ bool Greenpak4RCOscillator::Save(bool* bitstream)
 			break;
 	
 		default:
-			fprintf(stderr, "INTERNAL ERROR: GP_RCOSC post divider is bogus");
-			exit(1);
+			LogFatal("GP_RCOSC post divider is bogus");
 			break;
 	}
 

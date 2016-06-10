@@ -21,3 +21,6 @@ override_dh_auto_configure:
 # create a -dbg package
 override_dh_strip:
 	dh_strip -pgp4par --dbg-package=gp4par-dbg
+
+override_dh_compress:
+	dh_compress --exclude=.pdf

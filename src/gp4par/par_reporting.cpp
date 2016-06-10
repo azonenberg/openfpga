@@ -108,7 +108,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	
 	//Print the actual report
 
-	printf("\nDevice utilization:\n");
+	LogNotice("\nDevice utilization:\n");
 	unsigned int total_luts_used = luts_used[2] + luts_used[3] + luts_used[4];
 	unsigned int total_lut_count = lut_counts[2] + lut_counts[3] + lut_counts[4];
 	unsigned int total_ff = device->GetTotalFFCount();
@@ -123,23 +123,23 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int total_shregs = device->GetShiftRegisterCount();
 	unsigned int total_vrefs = device->GetVrefCount();
 	unsigned int total_acmps = device->GetAcmpCount();
-	printf("    ABUF:      %2d/%2d (%d %%)\n", abuf_used, 1, abuf_used*100);
-	printf("    ACMP:      %2d/%2d (%d %%)\n", acmp_used, total_acmps, acmp_used*100 / total_acmps);
-	printf("    BANDGAP:   %2d/%2d (%d %%)\n", bandgap_used, 1, bandgap_used*100);
-	printf("    COUNT:     %2d/%2d (%d %%)\n",
+	LogNotice("    ABUF:      %2d/%2d (%d %%)\n", abuf_used, 1, abuf_used*100);
+	LogNotice("    ACMP:      %2d/%2d (%d %%)\n", acmp_used, total_acmps, acmp_used*100 / total_acmps);
+	LogNotice("    BANDGAP:   %2d/%2d (%d %%)\n", bandgap_used, 1, bandgap_used*100);
+	LogNotice("    COUNT:     %2d/%2d (%d %%)\n",
 		total_counters_used, total_counters, total_counters_used*100 / total_counters);
-	printf("      COUNT8:  %2d/%2d (%d %%)\n",
+	LogNotice("      COUNT8:  %2d/%2d (%d %%)\n",
 		counters_8_used, total_counters_8, counters_8_used*100 / total_counters_8);
-	printf("      COUNT14: %2d/%2d (%d %%)\n",
+	LogNotice("      COUNT14: %2d/%2d (%d %%)\n",
 		counters_14_used, total_counters_14, counters_14_used*100 / total_counters_14);
-	printf("    FF:        %2d/%2d (%d %%)\n", total_dff_used, total_ff, total_dff_used*100 / total_ff);
-	printf("      DFF:     %2d/%2d (%d %%)\n", dff_used, total_dff, dff_used*100 / total_dff);
-	printf("      DFFSR:   %2d/%2d (%d %%)\n", dffsr_used, total_dffsr, dffsr_used*100 / total_dffsr);
-	printf("    IOB:       %2d/%2d (%d %%)\n", iobs_used, iob_count, iobs_used*100 / iob_count);
+	LogNotice("    FF:        %2d/%2d (%d %%)\n", total_dff_used, total_ff, total_dff_used*100 / total_ff);
+	LogNotice("      DFF:     %2d/%2d (%d %%)\n", dff_used, total_dff, dff_used*100 / total_dff);
+	LogNotice("      DFFSR:   %2d/%2d (%d %%)\n", dffsr_used, total_dffsr, dffsr_used*100 / total_dffsr);
+	LogNotice("    IOB:       %2d/%2d (%d %%)\n", iobs_used, iob_count, iobs_used*100 / iob_count);
 	if(total_invs > 0)
-		printf("    INV:       %2d/%2d (%d %%)\n", inv_used, total_invs, inv_used*100 / total_invs);
-	printf("    LFOSC:     %2d/%2d (%d %%)\n", lfosc_used, 1, lfosc_used*100);
-	printf("    LUT:       %2d/%2d (%d %%)\n", total_luts_used, total_lut_count, total_luts_used*100 / total_lut_count);
+		LogNotice("    INV:       %2d/%2d (%d %%)\n", inv_used, total_invs, inv_used*100 / total_invs);
+	LogNotice("    LFOSC:     %2d/%2d (%d %%)\n", lfosc_used, 1, lfosc_used*100);
+	LogNotice("    LUT:       %2d/%2d (%d %%)\n", total_luts_used, total_lut_count, total_luts_used*100 / total_lut_count);
 	for(unsigned int i=2; i<=4; i++)
 	{
 		unsigned int used = luts_used[i];
@@ -147,19 +147,19 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		if(!count)
 			continue;
 		unsigned int percent = 100*used / count;
-		printf("      LUT%d:    %2d/%2d (%d %%)\n", i, used, count, percent);
+		LogNotice("      LUT%d:    %2d/%2d (%d %%)\n", i, used, count, percent);
 	}
-	printf("    PGA:       %2d/%2d (%d %%)\n", pga_used, 1, pga_used*100);
-	printf("    POR:       %2d/%2d (%d %%)\n", por_used, 1, por_used*100);
-	printf("    RCOSC:     %2d/%2d (%d %%)\n", rcosc_used, 1, rcosc_used*100);
-	printf("    RINGOSC:   %2d/%2d (%d %%)\n", ringosc_used, 1, ringosc_used*100);
-	printf("    SHREG:     %2d/%2d (%d %%)\n", shreg_used, total_shregs, shreg_used*100 / total_shregs);
-	printf("    SYSRST:    %2d/%2d (%d %%)\n", sysrst_used, 1, sysrst_used*100);
-	printf("    VREF:      %2d/%2d (%d %%)\n", vref_used, total_vrefs, vref_used*100 / total_vrefs);
+	LogNotice("    PGA:       %2d/%2d (%d %%)\n", pga_used, 1, pga_used*100);
+	LogNotice("    POR:       %2d/%2d (%d %%)\n", por_used, 1, por_used*100);
+	LogNotice("    RCOSC:     %2d/%2d (%d %%)\n", rcosc_used, 1, rcosc_used*100);
+	LogNotice("    RINGOSC:   %2d/%2d (%d %%)\n", ringosc_used, 1, ringosc_used*100);
+	LogNotice("    SHREG:     %2d/%2d (%d %%)\n", shreg_used, total_shregs, shreg_used*100 / total_shregs);
+	LogNotice("    SYSRST:    %2d/%2d (%d %%)\n", sysrst_used, 1, sysrst_used*100);
+	LogNotice("    VREF:      %2d/%2d (%d %%)\n", vref_used, total_vrefs, vref_used*100 / total_vrefs);
 	unsigned int total_routes_used = num_routes_used[0] + num_routes_used[1];
-	printf("    X-conn:    %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);
-	printf("      East:    %2d/10 (%d %%)\n", num_routes_used[0], num_routes_used[0]*100 / 10);
-	printf("      West:    %2d/10 (%d %%)\n", num_routes_used[1], num_routes_used[1]*100 / 10);
+	LogNotice("    X-conn:    %2d/20 (%d %%)\n", total_routes_used, total_routes_used*100 / 20);
+	LogNotice("      East:    %2d/10 (%d %%)\n", num_routes_used[0], num_routes_used[0]*100 / 10);
+	LogNotice("      West:    %2d/10 (%d %%)\n", num_routes_used[1], num_routes_used[1]*100 / 10);
 }
 
 /**
@@ -167,9 +167,9 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
  */
 void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* /*device*/)
 {
-	printf("\nPlacement report:\n");
-	printf("    +----------------------------------------------------+-----------------+\n");
-	printf("    | %-50s | %-15s |\n", "Node", "Site");
+	LogNotice("\nPlacement report:\n");
+	LogNotice("    +----------------------------------------------------+-----------------+\n");
+	LogNotice("    | %-50s | %-15s |\n", "Node", "Site");
 	
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
@@ -182,9 +182,9 @@ void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* /*device*/)
 			continue;
 		auto dst = static_cast<Greenpak4BitstreamEntity*>(dnode->GetData());
 			
-		printf("    | %-50s | %-15s |\n", src->m_name.c_str(), dst->GetDescription().c_str());
+		LogNotice("    | %-50s | %-15s |\n", src->m_name.c_str(), dst->GetDescription().c_str());
 		
 	}
 	
-	printf("    +----------------------------------------------------+-----------------+\n");
+	LogNotice("    +----------------------------------------------------+-----------------+\n");
 }

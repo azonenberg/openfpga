@@ -37,24 +37,24 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname, std::string top)
 	FILE* fp = fopen(fname.c_str(), "r");
 	if(fp == NULL)
 	{
-		fprintf(stderr, "ERROR: Failed to open netlist file %s\n", fname.c_str());
+		LogError("Failed to open netlist file %s\n", fname.c_str());
 		exit(-1);
 	}
 	if(0 != fseek(fp, 0, SEEK_END))
 	{
-		fprintf(stderr, "ERROR: Failed to seek to end of netlist file %s\n", fname.c_str());
+		LogError("Failed to seek to end of netlist file %s\n", fname.c_str());
 		exit(-1);
 	}
 	size_t len = ftell(fp);
 	if(0 != fseek(fp, 0, SEEK_SET))
 	{
-		fprintf(stderr, "ERROR: Failed to seek to start of netlist file %s\n", fname.c_str());
+		LogError("Failed to seek to start of netlist file %s\n", fname.c_str());
 		exit(-1);
 	}
 	char* json_string = new char[len];
 	if(len != fread(json_string, 1, len, fp))
 	{
-		fprintf(stderr, "ERROR: Failed read contents of netlist file %s\n", fname.c_str());
+		LogError("Failed read contents of netlist file %s\n", fname.c_str());
 		exit(-1);
 	}
 	fclose(fp);
@@ -63,7 +63,7 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname, std::string top)
 	json_tokener* tok = json_tokener_new();
 	if(!tok)
 	{
-		fprintf(stderr, "ERROR: Failed to create JSON tokenizer object\n");
+		LogError("Failed to create JSON tokenizer object\n");
 		exit(-1);
 	}
 	json_tokener_error err;
@@ -71,7 +71,7 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname, std::string top)
 	if(NULL == object)
 	{
 		const char* desc = json_tokener_error_desc(err);
-		fprintf(stderr, "ERROR: JSON parsing failed (err = %s)\n", desc);
+		LogError("JSON parsing failed (err = %s)\n", desc);
 		exit(-1);
 	}
 	
@@ -115,11 +115,11 @@ void Greenpak4Netlist::Load(json_object* object)
 		{
 			if(!json_object_is_type(child, json_type_string))
 			{
-				fprintf(stderr, "ERROR: netlist creator should be of type string but isn't\n");
+				LogError("netlist creator should be of type string but isn't\n");
 				exit(-1);
 			}
 			m_creator = json_object_get_string(child);
-			printf("Netlist creator: %s\n", m_creator.c_str());
+			LogNotice("Netlist creator: %s\n", m_creator.c_str());
 		}
 		
 		//Modules in the file (expecting an object)
@@ -127,7 +127,7 @@ void Greenpak4Netlist::Load(json_object* object)
 		{
 			if(!json_object_is_type(child, json_type_object))
 			{
-				fprintf(stderr, "ERROR: netlist modules should be of type object but isn't\n");
+				LogError("netlist modules should be of type object but isn't\n");
 				exit(-1);
 			}
 			
@@ -138,7 +138,7 @@ void Greenpak4Netlist::Load(json_object* object)
 		//Something bad
 		else
 		{
-			fprintf(stderr, "ERROR: Unknown top-level JSON object \"%s\"\n", name.c_str());
+			LogError("Unknown top-level JSON object \"%s\"\n", name.c_str());
 			exit(-1);
 		}
 	}
@@ -154,14 +154,14 @@ void Greenpak4Netlist::Load(json_object* object)
  */
 void Greenpak4Netlist::IndexNets()
 {
-	printf("Indexing...\n");
+	LogNotice("Indexing...\n");
 	
 	//Loop over all of our ports and add them to the associated nets
 	for(auto it = m_topModule->port_begin(); it != m_topModule->port_end(); it ++)
 	{
 		Greenpak4NetlistPort* port = it->second;
-		//printf("    Port %s connects to:\n", it->first.c_str());
-		//printf("        node %s\n", port->m_node->m_name.c_str());
+		//LogNotice("    Port %s connects to:\n", it->first.c_str());
+		//LogNotice("        node %s\n", port->m_node->m_name.c_str());
 		port->m_node->m_ports.push_back(port);
 	}
 	
@@ -169,11 +169,11 @@ void Greenpak4Netlist::IndexNets()
 	for(auto it = m_topModule->cell_begin(); it != m_topModule->cell_end(); it ++)
 	{
 		Greenpak4NetlistCell* cell = it->second;
-		//printf("    Cell %s connects to:\n", it->first.c_str());
+		//LogNotice("    Cell %s connects to:\n", it->first.c_str());
 		for(auto jt : cell->m_connections)
 		{
 			Greenpak4NetlistNode* node = jt.second;
-			//printf("        %s: net %s\n", jt.first.c_str(), node->m_name.c_str());
+			//LogNotice("        %s: net %s\n", jt.first.c_str(), node->m_name.c_str());
 			node->m_nodeports.push_back(Greenpak4NetlistNodePoint(cell, jt.first));
 		}
 	}
@@ -183,7 +183,7 @@ void Greenpak4Netlist::IndexNets()
 	{
 		if(it->second == NULL)
 		{
-			//printf("Got null node %s during dedup\n", it->second->m_name.c_str());
+			//LogNotice("Got null node %s during dedup\n", it->second->m_name.c_str());
 		}
 		else
 			m_nodes.insert(it->second);
@@ -193,14 +193,14 @@ void Greenpak4Netlist::IndexNets()
 	//Print them out
 	for(auto node : m_nodes)
 	{
-		printf("    Node %s connects to:\n", node->m_name.c_str());
+		LogNotice("    Node %s connects to:\n", node->m_name.c_str());
 		for(auto p : node->m_ports)
 		{
 			Greenpak4NetlistNode* net = m_topModule->GetNet(p->m_name);
-			printf("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+			LogNotice("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
 		}
 		for(auto c : node->m_nodeports)
-			printf("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+			LogNotice("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 	}
 	*/
 }
@@ -212,7 +212,7 @@ void Greenpak4Netlist::IndexNets()
  */
 void Greenpak4Netlist::LoadModules(json_object* object)
 {
-	printf("Loading modules...\n");
+	LogNotice("Loading modules...\n");
 	
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
@@ -226,7 +226,7 @@ void Greenpak4Netlist::LoadModules(json_object* object)
 		//Verify it's an object
 		if(!json_object_is_type(child, json_type_object))
 		{
-			fprintf(stderr, "ERROR: netlist module entry should be of type object but isn't\n");
+			LogError("netlist module entry should be of type object but isn't\n");
 			exit(-1);
 		}
 		
@@ -241,7 +241,7 @@ void Greenpak4Netlist::LoadModules(json_object* object)
 		m_topModule = m_modules[m_topModuleName];
 	else
 	{
-		fprintf(stderr, "ERROR: Unable to find top-level module \"%s\" in netlist\n", m_topModuleName.c_str());
+		LogError("Unable to find top-level module \"%s\" in netlist\n", m_topModuleName.c_str());
 		exit(-1);
 	}
 }
