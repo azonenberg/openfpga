@@ -179,7 +179,7 @@ protected:
 class Greenpak4EntityOutput
 {
 public:
-	Greenpak4EntityOutput(Greenpak4BitstreamEntity* src, std::string port, unsigned int matrix)
+	Greenpak4EntityOutput(Greenpak4BitstreamEntity* src=NULL, std::string port="", unsigned int matrix=0)
 	: m_src(src)
 	, m_port(port)
 	, m_matrix(matrix)

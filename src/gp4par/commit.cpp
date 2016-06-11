@@ -55,8 +55,8 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 	num_routes_used[0] = 0;
 	num_routes_used[1] = 0;
 		
-	//Map of source node to cross-connection output
-	std::map<Greenpak4BitstreamEntity*, Greenpak4BitstreamEntity*> nodemap;
+	//Map of source net to cross-connection output
+	map<Greenpak4EntityOutput, Greenpak4EntityOutput> nodemap;
 	
 	for(uint32_t i=0; i<device->GetNumNodes(); i++)
 	{
@@ -82,6 +82,10 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 					src = src->GetDual();
 			}
 			
+			//Look up the actual NET (not just the entity) for the source.
+			//If we don't do this we risk merging cross-connections that should not be (see github issue #13)
+			Greenpak4EntityOutput srcnet = src->GetOutput(edge->m_sourceport);
+			
 			//Cross connections
 			//Only use these if destination node is general fabric routing; dedicated routing can cross between
 			//the matrices freely
@@ -89,8 +93,8 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			if( (srcmatrix != dst->GetMatrix()) && dst->IsGeneralFabricInput(edge->m_destport) )
 			{
 				//Reuse existing connections, if any
-				if(nodemap.find(src) != nodemap.end())
-					src = nodemap[src];
+				if(nodemap.find(srcnet) != nodemap.end())
+					srcnet = nodemap[srcnet];
 
 				//Allocate a new cross-connection
 				else
@@ -111,14 +115,15 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 					num_routes_used[srcmatrix] ++;
 					
 					//Insert the cross-connection into the path
-					xconn->SetInput("I", src->GetOutput(edge->m_sourceport));
-					nodemap[src] = xconn;
-					src = xconn;
+					xconn->SetInput("I", srcnet);
+					Greenpak4EntityOutput newsrc = xconn->GetOutput("O");
+					nodemap[srcnet] = newsrc;
+					srcnet = newsrc;
 				}
 			}
 			
-			//Use new unified configuration interface here to simplify things massively
-			dst->SetInput(edge->m_destport, src->GetOutput(edge->m_sourceport));
+			//Yay virtual functions - we can set the input without caring about the node type
+			dst->SetInput(edge->m_destport, srcnet);
 		}
 	}
 }
