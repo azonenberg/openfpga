@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 7 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-06-05"
+Date "2016-06-10"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -557,10 +557,10 @@ $EndComp
 Text Notes 850  11750 0    60   ~ 0
 HV-tolerant inverting buffer for driving GPIO2/Vpp of the DUT\nDUT pin 2 is input only, so we only need a driver
 $Comp
-L SSM6N58NU_DUAL_NMOS Q1
+L SSM6N58NU_DUAL_NMOS Q16
 U 1 1 573D1681
 P 2250 11150
-F 0 "Q1" H 2390 11203 60  0000 L CNN
+F 0 "Q16" H 2390 11203 60  0000 L CNN
 F 1 "SSM6N58NU" H 2390 11097 60  0000 L CNN
 F 2 "azonenberg_pcb:DFN_6_0.65MM_2x2MM_GDS" H 2250 11150 60  0001 C CNN
 F 3 "" H 2250 11150 60  0000 C CNN
