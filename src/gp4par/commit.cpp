@@ -47,8 +47,6 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 
 /**
 	@brief Commit post-PAR results from the netlist to the routing matrix
-	
-	TODO: refactor a lot of this stuff to be in the BitstreamEntity derived class
  */
 void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
 {
