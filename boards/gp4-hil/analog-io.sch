@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 5 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-06-11"
+Date "2016-06-12"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "ADCs and DACs"
@@ -2995,11 +2995,11 @@ Wire Wire Line
 Connection ~ 3500 900 
 Connection ~ 3500 1050
 Connection ~ 3500 1200
-Text Label 3150 5650 0    60   ~ 0
+Text Label 3150 5850 0    60   ~ 0
 ADC_GPIO2
 Text Label 3150 5950 0    60   ~ 0
 ADC_GPIO20
-Text Label 3150 5850 0    60   ~ 0
+Text Label 3150 5650 0    60   ~ 0
 ADC_VDD1
 Text Label 3150 5750 0    60   ~ 0
 ADC_VDD2
