@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 5 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-06-10"
+Date "2016-06-11"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "ADCs and DACs"
@@ -165,21 +165,21 @@ $EndComp
 NoConn ~ 3050 6550
 NoConn ~ 3050 6650
 NoConn ~ 3050 6750
-Text Label 20550 1150 2    60   ~ 0
-MUX_A0
-Text Label 20550 1250 2    60   ~ 0
-MUX_A1
 Text Label 20550 1350 2    60   ~ 0
-MUX_A2
-Text Label 20550 1950 2    60   ~ 0
-MUX_A3
-Text Label 20550 6050 2    60   ~ 0
-MUX_CS_A_N
+MUX_A0
 Text Label 20550 1650 2    60   ~ 0
-MUX_CS_B_N
-Text Label 20550 1750 2    60   ~ 0
-MUX_WR_N
+MUX_A1
+Text Label 20550 1150 2    60   ~ 0
+MUX_A2
+Text Label 20550 3950 2    60   ~ 0
+MUX_A3
 Text Label 20550 1850 2    60   ~ 0
+MUX_CS_A_N
+Text Label 20550 1750 2    60   ~ 0
+MUX_CS_B_N
+Text Label 20550 1950 2    60   ~ 0
+MUX_WR_N
+Text Label 20550 3250 2    60   ~ 0
 MUX_EN_N
 Text Notes 17150 12250 0    60   ~ 0
 DUT current metering
@@ -539,11 +539,11 @@ Text Label 18650 1350 2    60   ~ 0
 ADC_B_CLK_P
 Text Label 18650 1650 2    60   ~ 0
 ADC_B_CLK_N
-Text Label 20550 3250 2    60   ~ 0
+Text Label 20550 6050 2    60   ~ 0
 DAC_SYNC_N
 Text Label 20550 3850 2    60   ~ 0
 DAC_A_DIN
-Text Label 20550 3950 2    60   ~ 0
+Text Label 20550 1250 2    60   ~ 0
 DAC_B_DIN
 Text Label 20550 2350 2    60   ~ 0
 DAC_C_DIN
