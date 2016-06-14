@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 7 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-06-12"
+Date "2016-06-13"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -65,19 +65,6 @@ Text HLabel 1500 8300 0    60   BiDi ~ 0
 DUT_GPIO19
 Text HLabel 1500 8800 0    60   BiDi ~ 0
 DUT_GPIO20
-$Comp
-L XC7AxT-xFTG256x U?
-U 6 1 573B2D61
-P 19350 7550
-AR Path="/57316B0C/573B2D61" Ref="U?"  Part="1" 
-AR Path="/573AABB3/573B2D61" Ref="U2"  Part="6" 
-F 0 "U2" H 19350 7350 60  0000 L CNN
-F 1 "XC7A100T-1FTG256C" H 19350 7450 60  0000 L CNN
-F 2 "azonenberg_pcb:BGA_256_17x17_FULLARRAY_1MM" H 19350 7550 60  0001 C CNN
-F 3 "" H 19350 7550 60  0000 C CNN
-	6    19350 7550
-	1    0    0    -1  
-$EndComp
 $Comp
 L TS3A4751 U15
 U 1 1 573B348E
@@ -718,15 +705,15 @@ Wire Wire Line
 Wire Wire Line
 	16150 3550 16000 3550
 Wire Wire Line
-	19150 2750 18950 2750
+	19150 4450 18950 4450
 Wire Wire Line
 	18950 2850 19150 2850
 Wire Wire Line
-	19150 2950 18950 2950
+	19150 3450 18950 3450
 Wire Wire Line
-	18950 3050 19150 3050
+	18950 3250 19150 3250
 Wire Wire Line
-	19150 3150 18950 3150
+	19150 4250 18950 4250
 Wire Wire Line
 	18950 7050 19150 7050
 Wire Wire Line
@@ -748,7 +735,7 @@ Wire Wire Line
 Wire Wire Line
 	19150 5150 18950 5150
 Wire Wire Line
-	18950 5250 19150 5250
+	18950 4150 19150 4150
 Wire Wire Line
 	7500 1300 7700 1300
 Wire Wire Line
@@ -790,54 +777,52 @@ Wire Wire Line
 Wire Wire Line
 	1750 11350 2150 11350
 NoConn ~ 19150 2650
-Text HLabel 18950 5350 0    60   Output ~ 0
+Text HLabel 18950 3350 0    60   Output ~ 0
 GPIO3_AEN
-Text HLabel 18950 5450 0    60   Output ~ 0
+Text HLabel 18950 3150 0    60   Output ~ 0
 GPIO4_AEN
 Text HLabel 18950 4550 0    60   Output ~ 0
 GPIO5_AEN
-Text HLabel 18950 2950 0    60   Output ~ 0
+Text HLabel 18950 3450 0    60   Output ~ 0
 GPIO6_AEN
-Text HLabel 18950 5750 0    60   Output ~ 0
+Text HLabel 19000 5050 0    60   Output ~ 0
 GPIO7_AEN
-Text HLabel 18950 5850 0    60   Output ~ 0
+Text HLabel 18950 4050 0    60   Output ~ 0
 GPIO8_AEN
-Text HLabel 18950 3050 0    60   Output ~ 0
+Text HLabel 18950 3250 0    60   Output ~ 0
 GPIO9_AEN
-Text HLabel 18950 2750 0    60   Output ~ 0
+Text HLabel 18950 4450 0    60   Output ~ 0
 GPIO10_AEN
 Wire Wire Line
-	18950 5350 19150 5350
+	18950 3350 19150 3350
 Wire Wire Line
-	19150 5450 18950 5450
+	19150 3150 18950 3150
 Wire Wire Line
 	18950 5550 19150 5550
 Wire Wire Line
 	19150 5650 18950 5650
 Wire Wire Line
-	18950 5750 19150 5750
-Wire Wire Line
-	19150 5850 18950 5850
+	19150 4050 18950 4050
 Wire Wire Line
 	18950 5950 19150 5950
 Wire Wire Line
 	19150 6050 18950 6050
-Text HLabel 18950 6150 0    60   Output ~ 0
+Text HLabel 18950 3050 0    60   Output ~ 0
 GPIO12_AEN
 Text HLabel 18950 2850 0    60   Output ~ 0
 GPIO13_AEN
-Text HLabel 18950 6350 0    60   Output ~ 0
+Text HLabel 18950 3950 0    60   Output ~ 0
 GPIO14_AEN
-Text HLabel 18950 5250 0    60   Output ~ 0
+Text HLabel 18950 4150 0    60   Output ~ 0
 GPIO15_AEN
-Text HLabel 18950 3150 0    60   Output ~ 0
+Text HLabel 18950 4250 0    60   Output ~ 0
 GPIO17_AEN
 Wire Wire Line
-	19150 6150 18950 6150
+	19150 3050 18950 3050
 Wire Wire Line
 	18950 6250 19150 6250
 Wire Wire Line
-	19150 6350 18950 6350
+	19150 3950 18950 3950
 Wire Wire Line
 	18950 6450 19150 6450
 Wire Wire Line
@@ -850,10 +835,6 @@ NoConn ~ 19150 3550
 NoConn ~ 19150 3650
 NoConn ~ 19150 3750
 NoConn ~ 19150 3850
-NoConn ~ 19150 3950
-NoConn ~ 19150 4050
-NoConn ~ 19150 4150
-NoConn ~ 19150 4250
 $Comp
 L XC7AxT-xFTG256x U?
 U 5 1 573B2962
@@ -887,11 +868,30 @@ Wire Wire Line
 	16000 4450 16150 4450
 Wire Wire Line
 	19150 7250 18950 7250
-NoConn ~ 19150 3450
 NoConn ~ 19150 4950
-NoConn ~ 19150 5050
-NoConn ~ 19150 3250
 NoConn ~ 19150 4850
-NoConn ~ 19150 3350
-NoConn ~ 19150 4450
+NoConn ~ 19150 2950
+$Comp
+L XC7AxT-xFTG256x U?
+U 6 1 573B2D61
+P 19350 7550
+AR Path="/57316B0C/573B2D61" Ref="U?"  Part="1" 
+AR Path="/573AABB3/573B2D61" Ref="U2"  Part="6" 
+F 0 "U2" H 19350 7350 60  0000 L CNN
+F 1 "XC7A100T-1FTG256C" H 19350 7450 60  0000 L CNN
+F 2 "azonenberg_pcb:BGA_256_17x17_FULLARRAY_1MM" H 19350 7550 60  0001 C CNN
+F 3 "" H 19350 7550 60  0000 C CNN
+	6    19350 7550
+	1    0    0    -1  
+$EndComp
+NoConn ~ 19150 5250
+NoConn ~ 19150 5350
+NoConn ~ 19150 5750
+NoConn ~ 19150 5850
+NoConn ~ 19150 6150
+NoConn ~ 19150 6350
+NoConn ~ 19150 5450
+Wire Wire Line
+	19150 5050 19000 5050
+NoConn ~ 19150 2750
 $EndSCHEMATC
