@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 5 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-06-19"
+Date "2016-06-29"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 "ADCs and DACs"
@@ -1949,9 +1949,9 @@ Text Label 19000 11750 0    60   ~ 0
 VDD2_ISENSE
 Text Label 3150 5350 0    60   ~ 0
 VPP_ISENSE
-Text Label 3150 5450 0    60   ~ 0
+Text Label 3150 5250 0    60   ~ 0
 VDD1_ISENSE
-Text Label 3150 5550 0    60   ~ 0
+Text Label 3150 5450 0    60   ~ 0
 VDD2_ISENSE
 $Comp
 L C C184
@@ -2844,7 +2844,7 @@ Wire Wire Line
 	1550 5250 1650 5250
 Text Notes 1250 1900 0    60   ~ 0
 ADC A: 4x attenuation, 4V max, 3.9 mV resolution\nADC B: 1x attenuation internally, 1V max, 975 uV resolution\n       8x external attenuation: 8V max, 7.8 mV resolution
-Text Label 3150 5250 0    60   ~ 0
+Text Label 3150 5550 0    60   ~ 0
 ADC_VPP
 Wire Wire Line
 	3150 5250 3050 5250
