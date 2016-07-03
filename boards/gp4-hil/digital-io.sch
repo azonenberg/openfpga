@@ -19,7 +19,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 7 7
 Title "GreenPak Hardware-In-Loop Test Platform"
-Date "2016-06-29"
+Date "2016-07-03"
 Rev "0.1"
 Comp "Andrew Zonenberg"
 Comment1 ""
@@ -337,15 +337,15 @@ Text Label 18950 5550 2    60   ~ 0
 GPIO3_DIO
 Text Label 18950 5650 2    60   ~ 0
 GPIO4_DIO
-Text Label 18950 6850 2    60   ~ 0
+Text Label 18400 4350 2    60   ~ 0
 GPIO5_DIO
-Text Label 18950 6250 2    60   ~ 0
+Text Label 18950 5350 2    60   ~ 0
 GPIO6_DIO
 Text Label 18950 6950 2    60   ~ 0
 GPIO7_DIO
 Text Label 18950 7050 2    60   ~ 0
 GPIO8_DIO
-Text Label 18950 5150 2    60   ~ 0
+Text Label 18950 5450 2    60   ~ 0
 GPIO9_DIO
 Text Label 18950 6450 2    60   ~ 0
 GPIO10_DIO
@@ -733,9 +733,9 @@ Wire Wire Line
 Wire Wire Line
 	18950 6950 19150 6950
 Wire Wire Line
-	19150 5150 18950 5150
+	19150 4050 18950 4050
 Wire Wire Line
-	18950 4150 19150 4150
+	18950 5450 19150 5450
 Wire Wire Line
 	7500 1300 7700 1300
 Wire Wire Line
@@ -783,15 +783,15 @@ Text HLabel 18950 3150 0    60   Output ~ 0
 GPIO4_AEN
 Text HLabel 18950 4550 0    60   Output ~ 0
 GPIO5_AEN
-Text HLabel 18950 3450 0    60   Output ~ 0
-GPIO6_AEN
 Text HLabel 19000 5050 0    60   Output ~ 0
+GPIO6_AEN
+Text HLabel 18950 4450 0    60   Output ~ 0
 GPIO7_AEN
-Text HLabel 18950 4050 0    60   Output ~ 0
+Text HLabel 18950 6250 0    60   Output ~ 0
 GPIO8_AEN
 Text HLabel 18950 3250 0    60   Output ~ 0
 GPIO9_AEN
-Text HLabel 18950 4450 0    60   Output ~ 0
+Text HLabel 18950 3450 0    60   Output ~ 0
 GPIO10_AEN
 Wire Wire Line
 	18950 3350 19150 3350
@@ -802,7 +802,7 @@ Wire Wire Line
 Wire Wire Line
 	19150 5650 18950 5650
 Wire Wire Line
-	19150 4050 18950 4050
+	19150 5350 18950 5350
 Wire Wire Line
 	18950 5950 19150 5950
 Wire Wire Line
@@ -813,7 +813,7 @@ Text HLabel 18950 2850 0    60   Output ~ 0
 GPIO13_AEN
 Text HLabel 18950 3950 0    60   Output ~ 0
 GPIO14_AEN
-Text HLabel 18950 4150 0    60   Output ~ 0
+Text HLabel 18950 4050 0    60   Output ~ 0
 GPIO15_AEN
 Text HLabel 18950 4250 0    60   Output ~ 0
 GPIO17_AEN
@@ -829,7 +829,7 @@ Wire Wire Line
 	18950 6550 19150 6550
 Text Label 16000 4150 2    60   ~ 0
 GPIO20_DEN
-Text HLabel 18400 4350 0    60   Output ~ 0
+Text HLabel 18950 6850 0    60   Output ~ 0
 GPIO2_DIO
 NoConn ~ 19150 3550
 NoConn ~ 19150 3650
@@ -869,7 +869,6 @@ Wire Wire Line
 Wire Wire Line
 	19150 7250 18950 7250
 NoConn ~ 19150 4950
-NoConn ~ 19150 4850
 NoConn ~ 19150 2950
 $Comp
 L XC7AxT-xFTG256x U?
@@ -885,13 +884,14 @@ F 3 "" H 19350 7550 60  0000 C CNN
 	1    0    0    -1  
 $EndComp
 NoConn ~ 19150 5250
-NoConn ~ 19150 5350
 NoConn ~ 19150 5750
 NoConn ~ 19150 5850
 NoConn ~ 19150 6150
 NoConn ~ 19150 6350
-NoConn ~ 19150 5450
 Wire Wire Line
 	19150 5050 19000 5050
 NoConn ~ 19150 2750
+NoConn ~ 19150 4150
+NoConn ~ 19150 5150
+NoConn ~ 19150 4850
 $EndSCHEMATC
