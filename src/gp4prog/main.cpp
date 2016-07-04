@@ -23,8 +23,14 @@ using namespace std;
 libusb_device_handle* OpenDevice();
 string GetStringDescriptor(libusb_device_handle* hdev, uint8_t index);
 
+void GeneratePacketHeader(unsigned char* data, uint16_t type);
+
+void SetStatusLED(libusb_device_handle* hdev, bool status);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Entry point
+
+#define INT_ENDPOINT 2
 
 int main(int /*argc*/, char* /*argv*/[])
 {
@@ -44,10 +50,53 @@ int main(int /*argc*/, char* /*argv*/[])
 	printf("Found: %s %s\n", vendor.c_str(), name.c_str());
 	//string 0x80 is 02 03 for this board... what does that mean? firmware rev or something?
 	
+	//Blink the LED
+	for(int i=0; i<5; i++)
+	{
+		SetStatusLED(hdev, 1);
+		usleep(250 * 1000);
+		
+		SetStatusLED(hdev, 0);
+		usleep(250 * 1000);
+	}
+	
 	//Done
 	libusb_close(hdev);
 	libusb_exit(NULL);
 	return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Debug I/O
+
+void SetStatusLED(libusb_device_handle* hdev, bool status)
+{
+	//Generate the status packet
+	unsigned char cmd[63];
+	GeneratePacketHeader(cmd, 0x2104);
+	cmd[4] = status;
+	
+	//and send it
+	int transferred;
+	int err = 0;
+	if(0 != (err = libusb_interrupt_transfer(hdev, INT_ENDPOINT, cmd, sizeof(cmd), &transferred, 250)))
+	{
+		printf("libusb_interrupt_transfer failed (err=%d)\n", err);
+		exit(-1);
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USB interrupt packet header generation
+
+void GeneratePacketHeader(unsigned char* data, uint16_t type)
+{
+	data[0] = 0x01;
+	data[1] = type >> 8;
+	data[2] = type & 0xff;
+	data[3] = 0;
+	for(int i=4; i<62; i++)
+		data[i] = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,6 +142,28 @@ libusb_device_handle* OpenDevice()
 	if(!found)
 	{
 		printf("No device found, giving up\n");
+		exit(-1);
+	}
+	
+	//Detach the kernel driver, if any
+	int err = libusb_detach_kernel_driver(hdev, 0);
+	if( (0 != err) && (LIBUSB_ERROR_NOT_FOUND != err) )
+	{
+		printf("Can't detach kernel driver\n");
+		exit(-1);
+	}
+	
+	//Set the device configuration
+	if(0 != (err = libusb_set_configuration(hdev, 1)))
+	{
+		printf("Failed to select device configuration (err = %d)\n", err);
+		exit(-1);
+	}
+	
+	//Claim interface 0
+	if(0 != libusb_claim_interface(hdev, 0))
+	{
+		printf("Failed to claim interface\n");
 		exit(-1);
 	}
 	
