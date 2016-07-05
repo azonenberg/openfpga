@@ -1,5 +1,6 @@
 add_executable(gp4prog
 	main.cpp
+	boardproto.cpp
 	
 	usb.cpp
 )
