@@ -27,6 +27,48 @@ void GeneratePacketHeader(unsigned char* data, uint16_t type);
 
 void SetStatusLED(libusb_device_handle* hdev, bool status);
 
+//Test point config (actual bitstream coding)
+enum TPConfig
+{
+	//Types of driver
+	TP_FLOAT			= 0x0200,	//Driver not hooked up at all
+	TP_1				= 0x0001,	//Constant 1
+	TP_0				= 0x0000,	//Constant 0
+	TP_SIGGEN			= 0x0003,	//Signal generator
+	
+	//Drive strength
+	TP_STRONG			= 0x0c00,	//Strong push-pull driver
+	TP_WEAK				= 0x0e00,	//Weak push-pull  driver
+	TP_OD_PU			= 0x0400,	//Open drain NMOS driver with opposing pullup
+	TP_OD_PD			= 0x0600,	//Open drain PMOS driver with opposing pulldown
+	TP_OD_PMOS			= 0x0a00,	//Open drain PMOS driver
+	TP_OD_NMOS			= 0x0800,	//Open drain NMOS driver
+
+	//Final combinations observed in Silego code
+	TP_NC				= TP_FLOAT,					//Pad not used
+	TP_VDD				= TP_STRONG | TP_1,			//Strong 1
+	TP_GND				= TP_STRONG | TP_0,			//Strong 0
+	TP_PULLUP			= TP_WEAK | TP_1,			//Weak 1
+	TP_PULLDOWN			= TP_WEAK | TP_0,			//Weak 0
+	TP_LOGIC_PP			= TP_STRONG | TP_SIGGEN,	//Strong signal generator
+	TP_LOGIC_OD_PU		= TP_OD_PU | TP_SIGGEN,		//Open drain NMOS signal generator with opposing pullup
+	TP_LOGIC_OD_PD		= TP_OD_PD | TP_SIGGEN,		//Open drain PMOS signal generator with opposing pulldown
+	TP_LOGIC_OD_PMOS	= TP_OD_PMOS | TP_SIGGEN,	//Open drain PMOS signal generator
+	TP_LOGIC_OD_NMOS	= TP_OD_NMOS | TP_SIGGEN,	//Open drain PMOS signal generator
+	TP_LOGIC_WEAK_PP	= TP_WEAK | TP_SIGGEN		//Weak signal generator
+};
+
+//Helper struct for test point configuration 
+//Not actual bitstream ordering, but contains all the data
+struct TestPointConfig
+{
+public:
+	TPConfig testpoint_configs[21];	//only [20:12] and [10:2] meaningful
+									//[1:0] and 11 are just there so indexes match up with test point names
+
+	//TODO expansion config
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Entry point
 
