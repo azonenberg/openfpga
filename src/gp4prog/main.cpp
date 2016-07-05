@@ -63,11 +63,34 @@ enum TPConfig
 struct TestPointConfig
 {
 public:
-	TPConfig testpoint_configs[21];	//only [20:12] and [10:2] meaningful
-									//[1:0] and 11 are just there so indexes match up with test point names
 
-	//TODO expansion config
+	//Unused indexes waste space but we don't care
+	//test point config matches with array indexes this way - much easier to code to
+
+	//Configuration of each test pin's driver
+	TPConfig driverConfigs[21];	//only [20:12] and [10:2] meaningful
+
+	//Configuration of each test pin's LED
+	bool ledEnabled[21];		//only [20:12] and [10:3] meaningful
+	bool ledInverted[21];		//only [20:12] and [10:3] meaningful
+	
+	//Configuration of expansion connector
+	bool expansionEnabled[21];	//only [20:12], [10:2] meaningful for signals
+								//[1] is Vdd
+								
+	TestPointConfig()
+	{
+		for(int i=0; i<21; i++)
+		{
+			driverConfigs[i] = TP_NC;
+			ledEnabled[i] = false;
+			ledInverted[i] = false;
+			expansionEnabled[i] = false;
+		}
+	}
 };
+
+void SetTestPointConfig(libusb_device_handle* hdev, TestPointConfig& config);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Entry point
@@ -109,7 +132,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Debug I/O
+// Device I/O
 
 void SetStatusLED(libusb_device_handle* hdev, bool status)
 {
@@ -119,6 +142,80 @@ void SetStatusLED(libusb_device_handle* hdev, bool status)
 	cmd[4] = status;
 	
 	//and send it
+	int transferred;
+	int err = 0;
+	if(0 != (err = libusb_interrupt_transfer(hdev, INT_ENDPOINT, cmd, sizeof(cmd), &transferred, 250)))
+	{
+		printf("libusb_interrupt_transfer failed (err=%d)\n", err);
+		exit(-1);
+	}
+}
+
+void SetTestPointConfig(libusb_device_handle* hdev, TestPointConfig& config)
+{
+	//Generate the command packet header
+	unsigned char cmd[63];
+	GeneratePacketHeader(cmd, 0x0439);
+	
+	//Offsets 04 ... 27: test point config data
+	unsigned int offset = 4;
+	for(unsigned int i=2; i<=20; i++)
+	{
+		unsigned int cfg = config.driverConfigs[i];
+		cmd[offset] = cfg >> 8;
+		cmd[offset + 1] = cfg & 0xff;
+		
+		offset += 2;
+		
+		//skip TP11 since that's ground, no config for it
+		if(i == 10)
+			i++;
+	}
+	
+	//Offsets 28 ... 2e: unused? leave at 0 for now
+	
+	//Offsets 2f ... 31: expansion connector
+	uint8_t expansionBitMap[21][2] =
+	{
+		{0x00, 0x00},		//unused
+		{0x30, 0x01},		//Vdd
+		
+		{0x31, 0x04},		//TP2
+		{0x31, 0x01},		//TP3
+		{0x31, 0x10},		//TP4
+		{0x31, 0x40},		//TP5
+		{0x2f, 0x01},		//TP6
+		{0x2f, 0x04},		//TP7
+		{0x2f, 0x10},		//TP8
+		{0x2f, 0x40},		//TP9
+		{0x2f, 0x80},		//TP10
+		
+		{0x2f, 0x20},		//TP12
+		{0x31, 0x08},		//TP13
+		{0x31, 0x02},		//TP14
+		{0x30, 0x80},		//TP15
+		{0x31, 0x20},		//TP16
+		{0x2f, 0x02},		//TP17
+		{0x30, 0x20},		//TP18
+		{0x30, 0x08},		//TP19
+		{0x2f, 0x08}		//TP20
+	};
+	for(unsigned int i=1; i<21; i++)
+	{
+		if(config.expansionEnabled[i])
+			cmd[expansionBitMap[i][0]] = expansionBitMap[i][1];
+	}
+	
+	//Offsets 32 ... 34: LEDs from TP3 ... TP15
+	
+	
+	//Offsets 35 ... 36: LEDs from TP16 ... TP20
+	
+	
+	//Offset 37: always constant 1. Power LED maybe?
+	cmd[0x37] = 1;
+	
+	//Send the interrupt
 	int transferred;
 	int err = 0;
 	if(0 != (err = libusb_interrupt_transfer(hdev, INT_ENDPOINT, cmd, sizeof(cmd), &transferred, 250)))
