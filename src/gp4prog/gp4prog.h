@@ -31,4 +31,13 @@
 
 #include <libusb-1.0/libusb.h>
 
+typedef libusb_device_handle* hdevice;
+
+void USBSetup();
+void USBCleanup(hdevice hdev);
+
+hdevice OpenDevice();
+std::string GetStringDescriptor(hdevice hdev, uint8_t index);
+void SendInterruptTransfer(hdevice hdev, unsigned char* buf, size_t size);
+
 #endif

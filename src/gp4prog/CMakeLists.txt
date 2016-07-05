@@ -1,5 +1,7 @@
 add_executable(gp4prog
 	main.cpp
+	
+	usb.cpp
 )
 
 target_link_libraries(gp4prog

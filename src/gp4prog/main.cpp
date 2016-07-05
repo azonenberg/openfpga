@@ -20,14 +20,9 @@
 
 using namespace std;
 
-libusb_device_handle* OpenDevice();
-string GetStringDescriptor(libusb_device_handle* hdev, uint8_t index);
-
 void GeneratePacketHeader(unsigned char* data, uint16_t type);
-
-void SetStatusLED(libusb_device_handle* hdev, bool status);
-
-void SendInterruptTransfer(libusb_device_handle* hdev, unsigned char* buf, size_t size);
+void SetStatusLED(hdevice hdev, bool status);
+void SetTestPointConfig(hdevice hdev, TestPointConfig& config);
 
 //Test point config (actual bitstream coding)
 enum TPConfig
@@ -92,22 +87,14 @@ public:
 	}
 };
 
-void SetTestPointConfig(libusb_device_handle* hdev, TestPointConfig& config);
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Entry point
-
-#define INT_ENDPOINT 2
 
 int main(int /*argc*/, char* /*argv*/[])
 {
 	//Set up libusb and open the board (for now assume we only have one)
-	if(0 != libusb_init(NULL))
-	{
-		printf("libusb_init failed\n");
-		exit(-1);
-	}
-	libusb_device_handle* hdev = OpenDevice();
+	USBSetup();
+	hdevice hdev = OpenDevice();
 	
 	//Get string descriptors
 	string name = GetStringDescriptor(hdev, 1);			//board name
@@ -128,6 +115,7 @@ int main(int /*argc*/, char* /*argv*/[])
 	}
 	
 	//Set the I/O configuration on the test points
+	printf("Setting initial dummy I/O configuration\n");
 	TestPointConfig config;
 	for(int i=3; i<=10; i++)
 	{
@@ -139,16 +127,27 @@ int main(int /*argc*/, char* /*argv*/[])
 	//Wait a while
 	usleep(1000 * 1000);	
 	
+	//Wipe test config to floating
+	printf("Restoring test point configuration\n");
+	for(int i=0; i<=21; i++)
+	{
+		config.driverConfigs[i] = TP_FLOAT;
+		config.ledEnabled[i] = false;
+		config.ledInverted[i] = false;
+		config.expansionEnabled[i] = false;
+	}
+	SetTestPointConfig(hdev, config);
+	
 	//Done
-	libusb_close(hdev);
-	libusb_exit(NULL);
+	printf("Cleaning up\n");
+	USBCleanup(hdev);
 	return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device I/O
 
-void SetStatusLED(libusb_device_handle* hdev, bool status)
+void SetStatusLED(hdevice hdev, bool status)
 {
 	//Generate the status packet
 	unsigned char cmd[63];
@@ -159,7 +158,7 @@ void SetStatusLED(libusb_device_handle* hdev, bool status)
 	SendInterruptTransfer(hdev, cmd, sizeof(cmd));
 }
 
-void SetTestPointConfig(libusb_device_handle* hdev, TestPointConfig& config)
+void SetTestPointConfig(hdevice hdev, TestPointConfig& config)
 {
 	//Generate the command packet header
 	unsigned char cmd[63];
@@ -275,99 +274,4 @@ void GeneratePacketHeader(unsigned char* data, uint16_t type)
 	data[3] = 0;
 	for(int i=4; i<62; i++)
 		data[i] = 0;
-}
-
-void SendInterruptTransfer(libusb_device_handle* hdev, unsigned char* buf, size_t size)
-{
-	int transferred;
-	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, INT_ENDPOINT, buf, size, &transferred, 250)))
-	{
-		printf("libusb_interrupt_transfer failed (err=%d)\n", err);
-		exit(-1);
-	}
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Enumeration / setup helpers
-
-//Gets the device handle (assume only one for now)
-libusb_device_handle* OpenDevice()
-{
-	libusb_device** list;
-	ssize_t devcount = libusb_get_device_list(NULL, &list);
-	if(devcount < 0)
-	{
-		printf("libusb_get_device_list failed\n");
-		exit(-1);
-	}
-	libusb_device* device = NULL;
-	bool found = false;
-	for(ssize_t i=0; i<devcount; i++)
-	{
-		device = list[i];
-		
-		libusb_device_descriptor desc;
-		if(0 != libusb_get_device_descriptor(device, &desc))
-			continue;
-		
-		//Silego devkit
-		if( (desc.idVendor == 0x0f0f) && (desc.idProduct == 0x0006) )
-		{
-			found = true;
-			break;
-		}
-	}
-	libusb_device_handle* hdev;
-	if(found)
-	{
-		if(0 != libusb_open(device, &hdev))
-		{
-			printf("libusb_open failed\n");
-			exit(-1);
-		}
-	}	
-	libusb_free_device_list(list, 1);
-	if(!found)
-	{
-		printf("No device found, giving up\n");
-		exit(-1);
-	}
-	
-	//Detach the kernel driver, if any
-	int err = libusb_detach_kernel_driver(hdev, 0);
-	if( (0 != err) && (LIBUSB_ERROR_NOT_FOUND != err) )
-	{
-		printf("Can't detach kernel driver\n");
-		exit(-1);
-	}
-	
-	//Set the device configuration
-	if(0 != (err = libusb_set_configuration(hdev, 1)))
-	{
-		printf("Failed to select device configuration (err = %d)\n", err);
-		exit(-1);
-	}
-	
-	//Claim interface 0
-	if(0 != libusb_claim_interface(hdev, 0))
-	{
-		printf("Failed to claim interface\n");
-		exit(-1);
-	}
-	
-	return hdev;
-}
-
-//Gets a string descriptor as a STL string
-string GetStringDescriptor(libusb_device_handle* hdev, uint8_t index)
-{
-	char strbuf[128];
-	if(libusb_get_string_descriptor_ascii(hdev, index, (unsigned char*)strbuf, sizeof(strbuf)) < 0)
-	{
-		printf("libusb_get_string_descriptor_ascii failed\n");
-		exit(-1);
-	}
-	
-	return string(strbuf);
 }
