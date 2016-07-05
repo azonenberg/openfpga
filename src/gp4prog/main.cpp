@@ -27,6 +27,8 @@ void GeneratePacketHeader(unsigned char* data, uint16_t type);
 
 void SetStatusLED(libusb_device_handle* hdev, bool status);
 
+void SendInterruptTransfer(libusb_device_handle* hdev, unsigned char* buf, size_t size);
+
 //Test point config (actual bitstream coding)
 enum TPConfig
 {
@@ -60,7 +62,7 @@ enum TPConfig
 
 //Helper struct for test point configuration 
 //Not actual bitstream ordering, but contains all the data
-struct TestPointConfig
+class TestPointConfig
 {
 public:
 
@@ -99,14 +101,12 @@ void SetTestPointConfig(libusb_device_handle* hdev, TestPointConfig& config);
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-	//Set up libusb
+	//Set up libusb and open the board (for now assume we only have one)
 	if(0 != libusb_init(NULL))
 	{
 		printf("libusb_init failed\n");
 		exit(-1);
 	}
-	
-	//See what's out there
 	libusb_device_handle* hdev = OpenDevice();
 	
 	//Get string descriptors
@@ -114,9 +114,11 @@ int main(int /*argc*/, char* /*argv*/[])
 	string vendor = GetStringDescriptor(hdev, 2);		//manufacturer
 	printf("Found: %s %s\n", vendor.c_str(), name.c_str());
 	//string 0x80 is 02 03 for this board... what does that mean? firmware rev or something?
+	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
 	
-	//Blink the LED
-	for(int i=0; i<5; i++)
+	//Blink the LED a few times
+	printf("Blinking LED for sanity check\n");
+	for(int i=0; i<3; i++)
 	{
 		SetStatusLED(hdev, 1);
 		usleep(250 * 1000);
@@ -124,6 +126,18 @@ int main(int /*argc*/, char* /*argv*/[])
 		SetStatusLED(hdev, 0);
 		usleep(250 * 1000);
 	}
+	
+	//Set the I/O configuration on the test points
+	TestPointConfig config;
+	for(int i=3; i<=10; i++)
+	{
+		config.driverConfigs[i] = TP_PULLUP;
+		config.ledEnabled[i] = true;
+	}
+	SetTestPointConfig(hdev, config);
+	
+	//Wait a while
+	usleep(1000 * 1000);	
 	
 	//Done
 	libusb_close(hdev);
@@ -142,13 +156,7 @@ void SetStatusLED(libusb_device_handle* hdev, bool status)
 	cmd[4] = status;
 	
 	//and send it
-	int transferred;
-	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, INT_ENDPOINT, cmd, sizeof(cmd), &transferred, 250)))
-	{
-		printf("libusb_interrupt_transfer failed (err=%d)\n", err);
-		exit(-1);
-	}
+	SendInterruptTransfer(hdev, cmd, sizeof(cmd));
 }
 
 void SetTestPointConfig(libusb_device_handle* hdev, TestPointConfig& config)
@@ -207,26 +215,57 @@ void SetTestPointConfig(libusb_device_handle* hdev, TestPointConfig& config)
 	}
 	
 	//Offsets 32 ... 34: LEDs from TP3 ... TP15
-	
+	offset = 0x32;
+	unsigned int tpbase = 3;
+	for(int i=0; i<3; i++)
+	{
+		uint8_t ledcfg = 0;
+		for(int j=0; j<4; j++)
+		{
+			uint8_t bitmask = 1 << j;
+			uint8_t tpnum = tpbase + j;
+			
+			if(config.ledEnabled[tpnum])
+				ledcfg |= bitmask;
+			if(config.ledInverted[tpnum])
+				ledcfg |= (bitmask << 4);
+		}
+		cmd[offset] = ledcfg;
+		
+		//Bump pointers
+		offset ++;
+		tpbase += 4;
+		
+		//skip TP11 as it's not implemented in the hardware (ground)
+		if(i == 1)
+			tpbase ++;
+	}
 	
 	//Offsets 35 ... 36: LEDs from TP16 ... TP20
-	
+	uint8_t leden = 0;
+	uint8_t ledinv = 0;
+	for(int i=0; i<5; i++)
+	{
+		uint8_t tpnum = 16 + i;
+		uint8_t bitmask = 1 << i;
+		
+		if(config.ledEnabled[tpnum])
+			leden |= bitmask;
+		if(config.ledInverted[tpnum])
+			ledinv |= bitmask;
+	}
+	cmd[0x35] = leden;
+	cmd[0x36] = ledinv;
 	
 	//Offset 37: always constant 1. Power LED maybe?
 	cmd[0x37] = 1;
 	
-	//Send the interrupt
-	int transferred;
-	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, INT_ENDPOINT, cmd, sizeof(cmd), &transferred, 250)))
-	{
-		printf("libusb_interrupt_transfer failed (err=%d)\n", err);
-		exit(-1);
-	}
+	//Send it
+	SendInterruptTransfer(hdev, cmd, sizeof(cmd));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// USB interrupt packet header generation
+// USB interrupt helpers
 
 void GeneratePacketHeader(unsigned char* data, uint16_t type)
 {
@@ -236,6 +275,17 @@ void GeneratePacketHeader(unsigned char* data, uint16_t type)
 	data[3] = 0;
 	for(int i=4; i<62; i++)
 		data[i] = 0;
+}
+
+void SendInterruptTransfer(libusb_device_handle* hdev, unsigned char* buf, size_t size)
+{
+	int transferred;
+	int err = 0;
+	if(0 != (err = libusb_interrupt_transfer(hdev, INT_ENDPOINT, buf, size, &transferred, 250)))
+	{
+		printf("libusb_interrupt_transfer failed (err=%d)\n", err);
+		exit(-1);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
