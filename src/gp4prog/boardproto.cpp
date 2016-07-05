@@ -142,12 +142,12 @@ void SetTestPointConfig(hdevice hdev, TestPointConfig& config)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USB interrupt helpers
 
-void GeneratePacketHeader(unsigned char* data, uint16_t type)
+void GeneratePacketHeader(unsigned char* data, uint16_t type, uint16_t packets_left)
 {
 	data[0] = 0x01;
 	data[1] = type >> 8;
 	data[2] = type & 0xff;
-	data[3] = 0;
+	data[3] = packets_left;	//decreasing sequence number
 	for(int i=4; i<62; i++)
 		data[i] = 0;
 }

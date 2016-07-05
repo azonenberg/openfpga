@@ -112,7 +112,7 @@ public:
 	}
 };
 
-void GeneratePacketHeader(unsigned char* data, uint16_t type);
+void GeneratePacketHeader(unsigned char* data, uint16_t type, uint16_t packets_left = 0);
 void SetStatusLED(hdevice hdev, bool status);
 void SetTestPointConfig(hdevice hdev, TestPointConfig& config);
 
