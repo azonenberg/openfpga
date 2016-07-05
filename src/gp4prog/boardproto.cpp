@@ -132,7 +132,7 @@ void SetTestPointConfig(hdevice hdev, TestPointConfig& config)
 	cmd[0x35] = leden;
 	cmd[0x36] = ledinv;
 	
-	//Offset 37: always constant 1. Power LED maybe?
+	//Offset 37: always constant 1, meaning unknown
 	cmd[0x37] = 1;
 	
 	//Send it
