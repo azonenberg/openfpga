@@ -243,7 +243,7 @@ void ShowUsage()
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"
 		"    -l, --logfile        <file>\n"
-		"        Causes log messages to be written to <file>."
+		"        Causes log messages to be written to <file>.\n"
 		"    -L, --logfile-lines  <file>\n"
 		"        Causes log messages to be written to <file>, flushing after each line.\n"
 		"    --unused-pull        [down|up|float]\n"
