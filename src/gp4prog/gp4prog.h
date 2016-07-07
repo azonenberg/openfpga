@@ -155,7 +155,15 @@ public:
 void SetStatusLED(hdevice hdev, bool status);
 void SetIOConfig(hdevice hdev, IOConfig& config);
 
+enum SiggenStatus
+{
+	SIGGEN_PAUSE,
+	SIGGEN_START,
+	SIGGEN_STOP,
+	SIGGEN_NOP
+};
+
 void ConfigureSiggen(hdevice hdev, uint8_t channel);
-void SetSiggenStatus(hdevice hdev, bool* status);
+void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status);
 
 #endif

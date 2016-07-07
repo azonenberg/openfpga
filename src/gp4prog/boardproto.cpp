@@ -36,11 +36,13 @@ void DataFrame::Send(hdevice hdev)
 	//Packet body
 	for(size_t i=0; i<m_payload.size(); i++)
 		data[4+i] = m_payload[i];
-		
+	
+	/*	
 	printf("Sending: ");
 	for(int i=0; i<63; i++)
 		printf("%02x", data[i] & 0xff);
 	printf("\n");
+	*/
 		
 	SendInterruptTransfer(hdev, data, sizeof(data));
 }
@@ -48,12 +50,18 @@ void DataFrame::Send(hdevice hdev)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device I/O
 
-void SetSiggenStatus(hdevice hdev, bool* status)
+void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status)
 {
 	DataFrame frame(DataFrame::ENABLE_SIGGEN);
 	
 	for(unsigned int i=0; i<19; i++)
-		frame.push_back(status[i]);
+	{
+		if(i == chan)					//apply our status
+			frame.push_back(status);
+			
+		else
+			frame.push_back(SIGGEN_NOP);	//no change
+	}
 		
 	frame.Send(hdev);
 }
@@ -67,10 +75,11 @@ void ConfigureSiggen(hdevice hdev, uint8_t channel)
 	//For now, hard-code to 3V3 (2423 = 0x0977)
 	uint16_t voltage = 0x977;
 	
-	frame.push_back(1);				//logic generator
+	frame.push_back(2);				//signal generator
 	frame.push_back(channel);		//channel number
 	frame.push_back(1);				//hold at start value before starting
 	frame.push_back(0);				//repeat waveform forever
+	frame.push_back(1);				//end state: keep last state
 	frame.push_back(voltage >> 8);	//voltage
 	frame.push_back(voltage & 0xff);
 	frame.push_back(0);				//ramp delay
@@ -144,8 +153,6 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	}
 	for(size_t i=0; i<3; i++)
 		frame.push_back(exp[i]);
-	
-	printf("offset = %x\n", frame.m_payload.size());
 	
 	//LEDs from TP3 ... TP15
 	unsigned int tpbase = 3;

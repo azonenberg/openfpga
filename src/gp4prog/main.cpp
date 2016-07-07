@@ -51,12 +51,12 @@ int main(int /*argc*/, char* /*argv*/[])
 	printf("Configuring Vdd signal generator\n");
 	ConfigureSiggen(hdev, 1);
 	bool enable[19] = { true, false };
-	SetSiggenStatus(hdev, enable);
+	SetSiggenStatus(hdev, 1, SIGGEN_START);
 	
 	//Set the I/O configuration on the test points
 	printf("Setting initial dummy I/O configuration\n");
 	IOConfig config;
-	for(int i=3; i<=3; i++)
+	for(int i=3; i<=5; i++)
 	{
 		config.driverConfigs[i] = TP_PULLUP;
 		config.ledEnabled[i] = true;
@@ -76,6 +76,9 @@ int main(int /*argc*/, char* /*argv*/[])
 		config.expansionEnabled[i] = false;
 	}
 	SetIOConfig(hdev, config);
+	
+	//Kill power
+	SetSiggenStatus(hdev, 1, SIGGEN_STOP);
 	
 	//Done
 	printf("Cleaning up\n");
