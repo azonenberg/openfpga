@@ -23,74 +23,89 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device I/O
 
-void SetStatusLED(hdevice hdev, bool status)
+void DataFrame::Send(hdevice hdev)
 {
-	//Generate the status packet
-	unsigned char cmd[63];
-	GeneratePacketHeader(cmd, 0x2104);
-	cmd[4] = status;
+	unsigned char data[63] = {0};
 	
-	//and send it
-	SendInterruptTransfer(hdev, cmd, sizeof(cmd));
+	//Packet header
+	data[0] = m_sequenceA;
+	data[1] = m_type;
+	data[2] = 3 + m_payload.size();
+	data[3] = m_sequenceB;
+	
+	//Packet body
+	for(size_t i=0; i<m_payload.size(); i++)
+		data[4+i] = m_payload[i];
+		
+	SendInterruptTransfer(hdev, data, sizeof(data));
 }
 
-void SetTestPointConfig(hdevice hdev, TestPointConfig& config)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Device I/O
+
+void SetStatusLED(hdevice hdev, bool status)
 {
-	//Generate the command packet header
-	unsigned char cmd[63];
-	GeneratePacketHeader(cmd, 0x0439);
+	DataFrame frame(DataFrame::SET_STATUS_LED);
+	frame.push_back(status);
+	frame.Send(hdev);
+}
+
+void SetIOConfig(hdevice hdev, IOConfig& config)
+{
+	DataFrame frame(DataFrame::CONFIG_IO);
 	
-	//Offsets 04 ... 27: test point config data
-	unsigned int offset = 4;
+	//Test point config data
 	for(unsigned int i=2; i<=20; i++)
 	{
 		unsigned int cfg = config.driverConfigs[i];
-		cmd[offset] = cfg >> 8;
-		cmd[offset + 1] = cfg & 0xff;
-		
-		offset += 2;
+		frame.push_back(cfg >> 8);
+		frame.push_back(cfg & 0xff);
 		
 		//skip TP11 since that's ground, no config for it
 		if(i == 10)
 			i++;
 	}
 	
-	//Offsets 28 ... 2e: unused? leave at 0 for now
+	//7 unknown bytes, leave zero for now
+	for(size_t i=0; i<7; i++)
+		frame.push_back(0);
 	
-	//Offsets 2f ... 31: expansion connector
+	//Offsets 2f ... 31: expansion connector TODO
+	uint8_t exp[3] = {0};
 	uint8_t expansionBitMap[21][2] =
 	{
-		{0x00, 0x00},		//unused
-		{0x30, 0x01},		//Vdd
+		{0, 0x00},		//unused
+		{1, 0x01},		//Vdd
 		
-		{0x31, 0x04},		//TP2
-		{0x31, 0x01},		//TP3
-		{0x31, 0x10},		//TP4
-		{0x31, 0x40},		//TP5
-		{0x2f, 0x01},		//TP6
-		{0x2f, 0x04},		//TP7
-		{0x2f, 0x10},		//TP8
-		{0x2f, 0x40},		//TP9
-		{0x2f, 0x80},		//TP10
+		{2, 0x04},		//TP2
+		{2, 0x01},		//TP3
+		{2, 0x10},		//TP4
+		{2, 0x40},		//TP5
+		{0, 0x01},		//TP6
+		{0, 0x04},		//TP7
+		{0, 0x10},		//TP8
+		{0, 0x40},		//TP9
+		{0, 0x80},		//TP10
 		
-		{0x2f, 0x20},		//TP12
-		{0x31, 0x08},		//TP13
-		{0x31, 0x02},		//TP14
-		{0x30, 0x80},		//TP15
-		{0x31, 0x20},		//TP16
-		{0x2f, 0x02},		//TP17
-		{0x30, 0x20},		//TP18
-		{0x30, 0x08},		//TP19
-		{0x2f, 0x08}		//TP20
+		{0, 0x20},		//TP12
+		{2, 0x08},		//TP13
+		{2, 0x02},		//TP14
+		{1, 0x80},		//TP15
+		{2, 0x20},		//TP16
+		{0, 0x02},		//TP17
+		{1, 0x20},		//TP18
+		{1, 0x08},		//TP19
+		{2, 0x08}		//TP20
 	};
 	for(unsigned int i=1; i<21; i++)
 	{
 		if(config.expansionEnabled[i])
-			cmd[expansionBitMap[i][0]] = expansionBitMap[i][1];
+			exp[expansionBitMap[i][0]] = expansionBitMap[i][1];
 	}
+	for(size_t i=0; i<7; i++)
+		frame.push_back(exp[i]);
 	
-	//Offsets 32 ... 34: LEDs from TP3 ... TP15
-	offset = 0x32;
+	//LEDs from TP3 ... TP15
 	unsigned int tpbase = 3;
 	for(int i=0; i<3; i++)
 	{
@@ -105,13 +120,10 @@ void SetTestPointConfig(hdevice hdev, TestPointConfig& config)
 			if(config.ledInverted[tpnum])
 				ledcfg |= (bitmask << 4);
 		}
-		cmd[offset] = ledcfg;
-		
-		//Bump pointers
-		offset ++;
+		frame.push_back(ledcfg);
+				
+		//Bump pointers. skip TP11 as it's not implemented in the hardware (ground)
 		tpbase += 4;
-		
-		//skip TP11 as it's not implemented in the hardware (ground)
 		if(i == 1)
 			tpbase ++;
 	}
@@ -129,26 +141,14 @@ void SetTestPointConfig(hdevice hdev, TestPointConfig& config)
 		if(config.ledInverted[tpnum])
 			ledinv |= bitmask;
 	}
-	cmd[0x35] = leden;
-	cmd[0x36] = ledinv;
+	frame.push_back(leden);
+	frame.push_back(ledinv);
 	
 	//Offset 37: always constant 1, meaning unknown
-	cmd[0x37] = 1;
+	frame.push_back(0x1);
 	
-	//Send it
-	SendInterruptTransfer(hdev, cmd, sizeof(cmd));
+	//Done, send it
+	frame.Send(hdev);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// USB interrupt helpers
-
-void GeneratePacketHeader(unsigned char* data, uint16_t type, uint16_t packets_left)
-{
-	data[0] = 0x01;
-	data[1] = type >> 8;
-	data[2] = type & 0xff;
-	data[3] = packets_left;	//decreasing sequence number
-	for(int i=4; i<62; i++)
-		data[i] = 0;
-}
 

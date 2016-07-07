@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #include <string>
+#include <vector>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -80,9 +81,9 @@ enum TPConfig
 	TP_LOGIC_WEAK_PP	= TP_WEAK | TP_SIGGEN		//Weak signal generator
 };
 
-//Helper struct for test point configuration 
+//Helper for test point configuration 
 //Not actual bitstream ordering, but contains all the data
-class TestPointConfig
+class IOConfig
 {
 public:
 
@@ -100,7 +101,7 @@ public:
 	bool expansionEnabled[21];	//only [20:12], [10:2] meaningful for signals
 								//[1] is Vdd
 								
-	TestPointConfig()
+	IOConfig()
 	{
 		for(int i=0; i<21; i++)
 		{
@@ -112,8 +113,46 @@ public:
 	}
 };
 
-void GeneratePacketHeader(unsigned char* data, uint16_t type, uint16_t packets_left = 0);
+//Logical view of a data packet on the wire
+//Not actual bitstream ordering, but contains all the data
+class DataFrame
+{
+public:
+	DataFrame(uint8_t type)
+		: m_type(type)
+		, m_sequenceA(1)
+		, m_sequenceB(0)
+	{
+	}
+	
+	enum PacketTypes
+	{
+		READ_BITSTREAM_START	= 0x02,
+		WRITE_BITSTREAM_SRAM	= 0x03,
+		CONFIG_IO				= 0x04,
+		RESET					= 0x05,
+		//6 so far unobserved
+		READ_BITSTREAM_CONT		= 0x07,
+		CONFIG_SIGGEN			= 0x08,
+		ENABLE_SIGGEN			= 0x09,
+		SET_STATUS_LED			= 0x21,
+		GET_OSC_FREQ			= 0x42,
+		TRIM_OSC				= 0x49
+	};
+	
+	void Send(hdevice hdev);
+	
+	void push_back(uint8_t b)
+	{ m_payload.push_back(b); }
+
+public:
+	uint8_t m_type;
+	uint8_t m_sequenceA;
+	uint8_t m_sequenceB;
+	std::vector<uint8_t> m_payload;
+};
+
 void SetStatusLED(hdevice hdev, bool status);
-void SetTestPointConfig(hdevice hdev, TestPointConfig& config);
+void SetIOConfig(hdevice hdev, IOConfig& config);
 
 #endif

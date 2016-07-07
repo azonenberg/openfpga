@@ -49,19 +49,19 @@ int main(int /*argc*/, char* /*argv*/[])
 	
 	//Set the I/O configuration on the test points
 	printf("Setting initial dummy I/O configuration\n");
-	TestPointConfig config;
+	IOConfig config;
 	for(int i=3; i<=10; i++)
 	{
 		config.driverConfigs[i] = TP_PULLUP;
 		config.ledEnabled[i] = true;
 	}
-	SetTestPointConfig(hdev, config);
+	SetIOConfig(hdev, config);
 	
 	//Wait a while
 	usleep(1000 * 1000);	
 	
-	//Wipe test config to floating
-	printf("Restoring test point configuration\n");
+	//Wipe I/O config to floating
+	printf("Restoring I/O configuration\n");
 	for(int i=0; i<=21; i++)
 	{
 		config.driverConfigs[i] = TP_FLOAT;
@@ -69,7 +69,7 @@ int main(int /*argc*/, char* /*argv*/[])
 		config.ledInverted[i] = false;
 		config.expansionEnabled[i] = false;
 	}
-	SetTestPointConfig(hdev, config);
+	SetIOConfig(hdev, config);
 	
 	//Done
 	printf("Cleaning up\n");
