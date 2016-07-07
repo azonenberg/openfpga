@@ -110,7 +110,7 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	for(size_t i=0; i<7; i++)
 		frame.push_back(0);
 	
-	//Offsets 2f ... 31: expansion connector TODO
+	//Expansion connector
 	uint8_t exp[3] = {0};
 	uint8_t expansionBitMap[21][2] =
 	{
@@ -142,7 +142,7 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 		if(config.expansionEnabled[i])
 			exp[expansionBitMap[i][0]] = expansionBitMap[i][1];
 	}
-	for(size_t i=0; i<7; i++)
+	for(size_t i=0; i<3; i++)
 		frame.push_back(exp[i]);
 	
 	printf("offset = %x\n", frame.m_payload.size());
@@ -190,8 +190,6 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	frame.push_back(0x1);
 	frame.push_back(0x0);
 	frame.push_back(0x0);
-	
-	printf("LED config 0x32: %02x\n", frame.m_payload[0x32]);
 	
 	//Done, send it
 	frame.Send(hdev);
