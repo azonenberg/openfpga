@@ -155,4 +155,7 @@ public:
 void SetStatusLED(hdevice hdev, bool status);
 void SetIOConfig(hdevice hdev, IOConfig& config);
 
+void ConfigureSiggen(hdevice hdev, uint8_t channel);
+void SetSiggenStatus(hdevice hdev, bool* status);
+
 #endif

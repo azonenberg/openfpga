@@ -37,11 +37,51 @@ void DataFrame::Send(hdevice hdev)
 	for(size_t i=0; i<m_payload.size(); i++)
 		data[4+i] = m_payload[i];
 		
+	printf("Sending: ");
+	for(int i=0; i<63; i++)
+		printf("%02x", data[i] & 0xff);
+	printf("\n");
+		
 	SendInterruptTransfer(hdev, data, sizeof(data));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device I/O
+
+void SetSiggenStatus(hdevice hdev, bool* status)
+{
+	DataFrame frame(DataFrame::ENABLE_SIGGEN);
+	
+	for(unsigned int i=0; i<19; i++)
+		frame.push_back(status[i]);
+		
+	frame.Send(hdev);
+}
+
+//ch1 = Vdd, CH2...20 = TP2...20
+//TODO: more than just a dummy placeholder
+void ConfigureSiggen(hdevice hdev, uint8_t channel)
+{
+	DataFrame frame(DataFrame::CONFIG_SIGGEN);
+	
+	//For now, hard-code to 3V3 (2423 = 0x0977)
+	uint16_t voltage = 0x977;
+	
+	frame.push_back(1);				//logic generator
+	frame.push_back(channel);		//channel number
+	frame.push_back(1);				//hold at start value before starting
+	frame.push_back(0);				//repeat waveform forever
+	frame.push_back(voltage >> 8);	//voltage
+	frame.push_back(voltage & 0xff);
+	frame.push_back(0);				//ramp delay
+	frame.push_back(0);
+	frame.push_back(0);				//integral step part
+	frame.push_back(0);
+	frame.push_back(0);				//step sign and fractional step part
+	frame.push_back(0);
+	
+	frame.Send(hdev);
+}
 
 void SetStatusLED(hdevice hdev, bool status)
 {
@@ -105,6 +145,8 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	for(size_t i=0; i<7; i++)
 		frame.push_back(exp[i]);
 	
+	printf("offset = %x\n", frame.m_payload.size());
+	
 	//LEDs from TP3 ... TP15
 	unsigned int tpbase = 3;
 	for(int i=0; i<3; i++)
@@ -128,7 +170,7 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 			tpbase ++;
 	}
 	
-	//Offsets 35 ... 36: LEDs from TP16 ... TP20
+	//LEDs from TP16 ... TP20
 	uint8_t leden = 0;
 	uint8_t ledinv = 0;
 	for(int i=0; i<5; i++)
@@ -144,8 +186,12 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	frame.push_back(leden);
 	frame.push_back(ledinv);
 	
-	//Offset 37: always constant 1, meaning unknown
+	//Always constant, meaning unknown
 	frame.push_back(0x1);
+	frame.push_back(0x0);
+	frame.push_back(0x0);
+	
+	printf("LED config 0x32: %02x\n", frame.m_payload[0x32]);
 	
 	//Done, send it
 	frame.Send(hdev);
