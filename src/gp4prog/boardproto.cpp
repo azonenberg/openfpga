@@ -292,7 +292,7 @@ void LoadBitstream(hdevice hdev, std::vector<uint8_t> bitstream)
 	frame.push_back(0x00);
 	frame.push_back(0x00);
 
-	uint16_t cycles = 0x828;//bitstream.size() * 8 + 34;
+	uint16_t cycles = bitstream.size() * 8 + 34;
 	frame.push_back(cycles >> 8);
 	frame.push_back(cycles & 0xff);
 
