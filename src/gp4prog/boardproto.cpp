@@ -96,7 +96,7 @@ void DataFrame::Send(hdevice hdev)
 	for(size_t i=0; i<m_payload.size(); i++)
 		data[4+i] = m_payload[i];
 	
-	LogVerbose("Sending: ");
+	LogVerbose("H→D: ");
 	for(int i=0; i<64; i++) {
 		LogVerbose("%02x", data[i] & 0xff);
 		if(i < 4) LogVerbose("_");
@@ -104,6 +104,62 @@ void DataFrame::Send(hdevice hdev)
 	LogVerbose("\n");
 	
 	SendInterruptTransfer(hdev, data, sizeof(data));
+}
+
+void DataFrame::Receive(hdevice hdev)
+{
+	uint8_t data[64];
+
+	ReceiveInterruptTransfer(hdev, data, sizeof(data));
+
+	LogVerbose("D→H: ");
+	for(int i=0; i<64; i++) {
+		LogVerbose("%02x", data[i] & 0xff);
+		if(i < 4) LogVerbose("_");
+	}
+	LogVerbose("\n");
+
+	//Packet header
+	uint8_t size;
+	m_sequenceA = data[0];
+	m_type = data[1];
+	if(data[2] == 0x00)
+		size = 0;
+	else if(data[2] > 3)
+		size = data[2] - 3;
+	else
+		LogFatal("Unexpected size %d\n", data[2]);
+	m_sequenceB = data[3];
+	
+	//Packet body
+	m_payload.resize(size);
+	for(size_t i=0; i<m_payload.size(); i++)
+		m_payload[i] = data[4+i];
+}
+
+void DataFrame::Roundtrip(hdevice hdev, uint8_t ack_type)
+{
+	Send(hdev);
+
+	// Receive an acknowledgement frame
+	DataFrame ack_frame;
+	ack_frame.Receive(hdev);
+
+	// Compare the two frames. 
+	// Received frame will usually have length 0x3f; it is unimportant.
+	// Received frame will sometimes have the same sequence number B, sometimes not. It is unimportant.
+	if(!(m_sequenceA == ack_frame.m_sequenceA &&
+	     ack_type == ack_frame.m_type &&
+	     m_payload.size() <= ack_frame.m_payload.size() &&
+	     std::equal(m_payload.begin(), m_payload.end(),
+	                ack_frame.m_payload.begin()))) {
+		LogFatal("Unexpected acknowledgement frame\n");
+	}
+}
+
+void DataFrame::Roundtrip(hdevice hdev)
+{
+	Roundtrip(hdev, m_type);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,14 +179,14 @@ void SetPart(hdevice hdev, SilegoPart part)
 	frame.push_back(0x00);
 	frame.push_back(0x00);
 	frame.push_back(0x00);
-	frame.Send(hdev);
+	frame.Roundtrip(hdev);
 }
 
 void SetStatusLED(hdevice hdev, bool status)
 {
 	DataFrame frame(DataFrame::SET_STATUS_LED);
 	frame.push_back(status);
-	frame.Send(hdev);
+	frame.Roundtrip(hdev);
 }
 
 void SetIOConfig(hdevice hdev, IOConfig& config)
@@ -258,7 +314,7 @@ void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage)
 	// frame.push_back(0);					//step sign and fractional step part
 	// frame.push_back(0);
 	
-	frame.Send(hdev);
+	frame.Roundtrip(hdev);
 }
 
 void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status)
@@ -294,11 +350,11 @@ void LoadBitstream(hdevice hdev, std::vector<uint8_t> bitstream)
 		frame.push_back(bitstream[i]);
 
 		if(frame.IsFull()) {
-			frame.Send(hdev);
+			frame.Roundtrip(hdev, DataFrame::WRITE_BITSTREAM_SRAM_ACK1);
 			frame = frame.Next();
 		}
 	}
 
 	if(!frame.IsEmpty())
-		frame.Send(hdev);
+		frame.Roundtrip(hdev, DataFrame::WRITE_BITSTREAM_SRAM_ACK2);
 }

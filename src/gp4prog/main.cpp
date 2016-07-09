@@ -31,7 +31,7 @@ vector<uint8_t> ReadBitstream(string fname);
 
 int main(int argc, char* argv[])
 {
-	LogSink::Severity console_verbosity = LogSink::VERBOSE;
+	LogSink::Severity console_verbosity = LogSink::NOTICE;
 
 	string fname;
 

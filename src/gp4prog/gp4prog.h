@@ -48,6 +48,7 @@ void USBCleanup(hdevice hdev);
 hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct);
 std::string GetStringDescriptor(hdevice hdev, uint8_t index);
 void SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size);
+void ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Board protocol stuff
@@ -126,6 +127,13 @@ public:
 class DataFrame
 {
 public:
+	DataFrame()
+		: m_type(0)
+		, m_sequenceA(0)
+		, m_sequenceB(0)
+	{
+	}
+
 	DataFrame(uint8_t type)
 		: m_type(type)
 		, m_sequenceA(1)
@@ -137,21 +145,26 @@ public:
 	
 	enum PacketTypes
 	{
-		READ_BITSTREAM_START	= 0x02,
-		WRITE_BITSTREAM_SRAM	= 0x03,
-		CONFIG_IO				= 0x04,
-		RESET					= 0x05,
+		READ_BITSTREAM_START		= 0x02,
+		WRITE_BITSTREAM_SRAM		= 0x03,
+		CONFIG_IO					= 0x04,
+		RESET						= 0x05,
 		//6 so far unobserved
-		READ_BITSTREAM_CONT		= 0x07,
-		CONFIG_SIGGEN			= 0x08,
-		ENABLE_SIGGEN			= 0x09,
-		SET_STATUS_LED			= 0x21,
-		SET_PART                = 0x25,
-		GET_OSC_FREQ			= 0x42,
-		TRIM_OSC				= 0x49
+		READ_BITSTREAM_CONT			= 0x07,
+		WRITE_BITSTREAM_SRAM_ACK1   = 0x07,
+		CONFIG_SIGGEN				= 0x08,
+		ENABLE_SIGGEN				= 0x09,
+		WRITE_BITSTREAM_SRAM_ACK2   = 0x1a,
+		SET_STATUS_LED				= 0x21,
+		SET_PART                	= 0x25,
+		GET_OSC_FREQ				= 0x42,
+		TRIM_OSC					= 0x49
 	};
 	
 	void Send(hdevice hdev);
+	void Receive(hdevice hdev);
+	void Roundtrip(hdevice hdev);
+	void Roundtrip(hdevice hdev, uint8_t ack_type);
 
 	bool IsEmpty()
 	{ return m_payload.size() == 0; }

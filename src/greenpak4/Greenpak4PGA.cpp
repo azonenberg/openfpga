@@ -288,6 +288,8 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			break;
 		*/
 	}
+
+	return true;
 	
 	//Set the power-on signal if we have any loads other than the ADC
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());

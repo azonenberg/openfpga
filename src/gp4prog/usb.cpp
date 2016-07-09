@@ -20,7 +20,8 @@
 
 using namespace std;
 
-#define INT_ENDPOINT 2
+#define EP_OUT 0x02
+#define EP_IN  0x81
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USB command helpers
@@ -29,9 +30,20 @@ void SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size)
 {
 	int transferred;
 	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, INT_ENDPOINT, const_cast<uint8_t*>(buf), size, &transferred, 250)))
+	if(0 != (err = libusb_interrupt_transfer(hdev, EP_OUT, const_cast<uint8_t*>(buf), size, &transferred, 250)))
 	{
-		printf("libusb_interrupt_transfer failed (err=%d)\n", err);
+		printf("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
+		exit(-1);
+	}
+}
+
+void ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size)
+{
+	int transferred;
+	int err = 0;
+	if(0 != (err = libusb_interrupt_transfer(hdev, EP_IN, buf, size, &transferred, 250)))
+	{
+		printf("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
 		exit(-1);
 	}
 }
