@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 		}
 		else if(s == "-q" || s == "--quiet")
 		{
-			if(console_verbosity == LogSink::VERBOSE)
+			if(console_verbosity == LogSink::NOTICE)
 				console_verbosity = LogSink::WARNING;
 			else if(console_verbosity == LogSink::WARNING)
 				console_verbosity = LogSink::ERROR;
