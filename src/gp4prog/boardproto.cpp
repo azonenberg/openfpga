@@ -20,12 +20,19 @@
 
 using namespace std;
 
+void SwitchMode(hdevice hdev)
+{
+	uint8_t data[64] = {};
+	data[60] = 0x09;
+	SendInterruptTransfer(hdev, data, sizeof(data));
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device I/O
 
 void DataFrame::Send(hdevice hdev)
 {
-	unsigned char data[63] = {0};
+	uint8_t data[64] = {};
 	
 	//Packet header
 	data[0] = m_sequenceA;

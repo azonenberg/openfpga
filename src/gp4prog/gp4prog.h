@@ -43,12 +43,14 @@ typedef libusb_device_handle* hdevice;
 void USBSetup();
 void USBCleanup(hdevice hdev);
 
-hdevice OpenDevice();
+hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct);
 std::string GetStringDescriptor(hdevice hdev, uint8_t index);
-void SendInterruptTransfer(hdevice hdev, unsigned char* buf, size_t size);
+void SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Board protocol stuff
+
+void SwitchMode(hdevice hdev);
 
 //Test point config (actual bitstream coding)
 enum TPConfig

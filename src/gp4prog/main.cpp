@@ -25,9 +25,33 @@ using namespace std;
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-	//Set up libusb and open the board (for now assume we only have one)
+	//Set up libusb
 	USBSetup();
-	hdevice hdev = OpenDevice();
+	
+	// Try opening the board in "orange" mode
+	hdevice hdev = OpenDevice(0x0f0f, 0x0006);
+	if(!hdev) {
+		// Try opening the board in "white" mode
+ 		hdev = OpenDevice(0x0f0f, 0x8006);
+		if(!hdev) {
+			printf("No device found, giving up\n");
+			exit(-1);
+		}
+
+		// Change the board into "orange" mode
+		printf("Switching board mode\n");
+		SwitchMode(hdev);
+
+		// Takes a while to switch and re-enumerate
+		usleep(1000 * 1000);
+
+		// Try opening the board in "orange" mode again
+		hdev = OpenDevice(0x0f0f, 0x0006);
+		if(!hdev) {
+			printf("Could not switch mode, giving up\n");
+			exit(-1);
+		}
+	}
 	
 	//Get string descriptors
 	string name = GetStringDescriptor(hdev, 1);			//board name

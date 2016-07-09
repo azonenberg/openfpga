@@ -25,11 +25,11 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USB command helpers
 
-void SendInterruptTransfer(hdevice hdev, unsigned char* buf, size_t size)
+void SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size)
 {
 	int transferred;
 	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, INT_ENDPOINT, buf, size, &transferred, 250)))
+	if(0 != (err = libusb_interrupt_transfer(hdev, INT_ENDPOINT, const_cast<uint8_t*>(buf), size, &transferred, 250)))
 	{
 		printf("libusb_interrupt_transfer failed (err=%d)\n", err);
 		exit(-1);
@@ -56,7 +56,7 @@ void USBCleanup(hdevice hdev)
 }
 
 //Gets the device handle (assume only one for now)
-hdevice OpenDevice()
+hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 {
 	libusb_device** list;
 	ssize_t devcount = libusb_get_device_list(NULL, &list);
@@ -76,7 +76,7 @@ hdevice OpenDevice()
 			continue;
 		
 		//Silego devkit
-		if( (desc.idVendor == 0x0f0f) && (desc.idProduct == 0x0006) )
+		if( (desc.idVendor == idVendor) && (desc.idProduct == idProduct) )
 		{
 			found = true;
 			break;
@@ -94,10 +94,9 @@ hdevice OpenDevice()
 	libusb_free_device_list(list, 1);
 	if(!found)
 	{
-		printf("No device found, giving up\n");
-		exit(-1);
+		return NULL;
 	}
-	
+
 	//Detach the kernel driver, if any
 	int err = libusb_detach_kernel_driver(hdev, 0);
 	if( (0 != err) && (LIBUSB_ERROR_NOT_FOUND != err) )
