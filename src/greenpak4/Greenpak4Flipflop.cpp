@@ -35,6 +35,7 @@ Greenpak4Flipflop::Greenpak4Flipflop(
 	, m_ffnum(ffnum)
 	, m_hasSR(has_sr)
 	, m_initValue(false)
+	, m_srmode(false)
 	, m_input(device->GetGround())
 	, m_clock(device->GetGround())
 	, m_nsr(device->GetPower())

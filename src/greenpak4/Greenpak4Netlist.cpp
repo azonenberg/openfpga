@@ -51,7 +51,8 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname, std::string top)
 		LogError("Failed to seek to start of netlist file %s\n", fname.c_str());
 		exit(-1);
 	}
-	char* json_string = new char[len];
+	char* json_string = new char[len + 1];
+	json_string[len] = '\0';
 	if(len != fread(json_string, 1, len, fp))
 	{
 		LogError("Failed read contents of netlist file %s\n", fname.c_str());
