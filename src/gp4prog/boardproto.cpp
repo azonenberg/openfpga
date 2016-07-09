@@ -20,15 +20,64 @@
 
 using namespace std;
 
-void SwitchMode(hdevice hdev)
-{
-	uint8_t data[64] = {};
-	data[60] = 0x09;
-	SendInterruptTransfer(hdev, data, sizeof(data));
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device I/O
+
+/* For use with the following systemtap script and the vendor tool (run as `stap -g silego.stp`):
+
+function getstr:string(buf:long, off:long, cnt:long, pad:long) %{
+  const char hex[] = "0123456789abcdef";
+  uint8_t *buf = (*(uint8_t **)STAP_ARG_buf) + 0x10 + STAP_ARG_off;
+  int i;
+  char *out = STAP_RETVALUE;
+  int remain = MAXSTRINGLEN;
+  for(i = 0; i < STAP_ARG_cnt - STAP_ARG_off; i++) {
+    const char byte[3] = { hex[buf[i] >> 4], hex[buf[i] & 0xf] };
+    strlcpy (out, byte, remain);
+    out += 2; remain -= 2;
+    if(STAP_ARG_pad && (i == 0 || i == 1 || i == 2 || i == 3)) {
+      strlcpy(out, "_", remain);
+      out += 1; remain -= 1;
+    }
+  }
+%}
+
+global rbuf, rcnt, rtyp
+probe process("/usr/lib/libSilegoUSB-2.0.so.1").
+    function("_ZN9USBDevice8dataReadER7QVectorIhE").
+    call {
+  rbuf = register("rsi")
+  rcnt = register("rdx")
+  rtyp = register("rcx")
+}
+probe process("/usr/lib/libSilegoUSB-2.0.so.1").
+    function("_ZN9USBDevice8dataReadER7QVectorIhE").
+    return {
+  printf("R%02x %s\n", rtyp, getstr(rbuf, 0, 64, 1));
+}
+
+probe process("/usr/lib/libSilegoUSB-2.0.so.1").
+    function("_ZN9USBDevice9dataWriteER7QVectorIhE").
+    call {
+  wbuf = register("rsi")
+  wcnt = register("rdx")
+  wtyp = register("rcx")
+  printf("W%02x %s\n", wtyp, getstr(wbuf, 0, 64, 1));
+}
+
+*/
+DataFrame::DataFrame(const char *ascii)
+{
+	uint8_t size;
+	sscanf(ascii, "%02hhx_%02hhx_%02hhx_%02hhx_", &m_sequenceA, &m_type, &size, &m_sequenceB);
+	for(size_t i=0; i<60; i++) {
+		uint8_t byte;
+		sscanf(ascii+12+i*2, "%02hhx", &byte);
+		m_payload.push_back(byte);
+	}
+	if(size > 3)
+		m_payload.resize(size - 3);
+}
 
 void DataFrame::Send(hdevice hdev)
 {
@@ -37,65 +86,45 @@ void DataFrame::Send(hdevice hdev)
 	//Packet header
 	data[0] = m_sequenceA;
 	data[1] = m_type;
-	data[2] = 3 + m_payload.size();
+	if(m_payload.size() == 0)
+		data[2] = 0x00;
+	else
+		data[2] = 3 + m_payload.size();		
 	data[3] = m_sequenceB;
 	
 	//Packet body
 	for(size_t i=0; i<m_payload.size(); i++)
 		data[4+i] = m_payload[i];
 	
-	/*	
+	/*
 	printf("Sending: ");
-	for(int i=0; i<63; i++)
+	for(int i=0; i<64; i++) {
 		printf("%02x", data[i] & 0xff);
+		if(i < 4) printf("_");
+	}
 	printf("\n");
 	*/
-		
+	
 	SendInterruptTransfer(hdev, data, sizeof(data));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device I/O
 
-void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status)
+void SwitchMode(hdevice hdev)
 {
-	DataFrame frame(DataFrame::ENABLE_SIGGEN);
-	
-	for(unsigned int i=0; i<19; i++)
-	{
-		if(i == chan)					//apply our status
-			frame.push_back(status);
-			
-		else
-			frame.push_back(SIGGEN_NOP);	//no change
-	}
-		
-	frame.Send(hdev);
+	uint8_t data[64] = {};
+	data[60] = 0x09;
+	SendInterruptTransfer(hdev, data, sizeof(data));
 }
 
-//ch1 = Vdd, CH2...20 = TP2...20
-//TODO: more than just a dummy placeholder
-void ConfigureSiggen(hdevice hdev, uint8_t channel)
+void SetPart(hdevice hdev, SilegoPart part)
 {
-	DataFrame frame(DataFrame::CONFIG_SIGGEN);
-	
-	//For now, hard-code to 3V3 (2423 = 0x0977)
-	uint16_t voltage = 0x977;
-	
-	frame.push_back(2);				//signal generator
-	frame.push_back(channel);		//channel number
-	frame.push_back(1);				//hold at start value before starting
-	frame.push_back(0);				//repeat waveform forever
-	frame.push_back(1);				//end state: keep last state
-	frame.push_back(voltage >> 8);	//voltage
-	frame.push_back(voltage & 0xff);
-	frame.push_back(0);				//ramp delay
-	frame.push_back(0);
-	frame.push_back(0);				//integral step part
-	frame.push_back(0);
-	frame.push_back(0);				//step sign and fractional step part
-	frame.push_back(0);
-	
+	DataFrame frame(DataFrame::SET_PART);
+	frame.push_back((uint8_t)part);
+	frame.push_back(0x00);
+	frame.push_back(0x00);
+	frame.push_back(0x00);
 	frame.Send(hdev);
 }
 
@@ -209,4 +238,75 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	frame.Send(hdev);
 }
 
+//ch1 = Vdd, CH2...20 = TP2...20
+//TODO: more than just a dummy placeholder
+void ConfigureSiggen(hdevice hdev, uint8_t channel)
+{
+	DataFrame frame(DataFrame::CONFIG_SIGGEN);
+	
+	//For now, hard-code to 3V3 (2423 = 0x0977)
+	uint16_t voltage = 0x977;
+	
+	frame.push_back(2);				//signal generator
+	frame.push_back(channel);		//channel number
+	frame.push_back(1);				//hold at start value before starting
+	frame.push_back(0);				//repeat waveform forever
+	frame.push_back(1);				//end state: keep last state
+	frame.push_back(voltage >> 8);	//voltage
+	frame.push_back(voltage & 0xff);
+	frame.push_back(0);				//ramp delay
+	frame.push_back(0);
+	frame.push_back(0);				//integral step part
+	frame.push_back(0);
+	frame.push_back(0);				//step sign and fractional step part
+	frame.push_back(0);
+	
+	frame.Send(hdev);
+}
 
+void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status)
+{
+	DataFrame frame(DataFrame::ENABLE_SIGGEN);
+	
+	for(unsigned int i=0; i<19; i++)
+	{
+		if(i == chan)					//apply our status
+			frame.push_back(status);
+			
+		else
+			frame.push_back(SIGGEN_NOP);	//no change
+	}
+		
+	frame.Send(hdev);
+}
+
+void LoadBitstream(hdevice hdev, std::vector<uint8_t> bitstream)
+{
+	bitstream[247] = 0xdd;
+	bitstream[248] = 0x06;
+	bitstream[249] = 0x80;
+	bitstream[250] = 0x6c;
+
+	DataFrame frame(DataFrame::WRITE_BITSTREAM_SRAM);
+	frame.push_back(0x80);
+	frame.push_back(0x00);
+	frame.push_back(0x00);
+
+	uint16_t cycles = 0x828;//bitstream.size() * 8 + 34;
+	frame.push_back(cycles >> 8);
+	frame.push_back(cycles & 0xff);
+
+	frame.m_sequenceB = (bitstream.size() + 3) / 60;
+
+	for(size_t i = 0; i < bitstream.size(); i++) {
+		frame.push_back(bitstream[i]);
+
+		if(frame.IsFull()) {
+			frame.Send(hdev);
+			frame = frame.Next();
+		}
+	}
+
+	if(!frame.IsEmpty())
+		frame.Send(hdev);
+}

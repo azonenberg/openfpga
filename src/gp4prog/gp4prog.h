@@ -50,7 +50,11 @@ void SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Board protocol stuff
 
-void SwitchMode(hdevice hdev);
+//Part numbers (actual bitstream coding)
+enum SilegoPart
+{
+	SLG46620V = 0x62,
+};
 
 //Test point config (actual bitstream coding)
 enum TPConfig
@@ -126,6 +130,8 @@ public:
 		, m_sequenceB(0)
 	{
 	}
+
+	DataFrame(const char *ascii);
 	
 	enum PacketTypes
 	{
@@ -138,14 +144,29 @@ public:
 		CONFIG_SIGGEN			= 0x08,
 		ENABLE_SIGGEN			= 0x09,
 		SET_STATUS_LED			= 0x21,
+		SET_PART                = 0x25,
 		GET_OSC_FREQ			= 0x42,
 		TRIM_OSC				= 0x49
 	};
 	
 	void Send(hdevice hdev);
+
+	bool IsEmpty()
+	{ return m_payload.size() == 0; }
+
+	bool IsFull()
+	{ return m_payload.size() == 60; }
 	
 	void push_back(uint8_t b)
 	{ m_payload.push_back(b); }
+
+	DataFrame Next()
+	{
+		DataFrame next_frame(m_type);
+		next_frame.m_sequenceA = m_sequenceA + 1;
+		next_frame.m_sequenceB = m_sequenceB - 1;
+		return next_frame;
+	}
 
 public:
 	uint8_t m_type;
@@ -153,6 +174,10 @@ public:
 	uint8_t m_sequenceB;
 	std::vector<uint8_t> m_payload;
 };
+
+void SwitchMode(hdevice hdev);
+
+void SetPart(hdevice hdev, SilegoPart part);
 
 void SetStatusLED(hdevice hdev, bool status);
 void SetIOConfig(hdevice hdev, IOConfig& config);
@@ -167,5 +192,7 @@ enum SiggenStatus
 
 void ConfigureSiggen(hdevice hdev, uint8_t channel);
 void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status);
+
+void LoadBitstream(hdevice hdev, std::vector<uint8_t> bitstream);
 
 #endif

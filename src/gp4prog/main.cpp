@@ -16,12 +16,55 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
+#include <string.h>
 #include "gp4prog.h"
 
 using namespace std;
 
+vector<uint8_t> ReadBitstream(string fname);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Entry point
+
+vector<uint8_t> ReadBitstream(string fname)
+{	
+	//Open the file
+	FILE* fp = fopen(fname.c_str(), "r");
+	if(!fp)
+	{
+		printf("Couldn't open %s for reading\n", fname.c_str());
+		exit(-1);
+	}
+	
+	char signature[64];
+	fgets(signature, sizeof(signature), fp);
+	if(strcmp(signature, "index\t\tvalue\t\tcomment\n")) 
+	{
+		printf("%s is not a GreenPAK bitstream", fname.c_str());
+		exit(-1);
+	}
+
+	vector<uint8_t> bitstream(2048/8);
+	while(!feof(fp))
+	{
+		int index;
+		int value;
+		fscanf(fp, "%d\t\t%d\t\t//\n", &index, &value);
+
+		int byteindex = index / 8;
+		if((byteindex < 0 || byteindex > (int)bitstream.size()) || (value != 0 && value != 1))
+		{
+			printf("%s contains a malformed GreenPAK bitstream\n", fname.c_str());
+			exit(-1);
+		}
+
+		bitstream[byteindex] |= (value << (index % 8));
+	}
+
+	fclose(fp);
+
+	return bitstream;
+}
 
 int main(int /*argc*/, char* /*argv*/[])
 {
@@ -60,39 +103,52 @@ int main(int /*argc*/, char* /*argv*/[])
 	//string 0x80 is 02 03 for this board... what does that mean? firmware rev or something?
 	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
 	
-	//Blink the LED a few times
-	printf("Blinking LED for sanity check\n");
-	for(int i=0; i<3; i++)
-	{
-		SetStatusLED(hdev, 1);
-		usleep(250 * 1000);
-		
-		SetStatusLED(hdev, 0);
-		usleep(250 * 1000);
-	}
+	//Light up the status LED
+	SetStatusLED(hdev, 1);
 	
 	//Configure the signal generator for Vdd
 	printf("Configuring Vdd signal generator\n");
 	ConfigureSiggen(hdev, 1);
-	bool enable[19] = { true, false };
 	SetSiggenStatus(hdev, 1, SIGGEN_START);
+
+	//Select part
+	printf("Selecting part\n");
+	SetPart(hdev, SLG46620V);
+
+	//Load bitstream
+	printf("Loading bitstream into SRAM\n");
+	LoadBitstream(hdev, ReadBitstream("test.txt"));
 	
 	//Set the I/O configuration on the test points
-	printf("Setting initial dummy I/O configuration\n");
+	//Expects a bitstream that does assign TP4=TP3;
+	printf("Setting testing I/O configuration\n");
 	IOConfig config;
-	for(int i=3; i<=5; i++)
-	{
-		config.driverConfigs[i] = TP_PULLUP;
-		config.ledEnabled[i] = true;
-	}
+	config.driverConfigs[3] = TP_GND;
+	config.ledEnabled[3] = true;
+	config.driverConfigs[4] = TP_PULLUP;
+	config.ledEnabled[4] = true;
 	SetIOConfig(hdev, config);
 	
-	//Wait a while
-	usleep(2 * 1000 * 1000);	
+	//Blink TP3
+	usleep(300 * 1000);
+	config.driverConfigs[3] = TP_VDD;
+	SetIOConfig(hdev, config);
+	
+	usleep(300 * 1000);
+	config.driverConfigs[3] = TP_GND;
+	SetIOConfig(hdev, config);
+	
+	usleep(300 * 1000);
+	config.driverConfigs[3] = TP_VDD;
+	SetIOConfig(hdev, config);
+	
+	usleep(300 * 1000);
+	config.driverConfigs[3] = TP_GND;
+	SetIOConfig(hdev, config);
 	
 	//Wipe I/O config to floating
 	printf("Restoring I/O configuration\n");
-	for(int i=0; i<=21; i++)
+	for(int i=0; i<=20; i++)
 	{
 		config.driverConfigs[i] = TP_FLOAT;
 		config.ledEnabled[i] = false;
@@ -106,6 +162,7 @@ int main(int /*argc*/, char* /*argv*/[])
 	
 	//Done
 	printf("Cleaning up\n");
+	SetStatusLED(hdev, 0);
 	USBCleanup(hdev);
 	return 0;
 }
