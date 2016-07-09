@@ -239,7 +239,7 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	for(unsigned int i=1; i<21; i++)
 	{
 		if(config.expansionEnabled[i])
-			exp[expansionBitMap[i][0]] = expansionBitMap[i][1];
+			exp[expansionBitMap[i][0]] |= expansionBitMap[i][1];
 	}
 	for(size_t i=0; i<3; i++)
 		frame.push_back(exp[i]);
