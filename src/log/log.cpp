@@ -37,7 +37,7 @@ void LogFatal(const char *format, ...)
 		va_end(va);
 
 		sink->Log(LogSink::FATAL, 
-			"    This indicates a bug in gp4par, please file a report via\n"
+			"    This indicates a bug in openfpga, please file a report via\n"
 			"        https://github.com/azonenberg/openfpga/issues/new.\n");
 	}
 

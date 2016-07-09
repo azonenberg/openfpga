@@ -62,7 +62,7 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 	ssize_t devcount = libusb_get_device_list(NULL, &list);
 	if(devcount < 0)
 	{
-		printf("libusb_get_device_list failed\n");
+		LogError("libusb_get_device_list failed\n");
 		exit(-1);
 	}
 	libusb_device* device = NULL;
@@ -87,7 +87,7 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 	{
 		if(0 != libusb_open(device, &hdev))
 		{
-			printf("libusb_open failed\n");
+			LogError("libusb_open failed\n");
 			exit(-1);
 		}
 	}	
@@ -101,21 +101,21 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 	int err = libusb_detach_kernel_driver(hdev, 0);
 	if( (0 != err) && (LIBUSB_ERROR_NOT_FOUND != err) )
 	{
-		printf("Can't detach kernel driver\n");
+		LogError("Can't detach kernel driver\n");
 		exit(-1);
 	}
 	
 	//Set the device configuration
 	if(0 != (err = libusb_set_configuration(hdev, 1)))
 	{
-		printf("Failed to select device configuration (err = %d)\n", err);
+		LogError("Failed to select device configuration (err = %d)\n", err);
 		exit(-1);
 	}
 	
 	//Claim interface 0
 	if(0 != libusb_claim_interface(hdev, 0))
 	{
-		printf("Failed to claim interface\n");
+		LogError("Failed to claim interface\n");
 		exit(-1);
 	}
 	
@@ -128,7 +128,7 @@ string GetStringDescriptor(hdevice hdev, uint8_t index)
 	char strbuf[128];
 	if(libusb_get_string_descriptor_ascii(hdev, index, (unsigned char*)strbuf, sizeof(strbuf)) < 0)
 	{
-		printf("libusb_get_string_descriptor_ascii failed\n");
+		LogError("libusb_get_string_descriptor_ascii failed\n");
 		exit(-1);
 	}
 	

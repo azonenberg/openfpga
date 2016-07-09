@@ -35,6 +35,8 @@
 
 #include <libusb-1.0/libusb.h>
 
+#include "../log/log.h"
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USB command wrappers
 
@@ -190,7 +192,7 @@ enum SiggenStatus
 	SIGGEN_NOP
 };
 
-void ConfigureSiggen(hdevice hdev, uint8_t channel);
+void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage);
 void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status);
 
 void LoadBitstream(hdevice hdev, std::vector<uint8_t> bitstream);

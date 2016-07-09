@@ -165,7 +165,8 @@ int main(int argc, char* argv[])
 	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
 	
 	//Print header
-	ShowVersion();
+	if(console_verbosity >= LogSink::NOTICE)
+		ShowVersion();
 	
 	//Print configuration
 	LogNotice("\nDevice configuration:\n");
@@ -254,7 +255,7 @@ void ShowUsage()
 
 void ShowVersion()
 {
-	LogNotice(
+	printf(
 		"Greenpak4 place-and-route by Andrew D. Zonenberg.\n"
 		"\n"
 		"License: LGPL v2.1+\n"
