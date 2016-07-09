@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 	string ofname = "";
 	
 	//Top-level module name
-	string top = "";
+	string top = "top";
 	
 	//Action to take with unused pins;
 	Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_NONE;
