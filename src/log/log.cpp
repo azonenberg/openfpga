@@ -17,7 +17,9 @@
  **********************************************************************************************************************/
 
 #include "log.h"
-#include <stdarg.h>
+#include <cstdarg>
+#include <cstdlib>
+#include <string>
 
 std::vector<std::unique_ptr<LogSink>> g_log_sinks;
 
