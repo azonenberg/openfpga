@@ -9,9 +9,31 @@
 \usepackage{placeins}
 \usepackage{paralist}
 \usepackage{makecell}
+\usepackage{tikz}
 \usepackage[osf]{libertine}
 \usepackage{zi4}
 \usepackage[libertine,cmbraces]{newtxmath}
+
+% tikz configuration
+\usetikzlibrary{arrows,positioning} 
+\tikzset{
+	% standard arrow tip
+	>=stealth',
+	% box style
+	box/.style={
+		rectangle,
+		rounded corners,
+		draw=black, very thick,
+		minimum height=2em
+	},
+	% arrow style
+	arrow/.style={
+		->,
+		thick,
+		shorten <=2pt,
+		shorten >=2pt,
+	}
+}
 
 % configuration of source code examples
 \usepackage{listings}
@@ -140,7 +162,37 @@ between components is shown in Figure \ref{flow}.
 
 \begin{figure}[h]
 \centering
-\includegraphics[scale=1]{figures/flow.pdf}
+
+\begin{tikzpicture}[node distance=1cm, auto,]
+	\node[box,align=center] (yosys) 
+		{Synthesis \\ (yosys)};
+	\node[box,align=center,right=of yosys] (gp4par) 
+		{Place and Route \\ (gp4par)};
+	\node[box,align=center,right=of gp4par] (gp4prog) 
+		{Device Programming \\ (gp4prog)};
+	\node[box,align=center,right=of gp4par,below=of gp4prog] (gp4vendor) 
+		{Device Programming \\ (GreenPak4 Designer)};
+
+	\draw[arrow] (yosys) -- (gp4par);
+	\draw[arrow] (gp4par) -- (gp4prog);
+	\draw[arrow] (gp4par) -- (gp4vendor.west);
+\end{tikzpicture}
+
+ % %nodes
+ % \node[punkt] (market) {Market (b)};
+ % \node[punkt, inner sep=5pt,below=0.5cm of market]
+ % (formidler) {Intermediaries (c)};
+ % % We make a dummy figure to make everything look nice.
+ % \node[above=of market] (dummy) {};
+ % \node[right=of dummy] (t) {Ultimate borrower}
+ %   edge[pil,bend left=45] (market.east) % edges are used to connect two nodes
+ %   edge[pil, bend left=45] (formidler.east); % .east since we want
+ %                                             % consistent style
+ % \node[left=of dummy] (g) {Ultimate lender}
+ %   edge[pil, bend right=45] (market.west)
+ %   edge[pil, bend right=45] (formidler.west)
+ %   edge[pil,<->, bend left=45] node[auto] {Direct (a)} (t);
+
 \caption{Data flow between toolchain components}
 \label{flow}
 \end{figure}

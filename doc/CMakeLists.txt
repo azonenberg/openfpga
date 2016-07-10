@@ -15,8 +15,8 @@ endforeach()
 
 add_custom_command(
     OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/gp4-hdl.pdf
-    COMMAND pdflatex -interaction nonstopmode ${CMAKE_CURRENT_SOURCE_DIR}/gp4-hdl.tex
-    COMMAND pdflatex -interaction nonstopmode ${CMAKE_CURRENT_SOURCE_DIR}/gp4-hdl.tex
+    COMMAND pdflatex -halt-on-error ${CMAKE_CURRENT_SOURCE_DIR}/gp4-hdl.tex
+    COMMAND pdflatex -halt-on-error ${CMAKE_CURRENT_SOURCE_DIR}/gp4-hdl.tex
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gp4-hdl.tex ${BIN_FIGURES}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     VERBATIM)
