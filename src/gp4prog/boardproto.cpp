@@ -211,11 +211,10 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	
 	//Expansion connector
 	uint8_t exp[3] = {0};
-	uint8_t expansionBitMap[21][2] =
+	uint8_t expansionBitMap[][2] =
 	{
 		{0, 0x00},		//unused
 		{1, 0x01},		//Vdd
-		
 		{2, 0x04},		//TP2
 		{2, 0x01},		//TP3
 		{2, 0x10},		//TP4
@@ -225,7 +224,7 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 		{0, 0x10},		//TP8
 		{0, 0x40},		//TP9
 		{0, 0x80},		//TP10
-		
+		{0, 0x00},      //GND
 		{0, 0x20},		//TP12
 		{2, 0x08},		//TP13
 		{2, 0x02},		//TP14
@@ -234,9 +233,9 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 		{0, 0x02},		//TP17
 		{1, 0x20},		//TP18
 		{1, 0x08},		//TP19
-		{2, 0x08}		//TP20
+		{0, 0x08}		//TP20
 	};
-	for(unsigned int i=1; i<21; i++)
+	for(unsigned int i=1; i<=20; i++)
 	{
 		if(config.expansionEnabled[i])
 			exp[expansionBitMap[i][0]] |= expansionBitMap[i][1];
