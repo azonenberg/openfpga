@@ -150,7 +150,7 @@ void Greenpak4PAREngine::InitialPlacement_core()
 				
 				LogError(
 					"Could not place netlist cell \"%s\" because we ran out of sites with type \"%s\"\n"
-					"       This can happen if you have overly restrictive LOC constraints.",
+					"       This can happen if you have overly restrictive LOC constraints.\n",
 					cell->m_name.c_str(),
 					m_lmap[label].c_str()
 					);
