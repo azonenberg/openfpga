@@ -37,7 +37,13 @@ int main(int argc, char* argv[])
 
 	double voltage = 0.0;
 	vector<int> nets;
-
+	enum modes
+	{
+		MODE_NONE,
+		MODE_PROGRAM,
+		MODE_RESET
+	} mode = MODE_NONE;
+	
 	//Parse command-line arguments
 	for(int i=1; i<argc; i++)
 	{
@@ -52,6 +58,10 @@ int main(int argc, char* argv[])
 		{
 			ShowVersion();
 			return 0;
+		}
+		else if( (s == "-r") || (s == "--reset") )
+		{
+			mode = MODE_RESET;
 		}
 		else if(s == "--verbose")
 		{
@@ -116,7 +126,10 @@ int main(int argc, char* argv[])
 
 		//assume it's the bitstream file if it's the first non-switch argument
 		else if( (s[0] != '-') && (fname == "") )
+		{
+			mode = MODE_PROGRAM;
 			fname = s;
+		}
 			
 		else
 		{
@@ -131,18 +144,6 @@ int main(int argc, char* argv[])
 	//Print header
 	if(console_verbosity >= LogSink::NOTICE)
 		ShowVersion();
-
-	vector<uint8_t> bitstream;
-	if(!fname.empty()) {
-		bitstream = ReadBitstream(fname);
-		if(bitstream.empty())
-			return 1;
-	}
-
-	if(!bitstream.empty() && voltage == 0.0) {
-		LogError("Vdd must be provided for programming\n");
-		return 1;
-	}
 
 	//Set up libusb
 	USBSetup();
@@ -180,6 +181,13 @@ int main(int argc, char* argv[])
 	//string 0x80 is 02 03 for this board... what does that mean? firmware rev or something?
 	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
 	
+	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
+	if(mode == MODE_NONE)
+	{
+		LogNotice("No commands requested, exiting\n");
+		return 0;
+	}
+	
 	//Light up the status LED
 	SetStatusLED(hdev, 1);
 	
@@ -193,13 +201,21 @@ int main(int argc, char* argv[])
 	SetSiggenStatus(hdev, 1, SIGGEN_STOP);
 	IOConfig config;
 	SetIOConfig(hdev, config);
+	
+	//If we're programming, do that
+	if(mode == MODE_PROGRAM)
+	{
+		vector<uint8_t> bitstream;
+		bitstream = ReadBitstream(fname);
+		if(bitstream.empty())
+			return 1;
+		
+		if(voltage == 0.0)
+		{
+			LogError("Vdd must be provided for programming\n");
+			return 1;
+		}
 
-	if(bitstream.empty())
-	{
-		LogWarning("No bitstream provided, keeping the board in reset state\n");
-	}
-	else
-	{
 		//Configure the signal generator for Vdd
 		LogNotice("Setting Vdd=%.3gV\n", voltage);
 		ConfigureSiggen(hdev, 1, voltage);
@@ -212,7 +228,8 @@ int main(int argc, char* argv[])
 		//Set the I/O configuration on the test points
 		//Expects a bitstream that does assign TP4=TP3;
 		LogNotice("Setting I/O configuration\n");
-		for(int net : nets) {
+		for(int net : nets)
+		{
 			// Note: for unknown reasons, the net has to be driven (e.g. weakly) for the LED to become active.
 			// For unknown reasons, the vendor tool does not seem to suffer from this issue, and it
 			// lets the LED light up even with all pins as TP_FLOAT.
@@ -234,10 +251,13 @@ int main(int argc, char* argv[])
 void ShowUsage()
 {
 	printf(//                                                                               v 80th column
-		"Usage: gp4prog foo.txt\n"
+		"Usage: gp4prog bitstream.txt\n"
+		"    When run with no arguments, scans for the board but makes no config changes.\n"
 		"    -q, --quiet\n"
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"
+		"    -r, --reset\n"
+		"        Resets the board but does not load a new bitstream.\n"
 		"    -v, --voltage        <voltage>\n"
 		"        Adjusts Vdd to the specified value in volts (0V to 5.5V), ±70mV.\n"
 		"    -n, --nets           <nets>\n"
