@@ -183,7 +183,8 @@ int main(int argc, char* argv[])
 	//Light up the status LED
 	SetStatusLED(hdev, 1);
 	
-	//Select part
+	//Select part (no other parts supported yet).
+	//TODO: see if we can enumerate what's plugged in / check the bitstream supplied
 	LogNotice("Selecting part SLG46620V\n");
 	SetPart(hdev, SLG46620V);
 
