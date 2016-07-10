@@ -151,7 +151,9 @@ void BuildGraphs(
 	
 	//Make device nodes for the counters
 	uint32_t count8_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8");
+	uint32_t count8_adv_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8_ADV");
 	uint32_t count14_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT14");
+	uint32_t count14_adv_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT14_ADV");
 	for(unsigned int i=0; i<device->GetCounterCount(); i++)
 	{
 		auto counter = device->GetCounter(i);
@@ -159,13 +161,31 @@ void BuildGraphs(
 		//Decide on primary label
 		if(counter->GetDepth() == 14)
 		{
-			auto node = MakeNode(count14_label, counter, dgraph);
-						
-			//It's legal to map a COUNT8 to a COUNT14 site, so add that as an alternate
-			node->AddAlternateLabel(count8_label);
+			if(counter->HasFSM()) {
+				auto node = MakeNode(count14_adv_label, counter, dgraph);
+							
+				//It's legal to map a COUNT8 or a COUNT14 to a COUNT14_ADV site, so add that as an alternate.
+				//It's not legal to map a COUNT8_ADV to a COUNT14_ADV site because they have different behavior
+				//when counting up.
+				node->AddAlternateLabel(count8_label);
+				node->AddAlternateLabel(count14_label);
+			} else {
+				auto node = MakeNode(count14_label, counter, dgraph);
+							
+				//It's legal to map a COUNT8 to a COUNT14 site, so add that as an alternate
+				node->AddAlternateLabel(count8_label);
+			}
 		}
-		else
-			MakeNode(count8_label, counter, dgraph);
+		else {
+			if(counter->HasFSM()) {
+				auto node = MakeNode(count8_adv_label, counter, dgraph);
+
+				//It's legal to map a COUNT8 to a COUNT8_ADV site, so add that as an alternate.
+				node->AddAlternateLabel(count8_label);
+			} else {
+				MakeNode(count8_label, counter, dgraph);
+			}
+		}
 	}
 	
 	//TODO: make nodes for all of the other hard IP

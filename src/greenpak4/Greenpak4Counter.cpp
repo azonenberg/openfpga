@@ -40,10 +40,13 @@ Greenpak4Counter::Greenpak4Counter(
 	, m_countnum(countnum)
 	, m_reset(device->GetGround())	//default reset is ground
 	, m_clock(device->GetGround())
+	, m_up(device->GetGround())
+	, m_keep(device->GetGround())
 	, m_hasFSM(has_fsm)
 	, m_countVal(0)
 	, m_preDivide(1)
 	, m_resetMode(BOTH_EDGE)						//default reset mode is both edges
+	, m_resetValue(ZERO)
 	, m_hasWakeSleepPowerDown(has_wspwrdn)
 	, m_hasEdgeDetect(has_edgedetect)
 	, m_hasPWM(has_pwm)
@@ -62,7 +65,10 @@ Greenpak4Counter::~Greenpak4Counter()
 string Greenpak4Counter::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "COUNT%d_%d", m_depth, m_countnum);
+	if(m_hasFSM)
+		snprintf(buf, sizeof(buf), "COUNT%d_ADV_%d", m_depth, m_countnum);
+	else
+		snprintf(buf, sizeof(buf), "COUNT%d_%d", m_depth, m_countnum);
 	return string(buf);
 }
 
@@ -97,6 +103,24 @@ void Greenpak4Counter::CommitChanges()
 			exit(-1);
 		}
 	}
+
+	if(ncell->HasParameter("RESET_VALUE"))
+	{
+		string p = ncell->m_parameters["RESET_VALUE"];
+		if(p == "ZERO")
+			m_resetValue = ZERO;
+		else if(p == "COUNT_TO")
+			m_resetValue = COUNT_TO;
+		else
+		{
+			LogError(
+				"Counter \"%s\" has illegal reset value \"%s\" "
+				"(must be ZERO or COUNT_TO)\n",
+				ncell->m_name.c_str(),
+				p.c_str());
+			exit(-1);
+		}
+	}
 	
 	if(ncell->HasParameter("COUNT_TO"))
 		m_countVal = (atoi(ncell->m_parameters["COUNT_TO"].c_str()));
@@ -109,6 +133,10 @@ vector<string> Greenpak4Counter::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("RST");
+	if(m_hasFSM) {
+		r.push_back("UP");
+		r.push_back("KEEP");
+	}
 	return r;
 }
 
@@ -116,8 +144,12 @@ void Greenpak4Counter::SetInput(string port, Greenpak4EntityOutput src)
 {
 	if(port == "RST")
 		m_reset = src;
-	if(port == "CLK")
+	else if(port == "CLK")
 		m_clock = src;
+	else if(port == "UP")
+		m_up = src;
+	else if(port == "KEEP")
+		m_keep = src;
 	
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
@@ -156,12 +188,12 @@ bool Greenpak4Counter::Save(bool* bitstream)
 			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_reset))
 				return false;
 				
-			//KEEP (ignored)
-			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetGround()))
+			//Keep FSM input
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_keep))
 				return false;
 				
-			//UP (ignored)
-			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetGround()))
+			//Up FSM input
+			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 2, m_up))
 				return false;
 		}
 		
@@ -463,18 +495,44 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		}
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// FSM input data source (not implemented for now)
+		// FSM input data source
 		
-		//NVM data (FSM data = max count)
-		bitstream[nbase + 0] = false;
-		bitstream[nbase + 1] = false;
+		//if unused, reset to NVM data
+		if(unused)
+		{
+
+			bitstream[nbase + 0] = false;
+			bitstream[nbase + 1] = false;
+		}
+		else
+		{
+			//NVM data (FSM data = max count)
+			if(m_resetValue == COUNT_TO)
+			{
+				bitstream[nbase + 0] = false;
+				bitstream[nbase + 1] = false;
+			}
+
+			//Zero
+			else if(m_resetValue == ZERO)
+			{
+				bitstream[nbase + 0] = false;
+				bitstream[nbase + 1] = true;
+			}
+		}
+
+		//
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Value control
 		
-		//Reset count to zero
-		//TODO: make this configurable
-		bitstream[nbase + 2] = false;
+		//If unused, reset to zero
+		if(unused)
+			bitstream[nbase + 2] = false;
+
+		//Reset to FSM data source
+		else
+			bitstream[nbase + 2] = true;
 	}
 		
 	//Not FSM capable (see CNT/DLY0)

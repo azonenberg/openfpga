@@ -19,6 +19,7 @@
 #ifndef Greenpak4Device_h
 #define Greenpak4Device_h
 
+#include <algorithm>
 #include <vector>
 #include <map>
 
@@ -152,8 +153,16 @@ public:
 	unsigned int Get8BitCounterCount()
 	{ return m_counters8bit.size(); }
 	
+	unsigned int Get8BitCounterCount(bool withFSM)
+	{ return std::count_if(m_counters8bit.begin(), m_counters8bit.end(),
+						   [&](Greenpak4Counter *c) { return c->HasFSM() == withFSM; }); }
+	
 	unsigned int Get14BitCounterCount()
 	{ return m_counters14bit.size(); }
+	
+	unsigned int Get14BitCounterCount(bool withFSM)
+	{ return std::count_if(m_counters14bit.begin(), m_counters14bit.end(),
+						   [&](Greenpak4Counter *c) { return c->HasFSM() == withFSM; }); }
 	
 	Greenpak4Counter* Get8BitCounter(unsigned int i)
 	{ return m_counters8bit[i]; }

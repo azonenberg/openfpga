@@ -1,6 +1,6 @@
 \documentclass[11pt]{article}
 \usepackage[T1]{fontenc}
-\usepackage[margin=1in,top=0.8in,bottom=0.7in]{geometry}
+\usepackage[margin=1in,top=0.6in,bottom=0.6in]{geometry}
 %\usepackage[hidelinks,bookmarks]{hyperref}
 \usepackage[bookmarks,colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
 \usepackage{url}
@@ -1268,13 +1268,12 @@ GP_BANDGAP #(
 \label{gp-count8}
 
 \subsubsection{Introduction}
-This primitive represents an 8-bit down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at power-on reset, and
-to 0 by the reset pin. (Some of the hard IP blocks support resetting to \tokenstyle{COUNT\_TO} with the reset pin and/or counting
-up, but this is not supported by the current \namestyle{gp4par} tool.)
+This primitive represents an 8-bit down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at 
+power-on reset, and to 0 by the reset pin.
 
 Note that this primitive does \emph{not} always map to a hard IP block with \emph{exactly} 8 bit depth. The technology
-mapper may map \tokenstyle{GP\_COUNT8} cells to unused 14-bit counters in order to relieve routing pressure. In this case, the high
-6 bits of the counter will always be zero.
+mapper may map \tokenstyle{GP\_COUNT8} cells to unused 14-bit counters in order to relieve routing pressure.
+In this case, the high 6 bits of the counter will always be zero.
 
 \subsubsection{Port Descriptions}
 
@@ -1284,7 +1283,8 @@ mapper may map \tokenstyle{GP\_COUNT8} cells to unused 14-bit counters in order 
 \thickhline
 \tokenstyle{CLK} & Input & 1 & The input clock signal. \\
 \thinhline
-\tokenstyle{RST} & Input & 1 & Reset input (polarity depends on \tokenstyle{RESET\_MODE}). When triggered, resets the count register to zero. \\
+\tokenstyle{RST} & Input & 1 & Reset input (polarity depends on \tokenstyle{RESET\_MODE}).
+	When triggered, resets the count register to zero. \\
 \thinhline
 \tokenstyle{OUT} & Output & 1 & Counter underflow output. High whenever the count register equals zero. \\
 \thinhline
@@ -1311,8 +1311,10 @@ mapper may map \tokenstyle{GP\_COUNT8} cells to unused 14-bit counters in order 
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-count8-example} begins counting from 8'hcc down to zero, on rising edges of \wirestyle{clk}, as
-soon as the device exits power-on reset. When the counter reaches zero \wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to 8'hcc. The counter also resets immediately to 8'hcc, and is held in reset, when \wirestyle{count\_rst} is high.
+The example shown in figure \ref{gp-count8-example} begins counting from \datastyle{8'hcc} down to zero,
+on rising edges of \wirestyle{clk}, as soon as the device exits power-on reset. When the counter reaches zero 
+\wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to \datastyle{8'hcc}. 
+The counter also resets immediately to zero, and is held in reset, when \wirestyle{count\_rst} is high.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1334,6 +1336,90 @@ GP_COUNT8 #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_COUNT8_ADV
+
+\pagebreak
+\subsection{\tokenstyle{GP\_COUNT8\_ADV}: 8-Bit Resettable Up/Down Counter With Clock Gating}
+\label{gp-count8-adv}
+
+\subsubsection{Introduction}
+This primitive represents an 8-bit up/down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at
+power-on reset, underflow or overflow, and to a configurable value by the reset pin.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{CLK} & Input & 1 & The input clock signal. \\
+\thinhline
+\tokenstyle{RST} & Input & 1 & Reset input (polarity depends on \tokenstyle{RESET\_MODE}). \\
+\thinhline
+\tokenstyle{UP} & Input & 1 & Direction input. \\
+\thinhline
+\tokenstyle{KEEP} & Input & 1 & Clock gating input. \\
+\thinhline
+\tokenstyle{OUT} & Output & 1 & Counter underflow/overflow output. \newline
+	\whenstyle{When \tokenstyle{UP} is 0:} High whenever the count register equals zero. \newline
+	\whenstyle{When \tokenstyle{UP} is 1:} High whenever the count register equals \datastyle{8'hff}. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{CLKIN\_DIVIDE} & Integer & 8 &
+	Input clock divider. Legal values depend on what source \tokenstyle{CLK} is driven by, see device datasheet.\\
+\thinhline
+\tokenstyle{COUNT\_TO} & Integer & 8 & Value to set the counter to on underflow. \\
+\thinhline
+\tokenstyle{RESET\_MODE} & String & N/A &
+	\strexamplestyle{RISING} Resets the counter on a rising edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{FALLING} Resets the counter on a falling edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{BOTH} Resets the counter on any edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{LEVEL} Resets the counter when \tokenstyle{RST} is high. \\
+\thinhline
+\tokenstyle{RESET\_VALUE} & String & N/A &
+	\strexamplestyle{COUNT\_TO} Resets the counter to \tokenstyle{COUNT\_TO}. \newline
+	\strexamplestyle{ZERO} Resets the counter to 0. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-count8-adv-example} begins counting from \datastyle{8'hcc} up to \datastyle{8'hff}, 
+on rising edges of \wirestyle{clk}, as soon as the device exits power-on reset.
+When the counter reaches \datastyle{8'hff}, \wirestyle{overflow} goes high for one \wirestyle{clk} cycle and
+the counter is reset to \datastyle{8'hcc}. The counter also resets immediately to \datastyle{8'hcc}, and is held
+in reset,  when \wirestyle{count\_rst} is high.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire count_rst;
+wire overflow;
+GP_COUNT8_ADV #(
+	.CLKIN_DIVIDE(1)
+	.COUNT_TO(8'hcc),
+	.RESET_MODE("LEVEL"),
+	.RESET_VALUE("COUNT_TO"),
+) up_cnt (
+	.CLK(clk),
+	.RST(count_rst),
+	.OUT(overflow),
+	.UP(1'b1),
+	.KEEP(1'b0)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_COUNT8\_ADV}}
+\label{gp-count8-adv-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_COUNT14
 
 \pagebreak
@@ -1341,9 +1427,8 @@ GP_COUNT8 #(
 \label{gp-count14}
 
 \subsubsection{Introduction}
-This primitive represents an 14-bit down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at power-on reset, and
-to 0 by the reset pin. (Some of the hard IP blocks support resetting to \tokenstyle{COUNT\_TO} with the reset pin and/or counting
-up, but this is not supported by the current \namestyle{gp4par} tool.)
+This primitive represents an 14-bit down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at 
+power-on reset, and to 0 by the reset pin.
 
 In the current software, this primitive currently will always map to a 14-bit counter cell in the device. A planned
 future optimization will allow the technology mapper to map 14-bit counters in the netlist to 8-bit counter cells if
@@ -1385,7 +1470,10 @@ containing counters of variable depth.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-count14-example} begins counting from \datastyle{14'd3141} down to zero, on rising edges of \wirestyle{clk}, as soon as the device exits POR. When the counter reaches zero \wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to \datastyle{14'd3141}. The counter also resets immediately to \datastyle{14'd3141}, and is held in reset, when \wirestyle{count\_rst} is high.
+The example shown in figure \ref{gp-count14-example} begins counting from \datastyle{14'd3141} down to zero, on 
+rising edges of \wirestyle{clk}, as soon as the device exits power-on reset. When the counter reaches zero 
+\wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to \datastyle{14'd3141}.
+The counter also resets immediately to zero, and is held in reset, when \wirestyle{count\_rst} is high.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1404,6 +1492,90 @@ GP_COUNT14 #(
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_COUNT14}}
 \label{gp-count14-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_COUNT14_ADV
+
+\pagebreak
+\subsection{\tokenstyle{GP\_COUNT14\_ADV}: 14-Bit Resettable Up/Down Counter With Clock Gating}
+\label{gp-count14-adv}
+
+\subsubsection{Introduction}
+This primitive represents a 14-bit up/down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at
+power-on reset, underflow or overflow, and to a configurable value by the reset pin.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{CLK} & Input & 1 & The input clock signal. \\
+\thinhline
+\tokenstyle{RST} & Input & 1 & Reset input (polarity depends on \tokenstyle{RESET\_MODE}). \\
+\thinhline
+\tokenstyle{UP} & Input & 1 & Direction input. \\
+\thinhline
+\tokenstyle{KEEP} & Input & 1 & Clock gating input. \\
+\thinhline
+\tokenstyle{OUT} & Output & 1 & Counter underflow/overflow output. \newline
+	\whenstyle{When \tokenstyle{UP} is 0:} High whenever the count register equals zero. \newline
+	\whenstyle{When \tokenstyle{UP} is 1:} High whenever the count register equals \datastyle{14'h3fff}. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{CLKIN\_DIVIDE} & Integer & 8 &
+	Input clock divider. Legal values depend on what source \tokenstyle{CLK} is driven by, see device datasheet.\\
+\thinhline
+\tokenstyle{COUNT\_TO} & Integer & 14 & Value to set the counter to on underflow. \\
+\thinhline
+\tokenstyle{RESET\_MODE} & String & N/A &
+	\strexamplestyle{RISING} Resets the counter on a rising edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{FALLING} Resets the counter on a falling edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{BOTH} Resets the counter on any edge of \tokenstyle{RST}. \newline
+	\strexamplestyle{LEVEL} Resets the counter when \tokenstyle{RST} is high. \\
+\thinhline
+\tokenstyle{RESET\_VALUE} & String & N/A &
+	\strexamplestyle{COUNT\_TO} Resets the counter to \tokenstyle{COUNT\_TO}. \newline
+	\strexamplestyle{ZERO} Resets the counter to 0. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-count14-adv-example} begins counting from \datastyle{14'd3141} up to 
+\datastyle{14'h3fff}, on rising edges of \wirestyle{clk}, as soon as the device exits power-on reset.
+When the counter reaches \datastyle{14'h3fff}, \wirestyle{overflow} goes high for one \wirestyle{clk} cycle and 
+the counter is reset to \datastyle{14'd3141}. The counter also resets immediately to \datastyle{14'd0}, and 
+is held in reset, when \wirestyle{count\_rst} is high.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire count_rst;
+wire overflow;
+GP_COUNT14_ADV #(
+	.CLKIN_DIVIDE(1)
+	.COUNT_TO(14'd3141),
+	.RESET_MODE("LEVEL"),
+	.RESET_VALUE("ZERO")
+) up_cnt (
+	.CLK(clk),
+	.RST(count_rst),
+	.OUT(overflow),
+	.UP(1'b1),
+	.KEEP(1'b0)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_COUNT14\_ADV}}
+\label{gp-count14-adv-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -52,6 +52,9 @@ public:
 	
 	unsigned int GetCounterIndex()
 	{ return m_countnum; }
+
+	bool HasFSM()
+	{ return m_hasFSM; }
 	
 	enum ResetMode
 	{
@@ -59,6 +62,12 @@ public:
 		FALLING_EDGE = 1,
 		RISING_EDGE = 2,
 		HIGH_LEVEL = 3
+	};
+
+	enum ResetValue
+	{
+		ZERO = 0,
+		COUNT_TO = 1
 	};
 	
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
@@ -83,6 +92,12 @@ protected:
 	///Clock input
 	Greenpak4EntityOutput m_clock;
 		
+	///Up FSM input
+	Greenpak4EntityOutput m_up;
+		
+	///Keep FSM input
+	Greenpak4EntityOutput m_keep;
+		
 	///FSM-present flag
 	bool m_hasFSM;
 	
@@ -94,6 +109,9 @@ protected:
 	
 	///Reset mode
 	ResetMode m_resetMode;
+
+	///Reset value
+	ResetValue m_resetValue;
 	
 	///Indicates if we have a wake-sleep power down mode
 	bool m_hasWakeSleepPowerDown;
