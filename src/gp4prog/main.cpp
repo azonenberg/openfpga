@@ -187,18 +187,10 @@ int main(int argc, char* argv[])
 	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
 
 	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
-	if(fname.empty() && voltage == 0.0 && nets.empty())
+	if(fname.empty() && voltage == 0.0 && nets.empty() && !reset)
 	{
-		if(!reset)
-		{
-			LogNotice("No actions requested, exiting\n");
-			return 0;
-		}
-	}
-	else if(reset)
-	{
-		LogError("--reset is incompatible with any other options\n");
-		return 1;
+		LogNotice("No actions requested, exiting\n");
+		return 0;
 	}
 
 	//Light up the status LED
@@ -273,6 +265,9 @@ void ShowUsage()
 		"    -q, --quiet\n"
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"
+		"\n"
+		"    The following options are instructions for the developer board. They are\n"
+		"    executed in the order listed here, regardless of their order on command line.\n"
 		"    -r, --reset\n"
 		"        Resets the board:\n"
 		"          * disables every LED;\n"
@@ -280,8 +275,7 @@ void ShowUsage()
 		"          * disables Vdd supply.\n"
 		"    -e, --emulate        <bitstream>\n"
 		"        Downloads the specified bitstream into volatile memory.\n"
-		"        This clears anything that was configured using the --voltage or --nets\n"
-		"        options in a previous invocation of gp4prog.\n"
+		"        Implies --reset --voltage 3.3.\n"
 		"    -v, --voltage        <voltage>\n"
 		"        Adjusts Vdd to the specified value in volts (0V to 5.5V), ±70mV.\n"
 		"    -n, --nets           <nets>\n"
