@@ -33,6 +33,7 @@ int main(int argc, char* argv[])
 {
 	LogSink::Severity console_verbosity = LogSink::NOTICE;
 
+	bool reset = false;
 	string fname;
 	double voltage = 0.0;
 	vector<int> nets;
@@ -62,6 +63,10 @@ int main(int argc, char* argv[])
 				console_verbosity = LogSink::WARNING;
 			else if(console_verbosity == LogSink::WARNING)
 				console_verbosity = LogSink::ERROR;
+		}
+		else if(s == "-r" || s == "--reset")
+		{
+			reset = true;
 		}
 		else if(s == "-e" || s == "--emulate")
 		{
@@ -184,8 +189,16 @@ int main(int argc, char* argv[])
 	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
 	if(fname.empty() && voltage == 0.0 && nets.empty())
 	{
-		LogNotice("No actions requested, exiting\n");
-		return 0;
+		if(!reset)
+		{
+			LogNotice("No actions requested, exiting\n");
+			return 0;
+		}
+	}
+	else if(reset)
+	{
+		LogError("--reset is incompatible with any other options\n");
+		return 1;
 	}
 
 	//Light up the status LED
@@ -195,6 +208,15 @@ int main(int argc, char* argv[])
 	//TODO: see if we can enumerate what's plugged in / check the bitstream supplied
 	LogNotice("Selecting part SLG46620V\n");
 	SetPart(hdev, SLG46620V);
+
+	//If we're resetting, do just that
+	if(reset)
+	{
+		LogNotice("Resetting board I/O and signal generators\n");
+		IOConfig config;
+		SetIOConfig(hdev, config);
+		ResetAllSiggens(hdev);
+	}
 
 	//If we're programming, do that first
 	if(!fname.empty())
@@ -251,6 +273,11 @@ void ShowUsage()
 		"    -q, --quiet\n"
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"
+		"    -r, --reset\n"
+		"        Resets the board:\n"
+		"          * disables every LED;\n"
+		"          * disables every expansion connector passthrough;\n"
+		"          * disables Vdd supply.\n"
 		"    -e, --emulate        <bitstream>\n"
 		"        Downloads the specified bitstream into volatile memory.\n"
 		"        This clears anything that was configured using the --voltage or --nets\n"

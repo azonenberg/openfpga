@@ -67,7 +67,7 @@ enum TPConfig
 	TP_1				= 0x0001,	//Constant 1
 	TP_0				= 0x0000,	//Constant 0
 	TP_SIGGEN			= 0x0003,	//Signal generator
-	
+
 	//Drive strength
 	TP_STRONG			= 0x0c00,	//Strong push-pull driver
 	TP_WEAK				= 0x0e00,	//Weak push-pull  driver
@@ -90,7 +90,7 @@ enum TPConfig
 	TP_LOGIC_WEAK_PP	= TP_WEAK | TP_SIGGEN		//Weak signal generator
 };
 
-//Helper for test point configuration 
+//Helper for test point configuration
 //Not actual bitstream ordering, but contains all the data
 class IOConfig
 {
@@ -105,11 +105,11 @@ public:
 	//Configuration of each test pin's LED
 	bool ledEnabled[21];		//only [20:12] and [10:3] meaningful
 	bool ledInverted[21];		//only [20:12] and [10:3] meaningful
-	
+
 	//Configuration of expansion connector
 	bool expansionEnabled[21];	//only [20:12], [10:2] meaningful for signals
 								//[1] is Vdd
-								
+
 	IOConfig()
 	{
 		for(int i=0; i<21; i++)
@@ -142,7 +142,7 @@ public:
 	}
 
 	DataFrame(const char *ascii);
-	
+
 	enum PacketTypes
 	{
 		READ_BITSTREAM_START		= 0x02,
@@ -160,7 +160,7 @@ public:
 		GET_OSC_FREQ				= 0x42,
 		TRIM_OSC					= 0x49
 	};
-	
+
 	void Send(hdevice hdev);
 	void Receive(hdevice hdev);
 	void Roundtrip(hdevice hdev);
@@ -171,7 +171,7 @@ public:
 
 	bool IsFull()
 	{ return m_payload.size() == 60; }
-	
+
 	void push_back(uint8_t b)
 	{ m_payload.push_back(b); }
 
@@ -199,13 +199,15 @@ void SetIOConfig(hdevice hdev, IOConfig& config);
 
 enum SiggenStatus
 {
-	SIGGEN_PAUSE,
-	SIGGEN_START,
-	SIGGEN_STOP,
-	SIGGEN_NOP
+	SIGGEN_PAUSE	= 0x00,
+	SIGGEN_START	= 0x01,
+	SIGGEN_STOP		= 0x02,
+	SIGGEN_NOP		= 0x03,
+	SIGGEN_RESET	= 0x07
 };
 
 void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage);
+void ResetAllSiggens(hdevice hdev);
 void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status);
 
 void LoadBitstream(hdevice hdev, std::vector<uint8_t> bitstream);

@@ -316,6 +316,18 @@ void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage)
 	frame.Roundtrip(hdev);
 }
 
+void ResetAllSiggens(hdevice hdev)
+{
+	DataFrame frame(DataFrame::ENABLE_SIGGEN);
+
+	for(unsigned int i=1; i<=19; i++)
+	{
+		frame.push_back(SIGGEN_RESET);
+	}
+
+	frame.Send(hdev);
+}
+
 void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status)
 {
 	DataFrame frame(DataFrame::ENABLE_SIGGEN);
