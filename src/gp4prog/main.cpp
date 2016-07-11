@@ -34,21 +34,14 @@ int main(int argc, char* argv[])
 	LogSink::Severity console_verbosity = LogSink::NOTICE;
 
 	string fname;
-
 	double voltage = 0.0;
 	vector<int> nets;
-	enum modes
-	{
-		MODE_NONE,
-		MODE_PROGRAM,
-		MODE_RESET
-	} mode = MODE_NONE;
-	
+
 	//Parse command-line arguments
 	for(int i=1; i<argc; i++)
 	{
 		string s(argv[i]);
-		
+
 		if(s == "--help")
 		{
 			ShowUsage();
@@ -58,10 +51,6 @@ int main(int argc, char* argv[])
 		{
 			ShowVersion();
 			return 0;
-		}
-		else if( (s == "-r") || (s == "--reset") )
-		{
-			mode = MODE_RESET;
 		}
 		else if(s == "--verbose")
 		{
@@ -73,6 +62,18 @@ int main(int argc, char* argv[])
 				console_verbosity = LogSink::WARNING;
 			else if(console_verbosity == LogSink::WARNING)
 				console_verbosity = LogSink::ERROR;
+		}
+		else if(s == "-e" || s == "--emulate")
+		{
+			if(i+1 < argc)
+			{
+				fname = argv[++i];
+			}
+			else
+			{
+				printf("--nets requires an argument\n");
+				return 1;
+			}
 		}
 		else if(s == "-v" || s == "--voltage")
 		{
@@ -127,10 +128,9 @@ int main(int argc, char* argv[])
 		//assume it's the bitstream file if it's the first non-switch argument
 		else if( (s[0] != '-') && (fname == "") )
 		{
-			mode = MODE_PROGRAM;
 			fname = s;
 		}
-			
+
 		else
 		{
 			printf("Unrecognized command-line argument \"%s\", use --help\n", s.c_str());
@@ -140,16 +140,16 @@ int main(int argc, char* argv[])
 
 	//Set up logging
 	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
-	
+
 	//Print header
 	if(console_verbosity >= LogSink::NOTICE)
 		ShowVersion();
 
 	//Set up libusb
 	USBSetup();
-	
+
 	// Try opening the board in "orange" mode
-	LogNotice("\nSearching for programmer\n");
+	LogNotice("\nSearching for developer board\n");
 	hdevice hdev = OpenDevice(0x0f0f, 0x0006);
 	if(!hdev) {
 		// Try opening the board in "white" mode
@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
 		}
 
 		// Change the board into "orange" mode
-		LogVerbose("Switching board into programmer mode\n");
+		LogVerbose("Switching developer board from bootloader mode\n");
 		SwitchMode(hdev);
 
 		// Takes a while to switch and re-enumerate
@@ -173,61 +173,56 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 	}
-	
+
 	//Get string descriptors
 	string name = GetStringDescriptor(hdev, 1);			//board name
 	string vendor = GetStringDescriptor(hdev, 2);		//manufacturer
 	LogNotice("Found: %s %s\n", vendor.c_str(), name.c_str());
 	//string 0x80 is 02 03 for this board... what does that mean? firmware rev or something?
 	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
-	
+
 	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
-	if(mode == MODE_NONE)
+	if(fname.empty() && voltage == 0.0 && nets.empty())
 	{
-		LogNotice("No commands requested, exiting\n");
+		LogNotice("No actions requested, exiting\n");
 		return 0;
 	}
-	
+
 	//Light up the status LED
 	SetStatusLED(hdev, 1);
-	
+
 	//Select part (no other parts supported yet).
 	//TODO: see if we can enumerate what's plugged in / check the bitstream supplied
 	LogNotice("Selecting part SLG46620V\n");
 	SetPart(hdev, SLG46620V);
 
-	//Wipe I/O config to floating
-	LogNotice("Resetting I/O configuration\n");
-	SetSiggenStatus(hdev, 1, SIGGEN_STOP);
-	IOConfig config;
-	SetIOConfig(hdev, config);
-	
-	//If we're programming, do that
-	if(mode == MODE_PROGRAM)
+	//If we're programming, do that first
+	if(!fname.empty())
 	{
 		vector<uint8_t> bitstream;
 		bitstream = ReadBitstream(fname);
 		if(bitstream.empty())
 			return 1;
-		
-		if(voltage == 0.0)
-		{
-			LogError("Vdd must be provided for programming\n");
-			return 1;
-		}
-
-		//Configure the signal generator for Vdd
-		LogNotice("Setting Vdd=%.3gV\n", voltage);
-		ConfigureSiggen(hdev, 1, voltage);
-		SetSiggenStatus(hdev, 1, SIGGEN_START);
 
 		//Load bitstream
 		LogNotice("Loading bitstream into SRAM\n");
 		LoadBitstream(hdev, bitstream);
-		
+	}
+
+	if(voltage != 0.0)
+	{
+		//Configure the signal generator for Vdd
+		LogNotice("Setting Vdd=%.3gV\n", voltage);
+		ConfigureSiggen(hdev, 1, voltage);
+		SetSiggenStatus(hdev, 1, SIGGEN_START);
+	}
+
+	if(!nets.empty())
+	{
 		//Set the I/O configuration on the test points
 		//Expects a bitstream that does assign TP4=TP3;
 		LogNotice("Setting I/O configuration\n");
+		IOConfig config;
 		for(int net : nets)
 		{
 			// Note: for unknown reasons, the net has to be driven (e.g. weakly) for the LED to become active.
@@ -243,7 +238,7 @@ int main(int argc, char* argv[])
 	//Done
 	LogNotice("Done\n");
 	SetStatusLED(hdev, 0);
-	
+
 	USBCleanup(hdev);
 	return 0;
 }
@@ -256,8 +251,10 @@ void ShowUsage()
 		"    -q, --quiet\n"
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"
-		"    -r, --reset\n"
-		"        Resets the board but does not load a new bitstream.\n"
+		"    -e, --emulate        <bitstream>\n"
+		"        Downloads the specified bitstream into volatile memory.\n"
+		"        This clears anything that was configured using the --voltage or --nets\n"
+		"        options in a previous invocation of gp4prog.\n"
 		"    -v, --voltage        <voltage>\n"
 		"        Adjusts Vdd to the specified value in volts (0V to 5.5V), ±70mV.\n"
 		"    -n, --nets           <nets>\n"
@@ -280,7 +277,7 @@ void ShowVersion()
 // Bitstream reader
 
 vector<uint8_t> ReadBitstream(string fname)
-{	
+{
 	//Open the file
 	FILE* fp = fopen(fname.c_str(), "r");
 	if(!fp)
@@ -288,10 +285,10 @@ vector<uint8_t> ReadBitstream(string fname)
 		LogError("Couldn't open %s for reading\n", fname.c_str());
 		return {};
 	}
-	
+
 	char signature[64];
 	fgets(signature, sizeof(signature), fp);
-	if(strcmp(signature, "index\t\tvalue\t\tcomment\n")) 
+	if(strcmp(signature, "index\t\tvalue\t\tcomment\n"))
 	{
 		LogError("%s is not a GreenPAK bitstream", fname.c_str());
 		return {};
