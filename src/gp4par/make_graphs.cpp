@@ -203,9 +203,6 @@ void BuildGraphs(
 	//Make netlist nodes for cells
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
 	{
-		//TODO: Support LOC constraints on individual cells
-		//For now, just label by type
-		
 		//Figure out the type of node
 		Greenpak4NetlistCell* cell = it->second;
 		uint32_t label = 0;
