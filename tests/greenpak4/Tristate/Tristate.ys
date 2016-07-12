@@ -1,4 +1,0 @@
-#!/nfs4/home/azonenberg/code/3rdparty/yosys/yosys
-##!/usr/bin/env yosys
-read_verilog Tristate.v
-synth_greenpak4 -top Tristate -part SLG46620V -json /tmp/Tristate.json

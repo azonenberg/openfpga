@@ -3,11 +3,17 @@
 
 cmake_minimum_required(VERSION 2.8)
 project(openfpga CXX)
+enable_testing()
 include(GNUInstallDirs)
 
-set( EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
-set( LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
+# Project configuration
+set(BUILD_DOC     ON      CACHE BOOL   "Build documentation")
+set(YOSYS_COMMAND "yosys" CACHE STRING "Command used to run yosys")
 
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
+
+# Compiler configuration
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
   set(EXTRA_WARNINGS "-Wcast-align -Winit-self -Wmissing-declarations")
   set(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wswitch -Wwrite-strings")
@@ -44,6 +50,7 @@ if(SANITIZE)
   endif()
 endif()
 
+# Subdirectories
 add_subdirectory(src)
 add_subdirectory(tests)
 add_subdirectory(doc)
