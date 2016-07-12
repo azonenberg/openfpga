@@ -53,4 +53,6 @@ endif()
 # Subdirectories
 add_subdirectory(src)
 add_subdirectory(tests)
-add_subdirectory(doc)
+if(BUILD_DOC)
+  add_subdirectory(doc)
+endif()
