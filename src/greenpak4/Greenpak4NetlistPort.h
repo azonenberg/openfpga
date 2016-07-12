@@ -78,9 +78,7 @@ public:
 	Direction m_direction;
 	
 	Greenpak4NetlistModule* m_module;
-	
-	Greenpak4NetlistNode* m_net;
-	
+
 	//The netlist node we're attached to
 	Greenpak4NetlistNode* m_node;
 	

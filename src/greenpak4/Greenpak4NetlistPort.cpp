@@ -29,7 +29,6 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 	: Greenpak4NetlistEntity(name)
 	, m_direction(DIR_INPUT)
 	, m_module(module)
-	, m_net(NULL)
 	, m_node(NULL)
 	, m_parnode(NULL)
 {	

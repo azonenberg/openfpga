@@ -406,38 +406,50 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 		//Otherwise should be 1 bit
 		int len = json_object_array_length(child);
 		if(len == 0)
-			continue;		
-		if(len != 1)
-		{
-			LogError("Arrays not implemented in cell connections\n");
-			exit(-1);
-		}
-		
-		Greenpak4NetlistNode* node = NULL;
-		
-		json_object* jnode = json_object_array_get_idx(child, 0);
-		
-		//If it's a string, it's a constant one or zero
-		if(json_object_is_type(jnode, json_type_string))
-		{
-			string s = json_object_get_string(jnode);
-			if(s == "1")
-				node = m_vdd;
-			else
-				node = m_vss;
-		}
-		
-		//Otherwise it has to be an integer
-		else if(!json_object_is_type(jnode, json_type_int))
-		{
-			LogError("Net number for cell should be of type integer but isn't\n");
-			exit(-1);
-		}
-		
-		else
-			node = GetNode(json_object_get_int(jnode));
+			continue;
 			
-		//Name the net
-		cell->m_connections[cname] = node;
+		//May have multiple bits if it's a vector port
+		for(int i=0; i<len; i++)
+		{
+			Greenpak4NetlistNode* node = NULL;
+		
+			json_object* jnode = json_object_array_get_idx(child, i);
+			
+			//If it's a string, it's a constant one or zero
+			if(json_object_is_type(jnode, json_type_string))
+			{
+				string s = json_object_get_string(jnode);
+				if(s == "1")
+					node = m_vdd;
+				else
+					node = m_vss;
+			}
+			
+			//Otherwise it has to be an integer
+			else if(!json_object_is_type(jnode, json_type_int))
+			{
+				LogError("Net number for cell should be of type integer but isn't\n");
+				exit(-1);
+			}
+			
+			else
+				node = GetNode(json_object_get_int(jnode));
+			
+			//printf("cell connections not implemented\n");
+			
+			/*
+			//Name the port... use [] in case of vectors, but no [0] for scalars
+			string pname = cname;
+			if(len > 1)
+			{
+				char tmp[512];
+				snprintf(tmp, sizeof(tmp), "%s[%d]", cname.c_str(), i);
+				pname = tmp;
+			}
+			*/
+			
+			//Name the net
+			cell->m_connections[cname] = node;
+		}
 	}
 }
