@@ -208,19 +208,19 @@ int main(int argc, char* argv[])
 	
 	
 	//Parse the unplaced netlist
-	LogNotice("\nLoading Yosys JSON file \"%s\"\n", fname.c_str());
+	LogNotice("\nLoading Yosys JSON file \"%s\".\n", fname.c_str());
 	Greenpak4Netlist netlist(fname);
 	
 	//Create the device and initialize all IO pins
 	Greenpak4Device device(part, unused_pull, unused_drive);
 	
 	//Do the actual P&R
-	LogNotice("Synthesizing top-level module \"%s\"\n", netlist.GetTopModule()->GetName().c_str());
+	LogNotice("\nSynthesizing top-level module \"%s\".\n", netlist.GetTopModule()->GetName().c_str());
 	if(!DoPAR(&netlist, &device))
 		return 2;
 	
 	//Write the final bitstream
-	LogNotice("\nWriting final bitstream to output file \"%s\"\n", ofname.c_str());
+	LogNotice("\nWriting final bitstream to output file \"%s\".\n", ofname.c_str());
 	device.WriteToFile(ofname);	
 	
 	//TODO: Static timing analysis

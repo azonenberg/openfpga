@@ -81,19 +81,22 @@ protected:
 extern std::vector<std::unique_ptr<LogSink>> g_log_sinks;
 
 #ifdef __GNUC__
-#define ATTR_FORMAT   __attribute__((__format__ (__printf__, 1, 2)))
-#define ATTR_NORETURN __attribute__((noreturn))
+#define ATTR_FORMAT(n, m) __attribute__((__format__ (__printf__, n, m)))
+#define ATTR_NORETURN     __attribute__((noreturn))
 #else
-#define ATTR_FORMAT
+#define ATTR_FORMAT(n, m)
 #define ATTR_NORETURN
 #endif
 
-ATTR_FORMAT void LogVerbose(const char *format, ...);
-ATTR_FORMAT void LogNotice(const char *format, ...);
-ATTR_FORMAT void LogWarning(const char *format, ...);
-ATTR_FORMAT void LogError(const char *format, ...);
-ATTR_FORMAT void LogDebug(const char *format, ...);
-ATTR_FORMAT ATTR_NORETURN void LogFatal(const char *format, ...);
+ATTR_FORMAT(1, 2) void LogVerbose(const char *format, ...);
+ATTR_FORMAT(1, 2) void LogNotice(const char *format, ...);
+ATTR_FORMAT(1, 2) void LogWarning(const char *format, ...);
+ATTR_FORMAT(1, 2) void LogError(const char *format, ...);
+ATTR_FORMAT(1, 2) void LogDebug(const char *format, ...);
+ATTR_FORMAT(1, 2) ATTR_NORETURN void LogFatal(const char *format, ...);
+
+///Just print the message at given log level, don't do anything special for warnings or errors
+ATTR_FORMAT(2, 3) void Log(LogSink::Severity severity, const char *format, ...);
 
 #undef ATTR_FORMAT
 #undef ATTR_NORETURN

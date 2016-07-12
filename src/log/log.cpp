@@ -60,7 +60,7 @@ void LogWarning(const char *format, ...)
 {
 	va_list va;
 	for(auto &sink : g_log_sinks) {
-		sink->Log(LogSink::WARNING, "WARNING: ");
+		sink->Log(LogSink::WARNING, "Warning: ");
 
 		va_start(va, format);
 		sink->Log(LogSink::WARNING, format, va);
@@ -94,6 +94,16 @@ void LogDebug(const char *format, ...)
 	for(auto &sink : g_log_sinks) {
 		va_start(va, format);
 		sink->Log(LogSink::DEBUG, format, va);
+		va_end(va);
+	}
+}
+
+void Log(LogSink::Severity severity, const char *format, ...)
+{
+	va_list va;
+	for(auto &sink : g_log_sinks) {
+		va_start(va, format);
+		sink->Log(severity, format, va);
 		va_end(va);
 	}
 }

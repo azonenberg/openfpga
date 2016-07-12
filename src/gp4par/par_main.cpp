@@ -68,7 +68,7 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
  */
 void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 {
-	LogNotice("\nPost-PAR design rule checks\n");
+	LogNotice("\nChecking post-route design rules...\n");
 		
 	//Check for nodes in the netlist that have no load
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)

@@ -129,7 +129,7 @@ uint32_t PAREngine::ComputeAndPrintScore(vector<PARGraphEdge*>& unroutes, uint32
 	uint32_t cost = ComputeCost();
 	
 	unroutes.clear();
-	LogNotice(
+	LogVerbose(
 		"    Iteration %d: unroutability %d, congestion %d, timing %d (total cost %d)\n",
 		iteration,
 		ucost,

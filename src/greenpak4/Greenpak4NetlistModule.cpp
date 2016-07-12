@@ -34,7 +34,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 {
 	CreatePowerNets();
 	
-	LogNotice("    %s\n", name.c_str());
+	LogVerbose("    %s\n", name.c_str());
 	
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);

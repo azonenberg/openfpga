@@ -25,7 +25,7 @@ using namespace std;
  */
 void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
 {
-	LogNotice("\nBuilding final post-route netlist...\n");
+	LogNotice("\nBuilding post-route netlist...\n");
 	
 	//Go over all of the nodes in the graph and configure the nodes themselves
 	//Net routing will come later!

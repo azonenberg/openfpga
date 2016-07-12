@@ -221,7 +221,7 @@ void Greenpak4Netlist::IndexNets()
  */
 void Greenpak4Netlist::LoadModules(json_object* object)
 {
-	LogNotice("Loading modules...\n");
+	LogNotice("\nLoading modules...\n");
 	
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
