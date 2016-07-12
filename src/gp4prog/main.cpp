@@ -291,7 +291,7 @@ void ShowUsage()
 void ShowVersion()
 {
 	printf(
-		"Greenpak4 programmer by Andrew D. Zonenberg and whitequark.\n"
+		"GreenPAK 4 programmer by Andrew D. Zonenberg and whitequark.\n"
 		"\n"
 		"License: LGPL v2.1+\n"
 		"This is free software: you are free to change and redistribute it.\n"

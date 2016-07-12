@@ -256,7 +256,7 @@ void ShowUsage()
 void ShowVersion()
 {
 	printf(
-		"Greenpak4 place-and-route by Andrew D. Zonenberg.\n"
+		"GreenPAK 4 place-and-route by Andrew D. Zonenberg.\n"
 		"\n"
 		"License: LGPL v2.1+\n"
 		"This is free software: you are free to change and redistribute it.\n"
