@@ -243,7 +243,7 @@ void ShowUsage()
 		"    --debug\n"
 		"        Prints lots of internal debugging information.\n"
 		"    -o, --output         <bitstream>\n"
-		"        Writes bitstream into the specified file."
+		"        Writes bitstream into the specified file.\n"
 		"    -l, --logfile        <file>\n"
 		"        Causes verbose log messages to be written to <file>.\n"
 		"    -L, --logfile-lines  <file>\n"
