@@ -161,13 +161,13 @@ void Greenpak4Netlist::IndexNets()
 	for(auto it = m_topModule->port_begin(); it != m_topModule->port_end(); it ++)
 	{
 		Greenpak4NetlistPort* port = it->second;
-		LogVerbose("    Port %s connects to:\n", it->first.c_str());
+		LogDebug("    Port %s connects to:\n", it->first.c_str());
 		
 		for(unsigned int i=0; i<port->m_nodes.size(); i++)
 		{
 			auto x = port->m_nodes[i];
 			
-			LogVerbose("        bit %u: node %s\n", i, port->m_nodes[i]->m_name.c_str());
+			LogDebug("        bit %u: node %s\n", i, port->m_nodes[i]->m_name.c_str());
 			x->m_ports.push_back(port);
 		}
 	}
@@ -176,7 +176,7 @@ void Greenpak4Netlist::IndexNets()
 	for(auto it = m_topModule->cell_begin(); it != m_topModule->cell_end(); it ++)
 	{
 		Greenpak4NetlistCell* cell = it->second;
-		LogVerbose("    Cell %s connects to:\n", it->first.c_str());
+		LogDebug("    Cell %s connects to:\n", it->first.c_str());
 		for(auto jt : cell->m_connections)
 		{
 			string cellname = jt.first;
@@ -184,7 +184,7 @@ void Greenpak4Netlist::IndexNets()
 			for(unsigned int i=0; i<net.size(); i++)
 			{
 				Greenpak4NetlistNode* node = net[i];
-				LogVerbose("        %s[%u]: net %s\n", cellname.c_str(), i, node->m_name.c_str());
+				LogDebug("        %s[%u]: net %s\n", cellname.c_str(), i, node->m_name.c_str());
 				node->m_nodeports.push_back(Greenpak4NetlistNodePoint(cell, cellname, i));
 			}
 		}
@@ -195,7 +195,7 @@ void Greenpak4Netlist::IndexNets()
 	{
 		if(it->second == NULL)
 		{
-			LogVerbose("Got null node %s during dedup\n", it->second->m_name.c_str());
+			LogDebug("Got null node %s during dedup\n", it->second->m_name.c_str());
 		}
 		else
 			m_nodes.insert(it->second);
@@ -204,14 +204,14 @@ void Greenpak4Netlist::IndexNets()
 	//Print them out
 	for(auto node : m_nodes)
 	{
-		LogVerbose("    Node %s connects to:\n", node->m_name.c_str());
+		LogDebug("    Node %s connects to:\n", node->m_name.c_str());
 		for(auto p : node->m_ports)
 		{
 			Greenpak4NetlistNode* net = m_topModule->GetNet(p->m_name);
-			LogVerbose("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
+			LogDebug("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
 		}
 		for(auto c : node->m_nodeports)
-			LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+			LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 	}
 }
 
