@@ -140,7 +140,7 @@ string Greenpak4BitstreamEntity::GetOutputName()
 	//Find the net we connect to
 	if(cell->m_connections.find(portname) == cell->m_connections.end())
 		return "error";
-	return cell->m_connections[portname]->m_name;
+	return cell->m_connections[portname][0]->m_name;	//FIXME:VECTOR
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

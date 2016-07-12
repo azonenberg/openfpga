@@ -150,13 +150,13 @@ void Greenpak4NetlistModule::CreatePowerNets()
 	Greenpak4NetlistCell* vcell = new Greenpak4NetlistCell(this);
 	vcell->m_name = vdd;
 	vcell->m_type = vdd;
-	vcell->m_connections["OUT"] = m_vdd;
+	vcell->m_connections["OUT"].push_back(m_vdd);
 	m_cells[vdd] = vcell;
 	
 	Greenpak4NetlistCell* gcell = new Greenpak4NetlistCell(this);
 	gcell->m_name = vss;
 	gcell->m_type = vss;
-	gcell->m_connections["OUT"] = m_vss;
+	gcell->m_connections["OUT"].push_back(m_vss);
 	m_cells[vss] = gcell;
 }
 
@@ -238,7 +238,7 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 		exit(-1);
 	}
 	
-	Greenpak4NetlistNode* node = NULL;
+	vector<Greenpak4NetlistNode*> nodes;
 	
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
@@ -264,25 +264,33 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 
 			//Walk the array
 			int len = json_object_array_length(child);
-			if(len != 1)
+			for(int i=0; i<len; i++)
 			{
-				LogError("Vectors must be split during synthesis; PAR cannot handle vector nets\n");
-				exit(-1);
-			}
-			
-			json_object* jnode = json_object_array_get_idx(child, 0);
-			if(!json_object_is_type(jnode, json_type_int))
-			{
-				LogError("Net number in module should be of type integer but isn't\n");
-				exit(-1);
-			}
+				json_object* jnode = json_object_array_get_idx(child, i);
+				if(!json_object_is_type(jnode, json_type_int))
+				{
+					LogError("Net number in module should be of type integer but isn't\n");
+					exit(-1);
+				}
 
-			//How to handle multiple names for the same net??
-			node = GetNode(json_object_get_int(jnode));
-		
-			//Set up name etc
-			node->m_name = name;
-			m_nets[name] = node;
+				//Look up net number and name
+				int netnum = json_object_get_int(jnode);
+				string bname = name;
+				if(len > 1)
+				{
+					char tmp[256];
+					snprintf(tmp, sizeof(tmp), "%s[%d]", name.c_str(), i);
+					bname = tmp;
+				}
+
+				//How to handle multiple names for the same net??
+				auto node = GetNode(netnum);
+				nodes.push_back(node);
+			
+				//Set up name etc
+				node->m_name = bname;
+				m_nets[bname] = node;
+			}
 		}
 		
 		//Attributes - array of name-value pairs
@@ -294,7 +302,9 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 				exit(-1);
 			}
 			
-			LoadNetAttributes(node, child);
+			//Same attributes for all nodes in the vector net
+			for(auto node : nodes)
+				LoadNetAttributes(node, child);
 		}
 		
 		//Unsupported
@@ -435,21 +445,8 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 			else
 				node = GetNode(json_object_get_int(jnode));
 			
-			//printf("cell connections not implemented\n");
-			
-			/*
-			//Name the port... use [] in case of vectors, but no [0] for scalars
-			string pname = cname;
-			if(len > 1)
-			{
-				char tmp[512];
-				snprintf(tmp, sizeof(tmp), "%s[%d]", cname.c_str(), i);
-				pname = tmp;
-			}
-			*/
-			
-			//Name the net
-			cell->m_connections[cname] = node;
+			//Hook up the connection
+			cell->m_connections[cname].push_back(node);
 		}
 	}
 }

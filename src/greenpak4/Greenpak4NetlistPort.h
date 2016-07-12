@@ -27,13 +27,15 @@ class Greenpak4NetlistNodePoint
 {
 public:
 
-	Greenpak4NetlistNodePoint(Greenpak4NetlistCell* cell, std::string port)
+	Greenpak4NetlistNodePoint(Greenpak4NetlistCell* cell, std::string port, unsigned int nbit)
 		: m_cell(cell)
 		, m_portname(port)
+		, m_nbit(nbit)
 	{}
 
 	Greenpak4NetlistCell* m_cell;
 	std::string m_portname;
+	unsigned int m_nbit;
 };
 
 //A single named node in the netlist (may be a wire or part of a bus)
@@ -62,7 +64,7 @@ public:
 	std::vector<Greenpak4NetlistPort*> m_ports;
 };
 
-//A module port (attached to a single node)
+//A module port (attached to one or more nodes)
 class Greenpak4NetlistPort : public Greenpak4NetlistEntity
 {
 public:
@@ -78,9 +80,12 @@ public:
 	Direction m_direction;
 	
 	Greenpak4NetlistModule* m_module;
-
+	
+	//The named net
+	Greenpak4NetlistNode* m_net;
+	
 	//The netlist node we're attached to
-	Greenpak4NetlistNode* m_node;
+	std::vector<Greenpak4NetlistNode*> m_nodes;
 	
 	//The graph node for this IOB (only valid during place-and-route)
 	PARGraphNode* m_parnode;

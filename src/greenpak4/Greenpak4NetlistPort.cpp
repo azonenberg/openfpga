@@ -29,7 +29,6 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 	: Greenpak4NetlistEntity(name)
 	, m_direction(DIR_INPUT)
 	, m_module(module)
-	, m_node(NULL)
 	, m_parnode(NULL)
 {	
 	json_object_iterator end = json_object_iter_end(object);
@@ -77,24 +76,18 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 
 			//Walk the array
 			int len = json_object_array_length(child);
-			if(len != 1)
+			for(int i=0; i<len; i++)
 			{
-				LogError(
-					"Port %s on module %s is a vector (should split nets during synthesis)\n",
-					module->GetName().c_str(),
-					name.c_str());
-				exit(-1);
-			}
-			
-			json_object* jnode = json_object_array_get_idx(child, 0);
-			if(!json_object_is_type(jnode, json_type_int))
-			{
-				LogError("Net number of port \"%s\" should be of type integer but isn't\n",
-					m_name.c_str());
-				exit(-1);
-			}
+				json_object* jnode = json_object_array_get_idx(child, i);
+				if(!json_object_is_type(jnode, json_type_int))
+				{
+					LogError("Net number of port \"%s\" should be of type integer but isn't\n",
+						m_name.c_str());
+					exit(-1);
+				}
 
-			m_node = module->GetNode(json_object_get_int(jnode));
+				m_nodes.push_back(module->GetNode(json_object_get_int(jnode)));
+			}
 		}
 		
 		//Garbage

@@ -65,11 +65,11 @@ void Greenpak4IOB::CommitChanges()
 	//Get the net
 	Greenpak4NetlistNode* net = NULL;
 	if(cell->m_type == "GP_IBUF")
-		net = cell->m_connections["IN"];
+		net = cell->m_connections["IN"][0];
 	else if(cell->m_type == "GP_OBUF")
-		net = cell->m_connections["OUT"];
+		net = cell->m_connections["OUT"][0];
 	else if(cell->m_type == "GP_IOBUF")
-		net = cell->m_connections["IO"];
+		net = cell->m_connections["IO"][0];
 	if(net == NULL)
 		return;
 			

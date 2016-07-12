@@ -59,7 +59,9 @@ public:
 	std::map<std::string, std::string> m_parameters;
 	std::map<std::string, std::string> m_attributes;
 	
-	std::map<std::string, Greenpak4NetlistNode* > m_connections;
+	typedef std::vector<Greenpak4NetlistNode*> cellnet;
+	
+	std::map<std::string, cellnet > m_connections;
 	
 	PARGraphNode* m_parnode;
 	

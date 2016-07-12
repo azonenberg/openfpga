@@ -58,8 +58,9 @@ void Greenpak4NetlistCell::FindLOC()
 		else if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
 			continue;
 			
-		//See if this net has a LOC constraint
-		auto net = it.second;
+		//See if this net has a LOC constraint on the LSB (constraints on other bits ignored)
+		//TODO: find constraints on any bit in the net
+		auto net = it.second[0];
 		if(!net->HasAttribute("LOC"))
 			continue;
 
