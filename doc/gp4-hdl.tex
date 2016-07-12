@@ -1257,7 +1257,9 @@ GP_ACMP #(
 \subsection{\tokenstyle{GP\_BANDGAP}: Bandgap Voltage Reference}
 
 \subsubsection{Introduction}
-This primitive represents the bandgap voltage reference.
+This primitive allows configuration of the bandgap voltage reference. It produces a 1.0V reference which is used 
+internally by the \tokenref{GP\_VREF}{gp-vref} block. (This connection is implicit and does not need to be provided in 
+your HDL.)
 
 \subsubsection{Port Descriptions}
 
@@ -1266,9 +1268,6 @@ This primitive represents the bandgap voltage reference.
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
 \tokenstyle{OK} & Output & 1 & Goes high when bandgap voltage reference is stable. \\
-\thinhline
-\tokenstyle{VOUT} & Output & 1 & 1.0V reference voltage.
-	Dedicated connection to mixed signal hard IP, does not connect to general fabric routing. \\
 \thinhline
 \end{tabularx}
 
@@ -1292,8 +1291,7 @@ This primitive represents the bandgap voltage reference.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-bandgap-example} sets \wirestyle{bg\_ok} high $550 \mu s$ after reset. \wirestyle{bandgap\_vout} is a 1.0V
-analog reference voltage for use by other mixed signal blocks.
+The example shown in figure \ref{gp-bandgap-example} sets \wirestyle{bg\_ok} high $550 \mu s$ after reset.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1304,8 +1302,7 @@ GP_BANDGAP #(
 	.CHOPPER_EN(1),
 	.OUT_DELAY(550)
 ) bandgap (
-	.OK(bg_ok),
-	.VOUT(bandgap_vout)
+	.OK(bg_ok)
 );
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_BANDGAP}}
@@ -1634,7 +1631,7 @@ GP_COUNT14_ADV #(
 % GP_DAC
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DAC}: Digital to Analog Converter (NOT IMPLEMENTED)}
+\subsection{\tokenstyle{GP\_DAC}: Digital to Analog Converter}
 \label{gp-dac}
 
 \subsubsection{Introduction}
@@ -1648,6 +1645,8 @@ require a clock.
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
 \tokenstyle{DIN} & Input & 8 & Input data. Must be connected to an 8-bit constant value for now. \\
+\thinhline
+\tokenstyle{VREF} & Input & 1 & Analog reference voltage from \tokenref{GP\_VREF}{gp-vref}. \\
 \thinhline
 \tokenstyle{VOUT} & Output & 1 & Analog output. \\
 \thinhline
@@ -1663,6 +1662,14 @@ The example shown in figure \ref{gp-dac-example} FIXME.
 
 \begin{figure}[h]
 \begin{lstlisting}
+wire[7:0] dcode;		//assigned elsewhere
+wire vref;				//assigned elsewhere
+wire vdac;
+GP_DAC dac(
+	.DIN(dcode),
+	.VOUT(vdac),
+	.VREF(vref)
+);
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_DAC}}
 \label{gp-dac-example}
@@ -2833,11 +2840,12 @@ GP_VDD vdd(
 
 \subsubsection{Introduction}
 This primitive represents one output channel from the device's voltage reference. It buffers and optionally divides the
-incoming voltage to drive the reference input to \tokenref{GP\_ACMP}{gp-acmp} cells and external reference output pins.
+incoming voltage to drive the reference input to \tokenref{GP\_ACMP}{gp-acmp} cells, \tokenref{GP\_DAC}{gp-dac} cells,
+and external reference output pins.
 
-Any number of \tokenstyle{GP\_VREF} blocks (up to a maximum of one per comparator) may be instantiated. The current toolchain
-version requires that the block be replicated manually if multiple comparators are driven by the same reference. A
-future version will perform this replication automatically, allowing one \tokenstyle{GP\_VREF} block to drive any number of loads.
+One \tokenstyle{GP\_VREF} block may drive any number of loads which use the same voltage, however internal device 
+connectivity restrictions must be observed (for example, off-die reference inputs cannot be used for GreenPak4 DACs). 
+See the device datasheet for full details on which reference configurations are legal for which analog IP blocks.
 
 \subsubsection{Port Descriptions}
 

@@ -66,7 +66,6 @@ vector<string> Greenpak4Bandgap::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("OK");
-	//VOUT is not general fabric routing
 	return r;
 }
 
@@ -74,7 +73,6 @@ unsigned int Greenpak4Bandgap::GetOutputNetNumber(string port)
 {
 	if(port == "OK")
 		return m_outputBaseWord;
-	//VOUT is not general fabric routing
 	else
 		return -1;
 }
