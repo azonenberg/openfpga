@@ -1,0 +1,27 @@
+language: c++
+sudo: false
+addons:
+  apt:
+    sources:
+      - llvm-toolchain-precise
+    packages:
+      - clang-3.8
+      - cmake
+      - libjson-c-dev
+      - libusb-1.0-0-dev
+env:
+  - MODE=normal
+  - MODE=ubsan
+  - MODE=asan
+  - MODE=scan-build
+install:
+  - git clone git://github.com/azonenberg/yosys $HOME/yosys
+  - make -C $HOME/yosys
+script:
+  - '[ "${MODE}" == "ubsan"      ] && CMAKE_FLAGS="-DBUILD_DOC=FALSE -DSANITIZE=undefined"'
+  - '[ "${MODE}" == "asan"       ] && CMAKE_FLAGS="-DBUILD_DOC=FALSE -DSANITIZE=address"'
+  - '[ "${MODE}" == "scan-build" ] && CMAKE_FLAGS="-DBUILD_DOC=FALSE" BUILD_PREFIX="scan-build --status-bugs"'
+  - 'mkdir build'
+  - 'cd build'
+  - '${BUILD_PREFIX} cmake .. -DCMAKE_CXX_COMPILER=clang -DYOSYS_COMMAND=$HOME/yosys/yosys ${CMAKE_FLAGS}'
+  - '${BUILD_PREFIX} make all test'
