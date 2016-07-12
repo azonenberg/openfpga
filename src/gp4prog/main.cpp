@@ -265,6 +265,8 @@ void ShowUsage()
 		"    -q, --quiet\n"
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"
+		"    --verbose\n"
+		"        Print lots of verbose debug information\n"
 		"\n"
 		"    The following options are instructions for the developer board. They are\n"
 		"    executed in the order listed here, regardless of their order on command line.\n"
