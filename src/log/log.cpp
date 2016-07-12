@@ -87,3 +87,13 @@ void LogVerbose(const char *format, ...)
 		va_end(va);
 	}
 }
+
+void LogDebug(const char *format, ...)
+{
+	va_list va;
+	for(auto &sink : g_log_sinks) {
+		va_start(va, format);
+		sink->Log(LogSink::DEBUG, format, va);
+		va_end(va);
+	}
+}

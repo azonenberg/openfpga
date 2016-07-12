@@ -36,7 +36,8 @@ public:
 		ERROR	= 2,
 		WARNING	= 3,
 		NOTICE	= 4,
-		VERBOSE	= 5
+		VERBOSE	= 5,
+		DEBUG = 6
 	};
 
 	virtual void Log(Severity severity, const std::string &msg) = 0;
@@ -91,6 +92,7 @@ ATTR_FORMAT void LogVerbose(const char *format, ...);
 ATTR_FORMAT void LogNotice(const char *format, ...);
 ATTR_FORMAT void LogWarning(const char *format, ...);
 ATTR_FORMAT void LogError(const char *format, ...);
+ATTR_FORMAT void LogDebug(const char *format, ...);
 ATTR_FORMAT ATTR_NORETURN void LogFatal(const char *format, ...);
 
 #undef ATTR_FORMAT
