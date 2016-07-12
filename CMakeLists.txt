@@ -18,7 +18,10 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
   set(CMAKE_LINK_FLAGS "-ggdb")
 endif()
 
-# Sanitizers
+# Compilation database for Clang static analyzer
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Clang sanitizers
 if(SANITIZE)
   if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
     if(SANITIZE STREQUAL memory)
@@ -28,11 +31,14 @@ if(SANITIZE)
       message(STATUS "           -DCMAKE_EXE_LINKER_FLAGS=\"-lc++abi -L\${MSAN_PREFIX}/lib\" ...")
       message(STATUS "See https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=memory -fsanitize-memory-track-origins")
+    elseif(SANITIZE STREQUAL address)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
     elseif(SANITIZE STREQUAL undefined)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined,integer")
     else()
       message(FATAL_ERROR "Unsupported sanitizer ${SANITIZE}")
     endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize-recover=all")
   else()
     message(FATAL_ERROR "Sanitizers not supported on compiler ${CMAKE_CXX_COMPILER_ID}")
   endif()
