@@ -497,32 +497,11 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// FSM input data source
 		
-		//if unused, reset to NVM data
-		if(unused)
-		{
+		//NVM data (FSM data = max count)
+		//NB: on SLG46620, FSM0 and FSM1 encoding for this register does not match
+		bitstream[nbase + 0] = false;
+		bitstream[nbase + 1] = false;
 
-			bitstream[nbase + 0] = false;
-			bitstream[nbase + 1] = false;
-		}
-		else
-		{
-			//NVM data (FSM data = max count)
-			if(m_resetValue == COUNT_TO)
-			{
-				bitstream[nbase + 0] = false;
-				bitstream[nbase + 1] = false;
-			}
-
-			//Zero
-			else if(m_resetValue == ZERO)
-			{
-				bitstream[nbase + 0] = false;
-				bitstream[nbase + 1] = true;
-			}
-		}
-
-		//
-		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Value control
 		
@@ -530,9 +509,16 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		if(unused)
 			bitstream[nbase + 2] = false;
 
-		//Reset to FSM data source
 		else
-			bitstream[nbase + 2] = true;
+		{
+			//Set (to FSM data source)
+			if(m_resetValue == COUNT_TO)
+				bitstream[nbase + 2] = true;
+
+			//Reset (to zero)
+			else if(m_resetValue == ZERO)
+				bitstream[nbase + 2] = false;
+		}
 	}
 		
 	//Not FSM capable (see CNT/DLY0)

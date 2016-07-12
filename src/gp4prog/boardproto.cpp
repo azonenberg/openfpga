@@ -82,27 +82,27 @@ DataFrame::DataFrame(const char *ascii)
 void DataFrame::Send(hdevice hdev)
 {
 	uint8_t data[64] = {};
-	
+
 	//Packet header
 	data[0] = m_sequenceA;
 	data[1] = m_type;
 	if(m_payload.size() == 0)
 		data[2] = 0x00;
 	else
-		data[2] = 3 + m_payload.size();		
+		data[2] = 3 + m_payload.size();
 	data[3] = m_sequenceB;
-	
+
 	//Packet body
 	for(size_t i=0; i<m_payload.size(); i++)
 		data[4+i] = m_payload[i];
-	
+
 	LogVerbose("H→D: ");
 	for(int i=0; i<64; i++) {
 		LogVerbose("%02x", data[i] & 0xff);
 		if(i < 4) LogVerbose("_");
 	}
 	LogVerbose("\n");
-	
+
 	SendInterruptTransfer(hdev, data, sizeof(data));
 }
 
@@ -130,7 +130,7 @@ void DataFrame::Receive(hdevice hdev)
 	else
 		LogFatal("Unexpected size %d\n", data[2]);
 	m_sequenceB = data[3];
-	
+
 	//Packet body
 	m_payload.resize(size);
 	for(size_t i=0; i<m_payload.size(); i++)
@@ -145,7 +145,7 @@ void DataFrame::Roundtrip(hdevice hdev, uint8_t ack_type)
 	DataFrame ack_frame;
 	ack_frame.Receive(hdev);
 
-	// Compare the two frames. 
+	// Compare the two frames.
 	// Received frame will usually have length 0x3f; it is unimportant.
 	// Received frame will sometimes have the same sequence number B, sometimes not. It is unimportant.
 	if(!(m_sequenceA == ack_frame.m_sequenceA &&
@@ -192,23 +192,23 @@ void SetStatusLED(hdevice hdev, bool status)
 void SetIOConfig(hdevice hdev, IOConfig& config)
 {
 	DataFrame frame(DataFrame::CONFIG_IO);
-	
+
 	//Test point config data
 	for(unsigned int i=2; i<=20; i++)
 	{
 		unsigned int cfg = config.driverConfigs[i];
 		frame.push_back(cfg >> 8);
 		frame.push_back(cfg & 0xff);
-		
+
 		//skip TP11 since that's ground, no config for it
 		if(i == 10)
 			i++;
 	}
-	
+
 	//7 unknown bytes, leave zero for now
 	for(size_t i=0; i<7; i++)
 		frame.push_back(0);
-	
+
 	//Expansion connector
 	uint8_t exp[3] = {0};
 	uint8_t expansionBitMap[][2] =
@@ -242,7 +242,7 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	}
 	for(size_t i=0; i<3; i++)
 		frame.push_back(exp[i]);
-	
+
 	//LEDs from TP3 ... TP15
 	unsigned int tpbase = 3;
 	for(int i=0; i<3; i++)
@@ -252,20 +252,20 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 		{
 			uint8_t bitmask = 1 << j;
 			uint8_t tpnum = tpbase + j;
-			
+
 			if(config.ledEnabled[tpnum])
 				ledcfg |= bitmask;
 			if(config.ledInverted[tpnum])
 				ledcfg |= (bitmask << 4);
 		}
 		frame.push_back(ledcfg);
-				
+
 		//Bump pointers. skip TP11 as it's not implemented in the hardware (ground)
 		tpbase += 4;
 		if(i == 1)
 			tpbase ++;
 	}
-	
+
 	//LEDs from TP16 ... TP20
 	uint8_t leden = 0;
 	uint8_t ledinv = 0;
@@ -273,7 +273,7 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	{
 		uint8_t tpnum = 16 + i;
 		uint8_t bitmask = 1 << i;
-		
+
 		if(config.ledEnabled[tpnum])
 			leden |= bitmask;
 		if(config.ledInverted[tpnum])
@@ -281,12 +281,12 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	}
 	frame.push_back(leden);
 	frame.push_back(ledinv);
-	
+
 	//Always constant, meaning unknown
 	frame.push_back(0x1);
 	frame.push_back(0x0);
 	frame.push_back(0x0);
-	
+
 	//Done, send it
 	frame.Send(hdev);
 }
@@ -296,9 +296,9 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage)
 {
 	DataFrame frame(DataFrame::CONFIG_SIGGEN);
-	
-	uint16_t raw_voltage = voltage / 1.362;
-	
+
+	uint16_t raw_voltage = voltage / 0.001362;
+
 	frame.push_back(2);					//signal generator
 	frame.push_back(channel);			//channel number
 	frame.push_back(1);					//hold at start value before starting
@@ -312,23 +312,35 @@ void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage)
 	// frame.push_back(0);
 	// frame.push_back(0);					//step sign and fractional step part
 	// frame.push_back(0);
-	
+
 	frame.Roundtrip(hdev);
+}
+
+void ResetAllSiggens(hdevice hdev)
+{
+	DataFrame frame(DataFrame::ENABLE_SIGGEN);
+
+	for(unsigned int i=1; i<=19; i++)
+	{
+		frame.push_back(SIGGEN_RESET);
+	}
+
+	frame.Send(hdev);
 }
 
 void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status)
 {
 	DataFrame frame(DataFrame::ENABLE_SIGGEN);
-	
+
 	for(unsigned int i=1; i<=19; i++)
 	{
 		if(i == chan)					//apply our status
 			frame.push_back(status);
-			
+
 		else
 			frame.push_back(SIGGEN_NOP);	//no change
 	}
-		
+
 	frame.Send(hdev);
 }
 
