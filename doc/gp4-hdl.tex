@@ -2964,8 +2964,7 @@ Analog, and saves the generated bitstream to Analog-hdl.txt. Unused pins are pul
 
 \begin{figure}[h]
 \begin{lstlisting}[language=sh]
-gp4par Analog.json --top Analog --output Analog-hdl.txt \
-	--unused-pull down --unused-drive 10k
+gp4par Analog.json --output Analog-hdl.txt --unused-pull down --unused-drive 10k
 \end{lstlisting}
 \caption{Example usage of \namestyle{gp4par}}
 \label{gp-cmd-example}
@@ -2985,10 +2984,6 @@ console and then quit.
 
 The \texttt{--output} argument is required for all place-and-route operations. It must be immediately followed by the
 filename to which the generated bitstream will be written.
-
-\subsection{\texttt{--top}}
-
-The \texttt{--top} argument is optional. If used, it must be immediately followed by the case-sensitive name of the top-level module. The default name if not specified is ``\tokenstyle{top}".
 
 \subsection{\texttt{--unused-drive}}
 

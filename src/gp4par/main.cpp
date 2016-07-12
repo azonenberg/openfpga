@@ -30,9 +30,6 @@ int main(int argc, char* argv[])
 	//Output file
 	string ofname = "";
 	
-	//Top-level module name
-	string top = "top";
-	
 	//Action to take with unused pins;
 	Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_NONE;
 	Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
@@ -80,16 +77,6 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 		}
-		else if(s == "--top")
-		{
-			if(i+1 < argc)
-				top = argv[++i];
-			else
-			{
-				printf("--top requires an argument\n");
-				return 1;
-			}
-		}		
 		else if(s == "--unused-pull")
 		{
 			if(i+1 < argc)
@@ -219,14 +206,14 @@ int main(int argc, char* argv[])
 	
 	
 	//Parse the unplaced netlist
-	LogNotice("\nLoading Yosys JSON file \"%s\", expecting top-level module \"%s\"\n",
-		fname.c_str(), top.c_str());
-	Greenpak4Netlist netlist(fname, top);
+	LogNotice("\nLoading Yosys JSON file \"%s\"\n", fname.c_str());
+	Greenpak4Netlist netlist(fname);
 	
 	//Create the device and initialize all IO pins
 	Greenpak4Device device(part, unused_pull, unused_drive);
 	
 	//Do the actual P&R
+	LogNotice("Synthesizing top-level module \"%s\"\n", netlist.GetTopModule()->GetName().c_str());
 	if(!DoPAR(&netlist, &device))
 		return 2;
 	
@@ -243,7 +230,7 @@ int main(int argc, char* argv[])
 void ShowUsage()
 {
 	printf(//                                                                               v 80th column
-		"Usage: gp4par --top TopModule --output foo.txt foo.json\n"
+		"Usage: gp4par --output foo.txt foo.json\n"
 		"    --debug\n"
 		"        Prints lots of verbose debugging output.\n"
 		"    -q, --quiet\n"

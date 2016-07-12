@@ -99,6 +99,8 @@ public:
 	std::string GetName()
 	{ return m_name; }
 	
+	std::map<std::string, std::string> m_attributes;
+
 	typedef std::map<std::string, Greenpak4NetlistPort*> portmap;
 	typedef std::map<std::string, Greenpak4NetlistCell*> cellmap;
 	typedef std::map<std::string, Greenpak4NetlistNode*> netmap;
@@ -144,6 +146,7 @@ protected:
 	
 	std::string m_name;
 	
+	void LoadAttributes(json_object* object);
 	void LoadNetName(std::string name, json_object* object);
 	void LoadNetAttributes(Greenpak4NetlistNode* net, json_object* object);
 	void LoadCell(std::string name, json_object* object);

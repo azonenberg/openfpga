@@ -29,9 +29,8 @@ Greenpak4NetlistEntity::~Greenpak4NetlistEntity()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4Netlist::Greenpak4Netlist(std::string fname, std::string top)
-	: m_topModuleName(top)
-	, m_topModule(NULL)
+Greenpak4Netlist::Greenpak4Netlist(std::string fname)
+	: m_topModule(NULL)
 {
 	//Read the netlist
 	FILE* fp = fopen(fname.c_str(), "r");
@@ -243,15 +242,23 @@ void Greenpak4Netlist::LoadModules(json_object* object)
 		//TODO: If the child object is a standard library cell, don't bother parsing it?
 		
 		//Load it
-		m_modules[name] = new Greenpak4NetlistModule(this, name, child);
+		Greenpak4NetlistModule *module = new Greenpak4NetlistModule(this, name, child);
+		m_modules[name] = module;
+
+		//Did we get a top-level module?
+		if(module->m_attributes.find("top") != module->m_attributes.end()) {
+			if(m_topModule) {
+				LogError("More than one top-level module in netlist\n");
+				exit(-1);
+			}
+			m_topModule = module;
+		}
 	}
 	
 	//Verify we got the top-level module we expected
-	if(m_modules.find(m_topModuleName) != m_modules.end())
-		m_topModule = m_modules[m_topModuleName];
-	else
+	if(m_topModule == NULL)
 	{
-		LogError("Unable to find top-level module \"%s\" in netlist\n", m_topModuleName.c_str());
+		LogError("Unable to find a top-level module in netlist\n");
 		exit(-1);
 	}
 }

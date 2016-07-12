@@ -33,7 +33,7 @@
 class Greenpak4Netlist
 {
 public:
-	Greenpak4Netlist(std::string fname, std::string top);
+	Greenpak4Netlist(std::string fname);
 	virtual ~Greenpak4Netlist();
 	
 	Greenpak4NetlistModule* GetTopModule()
@@ -58,7 +58,6 @@ protected:
 	void Load(json_object* object);
 	void LoadModules(json_object* object);
 		
-	std::string m_topModuleName;
 	std::string m_creator;
 	
 	//All of the modules in the netlist

@@ -51,52 +51,58 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 			LogError("module child should be of type object but isn't\n");
 			exit(-1);
 		}
-		
-		//Go over the children's children and process it
-		json_object_iterator end = json_object_iter_end(child);
-		for(json_object_iterator it2 = json_object_iter_begin(child);
-			!json_object_iter_equal(&it2, &end);
-			json_object_iter_next(&it2))
+
+		if(name == "attributes")
+			LoadAttributes(child);
+
+		else
 		{
-			//See what we got
-			string cname = json_object_iter_peek_name(&it2);
-			json_object* cobject = json_object_iter_peek_value(&it2);
-			
-			//Whatever it is, it should be an object
-			if(!json_object_is_type(cobject, json_type_object))
+			//Go over the children's children and process it
+			json_object_iterator end = json_object_iter_end(child);
+			for(json_object_iterator it2 = json_object_iter_begin(child);
+				!json_object_iter_equal(&it2, &end);
+				json_object_iter_next(&it2))
 			{
-				LogError("module child should be of type object but isn't\n");
-				exit(-1);
-			}
-			
-			//Load ports
-			if(name == "ports")
-			{
-				//Make sure it doesn't exist
-				if(m_ports.find(cname) != m_ports.end())
+				//See what we got
+				string cname = json_object_iter_peek_name(&it2);
+				json_object* cobject = json_object_iter_peek_value(&it2);
+
+				//Whatever it is, it should be an object
+				if(!json_object_is_type(cobject, json_type_object))
 				{
-					LogError("Attempted redeclaration of module port \"%s\"\n", name.c_str());
+					LogError("module child should be of type object but isn't\n");
 					exit(-1);
 				}
 				
-				//Create the port
-				Greenpak4NetlistPort* port = new Greenpak4NetlistPort(this, cname, cobject);
-				m_ports[cname] = port;
-			}
-			
-			//Load cells
-			else if(name == "cells")
-				LoadCell(cname, cobject);
-			
-			//Load net names
-			else if(name == "netnames")
-				LoadNetName(cname, cobject);
-			
-			//Whatever it is, we don't want it
-			else
-			{
-				LogError("Unknown top-level JSON object \"%s\"\n", name.c_str());
-				exit(-1);
+				//Load ports
+				if(name == "ports")
+				{
+					//Make sure it doesn't exist
+					if(m_ports.find(cname) != m_ports.end())
+					{
+						LogError("Attempted redeclaration of module port \"%s\"\n", name.c_str());
+						exit(-1);
+					}
+
+					//Create the port
+					Greenpak4NetlistPort* port = new Greenpak4NetlistPort(this, cname, cobject);
+					m_ports[cname] = port;
+				}
+
+				//Load cells
+				else if(name == "cells")
+					LoadCell(cname, cobject);
+
+				//Load net names
+				else if(name == "netnames")
+					LoadNetName(cname, cobject);
+
+				//Whatever it is, we don't want it
+				else
+				{
+					LogError("Unknown top-level JSON object \"%s\"\n", name.c_str());
+					exit(-1);
+				}
 			}
 		}
 	}
@@ -162,6 +168,28 @@ void Greenpak4NetlistModule::CreatePowerNets()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Loading
+
+void Greenpak4NetlistModule::LoadAttributes(json_object* object)
+{
+	json_object_iterator end = json_object_iter_end(object);
+	for(json_object_iterator it = json_object_iter_begin(object);
+		!json_object_iter_equal(&it, &end);
+		json_object_iter_next(&it))
+	{
+		string cname = json_object_iter_peek_name(&it);
+		json_object* child = json_object_iter_peek_value(&it);
+
+		//Make sure we don't have it already
+		if(m_attributes.find(cname) != m_attributes.end())
+		{
+			LogError("Attempted redeclaration of module attribute \"%s\"\n", cname.c_str());
+			exit(-1);
+		}
+
+		//Save the attribute
+		m_attributes[cname] = json_object_get_string(child);
+	}
+}
 
 Greenpak4NetlistNode* Greenpak4NetlistModule::GetNode(int32_t netnum)
 {
