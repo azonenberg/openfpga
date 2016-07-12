@@ -50,3 +50,9 @@ script:
   - 'if [ "${MODE}" != "scan-build" ]; then
       ctest --output-on-failure;
     fi'
+notifications:
+  irc:
+    channels:
+      - "chat.freenode.net##openfpga"
+    use_notice: true
+    skip_join: true
