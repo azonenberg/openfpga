@@ -32,12 +32,12 @@ public:
 
 	enum Severity
 	{
-		FATAL	= 1,
-		ERROR	= 2,
-		WARNING	= 3,
-		NOTICE	= 4,
-		VERBOSE	= 5,
-		DEBUG = 6
+		FATAL	= 1,	//State is totally unusable, must exit right now
+		ERROR	= 2,	//Design is unroutable, cannot continue
+		WARNING	= 3,	//Design may have an error, but we'll attempt to proceed at your own risk
+		NOTICE	= 4,	//Useful information about progress
+		VERBOSE	= 5,	//Detailed information end users may sometimes need, but not often
+		DEBUG = 6		//Extremely detailed information only useful to people working on the toolchain internals
 	};
 
 	virtual void Log(Severity severity, const std::string &msg) = 0;
