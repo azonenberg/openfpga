@@ -55,9 +55,13 @@ int main(int argc, char* argv[])
 			ShowVersion();
 			return 0;
 		}
+		else if(s == "-d" || s == "--debug")
+			console_verbosity = LogSink::DEBUG;
 		else if(s == "-q" || s == "--quiet")
 		{
-			if(console_verbosity == LogSink::VERBOSE)
+			if(console_verbosity == LogSink::DEBUG)
+				console_verbosity = LogSink::VERBOSE;
+			else if(console_verbosity == LogSink::VERBOSE)
 				console_verbosity = LogSink::WARNING;
 			else if(console_verbosity == LogSink::WARNING)
 				console_verbosity = LogSink::ERROR;
@@ -240,6 +244,8 @@ void ShowUsage()
 {
 	printf(//                                                                               v 80th column
 		"Usage: gp4par --top TopModule --output foo.txt foo.json\n"
+		"    -d, --debug\n"
+		"        Prints lots of verbose debugging output.\n"
 		"    -q, --quiet\n"
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"
