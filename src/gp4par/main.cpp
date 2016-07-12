@@ -22,7 +22,7 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	LogSink::Severity console_verbosity = LogSink::VERBOSE;
+	LogSink::Severity console_verbosity = LogSink::NOTICE;
 
 	//Netlist file
 	string fname = "";
@@ -52,8 +52,6 @@ int main(int argc, char* argv[])
 			ShowVersion();
 			return 0;
 		}
-		else if(s == "--debug")
-			console_verbosity = LogSink::DEBUG;
 		else if(s == "-q" || s == "--quiet")
 		{
 			if(console_verbosity == LogSink::DEBUG)
@@ -63,6 +61,10 @@ int main(int argc, char* argv[])
 			else if(console_verbosity == LogSink::WARNING)
 				console_verbosity = LogSink::ERROR;
 		}
+		else if(s == "--verbose")
+			console_verbosity = LogSink::VERBOSE;
+		else if(s == "--debug")
+			console_verbosity = LogSink::DEBUG;
 		else if(s == "-l" || s == "--logfile" ||
 		        s == "-L" || s == "--logfile-lines")
 		{
@@ -231,15 +233,18 @@ void ShowUsage()
 {
 	printf(//                                                                               v 80th column
 		"Usage: gp4par --output foo.txt foo.json\n"
-		"    --debug\n"
-		"        Prints lots of verbose debugging output.\n"
 		"    -q, --quiet\n"
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"
+		"    --verbose\n"
+		"        Prints additional information about the design.\n"
+		"    --debug\n"
+		"        Prints lots of internal debugging information.\n"
 		"    -l, --logfile        <file>\n"
-		"        Causes log messages to be written to <file>.\n"
+		"        Causes verbose log messages to be written to <file>.\n"
 		"    -L, --logfile-lines  <file>\n"
-		"        Causes log messages to be written to <file>, flushing after each line.\n"
+		"        Causes verbose log messages to be written to <file>, flushing after\n"
+		"        each line.\n"
 		"    --unused-pull        [down|up|float]\n"
 		"        Specifies direction to pull unused pins.\n"
 		"    --unused-drive       [10k|100k|1m]\n"

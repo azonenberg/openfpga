@@ -96,12 +96,12 @@ void DataFrame::Send(hdevice hdev)
 	for(size_t i=0; i<m_payload.size(); i++)
 		data[4+i] = m_payload[i];
 
-	LogVerbose("H→D: ");
+	LogDebug("H→D: ");
 	for(int i=0; i<64; i++) {
-		LogVerbose("%02x", data[i] & 0xff);
-		if(i < 4) LogVerbose("_");
+		LogDebug("%02x", data[i] & 0xff);
+		if(i < 4) LogDebug("_");
 	}
-	LogVerbose("\n");
+	LogDebug("\n");
 
 	SendInterruptTransfer(hdev, data, sizeof(data));
 }
@@ -112,12 +112,12 @@ void DataFrame::Receive(hdevice hdev)
 
 	ReceiveInterruptTransfer(hdev, data, sizeof(data));
 
-	LogVerbose("D→H: ");
+	LogDebug("D→H: ");
 	for(int i=0; i<64; i++) {
-		LogVerbose("%02x", data[i] & 0xff);
-		if(i < 4) LogVerbose("_");
+		LogDebug("%02x", data[i] & 0xff);
+		if(i < 4) LogDebug("_");
 	}
-	LogVerbose("\n");
+	LogDebug("\n");
 
 	//Packet header
 	uint8_t size;

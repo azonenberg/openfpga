@@ -53,10 +53,6 @@ int main(int argc, char* argv[])
 			ShowVersion();
 			return 0;
 		}
-		else if(s == "--verbose")
-		{
-			console_verbosity = LogSink::VERBOSE;
-		}
 		else if(s == "-q" || s == "--quiet")
 		{
 			if(console_verbosity == LogSink::NOTICE)
@@ -64,6 +60,10 @@ int main(int argc, char* argv[])
 			else if(console_verbosity == LogSink::WARNING)
 				console_verbosity = LogSink::ERROR;
 		}
+		else if(s == "--verbose")
+			console_verbosity = LogSink::VERBOSE;
+		else if(s == "--debug")
+			console_verbosity = LogSink::DEBUG;
 		else if(s == "-r" || s == "--reset")
 		{
 			reset = true;
@@ -266,7 +266,9 @@ void ShowUsage()
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"
 		"    --verbose\n"
-		"        Print lots of verbose debug information\n"
+		"        Prints additional information about the design.\n"
+		"    --debug\n"
+		"        Prints lots of internal debugging information.\n"
 		"\n"
 		"    The following options are instructions for the developer board. They are\n"
 		"    executed in the order listed here, regardless of their order on command line.\n"
