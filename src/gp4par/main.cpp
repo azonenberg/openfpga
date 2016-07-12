@@ -57,6 +57,8 @@ int main(int argc, char* argv[])
 			if(console_verbosity == LogSink::DEBUG)
 				console_verbosity = LogSink::VERBOSE;
 			else if(console_verbosity == LogSink::VERBOSE)
+				console_verbosity = LogSink::NOTICE;
+			else if(console_verbosity == LogSink::NOTICE)
 				console_verbosity = LogSink::WARNING;
 			else if(console_verbosity == LogSink::WARNING)
 				console_verbosity = LogSink::ERROR;
