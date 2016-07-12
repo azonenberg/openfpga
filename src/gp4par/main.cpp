@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 		}
-		else if(s == "--output")
+		else if(s == "-o" || s == "--output")
 		{
 			if(i+1 < argc)
 				ofname = argv[++i];
@@ -232,7 +232,7 @@ int main(int argc, char* argv[])
 void ShowUsage()
 {
 	printf(//                                                                               v 80th column
-		"Usage: gp4par --output foo.txt foo.json\n"
+		"Usage: gp4par -o bitstream.txt netlist.json\n"
 		"    -q, --quiet\n"
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"
@@ -240,6 +240,8 @@ void ShowUsage()
 		"        Prints additional information about the design.\n"
 		"    --debug\n"
 		"        Prints lots of internal debugging information.\n"
+		"    -o, --output         <bitstream>\n"
+		"        Writes bitstream into the specified file."
 		"    -l, --logfile        <file>\n"
 		"        Causes verbose log messages to be written to <file>.\n"
 		"    -L, --logfile-lines  <file>\n"
