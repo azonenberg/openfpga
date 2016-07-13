@@ -34,7 +34,7 @@ Greenpak4VoltageReference::Greenpak4VoltageReference(
 		, m_vin(device->GetGround())
 		, m_refnum(refnum)
 		, m_vinDiv(1)
-		, m_vref(0)		//invalid / not used
+		, m_vref(50)	//not used; selector 5'b00000 in bitstream
 		, m_voutMuxsel(vout_muxsel)
 {
 	//give us a dual so we can route to both left-side comparators and right-side ios
@@ -132,9 +132,9 @@ bool Greenpak4VoltageReference::Save(bool* bitstream)
 				return false;
 			}
 			
-			if(m_vref > 1200)
+			if(m_vref < 50 || m_vref > 1200)
 			{
-				LogError("DRC: Voltage reference %s must be set to <= 1200 mV (requested %d)\n",
+				LogError("DRC: Voltage reference %s must be set between 50mV and 1200 mV inclusive (requested %d)\n",
 					GetDescription().c_str(), m_vref);
 				return false;
 			}
