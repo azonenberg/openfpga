@@ -7,6 +7,7 @@ ADD_LIBRARY(greenpak4 STATIC
 	Greenpak4Comparator.cpp
 	Greenpak4Counter.cpp
 	Greenpak4CrossConnection.cpp
+	Greenpak4DAC.cpp
 	Greenpak4DualEntity.cpp
 	Greenpak4Device.cpp
 	Greenpak4Flipflop.cpp

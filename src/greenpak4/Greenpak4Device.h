@@ -229,6 +229,15 @@ public:
 	
 	Greenpak4Abuf* GetAbuf()
 	{ return m_abuf; }
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// DACS
+	
+	Greenpak4DAC* GetDAC(unsigned int i)
+	{ return m_dacs[i]; }
+	
+	unsigned int GetDACCount()
+	{ return m_dacs.size(); }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ALL NODES
@@ -301,6 +310,9 @@ protected:
 	
 	///Analog comparators
 	std::vector<Greenpak4Comparator*> m_acmps;
+	
+	///Digital to analog converters
+	std::vector<Greenpak4DAC*> m_dacs;
 	
 	///Constant digital 1
 	Greenpak4PowerRail* m_constantOne;

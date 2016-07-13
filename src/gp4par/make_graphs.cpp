@@ -117,6 +117,11 @@ void BuildGraphs(
 	uint32_t acmp_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_ACMP");
 	for(unsigned int i=0; i<device->GetAcmpCount(); i++)
 		MakeNode(acmp_label, device->GetAcmp(i), dgraph);
+		
+	//Make device nodes for the DACs
+	uint32_t dac_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DAC");
+	for(unsigned int i=0; i<device->GetDACCount(); i++)
+		MakeNode(dac_label, device->GetDAC(i), dgraph);
 	
 	//Make device nodes for each type of flipflop
 	uint32_t dff_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFF");
@@ -608,5 +613,16 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		// PGA to IOB
 		
 		pga->AddEdge("VOUT", pin7, "IN");
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// INPUTS TO DAC
+		
+		//Static 1/0 for register configuration
+		for(size_t i=0; i<device->GetDACCount(); i++)
+		{
+			auto dac = device->GetDAC(i)->GetPARNode();
+			//TODO: How to handle multi-bit vectors?
+			vdd->AddEdge("OUT", dac, "DIN");
+		}
 	}
 }

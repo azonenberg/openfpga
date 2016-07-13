@@ -15,45 +15,89 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
-#ifndef Greenpak4_h
-#define Greenpak4_h
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
+#include "Greenpak4.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4DualEntity.h"
+using namespace std;
 
-#include "Greenpak4Abuf.h"
-#include "Greenpak4Bandgap.h"
-#include "Greenpak4Counter.h"
-#include "Greenpak4Comparator.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4DAC.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4LUTPgen.h"
-#include "Greenpak4PGA.h"
-#include "Greenpak4PowerOnReset.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4RCOscillator.h"
-#include "Greenpak4RingOscillator.h"
-#include "Greenpak4ShiftRegister.h"
-#include "Greenpak4SystemReset.h"
-#include "Greenpak4VoltageReference.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
+Greenpak4DAC::Greenpak4DAC(
+	Greenpak4Device* device,
+	unsigned int cbase_reg,
+	unsigned int cbase_pwr,
+	unsigned int cbase_insel,
+	unsigned int dacnum)
+	: Greenpak4BitstreamEntity(device, 0, -1, -1, -1)
+		, m_dacnum(dacnum)
+		, m_cbaseReg(cbase_reg)
+		, m_cbasePwr(cbase_pwr)
+		, m_cbaseInsel(cbase_insel)
+{
+}
 
-#include "Greenpak4Device.h"
+Greenpak4DAC::~Greenpak4DAC()
+{
+	
+}
 
-#endif
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+string Greenpak4DAC::GetDescription()
+{
+	char buf[128];
+	snprintf(buf, sizeof(buf), "DAC_%d", m_dacnum);
+	return string(buf);
+}
+
+vector<string> Greenpak4DAC::GetInputPorts() const
+{
+	vector<string> r;
+	//no general fabric inputs
+	return r;
+}
+
+void Greenpak4DAC::SetInput(string port, Greenpak4EntityOutput src)
+{
+	//if(port == "IN")
+	//	m_input = src;
+	
+	//ignore anything else silently (should not be possible since synthesis would error out)
+}
+
+vector<string> Greenpak4DAC::GetOutputPorts() const
+{
+	vector<string> r;
+	//no general fabric outputs
+	return r;
+}
+
+unsigned int Greenpak4DAC::GetOutputNetNumber(string /*port*/)
+{
+	return -1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization
+
+void Greenpak4DAC::CommitChanges()
+{
+	//No configuration
+}
+
+bool Greenpak4DAC::Load(bool* /*bitstream*/)
+{
+	//TODO: Do our inputs
+	LogFatal("Unimplemented\n");
+}
+
+bool Greenpak4DAC::Save(bool* /*bitstream*/)
+{
+	//no configuration, we just exist to help configure the comparator input muxes
+		
+	return true;
+}

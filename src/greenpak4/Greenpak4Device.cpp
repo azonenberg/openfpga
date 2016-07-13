@@ -342,7 +342,9 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	
 	//TODO: ADC
 	
-	//TODO: DAC
+	//The DACs
+	m_dacs.push_back(new Greenpak4DAC(this, 844, 840, 843, 0));
+	m_dacs.push_back(new Greenpak4DAC(this, 823, 834, 883, 1));
 	
 	//Bandgap reference
 	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923);
@@ -480,6 +482,8 @@ void Greenpak4Device::CreateDevice_common()
 	for(auto x : m_vrefs)
 		m_bitstuff.push_back(x);
 	for(auto x : m_acmps)
+		m_bitstuff.push_back(x);
+	for(auto x : m_dacs)
 		m_bitstuff.push_back(x);
 	m_bitstuff.push_back(m_constantZero);
 	m_bitstuff.push_back(m_constantOne);
