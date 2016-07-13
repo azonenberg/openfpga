@@ -1,0 +1,58 @@
+language: c++
+# Enable once https://github.com/travis-ci/apt-package-whitelist/issues/3201 is fixed, as container builds are faster.
+# sudo: false
+# addons:
+#   apt:
+#     sources:
+#       - llvm-toolchain-precise
+#     packages:
+#       - clang-3.8
+#       - cmake
+#       - libjson-c-dev
+#       - libusb-1.0-0-dev
+sudo: required
+dist: trusty
+env:
+  - MODE=normal
+  - MODE=ubsan
+  - MODE=asan
+  - MODE=scan-build
+cache:
+  directories:
+    - $HOME/yosys
+install:
+  - wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+  - sudo add-apt-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.8 main'
+  - sudo apt-get update -q -y
+  - sudo apt-get install -q -y clang-3.8 cmake libjson-c-dev libusb-1.0-0-dev
+  - 'if [ "${MODE}" == "normal" ]; then
+      sudo apt-get install -q -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra;
+    fi'
+  - 'if ! [ -e "$HOME/yosys/.git" ]; then
+      git clone git://github.com/azonenberg/yosys $HOME/yosys;
+    fi'
+  - git -C $HOME/yosys pull
+  - make -C $HOME/yosys
+script:
+  - 'if [ "${MODE}" == "ubsan" ]; then
+      CMAKE_FLAGS="-DBUILD_DOC=FALSE -DCMAKE_CXX_COMPILER=clang++-3.8 -DSANITIZE=undefined";
+    fi'
+  - 'if [ "${MODE}" == "asan" ]; then
+      CMAKE_FLAGS="-DBUILD_DOC=FALSE -DCMAKE_CXX_COMPILER=clang++-3.8 -DSANITIZE=address";
+    fi'
+  - 'if [ "${MODE}" == "scan-build" ]; then
+      BUILD_PREFIX="scan-build-3.8 --status-bugs" CMAKE_FLAGS="-DBUILD_DOC=FALSE";
+    fi'
+  - 'mkdir build'
+  - 'cd build'
+  - '${BUILD_PREFIX} cmake .. -DYOSYS_COMMAND=$HOME/yosys/yosys ${CMAKE_FLAGS}'
+  - '${BUILD_PREFIX} make all'
+  - 'if [ "${MODE}" != "scan-build" ]; then
+      ctest --output-on-failure;
+    fi'
+notifications:
+  irc:
+    channels:
+      - "chat.freenode.net##openfpga"
+    use_notice: true
+    skip_join: true
