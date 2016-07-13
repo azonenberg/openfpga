@@ -10,13 +10,14 @@ language: c++
 #       - cmake
 #       - libjson-c-dev
 #       - libusb-1.0-0-dev
+#       - cppcheck
 sudo: required
 dist: trusty
 env:
   - MODE=normal
   - MODE=ubsan
   - MODE=asan
-  - MODE=scan-build
+  - MODE=analysis
 cache:
   directories:
     - $HOME/yosys
@@ -40,14 +41,16 @@ script:
   - 'if [ "${MODE}" == "asan" ]; then
       CMAKE_FLAGS="-DBUILD_DOC=FALSE -DCMAKE_CXX_COMPILER=clang++-3.8 -DSANITIZE=address";
     fi'
-  - 'if [ "${MODE}" == "scan-build" ]; then
+  - 'if [ "${MODE}" == "analysis" ]; then
       BUILD_PREFIX="scan-build-3.8 --status-bugs" CMAKE_FLAGS="-DBUILD_DOC=FALSE";
     fi'
   - 'mkdir build'
   - 'cd build'
   - '${BUILD_PREFIX} cmake .. -DYOSYS_COMMAND=$HOME/yosys/yosys ${CMAKE_FLAGS}'
   - '${BUILD_PREFIX} make all'
-  - 'if [ "${MODE}" != "scan-build" ]; then
+  - 'if [ "${MODE}" == "analysis" ]; then
+      cppcheck -q --enable=warning --error-exitcode=1 src;
+    else
       ctest --output-on-failure;
     fi'
 notifications:
