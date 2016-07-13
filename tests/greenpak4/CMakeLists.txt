@@ -5,6 +5,7 @@ function(add_greenpak4_test name)
 				-p "read_verilog ${CMAKE_CURRENT_SOURCE_DIR}/${name}.v"
 				-p "synth_greenpak4 -top ${name} -part SLG46620V"
 				-p "write_json   ${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
+		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${name}.v"
 		COMMENT "Synthesizing Verilog file ${CMAKE_CURRENT_SOURCE_DIR}/${name}"
 		VERBATIM)
 

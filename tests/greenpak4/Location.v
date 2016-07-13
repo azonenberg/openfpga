@@ -69,7 +69,7 @@ module Location(a, b, c, d, e);
 	localparam COUNT_MAX = 'd31;
 	wire led_lfosc_raw;
 	
-	(* LOC = "COUNT8_4" *)
+	(* LOC = "COUNT8_ADV_4" *)
 	GP_COUNT8 #(
 		.RESET_MODE("LEVEL"),
 		.COUNT_TO(COUNT_MAX),
