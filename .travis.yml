@@ -25,7 +25,7 @@ install:
   - wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
   - sudo add-apt-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.8 main'
   - sudo apt-get update -q -y
-  - sudo apt-get install -q -y clang-3.8 cmake libjson-c-dev libusb-1.0-0-dev
+  - sudo apt-get install -q -y clang-3.8 cmake libjson-c-dev libusb-1.0-0-dev cppcheck
   - 'if [ "${MODE}" == "normal" ]; then
       sudo apt-get install -q -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra;
     fi'
