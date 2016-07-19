@@ -27,6 +27,7 @@ using namespace std;
 PAREngine::PAREngine(PARGraph* netlist, PARGraph* device)
 	: m_netlist(netlist)
 	, m_device(device)
+	, m_temperature(0)
 {
 	
 }
