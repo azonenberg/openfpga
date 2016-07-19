@@ -579,8 +579,10 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 	//Get the config data from each of our blocks
 	for(auto x : m_bitstuff)
 	{
-		if(!x->Save(bitstream))
+		if(!x->Save(bitstream)) {
+			fclose(fp);
 			return false;
+		}
 	}
 	
 	//Write chip-wide tuning data

@@ -316,6 +316,7 @@ vector<uint8_t> ReadBitstream(string fname)
 	if(strcmp(signature, "index\t\tvalue\t\tcomment\n"))
 	{
 		LogError("%s is not a GreenPAK bitstream", fname.c_str());
+		fclose(fp);
 		return {};
 	}
 
@@ -330,6 +331,7 @@ vector<uint8_t> ReadBitstream(string fname)
 		if(byteindex < 0 || (value != 0 && value != 1))
 		{
 			LogError("%s contains a malformed GreenPAK bitstream\n", fname.c_str());
+			fclose(fp);
 			return {};
 		}
 
