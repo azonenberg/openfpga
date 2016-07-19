@@ -65,7 +65,7 @@ Greenpak4Comparator::~Greenpak4Comparator()
 string Greenpak4Comparator::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "ACMP_%d", m_cmpNum);
+	snprintf(buf, sizeof(buf), "ACMP_%u", m_cmpNum);
 	return string(buf);
 }
 

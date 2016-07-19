@@ -47,7 +47,7 @@ Greenpak4CrossConnection::~Greenpak4CrossConnection()
 string Greenpak4CrossConnection::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "XCONN_%d_%d", m_matrix, m_inputBaseWord);
+	snprintf(buf, sizeof(buf), "XCONN_%u_%u", m_matrix, m_inputBaseWord);
 	return string(buf);
 }
 

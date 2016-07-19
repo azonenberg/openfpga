@@ -50,7 +50,7 @@ Greenpak4DAC::~Greenpak4DAC()
 string Greenpak4DAC::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "DAC_%d", m_dacnum);
+	snprintf(buf, sizeof(buf), "DAC_%u", m_dacnum);
 	return string(buf);
 }
 

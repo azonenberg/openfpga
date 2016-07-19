@@ -102,7 +102,7 @@ unsigned int Greenpak4Flipflop::GetOutputNetNumber(string port)
 string Greenpak4Flipflop::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "DFF_%d", m_ffnum);
+	snprintf(buf, sizeof(buf), "DFF_%u", m_ffnum);
 	return string(buf);
 }
 

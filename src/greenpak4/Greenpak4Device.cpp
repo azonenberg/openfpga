@@ -603,7 +603,7 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 	//Write the bitfile
 	fprintf(fp, "index\t\tvalue\t\tcomment\n");
 	for(unsigned int i=0; i<m_bitlen; i++)
-		fprintf(fp, "%d\t\t%d\t\t//\n", i, (int)bitstream[i]);
+		fprintf(fp, "%u\t\t%d\t\t//\n", i, (int)bitstream[i]);
 	
 	//Done
 	delete[] bitstream;

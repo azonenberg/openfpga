@@ -52,7 +52,7 @@ Greenpak4VoltageReference::~Greenpak4VoltageReference()
 string Greenpak4VoltageReference::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "VREF_%d", m_refnum);
+	snprintf(buf, sizeof(buf), "VREF_%u", m_refnum);
 	return string(buf);
 }
 

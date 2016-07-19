@@ -47,7 +47,7 @@ Greenpak4IOBTypeA::~Greenpak4IOBTypeA()
 string Greenpak4IOBTypeA::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "P%d", m_pinNumber);
+	snprintf(buf, sizeof(buf), "P%u", m_pinNumber);
 	return string(buf);
 }
 

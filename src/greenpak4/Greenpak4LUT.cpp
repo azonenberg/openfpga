@@ -164,6 +164,6 @@ unsigned int Greenpak4LUT::GetOutputNetNumber(string port)
 string Greenpak4LUT::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "LUT%d_%d", m_order, m_lutnum);
+	snprintf(buf, sizeof(buf), "LUT%u_%u", m_order, m_lutnum);
 	return string(buf);
 }

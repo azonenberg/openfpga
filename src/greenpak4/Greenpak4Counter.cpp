@@ -66,9 +66,9 @@ string Greenpak4Counter::GetDescription()
 {
 	char buf[128];
 	if(m_hasFSM)
-		snprintf(buf, sizeof(buf), "COUNT%d_ADV_%d", m_depth, m_countnum);
+		snprintf(buf, sizeof(buf), "COUNT%u_ADV_%u", m_depth, m_countnum);
 	else
-		snprintf(buf, sizeof(buf), "COUNT%d_%d", m_depth, m_countnum);
+		snprintf(buf, sizeof(buf), "COUNT%u_%u", m_depth, m_countnum);
 	return string(buf);
 }
 

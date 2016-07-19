@@ -52,7 +52,7 @@ Greenpak4ShiftRegister::~Greenpak4ShiftRegister()
 string Greenpak4ShiftRegister::GetDescription()
 {
 	char buf[128];
-	snprintf(buf, sizeof(buf), "SHREG_%d", m_matrix);
+	snprintf(buf, sizeof(buf), "SHREG_%u", m_matrix);
 	return string(buf);
 }
 
