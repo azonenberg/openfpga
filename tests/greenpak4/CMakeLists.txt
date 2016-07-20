@@ -17,7 +17,8 @@ function(add_greenpak4_test name)
 		NAME    "${name}"
 		COMMAND gp4par --output  "${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
 		               --logfile "${CMAKE_CURRENT_BINARY_DIR}/${name}.log"
-		               "${CMAKE_CURRENT_BINARY_DIR}/${name}.json")
+		               "${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
+		               "--debug")
 endfunction()
 
 add_greenpak4_test(Analog)
