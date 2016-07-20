@@ -634,8 +634,24 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		for(size_t i=0; i<device->GetDACCount(); i++)
 		{
 			auto dac = device->GetDAC(i)->GetPARNode();
-			//TODO: How to handle multi-bit vectors?
-			vdd->AddEdge("OUT", dac, "DIN");
+			
+			vdd->AddEdge("OUT", dac, "DIN[0]");
+			vdd->AddEdge("OUT", dac, "DIN[1]");
+			vdd->AddEdge("OUT", dac, "DIN[2]");
+			vdd->AddEdge("OUT", dac, "DIN[3]");
+			vdd->AddEdge("OUT", dac, "DIN[4]");
+			vdd->AddEdge("OUT", dac, "DIN[5]");
+			vdd->AddEdge("OUT", dac, "DIN[6]");
+			vdd->AddEdge("OUT", dac, "DIN[7]");
+			
+			gnd->AddEdge("OUT", dac, "DIN[0]");
+			gnd->AddEdge("OUT", dac, "DIN[1]");
+			gnd->AddEdge("OUT", dac, "DIN[2]");
+			gnd->AddEdge("OUT", dac, "DIN[3]");
+			gnd->AddEdge("OUT", dac, "DIN[4]");
+			gnd->AddEdge("OUT", dac, "DIN[5]");
+			gnd->AddEdge("OUT", dac, "DIN[6]");
+			gnd->AddEdge("OUT", dac, "DIN[7]");
 		}
 	}
 }
