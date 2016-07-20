@@ -225,10 +225,9 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json Blinky.json
 The following legal Verilog-2001 features are not supported by \namestyle{gp4par} as of this writing:
 
 \begin{itemize}
-\item \whenstyle{Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide. Vector nets
-may be used at lower levels of the hierarchy without restriction as long as the synthesis script includes a
-\tokenstyle{splitnets} command to convert these to single bit nets. (The \tokenstyle{synth\_greenpak4} \namestyle{Yosys} command includes this command by
-default.)
+\item \whenstyle{Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide, since there 
+is currently no supported syntax for constraining them to package pins. Vector nets may be used at lower levels of the 
+hierarchy without restriction.
 \end{itemize}
 
 The following \namestyle{SLG46620V} device features are not supported by \namestyle{gp4par} as of this writing:
