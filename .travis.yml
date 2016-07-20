@@ -49,7 +49,7 @@ script:
   - '${BUILD_PREFIX} cmake .. -DYOSYS_COMMAND=$HOME/yosys/yosys ${CMAKE_FLAGS}'
   - '${BUILD_PREFIX} make all'
   - 'if [ "${MODE}" == "analysis" ]; then
-      cppcheck -q --enable=warning --error-exitcode=1 src;
+      cd .. && cppcheck -q --enable=warning --error-exitcode=1 src;
     else
       ctest --output-on-failure;
     fi'
