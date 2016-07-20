@@ -340,7 +340,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 				{
 					//Name the net
 					string nname = c.m_portname;
-					if(c.m_nbit != 0)	//FIXME: have X[0], X[1], X[2] instead of X, X[1], X[2]
+					if(c.m_vector)
 					{
 						char tmp[256];
 						snprintf(tmp, sizeof(tmp), "%s[%u]", c.m_portname.c_str(), c.m_nbit);

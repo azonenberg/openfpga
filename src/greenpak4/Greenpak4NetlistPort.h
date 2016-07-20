@@ -27,15 +27,17 @@ class Greenpak4NetlistNodePoint
 {
 public:
 
-	Greenpak4NetlistNodePoint(Greenpak4NetlistCell* cell, std::string port, unsigned int nbit)
+	Greenpak4NetlistNodePoint(Greenpak4NetlistCell* cell, std::string port, unsigned int nbit, bool vector)
 		: m_cell(cell)
 		, m_portname(port)
 		, m_nbit(nbit)
+		, m_vector(vector)
 	{}
 
 	Greenpak4NetlistCell* m_cell;
 	std::string m_portname;
 	unsigned int m_nbit;
+	bool m_vector;
 };
 
 //A single named node in the netlist (may be a wire or part of a bus)

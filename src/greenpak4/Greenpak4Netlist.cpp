@@ -180,11 +180,17 @@ void Greenpak4Netlist::IndexNets()
 		{
 			string cellname = jt.first;
 			auto net = jt.second;
+			bool vector = false;
+			if(net.size() != 1)
+				vector = true;
 			for(unsigned int i=0; i<net.size(); i++)
 			{
 				Greenpak4NetlistNode* node = net[i];
-				LogDebug("        %s[%u]: net %s\n", cellname.c_str(), i, node->m_name.c_str());
-				node->m_nodeports.push_back(Greenpak4NetlistNodePoint(cell, cellname, i));
+				if(vector)
+					LogDebug("        %s[%u]: net %s\n", cellname.c_str(), i, node->m_name.c_str());
+				else
+					LogDebug("        %s: net %s\n", cellname.c_str(), node->m_name.c_str());
+				node->m_nodeports.push_back(Greenpak4NetlistNodePoint(cell, cellname, i, vector));
 			}
 		}
 	}
