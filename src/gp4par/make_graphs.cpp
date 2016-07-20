@@ -240,11 +240,13 @@ void BuildGraphs(
  */
 void MakeNetlistEdges(Greenpak4Netlist* netlist)
 {
+	LogDebug("Creating PAR netlist...\n");
+	
 	for(auto it = netlist->nodebegin(); it != netlist->nodeend(); it ++)
 	{
 		Greenpak4NetlistNode* node = *it;
 			
-		//LogVerbose("    Node %s is sourced by:\n", node->m_name.c_str());
+		LogDebug("    Node %s is sourced by:\n", node->m_name.c_str());
 		
 		PARGraphNode* source = NULL;
 		string sourceport = "";
@@ -272,7 +274,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			
 			source = c.m_cell->m_parnode;
 			sourceport = c.m_portname;
-			//LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+			LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 		}
 		
 		//DRC fail if undriven net
@@ -284,7 +286,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			exit(-1);	
 		}
 		
-		//LogVerbose("        and drives\n");
+		LogDebug("        and drives\n");
 		
 		//If node is sourced by a port, special processing needed.
 		//We can only drive IBUF/IOBUF cells
@@ -300,7 +302,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			
 			for(auto c : node->m_nodeports)
 			{
-				//LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+				LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 				
 				//Verify the type is IBUF/IOBUF
 				if( (c.m_cell->m_type == "GP_IBUF") || (c.m_cell->m_type == "GP_IOBUF") )
@@ -321,6 +323,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 		else
 		{
 			/*
+			//TODO: dead code, can we delete?
 			for(auto p : node->m_ports)
 			{
 				if(p->m_parnode != source)
@@ -335,8 +338,18 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			{
 				if(c.m_cell->m_parnode != source)
 				{
-					//LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
-					source->AddEdge(sourceport, c.m_cell->m_parnode, c.m_portname);
+					//Name the net
+					string nname = c.m_portname;
+					if(c.m_nbit != 0)	//FIXME: have X[0], X[1], X[2] instead of X, X[1], X[2]
+					{
+						char tmp[256];
+						snprintf(tmp, sizeof(tmp), "%s[%u]", c.m_portname.c_str(), c.m_nbit);
+						nname = tmp;
+					}
+					
+					//Use the new name
+					LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), nname.c_str());
+					source->AddEdge(sourceport, c.m_cell->m_parnode, nname);
 				}
 			}
 		}
