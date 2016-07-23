@@ -39,10 +39,15 @@ STDLogSink::~STDLogSink()
 
 void STDLogSink::Log(Severity severity, const std::string &msg)
 {
-	if(severity <= WARNING) {
-		// Prevent newer messages on stderr from appearing before older messages on stdout
+	if(severity <= WARNING)
+	{
+		//Prevent newer messages on stderr from appearing before older messages on stdout
 		fflush(stdout);
+
 		fputs(msg.c_str(), stderr);
+
+		//Ensure that this message is displayed immediately even if we later print lower severity stuff later
+		fflush(stderr);
 	}
 	else if(severity <= m_min_severity)
 		fputs(msg.c_str(), stdout);
@@ -50,10 +55,15 @@ void STDLogSink::Log(Severity severity, const std::string &msg)
 
 void STDLogSink::Log(Severity severity, const char *format, va_list va) 
 {
-	if(severity <= WARNING) {
-		// See above
+	if(severity <= WARNING)
+	{
+		//See above
 		fflush(stdout);
+
 		vfprintf(stderr, format, va);
+
+		//See above
+		fflush(stderr);
 	}
 	else if(severity <= m_min_severity)
 		vfprintf(stdout, format, va);
