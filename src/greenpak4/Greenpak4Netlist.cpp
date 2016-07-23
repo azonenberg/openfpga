@@ -79,6 +79,7 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 	Load(object);
 	
 	//Clean up
+	json_object_put(object);
 	json_tokener_free(tok);
 	delete[] json_string;
 }
