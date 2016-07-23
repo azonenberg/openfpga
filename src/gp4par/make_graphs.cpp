@@ -277,19 +277,13 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 		}
 		
-		//DRC fail if undriven net
-		if( (source == NULL) && !sourced_by_port )
-		{
-			LogError(
-				"Net \"%s\" has loads, but no driver\n",
-				node->m_name.c_str());
-			exit(-1);	
-		}
-		
+		if((source == NULL) && !sourced_by_port)
+			LogDebug("        [NULL]\n");
 		LogDebug("        and drives\n");
 		
 		//If node is sourced by a port, special processing needed.
 		//We can only drive IBUF/IOBUF cells
+		bool has_loads = false;
 		if(sourced_by_port)
 		{
 			if(node->m_ports.size() != 1)
@@ -302,7 +296,8 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			
 			for(auto c : node->m_nodeports)
 			{
-				LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+				has_loads = true;
+				LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 				
 				//Verify the type is IBUF/IOBUF
 				if( (c.m_cell->m_type == "GP_IBUF") || (c.m_cell->m_type == "GP_IOBUF") )
@@ -348,11 +343,26 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 					}
 					
 					//Use the new name
-					LogVerbose("        cell %s port %s\n", c.m_cell->m_name.c_str(), nname.c_str());
-					source->AddEdge(sourceport, c.m_cell->m_parnode, nname);
+					has_loads = true;
+					LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), nname.c_str());
+					if(source)
+						source->AddEdge(sourceport, c.m_cell->m_parnode, nname);
 				}
 			}
 		}
+		
+		//DRC fail if undriven net.
+		//BUGFIX: undriven nets are legal if they also have no loads.
+		//This is possible if, for example, some bits of a vector net were absorbed into hard IP.
+		if( (source == NULL) && !sourced_by_port && has_loads)
+		{
+			LogError(
+				"Net \"%s\" has loads, but no driver\n",
+				node->m_name.c_str());
+			exit(-1);	
+		}
+		else if(!has_loads)
+			LogDebug("        [NULL]\n");
 	}
 }
 
