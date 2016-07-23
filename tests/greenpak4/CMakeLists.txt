@@ -23,6 +23,6 @@ endfunction()
 
 add_greenpak4_test(Analog)
 add_greenpak4_test(Blinky)
-add_greenpak4_test(Dac)
+#add_greenpak4_test(Dac)
 add_greenpak4_test(Location)
 add_greenpak4_test(Tristate)
