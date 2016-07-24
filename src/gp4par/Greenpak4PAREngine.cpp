@@ -391,11 +391,11 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	uint32_t label = pivot->GetLabel();
 	
 	//Debug log
-	/*
 	bool unroutable = (m_unroutableNodes.find(pivot) != m_unroutableNodes.end());
-	LogVerbose("        Seeking new placement for node %s (unroutable = %d)\n",
+	Greenpak4NetlistEntity* ne = static_cast<Greenpak4NetlistEntity*>(pivot->GetData());
+	LogDebug("        Seeking new placement for node %s (at %s, unroutable = %d)\n",
+		ne->m_name.c_str(),
 		current_site->GetDescription().c_str(), unroutable);
-	*/
 	
 	//Default to trying the opposite matrix
 	uint32_t target_matrix = 1 - current_matrix;
@@ -432,7 +432,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	//If no routable candidates found anywhere, consider the entire chip and hope we can patch things up later
 	if(temp_candidates.empty())
 	{
-		//LogVerbose("            No routable candidates found\n");
+		LogDebug("            No routable candidates found\n");
 		for(uint32_t i=0; i<m_device->GetNumNodesWithLabel(label); i++)
 			temp_candidates.insert(m_device->GetNodeByLabelAndIndex(label, i));
 	}
@@ -447,9 +447,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 		
 	//Pick one at random
 	auto c = candidates[rand() % ncandidates];
-	/*
-	LogVerbose("            Selected %s\n",
+	LogDebug("            Selected %s\n",
 		static_cast<Greenpak4BitstreamEntity*>(c->GetData())->GetDescription().c_str());
-	*/
 	return c;
 }
