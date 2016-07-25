@@ -16,45 +16,62 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
  
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#ifndef Greenpak4EntityOutput_h
+#define Greenpak4EntityOutput_h
 
 /**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
+	@brief A single output from a general fabric signal
  */
-
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4EntityOutput.h"
-#include "Greenpak4DualEntity.h"
-
-#include "Greenpak4Abuf.h"
-#include "Greenpak4Bandgap.h"
-#include "Greenpak4Counter.h"
-#include "Greenpak4Comparator.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4DAC.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4LUTPgen.h"
-#include "Greenpak4PGA.h"
-#include "Greenpak4PowerOnReset.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4RCOscillator.h"
-#include "Greenpak4RingOscillator.h"
-#include "Greenpak4ShiftRegister.h"
-#include "Greenpak4SystemReset.h"
-#include "Greenpak4VoltageReference.h"
-
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
-
-#include "Greenpak4Device.h"
+class Greenpak4EntityOutput
+{
+public:
+	Greenpak4EntityOutput(Greenpak4BitstreamEntity* src=NULL, std::string port="", unsigned int matrix=0)
+	: m_src(src)
+	, m_port(port)
+	, m_matrix(matrix)
+	{}
+	
+	//Equality test. Do NOT check for matrix equality
+	//as both outputs of a dual-matrix node are considered equal
+	bool operator==(const Greenpak4EntityOutput& rhs) const
+	{ return (m_src == rhs.m_src) && (m_port == rhs.m_port); }
+	
+	bool operator!=(const Greenpak4EntityOutput& rhs) const
+	{ return !(rhs == *this); }
+	
+	std::string GetDescription() const
+	{ return m_src->GetDescription(); }
+	
+	std::string GetOutputName() const
+	{ return m_src->GetDescription() + " port " + m_port; }
+	
+	Greenpak4EntityOutput GetDual();
+	
+	Greenpak4BitstreamEntity* GetRealEntity()
+	{ return m_src->GetRealEntity(); }
+	
+	bool IsPGA();
+	bool IsVoltageReference();
+	bool IsPowerRail();
+	bool GetPowerRailValue();
+	
+	bool HasDual()
+	{ return m_src->GetDual() != NULL; }
+	
+	unsigned int GetMatrix()
+	{ return m_matrix; }
+	
+	unsigned int GetNetNumber()
+	{ return m_src->GetOutputNetNumber(m_port); }
+	
+	//comparison operator for std::map
+	bool operator<(const Greenpak4EntityOutput& rhs) const
+	{ return GetOutputName() < rhs.GetOutputName(); }
+	
+public:
+	Greenpak4BitstreamEntity* m_src;
+	std::string m_port;
+	unsigned int m_matrix;
+};
 
 #endif
