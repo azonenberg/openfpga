@@ -550,22 +550,33 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// REFERENCE TO COMPARATORS
 		
-		auto acmp0 = device->GetAcmp(0)->GetPARNode();
-		auto acmp1 = device->GetAcmp(1)->GetPARNode();
-		auto acmp2 = device->GetAcmp(2)->GetPARNode();
-		auto acmp3 = device->GetAcmp(3)->GetPARNode();
-		auto acmp4 = device->GetAcmp(4)->GetPARNode();
-		auto acmp5 = device->GetAcmp(5)->GetPARNode();
+		PARGraphNode* acmps[] =
+		{
+			device->GetAcmp(0)->GetPARNode(),
+			device->GetAcmp(1)->GetPARNode(),
+			device->GetAcmp(2)->GetPARNode(),
+			device->GetAcmp(3)->GetPARNode(),
+			device->GetAcmp(4)->GetPARNode(),
+			device->GetAcmp(5)->GetPARNode()
+		};
 		
-		auto vref4 = device->GetVref(4)->GetPARNode();
-		auto vref5 = device->GetVref(5)->GetPARNode();
+		PARGraphNode* vrefs[] =
+		{
+			device->GetVref(0)->GetPARNode(),
+			device->GetVref(1)->GetPARNode(),
+			device->GetVref(2)->GetPARNode(),
+			device->GetVref(3)->GetPARNode(),
+			device->GetVref(4)->GetPARNode(),
+			device->GetVref(5)->GetPARNode()
+		};
 		
-		vref0->AddEdge("VOUT", acmp0, "VREF");
-		vref1->AddEdge("VOUT", acmp1, "VREF");
-		vref2->AddEdge("VOUT", acmp2, "VREF");
-		vref3->AddEdge("VOUT", acmp3, "VREF");
-		vref4->AddEdge("VOUT", acmp4, "VREF");
-		vref5->AddEdge("VOUT", acmp5, "VREF");
+		//Any vref can drive any comparator, we hide the complexity of the actual routing structure
+		//TODO: add a 6th vref for the DACs?
+		for(auto acmp : acmps)
+		{
+			for(auto vref : vrefs)
+				vref->AddEdge("VOUT", acmp, "VREF");
+		}
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO COMPARATORS
@@ -578,44 +589,44 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		
 		//Dedicated inputs for ACMP0 (none)
 		
-		//Dedicated inputs for ACMP1
-		pin12->AddEdge("OUT", acmp1, "VIN");
-		pga->AddEdge("VOUT", acmp1, "VIN");
+		//Dedicated inputs for acmps[1]
+		pin12->AddEdge("OUT", acmps[1], "VIN");
+		pga->AddEdge("VOUT", acmps[1], "VIN");
 		
-		//Dedicated inputs for ACMP2
-		pin13->AddEdge("OUT", acmp2, "VIN");
+		//Dedicated inputs for acmps[2]
+		pin13->AddEdge("OUT", acmps[2], "VIN");
 		
-		//Dedicated inputs for ACMP3
-		pin15->AddEdge("OUT", acmp3, "VIN");
-		pin13->AddEdge("OUT", acmp3, "VIN");
+		//Dedicated inputs for acmps[3]
+		pin15->AddEdge("OUT", acmps[3], "VIN");
+		pin13->AddEdge("OUT", acmps[3], "VIN");
 		
-		//Dedicated inputs for ACMP4
-		pin3->AddEdge("OUT", acmp4, "VIN");
-		pin15->AddEdge("OUT", acmp4, "VIN");
+		//Dedicated inputs for acmps[4]
+		pin3->AddEdge("OUT", acmps[4], "VIN");
+		pin15->AddEdge("OUT", acmps[4], "VIN");
 		
-		//Dedicated inputs for ACMP5
-		pin4->AddEdge("OUT", acmp5, "VIN");
+		//Dedicated inputs for acmps[5]
+		pin4->AddEdge("OUT", acmps[5], "VIN");
 		
-		//acmp0 input before gain stage is fed to everything but acmp5
-		pin6->AddEdge("OUT", acmp0, "VIN");
-		vdd->AddEdge("OUT", acmp0, "VIN");
-		abuf->AddEdge("OUT", acmp0, "VIN");
+		//acmps[0] input before gain stage is fed to everything but acmps[5]
+		pin6->AddEdge("OUT", acmps[0], "VIN");
+		vdd->AddEdge("OUT", acmps[0], "VIN");
+		abuf->AddEdge("OUT", acmps[0], "VIN");
 		
-		pin6->AddEdge("OUT", acmp1, "VIN");
-		vdd->AddEdge("OUT", acmp1, "VIN");
-		abuf->AddEdge("OUT", acmp1, "VIN");
+		pin6->AddEdge("OUT", acmps[1], "VIN");
+		vdd->AddEdge("OUT", acmps[1], "VIN");
+		abuf->AddEdge("OUT", acmps[1], "VIN");
 		
-		pin6->AddEdge("OUT", acmp2, "VIN");
-		vdd->AddEdge("OUT", acmp2, "VIN");
-		abuf->AddEdge("OUT", acmp2, "VIN");
+		pin6->AddEdge("OUT", acmps[2], "VIN");
+		vdd->AddEdge("OUT", acmps[2], "VIN");
+		abuf->AddEdge("OUT", acmps[2], "VIN");
 		
-		pin6->AddEdge("OUT", acmp3, "VIN");
-		vdd->AddEdge("OUT", acmp3, "VIN");
-		abuf->AddEdge("OUT", acmp3, "VIN");
+		pin6->AddEdge("OUT", acmps[3], "VIN");
+		vdd->AddEdge("OUT", acmps[3], "VIN");
+		abuf->AddEdge("OUT", acmps[3], "VIN");
 		
-		pin6->AddEdge("OUT", acmp4, "VIN");
-		vdd->AddEdge("OUT", acmp4, "VIN");
-		abuf->AddEdge("OUT", acmp4, "VIN");
+		pin6->AddEdge("OUT", acmps[4], "VIN");
+		vdd->AddEdge("OUT", acmps[4], "VIN");
+		abuf->AddEdge("OUT", acmps[4], "VIN");
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO PGA

@@ -29,7 +29,6 @@ public:
 	Greenpak4VoltageReference(
 		Greenpak4Device* device,
 		unsigned int refnum,
-		unsigned int cbase,
 		unsigned int vout_muxsel = -1);
 	
 	//Serialization

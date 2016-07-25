@@ -350,12 +350,12 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923);
 	
 	//Voltage reference
-	m_vrefs.push_back(new Greenpak4VoltageReference(this, 0, 892, 1));
-	m_vrefs.push_back(new Greenpak4VoltageReference(this, 1, 897, 2));
-	m_vrefs.push_back(new Greenpak4VoltageReference(this, 2, 902, 1));
-	m_vrefs.push_back(new Greenpak4VoltageReference(this, 3, 907, 2));
-	m_vrefs.push_back(new Greenpak4VoltageReference(this, 4, 912));
-	m_vrefs.push_back(new Greenpak4VoltageReference(this, 5, 917));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 0, 1));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 1, 2));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 2, 1));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 3, 2));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 4));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 5));
 	
 	//Analog comparators
 	//TODO speed doubler for ACMP5? Need to double check latest datasheet, this may have been changed

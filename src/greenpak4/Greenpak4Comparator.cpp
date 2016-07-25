@@ -35,7 +35,8 @@ Greenpak4Comparator::Greenpak4Comparator(
 		unsigned int cbase_bw,
 		unsigned int cbase_gain,
 		unsigned int cbase_vin,
-		unsigned int cbase_hyst
+		unsigned int cbase_hyst,
+		unsigned int cbase_vref
 		)
 		: Greenpak4BitstreamEntity(device, matrix, ibase, oword, -1)
 		, m_pwren(device->GetGround())
@@ -47,6 +48,7 @@ Greenpak4Comparator::Greenpak4Comparator(
 		, m_cbaseGain(cbase_gain)
 		, m_cbaseVin(cbase_vin)
 		, m_cbaseHyst(cbase_hyst)
+		, m_cbaseVref(cbase_vref)
 		, m_bandwidthHigh(true)
 		, m_vinAtten(1)
 		, m_isrcEn(false)
@@ -257,6 +259,40 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 		//Write the low bit
 		bitstream[m_cbaseVin] = (sel & 1) ? true : false;
 	}
+	
+	//Configure the voltage reference cell
+	unsigned int muxsel = 0;
+	if(m_vref.IsVoltageReference())
+	{
+		Greenpak4VoltageReference* vref = dynamic_cast<Greenpak4VoltageReference*>(m_vref.GetRealEntity());
+		muxsel = vref->GetACMPMuxSel();
+		
+		//TODO: how do we do routing when there's a dedicated reference input used?
+	}
+	
+	//Unused vrefs can be tied to ground
+	else if(m_vref.IsPowerRail() && !m_vref.GetPowerRailValue())
+	{
+		//emulate ground by setting 50 mV, the lowest threshold
+		muxsel = 0;
+	}
+	
+	//Vref must be sourced by a GP_VREF cell, complain if it's not
+	else
+	{
+		LogError(
+			"Invalid ACMP reference voltage source for %s\n"
+			"	(got %s, must be buffered by a GP_VREF)\n",
+			GetDescription().c_str(),
+			m_vref.GetOutputName().c_str()
+			);
+	}
+	
+	bitstream[m_cbaseVref + 0] = (muxsel & 1) ? true : false;
+	bitstream[m_cbaseVref + 1] = (muxsel & 2) ? true : false;
+	bitstream[m_cbaseVref + 2] = (muxsel & 4) ? true : false;
+	bitstream[m_cbaseVref + 3] = (muxsel & 8) ? true : false;
+	bitstream[m_cbaseVref + 4] = (muxsel & 16) ? true : false;
 	
 	return true;
 }

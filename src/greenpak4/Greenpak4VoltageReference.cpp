@@ -28,9 +28,8 @@ using namespace std;
 Greenpak4VoltageReference::Greenpak4VoltageReference(
 		Greenpak4Device* device,
 		unsigned int refnum,
-		unsigned int cbase,
 		unsigned int vout_muxsel)
-		: Greenpak4BitstreamEntity(device, 0, -1, -1, cbase)
+		: Greenpak4BitstreamEntity(device, 0, -1, -1, -1)
 		, m_vin(device->GetGround())
 		, m_refnum(refnum)
 		, m_vinDiv(1)
@@ -103,27 +102,13 @@ void Greenpak4VoltageReference::CommitChanges()
 
 bool Greenpak4VoltageReference::Load(bool* /*bitstream*/)
 {
-	//TODO: Do our inputs
+	//TODO: how do we do this?
 	LogFatal("Unimplemented\n");
 }
 
 bool Greenpak4VoltageReference::Save(bool* /*bitstream*/)
 {
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// INPUT BUS
-	
-	//No matrix selectors at all
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Configuration
-	/*
-	//Write the actual selector
-	bitstream[m_configBase + 0] = (select & 1) ? true : false;
-	bitstream[m_configBase + 1] = (select & 2) ? true : false;
-	bitstream[m_configBase + 2] = (select & 4) ? true : false;
-	bitstream[m_configBase + 3] = (select & 8) ? true : false;
-	bitstream[m_configBase + 4] = (select & 16) ? true : false;
-	*/
+	//no configuration, everything is in the downstream logic	
 	return true;
 }
 
@@ -169,7 +154,7 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 		}
 	}
 	
-	//TODO: external Vref, DAC
+	//TODO: external Vref, DAC need to be
 	else
 	{
 		LogError("Greenpak4VoltageReference inputs other than constant not implemented yet\n");
