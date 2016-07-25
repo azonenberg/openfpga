@@ -10,6 +10,7 @@ ADD_LIBRARY(greenpak4 STATIC
 	Greenpak4DAC.cpp
 	Greenpak4DualEntity.cpp
 	Greenpak4Device.cpp
+	Greenpak4EntityOutput.cpp
 	Greenpak4Flipflop.cpp
 	Greenpak4Inverter.cpp
 	Greenpak4IOB.cpp

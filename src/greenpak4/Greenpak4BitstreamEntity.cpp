@@ -22,36 +22,6 @@
 using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Greenpak4EntityOutput
-
-Greenpak4EntityOutput Greenpak4EntityOutput::GetDual()
-{
-	return m_src->GetDual()->GetOutput(m_port);
-}
-
-bool Greenpak4EntityOutput::IsPowerRail()
-{
-	return dynamic_cast<Greenpak4PowerRail*>(m_src) != NULL;
-}
-
-bool Greenpak4EntityOutput::IsVoltageReference()
-{
-	return dynamic_cast<Greenpak4VoltageReference*>(m_src) != NULL;
-}
-
-bool Greenpak4EntityOutput::IsPGA()
-{
-	return dynamic_cast<Greenpak4PGA*>(m_src) != NULL;
-}
-
-bool Greenpak4EntityOutput::GetPowerRailValue()
-{
-	if(!IsPowerRail())
-		return false;
-	return dynamic_cast<Greenpak4PowerRail*>(m_src)->GetDigitalValue();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
 Greenpak4BitstreamEntity::Greenpak4BitstreamEntity(
