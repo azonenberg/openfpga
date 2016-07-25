@@ -2838,13 +2838,17 @@ GP_VDD vdd(
 \label{gp-vref}
 
 \subsubsection{Introduction}
-This primitive represents one output channel from the device's voltage reference. It buffers and optionally divides the
-incoming voltage to drive the reference input to \tokenref{GP\_ACMP}{gp-acmp} cells, \tokenref{GP\_DAC}{gp-dac} cells,
-and external reference output pins.
+This primitive represents an \textit{abstracted view} of a reference voltage source. It buffers and optionally divides 
+the incoming voltage, or a constant voltage from the on-chip bandgap reference, to drive the reference input to 
+\tokenref{GP\_ACMP}{gp-acmp} cells, \tokenref{GP\_DAC}{gp-dac} cells, and external reference output pins.
 
 One \tokenstyle{GP\_VREF} block may drive any number of loads which use the same voltage, however internal device 
-connectivity restrictions must be observed (for example, off-die reference inputs cannot be used for GreenPak4 DACs). 
+connectivity restrictions must be observed (for example, off-die reference inputs cannot be used for GreenPAK4 DACs). 
 See the device datasheet for full details on which reference configurations are legal for which analog IP blocks.
+
+Note that this block does \textit{not} directly correspond to a physical GreenPAK device primitive (one GP\_VREF may 
+configure multiple reference generators attached to different hard IP) and thus the \tokenref{LOC}{constraint-loc} 
+constraint cannot be used with it.
 
 \subsubsection{Port Descriptions}
 

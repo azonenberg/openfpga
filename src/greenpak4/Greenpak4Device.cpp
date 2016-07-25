@@ -358,12 +358,13 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 5, 917));
 	
 	//Analog comparators
-	m_acmps.push_back(new Greenpak4Comparator(this, 0, 0, 69, 33, 832, 852, 853, 855, 934));
-	m_acmps.push_back(new Greenpak4Comparator(this, 1, 1, 70, 33, 831, 861, 857, 859, 932)); 
-	m_acmps.push_back(new Greenpak4Comparator(this, 2, 1, 71, 34,  0,  862, 864, 863, 930));
-	m_acmps.push_back(new Greenpak4Comparator(this, 3, 1, 72, 35,  0,  866, 867, 869, 928));
-	m_acmps.push_back(new Greenpak4Comparator(this, 4, 0, 70, 34,  0,  875, 871, 873, 926));
-	m_acmps.push_back(new Greenpak4Comparator(this, 5, 0, 71, 35,  0,  880,  0,   0,  924));	//TODO speed doubler
+	//TODO speed doubler for ACMP5? Need to double check latest datasheet, this may have been changed
+	m_acmps.push_back(new Greenpak4Comparator(this, 0, 0, 69, 33, 832, 852, 853, 855, 934, 892));
+	m_acmps.push_back(new Greenpak4Comparator(this, 1, 1, 70, 33, 831, 861, 857, 859, 932, 897)); 
+	m_acmps.push_back(new Greenpak4Comparator(this, 2, 1, 71, 34,  0,  862, 864, 863, 930, 902));
+	m_acmps.push_back(new Greenpak4Comparator(this, 3, 1, 72, 35,  0,  866, 867, 869, 928, 907));
+	m_acmps.push_back(new Greenpak4Comparator(this, 4, 0, 70, 34,  0,  875, 871, 873, 926, 912));
+	m_acmps.push_back(new Greenpak4Comparator(this, 5, 0, 71, 35,  0,  880,  0,   0,  924, 917));
 	
 	//PGA
 	m_pga = new Greenpak4PGA(this, 815);

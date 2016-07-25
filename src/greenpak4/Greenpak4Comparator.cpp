@@ -181,8 +181,11 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 				LogError("Invalid ACMP attenuation (must be 1/2/3/4)\n");
 				return false;
 		}
-	} else {
-		if(m_vinAtten != 1) {
+	}
+	else
+	{
+		if(m_vinAtten != 1)
+		{
 			LogError("Invalid ACMP attenuation (must be 1 for %s)\n",
 			         GetDescription().c_str());
 		}
@@ -218,8 +221,11 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 				LogError("Invalid ACMP hysteresis (must be 0/25/50/200)\n");
 				return false;
 		}
-	} else {
-		if(m_hysteresis != 0) {
+	}
+	else
+	{
+		if(m_hysteresis != 0)
+		{
 			LogError("Invalid ACMP hysteresis (must be 0 for %s)\n",
 			         GetDescription().c_str());
 		}
@@ -248,7 +254,7 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 		if(sel & 2)
 			bitstream[m_cbaseVin + 1] = true;
 			
-			//Write the low bit
+		//Write the low bit
 		bitstream[m_cbaseVin] = (sel & 1) ? true : false;
 	}
 	

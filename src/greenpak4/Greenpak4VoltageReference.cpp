@@ -107,7 +107,7 @@ bool Greenpak4VoltageReference::Load(bool* /*bitstream*/)
 	LogFatal("Unimplemented\n");
 }
 
-bool Greenpak4VoltageReference::Save(bool* bitstream)
+bool Greenpak4VoltageReference::Save(bool* /*bitstream*/)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
@@ -116,7 +116,19 @@ bool Greenpak4VoltageReference::Save(bool* bitstream)
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration
+	/*
+	//Write the actual selector
+	bitstream[m_configBase + 0] = (select & 1) ? true : false;
+	bitstream[m_configBase + 1] = (select & 2) ? true : false;
+	bitstream[m_configBase + 2] = (select & 4) ? true : false;
+	bitstream[m_configBase + 3] = (select & 8) ? true : false;
+	bitstream[m_configBase + 4] = (select & 16) ? true : false;
+	*/
+	return true;
+}
 
+unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
+{
 	unsigned int select = 0;
 
 	//Constants
@@ -163,13 +175,6 @@ bool Greenpak4VoltageReference::Save(bool* bitstream)
 		LogError("Greenpak4VoltageReference inputs other than constant not implemented yet\n");
 		return false;
 	}
-
-	//Write the actual selector
-	bitstream[m_configBase + 0] = (select & 1) ? true : false;
-	bitstream[m_configBase + 1] = (select & 2) ? true : false;
-	bitstream[m_configBase + 2] = (select & 4) ? true : false;
-	bitstream[m_configBase + 3] = (select & 8) ? true : false;
-	bitstream[m_configBase + 4] = (select & 16) ? true : false;
 	
-	return true;
+	return select;
 }

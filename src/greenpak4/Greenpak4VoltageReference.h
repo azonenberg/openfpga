@@ -48,8 +48,12 @@ public:
 	
 	virtual void CommitChanges();
 	
+	//mux selector for output pad drivers, need to come up with a clearer name!
 	unsigned int GetMuxSel()
 	{ return m_voutMuxsel; }
+	
+	//mux selector for ACMP voltage inputs
+	unsigned int GetACMPMuxSel();
 	
 protected:
 	Greenpak4EntityOutput m_vin;

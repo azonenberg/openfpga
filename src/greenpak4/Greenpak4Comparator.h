@@ -36,7 +36,8 @@ public:
 		unsigned int cbase_bw,
 		unsigned int cbase_gain,
 		unsigned int cbase_vin,
-		unsigned int cbase_hyst
+		unsigned int cbase_hyst,
+		unsigned int cbase_vref
 		);
 	
 	//Serialization
@@ -81,6 +82,7 @@ protected:
 	unsigned int m_cbaseGain;
 	unsigned int m_cbaseVin;
 	unsigned int m_cbaseHyst;
+	unsigned int m_cbaseVref;
 	
 	bool m_bandwidthHigh;
 	int m_vinAtten;
