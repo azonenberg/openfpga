@@ -331,23 +331,26 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			*/
 			for(auto c : node->m_nodeports)
 			{
-				if(c.m_cell->m_parnode != source)
+				Greenpak4NetlistModule* module = netlist->GetModule(c.m_cell->m_type);
+				Greenpak4NetlistPort* port = module->GetPort(c.m_portname);
+				
+				if(port->m_direction == Greenpak4NetlistPort::DIR_OUTPUT)
+					continue;
+
+				//Name the net
+				string nname = c.m_portname;
+				if(c.m_vector)
 				{
-					//Name the net
-					string nname = c.m_portname;
-					if(c.m_vector)
-					{
-						char tmp[256];
-						snprintf(tmp, sizeof(tmp), "%s[%u]", c.m_portname.c_str(), c.m_nbit);
-						nname = tmp;
-					}
-					
-					//Use the new name
-					has_loads = true;
-					LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), nname.c_str());
-					if(source)
-						source->AddEdge(sourceport, c.m_cell->m_parnode, nname);
+					char tmp[256];
+					snprintf(tmp, sizeof(tmp), "%s[%u]", c.m_portname.c_str(), c.m_nbit);
+					nname = tmp;
 				}
+				
+				//Use the new name
+				has_loads = true;
+				LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), nname.c_str());
+				if(source)
+					source->AddEdge(sourceport, c.m_cell->m_parnode, nname);
 			}
 		}
 		
