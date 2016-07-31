@@ -66,13 +66,6 @@ protected:
 	uint32_t m_nextLabel;
 	
 	/**
-		@brief Count of how many nodes have each label
-
-		Updated only when CountLabels() is called
-	 */
-	std::vector<uint32_t> m_labelCount;
-	
-	/**
 		@brief Set of nodes sorted by label
 	 */
 	std::vector< NodeVector > m_labeledNodes;
