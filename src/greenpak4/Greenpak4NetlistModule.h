@@ -50,8 +50,6 @@ public:
 	: m_parent(module)
 	{ m_parnode = NULL; }
 	virtual ~Greenpak4NetlistCell();
-
-	std::string m_type;
 	
 	bool HasParameter(std::string att)
 	{ return m_parameters.find(att) != m_parameters.end(); }
@@ -59,18 +57,6 @@ public:
 	//Indicates whether the cell is an I/O buffer
 	bool IsIOB()
 	{ return (m_type == "GP_IBUF") || (m_type == "GP_IOBUF") || (m_type == "GP_OBUF"); }
-	
-	std::map<std::string, std::string> m_parameters;
-	std::map<std::string, std::string> m_attributes;
-	
-	typedef std::vector<Greenpak4NetlistNode*> cellnet;
-	
-	std::map<std::string, cellnet > m_connections;
-	
-	PARGraphNode* m_parnode;
-	
-	//Parent module of the cell, not the module we're an instance of
-	Greenpak4NetlistModule* m_parent;	
 	
 	//Called by Greenpak4PAREngine::InitialPlacement_core
 	void FindLOC();
@@ -84,6 +70,21 @@ public:
 	//Clear the LOC constraint if it's determined to be bogus (TODO: better handling of this situation)
 	void ClearLOC()
 	{ m_loc = ""; }
+	
+	///Module name
+	std::string m_type;
+	
+	std::map<std::string, std::string> m_parameters;
+	std::map<std::string, std::string> m_attributes;
+	
+	typedef std::vector<Greenpak4NetlistNode*> cellnet;
+	
+	std::map<std::string, cellnet > m_connections;
+	
+	PARGraphNode* m_parnode;
+	
+	//Parent module of the cell, not the module we're an instance of
+	Greenpak4NetlistModule* m_parent;	
 	
 protected:
 	std::string m_loc;
