@@ -24,6 +24,7 @@
 
 #include <map>
 typedef std::map<uint32_t, std::string> labelmap;
+typedef std::map<std::string, uint32_t> ilabelmap;
 
 #include "Greenpak4PAREngine.h"
 

@@ -23,6 +23,17 @@ using namespace std;
 void MakeNetlistEdges(Greenpak4Netlist* netlist);
 void MakeDeviceEdges(Greenpak4Device* device);
 
+void MakeNetlistNodes(
+	Greenpak4Netlist* netlist,
+	PARGraph*& ngraph,
+	labelmap& lmap);
+
+void MakeDeviceNodes(
+	Greenpak4Device* device,
+	PARGraph*& ngraph,
+	PARGraph*& dgraph,
+	labelmap& lmap);
+
 void MakeSingleNode(
 	string type,
 	Greenpak4BitstreamEntity* entity,
@@ -48,10 +59,67 @@ void BuildGraphs(
 	//Create the graphs
 	ngraph = new PARGraph;
 	dgraph = new PARGraph;
+		
+	//Create the device graph.
+	//This is independent of the final netlist and has to be done first to assign graph labels
+	MakeDeviceNodes(device, ngraph, dgraph, lmap);
+	MakeDeviceEdges(device);
 	
-	//This is the module being PAR'd
+	//Create all of the nodes for the netlist, then connect with edges.
+	//This requires breaking point-to-multipoint nets into multiple point-to-point links.
+	MakeNetlistNodes(netlist, ngraph, lmap);
+	MakeNetlistEdges(netlist);
+}
+
+/**
+	@brief Make all of the nodes for the netlist graph
+ */
+void MakeNetlistNodes(
+	Greenpak4Netlist* netlist,
+	PARGraph*& ngraph,
+	labelmap& lmap)
+{
+	//Build inverse label map
+	ilabelmap ilmap;
+	for(auto it : lmap)
+		ilmap[it.second] = it.first;
+	
+	//Add aliases for different primitive names that map to the same node type
+	ilmap["GP_DFFR"] = ilmap["GP_DFFSR"];
+	ilmap["GP_DFFS"] = ilmap["GP_DFFSR"];
+	
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
-	
+	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
+	{
+		//Figure out the type of node
+		Greenpak4NetlistCell* cell = it->second;
+		uint32_t label = 0;
+		if(ilmap.find(cell->m_type) != ilmap.end())
+			label = ilmap[cell->m_type];
+		else
+		{
+			LogError(
+				"Cell \"%s\" is of type \"%s\" which is not a valid GreenPak4 primitive\n",
+				cell->m_name.c_str(), cell->m_type.c_str());
+			exit(-1);			
+		}
+		
+		//Create a node for the cell
+		PARGraphNode* nnode = new PARGraphNode(label, cell);
+		cell->m_parnode = nnode;
+		ngraph->AddNode(nnode);
+	}
+}
+
+/**
+	@brief Make all of the nodes for the device graph
+ */
+void MakeDeviceNodes(
+	Greenpak4Device* device,
+	PARGraph*& ngraph,
+	PARGraph*& dgraph,
+	labelmap& lmap)
+{
 	//Create device entries for the IOBs
 	uint32_t ibuf_label = AllocateLabel(ngraph, dgraph, lmap, "GP_IBUF");
 	uint32_t obuf_label = AllocateLabel(ngraph, dgraph, lmap, "GP_OBUF");
@@ -194,45 +262,6 @@ void BuildGraphs(
 	}
 	
 	//TODO: make nodes for all of the other hard IP
-	
-	//Build inverse label map
-	map<string, uint32_t> ilmap;
-	for(auto it : lmap)
-		ilmap[it.second] = it.first;
-	
-	//Add aliases for different primitive names that map to the same node type
-	ilmap["GP_DFFR"] = dffsr_label;
-	ilmap["GP_DFFS"] = dffsr_label;
-	ilmap["GP_DFFSR"] = dffsr_label;
-	
-	//Make netlist nodes for cells
-	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
-	{
-		//Figure out the type of node
-		Greenpak4NetlistCell* cell = it->second;
-		uint32_t label = 0;
-		if(ilmap.find(cell->m_type) != ilmap.end())
-			label = ilmap[cell->m_type];
-		else
-		{
-			LogError(
-				"Cell \"%s\" is of type \"%s\" which is not a valid GreenPak4 primitive\n",
-				cell->m_name.c_str(), cell->m_type.c_str());
-			exit(-1);			
-		}
-		
-		//Create a node for the cell
-		PARGraphNode* nnode = new PARGraphNode(label, cell);
-		cell->m_parnode = nnode;
-		ngraph->AddNode(nnode);
-	}
-	
-	//Create edges in the netlist.
-	//This requires breaking point-to-multipoint nets into multiple point-to-point links.
-	MakeNetlistEdges(netlist);
-		
-	//Create edges in the device. This is static for all designs (TODO cache somehow?)
-	MakeDeviceEdges(device);
 }
 
 /**
