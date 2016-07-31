@@ -50,9 +50,12 @@ public:
 	Greenpak4NetlistModule* GetModule(std::string name)
 	{ return m_modules[name]; }
 	
+	void Reindex();
+	
 protected:
 	
 	void IndexNets();
+	void ClearIndexes();
 	
 	//Init helpers
 	void Load(json_object* object);

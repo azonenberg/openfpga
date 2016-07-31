@@ -79,6 +79,11 @@ public:
 	
 	typedef std::vector<Greenpak4NetlistNode*> cellnet;
 	
+	/**
+		@brief Map of connections to the cell
+		
+		connections[portname] = {bit2, bit1, bit0}
+	 */
 	std::map<std::string, cellnet > m_connections;
 	
 	PARGraphNode* m_parnode;
@@ -139,6 +144,10 @@ public:
 	
 	Greenpak4Netlist* GetNetlist()
 	{ return m_parent; }
+	
+	//Add an extra cell (used by make_graphs to add inferred ACMPs etc)
+	void AddCell(Greenpak4NetlistCell* cell)
+	{ m_cells[cell->m_name] = cell; }
 		
 protected:
 	Greenpak4Netlist* m_parent;

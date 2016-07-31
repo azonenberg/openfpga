@@ -148,6 +148,29 @@ void Greenpak4Netlist::Load(json_object* object)
 }
 
 /**
+	@brief Destroy all index data.
+ */
+void Greenpak4Netlist::ClearIndexes()
+{
+	for(auto node : m_nodes)
+	{
+		node->m_nodeports.clear();
+		node->m_ports.clear();
+	}
+	
+	m_nodes.clear();
+}
+
+/**
+	@brief Force a re-index after changing the netlist (by PAR-level optimizations etc)
+ */
+void Greenpak4Netlist::Reindex()
+{
+	ClearIndexes();
+	IndexNets();
+}
+
+/**
 	@brief Index the nets so that each net has a list of cell ports it connects to.
 	
 	Has to be done as a second pass because there may be cycles in the netlist preventing us from resolving names

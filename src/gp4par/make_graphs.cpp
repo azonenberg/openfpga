@@ -26,7 +26,7 @@ void MakeDeviceEdges(Greenpak4Device* device);
 void MakeNetlistNodes(
 	Greenpak4Netlist* netlist,
 	PARGraph*& ngraph,
-	labelmap& lmap);
+	ilabelmap& ilmap);
 
 void MakeDeviceNodes(
 	Greenpak4Device* device,
@@ -48,8 +48,9 @@ PARGraphNode* MakeNode(
 	
 void InferExtraNodes(
 	Greenpak4Netlist* netlist,
+	Greenpak4Device* device,
 	PARGraph*& ngraph,
-	labelmap& lmap);
+	ilabelmap& ilap);
 
 /**
 	@brief Build the graphs
@@ -70,13 +71,18 @@ void BuildGraphs(
 	MakeDeviceNodes(device, ngraph, dgraph, lmap);
 	MakeDeviceEdges(device);
 	
+	//Build inverse label map
+	ilabelmap ilmap;
+	for(auto it : lmap)
+		ilmap[it.second] = it.first;
+	
 	//Create all of the nodes for the netlist, then connect with edges.
 	//This requires breaking point-to-multipoint nets into multiple point-to-point links.
-	MakeNetlistNodes(netlist, ngraph, lmap);
+	MakeNetlistNodes(netlist, ngraph, ilmap);
 	MakeNetlistEdges(netlist);
 	
 	//Infer extra support nodes for things that use hidden functions of others
-	InferExtraNodes(netlist, ngraph, lmap);
+	InferExtraNodes(netlist, device, ngraph, ilmap);
 }
 
 /**
@@ -84,9 +90,19 @@ void BuildGraphs(
  */
 void InferExtraNodes(
 	Greenpak4Netlist* netlist,
+	Greenpak4Device* device,
 	PARGraph*& ngraph,
-	labelmap& lmap)
+	ilabelmap& ilmap)
 {
+	LogDebug("Inferring extra nodes, if needed...\n");
+	
+	bool madeChanges = false;
+	
+	//Cache power rails, as they're frequently used
+	auto top = netlist->GetTopModule();
+	auto vdd = top->GetNet("GP_VDD");
+	auto vddn = device->GetPowerRail(true)->GetPARNode();
+		
 	//Look for IOBs driven by GP_VREF cells
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
@@ -97,7 +113,8 @@ void InferExtraNodes(
 			continue;
 		
 		//See if we're driven by a GP_VREF
-		Greenpak4NetlistNodePoint driver = cell->m_connections["IN"][0]->m_driver;
+		auto net = cell->m_connections["IN"][0];
+		auto driver = net->m_driver;
 		if(driver.IsNull())
 			continue;
 		if( (driver.m_cell->m_type != "GP_VREF") || (driver.m_portname != "VOUT") )
@@ -107,7 +124,67 @@ void InferExtraNodes(
 		//We have an IOB driven by a VREF.
 		//Check if we have a comparator driven by that VREF too.
 		LogDebug("    IOB \"%s\" is driven by VREF \"%s\"\n", cell->m_name.c_str(), vref->m_name.c_str());
-		//vector<Greenpak4NetlistCell*> acmps;
+		vector<Greenpak4NetlistCell*> acmps;
+		for(auto jt : net->m_nodeports)
+		{
+			if(jt.IsNull())
+				continue;
+			if(jt.m_cell->m_type == "GP_ACMP")
+				acmps.push_back(jt.m_cell);
+		}
+			
+		//No comparator driven by this voltage.
+		//We need to *create* a GP_ACMP cell that we can use to reserve our vref
+		if(acmps.empty())
+		{
+			LogDebug("        No comparator driven by this VREF, creating a dummy\n");
+			madeChanges = true;
+			
+			//Monotonically increasing counter used to ensure unique node IDs
+			static unsigned int acmp_id = 1;
+			
+			//Create the cell and tie its VREF to our input
+			Greenpak4NetlistCell* acmp = new Greenpak4NetlistCell(module);
+			acmp->m_type = "GP_ACMP";
+			acmp->m_connections["VREF"].push_back(net);
+			
+			//TODO: Determine whether we actually *need* to power on the comparator
+			//in order to turn on the voltage reference block.
+			//GreenPAK Designer seems to require this
+			acmp->m_connections["PWREN"].push_back(vdd);
+			
+			//Give it a name
+			char tmp[128];
+			snprintf(tmp, sizeof(tmp), "$auto$make_graphs.cpp:%d:acmp$%u",
+				__LINE__,
+				acmp_id ++);
+			acmp->m_name = tmp;
+			
+			//Add the cell to the module
+			module->AddCell(acmp);
+			
+			//Create the PAR node for it
+			PARGraphNode* nnode = new PARGraphNode(ilmap[acmp->m_type], acmp);
+			acmp->m_parnode = nnode;
+			ngraph->AddNode(nnode);
+			
+			//Copy the netlist edges to the PAR graph
+			//TODO: automate this somehow? Seems error-prone to do it twice
+			vref->m_parnode->AddEdge("VOUT", nnode, "VREF");
+			vddn->AddEdge("OUT", nnode, "PWREN");
+			
+			acmps.push_back(acmp);
+		}
+		
+		//TODO: Location constraints on the acmp
+	}
+	
+	//Re-index the graph if we chagned it
+	if(madeChanges)
+	{
+		LogNotice("    Re-indexing graph because we inferred additional nodes..\n");
+		netlist->Reindex();
+		ngraph->IndexNodesByLabel();
 	}
 }
 
@@ -117,13 +194,8 @@ void InferExtraNodes(
 void MakeNetlistNodes(
 	Greenpak4Netlist* netlist,
 	PARGraph*& ngraph,
-	labelmap& lmap)
-{
-	//Build inverse label map
-	ilabelmap ilmap;
-	for(auto it : lmap)
-		ilmap[it.second] = it.first;
-	
+	ilabelmap& ilmap)
+{	
 	//Add aliases for different primitive names that map to the same node type
 	ilmap["GP_DFFR"] = ilmap["GP_DFFSR"];
 	ilmap["GP_DFFS"] = ilmap["GP_DFFSR"];
