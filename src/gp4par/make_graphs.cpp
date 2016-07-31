@@ -535,17 +535,23 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// REFERENCE OUT
 		
+		PARGraphNode* vrefs[] =
+		{
+			device->GetVref(0)->GetPARNode(),
+			device->GetVref(1)->GetPARNode(),
+			device->GetVref(2)->GetPARNode(),
+			device->GetVref(3)->GetPARNode(),
+			device->GetVref(4)->GetPARNode(),
+			device->GetVref(5)->GetPARNode()
+		};
+		
 		//VREF0/1 can drive pin 19
-		auto vref0 = device->GetVref(0)->GetPARNode();
-		auto vref1 = device->GetVref(1)->GetPARNode();
-		vref0->AddEdge("VOUT", pin19, "IN");
-		vref1->AddEdge("VOUT", pin19, "IN");
+		vrefs[0]->AddEdge("VOUT", pin19, "IN");
+		vrefs[1]->AddEdge("VOUT", pin19, "IN");
 		
 		//VREF2/3 can drive pin 18
-		auto vref2 = device->GetVref(2)->GetPARNode();
-		auto vref3 = device->GetVref(3)->GetPARNode();
-		vref2->AddEdge("VOUT", pin18, "IN");
-		vref3->AddEdge("VOUT", pin18, "IN");
+		vrefs[2]->AddEdge("VOUT", pin18, "IN");
+		vrefs[3]->AddEdge("VOUT", pin18, "IN");
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// REFERENCE TO COMPARATORS
@@ -558,16 +564,6 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			device->GetAcmp(3)->GetPARNode(),
 			device->GetAcmp(4)->GetPARNode(),
 			device->GetAcmp(5)->GetPARNode()
-		};
-		
-		PARGraphNode* vrefs[] =
-		{
-			device->GetVref(0)->GetPARNode(),
-			device->GetVref(1)->GetPARNode(),
-			device->GetVref(2)->GetPARNode(),
-			device->GetVref(3)->GetPARNode(),
-			device->GetVref(4)->GetPARNode(),
-			device->GetVref(5)->GetPARNode()
 		};
 		
 		//Any vref can drive any comparator, we hide the complexity of the actual routing structure
