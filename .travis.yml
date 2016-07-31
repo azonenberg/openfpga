@@ -53,6 +53,14 @@ script:
     else
       ctest --output-on-failure;
     fi'
+after_script:
+  - 'if [ "${MODE}" == "analysis" ]; then
+      mkdir -p ~/.ssh;
+      openssl aes-256-cbc -K $encrypted_5c94a72f9082_key -iv $encrypted_5c94a72f9082_iv -in .travis.id_rsa.enc -out ~/.ssh/id_rsa -d;
+      chmod 0600 ~/.ssh/id_rsa;
+      sudo pip install ghp-import;
+      ghp-import -p -r git@github.com:azonenberg/openfpga /tmp/scan-build-*;
+    fi'
 notifications:
   irc:
     channels:
