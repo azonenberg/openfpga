@@ -91,49 +91,23 @@ void InferExtraNodes(
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
 	{
+		//See if we're an IOB
 		Greenpak4NetlistCell* cell = it->second;
 		if(!cell->IsIOB())
 			continue;
 		
-		//TODO: Have some way to index nets so that you can find connections
-		//to a particular node... O(n^2) is slow!
-		Greenpak4NetlistCell* vref = NULL;
-		bool talksToUs = false;
-		for(auto jt = module->net_begin(); jt != module->net_end(); jt ++)
-		{
-			auto net = jt->second;
-			
-			//If net has no driver, skip it
-			if(net->m_driver.IsNull())
-				continue;
-			
-			//Skip any net not driven by a VREF
-			if( (net->m_driver.m_cell->m_type != "GP_VREF") || (net->m_driver.m_portname != "VOUT") )
-			{
-				vref = NULL;
-				continue;
-			}
-			vref = net->m_driver.m_cell;
-			
-			//See if we're driven by this net
-			for(auto point : net->m_nodeports)
-			{
-				if(point.m_cell == cell)
-					talksToUs = true;
-			}
-			
-			//If both us and a vref are on the same net, we're good to go.
-			if(talksToUs)
-				break;
-			
-			//Otherwise clear the flags and try the next net
-			talksToUs = false;
-			vref = NULL;
-		}
-		if(!vref)
+		//See if we're driven by a GP_VREF
+		Greenpak4NetlistNodePoint driver = cell->m_connections["IN"][0]->m_driver;
+		if(driver.IsNull())
 			continue;
-			
+		if( (driver.m_cell->m_type != "GP_VREF") || (driver.m_portname != "VOUT") )
+			continue;
+		Greenpak4NetlistCell* vref = driver.m_cell;
+		
+		//We have an IOB driven by a VREF.
+		//Check if we have a comparator driven by that VREF too.
 		LogDebug("    IOB \"%s\" is driven by VREF \"%s\"\n", cell->m_name.c_str(), vref->m_name.c_str());
+		//vector<Greenpak4NetlistCell*> acmps;
 	}
 }
 
