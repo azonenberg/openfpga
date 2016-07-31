@@ -344,7 +344,9 @@ bool Greenpak4PAREngine::CantMoveSrc(Greenpak4BitstreamEntity* src)
 {
 	//If we have only one node of this type, we can't move it because there's nowhere to go
 	auto pn = src->GetPARNode();
-	if( (pn != NULL) && (m_device->GetNumNodesWithLabel(pn->GetLabel()) == 1) )
+	if(pn == NULL)
+		return true;
+	if(m_device->GetNumNodesWithLabel(pn->GetLabel()) == 1)
 		return true;
 
 	//If it has a LOC constraint, don't move it
@@ -364,7 +366,9 @@ bool Greenpak4PAREngine::CantMoveDst(Greenpak4BitstreamEntity* dst)
 {	
 	//If we have only one node of this type, we can't move it because there's nowhere to go
 	auto pn = dst->GetPARNode();
-	if( (pn != NULL) && (m_device->GetNumNodesWithLabel(pn->GetLabel()) == 1) )
+	if(pn == NULL)
+		return true;
+	if(m_device->GetNumNodesWithLabel(pn->GetLabel()) == 1)
 		return true;
 		
 	//If it has a LOC constraint, don't move it
