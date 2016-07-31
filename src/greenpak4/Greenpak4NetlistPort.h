@@ -23,57 +23,6 @@
 #include <vector>
 #include <json-c/json.h>
 
-class Greenpak4NetlistNodePoint
-{
-public:
-
-	Greenpak4NetlistNodePoint(Greenpak4NetlistCell* cell, std::string port, unsigned int nbit, bool vector)
-		: m_cell(cell)
-		, m_portname(port)
-		, m_nbit(nbit)
-		, m_vector(vector)
-	{}
-	
-	bool IsNull()
-	{ return (m_cell == NULL); }
-
-	Greenpak4NetlistCell* m_cell;
-	std::string m_portname;
-	unsigned int m_nbit;
-	bool m_vector;
-};
-
-//A single named node in the netlist (may be a wire or part of a bus)
-class Greenpak4NetlistNode
-{
-public:
-
-	Greenpak4NetlistNode();
-
-	std::string m_name;
-	
-	//Attributes
-	std::map<std::string, std::string> m_attributes;
-	
-	bool HasAttribute(std::string name)
-	{ return (m_attributes.find(name) != m_attributes.end() ); }
-	
-	std::string GetAttribute(std::string name)
-	{ return m_attributes[name]; }
-
-	//Source file locations
-	std::vector<std::string> m_src_locations;
-	
-	//Net source (only valid after indexing)
-	Greenpak4NetlistNodePoint m_driver;
-	
-	//List of internal points we link to (only valid after indexing)
-	std::vector<Greenpak4NetlistNodePoint> m_nodeports;
-	
-	//List of ports we link to (only valid after indexing)
-	std::vector<Greenpak4NetlistPort*> m_ports;
-};
-
 //A module port (attached to one or more nodes)
 class Greenpak4NetlistPort : public Greenpak4NetlistEntity
 {

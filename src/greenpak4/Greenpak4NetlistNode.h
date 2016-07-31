@@ -15,47 +15,59 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
-#ifndef Greenpak4_h
-#define Greenpak4_h
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
+#ifndef Greenpak4NetlistNode_h
+#define Greenpak4NetlistNode_h
 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4EntityOutput.h"
-#include "Greenpak4DualEntity.h"
+class Greenpak4NetlistNodePoint
+{
+public:
 
-#include "Greenpak4Abuf.h"
-#include "Greenpak4Bandgap.h"
-#include "Greenpak4Counter.h"
-#include "Greenpak4Comparator.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4DAC.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4LUTPgen.h"
-#include "Greenpak4PGA.h"
-#include "Greenpak4PowerOnReset.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4RCOscillator.h"
-#include "Greenpak4RingOscillator.h"
-#include "Greenpak4ShiftRegister.h"
-#include "Greenpak4SystemReset.h"
-#include "Greenpak4VoltageReference.h"
+	Greenpak4NetlistNodePoint(Greenpak4NetlistCell* cell, std::string port, unsigned int nbit, bool vector)
+		: m_cell(cell)
+		, m_portname(port)
+		, m_nbit(nbit)
+		, m_vector(vector)
+	{}
+	
+	bool IsNull()
+	{ return (m_cell == NULL); }
 
-#include "Greenpak4Netlist.h"
-#include "Greenpak4NetlistNode.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
+	Greenpak4NetlistCell* m_cell;
+	std::string m_portname;
+	unsigned int m_nbit;
+	bool m_vector;
+};
 
-#include "Greenpak4Device.h"
+//A single named node in the netlist (may be a wire or part of a bus)
+class Greenpak4NetlistNode
+{
+public:
+
+	Greenpak4NetlistNode();
+
+	std::string m_name;
+	
+	//Attributes
+	std::map<std::string, std::string> m_attributes;
+	
+	bool HasAttribute(std::string name)
+	{ return (m_attributes.find(name) != m_attributes.end() ); }
+	
+	std::string GetAttribute(std::string name)
+	{ return m_attributes[name]; }
+
+	//Source file locations
+	std::vector<std::string> m_src_locations;
+	
+	//Net source (only valid after indexing)
+	Greenpak4NetlistNodePoint m_driver;
+	
+	//List of internal points we link to (only valid after indexing)
+	std::vector<Greenpak4NetlistNodePoint> m_nodeports;
+	
+	//List of ports we link to (only valid after indexing)
+	std::vector<Greenpak4NetlistPort*> m_ports;
+};
 
 #endif
