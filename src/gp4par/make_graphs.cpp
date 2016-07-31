@@ -418,11 +418,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		for(auto srcport : oports)
 		{		
 			for(auto y : device_nodes)
-			{
-				//Do not add edges to ourself (TODO: allow outputs of cell to feed its inputs?)
-				if(x == y)
-					continue;
-					
+			{			
 				//Add paths to each cell input
 				auto iports = static_cast<Greenpak4BitstreamEntity*>(y->GetData())->GetInputPorts();
 				for(auto ip : iports)
