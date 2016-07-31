@@ -33,6 +33,9 @@ public:
 		, m_nbit(nbit)
 		, m_vector(vector)
 	{}
+	
+	bool IsNull()
+	{ return (m_cell == NULL); }
 
 	Greenpak4NetlistCell* m_cell;
 	std::string m_portname;

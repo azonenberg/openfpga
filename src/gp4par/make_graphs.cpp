@@ -103,6 +103,10 @@ void InferExtraNodes(
 		{
 			auto net = jt->second;
 			
+			//If net has no driver, skip it
+			if(net->m_driver.IsNull())
+				continue;
+			
 			//Skip any net not driven by a VREF
 			if( (net->m_driver.m_cell->m_type != "GP_VREF") || (net->m_driver.m_portname != "VOUT") )
 			{
