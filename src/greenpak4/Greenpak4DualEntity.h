@@ -37,9 +37,7 @@ public:
 	virtual bool Save(bool* bitstream);
 	
 	virtual std::string GetDescription();
-	
-	virtual Greenpak4BitstreamEntity* GetRealEntity();
-	
+		
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
 	
@@ -48,9 +46,6 @@ public:
 	virtual Greenpak4EntityOutput GetOutput(std::string port);
 	
 	virtual void CommitChanges();
-	
-protected:
-	Greenpak4BitstreamEntity* m_dual;
 };
 
 #endif

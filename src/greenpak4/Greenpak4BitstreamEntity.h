@@ -111,10 +111,10 @@ public:
 	/**
 		@brief Returns the real entity if we are a dual, or us if we're not
 	 */
-	virtual Greenpak4BitstreamEntity* GetRealEntity();
+	Greenpak4BitstreamEntity* GetRealEntity();
 	
 	//Return our dual, or NULL if we don't have one
-	Greenpak4DualEntity* GetDual()
+	Greenpak4BitstreamEntity* GetDual()
 	{ return m_dual; }
 	
 	//Get a list of input ports on this node that connect to general fabric routing (may be empty)
@@ -169,8 +169,11 @@ protected:
 	///The graph node used for place-and-route
 	PARGraphNode* m_parnode;
 	
-	///Our dual entity (if we have one)
-	Greenpak4DualEntity* m_dual;
+	///Our dual entity (if we have one). Dual points back to us.
+	Greenpak4BitstreamEntity* m_dual;
+	
+	///True if we're the master of a dual pair, or not a dual
+	bool m_dualMaster;
 };
 
 #endif

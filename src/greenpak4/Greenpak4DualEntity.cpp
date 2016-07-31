@@ -30,19 +30,14 @@ Greenpak4DualEntity::Greenpak4DualEntity(Greenpak4BitstreamEntity* dual)
 		0,	//no inputs
 		dual->GetInternalOutputBase(),
 		0)	//no configuration
-	, m_dual(dual)
 {
-
+	m_dual = dual;
+	m_dualMaster = false;
 }
 
 Greenpak4DualEntity::~Greenpak4DualEntity()
 {
 	
-}
-
-Greenpak4BitstreamEntity* Greenpak4DualEntity::GetRealEntity()
-{
-	return m_dual;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

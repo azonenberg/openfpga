@@ -38,13 +38,15 @@ Greenpak4BitstreamEntity::Greenpak4BitstreamEntity(
 	, m_configBase(cbase)
 	, m_parnode(NULL)
 	, m_dual(NULL)
+	, m_dualMaster(true)
 {
 	
 }
 
 Greenpak4BitstreamEntity::~Greenpak4BitstreamEntity()
 {
-	if(m_dual)
+	//Delete our dual if we're the master	
+	if(m_dual && m_dualMaster)
 	{
 		delete m_dual;
 		m_dual = NULL;
@@ -118,6 +120,9 @@ string Greenpak4BitstreamEntity::GetOutputName()
 
 Greenpak4BitstreamEntity* Greenpak4BitstreamEntity::GetRealEntity()
 {
+	if(m_dual && !m_dualMaster)
+		return m_dual;
+
 	return this;
 }
 
