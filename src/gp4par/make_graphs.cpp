@@ -45,6 +45,11 @@ PARGraphNode* MakeNode(
 	uint32_t label,
 	Greenpak4BitstreamEntity* entity,
 	PARGraph* dgraph);
+	
+void InferExtraNodes(
+	Greenpak4Netlist* netlist,
+	PARGraph*& ngraph,
+	labelmap& lmap);
 
 /**
 	@brief Build the graphs
@@ -59,7 +64,7 @@ void BuildGraphs(
 	//Create the graphs
 	ngraph = new PARGraph;
 	dgraph = new PARGraph;
-		
+	
 	//Create the device graph.
 	//This is independent of the final netlist and has to be done first to assign graph labels
 	MakeDeviceNodes(device, ngraph, dgraph, lmap);
@@ -69,6 +74,63 @@ void BuildGraphs(
 	//This requires breaking point-to-multipoint nets into multiple point-to-point links.
 	MakeNetlistNodes(netlist, ngraph, lmap);
 	MakeNetlistEdges(netlist);
+	
+	//Infer extra support nodes for things that use hidden functions of others
+	InferExtraNodes(netlist, ngraph, lmap);
+}
+
+/**
+	@brief Add extra nodes to handle dependencies between nodes that share hard IP under the hood
+ */
+void InferExtraNodes(
+	Greenpak4Netlist* netlist,
+	PARGraph*& ngraph,
+	labelmap& lmap)
+{
+	//Look for IOBs driven by GP_VREF cells
+	Greenpak4NetlistModule* module = netlist->GetTopModule();
+	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
+	{
+		Greenpak4NetlistCell* cell = it->second;
+		if(!cell->IsIOB())
+			continue;
+		
+		//TODO: Have some way to index nets so that you can find connections
+		//to a particular node... O(n^2) is slow!
+		Greenpak4NetlistCell* vref = NULL;
+		bool talksToUs = false;
+		for(auto jt = module->net_begin(); jt != module->net_end(); jt ++)
+		{
+			auto net = jt->second;
+			
+			//Skip any net not driven by a VREF
+			if( (net->m_driver.m_cell->m_type != "GP_VREF") || (net->m_driver.m_portname != "VOUT") )
+			{
+				vref = NULL;
+				continue;
+			}
+			vref = net->m_driver.m_cell;
+			
+			//See if we're driven by this net
+			for(auto point : net->m_nodeports)
+			{
+				if(point.m_cell == cell)
+					talksToUs = true;
+			}
+			
+			//If both us and a vref are on the same net, we're good to go.
+			if(talksToUs)
+				break;
+			
+			//Otherwise clear the flags and try the next net
+			talksToUs = false;
+			vref = NULL;
+		}
+		if(!vref)
+			continue;
+			
+		LogDebug("    IOB \"%s\" is driven by VREF \"%s\"\n", cell->m_name.c_str(), vref->m_name.c_str());
+	}
 }
 
 /**
@@ -88,6 +150,7 @@ void MakeNetlistNodes(
 	ilmap["GP_DFFR"] = ilmap["GP_DFFSR"];
 	ilmap["GP_DFFS"] = ilmap["GP_DFFSR"];
 	
+	//Create the actual nodes in the netlist
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
 	{
@@ -304,6 +367,8 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			source = c.m_cell->m_parnode;
 			sourceport = c.m_portname;
 			LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+			
+			node->m_driver = c;
 
 			//TODO: detect multiple drivers and complain
 			break;

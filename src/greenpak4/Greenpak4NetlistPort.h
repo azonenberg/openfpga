@@ -45,6 +45,8 @@ class Greenpak4NetlistNode
 {
 public:
 
+	Greenpak4NetlistNode();
+
 	std::string m_name;
 	
 	//Attributes
@@ -56,8 +58,11 @@ public:
 	std::string GetAttribute(std::string name)
 	{ return m_attributes[name]; }
 
-	//Source locations
+	//Source file locations
 	std::vector<std::string> m_src_locations;
+	
+	//Net source (only valid after indexing)
+	Greenpak4NetlistNodePoint m_driver;
 	
 	//List of internal points we link to (only valid after indexing)
 	std::vector<Greenpak4NetlistNodePoint> m_nodeports;
