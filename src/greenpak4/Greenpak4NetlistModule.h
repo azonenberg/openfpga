@@ -56,7 +56,7 @@ public:
 	
 	//Indicates whether the cell is an I/O buffer
 	bool IsIOB()
-	{ return (m_type == "GP_IBUF") || (m_type == "GP_IOBUF") || (m_type == "GP_OBUF"); }
+	{ return (m_type == "GP_IBUF") || (m_type == "GP_IOBUF") || (m_type == "GP_OBUF") || (m_type == "GP_OBUFT"); }
 	
 	//Called by Greenpak4PAREngine::InitialPlacement_core
 	void FindLOC();
