@@ -34,8 +34,10 @@ Greenpak4LUT::Greenpak4LUT(
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 	, m_lutnum(lutnum)
 	, m_order(order)
-	, m_inputs{device->GetGround(), device->GetGround(), device->GetGround(), device->GetGround()}
 {
+	for(unsigned int i=0; i<4; i++)
+		m_inputs[i] = device->GetGround();
+	
 	for(unsigned int i=0; i<16; i++)
 		m_truthtable[i] = false;
 }
