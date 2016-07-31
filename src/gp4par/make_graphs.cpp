@@ -250,7 +250,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 		
 		PARGraphNode* source = NULL;
 		string sourceport = "";
-		
+
 		//Nets sourced by port are special - no edges
 		bool sourced_by_port = false;
 		for(auto p : node->m_ports)
@@ -271,10 +271,13 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			
 			if(port->m_direction == Greenpak4NetlistPort::DIR_INPUT)
 				continue;
-			
+
 			source = c.m_cell->m_parnode;
 			sourceport = c.m_portname;
 			LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+
+			//TODO: detect multiple drivers and complain
+			break;
 		}
 		
 		if((source == NULL) && !sourced_by_port)
@@ -296,6 +299,10 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			
 			for(auto c : node->m_nodeports)
 			{
+				//Don't add edges to ourself (happens with inouts etc)
+				if( (source == c.m_cell->m_parnode) && (sourceport == c.m_portname) )
+					continue;
+
 				has_loads = true;
 				LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 				
@@ -334,6 +341,10 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 				Greenpak4NetlistModule* module = netlist->GetModule(c.m_cell->m_type);
 				Greenpak4NetlistPort* port = module->GetPort(c.m_portname);
 				
+				//Don't add edges to ourself (happens with inouts etc)
+				if( (source == c.m_cell->m_parnode) && (sourceport == c.m_portname) )
+					continue;
+
 				if(port->m_direction == Greenpak4NetlistPort::DIR_OUTPUT)
 					continue;
 
