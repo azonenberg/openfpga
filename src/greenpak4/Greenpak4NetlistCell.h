@@ -15,63 +15,77 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
+ 
+#ifndef Greenpak4NetlistCell_h
+#define Greenpak4NetlistCell_h
 
-#ifndef Greenpak4NetlistNode_h
-#define Greenpak4NetlistNode_h
+class Greenpak4NetlistModule;
 
-class Greenpak4NetlistCell;
-class Greenpak4NetlistPort;
-
-///A single scalar wire in the netlist
-class Greenpak4NetlistNodePoint
+//only for RTTI support and naming
+class Greenpak4NetlistEntity
 {
 public:
-
-	Greenpak4NetlistNodePoint(Greenpak4NetlistCell* cell, std::string port, unsigned int nbit, bool vector)
-		: m_cell(cell)
-		, m_portname(port)
-		, m_nbit(nbit)
-		, m_vector(vector)
+	Greenpak4NetlistEntity(std::string name = "")
+	: m_name(name)
 	{}
-	
-	bool IsNull()
-	{ return (m_cell == NULL); }
 
-	Greenpak4NetlistCell* m_cell;
-	std::string m_portname;
-	unsigned int m_nbit;
-	bool m_vector;
+	virtual ~Greenpak4NetlistEntity();
+	
+	std::string m_name;
 };
 
-//A single named node in the netlist (may be a wire or part of a bus)
-class Greenpak4NetlistNode
+//A single primitive cell in the netlist
+//TODO: move to separate header
+class Greenpak4NetlistCell : public Greenpak4NetlistEntity
 {
 public:
-
-	Greenpak4NetlistNode();
-
-	std::string m_name;
+	Greenpak4NetlistCell(Greenpak4NetlistModule* module)
+	: m_parent(module)
+	{ m_parnode = NULL; }
+	virtual ~Greenpak4NetlistCell();
 	
-	//Attributes
+	bool HasParameter(std::string att)
+	{ return m_parameters.find(att) != m_parameters.end(); }
+	
+	//Indicates whether the cell is an I/O buffer
+	bool IsIOB()
+	{ return (m_type == "GP_IBUF") || (m_type == "GP_IOBUF") || (m_type == "GP_OBUF") || (m_type == "GP_OBUFT"); }
+	
+	//Called by Greenpak4PAREngine::InitialPlacement_core
+	void FindLOC();
+	
+	std::string GetLOC()
+	{ return m_loc; }
+	
+	bool HasLOC()
+	{ return (m_loc != ""); }
+	
+	//Clear the LOC constraint if it's determined to be bogus (TODO: better handling of this situation)
+	void ClearLOC()
+	{ m_loc = ""; }
+	
+	///Module name
+	std::string m_type;
+	
+	std::map<std::string, std::string> m_parameters;
 	std::map<std::string, std::string> m_attributes;
 	
-	bool HasAttribute(std::string name)
-	{ return (m_attributes.find(name) != m_attributes.end() ); }
+	typedef std::vector<Greenpak4NetlistNode*> cellnet;
 	
-	std::string GetAttribute(std::string name)
-	{ return m_attributes[name]; }
-
-	//Source file locations
-	std::vector<std::string> m_src_locations;
+	/**
+		@brief Map of connections to the cell
+		
+		connections[portname] = {bit2, bit1, bit0}
+	 */
+	std::map<std::string, cellnet > m_connections;
 	
-	//Net source (only valid after indexing)
-	Greenpak4NetlistNodePoint m_driver;
+	PARGraphNode* m_parnode;
 	
-	//List of internal points we link to (only valid after indexing)
-	std::vector<Greenpak4NetlistNodePoint> m_nodeports;
+	//Parent module of the cell, not the module we're an instance of
+	Greenpak4NetlistModule* m_parent;	
 	
-	//List of ports we link to (only valid after indexing)
-	std::vector<Greenpak4NetlistPort*> m_ports;
+protected:
+	std::string m_loc;
 };
 
 #endif

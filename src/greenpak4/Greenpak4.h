@@ -51,10 +51,11 @@
 #include "Greenpak4SystemReset.h"
 #include "Greenpak4VoltageReference.h"
 
-#include "Greenpak4Netlist.h"
 #include "Greenpak4NetlistNode.h"
+#include "Greenpak4NetlistCell.h"
 #include "Greenpak4NetlistModule.h"
 #include "Greenpak4NetlistPort.h"
+#include "Greenpak4Netlist.h"
 
 #include "Greenpak4Device.h"
 
