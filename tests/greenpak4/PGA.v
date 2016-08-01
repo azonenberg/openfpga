@@ -19,16 +19,17 @@
 `default_nettype none
 
 /**
-	TODO: Rename test to PGA or something?
-
 	INPUTS:
+		PGA input on pin 8
 	
 	OUTPUTS:
+		PGA output on pin 7
 		
 	TEST PROCEDURE:
-		
+		Sweep analog wavefrom from 0 to 500 mV on pin 8
+		Output should be 2x the input voltage		
  */
-module Analog(bg_ok, vin, pgaout);
+module PGA(bg_ok, vin, pgaout);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
