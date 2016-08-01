@@ -165,7 +165,7 @@ void InferExtraNodes(
 			vout->m_src_locations = net->m_src_locations;
 			
 			//and add it to the module
-			module->AddNet(net);
+			module->AddNet(vout);
 			
 			//Hook up the output
 			vref->m_connections["VOUT"].push_back(vout);

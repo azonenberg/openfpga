@@ -83,7 +83,10 @@ public:
 		
 	//Add an extra net (used by make_graphs to add inferred VREFs etc)
 	void AddNet(Greenpak4NetlistNode* net)
-	{ m_nets[net->m_name] = net; }
+	{
+		m_nets[net->m_name] = net;
+		m_nodes[m_nextNetNumber ++] = net;
+	}
 		
 protected:
 	Greenpak4Netlist* m_parent;
@@ -108,6 +111,8 @@ protected:
 	portmap m_ports;
 	netmap m_nets;
 	cellmap m_cells;
+	
+	int32_t m_nextNetNumber;
 };
 
 #endif

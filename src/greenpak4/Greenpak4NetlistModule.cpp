@@ -31,6 +31,7 @@ using namespace std;
 Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::string name, json_object* object)
 	: m_parent(parent)
 	, m_name(name)
+	, m_nextNetNumber(0)
 {
 	CreatePowerNets();
 	
@@ -196,7 +197,16 @@ Greenpak4NetlistNode* Greenpak4NetlistModule::GetNode(int32_t netnum)
 	//See if we already have a node with this number.
 	//If not, create it
 	if(m_nodes.find(netnum) == m_nodes.end())
+	{
 		m_nodes[netnum] = new Greenpak4NetlistNode;
+		
+		//Keep running total of max net number in use
+		if(netnum > m_nextNetNumber)
+			m_nextNetNumber = netnum + 1;
+		
+		LogDebug("***************B Adding net %p with net num %d (m_nextNetNumber = %d)\n",
+			m_nodes[netnum], netnum, m_nextNetNumber);
+	}
 		
 	return m_nodes[netnum];
 }
