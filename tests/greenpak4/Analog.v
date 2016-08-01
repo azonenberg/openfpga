@@ -20,77 +20,29 @@
 
 /**
 	INPUTS:
-		Analog "vin" on pin 6
-		Analog "ain1" on pin 8
 	
 	OUTPUTS:
-		Bandgap OK on pin 20 (should be high after reset)
-		800 mV reference on pin 19
-		PGA output on pin 7, should be 2*ain1
-		Comparator output on pin 17, true if vin > 750 mV
-		Comparator output on pin 16, true if vin > 900 mV
-		Comparator output on pin 15, true if pgaout > 600 mV
 		
 	TEST PROCEDURE:
-		Pin 6: 600 mV
-		Pin 8: 200 mV
-		Expected:
-			Pin 20: digital high
-			Pin 19: 750 mV
-			Pin 18: 800 mV
-			Pin 7: 400 mV
-			Pin 17: digital low
-			Pin 16: digital low
-			Pin 15: digital low
-			
-		Pin 6: 800 mV
-			Pin 17: digital high
-			
-		Pin 6: 950 mV
-			Pin 16: digital high
-			
-		Pin 8: 350 mV
-			Pin 15: digital high
-			Pin 7: 700 mV
+		
  */
-module Analog(bg_ok, vref_800, vref_750/*, vin, ain1, pgaout, cout1, cout2, cout3*/);
+module Analog(bg_ok, vin, pgaout);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 	
 	(* LOC = "P20" *)
 	output wire bg_ok;
-	
-	(* LOC = "P19" *)
-	(* IBUF_TYPE = "ANALOG" *)
-	output wire vref_750;
-	
-	(* LOC = "P18" *)
-	(* IBUF_TYPE = "ANALOG" *)
-	output wire vref_800;
-	
-	/*
-	(* LOC = "P6" *)
-	(* IBUF_TYPE = "ANALOG" *)
-	input wire vin;
-	
+
 	(* LOC = "P8" *)
 	(* IBUF_TYPE = "ANALOG" *)
-	input wire ain1;
-	
+	input wire vin;
+
 	(* LOC = "P7" *)
 	(* IBUF_TYPE = "ANALOG" *)
 	output wire pgaout;
 	
-	(* LOC = "P17" *)
-	output wire cout1;
 	
-	(* LOC = "P16" *)
-	output wire cout2;
-	
-	(* LOC = "P15" *)
-	output wire cout3;
-	*/
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
 
@@ -101,19 +53,6 @@ module Analog(bg_ok, vref_800, vref_750/*, vin, ain1, pgaout, cout1, cout2, cout
 	) por (
 		.RST_DONE(por_done)
 	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Oscillators
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Analog buffer on the input voltage to reduce loading since we feed it to a couple of comparators
-	/*
-	wire vin_buf;
-	GP_ABUF abuf(
-		.IN(vin),
-		.OUT(vin_buf)
-	);
-	*/
 		
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// 1.0V bandgap voltage reference (used by a lot of the mixed signal IP)
@@ -127,82 +66,18 @@ module Analog(bg_ok, vref_800, vref_750/*, vin, ain1, pgaout, cout1, cout2, cout
 	);
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Voltage reference driving an external pin
-	
-	GP_VREF #(
-		.VIN_DIV(4'd1),
-		.VREF(16'd800)
-	) vr800 (
-		.VIN(1'b0),
-		.VOUT(vref_800)
-	);
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Voltage reference driving a comparator and external pin
-	
-	GP_VREF #(
-		.VIN_DIV(4'd1),
-		.VREF(16'd750)
-	) vr750 (
-		.VIN(1'b0),
-		.VOUT(vref_750)
-	);
-	/*
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Comparator checking vin against the reference
-	
-	GP_ACMP #(
-		.BANDWIDTH("LOW"),
-		.VIN_ATTEN(4'd1),
-		.VIN_ISRC_EN(1'b0),
-		.HYSTERESIS(8'd25)
-	) cmp1 (
-		.PWREN(por_done),
-		.OUT(cout1),
-		.VIN(vin_buf),
-		.VREF(vref_750)
-	);
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Voltage reference driving an internal comparator only
-	
-	wire vref_900;
-	GP_VREF #(
-		.VIN_DIV(4'd1),
-		.VREF(16'd900)
-	) vr900 (
-		.VIN(1'b0),
-		.VOUT(vref_900)
-	);
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Comparator checking vin against the second reference
-	
-	GP_ACMP #(
-		.BANDWIDTH("LOW"),
-		.VIN_ATTEN(4'd1),
-		.VIN_ISRC_EN(1'b0),
-		.HYSTERESIS(8'd25)
-	) cmp2 (
-		.PWREN(por_done),
-		.OUT(cout2),
-		.VIN(vin_buf),
-		.VREF(vref_900)
-	);
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Programmable-gain analog amplifier
 	
 	GP_PGA #(
 		.GAIN(2),
 		.INPUT_MODE("SINGLE")
 	) pga (
-		.VIN_P(ain1),
+		.VIN_P(vin),
 		.VIN_N(),
 		.VIN_SEL(1'b1),
 		.VOUT(pgaout)
 	);
-	
+	/*
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Voltage reference driving the PGA comparator
 	
