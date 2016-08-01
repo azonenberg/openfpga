@@ -103,6 +103,7 @@ void PARGraphNode::RemoveEdge(string srcport, PARGraphNode* sink, string dstport
 			continue;
 			
 		//Match, remove it
+		delete edge;
 		m_edges.erase(m_edges.begin() + i);
 	}
 }
