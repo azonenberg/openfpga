@@ -282,7 +282,7 @@ void InferExtraNodes(
 		LogNotice("    Re-indexing graph because we inferred additional nodes..\n");
 		netlist->Reindex();
 		ngraph->IndexNodesByLabel();
-		madeChanges = false;
+		//madeChanges = false;
 	}
 }
 
