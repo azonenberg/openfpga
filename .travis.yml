@@ -42,11 +42,14 @@ script:
       CMAKE_FLAGS="-DBUILD_DOC=FALSE -DCMAKE_CXX_COMPILER=clang++-3.8 -DSANITIZE=address";
     fi'
   - 'if [ "${MODE}" == "analysis" ]; then
-      BUILD_PREFIX="scan-build-3.8 --status-bugs" CMAKE_FLAGS="-DBUILD_DOC=FALSE";
+      BUILD_PREFIX="scan-build-3.8 --status-bugs --keep-empty" CMAKE_FLAGS="-DBUILD_DOC=FALSE";
     fi'
   - 'mkdir build'
   - 'cd build'
   - '${BUILD_PREFIX} cmake .. -DYOSYS_COMMAND=$HOME/yosys/yosys ${CMAKE_FLAGS}'
+  - 'if [ "${MODE}" == "analysis" ]; then
+      rm -rf /tmp/scan-build-*;
+    fi'
   - '${BUILD_PREFIX} make all'
   - 'if [ "${MODE}" == "analysis" ]; then
       cd .. && cppcheck -q --enable=warning --error-exitcode=1 src;
