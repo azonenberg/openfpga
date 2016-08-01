@@ -34,6 +34,7 @@ Greenpak4PGA::Greenpak4PGA(
 		, m_vinsel(device->GetPower())
 		, m_gain(100)
 		, m_inputMode(MODE_SINGLE)
+		, m_hasNonADCLoads(false)
 {
 }
 
@@ -133,6 +134,22 @@ void Greenpak4PGA::CommitChanges()
 			exit(-1);
 		}
 	}
+	
+	//See if we have any loads other than the ADC
+	m_hasNonADCLoads = false;
+	if(ncell && (ncell->m_connections.find("VOUT") != ncell->m_connections.end()) )
+	{
+		auto node = ncell->m_connections["VOUT"][0];
+		
+		for(auto point : node->m_nodeports)
+		{
+			if(point.m_cell != ncell)
+				m_hasNonADCLoads = true;
+		}
+		
+		if(!node->m_ports.empty())
+			m_hasNonADCLoads = true;
+	}	
 }
 
 bool Greenpak4PGA::Load(bool* /*bitstream*/)
@@ -290,30 +307,15 @@ bool Greenpak4PGA::Save(bool* bitstream)
 	}
 	
 	//Set the power-on signal if we have any loads other than the ADC
-	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
-	if(ncell && (ncell->m_connections.find("VOUT") != ncell->m_connections.end()) )
-	{
-		bool has_nonadc_loads = false;
-		auto node = ncell->m_connections["VOUT"][0];
+	
+	//Force the PGA on
+	bitstream[m_configBase + 6] = m_hasNonADCLoads;
 		
-		for(auto point : node->m_nodeports)
-		{
-			if(point.m_cell != ncell)
-				has_nonadc_loads = true;
-		}
+	//Force the ADC on
+	bitstream[m_configBase + 70] = m_hasNonADCLoads;
 		
-		if(!node->m_ports.empty())
-			has_nonadc_loads = true;
-		
-		//Force the PGA on
-		bitstream[m_configBase + 6] = has_nonadc_loads;
-		
-		//Force the ADC on
-		bitstream[m_configBase + 70] = has_nonadc_loads;
-		
-		//Enable the PGA output to non-ADC loads
-		bitstream[m_configBase + 71] = has_nonadc_loads;
-	}
+	//Enable the PGA output to non-ADC loads
+	bitstream[m_configBase + 71] = m_hasNonADCLoads;
 	
 	return true;
 }

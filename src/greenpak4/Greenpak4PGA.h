@@ -66,6 +66,9 @@ protected:
 		MODE_DIFF,
 		MODE_PDIFF
 	} m_inputMode;
+	
+	///indicates if we have any loads other than the ADC
+	bool m_hasNonADCLoads;
 };
 
 #endif	//Greenpak4PGA_h
