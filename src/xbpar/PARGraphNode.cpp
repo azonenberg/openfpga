@@ -18,6 +18,8 @@
  
 #include "xbpar.h"
 
+using namespace std;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
@@ -81,4 +83,26 @@ bool PARGraphNode::MatchesLabel(uint32_t target)
 			return true;
 	}
 	return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Topology modification
+
+/**
+	@brief Remove the given edge, if found
+ */
+void PARGraphNode::RemoveEdge(string srcport, PARGraphNode* sink, string dstport)
+{
+	for(ssize_t i=m_edges.size()-1; i>=0; i--)
+	{
+		//skip if not a match
+		auto edge = m_edges[i];
+		if( (edge->m_sourceport != srcport) || (edge->m_destport != dstport) )
+			continue;
+		if(edge->m_destnode != sink)
+			continue;
+			
+		//Match, remove it
+		m_edges.erase(m_edges.begin() + i);
+	}
 }

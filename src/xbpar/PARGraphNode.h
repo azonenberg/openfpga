@@ -75,6 +75,8 @@ public:
 
 	void AddEdge(std::string srcport, PARGraphNode* sink, std::string dstport = "")
 	{ m_edges.push_back(new PARGraphEdge(this, srcport, sink, dstport)); }
+	
+	void RemoveEdge(std::string srcport, PARGraphNode* sink, std::string dstport);
 
 	void* GetData()
 	{ return m_pData; }
