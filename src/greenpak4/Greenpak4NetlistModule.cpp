@@ -203,9 +203,6 @@ Greenpak4NetlistNode* Greenpak4NetlistModule::GetNode(int32_t netnum)
 		//Keep running total of max net number in use
 		if(netnum > m_nextNetNumber)
 			m_nextNetNumber = netnum + 1;
-		
-		LogDebug("***************B Adding net %p with net num %d (m_nextNetNumber = %d)\n",
-			m_nodes[netnum], netnum, m_nextNetNumber);
 	}
 		
 	return m_nodes[netnum];
