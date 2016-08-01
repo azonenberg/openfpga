@@ -373,12 +373,12 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_abuf = new Greenpak4Abuf(this);
 	
 	//Comparator input routing
-	auto pin3 = m_iobs[3]->GetOutput("");
-	auto pin4 = m_iobs[4]->GetOutput("");
-	auto pin6 = m_iobs[6]->GetOutput("");
-	auto pin12 = m_iobs[12]->GetOutput("");
-	auto pin13 = m_iobs[13]->GetOutput("");
-	auto pin15 = m_iobs[15]->GetOutput("");
+	auto pin3 = m_iobs[3]->GetOutput("OUT");
+	auto pin4 = m_iobs[4]->GetOutput("OUT");
+	auto pin6 = m_iobs[6]->GetOutput("OUT");
+	auto pin12 = m_iobs[12]->GetOutput("OUT");
+	auto pin13 = m_iobs[13]->GetOutput("OUT");
+	auto pin15 = m_iobs[15]->GetOutput("OUT");
 	auto vdd = m_constantOne->GetOutput("OUT");
 	auto pga = m_pga->GetOutput("VOUT");
 	auto pin6_buf = m_abuf->GetOutput("OUT");
