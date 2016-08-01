@@ -27,9 +27,9 @@
 		Bandgap OK on pin 20 (should be high after reset)
 		800 mV reference on pin 19
 		PGA output on pin 7, should be 2*ain1
-		Comparator output on pin 18, true if vin > 750 mV
-		Comparator output on pin 17, true if vin > 900 mV
-		Comparator output on pin 16, true if pgaout > 600 mV
+		Comparator output on pin 17, true if vin > 750 mV
+		Comparator output on pin 16, true if vin > 900 mV
+		Comparator output on pin 15, true if pgaout > 600 mV
 		
 	TEST PROCEDURE:
 		Pin 6: 600 mV
@@ -37,22 +37,23 @@
 		Expected:
 			Pin 20: digital high
 			Pin 19: 750 mV
+			Pin 18: 800 mV
 			Pin 7: 400 mV
-			Pin 18: digital low
 			Pin 17: digital low
 			Pin 16: digital low
+			Pin 15: digital low
 			
 		Pin 6: 800 mV
-			Pin 18: digital high
-			
-		Pin 6: 950 mV
 			Pin 17: digital high
 			
-		Pin 8: 350 mV
+		Pin 6: 950 mV
 			Pin 16: digital high
+			
+		Pin 8: 350 mV
+			Pin 15: digital high
 			Pin 7: 700 mV
  */
-module Analog(bg_ok, vref_800/*, vin, ain1, pgaout, cout1, cout2, cout3*/);
+module Analog(bg_ok, vref_800, vref_750/*, vin, ain1, pgaout, cout1, cout2, cout3*/);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -62,7 +63,12 @@ module Analog(bg_ok, vref_800/*, vin, ain1, pgaout, cout1, cout2, cout3*/);
 	
 	(* LOC = "P19" *)
 	(* IBUF_TYPE = "ANALOG" *)
+	output wire vref_750;
+	
+	(* LOC = "P18" *)
+	(* IBUF_TYPE = "ANALOG" *)
 	output wire vref_800;
+	
 	/*
 	(* LOC = "P6" *)
 	(* IBUF_TYPE = "ANALOG" *)
@@ -76,13 +82,13 @@ module Analog(bg_ok, vref_800/*, vin, ain1, pgaout, cout1, cout2, cout3*/);
 	(* IBUF_TYPE = "ANALOG" *)
 	output wire pgaout;
 	
-	(* LOC = "P18" *)
+	(* LOC = "P17" *)
 	output wire cout1;
 	
-	(* LOC = "P17" *)
+	(* LOC = "P16" *)
 	output wire cout2;
 	
-	(* LOC = "P16" *)
+	(* LOC = "P15" *)
 	output wire cout3;
 	*/
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,11 +137,9 @@ module Analog(bg_ok, vref_800/*, vin, ain1, pgaout, cout1, cout2, cout3*/);
 		.VOUT(vref_800)
 	);
 	
-	/*
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Voltage reference driving a comparator
+	// Voltage reference driving a comparator and external pin
 	
-	wire vref_750;
 	GP_VREF #(
 		.VIN_DIV(4'd1),
 		.VREF(16'd750)
@@ -143,7 +147,7 @@ module Analog(bg_ok, vref_800/*, vin, ain1, pgaout, cout1, cout2, cout3*/);
 		.VIN(1'b0),
 		.VOUT(vref_750)
 	);
-	
+	/*
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Comparator checking vin against the reference
 	

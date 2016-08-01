@@ -102,7 +102,9 @@ void InferExtraNodes(
 	auto top = netlist->GetTopModule();
 	auto vdd = top->GetNet("GP_VDD");
 	auto vddn = device->GetPowerRail(true)->GetPARNode();
-		
+
+	//TODO: If one GP_VREF drives multiple GP_ACMP blocks, split it
+
 	//Look for IOBs driven by GP_VREF cells
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
@@ -176,7 +178,10 @@ void InferExtraNodes(
 			acmps.push_back(acmp);
 		}
 		
-		//TODO: Location constraints on the acmp
+		//Error out if we have multiple ACMPs (we should have split by this point)
+		//At this point, routing *should* force us to pick the correct placement for the ACMP
+		if(acmps.size() > 1)
+			LogFatal("Multiple ACMPs driven by one GP_VREF (should have been split by InferExtraNodes pass)\n");
 	}
 	
 	//Re-index the graph if we chagned it
@@ -720,6 +725,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			device->GetAcmp(5)->GetPARNode()
 		};
 		
+		/*
 		//Any vref can drive any comparator, we hide the complexity of the actual routing structure
 		//TODO: add a 6th vref for the DACs?
 		for(auto acmp : acmps)
@@ -727,6 +733,12 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			for(auto vref : vrefs)
 				vref->AddEdge("VOUT", acmp, "VREF");
 		}
+		*/
+		
+		//Only allow one VREF to drive its attached comparator.
+		//TODO: Add a 6th vref for DAC reference
+		for(unsigned int i=0; i<6; i++)
+			vrefs[i]->AddEdge("VOUT", acmps[i], "VREF");
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO COMPARATORS
