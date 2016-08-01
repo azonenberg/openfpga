@@ -172,7 +172,8 @@ void InferExtraNodes(
 			load->m_connections["VREF"].clear();
 			load->m_connections["VREF"].push_back(vout);
 			
-			//TODO: remove stale edges in the PAR graph	
+			//Remove stale edge in the PAR graph	
+			cell->m_parnode->RemoveEdge("VOUT", load->m_parnode, "VREF");
 			
 			//Create the PAR node for it
 			PARGraphNode* nnode = new PARGraphNode(ilmap[vref->m_type], vref);

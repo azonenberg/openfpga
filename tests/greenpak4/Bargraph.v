@@ -33,7 +33,7 @@
 		Comparator output on pin 15, true if vin > 800 mV
 		Comparator output on pin 16, true if vin > 1000 mV
 		
-		Comparator output on pin 17, true if vin > 1000 mV
+		Comparator output on pin 17, true if vin2 > 1000 mV
 		
 	TEST PROCEDURE:
 		
@@ -54,9 +54,9 @@
 		Sweep pin 6 up to 1100 mV and back.
 		Pins 12-16 should light up in a bargraph display with 200 mV per step.
 		
-		Pin 17 should always have the same state as pin 16.
+		Pin 17 should be high iff pin 4 is > 1000 mV
  */
-module Bargraph(bg_ok, vref_800, vref_600, vin, cout1, cout2, cout3, cout4, cout5, cout6);
+module Bargraph(bg_ok, vref_800, vref_600, vin, vin2, cout1, cout2, cout3, cout4, cout5, cout6);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -75,6 +75,10 @@ module Bargraph(bg_ok, vref_800, vref_600, vin, cout1, cout2, cout3, cout4, cout
 	(* LOC = "P6" *)
 	(* IBUF_TYPE = "ANALOG" *)
 	input wire vin;
+	
+	(* LOC = "P4" *)
+	(* IBUF_TYPE = "ANALOG" *)
+	input wire vin2;
 	
 	(* LOC = "P12" *)
 	output wire cout1;
@@ -155,8 +159,10 @@ module Bargraph(bg_ok, vref_800, vref_600, vin, cout1, cout2, cout3, cout4, cout
 		
 	GP_ACMP #(.BANDWIDTH("LOW"), .VIN_ATTEN(4'd1), .VIN_ISRC_EN(1'b0), .HYSTERESIS(8'd25) )
 		cmp_1000a (.PWREN(por_done), .OUT(cout5), .VIN(vin_buf), .VREF(vref_1000) );
-		
+	
+	//Last comparator has to have different input
+	//as acmp0 input is not routable elsewhere
 	GP_ACMP #(.BANDWIDTH("LOW"), .VIN_ATTEN(4'd1), .VIN_ISRC_EN(1'b0), .HYSTERESIS(8'd25) )
-		cmp_1000b (.PWREN(por_done), .OUT(cout6), .VIN(vin_buf), .VREF(vref_1000) );
+		cmp_1000b (.PWREN(por_done), .OUT(cout6), .VIN(vin2), .VREF(vref_1000) );
 	
 endmodule
