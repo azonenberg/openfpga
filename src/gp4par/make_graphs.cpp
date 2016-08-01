@@ -183,9 +183,6 @@ void InferExtraNodes(
 			//Copy the netlist edges to the PAR graph
 			//TODO: automate this somehow? Seems error-prone to do it twice
 			nnode->AddEdge("VOUT", load->m_parnode, "VREF");
-			
-			//Done
-			madeChanges = true;
 		}
 	}
 	
