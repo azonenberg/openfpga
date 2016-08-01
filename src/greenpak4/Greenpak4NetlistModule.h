@@ -43,6 +43,7 @@ public:
 class Greenpak4NetlistModule;
 
 //A single primitive cell in the netlist
+//TODO: move to separate header
 class Greenpak4NetlistCell : public Greenpak4NetlistEntity
 {
 public:
@@ -94,6 +95,8 @@ public:
 protected:
 	std::string m_loc;
 };
+
+#include "Greenpak4NetlistNode.h"
 
 /**
 	@brief A single module in a Greenpak4Netlist
@@ -148,6 +151,10 @@ public:
 	//Add an extra cell (used by make_graphs to add inferred ACMPs etc)
 	void AddCell(Greenpak4NetlistCell* cell)
 	{ m_cells[cell->m_name] = cell; }
+		
+	//Add an extra net (used by make_graphs to add inferred VREFs etc)
+	void AddNet(Greenpak4NetlistNode* net)
+	{ m_nets[net->m_name] = net; }
 		
 protected:
 	Greenpak4Netlist* m_parent;
