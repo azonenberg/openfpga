@@ -315,7 +315,7 @@ vector<uint8_t> ReadBitstream(string fname)
 	fgets(signature, sizeof(signature), fp);
 	if(strcmp(signature, "index\t\tvalue\t\tcomment\n"))
 	{
-		LogError("%s is not a GreenPAK bitstream", fname.c_str());
+		LogError("%s is not a GreenPAK bitstream\n", fname.c_str());
 		fclose(fp);
 		return {};
 	}
