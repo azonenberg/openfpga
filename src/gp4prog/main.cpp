@@ -234,15 +234,20 @@ int main(int argc, char* argv[])
 	if(!nets.empty())
 	{
 		//Set the I/O configuration on the test points
-		//Expects a bitstream that does assign TP4=TP3;
 		LogNotice("Setting I/O configuration\n");
+
 		IOConfig config;
 		for(int net : nets)
 		{
-			// Note: for unknown reasons, the net has to be driven (e.g. weakly) for the LED to become active.
-			// For unknown reasons, the vendor tool does not seem to suffer from this issue, and it
-			// lets the LED light up even with all pins as TP_FLOAT.
-			config.driverConfigs[net] = TP_PULLDOWN;
+			// Some sort of reset. Required for the LED to become enabled after flashing in some cases;
+			// does not seem to affect anything else.
+			config.driverConfigs[net] = TP_1;
+		}
+		SetIOConfig(hdev, config);
+
+		for(int net : nets)
+		{
+			config.driverConfigs[net] = TP_FLOAT;
 			config.ledEnabled[net] = true;
 			config.expansionEnabled[net] = true;
 		}
