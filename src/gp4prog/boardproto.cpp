@@ -344,7 +344,7 @@ void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status)
 	frame.Send(hdev);
 }
 
-void LoadBitstream(hdevice hdev, std::vector<uint8_t> bitstream)
+void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream)
 {
 	DataFrame frame(DataFrame::WRITE_BITSTREAM_SRAM);
 	frame.push_back(0x80);
@@ -357,10 +357,12 @@ void LoadBitstream(hdevice hdev, std::vector<uint8_t> bitstream)
 
 	frame.m_sequenceB = (bitstream.size() + 3) / 60;
 
-	for(size_t i = 0; i < bitstream.size(); i++) {
+	for(size_t i = 0; i < bitstream.size(); i++) 
+	{
 		frame.push_back(bitstream[i]);
 
-		if(frame.IsFull()) {
+		if(frame.IsFull()) 
+		{
 			frame.Roundtrip(hdev, DataFrame::WRITE_BITSTREAM_SRAM_ACK1);
 			frame = frame.Next();
 		}
@@ -368,4 +370,39 @@ void LoadBitstream(hdevice hdev, std::vector<uint8_t> bitstream)
 
 	if(!frame.IsEmpty())
 		frame.Roundtrip(hdev, DataFrame::WRITE_BITSTREAM_SRAM_ACK2);
+}
+
+std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets)
+{
+	DataFrame reqFrame(DataFrame::READ_BITSTREAM_START);
+	reqFrame.push_back(0xc0);
+	reqFrame.push_back(0x07);
+	reqFrame.push_back(0xd0);
+
+	uint16_t cycles = octets * 8 + 34;
+	reqFrame.push_back(cycles >> 8);
+	reqFrame.push_back(cycles & 0xff);
+
+	std::vector<uint8_t> bitstream;
+	while(true) {
+		reqFrame.Send(hdev);
+
+		DataFrame repFrame;
+		repFrame.Receive(hdev);
+		if(!(repFrame.m_sequenceA == reqFrame.m_sequenceA &&
+		     repFrame.m_type == DataFrame::READ_BITSTREAM_ACK))
+			LogFatal("Unexpected reply\n");
+
+		bitstream.insert(bitstream.end(), repFrame.m_payload.begin(), repFrame.m_payload.end());
+		if(repFrame.m_sequenceB == 0) {
+			break;
+		}
+
+		reqFrame.m_type = DataFrame::READ_BITSTREAM_CONT;
+	}
+
+	if(bitstream.size() != octets)
+		LogFatal("Unexpected size of uploaded bitstream\n");
+
+	return bitstream;
 }

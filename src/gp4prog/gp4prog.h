@@ -56,6 +56,7 @@ void ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size);
 //Part numbers (actual bitstream coding)
 enum SilegoPart
 {
+	SLG46140V = 0x14,
 	SLG46620V = 0x62,
 };
 
@@ -77,6 +78,7 @@ enum TPConfig
 	TP_OD_NMOS			= 0x0800,	//Open drain NMOS driver
 
 	//Final combinations observed in Silego code
+	TP_RESET			= TP_1,						//Programmer pin reset
 	TP_NC				= TP_FLOAT,					//Pad not used
 	TP_VDD				= TP_STRONG | TP_1,			//Strong 1
 	TP_GND				= TP_STRONG | TP_0,			//Strong 0
@@ -154,6 +156,7 @@ public:
 		WRITE_BITSTREAM_SRAM_ACK1   = 0x07,
 		CONFIG_SIGGEN				= 0x08,
 		ENABLE_SIGGEN				= 0x09,
+		READ_BITSTREAM_ACK          = 0x13,
 		WRITE_BITSTREAM_SRAM_ACK2   = 0x1a,
 		SET_STATUS_LED				= 0x21,
 		SET_PART                	= 0x25,
@@ -210,6 +213,7 @@ void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage);
 void ResetAllSiggens(hdevice hdev);
 void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status);
 
-void LoadBitstream(hdevice hdev, std::vector<uint8_t> bitstream);
+std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets);
+void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream);
 
 #endif

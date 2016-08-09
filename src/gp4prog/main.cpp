@@ -24,7 +24,19 @@ using namespace std;
 void ShowUsage();
 void ShowVersion();
 
+const char *PartName(SilegoPart part);
+size_t BitstreamLength(SilegoPart part);
+
+enum class BitstreamKind {
+	UNRECOGNIZED,
+	EMPTY,
+	PROGRAMMED,
+	PROTECTED // implies PROGRAMMED
+};
+BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream);
+
 vector<uint8_t> ReadBitstream(string fname);
+void WriteBitstream(string fname, vector<uint8_t> bitstream);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Entry point
@@ -34,7 +46,7 @@ int main(int argc, char* argv[])
 	LogSink::Severity console_verbosity = LogSink::NOTICE;
 
 	bool reset = false;
-	string fname;
+	string emulateFilename, readFilename;
 	double voltage = 0.0;
 	vector<int> nets;
 
@@ -68,15 +80,27 @@ int main(int argc, char* argv[])
 		{
 			reset = true;
 		}
+		else if(s == "-R" || s == "--read")
+		{
+			if(i+1 < argc)
+			{
+				readFilename = argv[++i];
+			}
+			else
+			{
+				printf("--read requires an argument\n");
+				return 1;
+			}
+		}
 		else if(s == "-e" || s == "--emulate")
 		{
 			if(i+1 < argc)
 			{
-				fname = argv[++i];
+				emulateFilename = argv[++i];
 			}
 			else
 			{
-				printf("--nets requires an argument\n");
+				printf("--emulate requires an argument\n");
 				return 1;
 			}
 		}
@@ -131,9 +155,9 @@ int main(int argc, char* argv[])
 		}
 
 		//assume it's the bitstream file if it's the first non-switch argument
-		else if( (s[0] != '-') && (fname == "") )
+		else if( (s[0] != '-') && (emulateFilename == "") )
 		{
-			fname = s;
+			emulateFilename = s;
 		}
 
 		else
@@ -187,7 +211,7 @@ int main(int argc, char* argv[])
 	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
 
 	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
-	if(fname.empty() && voltage == 0.0 && nets.empty() && !reset)
+	if(emulateFilename.empty() && readFilename.empty() && voltage == 0.0 && nets.empty() && !reset)
 	{
 		LogNotice("No actions requested, exiting\n");
 		return 0;
@@ -196,12 +220,60 @@ int main(int argc, char* argv[])
 	//Light up the status LED
 	SetStatusLED(hdev, 1);
 
-	//Select part (no other parts supported yet).
-	//TODO: see if we can enumerate what's plugged in / check the bitstream supplied
-	LogNotice("Selecting part SLG46620V\n");
-	SetPart(hdev, SLG46620V);
+	//Detect the part that's plugged in.
+	LogNotice("Detecting part\n");
+	SilegoPart parts[] = { SLG46140V, SLG46620V };
+	SilegoPart detectedPart;
+	vector<uint8_t> programmedBitstream;
+	BitstreamKind bitstreamKind;
+	for(SilegoPart part : parts) {
+		LogVerbose("Selecting part %s\n", PartName(part));
+		SetPart(hdev, part);
 
-	//If we're resetting, do just that
+		//Read extant bitstream and determine part status.
+		LogVerbose("Reading bitstream from part\n");
+		programmedBitstream = UploadBitstream(hdev, BitstreamLength(part) / 8);
+		
+		bitstreamKind = ClassifyBitstream(part, programmedBitstream);
+		switch(bitstreamKind)
+		{
+			case BitstreamKind::EMPTY:
+				LogNotice("Detected empty %s\n", PartName(part));
+				break;
+
+			case BitstreamKind::PROGRAMMED:
+				LogNotice("Detected pre-programmed %s\n", PartName(part));
+				break;
+
+
+			case BitstreamKind::PROTECTED:
+				LogNotice("Detected pre-programmed and read-protected %s\n", PartName(part));
+				break;
+
+			case BitstreamKind::UNRECOGNIZED:
+				LogVerbose("Unrecognized bitstream\n");
+				continue;
+		}
+
+		if(bitstreamKind != BitstreamKind::UNRECOGNIZED) {
+			detectedPart = part;
+			break;
+		}
+	}
+
+	if(bitstreamKind == BitstreamKind::UNRECOGNIZED)
+	{
+		LogError("Could not detect a supported part\n");
+		return 1;
+	}
+
+	//We already have the programmed bitstream, so simply write it to a file
+	if(!readFilename.empty())
+	{
+		WriteBitstream(readFilename, programmedBitstream);
+	}
+
+	//If we're resetting, do that
 	if(reset)
 	{
 		LogNotice("Resetting board I/O and signal generators\n");
@@ -211,16 +283,19 @@ int main(int argc, char* argv[])
 	}
 
 	//If we're programming, do that first
-	if(!fname.empty())
+	if(!emulateFilename.empty())
 	{
-		vector<uint8_t> bitstream;
-		bitstream = ReadBitstream(fname);
-		if(bitstream.empty())
+		vector<uint8_t> newBitstream = ReadBitstream(emulateFilename);
+		if(newBitstream.empty())
 			return 1;
+		if(newBitstream.size() != BitstreamLength(detectedPart) / 8) {
+			LogError("Provided bitstream has incorrect length for selected part\n");
+			return 1;
+		}
 
 		//Load bitstream
 		LogNotice("Loading bitstream into SRAM\n");
-		LoadBitstream(hdev, bitstream);
+		DownloadBitstream(hdev, newBitstream);
 	}
 
 	if(voltage != 0.0)
@@ -238,11 +313,7 @@ int main(int argc, char* argv[])
 
 		IOConfig config;
 		for(int net : nets)
-		{
-			// Some sort of reset. Required for the LED to become enabled after flashing in some cases;
-			// does not seem to affect anything else.
-			config.driverConfigs[net] = TP_1;
-		}
+			config.driverConfigs[net] = TP_RESET;
 		SetIOConfig(hdev, config);
 
 		for(int net : nets)
@@ -282,12 +353,14 @@ void ShowUsage()
 		"          * disables every LED;\n"
 		"          * disables every expansion connector passthrough;\n"
 		"          * disables Vdd supply.\n"
-		"    -e, --emulate        <bitstream>\n"
+		"    -R, --read           <bitstream filename>\n"
+		"        Uploads the bitstream stored in non-volatile memory.\n"
+		"    -e, --emulate        <bitstream filename>\n"
 		"        Downloads the specified bitstream into volatile memory.\n"
 		"        Implies --reset --voltage 3.3.\n"
 		"    -v, --voltage        <voltage>\n"
 		"        Adjusts Vdd to the specified value in volts (0V to 5.5V), ±70mV.\n"
-		"    -n, --nets           <nets>\n"
+		"    -n, --nets           <net list>\n"
 		"        For every test point in the specified comma-separated list:\n"
 		"          * enables a non-inverted LED, if any;\n"
 		"          * enables expansion connector passthrough.\n");
@@ -304,12 +377,105 @@ void ShowVersion()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Bitstream reader
+// Part database
+
+const char *PartName(SilegoPart part)
+{
+	switch(part)
+	{
+		case SLG46620V: return "SLG46620V";
+		case SLG46140V: return "SLG46140V";
+	}
+
+	LogFatal("Unknown part\n");
+}
+
+size_t BitstreamLength(SilegoPart part)
+{
+	switch(part)
+	{
+		case SLG46620V: return 2048;
+		case SLG46140V: return 1024;
+	}
+
+	LogFatal("Unknown part\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Bitstream classification
+
+BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream)
+{
+	vector<uint8_t> emptyBitstream(BitstreamLength(part) / 8);
+	vector<uint8_t> preprogrammedMask(BitstreamLength(part) / 8);
+	pair<size_t, uint8_t> protectedMask;
+
+	switch(part) {
+		case SLG46620V: 
+			emptyBitstream[0x7f] = 0x5a;
+			emptyBitstream[0xff] = 0xa5;
+			//TODO: Some trim value? Figure out exactly what this does
+			preprogrammedMask[0xf7] = 0xff; 
+			preprogrammedMask[0xf8] = 0xff;
+			protectedMask = make_pair(0xfe, 0x80);
+			break;
+
+		case SLG46140V:
+			emptyBitstream[0x7b] = 0x5a;
+			emptyBitstream[0x7f] = 0xa5;
+			//TODO: Some trim value? Figure out exactly what this does
+			preprogrammedMask[0x77] = 0xff;
+			preprogrammedMask[0x78] = 0xff;
+			protectedMask = make_pair(0x7e, 0x80);
+			break;
+
+		default:
+			LogFatal("Unknown part\n");
+	}
+
+	if(bitstream.size() != emptyBitstream.size())
+		return BitstreamKind::UNRECOGNIZED;
+
+	//Iterate over the bitstream, and print our decisions after every octet, in --debug mode.
+	bool isPresent = true;
+	bool isProgrammed = false;
+	bool isProtected = false;
+	for(size_t i = bitstream.size() - 1; i > 0; i--) {
+		uint8_t maskedOctet = bitstream[i] & ~preprogrammedMask[i];
+		if(maskedOctet != 0x00)
+			LogDebug("mask(bitstream[0x%02zx]) = 0x%02hhx\n", i, maskedOctet);
+
+		if(emptyBitstream[i] != 0x00 && maskedOctet != emptyBitstream[i]) {
+			LogDebug("Bitstream does not match empty bitstream signature, part not present.\n");
+			isPresent = false;
+			break;
+		} else if(emptyBitstream[i] == 0x00 && maskedOctet != 0x00) {
+			LogDebug("Bitstream nonzero where empty bitstream isn't, part programmed.\n");
+			isProgrammed = true;
+		}
+
+		// TODO: verify that this works
+		if(protectedMask.first == i && protectedMask.second != 0 && 
+		   (bitstream[i] & protectedMask.second) == protectedMask.second) {
+			LogDebug("Bitstream matches protected mask, part protected.\n");
+			isProtected = true;
+		}
+	}
+
+	if(isPresent && isProgrammed)
+		return isProtected ? BitstreamKind::PROTECTED : BitstreamKind::PROGRAMMED;
+	else if(isPresent)
+		return BitstreamKind::EMPTY;
+	else
+		return BitstreamKind::UNRECOGNIZED;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Bitstream input/output
 
 vector<uint8_t> ReadBitstream(string fname)
 {
-	//Open the file
-	FILE* fp = fopen(fname.c_str(), "r");
+	FILE* fp = fopen(fname.c_str(), "rt");
 	if(!fp)
 	{
 		LogError("Couldn't open %s for reading\n", fname.c_str());
@@ -318,7 +484,9 @@ vector<uint8_t> ReadBitstream(string fname)
 
 	char signature[64];
 	fgets(signature, sizeof(signature), fp);
-	if(strcmp(signature, "index\t\tvalue\t\tcomment\n"))
+	if(strcmp(signature, "index\t\tvalue\t\tcomment\n") &&
+	   //GP4 on Linux still outputs a \r
+	   strcmp(signature, "index\t\tvalue\t\tcomment\r\n"))
 	{
 		LogError("%s is not a GreenPAK bitstream\n", fname.c_str());
 		fclose(fp);
@@ -348,4 +516,22 @@ vector<uint8_t> ReadBitstream(string fname)
 	fclose(fp);
 
 	return bitstream;
+}
+
+void WriteBitstream(string fname, vector<uint8_t> bitstream)
+{
+	FILE* fp = fopen(fname.c_str(), "wt");
+	if(!fp)
+	{
+		LogError("Couldn't open %s for reading\n", fname.c_str());
+		return;
+	}
+
+	fputs("index\t\tvalue\t\tcomment\n", fp);
+	for(size_t i = 0; i < bitstream.size() * 8; i++) {
+		int value = (bitstream[i / 8] >> (i % 8)) & 1;
+		fprintf(fp, "%d\t\t%d\t\t//\n", (int)i, value);
+	}
+
+	fclose(fp);
 }
