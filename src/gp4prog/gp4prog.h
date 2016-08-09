@@ -72,24 +72,28 @@ enum TPConfig
 	//Drive strength
 	TP_STRONG			= 0x0c00,	//Strong push-pull driver
 	TP_WEAK				= 0x0e00,	//Weak push-pull  driver
+	TP_REALLY_WEAK      = 0x0000,   //Very weak push-pull driver
 	TP_OD_PU			= 0x0400,	//Open drain NMOS driver with opposing pullup
 	TP_OD_PD			= 0x0600,	//Open drain PMOS driver with opposing pulldown
 	TP_OD_PMOS			= 0x0a00,	//Open drain PMOS driver
 	TP_OD_NMOS			= 0x0800,	//Open drain NMOS driver
 
 	//Final combinations observed in Silego code
-	TP_RESET			= TP_1,						//Programmer pin reset
 	TP_NC				= TP_FLOAT,					//Pad not used
 	TP_VDD				= TP_STRONG | TP_1,			//Strong 1
 	TP_GND				= TP_STRONG | TP_0,			//Strong 0
 	TP_PULLUP			= TP_WEAK | TP_1,			//Weak 1
 	TP_PULLDOWN			= TP_WEAK | TP_0,			//Weak 0
+	TP_FLIMSY_PULLUP	= TP_REALLY_WEAK | TP_1,	//Very weak 1
+	TP_FLIMSY_PULLDOWN	= TP_REALLY_WEAK | TP_0,	//Very weak 0
 	TP_LOGIC_PP			= TP_STRONG | TP_SIGGEN,	//Strong signal generator
 	TP_LOGIC_OD_PU		= TP_OD_PU | TP_SIGGEN,		//Open drain NMOS signal generator with opposing pullup
 	TP_LOGIC_OD_PD		= TP_OD_PD | TP_SIGGEN,		//Open drain PMOS signal generator with opposing pulldown
 	TP_LOGIC_OD_PMOS	= TP_OD_PMOS | TP_SIGGEN,	//Open drain PMOS signal generator
 	TP_LOGIC_OD_NMOS	= TP_OD_NMOS | TP_SIGGEN,	//Open drain PMOS signal generator
-	TP_LOGIC_WEAK_PP	= TP_WEAK | TP_SIGGEN		//Weak signal generator
+	TP_LOGIC_WEAK_PP	= TP_WEAK | TP_SIGGEN,		//Weak signal generator
+
+	TP_RESET            = TP_FLIMSY_PULLUP,			//Used to unstuck pins after SRAM upload
 };
 
 //Helper for test point configuration
@@ -160,7 +164,9 @@ public:
 		WRITE_BITSTREAM_SRAM_ACK2   = 0x1a,
 		SET_STATUS_LED				= 0x21,
 		SET_PART                	= 0x25,
+		CONFIG_ADC_MUX              = 0x33,
 		GET_OSC_FREQ				= 0x42,
+		READ_ADC                    = 0x47,
 		TRIM_OSC					= 0x49
 	};
 
@@ -215,5 +221,8 @@ void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status);
 
 std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets);
 void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream);
+
+void SelectADCChannel(hdevice hdev, unsigned int chan);
+double ReadADC(hdevice hdev);
 
 #endif

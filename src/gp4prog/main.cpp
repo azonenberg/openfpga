@@ -16,7 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#include <string.h>
+#include <cstring>
+#include <cmath>
 #include "gp4prog.h"
 
 using namespace std;
@@ -26,6 +27,7 @@ void ShowVersion();
 
 const char *PartName(SilegoPart part);
 size_t BitstreamLength(SilegoPart part);
+bool SocketTest(hdevice hdev, SilegoPart part);
 
 enum class BitstreamKind {
 	UNRECOGNIZED,
@@ -35,6 +37,7 @@ enum class BitstreamKind {
 };
 BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream);
 
+vector<uint8_t> BitstreamFromHex(string hex);
 vector<uint8_t> ReadBitstream(string fname);
 void WriteBitstream(string fname, vector<uint8_t> bitstream);
 
@@ -46,6 +49,7 @@ int main(int argc, char* argv[])
 	LogSink::Severity console_verbosity = LogSink::NOTICE;
 
 	bool reset = false;
+	bool test = false;
 	string emulateFilename, readFilename;
 	double voltage = 0.0;
 	vector<int> nets;
@@ -92,6 +96,8 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 		}
+		else if(s == "-t" || s == "--test-socket")
+			test = true;
 		else if(s == "-e" || s == "--emulate")
 		{
 			if(i+1 < argc)
@@ -211,7 +217,7 @@ int main(int argc, char* argv[])
 	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
 
 	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
-	if(emulateFilename.empty() && readFilename.empty() && voltage == 0.0 && nets.empty() && !reset)
+	if(emulateFilename.empty() && readFilename.empty() && voltage == 0.0 && nets.empty() && !test && !reset)
 	{
 		LogNotice("No actions requested, exiting\n");
 		return 0;
@@ -271,6 +277,17 @@ int main(int argc, char* argv[])
 	if(!readFilename.empty())
 	{
 		WriteBitstream(readFilename, programmedBitstream);
+	}
+
+	//Do a socket test before doing anything else, to catch failures early
+	if(test)
+	{
+		if(!SocketTest(hdev, detectedPart)) {
+			LogError("Socket test has failed\n");
+			return 1;
+		} else {
+			LogNotice("Socket test has passed\n");
+		}
 	}
 
 	//If we're resetting, do that
@@ -355,6 +372,8 @@ void ShowUsage()
 		"          * disables Vdd supply.\n"
 		"    -R, --read           <bitstream filename>\n"
 		"        Uploads the bitstream stored in non-volatile memory.\n"
+		"    -t, --test-socket\n"
+		"        Verifies that every connection between socket and device is intact.\n"
 		"    -e, --emulate        <bitstream filename>\n"
 		"        Downloads the specified bitstream into volatile memory.\n"
 		"        Implies --reset --voltage 3.3.\n"
@@ -399,6 +418,83 @@ size_t BitstreamLength(SilegoPart part)
 	}
 
 	LogFatal("Unknown part\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Socket test
+
+bool SocketTest(hdevice hdev, SilegoPart part)
+{
+	vector<uint8_t> loopbackBitstream;
+
+	switch(part)
+	{
+		case SLG46620V:
+			// To reproduce:
+			// module top(
+			// 		(* LOC="P2" *) input i,
+			// 		output o1, o2, o3, o4, o5, o6, o7, o8, o9, o10, o11, o12, o13, o14, o15, o16, o17
+			// 	);
+			// 	assign {o1, o2, o3, o4, o5, o6, o7, o8, o9, o10, o11, o12, o13, o14, o15, o16, o17} = {17{i}};
+			// endmodule
+			loopbackBitstream = BitstreamFromHex(
+				"0000000000000000000000000000000000000000000000000000000000000000"
+				"00000000000000000000d88f613f86fd18f6633f000000000000000000000000"
+				"0600000000000000000000000000000000000000000000000000000000000000"
+				"0000000000000800000000000000000900000008000400080002800000000000"
+				"0000000000000000000000000000000000000000000000000000000000000000"
+				"0000000000000000000034fdd33f4dff34fdd33f0d0000000000000000000000"
+				"0000000000000000000000002004000000000000000000000000000000000000"
+				"0000000000000000000000000000000200800020000004000000000200000000");
+			break;
+
+		default: LogFatal("Unknown part\n");
+	}
+
+	LogVerbose("Downloading test bitstream\n");
+	DownloadBitstream(hdev, loopbackBitstream);
+
+	LogVerbose("Initializing test I/O\n");
+	double supplyVoltage = 5.0;
+	ConfigureSiggen(hdev, 1, supplyVoltage);
+
+	IOConfig ioConfig;
+	for(size_t i = 2; i <= 20; i++)
+		ioConfig.driverConfigs[i] = TP_RESET;
+	SetIOConfig(hdev, ioConfig);
+
+	bool ok = true;
+	tuple<TPConfig, TPConfig, double> sequence[] = {
+		make_tuple(TP_GND, TP_FLIMSY_PULLUP,   0.0),
+		make_tuple(TP_VDD, TP_FLIMSY_PULLDOWN, 1.0),
+	};
+	for(auto config : sequence) {
+		if(get<0>(config) == TP_GND)
+			LogVerbose("Testing logical low output\n");
+		else
+			LogVerbose("Testing logical high output\n");
+
+		ioConfig.driverConfigs[2] = get<0>(config);
+		for(size_t i = 3; i <= 20; i++)
+			ioConfig.driverConfigs[i] = get<1>(config);
+		SetIOConfig(hdev, ioConfig);
+
+		for(int i = 2; i <= 20; i++) {
+			if(i == 11) continue;
+
+			SelectADCChannel(hdev, i);
+			double value = ReadADC(hdev);
+			LogDebug("P%d = %.3f V\n", i, supplyVoltage * value);
+
+			if(fabs(value - get<2>(config)) > 0.01) {
+				LogError("Socket functional test (%s level) test failed on pin P%d\n",
+				         (get<0>(config) == TP_GND) ? "low" : "high", i);
+				ok = false;
+			}
+		}
+	}
+
+	return ok;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -472,6 +568,17 @@ BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bitstream input/output
+
+vector<uint8_t> BitstreamFromHex(string hex)
+{
+	std::vector<uint8_t> bitstream;
+	for(size_t i = 0; i < hex.size(); i += 2) {
+		uint8_t octet;
+		sscanf(&hex[i], "%02hhx", &octet);
+		bitstream.push_back(octet);
+	}
+	return bitstream;
+}
 
 vector<uint8_t> ReadBitstream(string fname)
 {

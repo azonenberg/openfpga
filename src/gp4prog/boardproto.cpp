@@ -406,3 +406,34 @@ std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets)
 
 	return bitstream;
 }
+
+void SelectADCChannel(hdevice hdev, unsigned int chan)
+{
+	DataFrame frame(DataFrame::CONFIG_ADC_MUX);
+	frame.push_back(0x00);
+	if(chan >= 2 && chan <= 10)
+		frame.push_back(chan - 1);
+	else if(chan >= 12 && chan <= 20)
+		frame.push_back(chan - 2);
+	else
+		LogFatal("Unexpected ADC channel\n");
+	frame.push_back(0x00);
+	frame.Send(hdev);
+}
+
+double ReadADC(hdevice hdev)
+{
+	DataFrame frame(DataFrame::READ_ADC);
+	frame.push_back(0x01); // conversion time
+	frame.Send(hdev);
+
+	frame.Receive(hdev);
+	if(!(frame.m_type == DataFrame::READ_ADC))
+		LogFatal("Unexpected reply\n");
+	uint32_t value =
+		(frame.m_payload[0] << 24) |
+		(frame.m_payload[1] << 16) |
+		(frame.m_payload[2] <<  8) |
+		(frame.m_payload[3] <<  0);
+	return (double)(((int32_t)value) >> 8) / 0x90000;
+}
