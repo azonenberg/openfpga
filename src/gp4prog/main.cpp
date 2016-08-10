@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 
 	bool reset = false;
 	bool test = false;
-	unsigned rcOscFreq;
+	unsigned rcOscFreq = 0;
 	string emulateFilename, readFilename;
 	double voltage = 0.0;
 	vector<int> nets;
