@@ -191,8 +191,11 @@ bool Greenpak4RCOscillator::Save(bool* bitstream)
 	//Auto power-down
 	bitstream[m_configBase + 7] = !m_autoPowerDown;
 	
+	//Frequency selection
+	bitstream[m_configBase + 8] = m_fastClock;
+
 	//Bypass RC oscillator (TODO: what does this do??) matrix_out1_73
-	bitstream[m_configBase + 8] = false;
+	bitstream[m_configBase + 9] = false;
 
 	//Output pre-divider
 	switch(m_preDiv)
