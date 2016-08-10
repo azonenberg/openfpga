@@ -62,7 +62,6 @@ void Greenpak4PAREngine::InitialPlacement_core()
 		}
 			
 		//Search for a LOC constraint, if there is one
-		cell->FindLOC();
 		if(!cell->HasLOC())
 			continue;
 		string loc = cell->GetLOC();
@@ -72,7 +71,6 @@ void Greenpak4PAREngine::InitialPlacement_core()
 		{
 			LogError("Cell %s has invalid LOC constraint %s (no matching site in device)\n",
 				cell->m_name.c_str(), loc.c_str());
-			cell->ClearLOC();
 			exit(-1);
 		}
 		
@@ -98,7 +96,6 @@ void Greenpak4PAREngine::InitialPlacement_core()
 			LogError(
 				"Cell %s has invalid LOC constraint %s (another instance is already constrained there)\n",
 				cell->m_name.c_str(), loc.c_str());
-			cell->ClearLOC();
 			exit(-1);
 		}
 		

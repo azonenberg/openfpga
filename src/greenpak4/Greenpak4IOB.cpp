@@ -87,10 +87,6 @@ void Greenpak4IOB::CommitChanges()
 		if(x.first == "src")
 		{}
 		
-		//already PAR'd, useless now
-		else if(x.first == "LOC")
-		{}
-		
 		//IO schmitt trigger
 		else if(x.first == "SCHMITT_TRIGGER")
 		{

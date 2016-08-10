@@ -50,19 +50,12 @@ public:
 	//Indicates whether the cell is an I/O buffer
 	bool IsIOB()
 	{ return (m_type == "GP_IBUF") || (m_type == "GP_IOBUF") || (m_type == "GP_OBUF") || (m_type == "GP_OBUFT"); }
-	
-	//Called by Greenpak4PAREngine::InitialPlacement_core
-	void FindLOC();
-	
+
 	std::string GetLOC()
-	{ return m_loc; }
+	{ return m_attributes.at("LOC"); }
 	
 	bool HasLOC()
-	{ return (m_loc != ""); }
-	
-	//Clear the LOC constraint if it's determined to be bogus (TODO: better handling of this situation)
-	void ClearLOC()
-	{ m_loc = ""; }
+	{ return (m_attributes.find("LOC") != m_attributes.end()); }
 	
 	///Module name
 	std::string m_type;
@@ -83,9 +76,6 @@ public:
 	
 	//Parent module of the cell, not the module we're an instance of
 	Greenpak4NetlistModule* m_parent;	
-	
-protected:
-	std::string m_loc;
 };
 
 #endif
