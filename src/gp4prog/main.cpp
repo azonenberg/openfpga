@@ -258,57 +258,60 @@ int main(int argc, char* argv[])
 	//Light up the status LED
 	SetStatusLED(hdev, 1);
 
-	//Detect the part that's plugged in.
-	LogNotice("Detecting part\n");
-	SilegoPart parts[] = { SLG46140V, SLG46620V };
+	//See if any of the options require knowing what part we use.
 	SilegoPart detectedPart;
 	vector<uint8_t> programmedBitstream;
 	BitstreamKind bitstreamKind;
-	for(SilegoPart part : parts) {
-		LogVerbose("Selecting part %s\n", PartName(part));
-		SetPart(hdev, part);
+	if(!(readFilename.empty() && emulateFilename.empty() && rcOscFreq == 0 && !test)) {
+		//Detect the part that's plugged in.
+		LogNotice("Detecting part\n");
+		SilegoPart parts[] = { SLG46140V, SLG46620V };
+		for(SilegoPart part : parts) {
+			LogVerbose("Selecting part %s\n", PartName(part));
+			SetPart(hdev, part);
 
-		//Read extant bitstream and determine part status.
-		LogVerbose("Reading bitstream from part\n");
-		programmedBitstream = UploadBitstream(hdev, BitstreamLength(part) / 8);
-		
-		bitstreamKind = ClassifyBitstream(part, programmedBitstream);
-		switch(bitstreamKind)
+			//Read extant bitstream and determine part status.
+			LogVerbose("Reading bitstream from part\n");
+			programmedBitstream = UploadBitstream(hdev, BitstreamLength(part) / 8);
+			
+			bitstreamKind = ClassifyBitstream(part, programmedBitstream);
+			switch(bitstreamKind)
+			{
+				case BitstreamKind::EMPTY:
+					LogNotice("Detected empty %s\n", PartName(part));
+					break;
+
+				case BitstreamKind::PROGRAMMED:
+					LogNotice("Detected pre-programmed %s\n", PartName(part));
+					break;
+
+
+				case BitstreamKind::PROTECTED:
+					LogNotice("Detected pre-programmed and read-protected %s\n", PartName(part));
+					break;
+
+				case BitstreamKind::UNRECOGNIZED:
+					LogVerbose("Unrecognized bitstream\n");
+					continue;
+			}
+
+			if(bitstreamKind != BitstreamKind::UNRECOGNIZED) {
+				detectedPart = part;
+				break;
+			}
+		}
+
+		if(bitstreamKind == BitstreamKind::UNRECOGNIZED)
 		{
-			case BitstreamKind::EMPTY:
-				LogNotice("Detected empty %s\n", PartName(part));
-				break;
-
-			case BitstreamKind::PROGRAMMED:
-				LogNotice("Detected pre-programmed %s\n", PartName(part));
-				break;
-
-
-			case BitstreamKind::PROTECTED:
-				LogNotice("Detected pre-programmed and read-protected %s\n", PartName(part));
-				break;
-
-			case BitstreamKind::UNRECOGNIZED:
-				LogVerbose("Unrecognized bitstream\n");
-				continue;
+			LogError("Could not detect a supported part\n");
+			SetStatusLED(hdev, 0);
+			return 1;
 		}
-
-		if(bitstreamKind != BitstreamKind::UNRECOGNIZED) {
-			detectedPart = part;
-			break;
-		}
-	}
-
-	if(bitstreamKind == BitstreamKind::UNRECOGNIZED)
-	{
-		LogError("Could not detect a supported part\n");
-		SetStatusLED(hdev, 0);
-		return 1;
 	}
 
 	//We already have the programmed bitstream, so simply write it to a file
-	if(!readFilename.empty())
-	{
+	if(!readFilename.empty()) {
+		LogNotice("Writing programmed bitstream to %s\n", readFilename.c_str());
 		WriteBitstream(readFilename, programmedBitstream);
 	}
 
@@ -328,9 +331,7 @@ int main(int argc, char* argv[])
 	if(reset)
 	{
 		LogNotice("Resetting board I/O and signal generators\n");
-		IOConfig config;
-		SetIOConfig(hdev, config);
-		ResetAllSiggens(hdev);
+		Reset(hdev);
 	}
 
 	//If we need to trim oscillator, do that before programming
@@ -363,7 +364,7 @@ int main(int argc, char* argv[])
 		newBitstream[247] |= rcFtw >> 1;
 
 		//Load bitstream
-		LogNotice("Loading bitstream into SRAM\n");
+		LogNotice("Downloading bitstream into SRAM\n");
 		DownloadBitstream(hdev, newBitstream);
 
 		LogDebug("Unstucking I/O pins after SRAM programming\n");
@@ -579,6 +580,8 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 		}
 	}
 
+	LogVerbose("Resetting board after socket test\n");
+	Reset(hdev);
 	return ok;
 }
 
@@ -605,20 +608,20 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 				"0000000000000000000040fc0300000000000000000000000000000000000000"
 				"0000000000000000000000308004000000000000000000000000000000000000"
 				"0000000000000000000000000000000000000000000000e006088200000000a5");
-			if(freq == 2000000) // set the .OSC_FREQ("2M") bit
+			if(freq == 2000000) // set the .OSC_FREQ("2M") bit at reg<1650>
 				trimBitstream[1650/8] |= 1 << (1650%8);
 			break;
 
 		default: LogFatal("Unknown part\n");
 	}
 
-	LogDebug("Resetting board before oscillator trimming\n");
+	LogVerbose("Resetting board before oscillator trimming\n");
 	Reset(hdev);
 
-	LogDebug("Downloading oscillator trimming bitstream\n");
+	LogVerbose("Downloading oscillator trimming bitstream\n");
 	DownloadBitstream(hdev, trimBitstream, /*forTrimming=*/true);
 
-	LogDebug("Configuring I/O for oscillator trimming\n");
+	LogVerbose("Configuring I/O for oscillator trimming\n");
 	IOConfig config;
 	for(size_t i = 2; i <= 20; i++)
 		config.driverConfigs[i] = TP_PULLDOWN;
@@ -633,7 +636,7 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 	config.driverConfigs[15] = TP_VDD;
 	SetIOConfig(hdev, config);
 
-	LogDebug("Setting voltage for oscillator trimming\n");
+	LogVerbose("Setting voltage for oscillator trimming\n");
 	ConfigureSiggen(hdev, 1, voltage);
 
 	//The frequency tuning word is 7-bit
@@ -653,7 +656,7 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 	}
 	LogNotice("Trimmed RC oscillator to %d Hz\n", actualFreq);
 		
-	LogDebug("Resetting board after oscillator trimming\n");
+	LogVerbose("Resetting board after oscillator trimming\n");
 	Reset(hdev);
 	return mid;
 }
