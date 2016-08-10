@@ -27,7 +27,9 @@ void ShowVersion();
 
 const char *PartName(SilegoPart part);
 size_t BitstreamLength(SilegoPart part);
+
 bool SocketTest(hdevice hdev, SilegoPart part);
+bool CheckStatus(hdevice hdev);
 
 enum class BitstreamKind {
 	UNRECOGNIZED,
@@ -223,6 +225,12 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	//Check that we're in good standing
+	if(!CheckStatus(hdev)) {
+		LogError("Fault condition detected during initial check, exiting\n");
+		return 1;
+	}
+
 	//Light up the status LED
 	SetStatusLED(hdev, 1);
 
@@ -270,6 +278,7 @@ int main(int argc, char* argv[])
 	if(bitstreamKind == BitstreamKind::UNRECOGNIZED)
 	{
 		LogError("Could not detect a supported part\n");
+		SetStatusLED(hdev, 0);
 		return 1;
 	}
 
@@ -284,6 +293,7 @@ int main(int argc, char* argv[])
 	{
 		if(!SocketTest(hdev, detectedPart)) {
 			LogError("Socket test has failed\n");
+			SetStatusLED(hdev, 0);
 			return 1;
 		} else {
 			LogNotice("Socket test has passed\n");
@@ -307,6 +317,7 @@ int main(int argc, char* argv[])
 			return 1;
 		if(newBitstream.size() != BitstreamLength(detectedPart) / 8) {
 			LogError("Provided bitstream has incorrect length for selected part\n");
+			SetStatusLED(hdev, 0);
 			return 1;
 		}
 
@@ -340,6 +351,14 @@ int main(int argc, char* argv[])
 			config.expansionEnabled[net] = true;
 		}
 		SetIOConfig(hdev, config);
+	}
+
+	//Check that we didn't break anything
+	if(!CheckStatus(hdev))
+	{
+		LogError("Fault condition detected during final check, exiting\n");
+		SetStatusLED(hdev, 0);
+		return 1;
 	}
 
 	//Done
@@ -418,6 +437,26 @@ size_t BitstreamLength(SilegoPart part)
 	}
 
 	LogFatal("Unknown part\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Status check
+
+bool CheckStatus(hdevice hdev)
+{
+	BoardStatus status = GetStatus(hdev);
+	LogVerbose("Board voltages: A = %.3f V, B = %.3f B\n", status.voltageA, status.voltageB);
+
+	if(status.externalOverCurrent)
+		LogError("Overcurrent condition detected on external supply\n");
+	if(status.internalOverCurrent)
+		LogError("Overcurrent condition detected on internal supply\n");
+	if(status.internalUnderVoltage)
+		LogError("Undervoltage condition detected on internal supply\n");
+
+	return !(status.externalOverCurrent && 
+			 status.internalOverCurrent &&
+			 status.internalUnderVoltage);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

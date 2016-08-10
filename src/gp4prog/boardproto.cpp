@@ -291,13 +291,15 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	frame.Send(hdev);
 }
 
+static const double VOLTAGE_FACTOR = 0.001362; //mV/LSB
+
 //ch1 = Vdd, CH2...20 = TP2...20
 //TODO: more than just a dummy placeholder
 void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage)
 {
 	DataFrame frame(DataFrame::CONFIG_SIGGEN);
 
-	uint16_t raw_voltage = voltage / 0.001362;
+	uint16_t raw_voltage = voltage / VOLTAGE_FACTOR;
 
 	frame.push_back(2);					//signal generator
 	frame.push_back(channel);			//channel number
@@ -436,4 +438,28 @@ double ReadADC(hdevice hdev)
 		(frame.m_payload[2] <<  8) |
 		(frame.m_payload[3] <<  0);
 	return (double)(((int32_t)value) >> 8) / 0x90000;
+}
+
+BoardStatus GetStatus(hdevice hdev)
+{
+	DataFrame frame(DataFrame::GET_STATUS);
+	frame.Send(hdev);
+
+	// FIXME: we don't get any nonzero measurements here. It seems we are missing some sort of enable
+	// command for this feature. I haven't a faintest clue as to which.
+	frame.Receive(hdev);
+	if(!(frame.m_type == DataFrame::GET_STATUS))
+		LogFatal("Unexpected reply\n");
+
+	// uint16_t rawCurrent  = (frame.m_payload[10] << 8) | frame.m_payload[11];
+	uint16_t rawVoltageA = (frame.m_payload[12] << 8) | frame.m_payload[13];
+	uint16_t rawVoltageB = (frame.m_payload[14] << 8) | frame.m_payload[15];
+
+	BoardStatus status;
+	status.externalOverCurrent  = (frame.m_payload[7] == 0x01);
+	status.internalUnderVoltage = (frame.m_payload[8] == 0x01);
+	status.internalOverCurrent  = (frame.m_payload[9] == 0x02);
+	status.voltageA = rawVoltageA * VOLTAGE_FACTOR / 2;
+	status.voltageB = rawVoltageB * VOLTAGE_FACTOR / 2;
+	return status;
 }

@@ -128,6 +128,18 @@ public:
 	}
 };
 
+class BoardStatus
+{
+public:
+	bool internalOverCurrent = false;
+	bool externalOverCurrent = false;
+	bool internalUnderVoltage = false;
+
+	// double current = 0.0;
+	double voltageA = 0.0;
+	double voltageB = 0.0;
+};
+
 //Logical view of a data packet on the wire
 //Not actual bitstream ordering, but contains all the data
 class DataFrame
@@ -160,6 +172,7 @@ public:
 		WRITE_BITSTREAM_SRAM_ACK1   = 0x07,
 		CONFIG_SIGGEN				= 0x08,
 		ENABLE_SIGGEN				= 0x09,
+		GET_STATUS                  = 0x0a,
 		READ_BITSTREAM_ACK          = 0x13,
 		WRITE_BITSTREAM_SRAM_ACK2   = 0x1a,
 		SET_STATUS_LED				= 0x21,
@@ -224,5 +237,7 @@ void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream);
 
 void SelectADCChannel(hdevice hdev, unsigned int chan);
 double ReadADC(hdevice hdev);
+
+BoardStatus GetStatus(hdevice hdev);
 
 #endif
