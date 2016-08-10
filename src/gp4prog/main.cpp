@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
 	SetStatusLED(hdev, 1);
 
 	//See if any of the options require knowing what part we use.
-	SilegoPart detectedPart;
+	SilegoPart detectedPart = SilegoPart::UNRECOGNIZED;
 	vector<uint8_t> programmedBitstream;
 	BitstreamKind bitstreamKind;
 	if(!(readFilename.empty() && emulateFilename.empty() && rcOscFreq == 0 && !test)) {
@@ -301,7 +301,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		if(bitstreamKind == BitstreamKind::UNRECOGNIZED)
+		if(detectedPart == SilegoPart::UNRECOGNIZED)
 		{
 			LogError("Could not detect a supported part\n");
 			SetStatusLED(hdev, 0);
@@ -335,7 +335,7 @@ int main(int argc, char* argv[])
 	}
 
 	//If we need to trim oscillator, do that before programming
-	uint8_t rcFtw;
+	uint8_t rcFtw = 0;
 	if(rcOscFreq != 0)
 	{
 		if(voltage == 0.0) {
@@ -468,9 +468,9 @@ const char *PartName(SilegoPart part)
 	{
 		case SLG46620V: return "SLG46620V";
 		case SLG46140V: return "SLG46140V";
-	}
 
-	LogFatal("Unknown part\n");
+		default: LogFatal("Unknown part\n");
+	}
 }
 
 size_t BitstreamLength(SilegoPart part)
@@ -479,9 +479,9 @@ size_t BitstreamLength(SilegoPart part)
 	{
 		case SLG46620V: return 2048;
 		case SLG46140V: return 1024;
-	}
 
-	LogFatal("Unknown part\n");
+		default: LogFatal("Unknown part\n");
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

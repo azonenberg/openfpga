@@ -58,6 +58,7 @@ enum SilegoPart
 {
 	SLG46140V = 0x14,
 	SLG46620V = 0x62,
+	UNRECOGNIZED = 0xff,
 };
 
 //Test point config (actual bitstream coding)
