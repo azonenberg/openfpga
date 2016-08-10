@@ -29,6 +29,7 @@ const char *PartName(SilegoPart part);
 size_t BitstreamLength(SilegoPart part);
 
 bool SocketTest(hdevice hdev, SilegoPart part);
+uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq);
 bool CheckStatus(hdevice hdev);
 
 enum class BitstreamKind {
@@ -52,6 +53,7 @@ int main(int argc, char* argv[])
 
 	bool reset = false;
 	bool test = false;
+	unsigned rcOscFreq;
 	string emulateFilename, readFilename;
 	double voltage = 0.0;
 	vector<int> nets;
@@ -100,6 +102,27 @@ int main(int argc, char* argv[])
 		}
 		else if(s == "-t" || s == "--test-socket")
 			test = true;
+		else if(s == "-T" || s == "--trim")
+		{
+			if(i+1 < argc)
+			{
+				const char *value = argv[++i];
+				if(!strcmp(value, "25k"))
+					rcOscFreq = 25000;
+				else if(!strcmp(value, "2M"))
+					rcOscFreq = 2000000;
+				else
+				{
+					printf("--trim argument must be 25k or 2M\n");
+					return 1;
+				}
+			}
+			else
+			{
+				printf("--trim requires an argument\n");
+				return 1;
+			}
+		}
 		else if(s == "-e" || s == "--emulate")
 		{
 			if(i+1 < argc)
@@ -219,7 +242,8 @@ int main(int argc, char* argv[])
 	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
 
 	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
-	if(emulateFilename.empty() && readFilename.empty() && voltage == 0.0 && nets.empty() && !test && !reset)
+	if(emulateFilename.empty() && readFilename.empty() && voltage == 0.0 && nets.empty() && 
+	   rcOscFreq == 0 && !test && !reset)
 	{
 		LogNotice("No actions requested, exiting\n");
 		return 0;
@@ -309,6 +333,19 @@ int main(int argc, char* argv[])
 		ResetAllSiggens(hdev);
 	}
 
+	//If we need to trim oscillator, do that before programming
+	uint8_t rcFtw;
+	if(rcOscFreq != 0)
+	{
+		if(voltage == 0.0) {
+			LogError("Trimming oscillator requires specifying target voltage\n");
+			return 1;
+		}
+
+		LogNotice("Trimming oscillator for %d Hz at %.3g V\n", rcOscFreq, voltage);
+		rcFtw = TrimOscillator(hdev, detectedPart, voltage, rcOscFreq);
+	}
+
 	//If we're programming, do that first
 	if(!emulateFilename.empty())
 	{
@@ -321,17 +358,26 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
+		//Set trim value reg<1981:1975>
+		newBitstream[246] |= rcFtw << 7;
+		newBitstream[247] |= rcFtw >> 1;
+
 		//Load bitstream
 		LogNotice("Loading bitstream into SRAM\n");
 		DownloadBitstream(hdev, newBitstream);
+
+		LogDebug("Unstucking I/O pins after SRAM programming\n");
+		IOConfig ioConfig;
+		for(size_t i = 2; i <= 20; i++)
+			ioConfig.driverConfigs[i] = TP_RESET;
+		SetIOConfig(hdev, ioConfig);
 	}
 
 	if(voltage != 0.0)
 	{
 		//Configure the signal generator for Vdd
-		LogNotice("Setting Vdd=%.3gV\n", voltage);
+		LogNotice("Setting Vdd to %.3g V\n", voltage);
 		ConfigureSiggen(hdev, 1, voltage);
-		SetSiggenStatus(hdev, 1, SIGGEN_START);
 	}
 
 	if(!nets.empty())
@@ -340,10 +386,6 @@ int main(int argc, char* argv[])
 		LogNotice("Setting I/O configuration\n");
 
 		IOConfig config;
-		for(int net : nets)
-			config.driverConfigs[net] = TP_RESET;
-		SetIOConfig(hdev, config);
-
 		for(int net : nets)
 		{
 			config.driverConfigs[net] = TP_FLOAT;
@@ -393,6 +435,8 @@ void ShowUsage()
 		"        Uploads the bitstream stored in non-volatile memory.\n"
 		"    -t, --test-socket\n"
 		"        Verifies that every connection between socket and device is intact.\n"
+		"    -T, --trim           [25k|2M]\n"
+		"        Trims the RC oscillator to achieve the specified frequency.\n"
 		"    -e, --emulate        <bitstream filename>\n"
 		"        Downloads the specified bitstream into volatile memory.\n"
 		"        Implies --reset --voltage 3.3.\n"
@@ -443,9 +487,11 @@ size_t BitstreamLength(SilegoPart part)
 // Status check
 
 bool CheckStatus(hdevice hdev)
-{
+{	
+	LogDebug("Requesting board status\n");
+
 	BoardStatus status = GetStatus(hdev);
-	LogVerbose("Board voltages: A = %.3f V, B = %.3f B\n", status.voltageA, status.voltageB);
+	LogVerbose("Board voltages: A = %.3f V, B = %.3f V\n", status.voltageA, status.voltageB);
 
 	if(status.externalOverCurrent)
 		LogError("Overcurrent condition detected on external supply\n");
@@ -534,6 +580,82 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 	}
 
 	return ok;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Oscillator trimming
+
+uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq)
+{
+	vector<uint8_t> trimBitstream;
+
+	switch(part)
+	{
+		case SLG46620V:
+			// To reproduce:
+			// module top((* LOC="P13" *) output q);
+			// 	GP_RCOSC #(.AUTO_PWRDN(1'b0)) rcosc (.CLKOUT_FABRIC(q));
+			// endmodule
+			trimBitstream = BitstreamFromHex(
+				"0000000000000000000000000000000000000000000000000000000000000000"
+				"00000000000000000000000000000000000000000000000000000000c0bf6900"
+				"0000000000000000000000000000000000000000000000000000000000000000"
+				"0000000000000800300000000000200600000004000c000000c060300000005a"
+				"0000000000000000000000000000000000000000000000000000000000000000"
+				"0000000000000000000040fc0300000000000000000000000000000000000000"
+				"0000000000000000000000308004000000000000000000000000000000000000"
+				"0000000000000000000000000000000000000000000000e006088200000000a5");
+			if(freq == 2000000) // set the .OSC_FREQ("2M") bit
+				trimBitstream[1650/8] |= 1 << (1650%8);
+			break;
+
+		default: LogFatal("Unknown part\n");
+	}
+
+	LogDebug("Resetting board before oscillator trimming\n");
+	Reset(hdev);
+
+	LogDebug("Downloading oscillator trimming bitstream\n");
+	DownloadBitstream(hdev, trimBitstream, /*forTrimming=*/true);
+
+	LogDebug("Configuring I/O for oscillator trimming\n");
+	IOConfig config;
+	for(size_t i = 2; i <= 20; i++)
+		config.driverConfigs[i] = TP_PULLDOWN;
+	config.driverConfigs[2] = TP_FLOAT;
+	config.driverConfigs[3] = TP_VDD;
+	config.driverConfigs[4] = TP_GND;
+	config.driverConfigs[5] = TP_GND;
+	config.driverConfigs[6] = TP_GND;
+	config.driverConfigs[7] = TP_GND;
+	config.driverConfigs[10] = TP_VDD;
+	config.driverConfigs[12] = TP_VDD;
+	config.driverConfigs[15] = TP_VDD;
+	SetIOConfig(hdev, config);
+
+	LogDebug("Setting voltage for oscillator trimming\n");
+	ConfigureSiggen(hdev, 1, voltage);
+
+	//The frequency tuning word is 7-bit
+	uint8_t low = 0, high = 0x7f, mid;
+	unsigned actualFreq;
+	while(low < high) {
+		mid = low + (high - low) / 2;
+		LogDebug("Trimming with FTW %d\n", mid);
+		TrimOscillator(hdev, mid);
+		actualFreq = MeasureOscillatorFrequency(hdev);
+		LogDebug("Oscillator frequency is %d Hz\n", actualFreq);
+		if(actualFreq > freq) {
+			high = mid;
+		} else if(actualFreq < freq) {
+			low = mid + 1;
+		} else break;
+	}
+	LogNotice("Trimmed RC oscillator to %d Hz\n", actualFreq);
+		
+	LogDebug("Resetting board after oscillator trimming\n");
+	Reset(hdev);
+	return mid;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

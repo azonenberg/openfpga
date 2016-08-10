@@ -182,6 +182,12 @@ void SetPart(hdevice hdev, SilegoPart part)
 	frame.Roundtrip(hdev);
 }
 
+void Reset(hdevice hdev)
+{
+	DataFrame frame(DataFrame::RESET);
+	frame.Roundtrip(hdev);
+}
+
 void SetStatusLED(hdevice hdev, bool status)
 {
 	DataFrame frame(DataFrame::SET_STATUS_LED);
@@ -346,10 +352,10 @@ void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status)
 	frame.Send(hdev);
 }
 
-void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream)
+void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, bool forTrimming)
 {
 	DataFrame frame(DataFrame::WRITE_BITSTREAM_SRAM);
-	frame.push_back(0x80);
+	frame.push_back(forTrimming ? 0x87 : 0x80);
 	frame.push_back(0x00);
 	frame.push_back(0x00);
 
@@ -438,6 +444,44 @@ double ReadADC(hdevice hdev)
 		(frame.m_payload[2] <<  8) |
 		(frame.m_payload[3] <<  0);
 	return (double)(((int32_t)value) >> 8) / 0x90000;
+}
+
+void TrimOscillator(hdevice hdev, uint8_t ftw)
+{
+	DataFrame reqFrame = DataFrame(DataFrame::TRIM_OSC);
+	reqFrame.push_back(0x00);
+	reqFrame.push_back(ftw);
+	reqFrame.push_back(0x05);
+	reqFrame.push_back(0x04);
+	reqFrame.push_back(0x0a);
+	reqFrame.push_back(0x11);
+	reqFrame.push_back(0x02);
+	reqFrame.push_back(0x01);
+	reqFrame.Send(hdev);
+
+	DataFrame repFrame;
+	repFrame.Receive(hdev);
+	if(!(repFrame.m_type == reqFrame.m_type))
+		LogFatal("Unexpected reply\n");
+}
+
+unsigned MeasureOscillatorFrequency(hdevice hdev)
+{
+	DataFrame reqFrame = DataFrame(DataFrame::GET_OSC_FREQ);
+	reqFrame.push_back(0x00);
+	reqFrame.Send(hdev);
+
+	DataFrame repFrame;
+	repFrame.Receive(hdev);
+	if(!(repFrame.m_type == reqFrame.m_type))
+		LogFatal("Unexpected reply\n");
+
+	uint32_t value =
+		(repFrame.m_payload[0] << 24) |
+		(repFrame.m_payload[1] << 16) |
+		(repFrame.m_payload[2] <<  8) |
+		(repFrame.m_payload[3] <<  0);
+	return value;
 }
 
 BoardStatus GetStatus(hdevice hdev)

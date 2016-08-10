@@ -216,6 +216,8 @@ void SwitchMode(hdevice hdev);
 
 void SetPart(hdevice hdev, SilegoPart part);
 
+void Reset(hdevice hdev);
+
 void SetStatusLED(hdevice hdev, bool status);
 void SetIOConfig(hdevice hdev, IOConfig& config);
 
@@ -233,10 +235,13 @@ void ResetAllSiggens(hdevice hdev);
 void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status);
 
 std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets);
-void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream);
+void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, bool forTrimming = false);
 
 void SelectADCChannel(hdevice hdev, unsigned int chan);
 double ReadADC(hdevice hdev);
+
+void TrimOscillator(hdevice hdev, uint8_t ftw);
+unsigned MeasureOscillatorFrequency(hdevice hdev);
 
 BoardStatus GetStatus(hdevice hdev);
 
