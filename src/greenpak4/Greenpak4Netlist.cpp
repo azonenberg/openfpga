@@ -235,10 +235,7 @@ void Greenpak4Netlist::IndexNets()
 	{
 		LogDebug("    Node %s connects to:\n", node->m_name.c_str());
 		for(auto p : node->m_ports)
-		{
-			Greenpak4NetlistNode* net = m_topModule->GetNet(p->m_name);
 			LogDebug("        port %s\n", p->m_name.c_str());
-		}
 		for(auto c : node->m_nodeports)
 			LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 	}
