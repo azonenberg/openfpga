@@ -302,14 +302,33 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 			for(int i=0; i<len; i++)
 			{
 				json_object* jnode = json_object_array_get_idx(child, i);
-				if(!json_object_is_type(jnode, json_type_int))
+				
+				int netnum = -1;
+				
+				//If it's the string "x", the remaining bits of the signal are unused
+				if(json_object_is_type(jnode, json_type_string))
+				{			
+					string value = json_object_get_string(jnode);
+					if(value != "x")
+					{
+						LogError("Net number in module should be of type integer, or \"x\", but isn't\n");
+						exit(-1);
+					}
+				}
+				
+				//Should be an integer if we get here
+				else
 				{
-					LogError("Net number in module should be of type integer but isn't\n");
-					exit(-1);
+					if(!json_object_is_type(jnode, json_type_int))
+					{
+						LogError("Net number in module should be of type integer but isn't\n");
+						exit(-1);
+					}
+					
+					netnum = json_object_get_int(jnode);
 				}
 
 				//Look up net number and name
-				int netnum = json_object_get_int(jnode);
 				string bname = name;
 				if(len > 1)
 				{
@@ -317,14 +336,21 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 					snprintf(tmp, sizeof(tmp), "%s[%d]", name.c_str(), i);
 					bname = tmp;
 				}
-
-				//How to handle multiple names for the same net??
-				auto node = GetNode(netnum);
-				nodes.push_back(node);
-			
-				//Set up name etc
-				node->m_name = bname;
-				m_nets[bname] = node;
+				
+				//Special checking needed for unconnected nets in a vector
+				if(netnum < 0)
+					m_nets[bname] = NULL;
+				
+				else
+				{
+					//How to handle multiple names for the same net??
+					auto node = GetNode(netnum);
+					nodes.push_back(node);
+				
+					//Set up name etc
+					node->m_name = bname;
+					m_nets[bname] = node;
+				}
 			}
 		}
 		

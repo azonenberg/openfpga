@@ -219,14 +219,11 @@ void Greenpak4Netlist::IndexNets()
 		}
 	}
 	
-	//Make a set of the nodes to avoid duplication
+	//Make a set of the nodes to avoid duplication.
+	//Note that NULL is legal in vector nets if some bits were optimized out
 	for(auto it = m_topModule->net_begin(); it != m_topModule->net_end(); it ++)
 	{
-		if(it->second == NULL)
-		{
-			LogDebug("Got null node %s during dedup\n", it->second->m_name.c_str());
-		}
-		else
+		if(it->second != NULL)
 			m_nodes.insert(it->second);
 	}
 	
