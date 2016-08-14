@@ -101,8 +101,11 @@ void Greenpak4RCOscillator::CommitChanges()
 	if(ncell->HasParameter("PWRDN_EN"))
 		m_powerDownEn = (ncell->m_parameters["PWRDN_EN"] == "1");
 		
+	//If auto-powerdown is not specified, but the cell is instantiated, default to always running the osc
 	if(ncell->HasParameter("AUTO_PWRDN"))
 		m_autoPowerDown = (ncell->m_parameters["AUTO_PWRDN"] == "1");
+	else
+		m_autoPowerDown = false;
 		
 	if(ncell->HasParameter("PRE_DIV"))
 	{
