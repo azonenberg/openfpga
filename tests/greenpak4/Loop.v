@@ -37,9 +37,9 @@ module Loop(a, b);
 	assign a = x0;
 
 	wire y0, y1, y2;
-	GP_2LUT #(.INIT(4'b0010)) lut_inv0(.IN0(y0), .OUT(y1));
-	GP_2LUT #(.INIT(4'b0010)) lut_inv1(.IN0(y1), .OUT(y2));
-	GP_2LUT #(.INIT(4'b0010)) lut_inv2(.IN0(y2), .OUT(y0));
+	GP_INV inv0(.IN(y0), .OUT(y1));
+	GP_INV inv1(.IN(y1), .OUT(y2));
+	GP_INV inv2(.IN(y2), .OUT(y0));
 	assign b = y0;
 
 endmodule
