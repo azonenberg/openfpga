@@ -52,22 +52,14 @@ module Inverters(i, a, b, c, d, e, f, g, h);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Lots of inverters. Explicitly instantiate to prevent Yosys from optimizing them out
-		
-	wire[8:0] q;
-	assign q[0] = i;
-	assign a = q[1];
-	assign b = q[2];
-	assign c = q[3];
-	assign d = q[4];
-	assign e = q[5];
-	assign f = q[6];
-	assign g = q[7];
-	assign h = q[8];
 	
-	genvar j;
-	generate
-		for(j=0; j<8; j=j+1)
-			GP_INV inv(.IN(q[j]), .OUT(q[j+1]));
-	endgenerate
-
+	GP_INV inva(.IN(i), .OUT(a));
+	GP_INV invb(.IN(a), .OUT(b));
+	GP_INV invc(.IN(b), .OUT(c));
+	GP_INV invd(.IN(c), .OUT(d));
+	GP_INV inve(.IN(d), .OUT(e));
+	GP_INV invf(.IN(e), .OUT(f));
+	GP_INV invg(.IN(f), .OUT(g));
+	GP_INV invh(.IN(g), .OUT(h));
+	
 endmodule
