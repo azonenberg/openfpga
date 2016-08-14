@@ -2188,7 +2188,7 @@ recommend inferring logic.
 \thinhline
 \tokenstyle{nSR} & Input & 1 & Active-low set/reset. \\
 \thinhline
-\tokenstyle{Q} & Output & 1 & Output signal. \\
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
 \thinhline
 \end{tabularx}
 
@@ -2222,7 +2222,7 @@ GP_DFFSRI #(
 ) ff (
 	.CLK(clk),
 	.D(din),
-	.Q(dout),
+	.nQ(dout),
 	.nSR(nset)
 );
 \end{lstlisting}
