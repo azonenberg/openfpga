@@ -18,14 +18,17 @@
 
 `default_nettype none
 
-module Inverters(i, a, b, c, d, e, f, g, h);
+module Inverters(i, a, b, c, d, e, f, g, h, clk, q);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 
 	(* LOC = "P3" *)
 	input wire i;
-
+	
+	(* LOC = "P4" *)
+	input wire clk;
+	
 	(* LOC = "P12" *)
 	output wire a;
 	
@@ -49,6 +52,9 @@ module Inverters(i, a, b, c, d, e, f, g, h);
 	
 	(* LOC = "P19" *)
 	output wire h;
+	
+	(* LOC = "P20" *)
+	output wire q;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Lots of inverters. Explicitly instantiate to prevent Yosys from optimizing them out
@@ -61,5 +67,16 @@ module Inverters(i, a, b, c, d, e, f, g, h);
 	GP_INV invf(.IN(e), .OUT(f));
 	GP_INV invg(.IN(f), .OUT(g));
 	GP_INV invh(.IN(g), .OUT(h));
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// An inverted flipflop
+	
+	GP_DFFI #(
+		.INIT(1'b0)
+	) dff (
+		.D(i),
+		.CLK(clk),
+		.Q(q)
+	);
 	
 endmodule
