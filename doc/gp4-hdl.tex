@@ -1777,6 +1777,67 @@ GP_DFF #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DFFI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DFFI}: Positive Edge Triggered D Flipflop with Inverted Output}
+\label{gp-dff}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D flipflop with an inverted output. It may be mapped to either a 
+\tokenref{GP\_DFF}{gp-dff} or a \tokenref{GP\_DFFSR}{gp-dffsr} cell by the placer depending on resource utilization and 
+routing congestion.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{CLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop. \newline The power-up value of Q is inverted 
+with respect to INIT.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dffi-example} shows a flipflop initialized to zero at powerup.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+GP_DFFI #(
+	.INIT(1'b0)
+) ff (
+	.CLK(clk),
+	.D(din),
+	.Q(dout)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DFFI}}
+\label{gp-dffi-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DFFR
 
 \pagebreak
@@ -1838,6 +1899,71 @@ GP_DFFR #(
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_DFFR}}
 \label{gp-dffr-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DFFRI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DFFRI}: Positive Edge Triggered D Flipflop with Reset and Inverted Output}
+\label{gp-dffr}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D flipflop with active-low reset and an inverted output. It is internally 
+remapped to a \tokenref{GP\_DFFSR}{gp-dffsr} cell by the placer.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{CLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nRST} & Input & 1 & Active-low reset. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop.\newline The power-up value of Q is inverted 
+with respect to INIT.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dffri-example} shows a flipflop initialized to zero at power-up, and cleared to zero
+when \wirestyle{nrst} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nrst;
+GP_DFFRI #(
+	.INIT(1'b0)
+) ff (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nRST(nrst)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DFFRI}}
+\label{gp-dffri-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1905,6 +2031,71 @@ GP_DFFS #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DFFSI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DFFSU}: Positive Edge Triggered D Flipflop with Set and Inverted Output}
+\label{gp-dffs}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D flipflop with active-low set and an inverted output. It is internally remapped 
+to a \tokenref{GP\_DFFSR}{gp-dffsr} cell by the placer.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{CLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nSET} & Input & 1 & Active-low set. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop.\newline The power-up value of Q is 
+inverted with respect to INIT.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dffsi-example} shows a flipflop initialized to zero at power-up, and set to one
+when \wirestyle{nset} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DFFSI #(
+	.INIT(1'b0)
+) ff (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nSET(nset)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DFFSI}}
+\label{gp-dffsi-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DFFSR
 
 \pagebreak
@@ -1969,6 +2160,74 @@ GP_DFFSR #(
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_DFFSR}}
 \label{gp-dffsr-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DFFSR
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DFFSR}: Positive Edge Triggered D Flipflop with Set or Reset and Inverted Output}
+\label{gp-dffsr}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D flipflop with active-low set or reset (but not both), selectable at synthesis
+time by a parameter. The flipflop output is inverted.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{CLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nSR} & Input & 1 & Active-low set/reset. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop.\newline The power-up value of Q is 
+inverted with respect to INIT.\\
+\thinhline
+\tokenstyle{SRMODE} & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dffsri-example} shows a flipflop initialized to zero at power-up, and set to one
+when \wirestyle{nset} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DFFSRI #(
+	.INIT(1'b0),
+	.SRMODE(1'b1)
+) ff (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nSR(nset)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DFFSRI}}
+\label{gp-dffsri-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
