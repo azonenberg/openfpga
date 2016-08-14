@@ -1801,7 +1801,7 @@ recommend inferring logic.
 \thinhline
 \tokenstyle{CLK} & Input & 1 & Input clock. \\
 \thinhline
-\tokenstyle{Q} & Output & 1 & Output signal. \\
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
 \thinhline
 \end{tabularx}
 
@@ -1830,7 +1830,7 @@ GP_DFFI #(
 ) ff (
 	.CLK(clk),
 	.D(din),
-	.Q(dout)
+	.nQ(dout)
 );
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_DFFI}}
@@ -1927,7 +1927,7 @@ recommend inferring logic.
 \thinhline
 \tokenstyle{nRST} & Input & 1 & Active-low reset. \\
 \thinhline
-\tokenstyle{Q} & Output & 1 & Output signal. \\
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
 \thinhline
 \end{tabularx}
 
@@ -1958,7 +1958,7 @@ GP_DFFRI #(
 ) ff (
 	.CLK(clk),
 	.D(din),
-	.Q(dout),
+	.nQ(dout),
 	.nRST(nrst)
 );
 \end{lstlisting}
@@ -2056,7 +2056,7 @@ recommend inferring logic.
 \thinhline
 \tokenstyle{nSET} & Input & 1 & Active-low set. \\
 \thinhline
-\tokenstyle{Q} & Output & 1 & Output signal. \\
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
 \thinhline
 \end{tabularx}
 
@@ -2087,7 +2087,7 @@ GP_DFFSI #(
 ) ff (
 	.CLK(clk),
 	.D(din),
-	.Q(dout),
+	.nQ(dout),
 	.nSET(nset)
 );
 \end{lstlisting}
