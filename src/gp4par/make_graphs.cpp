@@ -356,28 +356,33 @@ void MakeDeviceNodes(
 			MakeNode(ibuf_label, iob, dgraph);
 	}
 	
+	//Make device nodes for the inverters
+	uint32_t inv_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_INV");
+	for(unsigned int i=0; i<device->GetInverterCount(); i++)
+		MakeNode(inv_label, device->GetInverter(i), dgraph);
+	
 	//Make device nodes for each type of LUT
 	uint32_t lut2_label = AllocateLabel(ngraph, dgraph, lmap, "GP_2LUT");
 	uint32_t lut3_label = AllocateLabel(ngraph, dgraph, lmap, "GP_3LUT");
 	uint32_t lut4_label = AllocateLabel(ngraph, dgraph, lmap, "GP_4LUT");
 	for(unsigned int i=0; i<device->GetLUT2Count(); i++)
-		MakeNode(lut2_label, device->GetLUT2(i), dgraph);
+	{
+		auto node = MakeNode(lut2_label, device->GetLUT2(i), dgraph);
+		node->AddAlternateLabel(inv_label);
+	}
 	for(unsigned int i=0; i<device->GetLUT3Count(); i++)
 	{
 		auto node = MakeNode(lut3_label, device->GetLUT3(i), dgraph);
 		node->AddAlternateLabel(lut2_label);
+		node->AddAlternateLabel(inv_label);
 	}
 	for(unsigned int i=0; i<device->GetLUT4Count(); i++)
 	{
 		auto node = MakeNode(lut4_label, device->GetLUT4(i), dgraph);
 		node->AddAlternateLabel(lut2_label);
 		node->AddAlternateLabel(lut3_label);
+		node->AddAlternateLabel(inv_label);
 	}
-	
-	//Make device nodes for the inverters
-	uint32_t inv_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_INV");
-	for(unsigned int i=0; i<device->GetInverterCount(); i++)
-		MakeNode(inv_label, device->GetInverter(i), dgraph);
 	
 	//Make device nodes for the shift registers
 	uint32_t shreg_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_SHREG");

@@ -92,29 +92,46 @@ void Greenpak4LUT::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-	
-	for(auto x : ncell->m_parameters)
-	{
-		//LUT initialization value, as decimal
-		if(x.first == "INIT")
-		{
-			//convert to bit array format for the bitstream library
-			uint32_t truth_table = atoi(x.second.c_str());
-			unsigned int nbits = 1 << m_order;
-			for(unsigned int i=0; i<nbits; i++)
-			{
-				bool a3 = (i & 8) ? true : false;
-				bool a2 = (i & 4) ? true : false;
-				bool a1 = (i & 2) ? true : false;
-				bool a0 = (i & 1) ? true : false;
-				m_truthtable[a3*8 | a2*4 | a1*2 | a0] = (truth_table & (1 << i)) ? true : false;
-			}
-		}
 		
-		else
+	//If the cell is an inverter, we need special processing to up-map
+	if(ncell->m_type == "GP_INV")
+	{
+		//Set up the truth table
+		m_truthtable[0] = true;
+		for(int i=1; i<16; i++)
+			m_truthtable[i] = false;
+		
+		//Tie upper bits off since they're not in the netlist
+		for(int i=1; i<4; i++)
+			m_inputs[i] = m_device->GetGround();
+	}
+	
+	//Not an inverter, treat it as a LUT
+	else
+	{
+		for(auto x : ncell->m_parameters)
 		{
-			LogWarning("Cell\"%s\" has unrecognized parameter %s, ignoring\n",
-				ncell->m_name.c_str(), x.first.c_str());
+			//LUT initialization value, as decimal
+			if(x.first == "INIT")
+			{
+				//convert to bit array format for the bitstream library
+				uint32_t truth_table = atoi(x.second.c_str());
+				unsigned int nbits = 1 << m_order;
+				for(unsigned int i=0; i<nbits; i++)
+				{
+					bool a3 = (i & 8) ? true : false;
+					bool a2 = (i & 4) ? true : false;
+					bool a1 = (i & 2) ? true : false;
+					bool a0 = (i & 1) ? true : false;
+					m_truthtable[a3*8 | a2*4 | a1*2 | a0] = (truth_table & (1 << i)) ? true : false;
+				}
+			}
+			
+			else
+			{
+				LogWarning("Cell\"%s\" has unrecognized parameter %s, ignoring\n",
+					ncell->m_name.c_str(), x.first.c_str());
+			}
 		}
 	}
 }
@@ -129,6 +146,7 @@ vector<string> Greenpak4LUT::GetInputPorts() const
 		case 2: r.push_back("IN1");
 		case 1: r.push_back("IN0");
 		default:
+			r.push_back("IN");	//used for up-mapping GP_INV to GP_LUTx
 			break;
 	}
 	return r;
@@ -136,8 +154,10 @@ vector<string> Greenpak4LUT::GetInputPorts() const
 
 void Greenpak4LUT::SetInput(string port, Greenpak4EntityOutput src)
 {
-	if(port == "IN0")
+	//used for up-mapping GP_INV to GP_LUTx
+	if( (port == "IN0") || (port == "IN") )
 		m_inputs[0] = src;
+		
 	else if(port == "IN1")
 		m_inputs[1] = src;
 	else if(port == "IN2")
