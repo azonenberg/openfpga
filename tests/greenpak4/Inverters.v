@@ -76,7 +76,7 @@ module Inverters(i, a, b, c, d, e, f, g, h, clk, q);
 	) dff (
 		.D(i),
 		.CLK(clk),
-		.Q(q)
+		.nQ(q)
 	);
 	
 endmodule

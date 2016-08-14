@@ -89,12 +89,13 @@ vector<string> Greenpak4Flipflop::GetOutputPorts() const
 {
 	vector<string> r;
 	r.push_back("Q");
+	r.push_back("nQ");
 	return r;
 }
 
 unsigned int Greenpak4Flipflop::GetOutputNetNumber(string port)
 {
-	if(port == "Q")
+	if( (port == "Q") || (port == "nQ") )
 		return m_outputBaseWord;
 	else
 		return -1;
