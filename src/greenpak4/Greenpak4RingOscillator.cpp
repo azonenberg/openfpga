@@ -106,9 +106,9 @@ void Greenpak4RingOscillator::CommitChanges()
 	else
 		m_autoPowerDown = false;
 		
-	if(ncell->HasParameter("PRE_DIV"))
+	if(ncell->HasParameter("HARDIP_DIV"))
 	{
-		int div = atoi(ncell->m_parameters["PRE_DIV"].c_str());
+		int div = atoi(ncell->m_parameters["HARDIP_DIV"].c_str());
 		
 		if(	(div == 1) || (div == 4) || (div == 8) || (div == 16) )
 			m_preDiv = div;

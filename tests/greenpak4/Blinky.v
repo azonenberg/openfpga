@@ -111,7 +111,7 @@ module Blinky(
 		.FABRIC_DIV(1)
 	) ringosc (
 		.PWRDN(osc_pwrdn),
-		.CLKOUT_PREDIV(clk_1687khz_cnt),
+		.CLKOUT_HARDIP(clk_1687khz_cnt),
 		.CLKOUT_FABRIC(clk_1687khz)
 	);
 	
@@ -126,7 +126,7 @@ module Blinky(
 		.FABRIC_DIV(1)
 	) rcosc (
 		.PWRDN(osc_pwrdn),
-		.CLKOUT_PREDIV(clk_6khz_cnt),
+		.CLKOUT_HARDIP(clk_6khz_cnt),
 		.CLKOUT_FABRIC(clk_6khz)
 	);
 	
