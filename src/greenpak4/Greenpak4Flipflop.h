@@ -73,6 +73,9 @@ protected:
 	///Set/reset mode (1=set, 0=reset)
 	bool m_srmode;
 	
+	///Output inverter flag (1 = QB, 0=Q)
+	bool m_outputInvert;
+	
 	///Input signal
 	Greenpak4EntityOutput m_input;
 	

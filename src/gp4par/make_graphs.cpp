@@ -295,6 +295,11 @@ void MakeNetlistNodes(
 	ilmap["GP_DFFR"] = ilmap["GP_DFFSR"];
 	ilmap["GP_DFFS"] = ilmap["GP_DFFSR"];
 	
+	ilmap["GP_DFFI"] = ilmap["GP_DFF"];
+	ilmap["GP_DFFSI"] = ilmap["GP_DFFS"];
+	ilmap["GP_DFFRI"] = ilmap["GP_DFFR"];
+	ilmap["GP_DFFSRI"] = ilmap["GP_DFFSR"];
+	
 	//Create the actual nodes in the netlist
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)

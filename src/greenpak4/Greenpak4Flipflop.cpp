@@ -36,6 +36,7 @@ Greenpak4Flipflop::Greenpak4Flipflop(
 	, m_hasSR(has_sr)
 	, m_initValue(false)
 	, m_srmode(false)
+	, m_outputInvert(false)
 	, m_input(device->GetGround())
 	, m_clock(device->GetGround())
 	, m_nsr(device->GetPower())
@@ -115,6 +116,10 @@ void Greenpak4Flipflop::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
+		
+	//If our primitive name ends in "I" we're inverting the output
+	if(ncell->m_type[ncell->m_type.length()-1] == 'I')
+		m_outputInvert = true;
 	
 	if(ncell->HasParameter("SRMODE"))
 		m_srmode = (ncell->m_parameters["SRMODE"] == "1");
@@ -180,8 +185,8 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 		//Mode select (hard wire to DFF for now)
 		bitstream[m_configBase + 0] = false;
 		
-		//Output polarity (hard wire to active-high for now)
-		bitstream[m_configBase + 1] = false;
+		//Output polarity
+		bitstream[m_configBase + 1] = m_outputInvert;
 		
 		//Set/reset mode
 		bitstream[m_configBase + 2] = m_srmode;
@@ -195,8 +200,8 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 		//Mode select (hard wire to DFF for now)
 		bitstream[m_configBase + 0] = false;
 		
-		//Output polarity (hard wire to active-high for now)
-		bitstream[m_configBase + 1] = false;
+		//Output polarity
+		bitstream[m_configBase + 1] = m_outputInvert;
 		
 		//Initial state
 		bitstream[m_configBase + 2] = m_initValue;
