@@ -1,0 +1,6 @@
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="0f0f" ATTRS{idProduct}=="0001" MODE:="0666" 
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="0f0f" ATTRS{idProduct}=="0002" MODE:="0666" 
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="0f0f" ATTRS{idProduct}=="0003" MODE:="0666"
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="0f0f" ATTRS{idProduct}=="0005" MODE:="0666"
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="0f0f" ATTRS{idProduct}=="0006" MODE:="0666"
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="0f0f" ATTRS{idProduct}=="8006" MODE:="0666"
