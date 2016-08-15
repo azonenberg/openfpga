@@ -30,8 +30,6 @@
 
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
 
 #include <libusb-1.0/libusb.h>
 
