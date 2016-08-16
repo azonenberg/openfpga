@@ -33,6 +33,12 @@
 
 #include <libusb-1.0/libusb.h>
 
+//Windows appears to define an ERROR macro in its headers.
+//Conflicts with ERROR enum defined in log.h.
+#if defined(_WIN32) && defined(ERROR)
+	#undef ERROR
+#endif
+
 #include "../log/log.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
