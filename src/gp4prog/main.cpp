@@ -63,7 +63,11 @@ int main(int argc, char* argv[])
 	{
 		string s(argv[i]);
 
-		if(s == "--help")
+		//Let the logger eat its args first
+		if(ParseLoggerArguments(i, argc, argv, console_verbosity))
+			continue;
+
+		else if(s == "--help")
 		{
 			ShowUsage();
 			return 0;
@@ -73,17 +77,6 @@ int main(int argc, char* argv[])
 			ShowVersion();
 			return 0;
 		}
-		else if(s == "-q" || s == "--quiet")
-		{
-			if(console_verbosity == LogSink::NOTICE)
-				console_verbosity = LogSink::WARNING;
-			else if(console_verbosity == LogSink::WARNING)
-				console_verbosity = LogSink::ERROR;
-		}
-		else if(s == "--verbose")
-			console_verbosity = LogSink::VERBOSE;
-		else if(s == "--debug")
-			console_verbosity = LogSink::DEBUG;
 		else if(s == "-r" || s == "--reset")
 		{
 			reset = true;

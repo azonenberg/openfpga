@@ -42,7 +42,11 @@ int main(int argc, char* argv[])
 	{
 		string s(argv[i]);
 		
-		if(s == "--help")
+		//Let the logger eat its args first
+		if(ParseLoggerArguments(i, argc, argv, console_verbosity))
+			continue;
+			
+		else if(s == "--help")
 		{
 			ShowUsage();
 			return 0;
@@ -51,35 +55,6 @@ int main(int argc, char* argv[])
 		{
 			ShowVersion();
 			return 0;
-		}
-		else if(s == "-q" || s == "--quiet")
-		{
-			if(console_verbosity == LogSink::DEBUG)
-				console_verbosity = LogSink::VERBOSE;
-			else if(console_verbosity == LogSink::VERBOSE)
-				console_verbosity = LogSink::NOTICE;
-			else if(console_verbosity == LogSink::NOTICE)
-				console_verbosity = LogSink::WARNING;
-			else if(console_verbosity == LogSink::WARNING)
-				console_verbosity = LogSink::ERROR;
-		}
-		else if(s == "--verbose")
-			console_verbosity = LogSink::VERBOSE;
-		else if(s == "--debug")
-			console_verbosity = LogSink::DEBUG;
-		else if(s == "-l" || s == "--logfile" ||
-		        s == "-L" || s == "--logfile-lines")
-		{
-			bool line_buffered = (s == "-L" || s == "--logfile-lines");
-			if(i+1 < argc) {
-				FILE *log = fopen(argv[++i], "wt");
-				g_log_sinks.emplace_back(new FILELogSink(log, line_buffered));
-			}
-			else
-			{
-				printf("%s requires an argument\n", s.c_str());
-				return 1;
-			}
 		}
 		else if(s == "--unused-pull")
 		{
