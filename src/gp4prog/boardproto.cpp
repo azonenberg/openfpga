@@ -352,10 +352,21 @@ void ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd)
 	frame.Send(hdev);
 }
 
-void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, bool forTrimming)
+void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, DownloadMode mode)
 {
-	DataFrame frame(DataFrame::WRITE_BITSTREAM_SRAM);
-	frame.push_back(forTrimming ? 0x87 : 0x80);
+	DataFrame::PacketType reqType, ack1Type, ack2Type;
+	if(mode == DownloadMode::PROGRAMMING) {
+		reqType = DataFrame::WRITE_BITSTREAM_NVRAM;
+		ack1Type = DataFrame::WRITE_BITSTREAM_NVRAM_ACK1;
+		ack2Type = DataFrame::WRITE_BITSTREAM_NVRAM_ACK2;
+	} else { // DownloadMode::{EMULATION,TRIMMING}
+		reqType = DataFrame::WRITE_BITSTREAM_SRAM;
+		ack1Type = DataFrame::WRITE_BITSTREAM_SRAM_ACK1;
+		ack2Type = DataFrame::WRITE_BITSTREAM_SRAM_ACK2;
+	}
+
+	DataFrame frame(reqType);
+	frame.push_back((mode == DownloadMode::TRIMMING) ? 0x87 : 0x80);
 	frame.push_back(0x00);
 	frame.push_back(0x00);
 
@@ -371,13 +382,13 @@ void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, bool forTri
 
 		if(frame.IsFull()) 
 		{
-			frame.Roundtrip(hdev, DataFrame::WRITE_BITSTREAM_SRAM_ACK1);
+			frame.Roundtrip(hdev, ack1Type);
 			frame = frame.Next();
 		}
 	}
 
 	if(!frame.IsEmpty())
-		frame.Roundtrip(hdev, DataFrame::WRITE_BITSTREAM_SRAM_ACK2);
+		frame.Roundtrip(hdev, ack2Type);
 }
 
 std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets)

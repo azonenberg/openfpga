@@ -160,8 +160,9 @@ public:
 
 	DataFrame(const char *ascii);
 
-	enum PacketTypes
+	enum PacketType
 	{
+		WRITE_BITSTREAM_NVRAM		= 0x01,
 		READ_BITSTREAM_START		= 0x02,
 		WRITE_BITSTREAM_SRAM		= 0x03,
 		CONFIG_IO					= 0x04,
@@ -169,9 +170,11 @@ public:
 		//6 so far unobserved
 		READ_BITSTREAM_CONT			= 0x07,
 		WRITE_BITSTREAM_SRAM_ACK1   = 0x07,
+		WRITE_BITSTREAM_NVRAM_ACK1  = 0x07,
 		CONFIG_SIGGEN				= 0x08,
 		ENABLE_SIGGEN				= 0x09,
 		GET_STATUS                  = 0x0a,
+		WRITE_BITSTREAM_NVRAM_ACK2	= 0x11,
 		READ_BITSTREAM_ACK          = 0x13,
 		WRITE_BITSTREAM_SRAM_ACK2   = 0x1a,
 		SET_STATUS_LED				= 0x21,
@@ -233,8 +236,15 @@ void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage);
 void ResetAllSiggens(hdevice hdev);
 void ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd);
 
+enum class DownloadMode
+{
+	EMULATION,
+	TRIMMING,
+	PROGRAMMING
+};
+
 std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets);
-void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, bool forTrimming = false);
+void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, DownloadMode mode);
 
 void SelectADCChannel(hdevice hdev, unsigned int chan);
 double ReadADC(hdevice hdev);

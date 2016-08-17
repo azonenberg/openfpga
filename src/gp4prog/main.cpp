@@ -27,6 +27,7 @@ void ShowVersion();
 
 const char *PartName(SilegoPart part);
 size_t BitstreamLength(SilegoPart part);
+const char *BitFunction(SilegoPart part, size_t bitno);
 
 bool SocketTest(hdevice hdev, SilegoPart part);
 uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq);
@@ -54,7 +55,9 @@ int main(int argc, char* argv[])
 	bool reset = false;
 	bool test = false;
 	unsigned rcOscFreq = 0;
-	string emulateFilename, readFilename;
+	string downloadFilename, uploadFilename;
+	bool programNvram = false;
+	bool force = false;
 	double voltage = 0.0;
 	vector<int> nets;
 
@@ -85,7 +88,7 @@ int main(int argc, char* argv[])
 		{
 			if(i+1 < argc)
 			{
-				readFilename = argv[++i];
+				uploadFilename = argv[++i];
 			}
 			else
 			{
@@ -118,9 +121,14 @@ int main(int argc, char* argv[])
 		}
 		else if(s == "-e" || s == "--emulate")
 		{
+			if(!downloadFilename.empty())
+			{
+				printf("only one --emulate or --program option can be specified\n");
+				return 1;
+			}
 			if(i+1 < argc)
 			{
-				emulateFilename = argv[++i];
+				downloadFilename = argv[++i];
 			}
 			else
 			{
@@ -128,6 +136,26 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 		}
+		else if(s == "--program")
+		{
+			if(!downloadFilename.empty())
+			{
+				printf("only one --emulate or --program option can be specified\n");
+				return 1;
+			}
+			if(i+1 < argc)
+			{
+				downloadFilename = argv[++i];
+				programNvram = true;
+			}
+			else
+			{
+				printf("--program requires an argument\n");
+				return 1;
+			}
+		}
+		else if(s == "--force")
+			force = true;
 		else if(s == "-v" || s == "--voltage")
 		{
 			if(i+1 < argc)
@@ -179,9 +207,9 @@ int main(int argc, char* argv[])
 		}
 
 		//assume it's the bitstream file if it's the first non-switch argument
-		else if( (s[0] != '-') && (emulateFilename == "") )
+		else if( (s[0] != '-') && (downloadFilename == "") )
 		{
-			emulateFilename = s;
+			downloadFilename = s;
 		}
 
 		else
@@ -235,7 +263,7 @@ int main(int argc, char* argv[])
 	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
 
 	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
-	if(emulateFilename.empty() && readFilename.empty() && voltage == 0.0 && nets.empty() && 
+	if(downloadFilename.empty() && uploadFilename.empty() && voltage == 0.0 && nets.empty() && 
 	   rcOscFreq == 0 && !test && !reset)
 	{
 		LogNotice("No actions requested, exiting\n");
@@ -255,7 +283,7 @@ int main(int argc, char* argv[])
 	SilegoPart detectedPart = SilegoPart::UNRECOGNIZED;
 	vector<uint8_t> programmedBitstream;
 	BitstreamKind bitstreamKind;
-	if(!(readFilename.empty() && emulateFilename.empty() && rcOscFreq == 0 && !test)) {
+	if(!(uploadFilename.empty() && downloadFilename.empty() && rcOscFreq == 0 && !test)) {
 		//Detect the part that's plugged in.
 		LogNotice("Detecting part\n");
 		SilegoPart parts[] = { SLG46140V, SLG46620V };
@@ -302,10 +330,20 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	if(programNvram && bitstreamKind != BitstreamKind::EMPTY) {
+		if(!force) {
+			LogError("Non-empty part detected; refusing to program without --force\n");
+			SetStatusLED(hdev, 0);
+			return 1;
+		} else {
+			LogNotice("Non-empty part detected and --force is specified; proceeding\n");
+		}
+	}
+
 	//We already have the programmed bitstream, so simply write it to a file
-	if(!readFilename.empty()) {
-		LogNotice("Writing programmed bitstream to %s\n", readFilename.c_str());
-		WriteBitstream(readFilename, programmedBitstream);
+	if(!uploadFilename.empty()) {
+		LogNotice("Writing programmed bitstream to %s\n", uploadFilename.c_str());
+		WriteBitstream(uploadFilename, programmedBitstream);
 	}
 
 	//Do a socket test before doing anything else, to catch failures early
@@ -341,9 +379,9 @@ int main(int argc, char* argv[])
 	}
 
 	//If we're programming, do that first
-	if(!emulateFilename.empty())
+	if(!downloadFilename.empty())
 	{
-		vector<uint8_t> newBitstream = ReadBitstream(emulateFilename);
+		vector<uint8_t> newBitstream = ReadBitstream(downloadFilename);
 		if(newBitstream.empty())
 			return 1;
 		if(newBitstream.size() != BitstreamLength(detectedPart) / 8) {
@@ -356,11 +394,46 @@ int main(int argc, char* argv[])
 		newBitstream[246] |= rcFtw << 7;
 		newBitstream[247] |= rcFtw >> 1;
 
-		//Load bitstream
-		LogNotice("Downloading bitstream into SRAM\n");
-		DownloadBitstream(hdev, newBitstream);
+		if(!programNvram) {
+			//Load bitstream into SRAM
+			LogNotice("Downloading bitstream into SRAM\n");
+			DownloadBitstream(hdev, newBitstream, DownloadMode::EMULATION);
+		} else {
+			//Program bitstream into NVM
+			LogNotice("Programming bitstream into NVM\n");
+			DownloadBitstream(hdev, newBitstream, DownloadMode::PROGRAMMING);
 
-		LogDebug("Unstucking I/O pins after SRAM programming\n");
+			LogNotice("Verifying programmed bitstream\n");
+			size_t bitstreamLength = BitstreamLength(detectedPart) / 8;
+			vector<uint8_t> bitstreamToVerify = UploadBitstream(hdev, bitstreamLength);
+			bool failed = false;
+			for(size_t i = 0; i < bitstreamLength * 8; i++) {
+				bool expectedBit = ((newBitstream     [i/8] >> (i%8)) & 1) == 1;
+				bool actualBit   = ((bitstreamToVerify[i/8] >> (i%8)) & 1) == 1;
+				if(expectedBit != actualBit) {
+					LogNotice("Bit %4zd differs: expected %d, actual %d",
+					          i, (int)expectedBit, (int)actualBit);
+					failed = true;
+
+					//Explain what undocumented bits do; most of these are also trimming values, and so
+					//it is normal for them to vary even if flashing the exact same bitstream many times.
+					const char *bitFunction = BitFunction(detectedPart, i);
+					if(bitFunction)
+						LogNotice(" (bit meaning: %s)\n", bitFunction);
+					else
+						LogNotice("\n");
+				}
+			}
+
+			if(failed)
+				LogError("Verification failed\n");
+			else
+				LogNotice("Verification passed\n");
+		}
+
+		//Developer board I/O pins become stuck after both SRAM and NVM programming;
+		//resetting them explicitly makes LEDs and outputs work again.
+		LogDebug("Unstucking I/O pins after programming\n");
 		IOConfig ioConfig;
 		for(size_t i = 2; i <= 20; i++)
 			ioConfig.driverConfigs[i] = TP_RESET;
@@ -417,6 +490,8 @@ void ShowUsage()
 		"        Prints additional information about the design.\n"
 		"    --debug\n"
 		"        Prints lots of internal debugging information.\n"
+		"    --force\n"
+		"        Perform actions that may be potentially inadvisable.\n"
 		"\n"
 		"    The following options are instructions for the developer board. They are\n"
 		"    executed in the order listed here, regardless of their order on command line.\n"
@@ -434,6 +509,11 @@ void ShowUsage()
 		"    -e, --emulate        <bitstream filename>\n"
 		"        Downloads the specified bitstream into volatile memory.\n"
 		"        Implies --reset --voltage 3.3.\n"
+		"    --program            <bitstream filename>\n"
+		"        Programs the specified bitstream into non-volatile memory.\n"
+		"        THIS CAN BE DONE ONLY ONCE FOR EVERY INTEGRATED CIRCUIT.\n"
+		"        Attempts to program non-empty parts will be rejected unless --force\n"
+		"        is specified.\n"
 		"    -v, --voltage        <voltage>\n"
 		"        Adjusts Vdd to the specified value in volts (0V to 5.5V), ±70mV.\n"
 		"    -n, --nets           <net list>\n"
@@ -475,6 +555,55 @@ size_t BitstreamLength(SilegoPart part)
 
 		default: LogFatal("Unknown part\n");
 	}
+}
+
+const char *BitFunction(SilegoPart part, size_t bitno)
+{
+	//The conditionals in this function are structured to resemble the structure of the datasheet.
+	//This is because the datasheet accurately *groups* reserved bits according to function;
+	//they simply black out the parts that aren't meant to be public, but do not mash them together.
+
+	const char *bitFunction = NULL;
+	
+	switch(part)
+	{
+		case SLG46620V:
+			if((bitno >= 570 && bitno <= 575) ||
+			   bitno == 833 ||
+			   bitno == 835 ||
+			   bitno == 881)
+				bitFunction = NULL;
+			else if(bitno >= 887 && bitno <= 891)
+				bitFunction = "Vref fine tune trimming value";
+			else if(bitno == 922 ||
+			        bitno == 937 ||
+			        bitno == 938 ||
+			        bitno == 939 ||
+			        (bitno >= 1003 && bitno <= 1015) ||
+			        (bitno >= 1594 && bitno <= 1599))
+				bitFunction = NULL;
+			else if(bitno >= 1975 && bitno <= 1981)
+				bitFunction = "RC oscillator trimming value";
+			else if((bitno >= 1982 && bitno <= 1987) ||
+			        (bitno >= 1988 && bitno <= 1995) ||
+			        (bitno >= 1996 && bitno <= 2001) ||
+			        (bitno >= 2002 && bitno <= 2007) ||
+			        (bitno >= 2013 && bitno <= 2014) ||
+			        (bitno >= 2021 && bitno <= 2027) ||
+			        (bitno >= 2028 && bitno <= 2029) ||
+			        bitno == 2030)
+				bitFunction = NULL;
+			else
+				bitFunction = "see datasheet";
+			break;
+
+		default: LogFatal("Unknown part\n");
+	}
+
+	if(bitFunction == NULL)
+		bitFunction = "unknown--reserved";
+
+	return bitFunction;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -528,7 +657,7 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 	}
 
 	LogVerbose("Downloading test bitstream\n");
-	DownloadBitstream(hdev, loopbackBitstream);
+	DownloadBitstream(hdev, loopbackBitstream, DownloadMode::EMULATION);
 
 	LogVerbose("Initializing test I/O\n");
 	double supplyVoltage = 5.0;
@@ -609,7 +738,7 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 	Reset(hdev);
 
 	LogVerbose("Downloading oscillator trimming bitstream\n");
-	DownloadBitstream(hdev, trimBitstream, /*forTrimming=*/true);
+	DownloadBitstream(hdev, trimBitstream, DownloadMode::TRIMMING);
 
 	LogVerbose("Configuring I/O for oscillator trimming\n");
 	IOConfig config;
