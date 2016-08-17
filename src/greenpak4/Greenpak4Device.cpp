@@ -597,7 +597,26 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 			bitstream[889] = false;
 			bitstream[888] = true;
 			bitstream[887] = false;
-		
+
+			//Device ID; immutable on the device but added to aid verification
+			bitstream[1016] = false;
+			bitstream[1017] = true;
+			bitstream[1018] = false;
+			bitstream[1019] = true;
+			bitstream[1020] = true;
+			bitstream[1021] = false;
+			bitstream[1022] = true;
+			bitstream[1023] = false;
+
+			bitstream[2040] = true;
+			bitstream[2041] = false;
+			bitstream[2042] = true;
+			bitstream[2043] = false;
+			bitstream[2044] = false;
+			bitstream[2045] = true;
+			bitstream[2046] = false;
+			bitstream[2047] = true;
+
 			break;
 	}
 		
