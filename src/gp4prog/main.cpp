@@ -593,6 +593,10 @@ const char *BitFunction(SilegoPart part, size_t bitno)
 			        (bitno >= 2028 && bitno <= 2029) ||
 			        bitno == 2030)
 				bitFunction = NULL;
+			else if(bitno >= 2031 && bitno <= 2038)
+				bitFunction = "pattern ID";
+			else if(bitno == 2039)
+				bitFunction = "read protection";
 			else
 				bitFunction = "see datasheet";
 			break;
