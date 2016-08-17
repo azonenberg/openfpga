@@ -306,7 +306,7 @@ int main(int argc, char* argv[])
 	SilegoPart detectedPart = SilegoPart::UNRECOGNIZED;
 	vector<uint8_t> programmedBitstream;
 	BitstreamKind bitstreamKind;
-	if(!(uploadFilename.empty() && downloadFilename.empty() && rcOscFreq == 0 && !test)) {
+	if(!(uploadFilename.empty() && downloadFilename.empty() && rcOscFreq == 0 && !test && !programNvram)) {
 		//Detect the part that's plugged in.
 		LogNotice("Detecting part\n");
 		SilegoPart parts[] = { SLG46140V, SLG46620V };
