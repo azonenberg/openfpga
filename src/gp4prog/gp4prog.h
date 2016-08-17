@@ -220,18 +220,18 @@ void Reset(hdevice hdev);
 void SetStatusLED(hdevice hdev, bool status);
 void SetIOConfig(hdevice hdev, IOConfig& config);
 
-enum SiggenStatus
+enum class SiggenCommand
 {
-	SIGGEN_PAUSE	= 0x00,
-	SIGGEN_START	= 0x01,
-	SIGGEN_STOP		= 0x02,
-	SIGGEN_NOP		= 0x03,
-	SIGGEN_RESET	= 0x07
+	PAUSE	= 0x00,
+	START	= 0x01,
+	STOP	= 0x02,
+	NOP		= 0x03,
+	RESET	= 0x07
 };
 
 void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage);
 void ResetAllSiggens(hdevice hdev);
-void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status);
+void ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd);
 
 std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets);
 void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, bool forTrimming = false);

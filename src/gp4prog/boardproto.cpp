@@ -330,23 +330,23 @@ void ResetAllSiggens(hdevice hdev)
 
 	for(unsigned int i=1; i<=19; i++)
 	{
-		frame.push_back(SIGGEN_RESET);
+		frame.push_back((int)SiggenCommand::RESET);
 	}
 
 	frame.Send(hdev);
 }
 
-void SetSiggenStatus(hdevice hdev, unsigned int chan, unsigned int status)
+void ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd)
 {
 	DataFrame frame(DataFrame::ENABLE_SIGGEN);
 
 	for(unsigned int i=1; i<=19; i++)
 	{
 		if(i == chan)					//apply our status
-			frame.push_back(status);
+			frame.push_back((int)cmd);
 
 		else
-			frame.push_back(SIGGEN_NOP);	//no change
+			frame.push_back((int)SiggenCommand::NOP);	//no change
 	}
 
 	frame.Send(hdev);
