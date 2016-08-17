@@ -36,10 +36,9 @@ bool CheckStatus(hdevice hdev);
 enum class BitstreamKind {
 	UNRECOGNIZED,
 	EMPTY,
-	PROGRAMMED,
-	PROTECTED // implies PROGRAMMED
+	PROGRAMMED
 };
-BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream);
+BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream, uint8_t &patternId);
 
 vector<uint8_t> BitstreamFromHex(string hex);
 vector<uint8_t> ReadBitstream(string fname);
@@ -58,6 +57,8 @@ int main(int argc, char* argv[])
 	string downloadFilename, uploadFilename;
 	bool programNvram = false;
 	bool force = false;
+	uint8_t patternId = 0;
+	bool readProtect = false;	
 	double voltage = 0.0;
 	vector<int> nets;
 
@@ -156,6 +157,28 @@ int main(int argc, char* argv[])
 		}
 		else if(s == "--force")
 			force = true;
+		else if(s == "--pattern-id")
+		{
+			if(i+1 < argc)
+			{
+				char *arg = argv[++i];
+				long id = strtol(arg, &arg, 10);
+				if(*arg == '\0' && id >= 0 && id <= 255)
+					patternId = id;
+				else
+				{
+					printf("--pattern-id argument must be a number between 0 and 255\n");
+					return 1;
+				}
+			}
+			else
+			{
+				printf("--pattern-id requires an argument\n");
+				return 1;
+			}
+		}
+		else if(s == "--read-protect")
+			readProtect = true;
 		else if(s == "-v" || s == "--voltage")
 		{
 			if(i+1 < argc)
@@ -295,7 +318,8 @@ int main(int argc, char* argv[])
 			LogVerbose("Reading bitstream from part\n");
 			programmedBitstream = UploadBitstream(hdev, BitstreamLength(part) / 8);
 			
-			bitstreamKind = ClassifyBitstream(part, programmedBitstream);
+			uint8_t patternId = 0;
+			bitstreamKind = ClassifyBitstream(part, programmedBitstream, patternId);
 			switch(bitstreamKind)
 			{
 				case BitstreamKind::EMPTY:
@@ -303,12 +327,7 @@ int main(int argc, char* argv[])
 					break;
 
 				case BitstreamKind::PROGRAMMED:
-					LogNotice("Detected pre-programmed %s\n", PartName(part));
-					break;
-
-
-				case BitstreamKind::PROTECTED:
-					LogNotice("Detected pre-programmed and read-protected %s\n", PartName(part));
+					LogNotice("Detected programmed %s (pattern ID %d)\n", PartName(part), patternId);
 					break;
 
 				case BitstreamKind::UNRECOGNIZED:
@@ -393,6 +412,13 @@ int main(int argc, char* argv[])
 		//Set trim value reg<1981:1975>
 		newBitstream[246] |= rcFtw << 7;
 		newBitstream[247] |= rcFtw >> 1;
+
+		//Set pattern ID reg<2031:2038>
+		newBitstream[253] |= patternId << 7;
+		newBitstream[254] |= patternId >> 1;
+
+		//Set read protection reg<2039>
+		newBitstream[254] |= ((uint8_t)readProtect) << 7;
 
 		if(!programNvram) {
 			//Load bitstream into SRAM
@@ -787,29 +813,26 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Bitstream classification
 
-BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream)
+BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream, uint8_t &patternId)
 {
 	vector<uint8_t> emptyBitstream(BitstreamLength(part) / 8);
-	vector<uint8_t> preprogrammedMask(BitstreamLength(part) / 8);
-	pair<size_t, uint8_t> protectedMask;
+	vector<uint8_t> factoryMask(BitstreamLength(part) / 8);
 
 	switch(part) {
 		case SLG46620V: 
 			emptyBitstream[0x7f] = 0x5a;
 			emptyBitstream[0xff] = 0xa5;
-			//TODO: Some trim value? Figure out exactly what this does
-			preprogrammedMask[0xf7] = 0xff; 
-			preprogrammedMask[0xf8] = 0xff;
-			protectedMask = make_pair(0xfe, 0x80);
+			//TODO: RC oscillator trim value, why is it factory programmed?
+			factoryMask[0xf7] = 0xff; 
+			factoryMask[0xf8] = 0xff;
 			break;
 
 		case SLG46140V:
 			emptyBitstream[0x7b] = 0x5a;
 			emptyBitstream[0x7f] = 0xa5;
-			//TODO: Some trim value? Figure out exactly what this does
-			preprogrammedMask[0x77] = 0xff;
-			preprogrammedMask[0x78] = 0xff;
-			protectedMask = make_pair(0x7e, 0x80);
+			//TODO: RC oscillator trim value, why is it factory programmed?
+			factoryMask[0x77] = 0xff;
+			factoryMask[0x78] = 0xff;
 			break;
 
 		default:
@@ -822,31 +845,36 @@ BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream)
 	//Iterate over the bitstream, and print our decisions after every octet, in --debug mode.
 	bool isPresent = true;
 	bool isProgrammed = false;
-	bool isProtected = false;
 	for(size_t i = bitstream.size() - 1; i > 0; i--) {
-		uint8_t maskedOctet = bitstream[i] & ~preprogrammedMask[i];
+		uint8_t maskedOctet = bitstream[i] & ~factoryMask[i];
 		if(maskedOctet != 0x00)
 			LogDebug("mask(bitstream[0x%02zx]) = 0x%02hhx\n", i, maskedOctet);
 
-		if(emptyBitstream[i] != 0x00 && maskedOctet != emptyBitstream[i]) {
+		if(emptyBitstream[i] != 0x00 && maskedOctet != emptyBitstream[i] && isPresent) {
 			LogDebug("Bitstream does not match empty bitstream signature, part not present.\n");
 			isPresent = false;
 			break;
-		} else if(emptyBitstream[i] == 0x00 && maskedOctet != 0x00) {
+		} else if(emptyBitstream[i] == 0x00 && maskedOctet != 0x00 && !isProgrammed) {
 			LogDebug("Bitstream nonzero where empty bitstream isn't, part programmed.\n");
 			isProgrammed = true;
 		}
+	}
 
-		// TODO: verify that this works
-		if(protectedMask.first == i && protectedMask.second != 0 && 
-		   (bitstream[i] & protectedMask.second) == protectedMask.second) {
-			LogDebug("Bitstream matches protected mask, part protected.\n");
-			isProtected = true;
-		}
+	switch(part) {
+		case SLG46620V: 
+			patternId = (bitstream[0xfd] >> 7) | (bitstream[0xfe] << 1);
+			break;
+	
+		case SLG46140V:
+			patternId = (bitstream[0x7d] >> 7) | (bitstream[0x7e] << 1);
+			break;
+
+		default:
+			LogFatal("Unknown part\n");
 	}
 
 	if(isPresent && isProgrammed)
-		return isProtected ? BitstreamKind::PROTECTED : BitstreamKind::PROGRAMMED;
+		return BitstreamKind::PROGRAMMED;
 	else if(isPresent)
 		return BitstreamKind::EMPTY;
 	else
