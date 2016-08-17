@@ -594,18 +594,25 @@ const char *BitFunction(SilegoPart part, size_t bitno)
 	switch(part)
 	{
 		case SLG46620V:
-			if((bitno >= 570 && bitno <= 575) ||
-			   bitno == 833 ||
-			   bitno == 835 ||
-			   bitno == 881)
+			if(bitno >= 570 && bitno <= 575)
+				bitFunction = NULL;
+			else if(bitno == 833)
+				bitFunction = "ACMP5 speed double";
+			else if(bitno == 835)
+				bitFunction = "ACMP4 speed double";
+			else if(bitno == 881)
 				bitFunction = NULL;
 			else if(bitno >= 887 && bitno <= 891)
-				bitFunction = "Vref fine tune trimming value";
-			else if(bitno == 922 ||
-			        bitno == 937 ||
-			        bitno == 938 ||
-			        bitno == 939 ||
-			        (bitno >= 1003 && bitno <= 1015) ||
+				bitFunction = "Vref value fine tune";
+			else if(bitno == 922)
+				bitFunction = "bandgap 1x buffer enable";
+			else if(bitno == 937)
+				bitFunction = "Vref op amp chopper frequency select";
+			else if(bitno == 938)
+				bitFunction = "bandgap op amp offset chopper enable";
+			else if(bitno == 939)
+				bitFunction = "Vref op amp offset chopper enable";
+			else if((bitno >= 1003 && bitno <= 1015) ||
 			        (bitno >= 1594 && bitno <= 1599))
 				bitFunction = NULL;
 			else if(bitno >= 1975 && bitno <= 1981)
