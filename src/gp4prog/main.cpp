@@ -510,11 +510,8 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 	{
 		case SLG46620V:
 			// To reproduce:
-			// module top(
-			// 		(* LOC="P2" *) input i,
-			// 		output o1, o2, o3, o4, o5, o6, o7, o8, o9, o10, o11, o12, o13, o14, o15, o16, o17
-			// 	);
-			// 	assign {o1, o2, o3, o4, o5, o6, o7, o8, o9, o10, o11, o12, o13, o14, o15, o16, o17} = {17{i}};
+			// module top((* LOC="P2" *) input i, output [16:0] o));
+			// 	assign o = {17{i}};
 			// endmodule
 			loopbackBitstream = BitstreamFromHex(
 				"0000000000000000000000000000000000000000000000000000000000000000"
@@ -590,7 +587,7 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 		case SLG46620V:
 			// To reproduce:
 			// module top((* LOC="P13" *) output q);
-			// 	GP_RCOSC #(.AUTO_PWRDN(1'b0)) rcosc (.CLKOUT_FABRIC(q));
+			// 	GP_RCOSC rcosc (.CLKOUT_FABRIC(q));
 			// endmodule
 			trimBitstream = BitstreamFromHex(
 				"0000000000000000000000000000000000000000000000000000000000000000"
