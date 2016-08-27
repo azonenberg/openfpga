@@ -22,7 +22,7 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	LogSink::Severity console_verbosity = LogSink::NOTICE;
+	Severity console_verbosity = Severity::NOTICE;
 
 	//Netlist file
 	string fname = "";
@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
 	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
 	
 	//Print header
-	if(console_verbosity >= LogSink::NOTICE)
+	if(console_verbosity >= Severity::NOTICE)
 		ShowVersion();
 	
 	//Print configuration

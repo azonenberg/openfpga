@@ -25,7 +25,7 @@ static void PrintRow(string kind, int used, int total)
 	if(total == 0) 
 		return;
 
-	LogSink::Severity severity = (used > 0) ? LogSink::NOTICE : LogSink::VERBOSE;
+	Severity severity = (used > 0) ? Severity::NOTICE : Severity::VERBOSE;
 	string padded_kind = kind + std::string(14 - kind.size(), ' ');
 	Log(severity, "    %s%2d/%2d (%d %%)\n", padded_kind.c_str(), used, total, used*100/total);
 }

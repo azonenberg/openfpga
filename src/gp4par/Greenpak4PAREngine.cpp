@@ -205,7 +205,7 @@ uint32_t Greenpak4PAREngine::ComputeCongestionCost()
 
 void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 {
-	LogNotice("\nUnroutable nets (%zu):\n", unroutes.size());
+	Log(Severity::ERROR, "\nUnroutable nets (%zu):\n", unroutes.size());
 	for(auto edge : unroutes)
 	{
 		auto source = static_cast<Greenpak4NetlistEntity*>(edge->m_sourcenode->GetData());
@@ -218,7 +218,7 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 		if(scell != NULL)
 		{
 			auto entity = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
-			LogNotice("    from cell %s (mapped to %s) port %s ",
+			Log(Severity::ERROR, "    from cell %s (mapped to %s) port %s ",
 				scell->m_name.c_str(),
 				entity->GetDescription().c_str(),
 				edge->m_sourceport.c_str()
@@ -227,16 +227,16 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 		else if(sport != NULL)
 		{		
 			auto iob = static_cast<Greenpak4IOB*>(edge->m_sourcenode->GetMate()->GetData());
-			LogNotice("    from port %s (mapped to IOB_%d)", sport->m_name.c_str(), iob->GetPinNumber());
+			Log(Severity::ERROR, "    from port %s (mapped to IOB_%d)", sport->m_name.c_str(), iob->GetPinNumber());
 		}
 		else
-			LogNotice("    from [invalid] ");
+			Log(Severity::ERROR, "    from [invalid] ");
 		
-		LogNotice(" to ");
+		Log(Severity::ERROR, " to ");
 		if(dcell != NULL)
 		{
 			auto entity = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
-			LogNotice(
+			Log(Severity::ERROR, 
 				"cell %s (mapped to %s) pin %s\n",
 				dcell->m_name.c_str(),
 				entity->GetDescription().c_str(),
@@ -244,12 +244,12 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 				);
 		}
 		else if(dport != NULL)
-			LogNotice("port %s\n", dport->m_name.c_str());
+			Log(Severity::ERROR, "port %s\n", dport->m_name.c_str());
 		else
-			LogNotice("[invalid]\n");
+			Log(Severity::ERROR, "[invalid]\n");
 	}
 	
-	LogNotice("\n");
+	Log(Severity::ERROR, "\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
