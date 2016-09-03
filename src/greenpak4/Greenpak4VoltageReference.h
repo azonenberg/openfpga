@@ -54,6 +54,14 @@ public:
 	//mux selector for ACMP voltage inputs
 	unsigned int GetACMPMuxSel();
 
+	//return true if we're reporting a constant voltage (divided from the bandgap)
+	bool IsConstantVoltage()
+	{ return (m_vin.IsPowerRail() && !m_vin.GetPowerRailValue()); }
+
+	//return the output voltage (if constant) in mV
+	unsigned int GetOutputVoltage()
+	{ return m_vref; }
+
 protected:
 	Greenpak4EntityOutput m_vin;
 
