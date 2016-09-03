@@ -275,9 +275,9 @@ void InferExtraNodes(
 		madeChanges = false;
 	}
 	
-	LogDebug("---foobar---\n");
+	LogDebug("---foobar (%d vrefs)---\n", device->GetVrefCount());
 	
-	//If one GP_VREF drives multiple GP_ACMP/GP_DAC/GP_*BUF blocks, split it
+	//If one GP_VREF drives multiple GP_ACMP/GP_DAC blocks, split it
 	//This must come after the IOB pass since that might infer GP_ACMPs we need to contend with
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
 	{
@@ -292,10 +292,10 @@ void InferExtraNodes(
 		bool found_target = false;
 		for(int i=net->m_nodeports.size()-1; i>=0; i--)
 		{
-			//Skip anything not a comparator, DAC, or IOB
+			//Skip anything not a comparator or DAC
 			auto load = net->m_nodeports[i].m_cell;
 			LogDebug("    load %s type %s\n", load->m_name.c_str(), load->m_type.c_str());
-			if( (load->m_type != "GP_ACMP") && (load->m_type != "GP_DAC") && !load->IsIOB() )
+			if( (load->m_type != "GP_ACMP") && (load->m_type != "GP_DAC") )
 				continue;
 				
 			//If this is the first one, flag it but don't do anything
@@ -970,8 +970,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		};
 		
 		//DAC voltage references driving DAC inputs
-		vrefs[6]->AddEdge("OUT", dacs[0], "VREF");
-		vrefs[7]->AddEdge("OUT", dacs[1], "VREF");
+		vrefs[6]->AddEdge("VOUT", dacs[0], "VREF");
+		vrefs[7]->AddEdge("VOUT", dacs[1], "VREF");
 		
 		//Static 1/0 for register configuration
 		for(size_t i=0; i<device->GetDACCount(); i++)
