@@ -312,7 +312,10 @@ bool Greenpak4PGA::Save(bool* bitstream)
 	bitstream[m_configBase + 6] = m_hasNonADCLoads;
 
 	//Force the ADC on
-	bitstream[m_configBase + 70] = m_hasNonADCLoads;
+	//Note that other logic (like the DAC) can force this too
+	//so don't write 0 if we don't need it ourself
+	if(m_hasNonADCLoads)
+		bitstream[m_configBase + 70] = true;
 
 	//Enable the PGA output to non-ADC loads
 	bitstream[m_configBase + 71] = m_hasNonADCLoads;
