@@ -82,16 +82,16 @@ module Dac(bg_ok, vout, vout2);
 	// DAC driving the voltage reference
 
 	//This DAC isn't working! Not sure why
-	(* LOC = "DAC_1" *)
 	wire vdac;
+	(* LOC = "DAC_1" *)
 	GP_DAC dac(
 		.DIN(8'hff),
 		.VOUT(vdac),
 		.VREF(vref_1v0)
 	);
 
-	(* LOC = "DAC_0" *)
 	wire vdac2;
+	(* LOC = "DAC_0" *)
 	GP_DAC dac2(
 		.DIN(8'h80),
 		.VOUT(vdac2),
