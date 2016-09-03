@@ -163,6 +163,8 @@ module Blinky(
 
 	//Hard IP post-divider
 	wire led_lfosc_raw;
+	(* LOC = "COUNT8_7" *)		//device is pretty full, PAR fails without this constraint
+								//TODO: better optimizer so we can figure this out without help?
 	GP_COUNT8 #(
 		.RESET_MODE("LEVEL"),
 		.COUNT_TO(COUNT_MAX),
