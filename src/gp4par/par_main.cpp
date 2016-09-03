@@ -270,6 +270,7 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		}
 	}
 
+	//TODO: Cannot use DAC1 when PGA is used either (undocumented conflict, datasheet says nothing about this)
 	//TODO: Cannot use DAC1 when ADC is used
 	//TODO: Cannot use DAC0 when ADC/PGA pseudo-diff mode is used
 }

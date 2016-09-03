@@ -93,7 +93,7 @@ module Dac(bg_ok, vout, vout2);
 	wire vdac2;
 	(* LOC = "DAC_0" *)
 	GP_DAC dac2(
-		.DIN(8'h80),
+		.DIN(8'hff),
 		.VOUT(vdac2),
 		.VREF(vref_1v0)
 	);
@@ -101,20 +101,19 @@ module Dac(bg_ok, vout, vout2);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Drive one pin with the DAC output directly, no vref
 	
-	assign vout = vdac;
+	//assign vout = vdac;
 	assign vout2 = vdac2;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Drive the other via a buffered reference
 
-	/*
 	GP_VREF #(
 		.VIN_DIV(4'd1),
 		.VREF(16'd00)
 	) vrdac (
 		.VIN(vdac),
-		.VOUT(vout2)
-	);*/
+		.VOUT(vout)
+	);
 	
 
 endmodule

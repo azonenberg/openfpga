@@ -32,7 +32,6 @@ public:
 		unsigned int cbase_pwr,
 		unsigned int cbase_insel,
 		unsigned int cbase_aon,
-		unsigned int cbase_aon2,
 		unsigned int dacnum);
 
 	//Serialization

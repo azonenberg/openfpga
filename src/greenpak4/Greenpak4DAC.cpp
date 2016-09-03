@@ -31,7 +31,6 @@ Greenpak4DAC::Greenpak4DAC(
 	unsigned int cbase_pwr,
 	unsigned int cbase_insel,
 	unsigned int cbase_aon,
-	unsigned int cbase_aon2,
 	unsigned int dacnum)
 	: Greenpak4BitstreamEntity(device, 0, -1, -1, -1)
 		, m_vref(device->GetGround())
@@ -40,7 +39,6 @@ Greenpak4DAC::Greenpak4DAC(
 		, m_cbasePwr(cbase_pwr)
 		, m_cbaseInsel(cbase_insel)
 		, m_cbaseAon(cbase_aon)
-		, m_cbaseAon2(cbase_aon2)
 {
 	for(unsigned int i=0; i<8; i++)
 		m_din[i] = device->GetGround();
@@ -165,8 +163,8 @@ bool Greenpak4DAC::Save(bool* bitstream)
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
-	//Turn the ADC analog block on (required for any DAC)
-	bitstream[m_cbaseAon] = true;
+	//Apparently DAC1 will die a horrible death if the ADC analog part is on
+	//so don't turn it on even though the datasheet kinda implies we might need it?
 
 	//Turn our DAC on
 	bitstream[m_cbasePwr] = true;
@@ -175,7 +173,7 @@ bool Greenpak4DAC::Save(bool* bitstream)
 	//This is a legal no-op in other situations.
 	//TODO: maybe add a routing preference so that DAC0 is preferred to DAC1 in a single-DAC design
 	//(otherwise we're wasting a bit of power)
-	bitstream[m_cbaseAon2] = true;
+	bitstream[m_cbaseAon] = true;
 
 	//Input selector (hard code to "register" for now)
 	//WTF, the config is flipped from DAC0 to DAC1??? (see SLG46620V table 40)

@@ -343,8 +343,8 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//TODO: ADC
 
 	//The DACs
-	m_dacs.push_back(new Greenpak4DAC(this, 844, 840, 843, 885, 885, 0));
-	m_dacs.push_back(new Greenpak4DAC(this, 823, 834, 883, 885, 840, 1));
+	m_dacs.push_back(new Greenpak4DAC(this, 844, 840, 843, 840, 0));
+	m_dacs.push_back(new Greenpak4DAC(this, 823, 834, 883, 840, 1));
 
 	//Bandgap reference
 	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923);
@@ -594,6 +594,14 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 	switch(m_part)
 	{
 		case GREENPAK4_SLG46620:
+
+			//FIXME: Disable ADC block (until we have the logic for that implemented)
+			bitstream[486] = true;
+			bitstream[487] = true;
+			bitstream[488] = true;
+			bitstream[489] = true;
+			bitstream[490] = true;
+			bitstream[491] = true;
 
 			//Vref fine tune, magic value from datasheet
 			bitstream[891] = true;
