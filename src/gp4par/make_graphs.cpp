@@ -275,8 +275,6 @@ void InferExtraNodes(
 		madeChanges = false;
 	}
 
-	LogDebug("---foobar (%d vrefs)---\n", device->GetVrefCount());
-
 	//If one GP_VREF drives multiple GP_ACMP/GP_DAC blocks, split it
 	//This must come after the IOB pass since that might infer GP_ACMPs we need to contend with
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
@@ -285,7 +283,7 @@ void InferExtraNodes(
 		Greenpak4NetlistCell* cell = it->second;
 		if(cell->m_type != "GP_VREF")
 			continue;
-		LogDebug("vref %s\n", cell->m_name.c_str());
+		//LogDebug("vref %s\n", cell->m_name.c_str());
 
 		//See what we drive
 		auto net = cell->m_connections["VOUT"][0];
@@ -294,7 +292,7 @@ void InferExtraNodes(
 		{
 			//Skip anything not a comparator or DAC
 			auto load = net->m_nodeports[i].m_cell;
-			LogDebug("    load %s type %s\n", load->m_name.c_str(), load->m_type.c_str());
+			//LogDebug("    load %s type %s\n", load->m_name.c_str(), load->m_type.c_str());
 			if( (load->m_type != "GP_ACMP") && (load->m_type != "GP_DAC") )
 				continue;
 
