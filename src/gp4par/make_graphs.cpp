@@ -1002,7 +1002,11 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		for(int i=0; i<2; i++)
 		{
 			for(int j=0; j<6; j++)
-				dacs[i]->AddEdge("VOUT", vrefs[i], "VIN");
+				dacs[i]->AddEdge("VOUT", vrefs[j], "VIN");
 		}
+
+		//DACs can drive I/O pins directly without going through a GP_VREF
+		dacs[0]->AddEdge("VOUT", pin19, "IN");
+		dacs[1]->AddEdge("VOUT", pin18, "IN");
 	}
 }
