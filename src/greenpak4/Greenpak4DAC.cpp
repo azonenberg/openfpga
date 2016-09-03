@@ -35,16 +35,6 @@ Greenpak4DAC::Greenpak4DAC(
 	unsigned int dacnum)
 	: Greenpak4BitstreamEntity(device, 0, -1, -1, -1)
 		, m_vref(device->GetGround())
-		, m_din({
-				device->GetGround(),
-				device->GetGround(),
-				device->GetGround(),
-				device->GetGround(),
-				device->GetGround(),
-				device->GetGround(),
-				device->GetGround(),
-				device->GetGround()
-			})
 		, m_dacnum(dacnum)
 		, m_cbaseReg(cbase_reg)
 		, m_cbasePwr(cbase_pwr)
@@ -52,6 +42,9 @@ Greenpak4DAC::Greenpak4DAC(
 		, m_cbaseAon(cbase_aon)
 		, m_cbaseAon2(cbase_aon2)
 {
+	for(unsigned int i=0; i<8; i++)
+		m_din[i] = device->GetGround();
+
 	//Make our output a dual so we don't infer cross connections when driving reference-output pins
 	//(even though we don't have a general fabric output)
 	m_dual = new Greenpak4DualEntity(this);
