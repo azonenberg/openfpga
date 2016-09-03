@@ -25,45 +25,45 @@ module Blinky(
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
-	
+
 	// Put outputs all together on the 11-20 side of the device
-	
+
 	(* LOC = "P20" *)
 	output reg led_lfosc_ff = 0;
-	
+
 	(* LOC = "P19" *)
 	output reg led_lfosc_count = 0;
-	
+
 	(* LOC = "P18" *)
 	output wire led_lfosc_shreg1;
-	
+
 	(* LOC = "P17" *)
 	output wire led_lfosc_shreg1a;
-	
+
 	(* LOC = "P16" *)
 	output wire led_lfosc_shreg2;
-	
+
 	(* LOC = "P15" *)
 	output wire led_lfosc_shreg2a;
-	
+
 	(* LOC = "P14" *)
 	output reg led_rosc_ff = 0;
-	
+
 	(* LOC = "P13" *)
 	output reg led_rcosc_ff = 0;
 
 	// Put inputs all together on the 1-10 side of the device
-	
+
 	(* LOC = "P2" *)
 	(* PULLDOWN = "10k" *)
 	(* SCHMITT_TRIGGER *)
 	input wire sys_rst;			//Full chip reset
-	
+
 	(* LOC = "P3" *)
 	(* PULLDOWN = "10k" *)
 	(* SCHMITT_TRIGGER *)
 	input wire count_rst;		//Logic reset
-	
+
 	(* LOC = "P4" *)
 	(* PULLDOWN = "10k" *)
 	(* SCHMITT_TRIGGER *)
@@ -78,7 +78,7 @@ module Blinky(
 	) reset_ctrl (
 		.RST(sys_rst)
 	);
-	
+
 	//Power-on reset
 	wire por_done;
 	GP_POR #(
@@ -89,7 +89,7 @@ module Blinky(
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Oscillators
-	
+
 	//The 1730 Hz oscillator
 	wire clk_108hz;
 	GP_LFOSC #(
@@ -100,7 +100,7 @@ module Blinky(
 		.PWRDN(osc_pwrdn),
 		.CLKOUT(clk_108hz)
 	);
-	
+
 	//The 27 MHz ring oscillator
 	wire clk_1687khz_cnt;		//dedicated output to hard IP only
 	wire clk_1687khz;			//general fabric output (used to toggle the LED)
@@ -114,7 +114,7 @@ module Blinky(
 		.CLKOUT_HARDIP(clk_1687khz_cnt),
 		.CLKOUT_FABRIC(clk_1687khz)
 	);
-	
+
 	//The 25 kHz RC oscillator
 	wire clk_6khz_cnt;			//dedicated output to hard IP only
 	wire clk_6khz;				//general fabric output (used to toggle the LED)
@@ -129,7 +129,7 @@ module Blinky(
 		.CLKOUT_HARDIP(clk_6khz_cnt),
 		.CLKOUT_FABRIC(clk_6khz)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Low-frequency oscillator and post-divider in behavioral logic, extracted to a hard IP block by synthesis
 
@@ -138,11 +138,11 @@ module Blinky(
 	//Fabric post-divider
 	reg[7:0] count = COUNT_MAX;
 	always @(posedge clk_108hz, posedge count_rst) begin
-		
+
 		//level triggered reset
 		if(count_rst)
 			count			<= 0;
-		
+
 		//counter
 		else begin
 
@@ -152,15 +152,15 @@ module Blinky(
 				count		<= count - 1'd1;
 
 		end
-		
+
 	end
-	
+
 	//Output bit
 	wire led_fabric_raw = (count == 0);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Low-frequency oscillator and post-divider in hard counter
-	
+
 	//Hard IP post-divider
 	wire led_lfosc_raw;
 	GP_COUNT8 #(
@@ -172,10 +172,10 @@ module Blinky(
 		.RST(count_rst),
 		.OUT(led_lfosc_raw)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring oscillator and post-divider in hard counter
-	
+
 	//Hard IP post-divider
 	wire led_rosc_raw;
 	GP_COUNT14 #(
@@ -187,10 +187,10 @@ module Blinky(
 		.RST(count_rst),
 		.OUT(led_rosc_raw)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// RC oscillator and post-divider in hard counter
-	
+
 	//Hard IP post-divider
 	wire led_rcosc_raw;
 	GP_COUNT14 #(
@@ -202,29 +202,29 @@ module Blinky(
 		.RST(count_rst),
 		.OUT(led_rcosc_raw)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LF oscillator LED toggling
-	
+
 	//Toggle the output every time the counters underflow
 	always @(posedge clk_108hz) begin
-	
+
 		//Gate toggle signals with POR to prevent glitches
 		//caused by blocks resetting at different times during boot
 		if(por_done) begin
-		
+
 			if(led_fabric_raw)
 				led_lfosc_ff	<= ~led_lfosc_ff;
 			if(led_lfosc_raw)
 				led_lfosc_count <= ~led_lfosc_count;
-				
+
 		end
 
 	end
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring oscillator LED toggling
-	
+
 	//Slow it down with a few DFFs to make it readable
 	reg[3:0] pdiv = 0;
 	always @(posedge clk_1687khz) begin
@@ -234,10 +234,10 @@ module Blinky(
 				led_rosc_ff		<= ~led_rosc_ff;
 		end
 	end
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring oscillator LED toggling
-	
+
 	always @(posedge clk_6khz) begin
 		if(led_rcosc_raw)
 			led_rcosc_ff		<= ~led_rcosc_ff;
@@ -245,7 +245,7 @@ module Blinky(
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Shift register to TAP RC oscillator outputs
-	
+
 	GP_SHREG #(
 		.OUTA_TAP(8),
 		.OUTA_INVERT(0),
@@ -257,10 +257,10 @@ module Blinky(
 		.OUTA(led_lfosc_shreg1),
 		.OUTB(led_lfosc_shreg2)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Same shift register, but written using behavioral logic and extracted to a shreg cell by synthesis
-	
+
 	reg[15:0] led_lfosc_infreg = 0;
 	assign led_lfosc_shreg1a = led_lfosc_infreg[7];
 	assign led_lfosc_shreg2a = led_lfosc_infreg[15];
@@ -268,5 +268,5 @@ module Blinky(
 	always @(posedge clk_108hz) begin
 		led_lfosc_infreg	<= {led_lfosc_infreg[14:0], led_lfosc_ff};
 	end
-	
+
 endmodule

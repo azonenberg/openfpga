@@ -21,19 +21,19 @@
 /**
 	INPUTS:
 		PGA input on pin 8
-	
+
 	OUTPUTS:
 		PGA output on pin 7
-		
+
 	TEST PROCEDURE:
 		Sweep analog wavefrom from 0 to 500 mV on pin 8
-		Output should be 2x the input voltage		
+		Output should be 2x the input voltage
  */
 module PGA(bg_ok, vin, pgaout);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
-	
+
 	(* LOC = "P20" *)
 	output wire bg_ok;
 
@@ -44,7 +44,7 @@ module PGA(bg_ok, vin, pgaout);
 	(* LOC = "P7" *)
 	(* IBUF_TYPE = "ANALOG" *)
 	output wire pgaout;
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
 
@@ -55,10 +55,10 @@ module PGA(bg_ok, vin, pgaout);
 	) por (
 		.RST_DONE(por_done)
 	);
-		
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// 1.0V bandgap voltage reference (used by a lot of the mixed signal IP)
-	
+
 	GP_BANDGAP #(
 		.AUTO_PWRDN(0),
 		.CHOPPER_EN(1),
@@ -66,10 +66,10 @@ module PGA(bg_ok, vin, pgaout);
 	) bandgap (
 		.OK(bg_ok)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Programmable-gain analog amplifier
-	
+
 	GP_PGA #(
 		.GAIN(2),
 		.INPUT_MODE("SINGLE")
@@ -79,5 +79,5 @@ module PGA(bg_ok, vin, pgaout);
 		.VIN_SEL(1'b1),
 		.VOUT(pgaout)
 	);
-		
+
 endmodule

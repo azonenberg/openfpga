@@ -22,7 +22,7 @@
 	OUTPUTS:
 		Bandgap OK on pin 20 (should be high after reset)
 		DAC output on pin 19 (sweeping TBD)
-		
+
 	TEST PROCEDURE:
 		TODO
  */
@@ -30,10 +30,10 @@ module Dac(bg_ok, vout);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
-	
+
 	(* LOC = "P20" *)
 	output wire bg_ok;
-	
+
 	(* LOC = "P19" *)
 	(* IBUF_TYPE = "ANALOG" *)
 	output wire vout;
@@ -51,10 +51,10 @@ module Dac(bg_ok, vout);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Oscillators
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// 1.0V voltage reference for the DAC
-	
+
 	//Configure the bandgap with default timing etc
 	GP_BANDGAP #(
 		.AUTO_PWRDN(0),
@@ -63,7 +63,7 @@ module Dac(bg_ok, vout);
 	) bandgap (
 		.OK(bg_ok)
 	);
-	
+
 	//1.0V reference for the DAC
 	wire vref_1v0;
 	GP_VREF #(
@@ -73,20 +73,20 @@ module Dac(bg_ok, vout);
 		.VIN(1'b0),
 		.VOUT(vref_1v0)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DAC driving the voltage reference
-	
+
 	wire vdac;
 	GP_DAC dac(
 		.DIN(8'h80),
 		.VOUT(vdac),
 		.VREF(vref_1v0)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Voltage reference to buffer the DAC output
-	
+
 	GP_VREF #(
 		.VIN_DIV(4'd1),
 		.VREF(16'd00)
@@ -94,5 +94,5 @@ module Dac(bg_ok, vout);
 		.VIN(vdac),
 		.VOUT(vout)
 	);
-	
+
 endmodule

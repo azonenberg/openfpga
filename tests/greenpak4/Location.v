@@ -22,28 +22,28 @@ module Location(a, b, c, d, e);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
-		
+
 	(* LOC = "P20" *)
 	(* PULLDOWN = "10k" *)
 	input wire a;
-	
+
 	(* LOC = "P19" *)
 	(* PULLDOWN = "10k" *)
 	input wire b;
-	
+
 	(* LOC = "P18" *)
 	(* PULLDOWN = "10k" *)
 	output wire c;
-	
+
 	(* LOC = "P17" *)
 	output wire d;
-	
+
 	(* LOC = "P16" *)
 	input wire e;
-		
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Clock/reset stuff
-	
+
 	//The 1730 Hz oscillator
 	wire clk_108hz;
 	GP_LFOSC #(
@@ -53,8 +53,8 @@ module Location(a, b, c, d, e);
 	) lfosc (
 		.PWRDN(1'b0),
 		.CLKOUT(clk_108hz)
-	);	
-	
+	);
+
 	//Power-on reset
 	wire por_done;
 	GP_POR #(
@@ -65,10 +65,10 @@ module Location(a, b, c, d, e);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Counter to blink an LED
-	
+
 	localparam COUNT_MAX = 'd31;
 	wire led_lfosc_raw;
-	
+
 	(* LOC = "COUNT8_ADV_4" *)
 	GP_COUNT8 #(
 		.RESET_MODE("LEVEL"),
@@ -79,27 +79,27 @@ module Location(a, b, c, d, e);
 		.RST(1'b0),
 		.OUT(led_lfosc_raw)
 	);
-	
+
 	//Toggle the output every time the counters underflow
 	(* LOC = "DFF_5" *)
 	reg led_out = 0;
 	assign c = led_out;
 	always @(posedge clk_108hz) begin
-	
+
 		//Gate toggle signals with POR to prevent glitches
 		//caused by blocks resetting at different times during boot
 		if(por_done) begin
-		
+
 			if(led_lfosc_raw)
 				led_out <= ~led_out;
-				
+
 		end
 
 	end
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LUT to drive another output
-	
+
 	(* LOC = "LUT3_1" *)
 	wire d_int = (a & b & e);
 	assign d = d_int;

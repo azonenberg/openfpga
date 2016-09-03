@@ -25,40 +25,40 @@ module Inverters(i, a, b, c, d, e, f, g, h, clk, q);
 
 	(* LOC = "P3" *)
 	input wire i;
-	
+
 	(* LOC = "P4" *)
 	input wire clk;
-	
+
 	(* LOC = "P12" *)
 	output wire a;
-	
+
 	(* LOC = "P13" *)
 	output wire b;
-	
+
 	(* LOC = "P14" *)
 	output wire c;
-	
+
 	(* LOC = "P15" *)
 	output wire d;
-	
+
 	(* LOC = "P16" *)
 	output wire e;
-	
+
 	(* LOC = "P17" *)
 	output wire f;
-	
+
 	(* LOC = "P18" *)
 	output wire g;
-	
+
 	(* LOC = "P19" *)
 	output wire h;
-	
+
 	(* LOC = "P20" *)
 	output wire q;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Lots of inverters. Explicitly instantiate to prevent Yosys from optimizing them out
-	
+
 	GP_INV inva(.IN(i), .OUT(a));
 	GP_INV invb(.IN(a), .OUT(b));
 	GP_INV invc(.IN(b), .OUT(c));
@@ -67,10 +67,10 @@ module Inverters(i, a, b, c, d, e, f, g, h, clk, q);
 	GP_INV invf(.IN(e), .OUT(f));
 	GP_INV invg(.IN(f), .OUT(g));
 	GP_INV invh(.IN(g), .OUT(h));
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// An inverted flipflop
-	
+
 	GP_DFFI #(
 		.INIT(1'b0)
 	) dff (
@@ -78,5 +78,5 @@ module Inverters(i, a, b, c, d, e, f, g, h, clk, q);
 		.CLK(clk),
 		.nQ(q)
 	);
-	
+
 endmodule
