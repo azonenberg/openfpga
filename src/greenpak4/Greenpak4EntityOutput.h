@@ -53,6 +53,7 @@ public:
 	bool IsPGA();
 	bool IsVoltageReference();
 	bool IsPowerRail();
+	bool IsDAC();
 	bool GetPowerRailValue();
 	
 	bool HasDual()

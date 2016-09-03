@@ -49,6 +49,9 @@ public:
 	
 	virtual void CommitChanges();
 	
+	unsigned int GetDACNum()
+	{ return m_dacnum; }
+
 protected:
 	//Greenpak4EntityOutput m_input;
 	

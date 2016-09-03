@@ -150,11 +150,30 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 		else
 		{
 			LogError("Greenpak4VoltageReference inputs for divided Vdd not implemented yet\n");
-			return false;
+			return 0;
 		}
 	}
 	
-	//TODO: external Vref, DAC need to be
+	//See if it's a DAC
+	else if(m_vin.IsDAC())
+	{
+		auto num = dynamic_cast<Greenpak4DAC*>(m_vin.GetRealEntity())->GetDACNum();
+
+		switch(num)
+		{
+			//Constant for SLG46620V, TODO check other parts?
+			case 0:
+				return 0x1F;
+			case 1:
+				return 0x1E;
+
+			default:
+				LogError("Greenpak4VoltageReference: invalid DAC\n");
+				break;
+		}
+	}
+
+	//TODO: external Vref
 	else
 	{
 		LogError("Greenpak4VoltageReference inputs other than constant not implemented yet\n");
