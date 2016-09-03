@@ -31,23 +31,23 @@ public:
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword);
-	
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-		
+
 	virtual ~Greenpak4Inverter();
 
 	virtual std::string GetDescription();
-	
+
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
-	
+
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
-	
+
 	virtual void CommitChanges();
-	
+
 protected:
 	Greenpak4EntityOutput m_input;
 };

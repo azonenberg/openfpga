@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 
 using namespace std;
@@ -45,7 +45,7 @@ Greenpak4Flipflop::Greenpak4Flipflop(
 
 Greenpak4Flipflop::~Greenpak4Flipflop()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,7 +67,7 @@ void Greenpak4Flipflop::SetInput(string port, Greenpak4EntityOutput src)
 		m_clock = src;
 	else if(port == "D")
 		m_input = src;
-	
+
 	//multiple set/reset modes possible
 	else if(port == "nSR")
 		m_nsr = src;
@@ -81,7 +81,7 @@ void Greenpak4Flipflop::SetInput(string port, Greenpak4EntityOutput src)
 		m_srmode = false;
 		m_nsr = src;
 	}
-	
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
@@ -117,11 +117,11 @@ void Greenpak4Flipflop::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-		
+
 	//If our primitive name ends in "I" we're inverting the output
 	if(ncell->m_type[ncell->m_type.length()-1] == 'I')
 		m_outputInvert = true;
-	
+
 	if(ncell->HasParameter("SRMODE"))
 		m_srmode = (ncell->m_parameters["SRMODE"] == "1");
 
@@ -140,7 +140,7 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 	bool has_sr = !m_nsr.IsPowerRail();
 	if(has_sr && !m_hasSR)
 		LogError("Tried to configure set/reset on a DFF cell with no S/R input\n");
-	
+
 	//Check if we're unused (input and clock pins are tied to ground)
 	bool no_input = ( m_input.IsPowerRail() && !m_input.GetPowerRailValue() );
 	bool no_clock = ( m_input.IsPowerRail() && !m_clock.GetPowerRailValue() );
@@ -148,7 +148,7 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
-	
+
 	if(m_hasSR)
 	{
 		//Set/reset defaults to constant 1 if not hooked up
@@ -161,14 +161,14 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 			sr = m_nsr;
 		if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, sr))
 			return false;
-			
+
 		//Hook up data and clock
 		if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_input))
 			return false;
 		if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 2, m_clock))
 			return false;
 	}
-	
+
 	else
 	{
 		//Hook up data and clock
@@ -177,37 +177,37 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 		if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_clock))
 			return false;
 	}
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration
-	
+
 	if(m_hasSR)
 	{
 		//Mode select (hard wire to DFF for now)
 		bitstream[m_configBase + 0] = false;
-		
+
 		//Output polarity
 		bitstream[m_configBase + 1] = m_outputInvert;
-		
+
 		//Set/reset mode
 		bitstream[m_configBase + 2] = m_srmode;
-			
+
 		//Initial state
 		bitstream[m_configBase + 3] = m_initValue;
 	}
-	
+
 	else
 	{
 		//Mode select (hard wire to DFF for now)
 		bitstream[m_configBase + 0] = false;
-		
+
 		//Output polarity
 		bitstream[m_configBase + 1] = m_outputInvert;
-		
+
 		//Initial state
 		bitstream[m_configBase + 2] = m_initValue;
 	}
-	
+
 	return true;
 }
 

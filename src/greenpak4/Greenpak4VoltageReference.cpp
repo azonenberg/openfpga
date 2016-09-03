@@ -42,7 +42,7 @@ Greenpak4VoltageReference::Greenpak4VoltageReference(
 
 Greenpak4VoltageReference::~Greenpak4VoltageReference()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -66,7 +66,7 @@ void Greenpak4VoltageReference::SetInput(string port, Greenpak4EntityOutput src)
 {
 	if(port == "VIN")
 		m_vin = src;
-	
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
@@ -92,10 +92,10 @@ void Greenpak4VoltageReference::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-	
+
 	if(ncell->HasParameter("VIN_DIV"))
 		m_vinDiv = atoi(ncell->m_parameters["VIN_DIV"].c_str());
-		
+
 	if(ncell->HasParameter("VREF"))
 		m_vref = atoi(ncell->m_parameters["VREF"].c_str());
 }
@@ -108,7 +108,7 @@ bool Greenpak4VoltageReference::Load(bool* /*bitstream*/)
 
 bool Greenpak4VoltageReference::Save(bool* /*bitstream*/)
 {
-	//no configuration, everything is in the downstream logic	
+	//no configuration, everything is in the downstream logic
 	return true;
 }
 
@@ -128,24 +128,24 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 					GetDescription().c_str(), m_vref);
 				return false;
 			}
-			
+
 			if(m_vref < 50 || m_vref > 1200)
 			{
 				LogError("DRC: Voltage reference %s must be set between 50mV and 1200 mV inclusive (requested %d)\n",
 					GetDescription().c_str(), m_vref);
 				return false;
 			}
-			
+
 			if(m_vinDiv != 1)
 			{
 				LogError("DRC: Voltage reference %s must have divisor of 1 when using constant voltage\n",
 					GetDescription().c_str());
 				return false;
 			}
-			
-			select = (m_vref / 50) - 1;		
+
+			select = (m_vref / 50) - 1;
 		}
-		
+
 		//Divided Vdd
 		else
 		{
@@ -153,7 +153,7 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 			return 0;
 		}
 	}
-	
+
 	//See if it's a DAC
 	else if(m_vin.IsDAC())
 	{
@@ -179,6 +179,6 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 		LogError("Greenpak4VoltageReference inputs other than constant not implemented yet\n");
 		return false;
 	}
-	
+
 	return select;
 }

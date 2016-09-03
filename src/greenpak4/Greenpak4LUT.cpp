@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 
 using namespace std;
@@ -37,14 +37,14 @@ Greenpak4LUT::Greenpak4LUT(
 {
 	for(unsigned int i=0; i<4; i++)
 		m_inputs[i] = device->GetGround();
-	
+
 	for(unsigned int i=0; i<16; i++)
 		m_truthtable[i] = false;
 }
 
 Greenpak4LUT::~Greenpak4LUT()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,12 +53,12 @@ Greenpak4LUT::~Greenpak4LUT()
 bool Greenpak4LUT::Load(bool* bitstream)
 {
 	//TODO: Do our inputs
-	
+
 	//Do the LUT
 	unsigned int nmax = 1 << m_order;
 	for(unsigned int i=0; i<nmax; i++)
 		m_truthtable[i] = bitstream[m_configBase + i];
-		
+
 	return true;
 }
 
@@ -66,20 +66,20 @@ bool Greenpak4LUT::Save(bool* bitstream)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
-	
+
 	for(unsigned int i=0; i<m_order; i++)
 	{
 		if(!WriteMatrixSelector(bitstream, m_inputBaseWord + i, m_inputs[i]))
 			return false;
 	}
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LUT CONTENTS
-		
+
 	unsigned int nmax = 1 << m_order;
 	for(unsigned int i=0; i<nmax; i++)
 		bitstream[m_configBase + i] = m_truthtable[i];
-		
+
 	return true;
 }
 
@@ -92,7 +92,7 @@ void Greenpak4LUT::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-		
+
 	//If the cell is an inverter, we need special processing to up-map
 	if(ncell->m_type == "GP_INV")
 	{
@@ -100,12 +100,12 @@ void Greenpak4LUT::CommitChanges()
 		m_truthtable[0] = true;
 		for(int i=1; i<16; i++)
 			m_truthtable[i] = false;
-		
+
 		//Tie upper bits off since they're not in the netlist
 		for(int i=1; i<4; i++)
 			m_inputs[i] = m_device->GetGround();
 	}
-	
+
 	//Not an inverter, treat it as a LUT
 	else
 	{
@@ -126,7 +126,7 @@ void Greenpak4LUT::CommitChanges()
 					m_truthtable[a3*8 | a2*4 | a1*2 | a0] = (truth_table & (1 << i)) ? true : false;
 				}
 			}
-			
+
 			else
 			{
 				LogWarning("Cell\"%s\" has unrecognized parameter %s, ignoring\n",
@@ -157,14 +157,14 @@ void Greenpak4LUT::SetInput(string port, Greenpak4EntityOutput src)
 	//used for up-mapping GP_INV to GP_LUTx
 	if( (port == "IN0") || (port == "IN") )
 		m_inputs[0] = src;
-		
+
 	else if(port == "IN1")
 		m_inputs[1] = src;
 	else if(port == "IN2")
 		m_inputs[2] = src;
 	else if(port == "IN3")
 		m_inputs[3] = src;
-	
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 

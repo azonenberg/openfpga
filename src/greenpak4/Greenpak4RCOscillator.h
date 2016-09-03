@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef Greenpak4RCOscillator_h
 #define Greenpak4RCOscillator_h
 
@@ -23,7 +23,7 @@ class Greenpak4PowerRail;
 
 /**
 	@brief The RC (2 MHz / 25 kHz) oscillator
- */ 
+ */
 class Greenpak4RCOscillator : public Greenpak4BitstreamEntity
 {
 public:
@@ -36,49 +36,49 @@ public:
 		unsigned int oword,
 		unsigned int cbase);
 	virtual ~Greenpak4RCOscillator();
-	
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-	
+
 	virtual std::string GetDescription();
-	
+
 	//Get the power-down input (used for DRC)
 	Greenpak4EntityOutput GetPowerDown()
 	{ return m_powerDown; }
-	
+
 	//Enable accessors
-	
+
 	bool GetPowerDownEn()
 	{ return m_powerDownEn; }
-	
+
 	bool IsConstantPowerDown();
-		
+
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
-	
+
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
-	
+
 	virtual void CommitChanges();
-	
+
 protected:
 
 	///Power-down input (if implemented)
 	Greenpak4EntityOutput m_powerDown;
-	
+
 	///Power-down enable
 	bool m_powerDownEn;
-	
+
 	///Auto power-down
 	bool m_autoPowerDown;
-	
+
 	///Output pre-divider
 	int m_preDiv;
-	
+
 	///Output post-divider
 	int m_postDiv;
-	
+
 	///Clock frequency (true = 2 MHz, false = 25 kHz)
 	bool m_fastClock;
 };

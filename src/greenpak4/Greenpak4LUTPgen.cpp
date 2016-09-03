@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 
 using namespace std;
@@ -38,7 +38,7 @@ Greenpak4LUTPgen::Greenpak4LUTPgen(
 
 Greenpak4LUTPgen::~Greenpak4LUTPgen()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,10 +57,10 @@ bool Greenpak4LUTPgen::Save(bool* bitstream)
 	bitstream[m_configBase + 17] = false;
 	bitstream[m_configBase + 18] = false;
 	bitstream[m_configBase + 19] = false;
-	
+
 	//Mode (for now, always LUT4)
 	bitstream[m_configBase + 20] = false;
-	
+
 	//Save LUT stuff
 	return Greenpak4LUT::Save(bitstream);
 }

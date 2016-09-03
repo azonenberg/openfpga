@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,9 +34,9 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 	: Greenpak4NetlistEntity(name)
 	, m_direction(DIR_INPUT)
 	, m_module(module)
-	, m_net(NULL)	
+	, m_net(NULL)
 	, m_parnode(NULL)
-{	
+{
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
 		!json_object_iter_equal(&it, &end);
@@ -45,7 +45,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 		//See what we got
 		string name = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
-		
+
 		//Direction should be a string from the enumerated list
 		if(name == "direction")
 		{
@@ -54,7 +54,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 				LogError("Port direction should be of type string but isn't\n");
 				exit(-1);
 			}
-			
+
 			//See what the direction is
 			string str = json_object_get_string(child);
 			if(str == "input")
@@ -69,7 +69,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 				exit(-1);
 			}
 		}
-		
+
 		//List of nodes in the object (should be an array)
 		else if(name == "bits")
 		{
@@ -95,7 +95,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 				m_nodes.push_back(module->GetNode(json_object_get_int(jnode)));
 			}
 		}
-		
+
 		//Garbage
 		else
 		{
@@ -107,5 +107,5 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 
 Greenpak4NetlistPort::~Greenpak4NetlistPort()
 {
-	
+
 }

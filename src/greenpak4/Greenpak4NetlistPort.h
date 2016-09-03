@@ -37,15 +37,15 @@ public:
 		DIR_INOUT
 	};
 	Direction m_direction;
-	
+
 	Greenpak4NetlistModule* m_module;
-	
+
 	//The named net
 	Greenpak4NetlistNode* m_net;
-	
+
 	//The netlist node we're attached to
 	std::vector<Greenpak4NetlistNode*> m_nodes;
-	
+
 	//The graph node for this IOB (only valid during place-and-route)
 	PARGraphNode* m_parnode;
 };

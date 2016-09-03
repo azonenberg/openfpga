@@ -15,13 +15,13 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef Greenpak4SystemReset_h
 #define Greenpak4SystemReset_h
 
 /**
 	@brief The system-wide warm reset block
- */ 
+ */
 class Greenpak4SystemReset : public Greenpak4BitstreamEntity
 {
 public:
@@ -38,7 +38,7 @@ public:
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-	
+
 	virtual std::string GetDescription();
 
 	enum ResetMode
@@ -47,23 +47,23 @@ public:
 		FALLING_EDGE,
 		HIGH_LEVEL
 	};
-	
+
 	void SetResetMode(ResetMode mode)
 	{ m_resetMode = mode; }
-	
+
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
-	
+
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
-	
+
 	virtual void CommitChanges();
-	
+
 protected:
-	
+
 	///Configuration for the reset
 	ResetMode m_resetMode;
-	
+
 	///The reset signal itself
 	Greenpak4EntityOutput m_reset;
 };

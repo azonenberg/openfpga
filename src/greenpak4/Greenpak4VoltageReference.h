@@ -30,33 +30,33 @@ public:
 		Greenpak4Device* device,
 		unsigned int refnum,
 		unsigned int vout_muxsel = -1);
-	
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-		
+
 	virtual ~Greenpak4VoltageReference();
 
 	virtual std::string GetDescription();
-	
+
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
-	
+
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
-	
+
 	virtual void CommitChanges();
-	
+
 	//mux selector for output pad drivers, need to come up with a clearer name!
 	unsigned int GetMuxSel()
 	{ return m_voutMuxsel; }
-	
+
 	//mux selector for ACMP voltage inputs
 	unsigned int GetACMPMuxSel();
-	
+
 protected:
 	Greenpak4EntityOutput m_vin;
-	
+
 	unsigned int m_refnum;
 	unsigned int m_vinDiv;
 	unsigned int m_vref;

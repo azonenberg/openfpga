@@ -29,44 +29,44 @@ public:
 	Greenpak4PGA(
 		Greenpak4Device* device,
 		unsigned int cbase);
-	
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-		
+
 	virtual ~Greenpak4PGA();
 
 	virtual std::string GetDescription();
-	
+
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
-	
+
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
-	
+
 	virtual void CommitChanges();
-	
+
 	Greenpak4EntityOutput GetInputP()
 	{ return m_vinp; }
-	
+
 	Greenpak4EntityOutput GetInputN()
 	{ return m_vinn; }
-	
+
 protected:
 	Greenpak4EntityOutput m_vinp;
 	Greenpak4EntityOutput m_vinn;
 	Greenpak4EntityOutput m_vinsel;
-	
+
 	//decimal fixed point: legal values 25, 50, 100, 200, 400, 800, 1600, 3200
 	unsigned int m_gain;
-	
+
 	enum InputModes
 	{
 		MODE_SINGLE,
 		MODE_DIFF,
 		MODE_PDIFF
 	} m_inputMode;
-	
+
 	///indicates if we have any loads other than the ADC
 	bool m_hasNonADCLoads;
 };

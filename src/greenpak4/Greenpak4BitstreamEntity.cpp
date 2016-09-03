@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 #include "../xbpar/xbpar.h"
 
@@ -40,12 +40,12 @@ Greenpak4BitstreamEntity::Greenpak4BitstreamEntity(
 	, m_dual(NULL)
 	, m_dualMaster(true)
 {
-	
+
 }
 
 Greenpak4BitstreamEntity::~Greenpak4BitstreamEntity()
 {
-	//Delete our dual if we're the master	
+	//Delete our dual if we're the master
 	if(m_dual && m_dualMaster)
 	{
 		delete m_dual;
@@ -95,20 +95,20 @@ string Greenpak4BitstreamEntity::GetOutputName()
 	if(mate == NULL)
 		return "";
 	auto entity = static_cast<Greenpak4NetlistEntity*>(mate->GetData());
-	
+
 	//If it's an IOB, return the IOB name
 	if(dynamic_cast<Greenpak4NetlistPort*>(entity))
 		return entity->m_name;
-	
+
 	//Nope, it's a cell
 	auto cell = dynamic_cast<Greenpak4NetlistCell*>(entity);
 	if(!cell)
 		return "error";
-	
+
 	//Look up our first output port... HACK!
 	//TODO: Fix this
 	string portname = GetOutputPorts()[0];
-		
+
 	//Find the net we connect to
 	if(cell->m_connections.find(portname) == cell->m_connections.end())
 		return "error";
@@ -137,7 +137,7 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	{
 		LogFatal("Tried to write signal from invalid net %x\n", signal.GetNetNumber());
 	}
-	
+
 	//SANITY CHECK - must be attached to the same matrix
 	//cross connections use opposite, though
 	if(cross_matrix)
@@ -145,7 +145,7 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 		//Do not do check if the signal is a power rail (this is the case for unused cross connections)
 		if(signal.IsPowerRail())
 		{}
-		
+
 		//No other signal, dual or not, should do this
 		else if(m_matrix == signal.GetMatrix())
 		{
@@ -157,25 +157,25 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 		//If we have a dual, use that
 		if(signal.HasDual())
 			signal = signal.GetDual();
-		
+
 		//otherwise something is fishy
 		else
 		{
 			LogFatal("Tried to write signal from opposite matrix without using a cross connection\n");
 		}
 	}
-	
+
 	//Good to go, write it
 	unsigned int sel = signal.GetNetNumber();
-	
+
 	//Calculate right matrix for cross connections etc
 	unsigned int matrix = m_matrix;
 	if(cross_matrix)
 		matrix = 1 - matrix;
-	
+
 	unsigned int nbits = m_device->GetMatrixBits();
 	unsigned int startbit = m_device->GetMatrixBase(matrix) + wordpos * nbits;
-	
+
 	//Need to flip bit ordering since lowest array index is the MSB
 	for(unsigned int i=0; i<nbits; i++)
 	{
@@ -184,6 +184,6 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 		else
 			bitstream[startbit + i] = false;
 	}
-	
+
 	return true;
 }

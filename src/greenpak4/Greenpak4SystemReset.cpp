@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 
 using namespace std;
@@ -38,7 +38,7 @@ Greenpak4SystemReset::Greenpak4SystemReset(
 
 Greenpak4SystemReset::~Greenpak4SystemReset()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,7 +73,7 @@ void Greenpak4SystemReset::SetInput(string port, Greenpak4EntityOutput src)
 {
 	if(port == "RST")
 		m_reset = src;
-	
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
@@ -86,7 +86,7 @@ void Greenpak4SystemReset::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-		
+
 	if(ncell->HasParameter("RESET_MODE"))
 	{
 		Greenpak4SystemReset::ResetMode mode = Greenpak4SystemReset::RISING_EDGE;
@@ -118,15 +118,15 @@ bool Greenpak4SystemReset::Save(bool* bitstream)
 {
 	//No DRC needed - cannot route anything but pin 2 to us
 	//If somebody tries something stupid PAR will fail with an unroutable design
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
-	
+
 	//no logic needed, hard-wired to pin #2
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration
-	
+
 	//Reset mode
 	switch(m_resetMode)
 	{
@@ -134,23 +134,23 @@ bool Greenpak4SystemReset::Save(bool* bitstream)
 			bitstream[m_configBase + 0] = true;
 			bitstream[m_configBase + 1] = false;
 			break;
-			
+
 		case RISING_EDGE:
 			bitstream[m_configBase + 0] = false;
 			bitstream[m_configBase + 1] = false;
 			break;
-			
+
 		case FALLING_EDGE:
 			bitstream[m_configBase + 0] = false;
 			bitstream[m_configBase + 1] = true;
 			break;
 	}
-	
+
 	//Reset enable if m_reset is not a power rail (ground)
 	if(!m_reset.IsPowerRail())
 		bitstream[m_configBase + 2] = true;
 	else
 		bitstream[m_configBase + 2] = false;
-	
+
 	return true;
 }

@@ -35,40 +35,40 @@ class Greenpak4Netlist
 public:
 	Greenpak4Netlist(std::string fname);
 	virtual ~Greenpak4Netlist();
-	
+
 	Greenpak4NetlistModule* GetTopModule()
 	{ return m_topModule; }
-	
+
 	typedef std::set<Greenpak4NetlistNode*> nodeset;
-	
+
 	nodeset::iterator nodebegin()
 	{ return m_nodes.begin(); }
-	
+
 	nodeset::iterator nodeend()
 	{ return m_nodes.end(); }
-	
+
 	Greenpak4NetlistModule* GetModule(std::string name)
 	{ return m_modules[name]; }
-	
+
 	void Reindex(bool verbose = true);
-	
+
 protected:
-	
+
 	void IndexNets(bool verbose);
 	void ClearIndexes();
-	
+
 	//Init helpers
 	void Load(json_object* object);
 	void LoadModules(json_object* object);
-		
+
 	std::string m_creator;
-	
+
 	//All of the modules in the netlist
 	std::map<std::string, Greenpak4NetlistModule*> m_modules;
-	
+
 	//The top-level module
 	Greenpak4NetlistModule* m_topModule;
-	
+
 	//All of the nets in the netlist
 	nodeset m_nodes;
 };

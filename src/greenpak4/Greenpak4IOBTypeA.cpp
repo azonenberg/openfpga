@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 
 using namespace std;
@@ -33,12 +33,12 @@ Greenpak4IOBTypeA::Greenpak4IOBTypeA(
 	unsigned int flags)
 	: Greenpak4IOB(device, pin_num, matrix, ibase, oword, cbase, flags)
 {
-	
+
 }
 
 Greenpak4IOBTypeA::~Greenpak4IOBTypeA()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +64,7 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
-	
+
 	//If we have no output pad driver, skip the driver inputs
 	if(m_flags & IOB_FLAG_INPUTONLY)
 	{
@@ -81,9 +81,9 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 			return false;
 		}
 	}
-	
+
 	else
-	{	
+	{
 		//If our output is from a Vref, special processing needed
 		if(m_outputSignal.IsVoltageReference())
 		{
@@ -93,14 +93,14 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 				return false;
 			if(!WriteMatrixSelector(bitstream, m_inputBaseWord+1, gnd))
 				return false;
-				
+
 			//Configure the analog output
 			auto vref = dynamic_cast<Greenpak4VoltageReference*>(m_outputSignal.GetRealEntity());
 			unsigned int sel = vref->GetMuxSel();
 			bitstream[m_analogConfigBase + 1] = (sel & 2) ? true : false;
 			bitstream[m_analogConfigBase + 0] = (sel & 1) ? true : false;
 		}
-		
+
 		//If our output is from a PGA, special processing needed
 		else if(m_outputSignal.IsPGA())
 		{
@@ -110,10 +110,10 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 				return false;
 			if(!WriteMatrixSelector(bitstream, m_inputBaseWord+1, gnd))
 				return false;
-				
+
 			//No special configuration required
 		}
-		
+
 		//Digital output and enable
 		else
 		{
@@ -123,36 +123,36 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 				return false;
 		}
 	}
-		
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
-		
+
 	//Input threshold 1:0
 	switch(m_inputThreshold)
-	{ 
+	{
 		case THRESHOLD_ANALOG:
 			bitstream[m_configBase+0] = true;
-			bitstream[m_configBase+1] = true;		
+			bitstream[m_configBase+1] = true;
 			break;
-			
+
 		case THRESHOLD_LOW:
 			bitstream[m_configBase+0] = false;
 			bitstream[m_configBase+1] = true;
 			break;
-			
+
 		case THRESHOLD_NORMAL:
 			bitstream[m_configBase+1] = false;
 			bitstream[m_configBase+0] = m_schmittTrigger;
 			break;
-			
+
 		default:
 			LogError("Invalid IOB threshold\n");
 			return false;
 	}
-	
+
 	//Base address for upcoming stuff, skipping output driver if not implemented
 	unsigned int base = m_configBase + 2;
-	
+
 	if(! (m_flags & IOB_FLAG_INPUTONLY) )
 	{
 		//Output drive strength 2, 7 if super driver present
@@ -163,13 +163,13 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 				if(m_flags & IOB_FLAG_X4DRIVE)
 					bitstream[m_configBase+7] = false;
 				break;
-				
+
 			case DRIVE_2X:
 				bitstream[m_configBase+2] = true;
 				if(m_flags & IOB_FLAG_X4DRIVE)
 					bitstream[m_configBase+7] = false;
 				break;
-			
+
 			//If we have a super driver, write x4 as double x2
 			case DRIVE_4X:
 				bitstream[m_configBase+2] = true;
@@ -181,37 +181,37 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 					return false;
 				}
 				break;
-			
+
 			default:
 				LogError("Invalid drive strength\n");
 				return false;
 		}
-	
+
 		//Output buffer type 3
 		switch(m_driveType)
 		{
 			case DRIVE_PUSHPULL:
 				bitstream[m_configBase+3] = false;
 				break;
-				
+
 			case DRIVE_NMOS_OPENDRAIN:
 				bitstream[m_configBase+3] = true;
 				break;
-				
+
 			default:
 				LogError("Invalid driver type\n");
 				return false;
 		}
-		
+
 		base += 2;
 	}
-	
+
 	//Pullup/down resistor strength 5:4, direction 6
 	if(m_pullDirection == PULL_NONE)
 	{
 		bitstream[base] = false;
 		bitstream[base+1] = false;
-		
+
 		//don't care, pull circuit disconnected
 		bitstream[base+2] = false;
 	}
@@ -223,37 +223,37 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 				bitstream[base] = true;
 				bitstream[base + 1] = false;
 				break;
-				
+
 			case PULL_100K:
 				bitstream[base] = false;
 				bitstream[base + 1] = true;
 				break;
-				
+
 			case PULL_1M:
 				bitstream[base] = true;
 				bitstream[base + 1] = true;
 				break;
-				
+
 			default:
 				LogError("Invalid pull strength\n");
 				return false;
 		}
-		
+
 		switch(m_pullDirection)
 		{
 			case PULL_UP:
 				bitstream[base + 2] = true;
 				break;
-			
+
 			case PULL_DOWN:
 				bitstream[base + 2] = false;
 				break;
-				
+
 			default:
 				LogError("Invalid pull direction\n");
 				return false;
 		}
 	}
-	
+
 	return true;
 }

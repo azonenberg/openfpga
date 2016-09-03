@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef Greenpak4NetlistCell_h
 #define Greenpak4NetlistCell_h
 
@@ -30,7 +30,7 @@ public:
 	{}
 
 	virtual ~Greenpak4NetlistEntity();
-	
+
 	std::string m_name;
 };
 
@@ -43,39 +43,39 @@ public:
 	: m_parent(module)
 	{ m_parnode = NULL; }
 	virtual ~Greenpak4NetlistCell();
-	
+
 	bool HasParameter(std::string att)
 	{ return m_parameters.find(att) != m_parameters.end(); }
-	
+
 	//Indicates whether the cell is an I/O buffer
 	bool IsIOB()
 	{ return (m_type == "GP_IBUF") || (m_type == "GP_IOBUF") || (m_type == "GP_OBUF") || (m_type == "GP_OBUFT"); }
 
 	std::string GetLOC()
 	{ return m_attributes.at("LOC"); }
-	
+
 	bool HasLOC()
 	{ return (m_attributes.find("LOC") != m_attributes.end()); }
-	
+
 	///Module name
 	std::string m_type;
-	
+
 	std::map<std::string, std::string> m_parameters;
 	std::map<std::string, std::string> m_attributes;
-	
+
 	typedef std::vector<Greenpak4NetlistNode*> cellnet;
-	
+
 	/**
 		@brief Map of connections to the cell
-		
+
 		connections[portname] = {bit2, bit1, bit0}
 	 */
 	std::map<std::string, cellnet > m_connections;
-	
+
 	PARGraphNode* m_parnode;
-	
+
 	//Parent module of the cell, not the module we're an instance of
-	Greenpak4NetlistModule* m_parent;	
+	Greenpak4NetlistModule* m_parent;
 };
 
 #endif

@@ -15,15 +15,15 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef Greenpak4DualEntity_h
 #define Greenpak4DualEntity_h
 
 /**
 	@brief The "dual entity" of a node that connects to both matrices.
-	
+
 	The dual is a skeleton net source that lives on the opposite half of the device and has no configuration or inputs.
- */ 
+ */
 class Greenpak4DualEntity : public Greenpak4BitstreamEntity
 {
 public:
@@ -31,20 +31,20 @@ public:
 	//Construction / destruction
 	Greenpak4DualEntity(Greenpak4BitstreamEntity* dual);
 	virtual ~Greenpak4DualEntity();
-		
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-	
+
 	virtual std::string GetDescription();
-		
+
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
-	
+
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
 	virtual Greenpak4EntityOutput GetOutput(std::string port);
-	
+
 	virtual void CommitChanges();
 };
 

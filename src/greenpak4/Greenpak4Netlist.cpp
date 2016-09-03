@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,7 +58,7 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 		exit(-1);
 	}
 	fclose(fp);
-	
+
 	//Parse the JSON
 	json_tokener* tok = json_tokener_new();
 	if(!tok)
@@ -74,10 +74,10 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 		LogError("JSON parsing failed (err = %s)\n", desc);
 		exit(-1);
 	}
-	
+
 	//Read stuff from it
 	Load(object);
-	
+
 	//Clean up
 	json_object_put(object);
 	json_tokener_free(tok);
@@ -97,7 +97,7 @@ Greenpak4Netlist::~Greenpak4Netlist()
 
 /**
 	@brief Top-level parsing routine
-	
+
 	Should only have creator and modules
  */
 void Greenpak4Netlist::Load(json_object* object)
@@ -110,7 +110,7 @@ void Greenpak4Netlist::Load(json_object* object)
 		//See what we got
 		string name = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
-		
+
 		//Creator of the file (expecting a string)
 		if(name == "creator")
 		{
@@ -122,7 +122,7 @@ void Greenpak4Netlist::Load(json_object* object)
 			m_creator = json_object_get_string(child);
 			LogNotice("Netlist creator: %s\n", m_creator.c_str());
 		}
-		
+
 		//Modules in the file (expecting an object)
 		else if(name == "modules")
 		{
@@ -131,11 +131,11 @@ void Greenpak4Netlist::Load(json_object* object)
 				LogError("netlist modules should be of type object but isn't\n");
 				exit(-1);
 			}
-			
+
 			//Load them
 			LoadModules(child);
 		}
-		
+
 		//Something bad
 		else
 		{
@@ -143,7 +143,7 @@ void Greenpak4Netlist::Load(json_object* object)
 			exit(-1);
 		}
 	}
-	
+
 	IndexNets(true);
 }
 
@@ -157,7 +157,7 @@ void Greenpak4Netlist::ClearIndexes()
 		node->m_nodeports.clear();
 		node->m_ports.clear();
 	}
-	
+
 	m_nodes.clear();
 }
 
@@ -172,7 +172,7 @@ void Greenpak4Netlist::Reindex(bool verbose)
 
 /**
 	@brief Index the nets so that each net has a list of cell ports it connects to.
-	
+
 	Has to be done as a second pass because there may be cycles in the netlist preventing us from resolving names
 	as we parse the JSON
  */
@@ -180,24 +180,24 @@ void Greenpak4Netlist::IndexNets(bool verbose)
 {
 	if(verbose)
 		LogNotice("Indexing...\n");
-	
+
 	//Loop over all of our ports and add them to the associated nets
 	for(auto it = m_topModule->port_begin(); it != m_topModule->port_end(); it ++)
 	{
 		Greenpak4NetlistPort* port = it->second;
 		if(verbose)
 			LogDebug("    Port %s connects to:\n", it->first.c_str());
-		
+
 		for(unsigned int i=0; i<port->m_nodes.size(); i++)
 		{
 			auto x = port->m_nodes[i];
-			
+
 			if(verbose)
 				LogDebug("        bit %u: node %s\n", i, port->m_nodes[i]->m_name.c_str());
 			x->m_ports.push_back(port);
 		}
 	}
-	
+
 	//Loop over all of our cells and add their connections
 	for(auto it = m_topModule->cell_begin(); it != m_topModule->cell_end(); it ++)
 	{
@@ -225,7 +225,7 @@ void Greenpak4Netlist::IndexNets(bool verbose)
 			}
 		}
 	}
-	
+
 	//Make a set of the nodes to avoid duplication.
 	//Note that NULL is legal in vector nets if some bits were optimized out
 	for(auto it = m_topModule->net_begin(); it != m_topModule->net_end(); it ++)
@@ -233,7 +233,7 @@ void Greenpak4Netlist::IndexNets(bool verbose)
 		if(it->second != NULL)
 			m_nodes.insert(it->second);
 	}
-	
+
 	//Print them out
 	if(verbose)
 	{
@@ -250,13 +250,13 @@ void Greenpak4Netlist::IndexNets(bool verbose)
 
 /**
 	@brief Module parsing routine
-	
+
 	Loads all of the modules in the netlist
  */
 void Greenpak4Netlist::LoadModules(json_object* object)
 {
 	LogNotice("\nLoading modules...\n");
-	
+
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
 		!json_object_iter_equal(&it, &end);
@@ -265,16 +265,16 @@ void Greenpak4Netlist::LoadModules(json_object* object)
 		//See what we got
 		string name = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
-		
+
 		//Verify it's an object
 		if(!json_object_is_type(child, json_type_object))
 		{
 			LogError("netlist module entry should be of type object but isn't\n");
 			exit(-1);
 		}
-		
+
 		//TODO: If the child object is a standard library cell, don't bother parsing it?
-		
+
 		//Load it
 		Greenpak4NetlistModule *module = new Greenpak4NetlistModule(this, name, child);
 		m_modules[name] = module;
@@ -288,7 +288,7 @@ void Greenpak4Netlist::LoadModules(json_object* object)
 			m_topModule = module;
 		}
 	}
-	
+
 	//Verify we got the top-level module we expected
 	if(m_topModule == NULL)
 	{

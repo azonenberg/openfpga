@@ -43,7 +43,7 @@ Greenpak4ShiftRegister::Greenpak4ShiftRegister(
 
 Greenpak4ShiftRegister::~Greenpak4ShiftRegister()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,7 +73,7 @@ void Greenpak4ShiftRegister::SetInput(string port, Greenpak4EntityOutput src)
 		m_reset = src;
 	else if(port == "CLK")
 		m_clock = src;
-	
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
@@ -104,7 +104,7 @@ void Greenpak4ShiftRegister::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-	
+
 	if(ncell->HasParameter("OUTA_TAP"))
 	{
 		m_delayA = atoi(ncell->m_parameters["OUTA_TAP"].c_str());
@@ -124,7 +124,7 @@ void Greenpak4ShiftRegister::CommitChanges()
 			exit(-1);
 		}
 	}
-	
+
 	if(ncell->HasParameter("OUTA_INVERT"))
 		m_invertA = atoi(ncell->m_parameters["OUTA_INVERT"].c_str());
 }
@@ -139,14 +139,14 @@ bool Greenpak4ShiftRegister::Save(bool* bitstream)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
-	
+
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_clock))
 		return false;
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_input))
 		return false;
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 2, m_reset))
 		return false;
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration
 
@@ -157,16 +157,16 @@ bool Greenpak4ShiftRegister::Save(bool* bitstream)
 	bitstream[m_configBase + 1] = (delayB & 2) ? true : false;
 	bitstream[m_configBase + 2] = (delayB & 4) ? true : false;
 	bitstream[m_configBase + 3] = (delayB & 8) ? true : false;
-	
+
 	//then tap A
 	int delayA = m_delayA - 1;
 	bitstream[m_configBase + 4] = (delayA & 1) ? true : false;
 	bitstream[m_configBase + 5] = (delayA & 2) ? true : false;
 	bitstream[m_configBase + 6] = (delayA & 4) ? true : false;
 	bitstream[m_configBase + 7] = (delayA & 8) ? true : false;
-	
+
 	//then invert flag
 	bitstream[m_configBase + 8] = m_invertA;
-	
+
 	return true;
 }

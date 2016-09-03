@@ -37,7 +37,7 @@ Greenpak4Inverter::Greenpak4Inverter(
 
 Greenpak4Inverter::~Greenpak4Inverter()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ void Greenpak4Inverter::SetInput(string port, Greenpak4EntityOutput src)
 {
 	if(port == "IN")
 		m_input = src;
-	
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
@@ -98,6 +98,6 @@ bool Greenpak4Inverter::Save(bool* bitstream)
 {
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input))
 		return false;
-		
+
 	return true;
 }

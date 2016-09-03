@@ -58,7 +58,7 @@ Greenpak4Comparator::Greenpak4Comparator(
 
 Greenpak4Comparator::~Greenpak4Comparator()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,7 +86,7 @@ void Greenpak4Comparator::SetInput(string port, Greenpak4EntityOutput src)
 		m_vin = src;
 	if(port == "VREF")
 		m_vref = src;
-	
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
@@ -114,16 +114,16 @@ void Greenpak4Comparator::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-		
+
 	if(ncell->HasParameter("BANDWIDTH"))
 		m_bandwidthHigh = (ncell->m_parameters["BANDWIDTH"] == "HIGH") ? true : false;
-		
+
 	if(ncell->HasParameter("VIN_ATTEN"))
 		m_vinAtten = (atoi(ncell->m_parameters["VIN_ATTEN"].c_str()));
-		
+
 	if(ncell->HasParameter("VIN_ISRC_EN"))
 		m_isrcEn = (ncell->m_parameters["VIN_ISRC_EN"] == "1") ? true : false;
-		
+
 	if(ncell->HasParameter("HYSTERESIS"))
 		m_hysteresis = (atoi(ncell->m_parameters["HYSTERESIS"].c_str()));
 }
@@ -138,21 +138,21 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
-	
+
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_pwren))
 		return false;
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
-	
+
 	//Input current source (iff present)
 	if(m_cbaseIsrc > 0)
 		bitstream[m_cbaseIsrc] = m_isrcEn;
-		
+
 	//Low bandwidth selector
 	if(m_cbaseBw > 0)
 		bitstream[m_cbaseBw] = !m_bandwidthHigh;
-		
+
 	//Gain selector
 	if(m_cbaseGain > 0)
 	{
@@ -162,23 +162,23 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 				bitstream[m_cbaseGain + 1] = false;
 				bitstream[m_cbaseGain + 0] = false;
 				break;
-			
+
 			case 2:
 				bitstream[m_cbaseGain + 1] = false;
 				bitstream[m_cbaseGain + 0] = true;
 				break;
-			
+
 			case 3:
 				bitstream[m_cbaseGain + 1] = true;
 				bitstream[m_cbaseGain + 0] = false;
 				break;
-			
+
 			case 4:
 				bitstream[m_cbaseGain + 1] = true;
 				bitstream[m_cbaseGain + 0] = true;
 				break;
-				
-				
+
+
 			default:
 				LogError("Invalid ACMP attenuation (must be 1/2/3/4)\n");
 				return false;
@@ -192,7 +192,7 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 			         GetDescription().c_str());
 		}
 	}
-	
+
 	//Hysteresis
 	if(m_cbaseHyst > 0)
 	{
@@ -202,23 +202,23 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 				bitstream[m_cbaseHyst + 1] = false;
 				bitstream[m_cbaseHyst + 0] = false;
 				break;
-			
+
 			case 25:
 				bitstream[m_cbaseHyst + 1] = false;
 				bitstream[m_cbaseHyst + 0] = true;
 				break;
-			
+
 			case 50:
 				bitstream[m_cbaseHyst + 1] = true;
 				bitstream[m_cbaseHyst + 0] = false;
 				break;
-			
+
 			case 200:
 				bitstream[m_cbaseHyst + 1] = true;
 				bitstream[m_cbaseHyst + 0] = true;
 				break;
-				
-				
+
+
 			default:
 				LogError("Invalid ACMP hysteresis (must be 0/25/50/200)\n");
 				return false;
@@ -232,11 +232,11 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 			         GetDescription().c_str());
 		}
 	}
-	
+
 	//If input is ground, then don't hook it up (we're not active)
 	if(m_vin.IsPowerRail() && !m_vin.GetPowerRailValue())
 	{}
-	
+
 	//Invalid input
 	else if(m_muxsels.find(m_vin) == m_muxsels.end())
 	{
@@ -244,39 +244,39 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 			m_vin.GetDescription().c_str(), GetDescription().c_str());
 		return false;
 	}
-	
+
 	//Valid input, hook it up
 	else
 	{
 		unsigned int sel = m_muxsels[m_vin];
-		
+
 		//Bitstream is zero-cleared at start of the writing process so high zero bits don't need to be written
-		
+
 		//2-bit mux selector? Write the high bit
 		if(sel & 2)
 			bitstream[m_cbaseVin + 1] = true;
-			
+
 		//Write the low bit
 		bitstream[m_cbaseVin] = (sel & 1) ? true : false;
 	}
-	
+
 	//Configure the voltage reference cell
 	unsigned int muxsel = 0;
 	if(m_vref.IsVoltageReference())
 	{
 		Greenpak4VoltageReference* vref = dynamic_cast<Greenpak4VoltageReference*>(m_vref.GetRealEntity());
 		muxsel = vref->GetACMPMuxSel();
-		
+
 		//TODO: how do we do routing when there's a dedicated reference input used?
 	}
-	
+
 	//Unused vrefs can be tied to ground
 	else if(m_vref.IsPowerRail() && !m_vref.GetPowerRailValue())
 	{
 		//emulate ground by setting 50 mV, the lowest threshold
 		muxsel = 0;
 	}
-	
+
 	//Vref must be sourced by a GP_VREF cell, complain if it's not
 	else
 	{
@@ -287,12 +287,12 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 			m_vref.GetOutputName().c_str()
 			);
 	}
-	
+
 	bitstream[m_cbaseVref + 0] = (muxsel & 1) ? true : false;
 	bitstream[m_cbaseVref + 1] = (muxsel & 2) ? true : false;
 	bitstream[m_cbaseVref + 2] = (muxsel & 4) ? true : false;
 	bitstream[m_cbaseVref + 3] = (muxsel & 8) ? true : false;
 	bitstream[m_cbaseVref + 4] = (muxsel & 16) ? true : false;
-	
+
 	return true;
 }

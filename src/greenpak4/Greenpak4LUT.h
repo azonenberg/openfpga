@@ -15,13 +15,13 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef Greenpak4LUT_h
 #define Greenpak4LUT_h
 
 /**
 	@brief A single LUT
- */ 
+ */
 class Greenpak4LUT : public Greenpak4BitstreamEntity
 {
 public:
@@ -36,27 +36,27 @@ public:
 		unsigned int cbase,
 		unsigned int order);
 	virtual ~Greenpak4LUT();
-	
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-		
+
 	unsigned int GetOrder()
 	{ return m_order; }
-	
+
 	unsigned int GetLutIndex()
 	{ return m_lutnum; }
-	
+
 	virtual std::string GetDescription();
-	
+
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
-	
+
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
-	
+
 	virtual void CommitChanges();
-	
+
 protected:
 
 	///Index of our LUT
@@ -64,18 +64,18 @@ protected:
 
 	///Number of inputs to the LUT
 	unsigned int m_order;
-	
+
 	/**
 		@brief The actual LUT data
-		
+
 		Statically allocate 16 bits per LUT to avoid the overhead of dynamic allocation.
 		Only bits 0... (2^order - 1) are valid.
 	 */
 	bool m_truthtable[16];
-	
+
 	/**
 		@brief Array of LUT inputs.
-		
+
 		Statically allocate 4 per LUT to avoid the overhead of dynamic allocation.
 		Only inputs 0... (order-1) are valid.
 	 */

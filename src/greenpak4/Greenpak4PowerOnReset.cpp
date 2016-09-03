@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 
 using namespace std;
@@ -37,7 +37,7 @@ Greenpak4PowerOnReset::Greenpak4PowerOnReset(
 
 Greenpak4PowerOnReset::~Greenpak4PowerOnReset()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,7 +84,7 @@ void Greenpak4PowerOnReset::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-		
+
 	if(ncell->HasParameter("POR_TIME"))
 	{
 		string p = ncell->m_parameters["POR_TIME"];

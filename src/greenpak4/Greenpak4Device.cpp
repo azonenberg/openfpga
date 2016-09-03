@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 #include <cassert>
 
@@ -36,12 +36,12 @@ Greenpak4Device::Greenpak4Device(
 	case GREENPAK4_SLG46620:
 		CreateDevice_SLG46620();
 		break;
-		
+
 	default:
 		assert(false);
 		break;
 	}
-	
+
 	//Set up pullups/downs on every IOB by default
 	for(auto x : m_iobs)
 	{
@@ -62,12 +62,12 @@ void Greenpak4Device::CreateDevice_SLG46620()
 {
 	//64 inputs per routing matrix
 	m_matrixBits = 6;
-	
+
 	//Create power rails
 	//These have to come first, since all other devices will refer to these during construction
 	m_constantZero = new Greenpak4PowerRail(this, 0, 0);
 	m_constantOne = new Greenpak4PowerRail(this, 0, 63);
-	
+
 	//Create the LUT2s (4 per device half)
 	for(int i=0; i<4; i++)
 	{
@@ -91,7 +91,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 			698 + i*4,	//LUT2s start at bitstream offset 698, 2^2 bits per LUT
 			2));		//this is a LUT2
 	}
-	
+
 	//Create the LUT3s (8 per device half)
 	for(int i=0; i<8; i++)
 	{
@@ -115,7 +115,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 			714 + i*8,	//LUT3s start at bitstream offset 714, 2^3 bits per LUT
 			3));		//this is a LUT3
 	}
-	
+
 	//Create the first LUT4 (pattern generator capable)
 	//For now, no PGEN support, only usable as a LUT
 	m_lut4s.push_back(new Greenpak4LUTPgen(
@@ -126,7 +126,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		13,		//we come after the last LUT3
 		656,	//LUT4 starts after last LUT3
 		4));	//this is a LUT4
-	
+
 	//Create the second LUT4 (no special functionality)
 	m_lut4s.push_back(new Greenpak4LUT(
 		this,
@@ -136,11 +136,11 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		13,		//we come after the last LUT3
 		778,	//LUT4s start at bitstream offset 778, 2^4 bits per LUT
 		4));	//this is a LUT4
-	
+
 	//Create the Type-A IOBs (with output enable)
 	m_iobs[2] =  new Greenpak4IOBTypeA(this, 2,  0, -1, 24, 941, Greenpak4IOB::IOB_FLAG_INPUTONLY);
 	m_iobs[3] =  new Greenpak4IOBTypeA(this, 3,  0, 56, 25, 946);
-	m_iobs[5] =  new Greenpak4IOBTypeA(this, 5,  0, 59, 27, 960);		
+	m_iobs[5] =  new Greenpak4IOBTypeA(this, 5,  0, 59, 27, 960);
 	m_iobs[7] =  new Greenpak4IOBTypeA(this, 7,  0, 62, 29, 974);
 	m_iobs[9] =  new Greenpak4IOBTypeA(this, 9,  0, 65, 31, 988);
 	m_iobs[10] = new Greenpak4IOBTypeA(this, 10, 0, 67, 32, 995, Greenpak4IOB::IOB_FLAG_X4DRIVE);
@@ -149,19 +149,19 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_iobs[16] = new Greenpak4IOBTypeA(this, 16, 1, 62, 28, 1940);
 	m_iobs[18] = new Greenpak4IOBTypeA(this, 18, 1, 65, 30, 1954);
 	m_iobs[19] = new Greenpak4IOBTypeA(this, 19, 1, 67, 31, 1961);
-	
+
 	m_iobs[19]->SetAnalogConfigBase(878);
 	m_iobs[18]->SetAnalogConfigBase(876);
-	
+
 	//Create the Type-B IOBs (no output enable)
 	m_iobs[4]  = new Greenpak4IOBTypeB(this,  4, 0, 58, 26, 953);
 	m_iobs[6]  = new Greenpak4IOBTypeB(this,  6, 0, 61, 28, 967);
 	m_iobs[8]  = new Greenpak4IOBTypeB(this,  8, 0, 64, 30, 981);
-	m_iobs[12] = new Greenpak4IOBTypeB(this, 12, 1, 56, 24, 1911, Greenpak4IOB::IOB_FLAG_X4DRIVE);	
+	m_iobs[12] = new Greenpak4IOBTypeB(this, 12, 1, 56, 24, 1911, Greenpak4IOB::IOB_FLAG_X4DRIVE);
 	m_iobs[15] = new Greenpak4IOBTypeB(this, 15, 1, 61, 27, 1933);
 	m_iobs[17] = new Greenpak4IOBTypeB(this, 17, 1, 64, 29, 1947);
 	m_iobs[20] = new Greenpak4IOBTypeB(this, 20, 1, 69, 32, 1968);
-	
+
 	//DFF/latches
 	//NOTE: Datasheet bug
 	//Figure 42 of SLG46620_DS_r075 (page 97) says DFF5 config range is bits 708-710
@@ -172,26 +172,26 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_dffsr.push_back(new Greenpak4Flipflop(this, 2,  true,  0, 42, 16, 685));
 	m_dffs.push_back( new Greenpak4Flipflop(this, 3,  false, 0, 45, 17, 689));
 	m_dffs.push_back( new Greenpak4Flipflop(this, 4,  false, 0, 47, 18, 692));
-	m_dffs.push_back( new Greenpak4Flipflop(this, 5,  false, 0, 49, 19, 695));	
+	m_dffs.push_back( new Greenpak4Flipflop(this, 5,  false, 0, 49, 19, 695));
 	m_dffsr.push_back(new Greenpak4Flipflop(this, 6,  true,  1, 36, 14, 794));
 	m_dffsr.push_back(new Greenpak4Flipflop(this, 7,  true,  1, 39, 15, 798));
 	m_dffsr.push_back(new Greenpak4Flipflop(this, 8,  true,  1, 42, 16, 802));
 	m_dffs.push_back( new Greenpak4Flipflop(this, 9,  false, 1, 45, 17, 806));
 	m_dffs.push_back( new Greenpak4Flipflop(this, 10, false, 1, 47, 18, 809));
 	m_dffs.push_back( new Greenpak4Flipflop(this, 11, false, 1, 49, 19, 812));
-	
+
 	//Shift registers
 	m_shregs.push_back(new Greenpak4ShiftRegister(this, 0, 51, 20, 1610));
 	m_shregs.push_back(new Greenpak4ShiftRegister(this, 1, 51, 20, 1619));
-	
+
 	//TODO: Edge detector/prog delays
-	
+
 	//Inverters
 	m_inverters.push_back(new Greenpak4Inverter(this, 0, 55, 23));
 	m_inverters.push_back(new Greenpak4Inverter(this, 1, 55, 23));
-	
+
 	//TODO: External clocks??
-	
+
 	//Low-frequency oscillator
 	m_lfosc = new Greenpak4LFOscillator(
 		this,
@@ -199,7 +199,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		84,		//input base (single power-down input)
 		50,		//output word (plus dedicated routing to counters etc)
 		1652);	//bitstream location
-		
+
 	//Ring oscillator
 	m_ringosc = new Greenpak4RingOscillator(
 		this,
@@ -207,7 +207,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		84,		//input base (single power-down input)
 		48,		//output word (plus dedicated routing to counters etc)
 		1630);	//bitstream location
-	
+
 	//RC oscillator
 	m_rcosc = new Greenpak4RCOscillator(
 		this,
@@ -215,7 +215,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		84,		//input base (single power-down input)
 		49,		//output word (plus dedicated routing to counters etc)
 		1642);	//bitstream location
-	
+
 	//Counters
 	m_counters14bit.push_back(new Greenpak4Counter(
 		this,
@@ -267,7 +267,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		1799));	//cbase (datasheet has a typo, this is correct)
 	m_counters8bit.push_back(new Greenpak4Counter(
 		this,
-		8,		//depth 
+		8,		//depth
 		true,	//we have FSM mode
 		false,	//no wake-sleep powerdown
 		false,	//no edge detector
@@ -279,7 +279,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		1820));	//cbase
 	m_counters8bit.push_back(new Greenpak4Counter(
 		this,
-		8,		//depth 
+		8,		//depth
 		false,	//no FSM mode
 		false,	//no wake-sleep powerdown
 		false,	//no edge detector
@@ -291,7 +291,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		1838));	//cbase
 	m_counters8bit.push_back(new Greenpak4Counter(
 		this,
-		8,		//depth 
+		8,		//depth
 		false,	//no FSM mode
 		false,	//no wake-sleep powerdown
 		false,	//no edge detector
@@ -303,7 +303,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		1852));	//cbase
 	m_counters8bit.push_back(new Greenpak4Counter(
 		this,
-		8,		//depth 
+		8,		//depth
 		false,	//no FSM mode
 		false,	//no wake-sleep powerdown
 		false,	//no edge detector
@@ -315,7 +315,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		1866));	//cbase
 	m_counters8bit.push_back(new Greenpak4Counter(
 		this,
-		8,		//depth 
+		8,		//depth
 		false,	//no FSM mode
 		false,	//no wake-sleep powerdown
 		false,	//no edge detector
@@ -327,7 +327,7 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		1880));	//cbase
 	m_counters8bit.push_back(new Greenpak4Counter(
 		this,
-		8,		//depth 
+		8,		//depth
 		false,	//no FSM mode
 		false,	//no wake-sleep powerdown
 		false,	//no edge detector
@@ -337,18 +337,18 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		80,		//ibase
 		40,		//oword,
 		1895));	//cbase
-	
-	//TODO: Slave SPI	
-	
+
+	//TODO: Slave SPI
+
 	//TODO: ADC
-	
+
 	//The DACs
 	m_dacs.push_back(new Greenpak4DAC(this, 844, 840, 843, 0));
 	m_dacs.push_back(new Greenpak4DAC(this, 823, 834, 883, 1));
-	
+
 	//Bandgap reference
 	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923);
-	
+
 	//Voltage references for comparators
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 0, 1));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 1, 2));
@@ -356,26 +356,26 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 3, 2));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 4));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 5));
-	
+
 	//Extra voltage references for the DACs (always 1.0V but having them declared as GP_VREF makes HDL cleaner)
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 6));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 7));
-	
+
 	//Analog comparators
 	//TODO speed doubler for ACMP5? Need to double check latest datasheet, this may have been changed
 	m_acmps.push_back(new Greenpak4Comparator(this, 0, 0, 69, 33, 832, 852, 853, 855, 934, 892));
-	m_acmps.push_back(new Greenpak4Comparator(this, 1, 1, 70, 33, 831, 861, 857, 859, 932, 897)); 
+	m_acmps.push_back(new Greenpak4Comparator(this, 1, 1, 70, 33, 831, 861, 857, 859, 932, 897));
 	m_acmps.push_back(new Greenpak4Comparator(this, 2, 1, 71, 34,  0,  862, 864, 863, 930, 902));
 	m_acmps.push_back(new Greenpak4Comparator(this, 3, 1, 72, 35,  0,  866, 867, 869, 928, 907));
 	m_acmps.push_back(new Greenpak4Comparator(this, 4, 0, 70, 34,  0,  875, 871, 873, 926, 912));
 	m_acmps.push_back(new Greenpak4Comparator(this, 5, 0, 71, 35,  0,  880,  0,   0,  924, 917));
-	
+
 	//PGA
 	m_pga = new Greenpak4PGA(this, 815);
-	
+
 	//Analog buffer
 	m_abuf = new Greenpak4Abuf(this);
-	
+
 	//Comparator input routing
 	auto pin3 = m_iobs[3]->GetOutput("OUT");
 	auto pin4 = m_iobs[4]->GetOutput("OUT");
@@ -409,26 +409,26 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_acmps[4]->AddInputMuxEntry(pin6_buf, 2);
 	m_acmps[4]->AddInputMuxEntry(vdd, 2);
 	m_acmps[5]->AddInputMuxEntry(pin4, 0);
-	
+
 	//TODO: Reserved bits
-	
+
 	//TODO: Vdd bypass
-	
+
 	//Power-on reset
 	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 2009);
-	
+
 	//TODO: IO pad precharge? what does this involve?
-	
+
 	//System reset
 	m_sysrst = new Greenpak4SystemReset(this, 0, 24, -1, 2018);
-	
+
 	//Total length of our bitstream
 	m_bitlen = 2048;
-	
+
 	//Initialize matrix base addresses
 	m_matrixBase[0] = 0;
 	m_matrixBase[1] = 1024;
-	
+
 	//Create cross connections
 	for(unsigned int matrix=0; matrix<2; matrix++)
 	{
@@ -444,9 +444,9 @@ void Greenpak4Device::CreateDevice_SLG46620()
 			m_crossConnections[matrix][i] = cc;
 		}
 	}
-	
+
 	//Do final initialization
-	CreateDevice_common();	
+	CreateDevice_common();
 }
 
 void Greenpak4Device::CreateDevice_common()
@@ -458,19 +458,19 @@ void Greenpak4Device::CreateDevice_common()
 		m_luts.push_back(x);
 	for(auto x : m_lut4s)
 		m_luts.push_back(x);
-		
+
 	//Add both kinds of FFs to the FF list
 	for(auto x : m_dffs)
 		m_dffAll.push_back(x);
 	for(auto x : m_dffsr)
 		m_dffAll.push_back(x);
-		
+
 	//Add all counters to counter list
 	for(auto x : m_counters8bit)
 		m_counters.push_back(x);
 	for(auto x : m_counters14bit)
 		m_counters.push_back(x);
-	
+
 	//Finally, put everything in bitstuff so we can walk the whole bitstream and not care about details
 	for(auto x : m_luts)
 		m_bitstuff.push_back(x);
@@ -500,7 +500,7 @@ void Greenpak4Device::CreateDevice_common()
 	m_bitstuff.push_back(m_por);
 	m_bitstuff.push_back(m_pga);
 	m_bitstuff.push_back(m_abuf);
-	
+
 	//TODO: this might be device specific - not all parts have exactly two matrices and ten cross connections?
 	for(unsigned int matrix=0; matrix<2; matrix++)
 		for(unsigned int i=0; i<10; i++)
@@ -557,7 +557,7 @@ unsigned int Greenpak4Device::GetMatrixBase(unsigned int matrix)
 {
 	if(matrix > 1)
 		return 0;
-		
+
 	return m_matrixBase[matrix];
 }
 
@@ -573,14 +573,14 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 		LogError("Couldn't open %s for writing\n", fname.c_str());
 		return false;
 	}
-	
+
 	//Allocate the bitstream and initialize to zero
 	//According to phone conversation w Silego FAE, 0 is legal default state for everything incl reserved bits
 	//All IOs will be floating digital inputs
 	bool* bitstream = new bool[m_bitlen];
 	for(unsigned int i=0; i<m_bitlen; i++)
 		bitstream[i] = false;
-	
+
 	//Get the config data from each of our blocks
 	for(auto x : m_bitstuff)
 	{
@@ -589,12 +589,12 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 			return false;
 		}
 	}
-	
+
 	//Write chip-wide tuning data
 	switch(m_part)
 	{
 		case GREENPAK4_SLG46620:
-		
+
 			//Vref fine tune, magic value from datasheet
 			bitstream[891] = true;
 			bitstream[890] = false;
@@ -623,12 +623,12 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 
 			break;
 	}
-		
+
 	//Write the bitfile
 	fprintf(fp, "index\t\tvalue\t\tcomment\n");
 	for(unsigned int i=0; i<m_bitlen; i++)
 		fprintf(fp, "%u\t\t%d\t\t//\n", i, (int)bitstream[i]);
-	
+
 	//Done
 	delete[] bitstream;
 	fclose(fp);

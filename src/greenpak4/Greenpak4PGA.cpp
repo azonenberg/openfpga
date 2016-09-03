@@ -40,7 +40,7 @@ Greenpak4PGA::Greenpak4PGA(
 
 Greenpak4PGA::~Greenpak4PGA()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -92,13 +92,13 @@ void Greenpak4PGA::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-	
+
 	if(ncell->HasParameter("GAIN"))
 	{
 		//convert to integer so we can sanity check more easily
 		float gain = atof(ncell->m_parameters["GAIN"].c_str());
 		int igain = gain*100;
-		
+
 		switch(igain)
 		{
 			case 25:
@@ -110,7 +110,7 @@ void Greenpak4PGA::CommitChanges()
 			case 1600:
 				m_gain = igain;
 				break;
-				
+
 			default:
 				LogError("PGA GAIN must be 0.25, 0.25, 1, 2, 4, 8, 16\n");
 				exit(-1);
@@ -120,36 +120,36 @@ void Greenpak4PGA::CommitChanges()
 	if(ncell->HasParameter("INPUT_MODE"))
 	{
 		string mode = ncell->m_parameters["INPUT_MODE"];
-		
+
 		if(mode == "SINGLE")
 			m_inputMode = MODE_SINGLE;
 		else if(mode == "DIFF")
 			m_inputMode = MODE_DIFF;
 		else if(mode == "PDIFF")
 			m_inputMode = MODE_PDIFF;
-			
+
 		else
 		{
 			LogError("PGA INPUT_MODE must be SINGLE, DIFF, or PDIFF\n");
 			exit(-1);
 		}
 	}
-	
+
 	//See if we have any loads other than the ADC
 	m_hasNonADCLoads = false;
 	if(ncell && (ncell->m_connections.find("VOUT") != ncell->m_connections.end()) )
 	{
 		auto node = ncell->m_connections["VOUT"][0];
-		
+
 		for(auto point : node->m_nodeports)
 		{
 			if(point.m_cell != ncell)
 				m_hasNonADCLoads = true;
 		}
-		
+
 		if(!node->m_ports.empty())
 			m_hasNonADCLoads = true;
-	}	
+	}
 }
 
 bool Greenpak4PGA::Load(bool* /*bitstream*/)
@@ -163,22 +163,22 @@ bool Greenpak4PGA::Save(bool* bitstream)
 	/*
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
-	
+
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_clock))
 		return false;
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_input))
 		return false;
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 2, m_reset))
 		return false;
-	
+
 	*/
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration
-	
+
 	//TODO: set true if input came from DAC0, false from anything else
 	bitstream[m_configBase + 0] = false;
-	
+
 	//If vinsel is a power rail, disable the input mux
 	if(m_vinsel.IsPowerRail())
 	{
@@ -187,16 +187,16 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			LogError("PGA VIN_SEL must be connected to IOB or Vdd\n");
 			return false;
 		}
-		
+
 		//Pin 16 mux disabled
 		else
-			bitstream[m_configBase + 1] = false;			
+			bitstream[m_configBase + 1] = false;
 	}
-	
+
 	//Assume it's a the correct IOB (no other paths should be routable in the graph)
 	else
-		bitstream[m_configBase + 1] = true;	
-		
+		bitstream[m_configBase + 1] = true;
+
 	//Set the diff/pdiff mode bits
 	switch(m_inputMode)
 	{
@@ -204,18 +204,18 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			bitstream[m_configBase + 2] = false;
 			bitstream[m_configBase + 7] = false;
 			break;
-			
+
 		case MODE_DIFF:
 			bitstream[m_configBase + 2] = true;
 			bitstream[m_configBase + 7] = false;
 			break;
-			
+
 		case MODE_PDIFF:
 			bitstream[m_configBase + 2] = true;
 			bitstream[m_configBase + 7] = true;
 			break;
 	}
-	
+
 	//Set the gain
 	if(m_inputMode == MODE_SINGLE)
 	{
@@ -228,7 +228,7 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			case 400:
 			case 800:
 				break;
-				
+
 			default:
 				LogError("PGA gain must be 0.25/0.5/1/2/4/8 for single ended inputs\n");
 				return false;
@@ -244,13 +244,13 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			case 800:
 			case 1600:
 				break;
-				
+
 			default:
 				LogError("PGA gain must be 1/2/4/8/16 for single ended inputs\n");
 				return false;
 		}
 	}
-	
+
 	switch(m_gain)
 	{
 		case 25:
@@ -258,43 +258,43 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			bitstream[m_configBase + 4] = false;
 			bitstream[m_configBase + 3] = false;
 			break;
-			
+
 		case 50:
 			bitstream[m_configBase + 5] = false;
 			bitstream[m_configBase + 4] = false;
 			bitstream[m_configBase + 3] = true;
 			break;
-		
+
 		case 100:
 			bitstream[m_configBase + 5] = false;
 			bitstream[m_configBase + 4] = true;
 			bitstream[m_configBase + 3] = false;
 			break;
-		
+
 		case 200:
 			bitstream[m_configBase + 5] = false;
 			bitstream[m_configBase + 4] = true;
 			bitstream[m_configBase + 3] = true;
 			break;
-			
+
 		case 400:
 			bitstream[m_configBase + 5] = true;
 			bitstream[m_configBase + 4] = false;
 			bitstream[m_configBase + 3] = false;
 			break;
-		
+
 		case 800:
 			bitstream[m_configBase + 5] = true;
 			bitstream[m_configBase + 4] = false;
 			bitstream[m_configBase + 3] = true;
 			break;
-		
+
 		case 1600:
 			bitstream[m_configBase + 5] = true;
 			bitstream[m_configBase + 4] = true;
 			bitstream[m_configBase + 3] = false;
 			break;
-		
+
 		/*
 		//Present in early datasheet revisions but not supported in GreenPak Designer
 		//According to discussions w/ Silego engineers, it is "not available" - possible silicon bug?
@@ -305,17 +305,17 @@ bool Greenpak4PGA::Save(bool* bitstream)
 			break;
 		*/
 	}
-	
+
 	//Set the power-on signal if we have any loads other than the ADC
-	
+
 	//Force the PGA on
 	bitstream[m_configBase + 6] = m_hasNonADCLoads;
-		
+
 	//Force the ADC on
 	bitstream[m_configBase + 70] = m_hasNonADCLoads;
-		
+
 	//Enable the PGA output to non-ADC loads
 	bitstream[m_configBase + 71] = m_hasNonADCLoads;
-	
+
 	return true;
 }

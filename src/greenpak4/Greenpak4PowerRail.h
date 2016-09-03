@@ -15,13 +15,13 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef Greenpak4PowerRail_h
 #define Greenpak4PowerRail_h
 
 /**
 	@brief A single power rail
- */ 
+ */
 class Greenpak4PowerRail : public Greenpak4BitstreamEntity
 {
 public:
@@ -32,24 +32,24 @@ public:
 		unsigned int matrix,
 		unsigned int oword);
 	virtual ~Greenpak4PowerRail();
-	
+
 	//Serialization (no-ops)
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-	
+
 	//Helper - get digital value (1 = Vdd, 0 = Vss)
 	bool GetDigitalValue()
 	{ return (m_outputBaseWord != 0); }
-	
+
 	virtual std::string GetDescription();
-	
+
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
-	
+
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
 	virtual void CommitChanges();
-	
+
 protected:
 };
 

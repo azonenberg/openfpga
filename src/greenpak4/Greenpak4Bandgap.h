@@ -15,13 +15,13 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef Greenpak4Bandgap_h
 #define Greenpak4Bandgap_h
 
 /**
 	@brief The bandgap voltage reference
- */ 
+ */
 class Greenpak4Bandgap : public Greenpak4BitstreamEntity
 {
 public:
@@ -34,29 +34,29 @@ public:
 		unsigned int oword,
 		unsigned int cbase);
 	virtual ~Greenpak4Bandgap();
-	
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-	
+
 	virtual std::string GetDescription();
-	
+
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
-	
+
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
-	
+
 	virtual void CommitChanges();
-	
+
 protected:
-		
+
 	///Auto power-down
 	bool m_autoPowerDown;
-	
+
 	///Chopper enable
 	bool m_chopperEn;
-	
+
 	///Delay from bandgap startup to output stable
 	int m_outDelay;
 };

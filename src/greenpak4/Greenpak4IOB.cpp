@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 
 using namespace std;
@@ -44,12 +44,12 @@ Greenpak4IOB::Greenpak4IOB(
 	, m_flags(flags)
 	, m_analogConfigBase(0)
 {
-	
+
 }
 
 Greenpak4IOB::~Greenpak4IOB()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ void Greenpak4IOB::CommitChanges()
 	auto cell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(cell == NULL)
 		return;
-	
+
 	//Get the net
 	Greenpak4NetlistNode* net = NULL;
 	if(cell->m_type == "GP_IBUF")
@@ -72,7 +72,7 @@ void Greenpak4IOB::CommitChanges()
 		net = cell->m_connections["IO"][0];
 	if(net == NULL)
 		return;
-			
+
 	//LogNotice("    Configuring IOB %d\n", m_pinNumber);
 	//If we get here, we're not unused.
 	//Default for USED nets, unless otherwise specced, is to float
@@ -86,7 +86,7 @@ void Greenpak4IOB::CommitChanges()
 		//do nothing, only for debugging
 		if(x.first == "src")
 		{}
-		
+
 		//IO schmitt trigger
 		else if(x.first == "SCHMITT_TRIGGER")
 		{
@@ -97,7 +97,7 @@ void Greenpak4IOB::CommitChanges()
 			else
 				bad_value = true;
 		}
-		
+
 		//Pullup strength/direction
 		else if(x.first == "PULLUP")
 		{
@@ -152,7 +152,7 @@ void Greenpak4IOB::CommitChanges()
 			else
 				bad_value = true;
 		}
-		
+
 		//Input buffer configuration
 		else if(x.first == "IBUF_TYPE")
 		{
@@ -166,14 +166,14 @@ void Greenpak4IOB::CommitChanges()
 			else
 				bad_value = true;
 		}
-		
+
 		//Ignore flipflop initialization, that's handled elsewhere
 		else if(x.first == "init")
 		{
 		}
-		
+
 		//TODO other configuration
-		
+
 		else
 		{
 			LogWarning("Top-level port \"%s\" has unrecognized attribute %s, ignoring\n",
@@ -189,7 +189,7 @@ void Greenpak4IOB::CommitChanges()
 
 		//LogNotice("        %s = %s\n", x.first.c_str(), x.second.c_str());
 	}
-	
+
 	//Configure output enable
 	if(cell->m_type == "GP_OBUF")
 		m_outputEnable = m_device->GetPower();
@@ -212,7 +212,7 @@ void Greenpak4IOB::SetInput(string port, Greenpak4EntityOutput src)
 		m_outputSignal = src;
 	else if(port == "OE")
 		m_outputEnable = src;
-	
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 

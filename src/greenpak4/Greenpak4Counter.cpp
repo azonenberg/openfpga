@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 
 using namespace std;
@@ -35,7 +35,7 @@ Greenpak4Counter::Greenpak4Counter(
 	unsigned int ibase,
 	unsigned int oword,
 	unsigned int cbase)
-	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)	
+	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 	, m_depth(depth)
 	, m_countnum(countnum)
 	, m_reset(device->GetGround())	//default reset is ground
@@ -56,7 +56,7 @@ Greenpak4Counter::Greenpak4Counter(
 
 Greenpak4Counter::~Greenpak4Counter()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,7 +81,7 @@ void Greenpak4Counter::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-		
+
 	if(ncell->HasParameter("RESET_MODE"))
 	{
 		string p = ncell->m_parameters["RESET_MODE"];
@@ -121,10 +121,10 @@ void Greenpak4Counter::CommitChanges()
 			exit(-1);
 		}
 	}
-	
+
 	if(ncell->HasParameter("COUNT_TO"))
 		m_countVal = (atoi(ncell->m_parameters["COUNT_TO"].c_str()));
-	
+
 	if(ncell->HasParameter("CLKIN_DIVIDE"))
 		m_preDivide = (atoi(ncell->m_parameters["CLKIN_DIVIDE"].c_str()));
 }
@@ -150,7 +150,7 @@ void Greenpak4Counter::SetInput(string port, Greenpak4EntityOutput src)
 		m_up = src;
 	else if(port == "KEEP")
 		m_keep = src;
-	
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
@@ -178,7 +178,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
-	
+
 	//COUNTER MODE
 	if(true)
 	{
@@ -187,29 +187,29 @@ bool Greenpak4Counter::Save(bool* bitstream)
 			//Reset input
 			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_reset))
 				return false;
-				
+
 			//Keep FSM input
 			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_keep))
 				return false;
-				
+
 			//Up FSM input
 			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 2, m_up))
 				return false;
 		}
-		
+
 		else
 		{
 			//Reset input
 			if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_reset))
 				return false;
 		}
-		
+
 		//TODO: dedicated input clock matrix stuff
 	}
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration
-	
+
 	//Count value (the same in all modes, just varies with depth)
 	if(m_depth > 8)
 	{
@@ -228,24 +228,24 @@ bool Greenpak4Counter::Save(bool* bitstream)
 	bitstream[m_configBase + 2] = (m_countVal & 0x04) ? true : false;
 	bitstream[m_configBase + 1] = (m_countVal & 0x02) ? true : false;
 	bitstream[m_configBase + 0] = (m_countVal & 0x01) ? true : false;
-	
+
 	//Base for remaining configuration data
 	uint32_t nbase = m_configBase + m_depth;
-	
+
 	//Get the bitstream node for RTTI checks
 	Greenpak4BitstreamEntity* clk = m_clock.GetRealEntity();
 	bool unused = false;
-	
+
 	//Check if we're unused
 	if(m_clock.IsPowerRail())
 		unused = true;
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Input clock
-	
+
 	//FSM/PWM have 4-bit clock selector
 	if(m_hasFSM || m_hasPWM)
-	{			
+	{
 		//Low-frequency oscillator
 		if(dynamic_cast<Greenpak4LFOscillator*>(clk) != NULL)
 		{
@@ -256,7 +256,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					m_countnum);
 				return false;
 			}
-			
+
 			//4'b1010
 			bitstream[nbase + 3] = true;
 			bitstream[nbase + 2] = false;
@@ -265,7 +265,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		}
 
 		//TODO: Matrix outputs
-		
+
 		//Ring oscillator
 		else if(dynamic_cast<Greenpak4RingOscillator*>(clk) != NULL)
 		{
@@ -276,14 +276,14 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					m_countnum);
 				return false;
 			}
-			
+
 			//4'b1000
 			bitstream[nbase + 3] = true;
 			bitstream[nbase + 2] = false;
 			bitstream[nbase + 1] = false;
 			bitstream[nbase + 0] = false;
 		}
-		
+
 		//RC oscillator
 		//TODO: 12 is a legal value for some counters but not others, need to consider this during placement??
 		else if(dynamic_cast<Greenpak4RCOscillator*>(clk) != NULL)
@@ -297,7 +297,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					bitstream[nbase + 1] = false;
 					bitstream[nbase + 0] = false;
 					break;
-				
+
 				//4'b0001
 				case 4:
 					bitstream[nbase + 3] = false;
@@ -305,7 +305,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					bitstream[nbase + 1] = false;
 					bitstream[nbase + 0] = true;
 					break;
-				
+
 				//4'b0010
 				case 12:
 					bitstream[nbase + 3] = false;
@@ -313,7 +313,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					bitstream[nbase + 1] = true;
 					bitstream[nbase + 0] = false;
 					break;
-				
+
 				//4'b0011
 				case 24:
 					bitstream[nbase + 3] = false;
@@ -321,7 +321,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					bitstream[nbase + 1] = true;
 					bitstream[nbase + 0] = true;
 					break;
-				
+
 				//4'b0100
 				case 64:
 					bitstream[nbase + 3] = false;
@@ -329,7 +329,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					bitstream[nbase + 1] = false;
 					bitstream[nbase + 0] = false;
 					break;
-					
+
 				default:
 					LogError(
 						"Counter %d does not support pre-divider values other than 1/4/12/24/64 "
@@ -338,7 +338,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					return false;
 			}
 		}
-		
+
 		//TODO: SPI clock
 		//TODO: FSM clock
 		//TODO: PWM clock
@@ -351,7 +351,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		}
 		nbase += 4;
 	}
-	
+
 	//others have 3-bit selector
 	else
 	{
@@ -365,13 +365,13 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					m_countnum);
 				return false;
 			}
-			
+
 			//3'b100
 			bitstream[nbase + 2] = true;
 			bitstream[nbase + 1] = false;
 			bitstream[nbase + 0] = false;
 		}
-		
+
 		//Ring oscillator
 		else if(dynamic_cast<Greenpak4RingOscillator*>(clk) != NULL)
 		{
@@ -382,13 +382,13 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					m_countnum);
 				return false;
 			}
-			
+
 			//3'b110
 			bitstream[nbase + 2] = true;
 			bitstream[nbase + 1] = true;
 			bitstream[nbase + 0] = false;
 		}
-		
+
 		//RC oscillator
 		else if(dynamic_cast<Greenpak4RCOscillator*>(clk) != NULL)
 		{
@@ -400,28 +400,28 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					bitstream[nbase + 1] = false;
 					bitstream[nbase + 0] = false;
 					break;
-					
+
 				//3'b001
 				case 4:
 					bitstream[nbase + 2] = false;
 					bitstream[nbase + 1] = false;
 					bitstream[nbase + 0] = true;
 					break;
-					
+
 				//3'b010
 				case 24:
 					bitstream[nbase + 2] = false;
 					bitstream[nbase + 1] = true;
 					bitstream[nbase + 0] = false;
 					break;
-					
+
 				//3'b011
 				case 64:
 					bitstream[nbase + 2] = false;
 					bitstream[nbase + 1] = true;
 					bitstream[nbase + 0] = true;
 					break;
-					
+
 				default:
 					LogError(
 						"Counter %d does not support pre-divider values other than 1/4/24/64 "
@@ -430,10 +430,10 @@ bool Greenpak4Counter::Save(bool* bitstream)
 					return false;
 			}
 		}
-		
+
 		//TODO: cascading
 		//TODO: Matrix outputs
-		
+
 		else if(!unused)
 		{
 			LogError("Counter %d input from %s not implemented\n",
@@ -441,27 +441,27 @@ bool Greenpak4Counter::Save(bool* bitstream)
 				m_clock.GetDescription().c_str());
 			return false;
 		}
-	
+
 		nbase += 3;
 	}
-		
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Main counter logic
-	
+
 	//FSM capable (see CNT/DLY4)
 	if(m_hasFSM)
-	{			
+	{
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Reset mode
-		
+
 		bitstream[nbase + 1] = (m_resetMode & 2) ? true : false;
 		bitstream[nbase + 0] = (m_resetMode & 1) ? true : false;
-		
+
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Block function
-		
+
 		nbase += 2;
-		
+
 		if(m_hasEdgeDetect)
 		{
 			//if unused, go to delay mode
@@ -470,33 +470,33 @@ bool Greenpak4Counter::Save(bool* bitstream)
 				bitstream[nbase + 1] = false;
 				bitstream[nbase + 0] = false;
 			}
-			
+
 			//Counter / FSM / PWM mode selected
 			else
 			{
 				bitstream[nbase + 1] = false;
 				bitstream[nbase + 0] = true;
 			}
-			
+
 			nbase += 2;
 		}
-		
+
 		else
 		{
 			//if unused, go to delay mode
 			if(unused)
 				bitstream[nbase + 0] = false;
-			
+
 			//Counter / FSM / PWM mode selected
 			else
 				bitstream[nbase + 0] = true;
-				
+
 			nbase ++;
 		}
-		
+
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// FSM input data source
-		
+
 		//NVM data (FSM data = max count)
 		//NB: on SLG46620, FSM0 and FSM1 encoding for this register does not match
 		bitstream[nbase + 0] = false;
@@ -504,7 +504,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Value control
-		
+
 		//If unused, reset to zero
 		if(unused)
 			bitstream[nbase + 2] = false;
@@ -520,41 +520,41 @@ bool Greenpak4Counter::Save(bool* bitstream)
 				bitstream[nbase + 2] = false;
 		}
 	}
-		
+
 	//Not FSM capable (see CNT/DLY0)
 	else
-	{			
+	{
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Reset mode
-		
+
 		bitstream[nbase + 1] = (m_resetMode & 2) ? true : false;
 		bitstream[nbase + 0] = (m_resetMode & 1) ? true : false;
-		
+
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Block function
-		
+
 		//PWM mode is only 1 bit (see CNT/DLY80
 		if(m_hasPWM)
 		{
 			//if unused, 1'b0 = delay
 			if(unused)
 				bitstream[nbase + 2] = false;
-			
+
 			//1'b1 = CNT
 			else
 				bitstream[nbase + 2] = true;
 		}
-		
+
 		//Not PWM capable (see CNT/DLY0)
 		else
-		{		
+		{
 			//if unused, 2'b00 = delay
 			if(unused)
 			{
 				bitstream[nbase + 3] = false;
 				bitstream[nbase + 2] = false;
 			}
-			
+
 			//2'b01 = CNT
 			else
 			{
@@ -562,14 +562,14 @@ bool Greenpak4Counter::Save(bool* bitstream)
 				bitstream[nbase + 2] = true;
 			}
 		}
-		
+
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Wake/sleep power down
-		
+
 		//For now, always run normally
 		if(m_hasWakeSleepPowerDown && !unused)
 			bitstream[nbase + 4] = true;
-		
+
 	}
 
 	return true;

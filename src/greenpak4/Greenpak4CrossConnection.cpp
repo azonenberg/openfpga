@@ -38,7 +38,7 @@ Greenpak4CrossConnection::Greenpak4CrossConnection(
 
 Greenpak4CrossConnection::~Greenpak4CrossConnection()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,18 +56,18 @@ void Greenpak4CrossConnection::SetInput(std::string /*port*/, Greenpak4EntityOut
 	//Don't complain if input is a power rail, those are the sole exception
 	if(input.IsPowerRail())
 	{}
-	
+
 	//Complain if input has a dual, they should never go through the cross connections
 	else if(input.HasDual())
 	{
 		LogFatal("tried to set cross-connection input from node with dual\n");
 	}
-	
+
 	else if(input.GetMatrix() == m_matrix)
 	{
 		LogFatal("tried to set cross-connection input from wrong matrix\n");
 	}
-	
+
 	m_input = input;
 }
 
@@ -109,6 +109,6 @@ bool Greenpak4CrossConnection::Save(bool* bitstream)
 {
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input, true))
 		return false;
-		
+
 	return true;
 }

@@ -33,7 +33,7 @@ public:
 		, m_nbit(nbit)
 		, m_vector(vector)
 	{}
-	
+
 	bool IsNull()
 	{ return (m_cell == NULL); }
 
@@ -51,25 +51,25 @@ public:
 	Greenpak4NetlistNode();
 
 	std::string m_name;
-	
+
 	//Attributes
 	std::map<std::string, std::string> m_attributes;
-	
+
 	bool HasAttribute(std::string name)
 	{ return (m_attributes.find(name) != m_attributes.end() ); }
-	
+
 	std::string GetAttribute(std::string name)
 	{ return m_attributes[name]; }
 
 	//Source file locations
 	std::vector<std::string> m_src_locations;
-	
+
 	//Net source (only valid after indexing)
 	Greenpak4NetlistNodePoint m_driver;
-	
+
 	//List of internal points we link to (only valid after indexing)
 	std::vector<Greenpak4NetlistNodePoint> m_nodeports;
-	
+
 	//List of ports we link to (only valid after indexing)
 	std::vector<Greenpak4NetlistPort*> m_ports;
 };

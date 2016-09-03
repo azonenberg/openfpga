@@ -15,13 +15,13 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef Greenpak4LUTPgen_h
 #define Greenpak4LUTPgen_h
 
 /**
 	@brief A single LUT with pattern-generator mode
- */ 
+ */
 class Greenpak4LUTPgen : public Greenpak4LUT
 {
 public:
@@ -36,11 +36,11 @@ public:
 		unsigned int cbase,
 		unsigned int order);
 	virtual ~Greenpak4LUTPgen();
-	
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-	
+
 protected:
 };
 

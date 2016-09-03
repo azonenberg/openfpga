@@ -27,26 +27,26 @@ public:
 
 	//Construction / destruction
 	Greenpak4Abuf(Greenpak4Device* device);
-	
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-		
+
 	virtual ~Greenpak4Abuf();
 
 	virtual std::string GetDescription();
-	
+
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
-	
+
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
-	
+
 	virtual void CommitChanges();
-	
+
 	Greenpak4EntityOutput GetInput()
 	{ return m_input; }
-	
+
 protected:
 	Greenpak4EntityOutput m_input;
 };

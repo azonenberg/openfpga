@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,9 +34,9 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 	, m_nextNetNumber(0)
 {
 	CreatePowerNets();
-	
+
 	LogVerbose("    %s\n", name.c_str());
-	
+
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
 		!json_object_iter_equal(&it, &end);
@@ -45,7 +45,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 		//See what we got
 		string name = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
-		
+
 		//Whatever it is, it should be an object
 		if(!json_object_is_type(child, json_type_object))
 		{
@@ -74,7 +74,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 					LogError("module child should be of type object but isn't\n");
 					exit(-1);
 				}
-				
+
 				//Load ports
 				if(name == "ports")
 				{
@@ -107,7 +107,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 			}
 		}
 	}
-	
+
 	//Assign port nets
 	for(auto it : m_ports)
 		it.second->m_net = m_nets[it.first];
@@ -116,19 +116,19 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 Greenpak4NetlistModule::~Greenpak4NetlistModule()
 {
 	//Clean up in reverse order
-	
+
 	//cells depend on everything
 	for(auto x : m_cells)
 		delete x.second;
 	m_cells.clear();
-	
+
 	//don't delete nets, it's just a re-indexing of nodes
-	
+
 	//ports don't depend on anything but nodes
 	for(auto x : m_ports)
 		delete x.second;
 	m_ports.clear();
-	
+
 	//then nodes at end
 	for(auto x : m_nodes)
 		delete x.second;
@@ -139,27 +139,27 @@ void Greenpak4NetlistModule::CreatePowerNets()
 {
 	string vdd = "GP_VDD";
 	string vss = "GP_VSS";
-	
+
 	//Create power/ground nets
 	m_vdd = new Greenpak4NetlistNode;
 	m_vdd->m_name = vdd;
-	
+
 	m_vss = new Greenpak4NetlistNode;
 	m_vss->m_name = vss;
-	
+
 	m_nodes[VDD_NETNUM] = m_vdd;
 	m_nodes[VSS_NETNUM] = m_vss;
-	
+
 	m_nets[vdd] = m_vdd;
 	m_nets[vss] = m_vss;
-	
+
 	//Create driver cells for them
 	Greenpak4NetlistCell* vcell = new Greenpak4NetlistCell(this);
 	vcell->m_name = vdd;
 	vcell->m_type = vdd;
 	vcell->m_connections["OUT"].push_back(m_vdd);
 	m_cells[vdd] = vcell;
-	
+
 	Greenpak4NetlistCell* gcell = new Greenpak4NetlistCell(this);
 	gcell->m_name = vss;
 	gcell->m_type = vss;
@@ -199,12 +199,12 @@ Greenpak4NetlistNode* Greenpak4NetlistModule::GetNode(int32_t netnum)
 	if(m_nodes.find(netnum) == m_nodes.end())
 	{
 		m_nodes[netnum] = new Greenpak4NetlistNode;
-		
+
 		//Keep running total of max net number in use
 		if(netnum > m_nextNetNumber)
 			m_nextNetNumber = netnum + 1;
 	}
-		
+
 	return m_nodes[netnum];
 }
 
@@ -213,7 +213,7 @@ void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
 	Greenpak4NetlistCell* cell = new Greenpak4NetlistCell(this);
 	cell->m_name = name;
 	m_cells[name] = cell;
-	
+
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
 		!json_object_iter_equal(&it, &end);
@@ -222,13 +222,13 @@ void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
 		//See what we got
 		string cname = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
-		
+
 		//Ignore hide_name request for now
 		if(cname == "hide_name")
 		{
-			
+
 		}
-		
+
 		//Type of cell
 		else if(cname == "type")
 		{
@@ -237,24 +237,24 @@ void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
 				LogError("Cell type should be of type string but isn't\n");
 				exit(-1);
 			}
-			
+
 			cell->m_type = json_object_get_string(child);
 		}
-		
+
 		else if(cname == "attributes")
 			LoadCellAttributes(cell, child);
-		
+
 		else if(cname == "parameters")
 			LoadCellParameters(cell, child);
-		
+
 		else if(cname == "connections")
 			LoadCellConnections(cell, child);
-		
+
 		//redundant, we can look this up from the module
 		else if(cname == "port_directions")
 		{
 		}
-		
+
 		//Unsupported
 		else
 		{
@@ -265,16 +265,16 @@ void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
 }
 
 void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
-{	
+{
 	//Create the named net
 	if(m_nets.find(name) != m_nets.end())
 	{
 		LogError("Attempted redeclaration of net \"%s\" \n", name.c_str());
 		exit(-1);
 	}
-	
+
 	vector<Greenpak4NetlistNode*> nodes;
-	
+
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
 		!json_object_iter_equal(&it, &end);
@@ -282,12 +282,12 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 	{
 		string cname = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
-		
+
 		//Ignore hide_name request for now
 		if(cname == "hide_name")
 		{
 		}
-		
+
 		//Bits - list of nets this name is assigned to
 		else if(cname == "bits")
 		{
@@ -302,12 +302,12 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 			for(int i=0; i<len; i++)
 			{
 				json_object* jnode = json_object_array_get_idx(child, i);
-				
+
 				int netnum = -1;
-				
+
 				//If it's the string "x", the remaining bits of the signal are unused
 				if(json_object_is_type(jnode, json_type_string))
-				{			
+				{
 					string value = json_object_get_string(jnode);
 					if(value != "x")
 					{
@@ -315,7 +315,7 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 						exit(-1);
 					}
 				}
-				
+
 				//Should be an integer if we get here
 				else
 				{
@@ -324,7 +324,7 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 						LogError("Net number in module should be of type integer but isn't\n");
 						exit(-1);
 					}
-					
+
 					netnum = json_object_get_int(jnode);
 				}
 
@@ -336,24 +336,24 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 					snprintf(tmp, sizeof(tmp), "%s[%d]", name.c_str(), i);
 					bname = tmp;
 				}
-				
+
 				//Special checking needed for unconnected nets in a vector
 				if(netnum < 0)
 					m_nets[bname] = NULL;
-				
+
 				else
 				{
 					//How to handle multiple names for the same net??
 					auto node = GetNode(netnum);
 					nodes.push_back(node);
-				
+
 					//Set up name etc
 					node->m_name = bname;
 					m_nets[bname] = node;
 				}
 			}
 		}
-		
+
 		//Attributes - array of name-value pairs
 		else if(cname == "attributes")
 		{
@@ -362,12 +362,12 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 				LogError("Net attributes should be of type object but isn't\n");
 				exit(-1);
 			}
-			
+
 			//Same attributes for all nodes in the vector net
 			for(auto node : nodes)
 				LoadNetAttributes(node, child);
 		}
-		
+
 		//Unsupported
 		else
 		{
@@ -396,16 +396,16 @@ void Greenpak4NetlistModule::LoadNetAttributes(Greenpak4NetlistNode* net, json_o
 			net->m_src_locations.push_back(value);
 			continue;
 		}
-				
+
 		//Make sure we don't have it already
 		if(net->m_attributes.find(cname) != net->m_attributes.end())
 		{
 			LogError("Attempted redeclaration of net attribute \"%s\"\n", cname.c_str());
 			exit(-1);
 		}
-		
+
 		//LogNotice("    net %s attribute %s = %s\n", net->m_name.c_str(), cname.c_str(), json_object_get_string(child));
-		
+
 		//Save the attribute
 		net->m_attributes[cname] = value;
 	}
@@ -420,14 +420,14 @@ void Greenpak4NetlistModule::LoadCellAttributes(Greenpak4NetlistCell* cell, json
 	{
 		string cname = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
-				
+
 		//Make sure we don't have it already
 		if(cell->m_attributes.find(cname) != cell->m_attributes.end())
 		{
 			LogError("Attempted redeclaration of cell attribute \"%s\"\n", cname.c_str());
 			exit(-1);
 		}
-		
+
 		//Save the attribute
 		cell->m_attributes[cname] = json_object_get_string(child);
 	}
@@ -442,16 +442,16 @@ void Greenpak4NetlistModule::LoadCellParameters(Greenpak4NetlistCell* cell, json
 	{
 		string cname = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
-		
+
 		//No type check, just convert back to string
-		
+
 		//Make sure we don't have it already
 		if(cell->m_parameters.find(cname) != cell->m_parameters.end())
 		{
 			LogError("Attempted redeclaration of cell parameter \"%s\"\n", cname.c_str());
 			exit(-1);
 		}
-		
+
 		//Save the attribute
 		cell->m_parameters[cname] = json_object_get_string(child);
 	}
@@ -466,7 +466,7 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 	{
 		string cname = json_object_iter_peek_name(&it);
 		json_object* child = json_object_iter_peek_value(&it);
-		
+
 		if(!json_object_is_type(child, json_type_array))
 		{
 			LogError("Cell connection value should be of type array but isn't\n");
@@ -478,14 +478,14 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 		int len = json_object_array_length(child);
 		if(len == 0)
 			continue;
-			
+
 		//May have multiple bits if it's a vector port
 		for(int i=0; i<len; i++)
 		{
 			Greenpak4NetlistNode* node = NULL;
-		
+
 			json_object* jnode = json_object_array_get_idx(child, i);
-			
+
 			//If it's a string, it's a constant one or zero
 			if(json_object_is_type(jnode, json_type_string))
 			{
@@ -495,17 +495,17 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 				else
 					node = m_vss;
 			}
-			
+
 			//Otherwise it has to be an integer
 			else if(!json_object_is_type(jnode, json_type_int))
 			{
 				LogError("Net number for cell should be of type integer but isn't\n");
 				exit(-1);
 			}
-			
+
 			else
 				node = GetNode(json_object_get_int(jnode));
-			
+
 			//Hook up the connection
 			cell->m_connections[cname].push_back(node);
 		}

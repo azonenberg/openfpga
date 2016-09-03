@@ -15,13 +15,13 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef Greenpak4IOBTypeA_h
 #define Greenpak4IOBTypeA_h
 
 /**
 	@brief A single IOB, bitfile format type A. Tristate capable.
- */ 
+ */
 class Greenpak4IOBTypeA : public Greenpak4IOB
 {
 public:
@@ -36,11 +36,11 @@ public:
 		unsigned int cbase,
 		unsigned int flags = IOB_FLAG_NORMAL);
 	virtual ~Greenpak4IOBTypeA();
-	
+
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-	
+
 	virtual std::string GetDescription();
 };
 

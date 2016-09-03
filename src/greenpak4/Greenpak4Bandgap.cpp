@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "Greenpak4.h"
 
 using namespace std;
@@ -39,7 +39,7 @@ Greenpak4Bandgap::Greenpak4Bandgap(
 
 Greenpak4Bandgap::~Greenpak4Bandgap()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,7 +86,7 @@ void Greenpak4Bandgap::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return;
-		
+
 	if(ncell->HasParameter("AUTO_PWRDN"))
 	{
 		string p = ncell->m_parameters["AUTO_PWRDN"];
@@ -95,7 +95,7 @@ void Greenpak4Bandgap::CommitChanges()
 		else
 			m_autoPowerDown = false;
 	}
-	
+
 	if(ncell->HasParameter("CHOPPER_EN"))
 	{
 		string p = ncell->m_parameters["CHOPPER_EN"];
@@ -104,7 +104,7 @@ void Greenpak4Bandgap::CommitChanges()
 		else
 			m_chopperEn = false;
 	}
-	
+
 	if(ncell->HasParameter("OUT_DELAY"))
 	{
 		string p = ncell->m_parameters["OUT_DELAY"];
@@ -133,18 +133,18 @@ bool Greenpak4Bandgap::Save(bool* bitstream)
 		bitstream[m_configBase + 0] = true;
 	else
 		bitstream[m_configBase + 0] = false;
-		
+
 	//Power-down 936
 	if(m_autoPowerDown)
 		bitstream[m_configBase + 13] = false;
 	else
 		bitstream[m_configBase + 13] = true;
-		
+
 	//Chopper enable flag
 	if(m_chopperEn)
 		bitstream[m_configBase + 15] = true;
 	else
 		bitstream[m_configBase + 15] = false;
-	
+
 	return true;
 }
