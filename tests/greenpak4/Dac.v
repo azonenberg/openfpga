@@ -34,11 +34,11 @@ module Dac(bg_ok, vout, vout2);
 	(* LOC = "P20" *)
 	output wire bg_ok;
 
-	(* LOC = "P19" *)
+	(* LOC = "P18" *)
 	(* IBUF_TYPE = "ANALOG" *)
 	output wire vout;
 
-	(* LOC = "P18" *)
+	(* LOC = "P19" *)
 	(* IBUF_TYPE = "ANALOG" *)
 	output wire vout2;
 
@@ -81,7 +81,8 @@ module Dac(bg_ok, vout, vout2);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DAC driving the voltage reference
 
-	(* LOC = "DAC_0" *)
+	//This DAC isn't working! Not sure why
+	(* LOC = "DAC_1" *)
 	wire vdac;
 	GP_DAC dac(
 		.DIN(8'hff),
@@ -89,21 +90,31 @@ module Dac(bg_ok, vout, vout2);
 		.VREF(vref_1v0)
 	);
 
+	(* LOC = "DAC_0" *)
+	wire vdac2;
+	GP_DAC dac2(
+		.DIN(8'h80),
+		.VOUT(vdac2),
+		.VREF(vref_1v0)
+	);
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Drive one pin with the DAC output directly, no vref
 	
 	assign vout = vdac;
+	assign vout2 = vdac2;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Drive the other via a buffered reference
-	
+
+	/*
 	GP_VREF #(
 		.VIN_DIV(4'd1),
 		.VREF(16'd00)
 	) vrdac (
 		.VIN(vdac),
 		.VOUT(vout2)
-	);
+	);*/
 	
 
 endmodule
