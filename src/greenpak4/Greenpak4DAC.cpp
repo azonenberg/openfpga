@@ -41,7 +41,7 @@ Greenpak4DAC::Greenpak4DAC(
 
 Greenpak4DAC::~Greenpak4DAC()
 {
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -65,7 +65,7 @@ void Greenpak4DAC::SetInput(string port, Greenpak4EntityOutput src)
 {
 	//if(port == "IN")
 	//	m_input = src;
-	
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
@@ -98,6 +98,6 @@ bool Greenpak4DAC::Load(bool* /*bitstream*/)
 bool Greenpak4DAC::Save(bool* /*bitstream*/)
 {
 	//no configuration, we just exist to help configure the comparator input muxes
-		
+
 	return true;
 }
