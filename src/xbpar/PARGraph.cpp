@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "xbpar.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24,7 +24,7 @@
 PARGraph::PARGraph()
 	: m_nextLabel(0)
 {
-	
+
 }
 
 PARGraph::~PARGraph()
@@ -66,10 +66,10 @@ PARGraphNode* PARGraph::GetNodeByIndex(uint32_t index)
 uint32_t PARGraph::GetNumEdges()
 {
 	uint32_t netcount = 0;
-	
+
 	for(auto x : m_nodes)
 		netcount += x->GetEdgeCount();
-	
+
 	return netcount;
 }
 
@@ -86,7 +86,7 @@ void PARGraph::AddNode(PARGraphNode* node)
 
 /**
 	@brief Look up how many nodes have a given label.
-	
+
 	Value is cached by IndexNodesByLabel();
  */
 uint32_t PARGraph::GetNumNodesWithLabel(uint32_t label)
@@ -103,11 +103,11 @@ void PARGraph::IndexNodesByLabel()
 	m_labeledNodes.clear();
 	for(uint32_t i=0; i<m_nextLabel; i++)
 		m_labeledNodes.push_back(NodeVector());
-		
+
 	//Do the indexing for primary labels first
 	for(auto x : m_nodes)
 		m_labeledNodes[x->GetLabel()].push_back(x);
-	
+
 	//Add secondary labels last (so lower priority
 	for(auto x : m_nodes)
 	{

@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef PAREngine_h
 #define PAREngine_h
 
@@ -30,11 +30,11 @@ class PAREngine
 public:
 	PAREngine(PARGraph* netlist, PARGraph* device);
 	virtual ~PAREngine();
-	
+
 	virtual bool PlaceAndRoute(std::map<uint32_t, std::string> label_names, uint32_t seed = 0);
-	
+
 	virtual uint32_t ComputeCost();
-	
+
 protected:
 
 	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate);
@@ -45,7 +45,7 @@ protected:
 	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes) =0;
 
 	virtual uint32_t ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration);
-	
+
 	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
 
 	virtual uint32_t ComputeCongestionCost();
@@ -60,12 +60,12 @@ protected:
 		std::map<uint32_t, std::string>& label_names);
 
 	virtual uint32_t ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode* candidate);
-	
+
 	std::string GetNodeTypes(PARGraphNode* node, std::map<uint32_t, std::string>& label_names);
 
 	PARGraph* m_netlist;
 	PARGraph* m_device;
-	
+
 	uint32_t m_temperature;
 };
 

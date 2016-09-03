@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "xbpar.h"
 #include <cstdlib>
 
@@ -29,7 +29,7 @@ PAREngine::PAREngine(PARGraph* netlist, PARGraph* device)
 	, m_device(device)
 	, m_temperature(0)
 {
-	
+
 }
 
 PAREngine::~PAREngine()
@@ -41,25 +41,25 @@ PAREngine::~PAREngine()
 
 /**
 	@brief Place-and-route implementation
-	
+
 	@return true on success, fail if design could not be routed
  */
 bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 {
 	LogVerbose("\nXBPAR initializing...\n");
 	m_temperature = 100;
-	
+
 	//TODO: glibc rand sucks, replace with something a bit more random
 	//(this may not make a difference for a device this tiny though)
 	srand(seed);
-		
+
 	//Detect obviously impossible-to-route designs
 	if(!SanityCheck(label_names))
 		return false;
-		
+
 	//Do an initial valid, but not necessarily routable, placement
 	InitialPlacement(label_names);
-		
+
 	//Converge until we get a passing placement
 	LogNotice("\nOptimizing placement...\n");
 	uint32_t iteration = 0;
@@ -76,37 +76,37 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 			newcost = ComputeAndPrintScore(unroutes, iteration);
 		time_since_best_cost ++;
 		iteration ++;
-		
+
 		//If cost is zero, stop now - we found a satisfactory placement!
 		if(newcost == 0)
 			break;
-		
+
 		//If the new placement is better than our previous record, make a note of that
 		if(newcost < best_cost)
 		{
 			best_cost = newcost;
 			time_since_best_cost = 0;
 		}
-		
+
 		//If we failed to improve placement after ten iterations it's hopeless, give up
 		//if(time_since_best_cost > 10)
 		//	break;
-		
+
 		//Find the set of nodes in the netlist that we can optimize
 		//If none were found, give up
 		vector<PARGraphNode*> badnodes;
 		FindSubOptimalPlacements(badnodes);
 		if(badnodes.empty())
 			break;
-		
+
 		//Try to optimize the placement more
 		made_change = OptimizePlacement(badnodes, label_names);
-			
+
 		//Cool the system down
 		//TODO: Decide on a good rate for this?
 		m_temperature --;
 	}
-	
+
 	//Check for any remaining unroutable nets
 	unroutes.clear();
 	if(0 != ComputeUnroutableCost(unroutes))
@@ -115,7 +115,7 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 		PrintUnroutes(unroutes);
 		return false;
 	}
-		
+
 	return true;
 }
 
@@ -128,7 +128,7 @@ uint32_t PAREngine::ComputeAndPrintScore(vector<PARGraphEdge*>& unroutes, uint32
 	uint32_t ccost = ComputeCongestionCost();
 	uint32_t tcost = ComputeTimingCost();
 	uint32_t cost = ComputeCost();
-	
+
 	unroutes.clear();
 	LogVerbose(
 		"    Iteration %d: unroutability %d, congestion %d, timing %d (total cost %d)\n",
@@ -138,7 +138,7 @@ uint32_t PAREngine::ComputeAndPrintScore(vector<PARGraphEdge*>& unroutes, uint32
 		tcost,
 		cost
 		);
-		
+
 	return cost;
 }
 
@@ -148,16 +148,16 @@ void PAREngine::PrintUnroutes(vector<PARGraphEdge*>& /*unroutes*/)
 
 /**
 	@brief Quickly find obviously unroutable designs.
-	
+
 	As of now, we only check for the condition where the netlist has more nodes with a given label than the device.
  */
 bool PAREngine::SanityCheck(map<uint32_t, string> label_names)
 {
 	LogVerbose("Initial design feasibility check...\n");
-		
+
 	uint32_t nmax_net = m_netlist->GetMaxLabel();
 	uint32_t nmax_dev = m_device->GetMaxLabel();
-	
+
 	//Make sure we'll detect if the netlist is bigger than the device
 	if(nmax_net > nmax_dev)
 	{
@@ -165,17 +165,17 @@ bool PAREngine::SanityCheck(map<uint32_t, string> label_names)
 			nmax_net, nmax_dev);
 		return false;
 	}
-		
+
 	//Cache the node count for both
 	m_netlist->IndexNodesByLabel();
 	m_device->IndexNodesByLabel();
-	
+
 	//For each legal label, verify we have enough nodes to map to
 	for(uint32_t label = 0; label <= nmax_net; label ++)
 	{
 		uint32_t nnet = m_netlist->GetNumNodesWithLabel(label);
 		uint32_t ndev = m_device->GetNumNodesWithLabel(label);
-		
+
 		//TODO: error reporting by device type, not just node IDs
 		if(nnet > ndev)
 		{
@@ -185,7 +185,7 @@ bool PAREngine::SanityCheck(map<uint32_t, string> label_names)
 			return false;
 		}
 	}
-		
+
 	//OK
 	return true;
 }
@@ -201,21 +201,21 @@ void PAREngine::InitialPlacement(map<uint32_t, string>& label_names)
 	LogVerbose("    %d nets, %d routing channels available\n",
 		m_netlist->GetNumEdges(),
 		m_device->GetNumEdges());
-	
+
 	//Cache the indexes
 	m_netlist->IndexNodesByLabel();
 	m_device->IndexNodesByLabel();
-	
+
 	//Do the actual placement (technology specific)
 	InitialPlacement_core();
-	
+
 	//Post-placement sanity check
 	LogVerbose("    Running post-placement sanity checks...\n");
 	for(uint32_t i=0; i<m_netlist->GetNumNodes(); i++)
 	{
 		PARGraphNode* node = m_netlist->GetNodeByIndex(i);
 		PARGraphNode* mate = node->GetMate();
-		
+
 		if(!mate->MatchesLabel(node->GetLabel()))
 		{
 			std::string node_types = GetNodeTypes(mate, label_names);
@@ -231,9 +231,9 @@ void PAREngine::InitialPlacement(map<uint32_t, string>& label_names)
 
 /**
 	@brief Iteratively refine the placement until we can't get any better.
-	
+
 	Calculate a cost function for the current placement, then optimize
-	
+
 	@return True if we made changes to the netlist, false if nothing was done
  */
 bool PAREngine::OptimizePlacement(
@@ -242,14 +242,14 @@ bool PAREngine::OptimizePlacement(
 {
 	//Pick one of the nodes at random as our pivot node
 	PARGraphNode* pivot = badnodes[rand() % badnodes.size()];
-	
+
 	//Find a new site for the pivot node (but remember the old site)
 	//If nothing was found, bail out
 	PARGraphNode* old_mate = pivot->GetMate();
 	PARGraphNode* new_mate = GetNewPlacementForNode(pivot);
 	if(new_mate == NULL)
 		return false;
-		
+
 	//SANITY CHECK: Make sure the OLD placement was legal (if not, something is seriously wrong)
 	if(!old_mate->MatchesLabel(pivot->GetLabel()))
 	{
@@ -261,20 +261,20 @@ bool PAREngine::OptimizePlacement(
 			node_types.c_str()
 			);
 	}
-	
+
 	//If the new site is already occupied, make sure the node we displace can go in our current site.
 	//If not, do nothing as the swap is impossible.
 	//Fixes github issue #9.
 	if(!CanMoveNode(pivot, old_mate, new_mate))
 		return false;
-	
+
 	//Do the swap, and measure the old/new scores
 	uint32_t original_cost = ComputeCost();
 	MoveNode(pivot, new_mate, label_names);
 	uint32_t new_cost = ComputeCost();
-	
+
 	//TODO: say what we swapped?
-	
+
 	//LogVerbose("    Original cost %u, new cost %u\n", original_cost, new_cost);
 
 	//If new cost is less, or greater with probability temperature, accept it
@@ -283,7 +283,7 @@ bool PAREngine::OptimizePlacement(
 		return true;
 	if( (rand() % 100) < (int)m_temperature )
 		return true;
-		
+
 	//If we don't like the change, revert
 	MoveNode(pivot, old_mate, label_names);
 	return false;
@@ -307,9 +307,9 @@ bool PAREngine::CanMoveNode(PARGraphNode* /*node*/, PARGraphNode* old_mate, PARG
 
 /**
 	@brief Moves a netlist node to a new placement.
-	
+
 	If there is already a node at the requested site, the two are swapped.
-	
+
 	@param node			Netlist node to be moved
 	@param newpos		Device node with the new position
  */
@@ -329,13 +329,13 @@ void PAREngine::MoveNode(
 			node_types.c_str()
 			);
 	}
-	
+
 	//If the new position is already used by a netlist node, we have to fix that
 	if(newpos->GetMate() != NULL)
 	{
 		PARGraphNode* other_net = newpos->GetMate();
 		PARGraphNode* old_pos = node->GetMate();
-		
+
 		//Verify the labels match in the reverse direction of the swap
 		if(!old_pos->MatchesLabel(other_net->GetLabel()))
 		{
@@ -348,10 +348,10 @@ void PAREngine::MoveNode(
 				node_types.c_str()
 				);
 		}
-		
+
 		other_net->MateWith(old_pos);
 	}
-	
+
 	//Now that the new node has no mate, just hook them up
 	node->MateWith(newpos);
 }
@@ -386,7 +386,7 @@ uint32_t PAREngine::ComputeCost()
 uint32_t PAREngine::ComputeUnroutableCost(vector<PARGraphEdge*>& unroutes)
 {
 	uint32_t cost = 0;
-	
+
 	//Loop over each edge in the source netlist and try to find a matching edge in the destination.
 	//No checks for multiple signals in one place for now.
 	for(uint32_t i=0; i<m_netlist->GetNumNodes(); i++)
@@ -396,7 +396,7 @@ uint32_t PAREngine::ComputeUnroutableCost(vector<PARGraphEdge*>& unroutes)
 		{
 			PARGraphEdge* nedge = netsrc->GetEdgeByIndex(j);
 			PARGraphNode* netdst = nedge->m_destnode;
-			
+
 			//For now, just bruteforce to find a matching edge (if there is one)
 			bool found = false;
 			PARGraphNode* devsrc = netsrc->GetMate();
@@ -410,12 +410,12 @@ uint32_t PAREngine::ComputeUnroutableCost(vector<PARGraphEdge*>& unroutes)
 					(dedge->m_destport == nedge->m_destport)
 					)
 				{
-					
+
 					found = true;
 					break;
 				}
 			}
-			
+
 			//If nothing found, add to list
 			if(!found)
 			{
@@ -424,7 +424,7 @@ uint32_t PAREngine::ComputeUnroutableCost(vector<PARGraphEdge*>& unroutes)
 			}
 		}
 	}
-	
+
 	return cost;
 }
 
@@ -434,7 +434,7 @@ uint32_t PAREngine::ComputeUnroutableCost(vector<PARGraphEdge*>& unroutes)
 uint32_t PAREngine::ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode* candidate)
 {
 	uint32_t cost = 0;
-	
+
 	//Loop over each edge in the source netlist and try to find a matching edge in the destination.
 	//No checks for multiple signals in one place for now.
 	for(uint32_t i=0; i<m_netlist->GetNumNodes(); i++)
@@ -444,11 +444,11 @@ uint32_t PAREngine::ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode*
 		{
 			PARGraphEdge* nedge = netsrc->GetEdgeByIndex(j);
 			PARGraphNode* netdst = nedge->m_destnode;
-			
+
 			//If either the source or destination is not our pivot node, ignore it
 			if( (netsrc != pivot) && (netdst != pivot) )
 				continue;
-			
+
 			//Find the hypothetical source/dest pair
 			PARGraphNode* devsrc = netsrc->GetMate();
 			PARGraphNode* devdst = netdst->GetMate();
@@ -456,7 +456,7 @@ uint32_t PAREngine::ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode*
 				devsrc = candidate;
 			else
 				devdst = candidate;
-			
+
 			//For now, just bruteforce to find a matching edge (if there is one)
 			bool found = false;
 			for(uint32_t k=0; k<devsrc->GetEdgeCount(); k++)
@@ -468,25 +468,25 @@ uint32_t PAREngine::ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode*
 					(dedge->m_destport == nedge->m_destport)
 					)
 				{
-					
+
 					found = true;
 					break;
 				}
 			}
-			
+
 			//If nothing found, add to cost
 			if(!found)
 				cost ++;
 
 		}
 	}
-	
+
 	return cost;
 }
 
 /**
 	@brief Computes the timing cost (measure of how much the current placement fails timing constraints).
-	
+
 	Default is zero (no timing analysis performed).
  */
 uint32_t PAREngine::ComputeTimingCost()
@@ -496,10 +496,10 @@ uint32_t PAREngine::ComputeTimingCost()
 
 /**
 	@brief Computes the congestion cost (measure of how many routes are simultaneously occupied by multiple signals)
-	
+
 	Default is zero (no congestion analysis performed)
  */
 uint32_t PAREngine::ComputeCongestionCost()
 {
-	return 0;	
+	return 0;
 }

@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #include "xbpar.h"
 
 using namespace std;
@@ -58,7 +58,7 @@ void PARGraphNode::MateWith(PARGraphNode* mate)
 		mate->MateWith(NULL);
 		mate->m_mate = this;
 	}
-	
+
 	//and set the forward pointer regardless
 	m_mate = mate;
 }
@@ -101,7 +101,7 @@ void PARGraphNode::RemoveEdge(string srcport, PARGraphNode* sink, string dstport
 			continue;
 		if(edge->m_destnode != sink)
 			continue;
-			
+
 		//Match, remove it
 		delete edge;
 		m_edges.erase(m_edges.begin() + i);

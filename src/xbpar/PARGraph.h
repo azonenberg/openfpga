@@ -15,7 +15,7 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
- 
+
 #ifndef PARGraph_h
 #define PARGraph_h
 
@@ -31,23 +31,23 @@ class PARGraph
 public:
 	PARGraph();
 	virtual ~PARGraph();
-	
+
 	//Label stuff
 	uint32_t AllocateLabel();
 	uint32_t GetMaxLabel();
-	
+
 	//Label indexing helpers
 	uint32_t GetNumNodesWithLabel(uint32_t label);
 	void IndexNodesByLabel();
 	PARGraphNode* GetNodeByLabelAndIndex(uint32_t label, uint32_t index);
-	
+
 	//Node iteration
 	uint32_t GetNumNodes();
 	PARGraphNode* GetNodeByIndex(uint32_t index);
-	
+
 	//Net iteration
 	uint32_t GetNumEdges();
-	
+
 	//Insertion
 	void AddNode(PARGraphNode* node);
 
@@ -59,12 +59,12 @@ protected:
 		@brief The set of all nodes in the graph. No implied order.
 	 */
 	NodeVector m_nodes;
-	
+
 	/**
 		@brief The highest label allocated to date.
 	 */
 	uint32_t m_nextLabel;
-	
+
 	/**
 		@brief Set of nodes sorted by label
 	 */
