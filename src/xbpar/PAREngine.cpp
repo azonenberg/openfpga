@@ -265,12 +265,8 @@ bool PAREngine::OptimizePlacement(
 	//If the new site is already occupied, make sure the node we displace can go in our current site.
 	//If not, do nothing as the swap is impossible.
 	//Fixes github issue #9.
-	PARGraphNode* displaced_node = new_mate->GetMate();
-	if(displaced_node != NULL)
-	{
-		if(!old_mate->MatchesLabel(displaced_node->GetLabel()))
-			return false;
-	}
+	if(!CanMoveNode(pivot, old_mate, new_mate))
+		return false;
 	
 	//Do the swap, and measure the old/new scores
 	uint32_t original_cost = ComputeCost();
@@ -291,6 +287,22 @@ bool PAREngine::OptimizePlacement(
 	//If we don't like the change, revert
 	MoveNode(pivot, old_mate, label_names);
 	return false;
+}
+
+/**
+	@brief Checks if we can move a node from one location to another
+ */
+bool PAREngine::CanMoveNode(PARGraphNode* /*node*/, PARGraphNode* old_mate, PARGraphNode* new_mate)
+{
+	//Labels don't match? No go
+	PARGraphNode* displaced_node = new_mate->GetMate();
+	if(displaced_node != NULL)
+	{
+		if(!old_mate->MatchesLabel(displaced_node->GetLabel()))
+			return false;
+	}
+
+	return true;
 }
 
 /**

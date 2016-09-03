@@ -356,6 +356,28 @@ bool Greenpak4PAREngine::CantMoveSrc(Greenpak4BitstreamEntity* src)
 	return false;
 }
 
+bool Greenpak4PAREngine::CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate)
+{
+	//Let base class filter stuff
+	if(!PAREngine::CanMoveNode(node, old_mate, new_mate))
+		return false;
+
+	//Remaining checks only make sense if we are displacing another node
+	auto displaced = new_mate->GetMate();
+	if(displaced == NULL)
+		return true;
+
+	//If the displaced node has a LOC constraint, don't use that site
+	auto netnode = dynamic_cast<Greenpak4NetlistCell*>(static_cast<Greenpak4NetlistEntity*>(displaced->GetData()));
+	if( (netnode != NULL) && netnode->HasLOC() )
+	{
+		//LogDebug("Tried to move cell %s\n", netnode->m_name.c_str());
+		return false;
+	}
+
+	return true;
+}
+
 /**
 	@brief Returns true if the given destination node cannot be moved
  */

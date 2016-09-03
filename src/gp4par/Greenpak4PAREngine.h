@@ -37,6 +37,8 @@ protected:
 	virtual uint32_t ComputeCongestionCost();
 	virtual void InitialPlacement_core();
 	
+	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate);
+
 	bool CantMoveSrc(Greenpak4BitstreamEntity* src);
 	bool CantMoveDst(Greenpak4BitstreamEntity* dst);
 	

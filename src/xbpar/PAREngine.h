@@ -37,6 +37,8 @@ public:
 	
 protected:
 
+	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate);
+
 	void MoveNode(PARGraphNode* node, PARGraphNode* newpos, std::map<uint32_t, std::string>& label_names);
 
 	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot) =0;
