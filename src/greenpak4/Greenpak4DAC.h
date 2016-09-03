@@ -31,6 +31,8 @@ public:
 		unsigned int cbase_reg,
 		unsigned int cbase_pwr,
 		unsigned int cbase_insel,
+		unsigned int cbase_aon,
+		unsigned int cbase_aon2,
 		unsigned int dacnum);
 
 	//Serialization
@@ -53,13 +55,16 @@ public:
 	{ return m_dacnum; }
 
 protected:
-	//Greenpak4EntityOutput m_input;
+	Greenpak4EntityOutput m_vref;
+	Greenpak4EntityOutput m_din[8];
 
 	unsigned int m_dacnum;
 
 	unsigned int m_cbaseReg;
 	unsigned int m_cbasePwr;
 	unsigned int m_cbaseInsel;
+	unsigned int m_cbaseAon;
+	unsigned int m_cbaseAon2;
 };
 
 #endif	//Greenpak4DAC_h
