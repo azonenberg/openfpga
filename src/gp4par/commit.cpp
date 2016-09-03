@@ -23,7 +23,7 @@ using namespace std;
 /**
 	@brief After a successful PAR, copy all of the data from the unplaced to placed nodes
  */
-void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
+bool CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
 {
 	LogNotice("\nBuilding post-route netlist...\n");
 
@@ -37,24 +37,30 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		if(mate == NULL)
 			continue;
 
+		//TODO: make this return a bool so we can detect problems?
 		static_cast<Greenpak4BitstreamEntity*>(node->GetData())->CommitChanges();
 	}
 
 	//Done configuring all of the nodes!
 	//Configure routes between them
-	CommitRouting(device, pdev, num_routes_used);
+	if(!CommitRouting(device, pdev, num_routes_used))
+		return false;
+
+	return true;
 }
 
 /**
 	@brief Commit post-PAR results from the netlist to the routing matrix
  */
-void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
+bool CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
 {
 	num_routes_used[0] = 0;
 	num_routes_used[1] = 0;
 
 	//Map of source net to cross-connection output
 	map<Greenpak4EntityOutput, Greenpak4EntityOutput> nodemap;
+
+	bool ran_out = false;
 
 	for(uint32_t i=0; i<device->GetNumNodes(); i++)
 	{
@@ -100,28 +106,40 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 					//We need to jump from one matrix to another!
 					//Make sure we have a free cross-connection to use
 					if(num_routes_used[srcmatrix] >= 10)
+						ran_out = true;
+
+					else
 					{
-						LogError(
-							"More than 100%% of device resources are used "
-							"(cross connections from matrix %d to %d)\n",
-								src->GetMatrix(),
-								dst->GetMatrix());
+						//Save our cross-connection and mark it as used
+						auto xconn = pdev->GetCrossConnection(srcmatrix, num_routes_used[srcmatrix]);
+
+
+						//Insert the cross-connection into the path
+						xconn->SetInput("I", srcnet);
+						Greenpak4EntityOutput newsrc = xconn->GetOutput("O");
+						nodemap[srcnet] = newsrc;
+						srcnet = newsrc;
 					}
 
-					//Save our cross-connection and mark it as used
-					auto xconn = pdev->GetCrossConnection(srcmatrix, num_routes_used[srcmatrix]);
 					num_routes_used[srcmatrix] ++;
-
-					//Insert the cross-connection into the path
-					xconn->SetInput("I", srcnet);
-					Greenpak4EntityOutput newsrc = xconn->GetOutput("O");
-					nodemap[srcnet] = newsrc;
-					srcnet = newsrc;
 				}
 			}
 
 			//Yay virtual functions - we can set the input without caring about the node type
-			dst->SetInput(edge->m_destport, srcnet);
+			if(!ran_out)
+				dst->SetInput(edge->m_destport, srcnet);
 		}
 	}
+
+	//Don't fail until we attempt full routing.
+	//This lets us see how much over the limit we went
+	if(ran_out)
+	{
+		LogError(
+			"More than 100%% of device resources are used "
+			"(cross connections)\n");
+		return false;
+	}
+
+	return true;
 }

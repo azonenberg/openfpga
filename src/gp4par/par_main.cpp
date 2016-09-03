@@ -48,7 +48,15 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 
 	//Copy the netlist over
 	unsigned int num_routes_used[2];
-	CommitChanges(dgraph, device, num_routes_used);
+	if(!CommitChanges(dgraph, device, num_routes_used))
+	{
+		LogNotice("Final routing failed\n");
+
+		//Placement is done, so print the placement report before we die
+		PrintUtilizationReport(ngraph, device, num_routes_used);
+		PrintPlacementReport(ngraph, device);
+		return false;
+	}
 
 	//Final DRC to make sure the placement is sane
 	PostPARDRC(ngraph, device);

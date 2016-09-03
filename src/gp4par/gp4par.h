@@ -56,8 +56,8 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
 void PostPARDRC(PARGraph* netlist, Greenpak4Device* device);
 
 //Committing
-void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
-void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
+bool CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
+bool CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
 void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned int* num_routes_used);
 void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* device);
 
