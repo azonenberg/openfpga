@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 	bool programNvram = false;
 	bool force = false;
 	uint8_t patternId = 0;
-	bool readProtect = false;	
+	bool readProtect = false;
 	double voltage = 0.0;
 	vector<int> nets;
 
@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
 	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
 
 	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
-	if(downloadFilename.empty() && uploadFilename.empty() && voltage == 0.0 && nets.empty() && 
+	if(downloadFilename.empty() && uploadFilename.empty() && voltage == 0.0 && nets.empty() &&
 	   rcOscFreq == 0 && !test && !reset)
 	{
 		LogNotice("No actions requested, exiting\n");
@@ -317,7 +317,7 @@ int main(int argc, char* argv[])
 			//Read extant bitstream and determine part status.
 			LogVerbose("Reading bitstream from part\n");
 			programmedBitstream = UploadBitstream(hdev, BitstreamLength(part) / 8);
-			
+
 			uint8_t patternId = 0;
 			bitstreamKind = ClassifyBitstream(part, programmedBitstream, patternId);
 			switch(bitstreamKind)
@@ -590,7 +590,7 @@ const char *BitFunction(SilegoPart part, size_t bitno)
 	//they simply black out the parts that aren't meant to be public, but do not mash them together.
 
 	const char *bitFunction = NULL;
-	
+
 	switch(part)
 	{
 		case SLG46620V:
@@ -647,7 +647,7 @@ const char *BitFunction(SilegoPart part, size_t bitno)
 // Status check
 
 bool CheckStatus(hdevice hdev)
-{	
+{
 	LogDebug("Requesting board status\n");
 
 	BoardStatus status = GetStatus(hdev);
@@ -660,7 +660,7 @@ bool CheckStatus(hdevice hdev)
 	if(status.internalUnderVoltage)
 		LogError("Undervoltage condition detected on internal supply\n");
 
-	return !(status.externalOverCurrent && 
+	return !(status.externalOverCurrent &&
 			 status.internalOverCurrent &&
 			 status.internalUnderVoltage);
 }
@@ -811,7 +811,7 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 		} else break;
 	}
 	LogNotice("Trimmed RC oscillator to %d Hz\n", actualFreq);
-		
+
 	LogVerbose("Resetting board after oscillator trimming\n");
 	Reset(hdev);
 	return mid;
@@ -826,11 +826,11 @@ BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream, uint
 	vector<uint8_t> factoryMask(BitstreamLength(part) / 8);
 
 	switch(part) {
-		case SLG46620V: 
+		case SLG46620V:
 			emptyBitstream[0x7f] = 0x5a;
 			emptyBitstream[0xff] = 0xa5;
 			//TODO: RC oscillator trim value, why is it factory programmed?
-			factoryMask[0xf7] = 0xff; 
+			factoryMask[0xf7] = 0xff;
 			factoryMask[0xf8] = 0xff;
 			break;
 
@@ -868,10 +868,10 @@ BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream, uint
 	}
 
 	switch(part) {
-		case SLG46620V: 
+		case SLG46620V:
 			patternId = (bitstream[0xfd] >> 7) | (bitstream[0xfe] << 1);
 			break;
-	
+
 		case SLG46140V:
 			patternId = (bitstream[0x7d] >> 7) | (bitstream[0x7e] << 1);
 			break;

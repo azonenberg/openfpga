@@ -376,11 +376,11 @@ void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, DownloadMod
 
 	frame.m_sequenceB = (bitstream.size() + 3) / 60;
 
-	for(size_t i = 0; i < bitstream.size(); i++) 
+	for(size_t i = 0; i < bitstream.size(); i++)
 	{
 		frame.push_back(bitstream[i]);
 
-		if(frame.IsFull()) 
+		if(frame.IsFull())
 		{
 			frame.Roundtrip(hdev, ack1Type);
 			frame = frame.Next();

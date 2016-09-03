@@ -82,11 +82,11 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 	for(ssize_t i=0; i<devcount; i++)
 	{
 		device = list[i];
-		
+
 		libusb_device_descriptor desc;
 		if(0 != libusb_get_device_descriptor(device, &desc))
 			continue;
-		
+
 		//Silego devkit
 		if( (desc.idVendor == idVendor) && (desc.idProduct == idProduct) )
 		{
@@ -102,7 +102,7 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 			LogError("libusb_open failed\n");
 			exit(-1);
 		}
-	}	
+	}
 	libusb_free_device_list(list, 1);
 	if(!found)
 	{
@@ -116,21 +116,21 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 		LogError("Can't detach kernel driver\n");
 		exit(-1);
 	}
-	
+
 	//Set the device configuration
 	if(0 != (err = libusb_set_configuration(hdev, 1)))
 	{
 		LogError("Failed to select device configuration (err = %d)\n", err);
 		exit(-1);
 	}
-	
+
 	//Claim interface 0
 	if(0 != libusb_claim_interface(hdev, 0))
 	{
 		LogError("Failed to claim interface\n");
 		exit(-1);
 	}
-	
+
 	return hdev;
 }
 
@@ -143,6 +143,6 @@ string GetStringDescriptor(hdevice hdev, uint8_t index)
 		LogError("libusb_get_string_descriptor_ascii failed\n");
 		exit(-1);
 	}
-	
+
 	return string(strbuf);
 }
