@@ -26,26 +26,26 @@ int main(int argc, char* argv[])
 
 	//Netlist file
 	string fname = "";
-	
+
 	//Output file
 	string ofname = "";
-	
+
 	//Action to take with unused pins;
 	Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_NONE;
 	Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
-	
+
 	//TODO: make this switchable via command line args
 	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
-	
+
 	//Parse command-line arguments
 	for(int i=1; i<argc; i++)
 	{
 		string s(argv[i]);
-		
+
 		//Let the logger eat its args first
 		if(ParseLoggerArguments(i, argc, argv, console_verbosity))
 			continue;
-			
+
 		else if(s == "--help")
 		{
 			ShowUsage();
@@ -112,18 +112,18 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 		}
-		
+
 		//assume it's the netlist file if it'[s the first non-switch argument
 		else if( (s[0] != '-') && (fname == "") )
 			fname = s;
-			
+
 		else
 		{
 			printf("Unrecognized command-line argument \"%s\", use --help\n", s.c_str());
 			return 1;
 		}
 	}
-	
+
 	//Netlist filenames must be specified
 	if( (fname == "") || (ofname == "") )
 	{
@@ -133,11 +133,11 @@ int main(int argc, char* argv[])
 
 	//Set up logging
 	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
-	
+
 	//Print header
 	if(console_verbosity >= Severity::NOTICE)
 		ShowVersion();
-	
+
 	//Print configuration
 	LogNotice("\nDevice configuration:\n");
 	LogNotice("    Target device: SLG46620V\n");
@@ -148,15 +148,15 @@ int main(int argc, char* argv[])
 		case Greenpak4IOB::PULL_NONE:
 			LogNotice("float\n");
 			break;
-			
+
 		case Greenpak4IOB::PULL_DOWN:
 			LogNotice("pull down with ");
 			break;
-			
+
 		case Greenpak4IOB::PULL_UP:
 			LogNotice("pull up with ");
 			break;
-			
+
 		default:
 			LogNotice("invalid\n");
 			return 1;
@@ -168,41 +168,41 @@ int main(int argc, char* argv[])
 			case Greenpak4IOB::PULL_10K:
 				LogNotice("10K\n");
 				break;
-				
+
 			case Greenpak4IOB::PULL_100K:
 				LogNotice("100K\n");
 				break;
-				
+
 			case Greenpak4IOB::PULL_1M:
 				LogNotice("1M\n");
 				break;
-				
+
 			default:
 				LogNotice("invalid\n");
 				return 1;
 		}
 	}
-	
-	
+
+
 	//Parse the unplaced netlist
 	LogNotice("\nLoading Yosys JSON file \"%s\".\n", fname.c_str());
 	Greenpak4Netlist netlist(fname);
-	
+
 	//Create the device and initialize all IO pins
 	Greenpak4Device device(part, unused_pull, unused_drive);
-	
+
 	//Do the actual P&R
 	LogNotice("\nSynthesizing top-level module \"%s\".\n", netlist.GetTopModule()->GetName().c_str());
 	if(!DoPAR(&netlist, &device))
 		return 2;
-	
+
 	//Write the final bitstream
 	LogNotice("\nWriting final bitstream to output file \"%s\".\n", ofname.c_str());
-	device.WriteToFile(ofname);	
-	
+	device.WriteToFile(ofname);
+
 	//TODO: Static timing analysis
 	LogNotice("\nStatic timing analysis: not yet implemented\n");
-	
+
 	return 0;
 }
 

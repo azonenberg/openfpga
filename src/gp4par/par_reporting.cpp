@@ -22,7 +22,7 @@ using namespace std;
 
 static void PrintRow(string kind, int used, int total)
 {
-	if(total == 0) 
+	if(total == 0)
 		return;
 
 	Severity severity = (used > 0) ? Severity::NOTICE : Severity::VERBOSE;
@@ -44,7 +44,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		device->GetLUT3Count(),
 		device->GetLUT4Count()
 	};
-	
+
 	//Loop over nodes, find how many of each type were used
 	//TODO: use PAR labels for this?
 	unsigned int luts_used[5] = {0};
@@ -126,7 +126,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		rcosc_used = 1;
 	if(device->GetSystemReset()->GetPARNode()->GetMate() != NULL)
 		sysrst_used = 1;
-	
+
 	//Print the actual report
 
 	LogNotice("\nDevice utilization:\n");
@@ -174,21 +174,21 @@ void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* /*device*/)
 	LogVerbose("\nPlacement report:\n");
 	LogVerbose("    +----------------------------------------------------+-----------------+\n");
 	LogVerbose("    | %-50s | %-15s |\n", "Node", "Site");
-	
+
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto nnode = netlist->GetNodeByIndex(i);
 		auto src = static_cast<Greenpak4NetlistEntity*>(nnode->GetData());
 		auto dnode = nnode->GetMate();
-		
+
 		//unplaced, ignore it for now
 		if(dnode == NULL)
 			continue;
 		auto dst = static_cast<Greenpak4BitstreamEntity*>(dnode->GetData());
-			
+
 		LogVerbose("    | %-50s | %-15s |\n", src->m_name.c_str(), dst->GetDescription().c_str());
-		
+
 	}
-	
+
 	LogVerbose("    +----------------------------------------------------+-----------------+\n");
 }

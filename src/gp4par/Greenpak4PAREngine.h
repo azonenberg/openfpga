@@ -27,24 +27,24 @@ class Greenpak4PAREngine : public PAREngine
 public:
 	Greenpak4PAREngine(PARGraph* netlist, PARGraph* device, labelmap& lmap);
 	virtual ~Greenpak4PAREngine();
-	
+
 protected:
 	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
-	
+
 	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes);
 	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot);
-	
+
 	virtual uint32_t ComputeCongestionCost();
 	virtual void InitialPlacement_core();
-	
+
 	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate);
 
 	bool CantMoveSrc(Greenpak4BitstreamEntity* src);
 	bool CantMoveDst(Greenpak4BitstreamEntity* dst);
-	
+
 	//Cached list of unroutable nodes for the current iteration
 	std::set<PARGraphNode*> m_unroutableNodes;
-	
+
 	//used for error messages only
 	labelmap m_lmap;
 };

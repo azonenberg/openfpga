@@ -26,7 +26,7 @@ using namespace std;
 void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used)
 {
 	LogNotice("\nBuilding post-route netlist...\n");
-	
+
 	//Go over all of the nodes in the graph and configure the nodes themselves
 	//Net routing will come later!
 	for(uint32_t i=0; i<device->GetNumNodes(); i++)
@@ -36,10 +36,10 @@ void CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		PARGraphNode* mate = node->GetMate();
 		if(mate == NULL)
 			continue;
-		
+
 		static_cast<Greenpak4BitstreamEntity*>(node->GetData())->CommitChanges();
 	}
-	
+
 	//Done configuring all of the nodes!
 	//Configure routes between them
 	CommitRouting(device, pdev, num_routes_used);
@@ -52,10 +52,10 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 {
 	num_routes_used[0] = 0;
 	num_routes_used[1] = 0;
-		
+
 	//Map of source net to cross-connection output
 	map<Greenpak4EntityOutput, Greenpak4EntityOutput> nodemap;
-	
+
 	for(uint32_t i=0; i<device->GetNumNodes(); i++)
 	{
 		//If no node in the netlist is assigned to us, nothing to do
@@ -63,7 +63,7 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		PARGraphNode* netnode = node->GetMate();
 		if(netnode == NULL)
 			continue;
-			
+
 		//Commit changes to all edges.
 		//Iterate over the NETLIST graph, not the DEVICE graph, but then transfer to the device graph
 		for(uint32_t i=0; i<netnode->GetEdgeCount(); i++)
@@ -71,7 +71,7 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 			auto edge = netnode->GetEdgeByIndex(i);
 			auto src = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
 			auto dst = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
-				
+
 			//If the source node has a dual, use the secondary output if needed
 			//so we don't waste cross connections
 			if(src->GetDual())
@@ -79,11 +79,11 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 				if(dst->GetMatrix() != src->GetMatrix())
 					src = src->GetDual();
 			}
-			
+
 			//Look up the actual NET (not just the entity) for the source.
 			//If we don't do this we risk merging cross-connections that should not be (see github issue #13)
 			Greenpak4EntityOutput srcnet = src->GetOutput(edge->m_sourceport);
-			
+
 			//Cross connections
 			//Only use these if destination node is general fabric routing; dedicated routing can cross between
 			//the matrices freely
@@ -96,7 +96,7 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 
 				//Allocate a new cross-connection
 				else
-				{				
+				{
 					//We need to jump from one matrix to another!
 					//Make sure we have a free cross-connection to use
 					if(num_routes_used[srcmatrix] >= 10)
@@ -107,11 +107,11 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 								src->GetMatrix(),
 								dst->GetMatrix());
 					}
-					
+
 					//Save our cross-connection and mark it as used
 					auto xconn = pdev->GetCrossConnection(srcmatrix, num_routes_used[srcmatrix]);
 					num_routes_used[srcmatrix] ++;
-					
+
 					//Insert the cross-connection into the path
 					xconn->SetInput("I", srcnet);
 					Greenpak4EntityOutput newsrc = xconn->GetOutput("O");
@@ -119,7 +119,7 @@ void CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 					srcnet = newsrc;
 				}
 			}
-			
+
 			//Yay virtual functions - we can set the input without caring about the node type
 			dst->SetInput(edge->m_destport, srcnet);
 		}
