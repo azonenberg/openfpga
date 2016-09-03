@@ -89,8 +89,8 @@ module Dac(bg_ok, vout);
 	
 	GP_VREF #(
 		.VIN_DIV(4'd1),
-		.VREF(16'd750)
-	) vr750 (
+		.VREF(16'd00)
+	) vrdac (
 		.VIN(vdac),
 		.VOUT(vout)
 	);

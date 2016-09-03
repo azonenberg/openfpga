@@ -50,11 +50,11 @@ public:
 	Greenpak4NetlistModule* GetModule(std::string name)
 	{ return m_modules[name]; }
 	
-	void Reindex();
+	void Reindex(bool verbose = true);
 	
 protected:
 	
-	void IndexNets();
+	void IndexNets(bool verbose);
 	void ClearIndexes();
 	
 	//Init helpers

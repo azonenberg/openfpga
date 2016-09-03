@@ -349,13 +349,17 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	//Bandgap reference
 	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923);
 	
-	//Voltage reference
+	//Voltage references for comparators
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 0, 1));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 1, 2));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 2, 1));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 3, 2));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 4));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 5));
+	
+	//Extra voltage references for the DACs (always 1.0V but having them declared as GP_VREF makes HDL cleaner)
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 6));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 7));
 	
 	//Analog comparators
 	//TODO speed doubler for ACMP5? Need to double check latest datasheet, this may have been changed

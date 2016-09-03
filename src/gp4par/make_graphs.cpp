@@ -51,6 +51,14 @@ void InferExtraNodes(
 	Greenpak4Device* device,
 	PARGraph*& ngraph,
 	ilabelmap& ilap);
+	
+void ReplicateVREF(
+	Greenpak4NetlistModule* module,
+	Greenpak4NetlistCell* cell,
+	Greenpak4NetlistNode* net,
+	Greenpak4NetlistCell* load,
+	PARGraph*& ngraph,
+	ilabelmap& ilmap);
 
 /**
 	@brief Build the graphs
@@ -86,6 +94,82 @@ void BuildGraphs(
 }
 
 /**
+	@brief Replicate a voltage reference
+ */
+void ReplicateVREF(
+	Greenpak4NetlistModule* module,
+	Greenpak4NetlistCell* cell,
+	Greenpak4NetlistNode* net,
+	Greenpak4NetlistCell* load,
+	PARGraph*& ngraph,
+	ilabelmap& ilmap)
+{
+	
+	
+	//Monotonically increasing counter used to ensure unique node IDs
+	static unsigned int vref_id = 1;
+		
+	//Create a new VREF and copy the input config
+	Greenpak4NetlistCell* vref = new Greenpak4NetlistCell(module);
+	vref->m_type = "GP_VREF";
+	vref->m_connections["VIN"].push_back(cell->m_connections["VIN"][0]);
+	vref->m_parameters = cell->m_parameters;
+	vref->m_attributes = cell->m_attributes;
+	
+	//Give it a name
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "$auto$make_graphs.cpp:%d:vref$%u",
+		__LINE__,
+		vref_id ++);
+	vref->m_name = tmp;
+	
+	//and add it to the module
+	module->AddCell(vref);
+	
+	//Create a net for the output
+	snprintf(tmp, sizeof(tmp), "$auto$make_graphs.cpp:%d:vref$%u",
+		__LINE__,
+		vref_id ++);
+	Greenpak4NetlistNode* vout = new Greenpak4NetlistNode;
+	vout->m_name = tmp;
+	vout->m_src_locations = net->m_src_locations;
+	
+	//and add it to the module
+	module->AddNet(vout);
+	
+	//Hook up the output
+	vref->m_connections["VOUT"].push_back(vout);
+	
+	//IOBs have different port naming from anything else we can drive
+	if(load->IsIOB())
+	{
+		load->m_connections["OUT"].clear();
+		load->m_connections["OUT"].push_back(vout);
+	}
+	else
+	{
+		load->m_connections["VREF"].clear();
+		load->m_connections["VREF"].push_back(vout);
+	}
+	
+	//Remove stale edge in the PAR graph	
+	cell->m_parnode->RemoveEdge("VOUT", load->m_parnode, "VREF");
+	
+	//Create the PAR node for it
+	PARGraphNode* nnode = new PARGraphNode(ilmap[vref->m_type], vref);
+	vref->m_parnode = nnode;
+	ngraph->AddNode(nnode);
+	
+	//Copy the netlist edges to the PAR graph
+	//TODO: automate this somehow? Seems error-prone to do it twice
+	if(load->IsIOB())
+		nnode->AddEdge("VOUT", load->m_parnode, "OUT");
+	else
+		nnode->AddEdge("VOUT", load->m_parnode, "VREF");
+}
+	
+
+/**
 	@brief Add extra nodes to handle dependencies between nodes that share hard IP under the hood
  */
 void InferExtraNodes(
@@ -102,100 +186,9 @@ void InferExtraNodes(
 	auto top = netlist->GetTopModule();
 	auto vdd = top->GetNet("GP_VDD");
 	auto vddn = device->GetPowerRail(true)->GetPARNode();
-
-	//If one GP_VREF drives multiple GP_ACMP blocks, split it
-	Greenpak4NetlistModule* module = netlist->GetTopModule();
-	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
-	{
-		//See if we're a VREF
-		Greenpak4NetlistCell* cell = it->second;
-		if(cell->m_type != "GP_VREF")
-			continue;
-			
-		//See what we drive
-		auto net = cell->m_connections["VOUT"][0];
-		bool found_acmp = false;
-		for(int i=net->m_nodeports.size()-1; i>=0; i--)
-		{
-			//Skip anything not a comparator
-			auto load = net->m_nodeports[i].m_cell;
-			if(load->m_type != "GP_ACMP")
-				continue;
-				
-			//If this is the first one, flag it but don't do anything
-			if(!found_acmp)
-			{
-				found_acmp = true;
-				continue;
-			}
-			
-			//We have a second ACMP.
-			//Need to create a new net and VREF in both netlists to fix it
-			LogDebug("    VREF %s drives multiple ACMPs, replicating to drive ACMP %s\n",
-				cell->m_name.c_str(),
-				load->m_name.c_str());
-			madeChanges = true;
-			
-			//Monotonically increasing counter used to ensure unique node IDs
-			static unsigned int vref_id = 1;
-				
-			//Create a new VREF and copy the input config
-			Greenpak4NetlistCell* vref = new Greenpak4NetlistCell(module);
-			vref->m_type = "GP_VREF";
-			vref->m_connections["VIN"].push_back(cell->m_connections["VIN"][0]);
-			vref->m_parameters = cell->m_parameters;
-			vref->m_attributes = cell->m_attributes;
-			
-			//Give it a name
-			char tmp[128];
-			snprintf(tmp, sizeof(tmp), "$auto$make_graphs.cpp:%d:vref$%u",
-				__LINE__,
-				vref_id ++);
-			vref->m_name = tmp;
-			
-			//and add it to the module
-			module->AddCell(vref);
-			
-			//Create a net for the output
-			snprintf(tmp, sizeof(tmp), "$auto$make_graphs.cpp:%d:vref$%u",
-				__LINE__,
-				vref_id ++);
-			Greenpak4NetlistNode* vout = new Greenpak4NetlistNode;
-			vout->m_name = tmp;
-			vout->m_src_locations = net->m_src_locations;
-			
-			//and add it to the module
-			module->AddNet(vout);
-			
-			//Hook up the output
-			vref->m_connections["VOUT"].push_back(vout);
-			load->m_connections["VREF"].clear();
-			load->m_connections["VREF"].push_back(vout);
-			
-			//Remove stale edge in the PAR graph	
-			cell->m_parnode->RemoveEdge("VOUT", load->m_parnode, "VREF");
-			
-			//Create the PAR node for it
-			PARGraphNode* nnode = new PARGraphNode(ilmap[vref->m_type], vref);
-			vref->m_parnode = nnode;
-			ngraph->AddNode(nnode);
-			
-			//Copy the netlist edges to the PAR graph
-			//TODO: automate this somehow? Seems error-prone to do it twice
-			nnode->AddEdge("VOUT", load->m_parnode, "VREF");
-		}
-	}
 	
-	//Re-index the graph if we changed it
-	if(madeChanges)
-	{
-		LogVerbose("    Re-indexing graph because we inferred additional nodes..\n");
-		netlist->Reindex();
-		ngraph->IndexNodesByLabel();
-		madeChanges = false;
-	}
-
 	//Look for IOBs driven by GP_VREF cells
+	Greenpak4NetlistModule* module = netlist->GetTopModule();
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
 	{
 		//See if we're an IOB
@@ -277,7 +270,58 @@ void InferExtraNodes(
 	if(madeChanges)
 	{
 		LogNotice("    Re-indexing graph because we inferred additional nodes..\n");
-		netlist->Reindex();
+		netlist->Reindex(true);
+		ngraph->IndexNodesByLabel();
+		madeChanges = false;
+	}
+	
+	LogDebug("---foobar---\n");
+	
+	//If one GP_VREF drives multiple GP_ACMP/GP_DAC/GP_*BUF blocks, split it
+	//This must come after the IOB pass since that might infer GP_ACMPs we need to contend with
+	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
+	{
+		//See if we're a VREF
+		Greenpak4NetlistCell* cell = it->second;
+		if(cell->m_type != "GP_VREF")
+			continue;
+		LogDebug("vref %s\n", cell->m_name.c_str());
+			
+		//See what we drive
+		auto net = cell->m_connections["VOUT"][0];
+		bool found_target = false;
+		for(int i=net->m_nodeports.size()-1; i>=0; i--)
+		{
+			//Skip anything not a comparator, DAC, or IOB
+			auto load = net->m_nodeports[i].m_cell;
+			LogDebug("    load %s type %s\n", load->m_name.c_str(), load->m_type.c_str());
+			if( (load->m_type != "GP_ACMP") && (load->m_type != "GP_DAC") && !load->IsIOB() )
+				continue;
+				
+			//If this is the first one, flag it but don't do anything
+			if(!found_target)
+			{
+				found_target = true;
+				continue;
+			}
+			
+			//We have a second ACMP.
+			//Need to create a new net and VREF in both netlists to fix it
+			LogDebug("    VREF %s drives multiple ACMP/DAC cells, replicating to drive %s\n",
+				cell->m_name.c_str(),
+				load->m_name.c_str());
+			madeChanges = true;
+			
+			//Replicate it
+			ReplicateVREF(module, cell, net, load, ngraph, ilmap);
+		}
+	}
+	
+	//Re-index the graph if we changed it
+	if(madeChanges)
+	{
+		LogVerbose("    Re-indexing graph because we inferred additional nodes..\n");
+		netlist->Reindex(true);
 		ngraph->IndexNodesByLabel();
 		//madeChanges = false;
 	}
@@ -659,6 +703,8 @@ PARGraphNode* MakeNode(
 
 /**
 	@brief Make all of the edges for the device graph (list of all possible connections)
+	
+	TODO: Should this be in the Greenpak4Device class?
  */
 void MakeDeviceEdges(Greenpak4Device* device)
 {
@@ -801,7 +847,11 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			device->GetVref(2)->GetPARNode(),
 			device->GetVref(3)->GetPARNode(),
 			device->GetVref(4)->GetPARNode(),
-			device->GetVref(5)->GetPARNode()
+			device->GetVref(5)->GetPARNode(),
+			
+			//DAC references
+			device->GetVref(6)->GetPARNode(),
+			device->GetVref(7)->GetPARNode()
 		};
 		
 		//VREF0/1 can drive pin 19
@@ -913,6 +963,16 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO DAC
 		
+		PARGraphNode* dacs[] =
+		{
+			device->GetDAC(0)->GetPARNode(),
+			device->GetDAC(1)->GetPARNode()
+		};
+		
+		//DAC voltage references driving DAC inputs
+		vrefs[6]->AddEdge("OUT", dacs[0], "VREF");
+		vrefs[7]->AddEdge("OUT", dacs[1], "VREF");
+		
 		//Static 1/0 for register configuration
 		for(size_t i=0; i<device->GetDACCount(); i++)
 		{
@@ -935,6 +995,16 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			gnd->AddEdge("OUT", dac, "DIN[5]");
 			gnd->AddEdge("OUT", dac, "DIN[6]");
 			gnd->AddEdge("OUT", dac, "DIN[7]");
+		}
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// OUTPUTS FROM DAC
+		
+		// Both DACs can drive to every comparator vref
+		for(int i=0; i<2; i++)
+		{
+			for(int j=0; j<6; j++)
+				dacs[i]->AddEdge("VOUT", vrefs[i], "VIN");
 		}
 	}
 }

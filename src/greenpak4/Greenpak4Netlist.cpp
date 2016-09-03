@@ -144,7 +144,7 @@ void Greenpak4Netlist::Load(json_object* object)
 		}
 	}
 	
-	IndexNets();
+	IndexNets(true);
 }
 
 /**
@@ -164,10 +164,10 @@ void Greenpak4Netlist::ClearIndexes()
 /**
 	@brief Force a re-index after changing the netlist (by PAR-level optimizations etc)
  */
-void Greenpak4Netlist::Reindex()
+void Greenpak4Netlist::Reindex(bool verbose)
 {
 	ClearIndexes();
-	IndexNets();
+	IndexNets(verbose);
 }
 
 /**
@@ -176,21 +176,24 @@ void Greenpak4Netlist::Reindex()
 	Has to be done as a second pass because there may be cycles in the netlist preventing us from resolving names
 	as we parse the JSON
  */
-void Greenpak4Netlist::IndexNets()
+void Greenpak4Netlist::IndexNets(bool verbose)
 {
-	LogNotice("Indexing...\n");
+	if(verbose)
+		LogNotice("Indexing...\n");
 	
 	//Loop over all of our ports and add them to the associated nets
 	for(auto it = m_topModule->port_begin(); it != m_topModule->port_end(); it ++)
 	{
 		Greenpak4NetlistPort* port = it->second;
-		LogDebug("    Port %s connects to:\n", it->first.c_str());
+		if(verbose)
+			LogDebug("    Port %s connects to:\n", it->first.c_str());
 		
 		for(unsigned int i=0; i<port->m_nodes.size(); i++)
 		{
 			auto x = port->m_nodes[i];
 			
-			LogDebug("        bit %u: node %s\n", i, port->m_nodes[i]->m_name.c_str());
+			if(verbose)
+				LogDebug("        bit %u: node %s\n", i, port->m_nodes[i]->m_name.c_str());
 			x->m_ports.push_back(port);
 		}
 	}
@@ -199,7 +202,8 @@ void Greenpak4Netlist::IndexNets()
 	for(auto it = m_topModule->cell_begin(); it != m_topModule->cell_end(); it ++)
 	{
 		Greenpak4NetlistCell* cell = it->second;
-		LogDebug("    Cell %s connects to:\n", it->first.c_str());
+		if(verbose)
+			LogDebug("    Cell %s connects to:\n", it->first.c_str());
 		for(auto jt : cell->m_connections)
 		{
 			string cellname = jt.first;
@@ -210,10 +214,13 @@ void Greenpak4Netlist::IndexNets()
 			for(unsigned int i=0; i<net.size(); i++)
 			{
 				Greenpak4NetlistNode* node = net[i];
-				if(vector)
-					LogDebug("        %s[%u]: net %s\n", cellname.c_str(), i, node->m_name.c_str());
-				else
-					LogDebug("        %s: net %s\n", cellname.c_str(), node->m_name.c_str());
+				if(verbose)
+				{
+					if(vector)
+						LogDebug("        %s[%u]: net %s\n", cellname.c_str(), i, node->m_name.c_str());
+					else
+						LogDebug("        %s: net %s\n", cellname.c_str(), node->m_name.c_str());
+				}
 				node->m_nodeports.push_back(Greenpak4NetlistNodePoint(cell, cellname, i, vector));
 			}
 		}
@@ -228,13 +235,16 @@ void Greenpak4Netlist::IndexNets()
 	}
 	
 	//Print them out
-	for(auto node : m_nodes)
+	if(verbose)
 	{
-		LogDebug("    Node %s connects to:\n", node->m_name.c_str());
-		for(auto p : node->m_ports)
-			LogDebug("        port %s\n", p->m_name.c_str());
-		for(auto c : node->m_nodeports)
-			LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+		for(auto node : m_nodes)
+		{
+			LogDebug("    Node %s connects to:\n", node->m_name.c_str());
+			for(auto p : node->m_ports)
+				LogDebug("        port %s\n", p->m_name.c_str());
+			for(auto c : node->m_nodeports)
+				LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+		}
 	}
 }
 
