@@ -33,7 +33,7 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 	: m_topModule(NULL)
 {
 	//Read the netlist
-	FILE* fp = fopen(fname.c_str(), "r");
+	FILE* fp = fopen(fname.c_str(), "rb");
 	if(fp == NULL)
 	{
 		LogError("Failed to open netlist file %s\n", fname.c_str());
