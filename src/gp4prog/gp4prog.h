@@ -31,20 +31,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <libusb-1.0/libusb.h>
-
-//Windows appears to define an ERROR macro in its headers.
-//Conflicts with ERROR enum defined in log.h.
-#if defined(_WIN32) && defined(ERROR)
-	#undef ERROR
-#endif
-
 #include "../log/log.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USB command wrappers
 
-typedef libusb_device_handle* hdevice;
+typedef struct libusb_device_handle* hdevice;
 
 void USBSetup();
 void USBCleanup(hdevice hdev);
