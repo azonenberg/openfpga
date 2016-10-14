@@ -97,13 +97,13 @@ module Dac(bg_ok, vout, vout2);
 		.VOUT(vdac2),
 		.VREF(vref_1v0)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Drive one pin with the DAC output directly, no vref
-	
+
 	//assign vout = vdac;
 	assign vout2 = vdac2;
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Drive the other via a buffered reference
 
@@ -114,6 +114,6 @@ module Dac(bg_ok, vout, vout2);
 		.VIN(vdac),
 		.VOUT(vout)
 	);
-	
+
 
 endmodule
