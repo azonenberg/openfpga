@@ -100,7 +100,7 @@ void Greenpak4PAREngine::InitialPlacement_core()
 		}
 
 		//Everything is good, apply the constraint
-		LogVerbose("    Applying LOC constraint %s to cell %s\n", loc.c_str(), cell->m_name.c_str());
+		LogVerbose("Applying LOC constraint %s to cell %s\n", loc.c_str(), cell->m_name.c_str());
 		node->MateWith(spnode);
 	}
 
@@ -206,6 +206,7 @@ uint32_t Greenpak4PAREngine::ComputeCongestionCost()
 void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 {
 	Log(Severity::ERROR, "\nUnroutable nets (%zu):\n", unroutes.size());
+	LogIndenter li;
 	for(auto edge : unroutes)
 	{
 		auto source = static_cast<Greenpak4NetlistEntity*>(edge->m_sourcenode->GetData());
@@ -218,7 +219,7 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 		if(scell != NULL)
 		{
 			auto entity = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
-			Log(Severity::ERROR, "    from cell %s (mapped to %s) port %s ",
+			Log(Severity::ERROR, "from cell %s (mapped to %s) port %s ",
 				scell->m_name.c_str(),
 				entity->GetDescription().c_str(),
 				edge->m_sourceport.c_str()
@@ -227,10 +228,10 @@ void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
 		else if(sport != NULL)
 		{
 			auto iob = static_cast<Greenpak4IOB*>(edge->m_sourcenode->GetMate()->GetData());
-			Log(Severity::ERROR, "    from port %s (mapped to IOB_%d)", sport->m_name.c_str(), iob->GetPinNumber());
+			Log(Severity::ERROR, "from port %s (mapped to IOB_%d)", sport->m_name.c_str(), iob->GetPinNumber());
 		}
 		else
-			Log(Severity::ERROR, "    from [invalid] ");
+			Log(Severity::ERROR, "from [invalid] ");
 
 		Log(Severity::ERROR, " to ");
 		if(dcell != NULL)
@@ -327,9 +328,10 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 
 	//DEBUG
 	/*
-	LogVerbose("    Optimizing (%d bad nodes, %d unroutes)\n", bad_nodes.size(), unroutes.size());
+	LogVerbose("Optimizing (%d bad nodes, %d unroutes)\n", bad_nodes.size(), unroutes.size());
+	LogIndenter li;
 	for(auto x : bad_nodes)
-		LogVerbose("        * %s\n",
+		LogVerbose("* %s\n",
 			static_cast<Greenpak4BitstreamEntity*>(x->GetMate()->GetData())->GetDescription().c_str());
 	*/
 }
@@ -416,7 +418,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	//Debug log
 	bool unroutable = (m_unroutableNodes.find(pivot) != m_unroutableNodes.end());
 	Greenpak4NetlistEntity* ne = static_cast<Greenpak4NetlistEntity*>(pivot->GetData());
-	LogDebug("        Seeking new placement for node %s (at %s, unroutable = %d)\n",
+	LogDebug("Seeking new placement for node %s (at %s, unroutable = %d)\n",
 		ne->m_name.c_str(),
 		current_site->GetDescription().c_str(), unroutable);
 
@@ -455,7 +457,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 	//If no routable candidates found anywhere, consider the entire chip and hope we can patch things up later
 	if(temp_candidates.empty())
 	{
-		LogDebug("            No routable candidates found\n");
+		LogDebug("No routable candidates found\n");
 		for(uint32_t i=0; i<m_device->GetNumNodesWithLabel(label); i++)
 			temp_candidates.insert(m_device->GetNodeByLabelAndIndex(label, i));
 	}
@@ -470,7 +472,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 
 	//Pick one at random
 	auto c = candidates[rand() % ncandidates];
-	LogDebug("            Selected %s\n",
+	LogDebug("Selected %s\n",
 		static_cast<Greenpak4BitstreamEntity*>(c->GetData())->GetDescription().c_str());
 	return c;
 }

@@ -181,19 +181,22 @@ void Greenpak4Netlist::IndexNets(bool verbose)
 	if(verbose)
 		LogNotice("Indexing...\n");
 
+	LogIndenter li;
+
 	//Loop over all of our ports and add them to the associated nets
 	for(auto it = m_topModule->port_begin(); it != m_topModule->port_end(); it ++)
 	{
 		Greenpak4NetlistPort* port = it->second;
 		if(verbose)
-			LogDebug("    Port %s connects to:\n", it->first.c_str());
+			LogDebug("Port %s connects to:\n", it->first.c_str());
+		LogIndenter li;
 
 		for(unsigned int i=0; i<port->m_nodes.size(); i++)
 		{
 			auto x = port->m_nodes[i];
 
 			if(verbose)
-				LogDebug("        bit %u: node %s\n", i, port->m_nodes[i]->m_name.c_str());
+				LogDebug("bit %u: node %s\n", i, port->m_nodes[i]->m_name.c_str());
 			x->m_ports.push_back(port);
 		}
 	}
@@ -203,7 +206,8 @@ void Greenpak4Netlist::IndexNets(bool verbose)
 	{
 		Greenpak4NetlistCell* cell = it->second;
 		if(verbose)
-			LogDebug("    Cell %s connects to:\n", it->first.c_str());
+			LogDebug("Cell %s connects to:\n", it->first.c_str());
+		LogIndenter li;
 		for(auto jt : cell->m_connections)
 		{
 			string cellname = jt.first;
@@ -217,9 +221,9 @@ void Greenpak4Netlist::IndexNets(bool verbose)
 				if(verbose)
 				{
 					if(vector)
-						LogDebug("        %s[%u]: net %s\n", cellname.c_str(), i, node->m_name.c_str());
+						LogDebug("%s[%u]: net %s\n", cellname.c_str(), i, node->m_name.c_str());
 					else
-						LogDebug("        %s: net %s\n", cellname.c_str(), node->m_name.c_str());
+						LogDebug("%s: net %s\n", cellname.c_str(), node->m_name.c_str());
 				}
 				node->m_nodeports.push_back(Greenpak4NetlistNodePoint(cell, cellname, i, vector));
 			}
@@ -239,11 +243,12 @@ void Greenpak4Netlist::IndexNets(bool verbose)
 	{
 		for(auto node : m_nodes)
 		{
-			LogDebug("    Node %s connects to:\n", node->m_name.c_str());
+			LogDebug("Node %s connects to:\n", node->m_name.c_str());
+			LogIndenter li;
 			for(auto p : node->m_ports)
-				LogDebug("        port %s\n", p->m_name.c_str());
+				LogDebug("port %s\n", p->m_name.c_str());
 			for(auto c : node->m_nodeports)
-				LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+				LogDebug("cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 		}
 	}
 }
@@ -256,6 +261,7 @@ void Greenpak4Netlist::IndexNets(bool verbose)
 void Greenpak4Netlist::LoadModules(json_object* object)
 {
 	LogNotice("\nLoading modules...\n");
+	LogIndenter li;
 
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);

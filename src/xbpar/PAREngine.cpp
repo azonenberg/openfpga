@@ -62,6 +62,8 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 
 	//Converge until we get a passing placement
 	LogNotice("\nOptimizing placement...\n");
+	LogIndenter li;
+
 	uint32_t iteration = 0;
 	vector<PARGraphEdge*> unroutes;
 	uint32_t best_cost = 1000000;
@@ -131,7 +133,7 @@ uint32_t PAREngine::ComputeAndPrintScore(vector<PARGraphEdge*>& unroutes, uint32
 
 	unroutes.clear();
 	LogVerbose(
-		"    Iteration %d: unroutability %d, congestion %d, timing %d (total cost %d)\n",
+		"Iteration %d: unroutability %d, congestion %d, timing %d (total cost %d)\n",
 		iteration,
 		ucost,
 		ccost,
@@ -198,7 +200,10 @@ void PAREngine::InitialPlacement(map<uint32_t, string>& label_names)
 	LogVerbose("Global placement of %d instances into %d sites...\n",
 		m_netlist->GetNumNodes(),
 		m_device->GetNumNodes());
-	LogVerbose("    %d nets, %d routing channels available\n",
+
+	LogIndenter li;
+
+	LogVerbose("%d nets, %d routing channels available\n",
 		m_netlist->GetNumEdges(),
 		m_device->GetNumEdges());
 
@@ -210,7 +215,7 @@ void PAREngine::InitialPlacement(map<uint32_t, string>& label_names)
 	InitialPlacement_core();
 
 	//Post-placement sanity check
-	LogVerbose("    Running post-placement sanity checks...\n");
+	LogVerbose("Running post-placement sanity checks...\n");
 	for(uint32_t i=0; i<m_netlist->GetNumNodes(); i++)
 	{
 		PARGraphNode* node = m_netlist->GetNodeByIndex(i);
@@ -240,6 +245,8 @@ bool PAREngine::OptimizePlacement(
 	vector<PARGraphNode*>& badnodes,
 	map<uint32_t, string>& label_names)
 {
+	LogIndenter li;
+
 	//Pick one of the nodes at random as our pivot node
 	PARGraphNode* pivot = badnodes[rand() % badnodes.size()];
 
@@ -275,7 +282,7 @@ bool PAREngine::OptimizePlacement(
 
 	//TODO: say what we swapped?
 
-	//LogVerbose("    Original cost %u, new cost %u\n", original_cost, new_cost);
+	//LogVerbose("Original cost %u, new cost %u\n", original_cost, new_cost);
 
 	//If new cost is less, or greater with probability temperature, accept it
 	//TODO: make probability depend on dCost?

@@ -140,47 +140,56 @@ int main(int argc, char* argv[])
 
 	//Print configuration
 	LogNotice("\nDevice configuration:\n");
-	LogNotice("    Target device: SLG46620V\n");
-	LogNotice("    VCC range: not yet implemented\n");
-	LogNotice("    Unused pins: ");
-	switch(unused_pull)
 	{
-		case Greenpak4IOB::PULL_NONE:
-			LogNotice("float\n");
-			break;
+		LogIndenter li;
+		LogNotice("Target device: SLG46620V\n");
+		LogNotice("VCC range: not yet implemented\n");
 
-		case Greenpak4IOB::PULL_DOWN:
-			LogNotice("pull down with ");
-			break;
+		string pull;
+		string drive;
 
-		case Greenpak4IOB::PULL_UP:
-			LogNotice("pull up with ");
-			break;
-
-		default:
-			LogNotice("invalid\n");
-			return 1;
-	}
-	if(unused_pull != Greenpak4IOB::PULL_NONE)
-	{
-		switch(unused_drive)
+		switch(unused_pull)
 		{
-			case Greenpak4IOB::PULL_10K:
-				LogNotice("10K\n");
+			case Greenpak4IOB::PULL_NONE:
+				pull = "float\n";
 				break;
 
-			case Greenpak4IOB::PULL_100K:
-				LogNotice("100K\n");
+			case Greenpak4IOB::PULL_DOWN:
+				pull = "pull down with ";
 				break;
 
-			case Greenpak4IOB::PULL_1M:
-				LogNotice("1M\n");
+			case Greenpak4IOB::PULL_UP:
+				pull = "pull up with ";
 				break;
 
 			default:
-				LogNotice("invalid\n");
+				LogError("Invalid pull direction\n");
 				return 1;
 		}
+
+		if(unused_pull != Greenpak4IOB::PULL_NONE)
+		{
+			switch(unused_drive)
+			{
+				case Greenpak4IOB::PULL_10K:
+					drive = "10K";
+					break;
+
+				case Greenpak4IOB::PULL_100K:
+					drive = "100K";
+					break;
+
+				case Greenpak4IOB::PULL_1M:
+					drive = "1M";
+					break;
+
+				default:
+					LogError("Invalid pull strength\n");
+					return 1;
+			}
+		}
+
+		LogNotice("Unused pins: %s %s\n", pull.c_str(), drive.c_str());
 	}
 
 

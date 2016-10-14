@@ -27,7 +27,7 @@ static void PrintRow(string kind, int used, int total)
 
 	Severity severity = (used > 0) ? Severity::NOTICE : Severity::VERBOSE;
 	string padded_kind = kind + std::string(14 - kind.size(), ' ');
-	Log(severity, "    %s%2d/%2d (%d %%)\n", padded_kind.c_str(), used, total, used*100/total);
+	Log(severity, "%s%2d/%2d (%d %%)\n", padded_kind.c_str(), used, total, used*100/total);
 }
 
 /**
@@ -128,8 +128,11 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		sysrst_used = 1;
 
 	//Print the actual report
+	//TODO: Figure out how to use indentation framework here for better columnar indents?
 
 	LogNotice("\nDevice utilization:\n");
+	LogIndenter li;
+
 	unsigned int total_dff_used = dff_used + dffsr_used;
 	unsigned int total_luts_used = luts_used[2] + luts_used[3] + luts_used[4];
 	unsigned int total_counters_used = counters_8_used + counters_8_adv_used +
@@ -172,8 +175,10 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* /*device*/)
 {
 	LogVerbose("\nPlacement report:\n");
-	LogVerbose("    +----------------------------------------------------+-----------------+\n");
-	LogVerbose("    | %-50s | %-15s |\n", "Node", "Site");
+	LogIndenter li;
+
+	LogVerbose("+----------------------------------------------------+-----------------+\n");
+	LogVerbose("| %-50s | %-15s |\n", "Node", "Site");
 
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
@@ -186,9 +191,9 @@ void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* /*device*/)
 			continue;
 		auto dst = static_cast<Greenpak4BitstreamEntity*>(dnode->GetData());
 
-		LogVerbose("    | %-50s | %-15s |\n", src->m_name.c_str(), dst->GetDescription().c_str());
+		LogVerbose("| %-50s | %-15s |\n", src->m_name.c_str(), dst->GetDescription().c_str());
 
 	}
 
-	LogVerbose("    +----------------------------------------------------+-----------------+\n");
+	LogVerbose("+----------------------------------------------------+-----------------+\n");
 }

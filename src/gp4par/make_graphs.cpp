@@ -179,6 +179,7 @@ void InferExtraNodes(
 	ilabelmap& ilmap)
 {
 	LogVerbose("Replicating nodes to control hard IP dependencies...\n");
+	LogIndenter li;
 
 	bool madeChanges = false;
 
@@ -207,7 +208,9 @@ void InferExtraNodes(
 
 		//We have an IOB driven by a VREF.
 		//Check if we have a comparator driven by that VREF too.
-		LogDebug("    IOB \"%s\" is driven by VREF \"%s\"\n", cell->m_name.c_str(), vref->m_name.c_str());
+		LogDebug("IOB \"%s\" is driven by VREF \"%s\"\n", cell->m_name.c_str(), vref->m_name.c_str());
+		LogIndenter li;
+
 		vector<Greenpak4NetlistCell*> acmps;
 		for(auto jt : net->m_nodeports)
 		{
@@ -221,7 +224,7 @@ void InferExtraNodes(
 		//We need to *create* a GP_ACMP cell that we can use to reserve our vref
 		if(acmps.empty())
 		{
-			LogDebug("        No comparator driven by this VREF, creating a dummy\n");
+			LogDebug("No comparator driven by this VREF, creating a dummy\n");
 			madeChanges = true;
 
 			//Monotonically increasing counter used to ensure unique node IDs
@@ -269,7 +272,7 @@ void InferExtraNodes(
 	//Re-index the graph if we changed it
 	if(madeChanges)
 	{
-		LogNotice("    Re-indexing graph because we inferred additional nodes..\n");
+		LogNotice("Re-indexing graph because we inferred additional nodes..\n");
 		netlist->Reindex(true);
 		ngraph->IndexNodesByLabel();
 		madeChanges = false;
@@ -305,7 +308,7 @@ void InferExtraNodes(
 
 			//We have a second ACMP.
 			//Need to create a new net and VREF in both netlists to fix it
-			LogDebug("    VREF %s drives multiple ACMP/DAC cells, replicating to drive %s\n",
+			LogDebug("VREF %s drives multiple ACMP/DAC cells, replicating to drive %s\n",
 				cell->m_name.c_str(),
 				load->m_name.c_str());
 			madeChanges = true;
@@ -318,7 +321,7 @@ void InferExtraNodes(
 	//Re-index the graph if we changed it
 	if(madeChanges)
 	{
-		LogVerbose("    Re-indexing graph because we inferred additional nodes..\n");
+		LogVerbose("Re-indexing graph because we inferred additional nodes..\n");
 		netlist->Reindex(true);
 		ngraph->IndexNodesByLabel();
 		//madeChanges = false;
@@ -530,12 +533,14 @@ void MakeDeviceNodes(
 void MakeNetlistEdges(Greenpak4Netlist* netlist)
 {
 	LogDebug("Creating PAR netlist...\n");
+	LogIndenter li;
 
 	for(auto it = netlist->nodebegin(); it != netlist->nodeend(); it ++)
 	{
 		Greenpak4NetlistNode* node = *it;
 
-		LogDebug("    Node %s is sourced by:\n", node->m_name.c_str());
+		LogDebug("Node %s is sourced by:\n", node->m_name.c_str());
+		LogIndenter li;
 
 		PARGraphNode* source = NULL;
 		string sourceport = "";
@@ -563,7 +568,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 
 			source = c.m_cell->m_parnode;
 			sourceport = c.m_portname;
-			LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+			LogDebug("cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 
 			node->m_driver = c;
 
@@ -572,8 +577,8 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 		}
 
 		if((source == NULL) && !sourced_by_port)
-			LogDebug("        [NULL]\n");
-		LogDebug("        and drives\n");
+			LogDebug("[NULL]\n");
+		LogDebug("and drives\n");
 
 		//If node is sourced by a port, special processing needed.
 		//We can only drive IBUF/IOBUF cells
@@ -595,7 +600,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 					continue;
 
 				has_loads = true;
-				LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
+				LogDebug("cell %s port %s\n", c.m_cell->m_name.c_str(), c.m_portname.c_str());
 
 				//Verify the type is IBUF/IOBUF
 				if( (c.m_cell->m_type == "GP_IBUF") || (c.m_cell->m_type == "GP_IOBUF") )
@@ -615,18 +620,6 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 		//Create edges from this source node to all sink nodes
 		else
 		{
-			/*
-			//TODO: dead code, can we delete?
-			for(auto p : node->m_ports)
-			{
-				if(p->m_parnode != source)
-				{
-					source->AddEdge(sourceport, p->m_parnode);
-					//Greenpak4NetlistNet* net = netlist->GetTopModule()->GetNet(p->m_name);
-					//LogVerbose("        port %s (loc %s)\n", p->m_name.c_str(), net->m_attributes["LOC"].c_str());
-				}
-			}
-			*/
 			for(auto c : node->m_nodeports)
 			{
 				Greenpak4NetlistModule* module = netlist->GetModule(c.m_cell->m_type);
@@ -650,7 +643,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 
 				//Use the new name
 				has_loads = true;
-				LogDebug("        cell %s port %s\n", c.m_cell->m_name.c_str(), nname.c_str());
+				LogDebug("cell %s port %s\n", c.m_cell->m_name.c_str(), nname.c_str());
 				if(source)
 					source->AddEdge(sourceport, c.m_cell->m_parnode, nname);
 			}
@@ -667,7 +660,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			exit(-1);
 		}
 		else if(!has_loads)
-			LogDebug("        [NULL]\n");
+			LogDebug("[NULL]\n");
 	}
 }
 
