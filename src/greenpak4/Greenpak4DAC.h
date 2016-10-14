@@ -63,7 +63,6 @@ protected:
 	unsigned int m_cbasePwr;
 	unsigned int m_cbaseInsel;
 	unsigned int m_cbaseAon;
-	unsigned int m_cbaseAon2;
 };
 
 #endif	//Greenpak4DAC_h
