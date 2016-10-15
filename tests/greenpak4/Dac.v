@@ -81,7 +81,6 @@ module Dac(bg_ok, vout, vout2);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DAC driving the voltage reference
 
-	//This DAC isn't working! Not sure why
 	wire vdac;
 	(* LOC = "DAC_1" *)
 	GP_DAC dac(
