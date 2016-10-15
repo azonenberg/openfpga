@@ -77,6 +77,7 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 {
 	LogNotice("\nChecking post-route design rules...\n");
+	LogIndenter li;
 
 	//Check for nodes in the netlist that have no load
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
@@ -154,14 +155,26 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 
 	//Check for ABUF with inputs driven from non-analog IOs
 	auto abuf = device->GetAbuf();
-	CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(abuf->GetInput().GetRealEntity()));
+	if(abuf)
+		CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(abuf->GetInput().GetRealEntity()));
 
 	//Check for PGA with inputs driven from non-analog IOs
 	auto pga = device->GetPGA();
-	CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(pga->GetInputP().GetRealEntity()));
-	CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(pga->GetInputN().GetRealEntity()));
+	if(pga)
+	{
+		CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(pga->GetInputP().GetRealEntity()));
+		CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(pga->GetInputN().GetRealEntity()));
+	}
 
 	//TODO: Check for VREF with inputs driven from non-analog IOs
+
+	//TODO: Check for PGA driving an IOB when ADC is enabled
+	//auto adc = device->GetADC();
+	if(pga /*&& adc*/)
+	{
+		//We do not yet implement the ADC
+		//so nothing to do here
+	}
 
 	//Check for multiple ACMPs using different settings of ACMP0's output mux
 	typedef pair<string, Greenpak4EntityOutput> spair;
