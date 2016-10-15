@@ -1677,7 +1677,7 @@ GP_DAC dac(
 % GP_DELAY
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DELAY}: Programmable Digital Delay Line (NOT IMPLEMENTED)}
+\subsection{\tokenstyle{GP\_DELAY}: Programmable Digital Delay Line}
 \label{gp-delay}
 
 \subsubsection{Introduction}
@@ -1708,10 +1708,14 @@ device datasheet for values.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-delay-example} FIXME.
+The example shown in figure \ref{gp-delay-example} shows a delay with a nominal value of 110 ns at 3.3V Vdd.
 
 \begin{figure}[h]
 \begin{lstlisting}
+GP_DELAY #(.DELAY_STEPS(1)) delay(
+	.IN(clk),
+	.OUT(clk_delayed)
+	);
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_DELAY}}
 \label{gp-delay-example}
