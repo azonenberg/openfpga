@@ -59,7 +59,8 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 	}
 
 	//Final DRC to make sure the placement is sane
-	PostPARDRC(ngraph, device);
+	if(!PostPARDRC(ngraph, device))
+		return false;
 
 	//Print reports
 	PrintUtilizationReport(ngraph, device, num_routes_used);
