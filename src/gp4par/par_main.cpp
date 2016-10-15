@@ -80,6 +80,8 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 	LogNotice("\nChecking post-route design rules...\n");
 	LogIndenter li;
 
+	bool ok = true;
+
 	//Check for nodes in the netlist that have no load
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
@@ -94,7 +96,7 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 			LogError(
 				"Node \"%s\" is not mapped to any site in the device\n",
 				src->m_name.c_str());
-			return false;
+			ok = false;
 		}
 
 		//Do not warn if power rails have no load, that's perfectly normal
@@ -142,7 +144,7 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 					it->first,
 					signal.GetOutputName().c_str()
 					);
-				return false;
+				ok = false;
 			}
 		}
 	}
@@ -230,7 +232,7 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 						LogNotice("Comparator %10s requested %s\n",
 							p.first.c_str(), p.second.GetOutputName().c_str());
 					}
-					return false;
+					ok = false;
 				}
 
 				//If ACMP0 is not used, but we use its output, configure it
@@ -282,7 +284,7 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 				"Multiple oscillators have power-down enabled, but do not share the same power-down signal\n");
 			for(auto p : powerdowns)
 				LogNotice("    Oscillator %10s powerdown is %s\n", p.first.c_str(), p.second.GetOutputName().c_str());
-			return false;
+			ok = false;
 		}
 	}
 
@@ -299,12 +301,15 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 				"Both DAC1 and the PGA are used. This is illegal due to a poorly documented control hazard.\n"
 				"Enabling the PGA turns on the SAR ADC, forcing DAC1 to emit a sawtooth waveform instead of the "
 				"desired signal.\n");
-			return false;
+			ok = false;
 		}
 	}
 
 	//TODO: Cannot use DAC1 when ADC is used
 	//TODO: Cannot use DAC0 when ADC/PGA pseudo-diff mode is used
+
+	//Done
+	return ok;
 }
 
 void CheckAnalogIbuf(Greenpak4BitstreamEntity* load, Greenpak4IOB* iob)
