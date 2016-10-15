@@ -309,6 +309,8 @@ int main(int argc, char* argv[])
 	if(!(uploadFilename.empty() && downloadFilename.empty() && rcOscFreq == 0 && !test && !programNvram)) {
 		//Detect the part that's plugged in.
 		LogNotice("Detecting part\n");
+		LogIndenter li;
+
 		SilegoPart parts[] = { SLG46140V, SLG46620V };
 		for(SilegoPart part : parts) {
 			LogVerbose("Selecting part %s\n", PartName(part));
@@ -394,6 +396,7 @@ int main(int argc, char* argv[])
 		}
 
 		LogNotice("Trimming oscillator for %d Hz at %.3g V\n", rcOscFreq, voltage);
+		LogIndenter li;
 		rcFtw = TrimOscillator(hdev, detectedPart, voltage, rcOscFreq);
 	}
 
@@ -423,10 +426,12 @@ int main(int argc, char* argv[])
 		if(!programNvram) {
 			//Load bitstream into SRAM
 			LogNotice("Downloading bitstream into SRAM\n");
+			LogIndenter li;
 			DownloadBitstream(hdev, newBitstream, DownloadMode::EMULATION);
 		} else {
 			//Program bitstream into NVM
 			LogNotice("Programming bitstream into NVM\n");
+			LogIndenter li;
 			DownloadBitstream(hdev, newBitstream, DownloadMode::PROGRAMMING);
 
 			LogNotice("Verifying programmed bitstream\n");
