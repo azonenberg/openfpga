@@ -128,6 +128,8 @@ public:
 
 	bool IsGeneralFabricInput(std::string port) const;
 
+	bool HasLoadsOnPort(std::string port);
+
 protected:
 
 	///Return our assigned netlist entity, if we have one (or NULL if not)

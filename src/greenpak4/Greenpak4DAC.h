@@ -53,6 +53,8 @@ public:
 	unsigned int GetDACNum()
 	{ return m_dacnum; }
 
+	bool IsUsed();
+
 protected:
 	Greenpak4EntityOutput m_vref;
 	Greenpak4EntityOutput m_din[8];

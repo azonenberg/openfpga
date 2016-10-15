@@ -86,6 +86,11 @@ unsigned int Greenpak4PGA::GetOutputNetNumber(string /*port*/)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+bool Greenpak4PGA::IsUsed()
+{
+	return HasLoadsOnPort("VOUT");
+}
+
 void Greenpak4PGA::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned

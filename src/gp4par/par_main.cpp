@@ -269,33 +269,32 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 	if(!powerdowns.empty())
 	{
 		Greenpak4EntityOutput src = device->GetGround();
-		bool ok = true;
+		bool xok = true;
 		for(auto p : powerdowns)
 		{
 			if(src.IsPowerRail())
 				src = p.second;
 			if(src != p.second)
-				ok = false;
+				xok = false;
 		}
 
-		if(!ok)
+		if(!xok)
 		{
 			LogError(
 				"Multiple oscillators have power-down enabled, but do not share the same power-down signal\n");
 			for(auto p : powerdowns)
 				LogNotice("    Oscillator %10s powerdown is %s\n", p.first.c_str(), p.second.GetOutputName().c_str());
+
 			ok = false;
 		}
 	}
 
-	//If the PGA is used, we cannot use DAC1 (undocumented conflict, datasheet says nothing about this...)
-	//It appears that enabling the PGA turns on the ADC and causes DAC1 to emit a sawtooth waveform, regardless
-	//of whether there is any actual use of the ADC subsystem.
+	//ADC/DAC conflicts
 	if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
 	{
+		//null check on pga is unnecessary for the 46620v, but necessary to avoid false positive from static analysis
 		auto dac1 = device->GetDAC(1);
-
-		if(pga->IsUsed() && dac1->IsUsed())
+		if(pga && pga->IsUsed() && dac1->IsUsed())
 		{
 			LogError(
 				"Both DAC1 and the PGA are used. This is illegal due to a poorly documented control hazard.\n"
@@ -303,10 +302,18 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 				"desired signal.\n");
 			ok = false;
 		}
-	}
 
-	//TODO: Cannot use DAC1 when ADC is used
-	//TODO: Cannot use DAC0 when ADC/PGA pseudo-diff mode is used
+		//null check to avoid false positive on static analysis
+		auto dac0 = device->GetDAC(0);
+		if(pga && pga->IsUsed() && dac0->IsUsed() && (pga->GetInputMode() == Greenpak4PGA::MODE_PDIFF) )
+		{
+			LogError(
+				"DAC0 is used while the PGA is in pseudo-differential mode. This is illegal since the "
+				"PGA uses DAC0 to provide the pseudo-differential offset voltage.\n");
+		}
+
+		//TODO: Cannot use DAC1 when ADC is used
+	}
 
 	//Done
 	return ok;

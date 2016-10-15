@@ -54,6 +54,40 @@ Greenpak4BitstreamEntity::~Greenpak4BitstreamEntity()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Connectivity tracing helpers
+
+/**
+	@brief Check if we have any loads on a particular port
+ */
+bool Greenpak4BitstreamEntity::HasLoadsOnPort(string port)
+{
+	//Get our cell, or bail if we're unassigned
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell == NULL)
+		return false;
+
+	//If nothing on the port, stop
+	if(ncell->m_connections.find(port) == ncell->m_connections.end())
+		return false;
+
+	//Check if any connections other than ourself
+	auto vec = ncell->m_connections[port];
+	for(auto node : vec)
+	{
+		for(auto point : node->m_nodeports)
+		{
+			if(point.m_cell != ncell)
+				return true;
+		}
+
+		if(!node->m_ports.empty())
+			return true;
+	}
+
+	return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Net numbering helpers
 
 Greenpak4EntityOutput Greenpak4BitstreamEntity::GetOutput(std::string port)

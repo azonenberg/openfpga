@@ -56,6 +56,11 @@ Greenpak4DAC::~Greenpak4DAC()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
+bool Greenpak4DAC::IsUsed()
+{
+	return HasLoadsOnPort("VOUT");
+}
+
 string Greenpak4DAC::GetDescription()
 {
 	char buf[128];

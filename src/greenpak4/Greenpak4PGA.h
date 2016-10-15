@@ -52,6 +52,18 @@ public:
 	Greenpak4EntityOutput GetInputN()
 	{ return m_vinn; }
 
+	bool IsUsed();
+
+	enum InputModes
+	{
+		MODE_SINGLE,
+		MODE_DIFF,
+		MODE_PDIFF
+	};
+
+	InputModes GetInputMode()
+	{ return m_inputMode; }
+
 protected:
 	Greenpak4EntityOutput m_vinp;
 	Greenpak4EntityOutput m_vinn;
@@ -60,12 +72,7 @@ protected:
 	//decimal fixed point: legal values 25, 50, 100, 200, 400, 800, 1600, 3200
 	unsigned int m_gain;
 
-	enum InputModes
-	{
-		MODE_SINGLE,
-		MODE_DIFF,
-		MODE_PDIFF
-	} m_inputMode;
+	InputModes m_inputMode;
 
 	///indicates if we have any loads other than the ADC
 	bool m_hasNonADCLoads;
