@@ -138,6 +138,7 @@ bool Greenpak4DAC::Save(bool* bitstream)
 
 	//VREF must be from a GP_VREF driving 1v0 for now
 	//Sanity check that
+	//TODO: DAC1 has a 50 mV offset, so the two are NOT equivalent!
 	if(!m_vref.IsVoltageReference())
 	{
 		LogError("DRC: DAC should have a voltage reference driving VREF, but something else was supplied instead\n");
