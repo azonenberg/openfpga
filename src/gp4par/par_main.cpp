@@ -286,7 +286,23 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		}
 	}
 
-	//TODO: Cannot use DAC1 when PGA is used either 
+	//If the PGA is used, we cannot use DAC1 (undocumented conflict, datasheet says nothing about this...)
+	//It appears that enabling the PGA turns on the ADC and causes DAC1 to emit a sawtooth waveform, regardless
+	//of whether there is any actual use of the ADC subsystem.
+	if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
+	{
+		auto dac1 = device->GetDAC(1);
+
+		if(pga->IsUsed() && dac1->IsUsed())
+		{
+			LogError(
+				"Both DAC1 and the PGA are used. This is illegal due to a poorly documented control hazard.\n"
+				"Enabling the PGA turns on the SAR ADC, forcing DAC1 to emit a sawtooth waveform instead of the "
+				"desired signal.\n");
+			return false;
+		}
+	}
+
 	//TODO: Cannot use DAC1 when ADC is used
 	//TODO: Cannot use DAC0 when ADC/PGA pseudo-diff mode is used
 }
