@@ -22,11 +22,12 @@
 	OUTPUTS:
 		Bandgap OK on pin 20 (should be high after reset)
 		DAC output on pin 19 (sweeping TBD)
+		DAC output on pin 18 (constant 1V)
 
 	TEST PROCEDURE:
 		TODO
  */
-module Dac(bg_ok, vout, vout2);
+module Dac(bg_ok, vout, vout2, wave_sync);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -42,6 +43,9 @@ module Dac(bg_ok, vout, vout2);
 	(* IBUF_TYPE = "ANALOG" *)
 	output wire vout2;
 
+	(* LOC = "P17" *)
+	output wire wave_sync;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
 
@@ -55,6 +59,17 @@ module Dac(bg_ok, vout, vout2);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Oscillators
+
+	//The 1730 Hz oscillator
+	wire clk_108hz;
+	GP_LFOSC #(
+		.PWRDN_EN(0),
+		.AUTO_PWRDN(0),
+		.OUT_DIV(16)
+	) lfosc (
+		.PWRDN(1'b0),
+		.CLKOUT(clk_108hz)
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// 1.0V voltage reference for the DAC
@@ -79,12 +94,30 @@ module Dac(bg_ok, vout, vout2);
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// A counter running off the 108 Hz clock
+
+	localparam COUNT_MAX = 255;
+
+	(* LOC = "COUNT8_6" *)
+	(* COUNT_EXTRACT = "FORCE" *)
+	reg[7:0] count = COUNT_MAX;
+	always @(posedge clk_108hz) begin
+		if(count == 0)
+			count <= COUNT_MAX;
+		else
+			count <= count - 1'd1;
+	end
+
+	//Counter overflow signal to LED
+	assign wave_sync = (count == 0);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DAC driving the voltage reference
 
 	wire vdac;
 	(* LOC = "DAC_1" *)
 	GP_DAC dac(
-		.DIN(8'hff),
+		.DIN(8'hff),	//count
 		.VOUT(vdac),
 		.VREF(vref_1v0)
 	);
