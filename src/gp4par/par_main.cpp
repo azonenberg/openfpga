@@ -74,7 +74,7 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 /**
 	@brief Do various sanity checks after the design is routed
  */
-void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
+bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 {
 	LogNotice("\nChecking post-route design rules...\n");
 	LogIndenter li;
@@ -93,7 +93,7 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 			LogError(
 				"Node \"%s\" is not mapped to any site in the device\n",
 				src->m_name.c_str());
-			exit(-1);
+			return false;
 		}
 
 		//Do not warn if power rails have no load, that's perfectly normal
@@ -141,7 +141,7 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 					it->first,
 					signal.GetOutputName().c_str()
 					);
-				exit(-1);
+				return false;
 			}
 		}
 	}
@@ -223,16 +223,18 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 					LogError(
 						"Multiple comparators tried to simultaneously use different outputs from "
 						"the ACMP0 input mux\n");
+					LogIndenter li;
 					for(auto p : inputs)
 					{
-						LogNotice("    Comparator %10s requested %s\n",
+						LogNotice("Comparator %10s requested %s\n",
 							p.first.c_str(), p.second.GetOutputName().c_str());
 					}
-					exit(-1);
+					return false;
 				}
 
 				//If ACMP0 is not used, but we use its output, configure it
 				//TODO: for better power efficiency, turn on only when a downstream comparator is on?
+				//TODO: This really should not be done in the DRC
 				if( (device->GetAcmp(0)->GetInput() == gnd) && (inputs.size() > 0) )
 				{
 					LogNotice(
@@ -279,11 +281,11 @@ void PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 				"Multiple oscillators have power-down enabled, but do not share the same power-down signal\n");
 			for(auto p : powerdowns)
 				LogNotice("    Oscillator %10s powerdown is %s\n", p.first.c_str(), p.second.GetOutputName().c_str());
-			exit(-1);
+			return false;
 		}
 	}
 
-	//TODO: Cannot use DAC1 when PGA is used either (undocumented conflict, datasheet says nothing about this)
+	//TODO: Cannot use DAC1 when PGA is used either 
 	//TODO: Cannot use DAC1 when ADC is used
 	//TODO: Cannot use DAC0 when ADC/PGA pseudo-diff mode is used
 }

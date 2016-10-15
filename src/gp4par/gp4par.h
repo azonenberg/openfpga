@@ -53,7 +53,7 @@ void ApplyLocConstraints(Greenpak4Netlist* netlist, PARGraph* ngraph, PARGraph* 
 bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device);
 
 //DRC
-void PostPARDRC(PARGraph* netlist, Greenpak4Device* device);
+bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device);
 
 //Committing
 bool CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
