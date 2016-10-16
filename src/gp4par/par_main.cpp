@@ -323,26 +323,29 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 	if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
 	{
 		//Get all IOB loads of the POR
-		auto por = device->GetPowerOnReset()->GetPARNode()->GetMate();
 		auto p8 = device->GetIOB(8);
-		for(uint32_t i=0; i<por->GetEdgeCount(); i++)
+		auto por = device->GetPowerOnReset()->GetPARNode()->GetMate();
+		if(por)
 		{
-			auto dest = por->GetEdgeByIndex(i)->m_destnode->GetMate();
-			auto n = static_cast<Greenpak4BitstreamEntity*>(dest->GetData())->GetRealEntity();
-
-			auto ioba = dynamic_cast<Greenpak4IOBTypeA*>(n);
-			auto iobb = dynamic_cast<Greenpak4IOBTypeB*>(n);
-
-			if( (ioba == NULL) && (iobb == NULL) )
-				continue;
-
-			if(n != p8)
+			for(uint32_t i=0; i<por->GetEdgeCount(); i++)
 			{
-				LogWarning(
-					"Pin %s is driven by the power-on reset, but is does not have dedicated reset routing.\n"
-					"This may lead to synchronization issues or glitches if this pin is used to drive resets on "
-					"external logic.\n",
-					n->GetDescription().c_str());
+				auto dest = por->GetEdgeByIndex(i)->m_destnode->GetMate();
+				auto n = static_cast<Greenpak4BitstreamEntity*>(dest->GetData())->GetRealEntity();
+
+				auto ioba = dynamic_cast<Greenpak4IOBTypeA*>(n);
+				auto iobb = dynamic_cast<Greenpak4IOBTypeB*>(n);
+
+				if( (ioba == NULL) && (iobb == NULL) )
+					continue;
+
+				if(n != p8)
+				{
+					LogWarning(
+						"Pin %s is driven by the power-on reset, but is does not have dedicated reset routing.\n"
+						"This may lead to synchronization issues or glitches if this pin is used to drive resets on "
+						"external logic.\n",
+						n->GetDescription().c_str());
+				}
 			}
 		}
 	}
