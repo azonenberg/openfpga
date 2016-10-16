@@ -451,7 +451,13 @@ int main(int argc, char* argv[])
 		LogNotice("Bitstream ID code: 0x%02x\n", patternID);
 
 		//Set read protection reg<2039>
+		//OR with the existing value: we can set the read protect bit here, but not overwrite the bit if
+		//it was set by gp4par. If you REALLY need to unprotect a bitstream, do it by hand in a text editor.
 		newBitstream[254] |= ((uint8_t)readProtect) << 7;
+		if(newBitstream[254] & 0x80)
+			LogNotice("Read protection: enabled\n");
+		else
+			LogNotice("Read protection: disabled\n");
 
 		if(!programNvram)
 		{
@@ -467,6 +473,7 @@ int main(int argc, char* argv[])
 			LogIndenter li;
 			DownloadBitstream(hdev, newBitstream, DownloadMode::PROGRAMMING);
 
+			//TODO: Figure out how to make this play nicely with read protection?
 			LogNotice("Verifying programmed bitstream\n");
 			size_t bitstreamLength = BitstreamLength(detectedPart) / 8;
 			vector<uint8_t> bitstreamToVerify = UploadBitstream(hdev, bitstreamLength);

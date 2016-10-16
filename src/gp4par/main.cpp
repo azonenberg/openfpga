@@ -37,8 +37,9 @@ int main(int argc, char* argv[])
 	//TODO: make this switchable via command line args
 	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
 
-	//ID code of the bitstream
+	//Bitstream metadata
 	unsigned int userid = 0;
+	bool readProtect = false;
 
 	//Parse command-line arguments
 	for(int i=1; i<argc; i++)
@@ -115,6 +116,8 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 		}
+		else if(s == "--read-protect")
+			readProtect = true;
 		else if(s == "-o" || s == "--output")
 		{
 			if(i+1 < argc)
@@ -155,8 +158,8 @@ int main(int argc, char* argv[])
 	LogNotice("\nDevice configuration:\n");
 	{
 		LogIndenter li;
-		LogNotice("Target device: SLG46620V\n");
-		LogNotice("VCC range: not yet implemented\n");
+		LogNotice("Target device:   SLG46620V\n");
+		LogNotice("VCC range:       not yet implemented\n");
 
 		string pull;
 		string drive;
@@ -164,7 +167,7 @@ int main(int argc, char* argv[])
 		switch(unused_pull)
 		{
 			case Greenpak4IOB::PULL_NONE:
-				pull = "float\n";
+				pull = "float";
 				break;
 
 			case Greenpak4IOB::PULL_DOWN:
@@ -202,7 +205,10 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		LogNotice("Unused pins: %s %s\n", pull.c_str(), drive.c_str());
+		LogNotice("Unused pins:     %s %s\n", pull.c_str(), drive.c_str());
+
+		LogNotice("User ID code:    %02x\n", userid);
+		LogNotice("Read protection: %s\n", readProtect ? "enabled" : "disabled");
 	}
 
 	//Parse the unplaced netlist
@@ -222,7 +228,7 @@ int main(int argc, char* argv[])
 		ofname.c_str(), (int)userid);
 	{
 		LogIndenter li;
-		device.WriteToFile(ofname, userid);
+		device.WriteToFile(ofname, userid, readProtect);
 	}
 
 	//TODO: Static timing analysis

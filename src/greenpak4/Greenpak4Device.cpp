@@ -573,8 +573,9 @@ unsigned int Greenpak4Device::GetMatrixBase(unsigned int matrix)
 
 	@param fname		Name of the file to write to
 	@param userid		ID code to write to the "user ID" area of the bitstream
+	@param readProtect	True to disable readout of the design
  */
-bool Greenpak4Device::WriteToFile(string fname, uint8_t userid)
+bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect)
 {
 	//Open the file
 	FILE* fp = fopen(fname.c_str(), "w");
@@ -648,6 +649,9 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid)
 			bitstream[2036] = (userid & 0x20) ? true : false;
 			bitstream[2037] = (userid & 0x40) ? true : false;
 			bitstream[2038] = (userid & 0x80) ? true : false;
+
+			//Read protection flag
+			bitstream[2039] = readProtect;
 
 			break;
 	}
