@@ -74,6 +74,9 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 
 /**
 	@brief Do various sanity checks after the design is routed
+
+	Also do a couple of tweaks to the bitstream that we can't find any other good spot for
+	TODO: this really should be done somewhere else?
  */
 bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 {
@@ -313,6 +316,35 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		}
 
 		//TODO: Cannot use DAC1 when ADC is used
+	}
+
+	//If POR is driven to an IOB, it should be pin 8 using dedicated routing
+	//If not, warn about timing
+	if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
+	{
+		//Get all IOB loads of the POR
+		auto por = device->GetPowerOnReset()->GetPARNode()->GetMate();
+		auto p8 = device->GetIOB(8);
+		for(uint32_t i=0; i<por->GetEdgeCount(); i++)
+		{
+			auto dest = por->GetEdgeByIndex(i)->m_destnode->GetMate();
+			auto n = static_cast<Greenpak4BitstreamEntity*>(dest->GetData())->GetRealEntity();
+
+			auto ioba = dynamic_cast<Greenpak4IOBTypeA*>(n);
+			auto iobb = dynamic_cast<Greenpak4IOBTypeB*>(n);
+
+			if( (ioba == NULL) && (iobb == NULL) )
+				continue;
+
+			if(n != p8)
+			{
+				LogWarning(
+					"Pin %s is driven by the power-on reset, but is does not have dedicated reset routing.\n"
+					"This may lead to synchronization issues or glitches if this pin is used to drive resets on "
+					"external logic.\n",
+					n->GetDescription().c_str());
+			}
+		}
 	}
 
 	//Done

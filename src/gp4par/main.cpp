@@ -207,7 +207,10 @@ int main(int argc, char* argv[])
 
 	//Write the final bitstream
 	LogNotice("\nWriting final bitstream to output file \"%s\".\n", ofname.c_str());
-	device.WriteToFile(ofname);
+	{
+		LogIndenter li;
+		device.WriteToFile(ofname);
+	}
 
 	//TODO: Static timing analysis
 	LogNotice("\nStatic timing analysis: not yet implemented\n");

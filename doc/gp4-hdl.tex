@@ -245,7 +245,6 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item DCMP/PWM
 \item Edge detector mode of PDELAY/edge detect block
 \item Slave SPI
-\item Pin 8 reset output (does this even exist?)
 \end{itemize}
 
 \pagebreak
@@ -3017,6 +3016,8 @@ device datasheet for exact functionality) and is independent of the power-on res
 
 Note that this block has slightly different timing than the power-on reset, which may cause glitches in some designs.
 To ensure consistent behavior between the runtime reset and boot, it may be necessary to instantiate the \tokenref{GP\_POR}{gp-por} block and gate glitching signals with \tokenstyle{RST\_DONE}.
+
+TODO: Latest GP4 datasheet (r085 p 20) seems to indicate FALLING mode does not exist, need to redo this?
 
 \subsubsection{Port Descriptions}
 

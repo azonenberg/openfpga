@@ -77,6 +77,16 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_outputSignal))
 		return false;
 
+	//If we are pin 8 on the SLG46620V, use dedicated routing when driven by the POR block
+	if( (m_pinNumber == 8) && (m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620) )
+	{
+		if(m_outputSignal.GetRealEntity() == m_device->GetPowerOnReset())
+		{
+			bitstream[2012] = true;
+			bitstream[2011] = false;
+		}
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
