@@ -37,6 +37,9 @@ int main(int argc, char* argv[])
 	//TODO: make this switchable via command line args
 	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
 
+	//ID code of the bitstream
+	unsigned int userid = 0;
+
 	//Parse command-line arguments
 	for(int i=1; i<argc; i++)
 	{
@@ -99,6 +102,16 @@ int main(int argc, char* argv[])
 			else
 			{
 				printf("--unused-drive requires an argument\n");
+				return 1;
+			}
+		}
+		else if(s == "--usercode")
+		{
+			if(i+1 < argc)
+				sscanf(argv[++i], "%x", &userid);
+			else
+			{
+				printf("--usercode requires an argument\n");
 				return 1;
 			}
 		}
@@ -192,7 +205,6 @@ int main(int argc, char* argv[])
 		LogNotice("Unused pins: %s %s\n", pull.c_str(), drive.c_str());
 	}
 
-
 	//Parse the unplaced netlist
 	LogNotice("\nLoading Yosys JSON file \"%s\".\n", fname.c_str());
 	Greenpak4Netlist netlist(fname);
@@ -206,10 +218,11 @@ int main(int argc, char* argv[])
 		return 2;
 
 	//Write the final bitstream
-	LogNotice("\nWriting final bitstream to output file \"%s\".\n", ofname.c_str());
+	LogNotice("\nWriting final bitstream to output file \"%s\", using ID code 0x%x.\n",
+		ofname.c_str(), (int)userid);
 	{
 		LogIndenter li;
-		device.WriteToFile(ofname);
+		device.WriteToFile(ofname, userid);
 	}
 
 	//TODO: Static timing analysis

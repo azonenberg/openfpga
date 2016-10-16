@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
 	bool programNvram = false;
 	bool force = false;
 	uint8_t patternId = 0;
+	bool patternIdSpecified = false;
 	bool readProtect = false;
 	double voltage = 0.0;
 	vector<int> nets;
@@ -159,6 +160,8 @@ int main(int argc, char* argv[])
 			force = true;
 		else if(s == "--pattern-id")
 		{
+			patternIdSpecified = true;
+
 			if(i+1 < argc)
 			{
 				char *arg = argv[++i];
@@ -412,13 +415,24 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
+		//TODO: Make this work for chips other than SLG46620V?
+
 		//Set trim value reg<1981:1975>
 		newBitstream[246] |= rcFtw << 7;
 		newBitstream[247] |= rcFtw >> 1;
 
 		//Set pattern ID reg<2031:2038>
-		newBitstream[253] |= patternId << 7;
-		newBitstream[254] |= patternId >> 1;
+		if(patternIdSpecified)
+		{
+			newBitstream[253] |= patternId << 7;
+			newBitstream[254] |= patternId >> 1;
+		}
+
+		//Read out the pattern ID and print it
+		unsigned int patternID =
+			( (newBitstream[254] << 1) & 0xff ) |
+			( (newBitstream[253] >> 7) & 0xff );
+		LogNotice("Bitstream ID code: 0x%02x\n", patternID);
 
 		//Set read protection reg<2039>
 		newBitstream[254] |= ((uint8_t)readProtect) << 7;

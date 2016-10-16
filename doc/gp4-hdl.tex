@@ -3290,6 +3290,14 @@ The \texttt{--stdout-only} argument is optional. When specified, \namestyle{gp4p
 This argument was implemented for easier integration with unit testing systems such as \namestyle{CTest} and is
 unlikely to be useful in general usage.
 
+\subsection{\texttt{--usercode}}
+
+The \texttt{--usercode} argument is optional. If used, it must be immediately followed by a hexadecimal integer. This
+ID code is written to SRAM and/or NVM on the device during programming and can be used for distinguishing firmware
+revisions, board ID, or similar applications.
+
+The length of the ID code varies by device family. For the \namestyle{SLG46620V} it is one byte (two hex digits).
+
 \subsection{\texttt{--unused-drive}}
 
 The \texttt{--unused-drive} argument is optional. If used, it must be immediately followed by ``\tokenstyle{10k}", 

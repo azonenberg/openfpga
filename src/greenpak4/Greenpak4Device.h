@@ -43,7 +43,7 @@ public:
 	virtual ~Greenpak4Device();
 
 	//Write to a bitfile
-	bool WriteToFile(std::string fname);
+	bool WriteToFile(std::string fname, uint8_t userid);
 
 	GREENPAK4_PART GetPart()
 	{ return m_part; }

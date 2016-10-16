@@ -568,7 +568,13 @@ unsigned int Greenpak4Device::GetMatrixBase(unsigned int matrix)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File I/O
 
-bool Greenpak4Device::WriteToFile(std::string fname)
+/**
+	@brief Writes the bitstream to a file
+
+	@param fname		Name of the file to write to
+	@param userid		ID code to write to the "user ID" area of the bitstream
+ */
+bool Greenpak4Device::WriteToFile(string fname, uint8_t userid)
 {
 	//Open the file
 	FILE* fp = fopen(fname.c_str(), "w");
@@ -594,7 +600,7 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 		}
 	}
 
-	//Write chip-wide tuning data
+	//Write chip-wide tuning data and ID code
 	switch(m_part)
 	{
 		case GREENPAK4_SLG46620:
@@ -632,6 +638,16 @@ bool Greenpak4Device::WriteToFile(std::string fname)
 			bitstream[2045] = true;
 			bitstream[2046] = false;
 			bitstream[2047] = true;
+
+			//User ID of the bitstream
+			bitstream[2031] = (userid & 0x01) ? true : false;
+			bitstream[2032] = (userid & 0x02) ? true : false;
+			bitstream[2033] = (userid & 0x04) ? true : false;
+			bitstream[2034] = (userid & 0x08) ? true : false;
+			bitstream[2035] = (userid & 0x10) ? true : false;
+			bitstream[2036] = (userid & 0x20) ? true : false;
+			bitstream[2037] = (userid & 0x40) ? true : false;
+			bitstream[2038] = (userid & 0x80) ? true : false;
 
 			break;
 	}
