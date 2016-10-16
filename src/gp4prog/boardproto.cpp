@@ -70,7 +70,8 @@ DataFrame::DataFrame(const char *ascii)
 {
 	uint8_t size;
 	sscanf(ascii, "%02hhx_%02hhx_%02hhx_%02hhx_", &m_sequenceA, &m_type, &size, &m_sequenceB);
-	for(size_t i=0; i<60; i++) {
+	for(size_t i=0; i<60; i++)
+	{
 		uint8_t byte;
 		sscanf(ascii+12+i*2, "%02hhx", &byte);
 		m_payload.push_back(byte);
@@ -97,7 +98,8 @@ void DataFrame::Send(hdevice hdev)
 		data[4+i] = m_payload[i];
 
 	LogDebug("H→D: ");
-	for(int i=0; i<64; i++) {
+	for(int i=0; i<64; i++)
+	{
 		LogDebug("%02x", data[i] & 0xff);
 		if(i < 4) LogDebug("_");
 	}
@@ -113,7 +115,8 @@ void DataFrame::Receive(hdevice hdev)
 	ReceiveInterruptTransfer(hdev, data, sizeof(data));
 
 	LogDebug("D→H: ");
-	for(int i=0; i<64; i++) {
+	for(int i=0; i<64; i++)
+	{
 		LogDebug("%02x", data[i] & 0xff);
 		if(i < 4) LogDebug("_");
 	}
@@ -152,7 +155,8 @@ void DataFrame::Roundtrip(hdevice hdev, uint8_t ack_type)
 	     ack_type == ack_frame.m_type &&
 	     m_payload.size() <= ack_frame.m_payload.size() &&
 	     std::equal(m_payload.begin(), m_payload.end(),
-	                ack_frame.m_payload.begin()))) {
+	                ack_frame.m_payload.begin())))
+	{
 		LogFatal("Unexpected acknowledgement frame\n");
 	}
 }
@@ -355,11 +359,15 @@ void ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd)
 void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, DownloadMode mode)
 {
 	DataFrame::PacketType reqType, ack1Type, ack2Type;
-	if(mode == DownloadMode::PROGRAMMING) {
+	if(mode == DownloadMode::PROGRAMMING)
+	{
 		reqType = DataFrame::WRITE_BITSTREAM_NVRAM;
 		ack1Type = DataFrame::WRITE_BITSTREAM_NVRAM_ACK1;
 		ack2Type = DataFrame::WRITE_BITSTREAM_NVRAM_ACK2;
-	} else { // DownloadMode::{EMULATION,TRIMMING}
+	}
+	else
+	{
+		// DownloadMode::{EMULATION,TRIMMING}
 		reqType = DataFrame::WRITE_BITSTREAM_SRAM;
 		ack1Type = DataFrame::WRITE_BITSTREAM_SRAM_ACK1;
 		ack2Type = DataFrame::WRITE_BITSTREAM_SRAM_ACK2;
@@ -403,7 +411,8 @@ std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets)
 	reqFrame.push_back(cycles & 0xff);
 
 	std::vector<uint8_t> bitstream;
-	while(true) {
+	while(true)
+	{
 		reqFrame.Send(hdev);
 
 		DataFrame repFrame;
@@ -413,7 +422,8 @@ std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets)
 			LogFatal("Unexpected reply\n");
 
 		bitstream.insert(bitstream.end(), repFrame.m_payload.begin(), repFrame.m_payload.end());
-		if(repFrame.m_sequenceB == 0) {
+		if(repFrame.m_sequenceB == 0)
+		{
 			break;
 		}
 

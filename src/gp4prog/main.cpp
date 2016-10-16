@@ -210,7 +210,8 @@ int main(int argc, char* argv[])
 			if(i+1 < argc)
 			{
 				char *arg = argv[++i];
-				do {
+				do
+				{
 					long net = strtol(arg, &arg, 10);
 					if(*arg && *arg != ',')
 					{
@@ -258,10 +259,12 @@ int main(int argc, char* argv[])
 	// Try opening the board in "orange" mode
 	LogNotice("\nSearching for developer board\n");
 	hdevice hdev = OpenDevice(0x0f0f, 0x0006);
-	if(!hdev) {
+	if(!hdev)
+	{
 		// Try opening the board in "white" mode
  		hdev = OpenDevice(0x0f0f, 0x8006);
-		if(!hdev) {
+		if(!hdev)
+		{
 			LogError("No device found, giving up\n");
 			return 1;
 		}
@@ -275,7 +278,8 @@ int main(int argc, char* argv[])
 
 		// Try opening the board in "orange" mode again
 		hdev = OpenDevice(0x0f0f, 0x0006);
-		if(!hdev) {
+		if(!hdev)
+		{
 			LogError("Could not switch mode, giving up\n");
 			return 1;
 		}
@@ -309,13 +313,15 @@ int main(int argc, char* argv[])
 	SilegoPart detectedPart = SilegoPart::UNRECOGNIZED;
 	vector<uint8_t> programmedBitstream;
 	BitstreamKind bitstreamKind;
-	if(!(uploadFilename.empty() && downloadFilename.empty() && rcOscFreq == 0 && !test && !programNvram)) {
+	if(!(uploadFilename.empty() && downloadFilename.empty() && rcOscFreq == 0 && !test && !programNvram))
+	{
 		//Detect the part that's plugged in.
 		LogNotice("Detecting part\n");
 		LogIndenter li;
 
 		SilegoPart parts[] = { SLG46140V, SLG46620V };
-		for(SilegoPart part : parts) {
+		for(SilegoPart part : parts)
+		{
 			LogVerbose("Selecting part %s\n", PartName(part));
 			SetPart(hdev, part);
 
@@ -340,7 +346,8 @@ int main(int argc, char* argv[])
 					continue;
 			}
 
-			if(bitstreamKind != BitstreamKind::UNRECOGNIZED) {
+			if(bitstreamKind != BitstreamKind::UNRECOGNIZED)
+			{
 				detectedPart = part;
 				break;
 			}
@@ -354,12 +361,16 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if(programNvram && bitstreamKind != BitstreamKind::EMPTY) {
-		if(!force) {
+	if(programNvram && bitstreamKind != BitstreamKind::EMPTY)
+	{
+		if(!force)
+		{
 			LogError("Non-empty part detected; refusing to program without --force\n");
 			SetStatusLED(hdev, 0);
 			return 1;
-		} else {
+		}
+		else
+		{
 			LogNotice("Non-empty part detected and --force is specified; proceeding\n");
 		}
 	}
@@ -373,11 +384,14 @@ int main(int argc, char* argv[])
 	//Do a socket test before doing anything else, to catch failures early
 	if(test)
 	{
-		if(!SocketTest(hdev, detectedPart)) {
+		if(!SocketTest(hdev, detectedPart))
+		{
 			LogError("Socket test has failed\n");
 			SetStatusLED(hdev, 0);
 			return 1;
-		} else {
+		}
+		else
+		{
 			LogNotice("Socket test has passed\n");
 		}
 	}
@@ -393,7 +407,8 @@ int main(int argc, char* argv[])
 	uint8_t rcFtw = 0;
 	if(rcOscFreq != 0)
 	{
-		if(voltage == 0.0) {
+		if(voltage == 0.0)
+		{
 			LogError("Trimming oscillator requires specifying target voltage\n");
 			return 1;
 		}
@@ -409,7 +424,8 @@ int main(int argc, char* argv[])
 		vector<uint8_t> newBitstream = ReadBitstream(downloadFilename);
 		if(newBitstream.empty())
 			return 1;
-		if(newBitstream.size() != BitstreamLength(detectedPart) / 8) {
+		if(newBitstream.size() != BitstreamLength(detectedPart) / 8)
+		{
 			LogError("Provided bitstream has incorrect length for selected part\n");
 			SetStatusLED(hdev, 0);
 			return 1;
@@ -437,12 +453,15 @@ int main(int argc, char* argv[])
 		//Set read protection reg<2039>
 		newBitstream[254] |= ((uint8_t)readProtect) << 7;
 
-		if(!programNvram) {
+		if(!programNvram)
+		{
 			//Load bitstream into SRAM
 			LogNotice("Downloading bitstream into SRAM\n");
 			LogIndenter li;
 			DownloadBitstream(hdev, newBitstream, DownloadMode::EMULATION);
-		} else {
+		}
+		else
+		{
 			//Program bitstream into NVM
 			LogNotice("Programming bitstream into NVM\n");
 			LogIndenter li;
@@ -452,10 +471,12 @@ int main(int argc, char* argv[])
 			size_t bitstreamLength = BitstreamLength(detectedPart) / 8;
 			vector<uint8_t> bitstreamToVerify = UploadBitstream(hdev, bitstreamLength);
 			bool failed = false;
-			for(size_t i = 0; i < bitstreamLength * 8; i++) {
+			for(size_t i = 0; i < bitstreamLength * 8; i++)
+			{
 				bool expectedBit = ((newBitstream     [i/8] >> (i%8)) & 1) == 1;
 				bool actualBit   = ((bitstreamToVerify[i/8] >> (i%8)) & 1) == 1;
-				if(expectedBit != actualBit) {
+				if(expectedBit != actualBit)
+				{
 					LogNotice("Bit %4zd differs: expected %d, actual %d",
 					          i, (int)expectedBit, (int)actualBit);
 					failed = true;
@@ -725,11 +746,14 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 	SetIOConfig(hdev, ioConfig);
 
 	bool ok = true;
-	tuple<TPConfig, TPConfig, double> sequence[] = {
+	tuple<TPConfig, TPConfig, double> sequence[] =
+	{
 		make_tuple(TP_GND, TP_FLIMSY_PULLUP,   0.0),
 		make_tuple(TP_VDD, TP_FLIMSY_PULLDOWN, 1.0),
 	};
-	for(auto config : sequence) {
+
+	for(auto config : sequence)
+	{
 		if(get<0>(config) == TP_GND)
 			LogVerbose("Testing logical low output\n");
 		else
@@ -740,14 +764,16 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 			ioConfig.driverConfigs[i] = get<1>(config);
 		SetIOConfig(hdev, ioConfig);
 
-		for(int i = 2; i <= 20; i++) {
+		for(int i = 2; i <= 20; i++)
+		{
 			if(i == 11) continue;
 
 			SelectADCChannel(hdev, i);
 			double value = ReadADC(hdev);
 			LogDebug("P%d = %.3f V\n", i, supplyVoltage * value);
 
-			if(fabs(value - get<2>(config)) > 0.01) {
+			if(fabs(value - get<2>(config)) > 0.01)
+			{
 				LogError("Socket functional test (%s level) test failed on pin P%d\n",
 				         (get<0>(config) == TP_GND) ? "low" : "high", i);
 				ok = false;
@@ -817,17 +843,23 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 	//The frequency tuning word is 7-bit
 	uint8_t low = 0, high = 0x7f, mid;
 	unsigned actualFreq;
-	while(low < high) {
+	while(low < high)
+	{
 		mid = low + (high - low) / 2;
 		LogDebug("Trimming with FTW %d\n", mid);
 		TrimOscillator(hdev, mid);
 		actualFreq = MeasureOscillatorFrequency(hdev);
 		LogDebug("Oscillator frequency is %d Hz\n", actualFreq);
-		if(actualFreq > freq) {
+		if(actualFreq > freq)
+		{
 			high = mid;
-		} else if(actualFreq < freq) {
+		}
+		else if(actualFreq < freq)
+		{
 			low = mid + 1;
-		} else break;
+		}
+		else
+			break;
 	}
 	LogNotice("Trimmed RC oscillator to %d Hz\n", actualFreq);
 
@@ -871,22 +903,27 @@ BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream, uint
 	//Iterate over the bitstream, and print our decisions after every octet, in --debug mode.
 	bool isPresent = true;
 	bool isProgrammed = false;
-	for(size_t i = bitstream.size() - 1; i > 0; i--) {
+	for(size_t i = bitstream.size() - 1; i > 0; i--)
+	{
 		uint8_t maskedOctet = bitstream[i] & ~factoryMask[i];
 		if(maskedOctet != 0x00)
 			LogDebug("mask(bitstream[0x%02zx]) = 0x%02hhx\n", i, maskedOctet);
 
-		if(emptyBitstream[i] != 0x00 && maskedOctet != emptyBitstream[i] && isPresent) {
+		if(emptyBitstream[i] != 0x00 && maskedOctet != emptyBitstream[i] && isPresent)
+		{
 			LogDebug("Bitstream does not match empty bitstream signature, part not present.\n");
 			isPresent = false;
 			break;
-		} else if(emptyBitstream[i] == 0x00 && maskedOctet != 0x00 && !isProgrammed) {
+		}
+		else if(emptyBitstream[i] == 0x00 && maskedOctet != 0x00 && !isProgrammed)
+		{
 			LogDebug("Bitstream nonzero where empty bitstream isn't, part programmed.\n");
 			isProgrammed = true;
 		}
 	}
 
-	switch(part) {
+	switch(part)
+	{
 		case SLG46620V:
 			patternId = (bitstream[0xfd] >> 7) | (bitstream[0xfe] << 1);
 			break;
@@ -913,7 +950,8 @@ BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream, uint
 vector<uint8_t> BitstreamFromHex(string hex)
 {
 	std::vector<uint8_t> bitstream;
-	for(size_t i = 0; i < hex.size(); i += 2) {
+	for(size_t i = 0; i < hex.size(); i += 2)
+	{
 		uint8_t octet;
 		sscanf(&hex[i], "%02hhx", &octet);
 		bitstream.push_back(octet);
@@ -976,7 +1014,8 @@ void WriteBitstream(string fname, vector<uint8_t> bitstream)
 	}
 
 	fputs("index\t\tvalue\t\tcomment\n", fp);
-	for(size_t i = 0; i < bitstream.size() * 8; i++) {
+	for(size_t i = 0; i < bitstream.size() * 8; i++)
+	{
 		int value = (bitstream[i / 8] >> (i % 8)) & 1;
 		fprintf(fp, "%d\t\t%d\t\t//\n", (int)i, value);
 	}
