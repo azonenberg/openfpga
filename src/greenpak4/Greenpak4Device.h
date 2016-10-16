@@ -240,6 +240,15 @@ public:
 	{ return m_dacs.size(); }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// DELAYS
+
+	Greenpak4Delay* GetDelay(unsigned int i)
+	{ return m_delays[i]; }
+
+	unsigned int GetDelayCount()
+	{ return m_delays.size(); }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ALL NODES
 
 	unsigned int GetEntityCount()
@@ -340,6 +349,9 @@ protected:
 
 	///Programmable-gain amplifier
 	Greenpak4PGA* m_pga;
+
+	///Digital delay lines
+	std::vector<Greenpak4Delay*> m_delays;
 
 	///Power-on reset
 	Greenpak4PowerOnReset* m_por;

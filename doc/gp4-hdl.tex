@@ -239,13 +239,13 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Voltage reference: DAC, divided Vdd, external references
 \item Comparators: Global buffer bandwidth selection, speed doubler
 \item ADC
-\item DAC
+\item DAC (partially implemented)
 \item PGEN mode of LUT4/PGEN block
 \item Wake-Sleep
 \item DCMP/PWM
-\item Programmble delay line / edge detector
+\item Edge detector mode of PDELAY/edge detect block
 \item Slave SPI
-\item Pin 8 reset output
+\item Pin 8 reset output (does this even exist?)
 \end{itemize}
 
 \pagebreak
@@ -1681,8 +1681,15 @@ GP_DAC dac(
 \label{gp-delay}
 
 \subsubsection{Introduction}
-This primitive corresponds to a programmable digital delay line with four taps. The exact values are PTV dependent; see 
+This primitive corresponds to a programmable digital delay line with four taps. It uniformly delays an incoming digital
+waveform by a fixed amount.
+
+For the SLG46620V each tap is nominally 165 ns at 3.3V. The exact range of tap delay values is PTV dependent; see
 device datasheet for values.
+
+TODO: is jitter characterized anywhere?
+
+TODO: Add parameter for glitch filter?
 
 \subsubsection{Port Descriptions}
 

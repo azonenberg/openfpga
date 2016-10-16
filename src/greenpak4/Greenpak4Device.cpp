@@ -184,7 +184,9 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_shregs.push_back(new Greenpak4ShiftRegister(this, 0, 51, 20, 1610));
 	m_shregs.push_back(new Greenpak4ShiftRegister(this, 1, 51, 20, 1619));
 
-	//TODO: Edge detector/prog delays
+	//Edge detector/prog delays
+	m_delays.push_back(new Greenpak4Delay(this, 0, 54, 22, 1600));
+	m_delays.push_back(new Greenpak4Delay(this, 1, 54, 22, 1609));
 
 	//Inverters
 	m_inverters.push_back(new Greenpak4Inverter(this, 0, 55, 23));
@@ -489,6 +491,8 @@ void Greenpak4Device::CreateDevice_common()
 	for(auto x : m_acmps)
 		m_bitstuff.push_back(x);
 	for(auto x : m_dacs)
+		m_bitstuff.push_back(x);
+	for(auto x : m_delays)
 		m_bitstuff.push_back(x);
 	m_bitstuff.push_back(m_constantZero);
 	m_bitstuff.push_back(m_constantOne);

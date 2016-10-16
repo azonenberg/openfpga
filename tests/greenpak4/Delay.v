@@ -18,6 +18,14 @@
 
 `default_nettype none
 
+/**
+	OUTPUTS:
+		pin 13: 500 kHz clock output
+		pin 12: same clock signal, lagging phase by ~165 ns
+
+	TEST PROCEDURE:
+		Verify 
+ */
 module Delay(clk, clk_delayed);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32,21 +40,23 @@ module Delay(clk, clk_delayed);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Oscillators
 
-	//The 1730 Hz oscillator
-	wire clk_108hz;
-	GP_LFOSC #(
+	//The 2 MHz RC oscillator
+	GP_RCOSC #(
 		.PWRDN_EN(0),
 		.AUTO_PWRDN(0),
-		.OUT_DIV(16)
-	) lfosc (
+		.OSC_FREQ("2M"),
+		.PRE_DIV(1),
+		.FABRIC_DIV(4)
+	) rcosc (
 		.PWRDN(1'b0),
-		.CLKOUT(clk_108hz)
+		.CLKOUT_HARDIP(),
+		.CLKOUT_FABRIC(clk)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The delay line
 
-	GP_DELAY #(.DELAY_STEPS(4)) delay(
+	GP_DELAY #(.DELAY_STEPS(1)) delay(
 		.IN(clk),
 		.OUT(clk_delayed)
 		);

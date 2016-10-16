@@ -454,6 +454,11 @@ void MakeDeviceNodes(
 	for(unsigned int i=0; i<device->GetDACCount(); i++)
 		MakeNode(dac_label, device->GetDAC(i), dgraph);
 
+	//Make device nodes for the delay lines
+	uint32_t delay_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DELAY");
+	for(unsigned int i=0; i<device->GetDelayCount(); i++)
+		MakeNode(delay_label, device->GetDelay(i), dgraph);
+
 	//Make device nodes for each type of flipflop
 	uint32_t dff_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFF");
 	uint32_t dffsr_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFFSR");
@@ -987,6 +992,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			gnd->AddEdge("OUT", dac, "DIN[6]");
 			gnd->AddEdge("OUT", dac, "DIN[7]");
 		}
+
+		//TODO: Direct inputs from counters
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// OUTPUTS FROM DAC
