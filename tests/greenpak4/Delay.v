@@ -20,11 +20,12 @@
 
 /**
 	OUTPUTS:
-		pin 13: 500 kHz clock output
-		pin 12: same clock signal, lagging phase by ~165 ns
+		pin 19: 500 kHz clock output
+		pin 18: same clock signal, lagging phase by ~165 ns
 
 	TEST PROCEDURE:
-		Verify 
+		1) Verify pin 19 has a clock waveform with 50% duty cycle and 500 KHz frequency
+		2) Verify pin 18 has the same waveform, delayed by 150-175 ns
  */
 module Delay(clk, clk_delayed);
 
