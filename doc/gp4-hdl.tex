@@ -3248,15 +3248,47 @@ gp4par Analog.json -o Analog-hdl.txt --unused-pull down --unused-drive 10k
 The netlist filename must be supplied for all place-and-route operations. It may be included anywhere in the argument
 list, although we recommend it be the first argument for better readability of the command.
 
+\subsection{\texttt{--debug}}
+
+The \texttt{--debug} argument is optional. When it is specified once, it causes \namestyle{gp4par} to print
+many debugging messages, normally useful only for development of \namestyle{gp4par}.
+
 \subsection{\texttt{--help}}
 
-The \texttt{--help} argument must be used alone, with no other arguments. It causes \namestyle{gp4par} to print a usage example to the
-console and then quit.
+The \texttt{--help} argument must be used alone, with no other arguments. It causes \namestyle{gp4par} to print a usage
+example to the console and then quit.
+
+\subsection{\texttt{--logfile}, \texttt{-l}}
+
+The \texttt{--logfile} argument, which is also accepted as \texttt{-l}, is optional. If used, it must be immediately
+followed by a file name, where \namestyle{gp4par} will write all diagnostic messages, even those suppressed by
+\texttt{--quiet}.
+
+\subsection{\texttt{--logfile-lines}, \texttt{-L}}
+
+The \texttt{--logfile-lines} argument, which is also accepted as \texttt{-L}, is optional. It is identical to
+\texttt{--logfile}, except that the file is line-buffered, that is every message is written to the file as soon
+as it is completely emitted by \namestyle{gp4par}.
 
 \subsection{\texttt{--output}, \texttt{-o}}
 
 The \texttt{--output} argument is required for all place-and-route operations. It must be immediately followed by the
 filename to which the generated bitstream will be written.
+
+\subsection{\texttt{--quiet}, \texttt{-q}}
+
+The \texttt{--quiet} argument, which is also accepted as \texttt{-q}, is optional. When it is specified once, it
+causes \namestyle{gp4par} to only print error and warning messages to the console; when it is specified twice,
+only error messages will be printed.
+
+\subsection{\texttt{--stdout-only}}
+
+The \texttt{--stdout-only} argument is optional. When specified, \namestyle{gp4par} will print all messages to
+\namestyle{stdout} regardless of severity. By default, messages of fatal, error, and warning severity are printed to
+\namestyle{stderr} and all lower severity messages are printed to \namestyle{stdout}.
+
+This argument was implemented for easier integration with unit testing systems such as \namestyle{CTest} and is
+unlikely to be useful in general usage.
 
 \subsection{\texttt{--unused-drive}}
 
@@ -3272,33 +3304,10 @@ The default behavior if not specified is ``\tokenstyle{float}".
 
 The behavior of ``\tokenstyle{none}" and ``\tokenstyle{float}" is identical; both names are accepted for convenience.
 
-\subsection{\texttt{--quiet}, \texttt{-q}}
-
-The \texttt{--quiet} argument, which is also accepted as \texttt{-q}, is optional. When it is specified once, it
-causes \namestyle{gp4par} to only print error and warning messages to the console; when it is specified twice,
-only error messages will be printed.
-
 \subsection{\texttt{--verbose}}
 
 The \texttt{--verbose} argument is optional. When it is specified once, it causes \namestyle{gp4par} to print
 messages, useful in rare cases.
-
-\subsection{\texttt{--debug}}
-
-The \texttt{--debug} argument is optional. When it is specified once, it causes \namestyle{gp4par} to print
-many debugging messages, useful only for development of \namestyle{gp4par}.
-
-\subsection{\texttt{--logfile}, \texttt{-l}}
-
-The \texttt{--logfile} argument, which is also accepted as \texttt{-l}, is optional. If used, it must be immediately
-followed by a file name, where \namestyle{gp4par} will write all diagnostic messages, even those suppressed by
-\texttt{--quiet}.
-
-\subsection{\texttt{--logfile-lines}, \texttt{-L}}
-
-The \texttt{--logfile-lines} argument, which is also accepted as \texttt{-L}, is optional. It is identical to
-\texttt{--logfile}, except that the file is line-buffered, that is every message is written to the file as soon
-as it is completely emitted by \namestyle{gp4par}.
 
 \subsection{\texttt{--version}}
 
