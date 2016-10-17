@@ -126,6 +126,34 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 
 	}
 
+	//Check for IOBs that are not LOC'd
+	for(auto it = device->iobbegin(); it != device->iobend(); it ++)
+	{
+		Greenpak4IOB* iob = it->second;
+
+		//Get the netlist cell for this IOB
+		//If no cell found we're unused so no point in looking
+		auto npnode = iob->GetPARNode()->GetMate();
+		if(npnode == NULL)
+			continue;
+		Greenpak4NetlistCell* ncell = static_cast<Greenpak4NetlistCell*>(npnode->GetData());
+		if(ncell == NULL)
+			continue;
+
+		//If we are not LOC'd, warn.
+		//This is not an error because sometimes a user may want to let PAR find a placement for a complex
+		//netlist before laying out the board, to improve routability. We warn because it's easy to forget
+		//to add LOC constraints afterwards, causing a future ECO to break the pinout.
+		if(!ncell->HasLOC())
+		{
+			LogWarning(
+				"IOB cell %s was placed at location %s, but was not locked with a LOC constraint.\n"
+				"This can lead to unexpected pinout changes if the netlist is modified.\n",
+				ncell->m_name.c_str(), iob->GetDescription().c_str()
+				);
+		}
+	}
+
 	//TODO: check floating inputs etc
 
 	//Check invalid IOB configuration
