@@ -24,7 +24,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
   set(CMAKE_LINK_FLAGS "-ggdb")
 endif()
 if(MSYS)
-  string(REPLACE "-fPIC" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  string(REPLACE "-fPIC" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   add_definitions(-D__USE_MINGW_ANSI_STDIO=1)
 endif()
 
