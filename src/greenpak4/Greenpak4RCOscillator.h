@@ -60,7 +60,7 @@ public:
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
 
-	virtual void CommitChanges();
+	virtual bool CommitChanges();
 
 protected:
 

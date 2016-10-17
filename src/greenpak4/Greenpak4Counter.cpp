@@ -75,12 +75,12 @@ string Greenpak4Counter::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4Counter::CommitChanges()
+bool Greenpak4Counter::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("RESET_MODE"))
 	{
@@ -100,7 +100,7 @@ void Greenpak4Counter::CommitChanges()
 				"(must be RISING, FALLING, BOTH, or LEVEL)\n",
 				ncell->m_name.c_str(),
 				p.c_str());
-			exit(-1);
+			return false;
 		}
 	}
 
@@ -118,7 +118,7 @@ void Greenpak4Counter::CommitChanges()
 				"(must be ZERO or COUNT_TO)\n",
 				ncell->m_name.c_str(),
 				p.c_str());
-			exit(-1);
+			return false;
 		}
 	}
 
@@ -127,6 +127,8 @@ void Greenpak4Counter::CommitChanges()
 
 	if(ncell->HasParameter("CLKIN_DIVIDE"))
 		m_preDivide = (atoi(ncell->m_parameters["CLKIN_DIVIDE"].c_str()));
+
+	return true;
 }
 
 vector<string> Greenpak4Counter::GetInputPorts() const

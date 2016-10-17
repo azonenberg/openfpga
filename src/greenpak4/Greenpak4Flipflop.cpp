@@ -111,12 +111,12 @@ string Greenpak4Flipflop::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4Flipflop::CommitChanges()
+bool Greenpak4Flipflop::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	//If our primitive name ends in "I" we're inverting the output
 	if(ncell->m_type[ncell->m_type.length()-1] == 'I')
@@ -127,6 +127,8 @@ void Greenpak4Flipflop::CommitChanges()
 
 	if(ncell->HasParameter("INIT"))
 		m_initValue = (ncell->m_parameters["INIT"] == "1");
+
+	return true;
 }
 
 bool Greenpak4Flipflop::Load(bool* /*bitstream*/)

@@ -27,6 +27,9 @@ bool CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 {
 	LogNotice("\nBuilding post-route netlist...\n");
 
+	//Detect all errors together then report at the end
+	bool fail = false;
+
 	//Go over all of the nodes in the graph and configure the nodes themselves
 	//Net routing will come later!
 	for(uint32_t i=0; i<device->GetNumNodes(); i++)
@@ -37,9 +40,13 @@ bool CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_ro
 		if(mate == NULL)
 			continue;
 
-		//TODO: make this return a bool so we can detect problems?
-		static_cast<Greenpak4BitstreamEntity*>(node->GetData())->CommitChanges();
+		//If any node fails to commit, abort
+		if(!static_cast<Greenpak4BitstreamEntity*>(node->GetData())->CommitChanges())
+			fail = true;
 	}
+
+	if(fail)
+		return false;
 
 	//Done configuring all of the nodes!
 	//Configure routes between them

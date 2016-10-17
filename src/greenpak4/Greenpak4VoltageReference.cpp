@@ -86,18 +86,20 @@ unsigned int Greenpak4VoltageReference::GetOutputNetNumber(string /*port*/)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4VoltageReference::CommitChanges()
+bool Greenpak4VoltageReference::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("VIN_DIV"))
 		m_vinDiv = atoi(ncell->m_parameters["VIN_DIV"].c_str());
 
 	if(ncell->HasParameter("VREF"))
 		m_vref = atoi(ncell->m_parameters["VREF"].c_str());
+
+	return true;
 }
 
 bool Greenpak4VoltageReference::Load(bool* /*bitstream*/)

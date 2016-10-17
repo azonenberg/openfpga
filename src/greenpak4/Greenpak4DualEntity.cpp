@@ -76,9 +76,10 @@ unsigned int Greenpak4DualEntity::GetOutputNetNumber(string port)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4DualEntity::CommitChanges()
+bool Greenpak4DualEntity::CommitChanges()
 {
 	//no action needed, we have no input pins to drive and no configuration
+	return true;
 }
 
 bool Greenpak4DualEntity::Load(bool* /*bitstream*/)

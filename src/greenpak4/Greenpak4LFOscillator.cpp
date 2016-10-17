@@ -89,12 +89,12 @@ string Greenpak4LFOscillator::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4LFOscillator::CommitChanges()
+bool Greenpak4LFOscillator::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("PWRDN_EN"))
 		m_powerDownEn = (ncell->m_parameters["PWRDN_EN"] == "1");
@@ -115,9 +115,11 @@ void Greenpak4LFOscillator::CommitChanges()
 		else
 		{
 			LogError("GP4_LFOSC output divider must be 1, 2, 4, or 16\n");
-			exit(1);
+			return false;
 		}
 	}
+
+	return true;
 }
 
 bool Greenpak4LFOscillator::Load(bool* /*bitstream*/)

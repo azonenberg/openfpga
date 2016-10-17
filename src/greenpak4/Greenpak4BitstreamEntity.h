@@ -124,7 +124,7 @@ public:
 	virtual std::vector<std::string> GetOutputPorts() const =0;
 
 	//Commit changes from the assigned PAR graph node to us
-	virtual void CommitChanges() =0;
+	virtual bool CommitChanges() =0;
 
 	bool IsGeneralFabricInput(std::string port) const;
 

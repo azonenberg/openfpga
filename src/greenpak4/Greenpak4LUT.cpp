@@ -86,12 +86,12 @@ bool Greenpak4LUT::Save(bool* bitstream)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-void Greenpak4LUT::CommitChanges()
+bool Greenpak4LUT::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	//If the cell is an inverter, we need special processing to up-map
 	if(ncell->m_type == "GP_INV")
@@ -134,6 +134,8 @@ void Greenpak4LUT::CommitChanges()
 			}
 		}
 	}
+
+	return true;
 }
 
 vector<string> Greenpak4LUT::GetInputPorts() const

@@ -91,12 +91,12 @@ bool Greenpak4PGA::IsUsed()
 	return HasLoadsOnPort("VOUT");
 }
 
-void Greenpak4PGA::CommitChanges()
+bool Greenpak4PGA::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("GAIN"))
 	{
@@ -118,7 +118,7 @@ void Greenpak4PGA::CommitChanges()
 
 			default:
 				LogError("PGA GAIN must be 0.25, 0.25, 1, 2, 4, 8, 16\n");
-				exit(-1);
+				return false;
 		}
 	}
 
@@ -136,7 +136,7 @@ void Greenpak4PGA::CommitChanges()
 		else
 		{
 			LogError("PGA INPUT_MODE must be SINGLE, DIFF, or PDIFF\n");
-			exit(-1);
+			return false;
 		}
 	}
 
@@ -155,6 +155,8 @@ void Greenpak4PGA::CommitChanges()
 		if(!node->m_ports.empty())
 			m_hasNonADCLoads = true;
 	}
+
+	return true;
 }
 
 bool Greenpak4PGA::Load(bool* /*bitstream*/)

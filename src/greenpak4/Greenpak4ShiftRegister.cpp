@@ -98,12 +98,12 @@ unsigned int Greenpak4ShiftRegister::GetOutputNetNumber(string port)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4ShiftRegister::CommitChanges()
+bool Greenpak4ShiftRegister::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("OUTA_TAP"))
 	{
@@ -111,7 +111,7 @@ void Greenpak4ShiftRegister::CommitChanges()
 		if( (m_delayA < 1) || (m_delayA > 16) )
 		{
 			LogError("Shift register OUTA_TAP must be in [1, 16]\n");
-			exit(-1);
+			return false;
 		}
 	}
 
@@ -121,12 +121,14 @@ void Greenpak4ShiftRegister::CommitChanges()
 		if( (m_delayB < 1) || (m_delayB > 16) )
 		{
 			LogError("Shift register OUTB_TAP must be in [1, 16]\n");
-			exit(-1);
+			return false;
 		}
 	}
 
 	if(ncell->HasParameter("OUTA_INVERT"))
 		m_invertA = atoi(ncell->m_parameters["OUTA_INVERT"].c_str());
+
+	return true;
 }
 
 bool Greenpak4ShiftRegister::Load(bool* /*bitstream*/)

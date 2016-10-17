@@ -108,12 +108,12 @@ unsigned int Greenpak4Comparator::GetOutputNetNumber(string port)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4Comparator::CommitChanges()
+bool Greenpak4Comparator::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("BANDWIDTH"))
 		m_bandwidthHigh = (ncell->m_parameters["BANDWIDTH"] == "HIGH") ? true : false;
@@ -126,6 +126,8 @@ void Greenpak4Comparator::CommitChanges()
 
 	if(ncell->HasParameter("HYSTERESIS"))
 		m_hysteresis = (atoi(ncell->m_parameters["HYSTERESIS"].c_str()));
+
+	return true;
 }
 
 bool Greenpak4Comparator::Load(bool* /*bitstream*/)

@@ -75,9 +75,10 @@ unsigned int Greenpak4Abuf::GetOutputNetNumber(string /*port*/)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4Abuf::CommitChanges()
+bool Greenpak4Abuf::CommitChanges()
 {
 	//No configuration
+	return true;
 }
 
 bool Greenpak4Abuf::Load(bool* /*bitstream*/)

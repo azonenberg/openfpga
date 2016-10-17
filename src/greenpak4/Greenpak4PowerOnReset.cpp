@@ -78,12 +78,12 @@ unsigned int Greenpak4PowerOnReset::GetOutputNetNumber(string port)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4PowerOnReset::CommitChanges()
+bool Greenpak4PowerOnReset::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("POR_TIME"))
 	{
@@ -98,9 +98,11 @@ void Greenpak4PowerOnReset::CommitChanges()
 				"Power-on reset \"%s\" has illegal reset delay \"%s\" (must be 4 or 500)\n",
 				ncell->m_name.c_str(),
 				p.c_str());
-			exit(-1);
+			return false;
 		}
 	}
+
+	return true;
 }
 
 bool Greenpak4PowerOnReset::Load(bool* /*bitstream*/)

@@ -91,12 +91,12 @@ string Greenpak4RCOscillator::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4RCOscillator::CommitChanges()
+bool Greenpak4RCOscillator::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("PWRDN_EN"))
 		m_powerDownEn = (ncell->m_parameters["PWRDN_EN"] == "1");
@@ -118,7 +118,7 @@ void Greenpak4RCOscillator::CommitChanges()
 		else
 		{
 			LogError("GP_RCOSC pre divider must be 1, 2, 4, 8\n");
-			exit(1);
+			return false;
 		}
 	}
 
@@ -134,7 +134,7 @@ void Greenpak4RCOscillator::CommitChanges()
 		else
 		{
 			LogError("GP_RCOSC post divider must be 1, 2, 3, 4, 8, 12, 24, or 64\n");
-			exit(1);
+			return false;
 		}
 	}
 
@@ -148,9 +148,11 @@ void Greenpak4RCOscillator::CommitChanges()
 		else
 		{
 			LogError("GP_RCOSC OSC_FREQ must be \"2M\" or \"25k\"\n");
-			exit(1);
+			return false;
 		}
 	}
+
+	return true;
 }
 
 bool Greenpak4RCOscillator::Load(bool* /*bitstream*/)

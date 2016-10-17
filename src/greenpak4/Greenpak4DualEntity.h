@@ -45,7 +45,7 @@ public:
 	virtual unsigned int GetOutputNetNumber(std::string port);
 	virtual Greenpak4EntityOutput GetOutput(std::string port);
 
-	virtual void CommitChanges();
+	virtual bool CommitChanges();
 };
 
 #endif

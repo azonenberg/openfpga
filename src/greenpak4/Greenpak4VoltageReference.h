@@ -45,7 +45,7 @@ public:
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
 
-	virtual void CommitChanges();
+	virtual bool CommitChanges();
 
 	//mux selector for output pad drivers, need to come up with a clearer name!
 	unsigned int GetMuxSel()

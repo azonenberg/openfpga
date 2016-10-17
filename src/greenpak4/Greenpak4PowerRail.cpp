@@ -41,9 +41,10 @@ Greenpak4PowerRail::~Greenpak4PowerRail()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Dummy serialization placeholders (nothing to do, we have no data)
 
-void Greenpak4PowerRail::CommitChanges()
+bool Greenpak4PowerRail::CommitChanges()
 {
 	//no action needed, we have no input pins to drive and no configuration
+	return true;
 }
 
 bool Greenpak4PowerRail::Load(bool* /*bitstream*/)

@@ -80,12 +80,12 @@ unsigned int Greenpak4Bandgap::GetOutputNetNumber(string port)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4Bandgap::CommitChanges()
+bool Greenpak4Bandgap::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("AUTO_PWRDN"))
 	{
@@ -116,9 +116,11 @@ void Greenpak4Bandgap::CommitChanges()
 		{
 			LogError("Bandgap has illegal reset delay \"%s\" (must be 100 or 550)\n",
 				p.c_str());
-			exit(-1);
+			return false;
 		}
 	}
+
+	return true;
 }
 
 bool Greenpak4Bandgap::Load(bool* /*bitstream*/)

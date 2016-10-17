@@ -85,15 +85,17 @@ unsigned int Greenpak4Delay::GetOutputNetNumber(string port)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4Delay::CommitChanges()
+bool Greenpak4Delay::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("DELAY_STEPS"))
 		m_delayTap = atoi(ncell->m_parameters["DELAY_STEPS"].c_str());
+
+	return true;
 }
 
 bool Greenpak4Delay::Load(bool* /*bitstream*/)

@@ -83,9 +83,10 @@ unsigned int Greenpak4Inverter::GetOutputNetNumber(string port)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4Inverter::CommitChanges()
+bool Greenpak4Inverter::CommitChanges()
 {
 	//No configuration
+	return true;
 }
 
 bool Greenpak4Inverter::Load(bool* /*bitstream*/)

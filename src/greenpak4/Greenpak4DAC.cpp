@@ -116,9 +116,10 @@ unsigned int Greenpak4DAC::GetOutputNetNumber(string /*port*/)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4DAC::CommitChanges()
+bool Greenpak4DAC::CommitChanges()
 {
 	//No configuration
+	return true;
 }
 
 bool Greenpak4DAC::Load(bool* /*bitstream*/)

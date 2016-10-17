@@ -55,12 +55,12 @@ Greenpak4IOB::~Greenpak4IOB()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-void Greenpak4IOB::CommitChanges()
+bool Greenpak4IOB::CommitChanges()
 {
 	//Get our IOB cell
 	auto cell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(cell == NULL)
-		return;
+		return true;
 
 	//Get the net
 	Greenpak4NetlistNode* net = NULL;
@@ -71,7 +71,7 @@ void Greenpak4IOB::CommitChanges()
 	else if(cell->m_type == "GP_IOBUF")
 		net = cell->m_connections["IO"][0];
 	if(net == NULL)
-		return;
+		return true;
 
 	//LogNotice("    Configuring IOB %d\n", m_pinNumber);
 	//If we get here, we're not unused.
@@ -202,8 +202,10 @@ void Greenpak4IOB::CommitChanges()
 	else
 	{
 		LogError("Invalid cell type for IOB\n");
-		exit(-1);
+		return false;
 	}
+
+	return true;
 }
 
 void Greenpak4IOB::SetInput(string port, Greenpak4EntityOutput src)

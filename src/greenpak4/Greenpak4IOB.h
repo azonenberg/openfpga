@@ -113,7 +113,7 @@ public:
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
 
-	virtual void CommitChanges();
+	virtual bool CommitChanges();
 
 	//Used to set defaults in Greenpak4Device constructor
 	void SetPullDirection(PullDirection dir)

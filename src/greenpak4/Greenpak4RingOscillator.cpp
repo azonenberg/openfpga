@@ -90,12 +90,12 @@ string Greenpak4RingOscillator::GetDescription()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4RingOscillator::CommitChanges()
+bool Greenpak4RingOscillator::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("PWRDN_EN"))
 		m_powerDownEn = (ncell->m_parameters["PWRDN_EN"] == "1");
@@ -115,7 +115,7 @@ void Greenpak4RingOscillator::CommitChanges()
 		else
 		{
 			LogError("GP_RINGOSC pre divider must be 1, 4, 8, 16\n");
-			exit(1);
+			return false;
 		}
 	}
 
@@ -131,9 +131,11 @@ void Greenpak4RingOscillator::CommitChanges()
 		else
 		{
 			LogError("GP_RINGOSC post divider must be 1, 2, 3, 4, 8, 12, 24, or 64\n");
-			exit(1);
+			return false;
 		}
 	}
+
+	return true;
 }
 
 bool Greenpak4RingOscillator::Load(bool* /*bitstream*/)

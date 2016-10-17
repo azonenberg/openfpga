@@ -81,12 +81,12 @@ void Greenpak4SystemReset::SetInput(string port, Greenpak4EntityOutput src)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-void Greenpak4SystemReset::CommitChanges()
+bool Greenpak4SystemReset::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
-		return;
+		return true;
 
 	if(ncell->HasParameter("RESET_MODE"))
 	{
@@ -102,7 +102,7 @@ void Greenpak4SystemReset::CommitChanges()
 				"Reset \"%s\" has illegal reset mode \"%s\" (must be RISING or LEVEL)\n",
 				ncell->m_name.c_str(),
 				p.c_str());
-			exit(-1);
+			return false;
 		}
 		SetResetMode(mode);
 	}
@@ -117,9 +117,11 @@ void Greenpak4SystemReset::CommitChanges()
 				"Reset \"%s\" has illegal reset speed %d us (must be 4 or 500)\n",
 				ncell->m_name.c_str(),
 				m_resetDelay);
-			exit(-1);
+			return false;
 		}
 	}
+
+	return true;
 }
 
 bool Greenpak4SystemReset::Load(bool* /*bitstream*/)
