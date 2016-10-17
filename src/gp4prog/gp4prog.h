@@ -31,14 +31,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <libusb-1.0/libusb.h>
-
 #include "../log/log.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USB command wrappers
 
-typedef libusb_device_handle* hdevice;
+typedef struct libusb_device_handle* hdevice;
 
 void USBSetup();
 void USBCleanup(hdevice hdev);

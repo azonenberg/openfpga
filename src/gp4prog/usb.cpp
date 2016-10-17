@@ -16,6 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
+#include <libusb-1.0/libusb.h>
+
+//Windows appears to define an ERROR macro in its headers.
+//Conflicts with ERROR enum defined in log.h.
+#if defined(_WIN32) && defined(ERROR)
+	#undef ERROR
+#endif
+
 #include "gp4prog.h"
 
 using namespace std;
