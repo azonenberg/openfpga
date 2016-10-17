@@ -3015,9 +3015,8 @@ This primitive represents the system reset block. This is an asynchronous global
 device datasheet for exact functionality) and is independent of the power-on reset, which cannot be configured.
 
 Note that this block has slightly different timing than the power-on reset, which may cause glitches in some designs.
-To ensure consistent behavior between the runtime reset and boot, it may be necessary to instantiate the \tokenref{GP\_POR}{gp-por} block and gate glitching signals with \tokenstyle{RST\_DONE}.
-
-TODO: Latest GP4 datasheet (r085 p 20) seems to indicate FALLING mode does not exist, need to redo this?
+To ensure consistent behavior between the runtime reset and boot, it may be necessary to instantiate the
+\tokenref{GP\_POR}{gp-por} block and gate glitching signals with \tokenstyle{RST\_DONE}.
 
 \subsubsection{Port Descriptions}
 
@@ -3036,9 +3035,11 @@ TODO: Latest GP4 datasheet (r085 p 20) seems to indicate FALLING mode does not e
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
 \tokenstyle{RESET\_MODE} & String & 1 &
-	\strexamplestyle{RISING} One-shot reset on rising edge of RST. \newline
-	\strexamplestyle{FALLING} One-shot reset on falling edge of RST. \newline
+	\strexamplestyle{EDGE} One-shot reset on rising edge of RST. \newline
 	\strexamplestyle{LEVEL} System is held in reset while RST is high.\\
+\tokenstyle{EDGE\_SPEED} & Integer & 9 &
+	Delay speed for the edge detector, in $\mu s$. Must be 4 or 500. \newline
+	Ignored if RESET\_MODE is LEVEL.\\
 \thinhline
 \end{tabularx}
 
@@ -3049,7 +3050,8 @@ The example shown in figure \ref{gp-sysreset-example} resets the device when \wi
 \begin{figure}[h]
 \begin{lstlisting}
 GP_SYSRESET #(
-	.RESET_MODE("LEVEL")
+	.RESET_MODE("LEVEL"),
+	.EDGE_SPEED(4)
 ) reset_ctrl (
 	.RST(rst)
 );

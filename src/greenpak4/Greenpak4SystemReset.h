@@ -44,7 +44,6 @@ public:
 	enum ResetMode
 	{
 		RISING_EDGE,
-		FALLING_EDGE,
 		HIGH_LEVEL
 	};
 
@@ -63,6 +62,9 @@ protected:
 
 	///Configuration for the reset
 	ResetMode m_resetMode;
+
+	///Delay value for the reset's edge detector
+	int m_resetDelay;
 
 	///The reset signal itself
 	Greenpak4EntityOutput m_reset;

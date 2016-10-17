@@ -31,6 +31,7 @@ Greenpak4SystemReset::Greenpak4SystemReset(
 	unsigned int cbase)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 	, m_resetMode(RISING_EDGE)
+	, m_resetDelay(500)
 	, m_reset(device->GetGround())
 {
 
@@ -93,19 +94,31 @@ void Greenpak4SystemReset::CommitChanges()
 		string p = ncell->m_parameters["RESET_MODE"];
 		if(p == "RISING")
 			mode = Greenpak4SystemReset::RISING_EDGE;
-		else if(p == "FALLING")
-			mode = Greenpak4SystemReset::FALLING_EDGE;
 		else if(p == "LEVEL")
 			mode = Greenpak4SystemReset::HIGH_LEVEL;
 		else
 		{
 			LogError(
-				"Reset \"%s\" has illegal reset mode \"%s\" (must be RISING, FALLING, or LEVEL)\n",
+				"Reset \"%s\" has illegal reset mode \"%s\" (must be RISING or LEVEL)\n",
 				ncell->m_name.c_str(),
 				p.c_str());
 			exit(-1);
 		}
 		SetResetMode(mode);
+	}
+
+	if(ncell->HasParameter("EDGE_SPEED"))
+	{
+		m_resetDelay = atoi(ncell->m_parameters["EDGE_SPEED"].c_str());
+
+		if( (m_resetDelay != 4) && (m_resetDelay != 500) )
+		{
+			LogError(
+				"Reset \"%s\" has illegal reset speed %d us (must be 4 or 500)\n",
+				ncell->m_name.c_str(),
+				m_resetDelay);
+			exit(-1);
+		}
 	}
 }
 
@@ -128,23 +141,10 @@ bool Greenpak4SystemReset::Save(bool* bitstream)
 	// Configuration
 
 	//Reset mode
-	switch(m_resetMode)
-	{
-		case HIGH_LEVEL:
-			bitstream[m_configBase + 0] = true;
-			bitstream[m_configBase + 1] = false;
-			break;
+	bitstream[m_configBase + 0] = (m_resetMode == HIGH_LEVEL);
 
-		case RISING_EDGE:
-			bitstream[m_configBase + 0] = false;
-			bitstream[m_configBase + 1] = false;
-			break;
-
-		case FALLING_EDGE:
-			bitstream[m_configBase + 0] = false;
-			bitstream[m_configBase + 1] = true;
-			break;
-	}
+	//Edge detector speed
+	bitstream[m_configBase + 1] = (m_resetDelay == 500);
 
 	//Reset enable if m_reset is not a power rail (ground)
 	if(!m_reset.IsPowerRail())
