@@ -45,6 +45,7 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 	{
 		LogError("Failed to seek to end of netlist file %s\n", fname.c_str());
 		m_parseOK = false;
+		fclose(fp);
 		return;
 	}
 	size_t len = ftell(fp);
@@ -58,6 +59,7 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 	json_string[len] = '\0';
 	if(len != fread(json_string, 1, len, fp))
 	{
+		delete[] json_string;
 		LogError("Failed read contents of netlist file %s\n", fname.c_str());
 		m_parseOK = false;
 		return;
