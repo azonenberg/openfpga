@@ -32,38 +32,44 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USB command helpers
 
-void SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size)
+bool SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size)
 {
 	int transferred;
 	int err = 0;
 	if(0 != (err = libusb_interrupt_transfer(hdev, 2|LIBUSB_ENDPOINT_OUT, 
 	                                         const_cast<uint8_t*>(buf), size, &transferred, 250)))
 	{
-		LogFatal("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
+		LogError("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
+		return false;
 	}
+	return true;
 }
 
-void ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size)
+bool ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size)
 {
 	int transferred;
 	int err = 0;
 	if(0 != (err = libusb_interrupt_transfer(hdev, 1|LIBUSB_ENDPOINT_IN, 
 	                                         buf, size, &transferred, 250)))
 	{
-		LogFatal("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
+		LogError("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
+		return false;
 	}
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Enumeration / setup helpers
 
 //Set up USB stuff
-void USBSetup()
+bool USBSetup()
 {
 	if(0 != libusb_init(NULL))
 	{
-		LogFatal("libusb_init failed\n");
+		LogError("libusb_init failed\n");
+		return false;
 	}
+	return true;
 }
 
 void USBCleanup(hdevice hdev)
@@ -79,7 +85,8 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 	ssize_t devcount = libusb_get_device_list(NULL, &list);
 	if(devcount < 0)
 	{
-		LogFatal("libusb_get_device_list failed\n");
+		LogError("libusb_get_device_list failed\n");
+		return NULL;
 	}
 	libusb_device* device = NULL;
 	bool found = false;
@@ -103,7 +110,8 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 	{
 		if(0 != libusb_open(device, &hdev))
 		{
-			LogFatal("libusb_open failed\n");
+			LogError("libusb_open failed\n");
+			return NULL;
 		}
 	}
 	libusb_free_device_list(list, 1);
@@ -116,32 +124,37 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 	int err = libusb_detach_kernel_driver(hdev, 0);
 	if( (0 != err) && (LIBUSB_ERROR_NOT_FOUND != err) )
 	{
-		LogFatal("Can't detach kernel driver\n");
+		LogError("Can't detach kernel driver\n");
+		return NULL;
 	}
 
 	//Set the device configuration
 	if(0 != (err = libusb_set_configuration(hdev, 1)))
 	{
-		LogFatal("Failed to select device configuration (err = %d)\n", err);
+		LogError("Failed to select device configuration (err = %d)\n", err);
+		return NULL;
 	}
 
 	//Claim interface 0
 	if(0 != libusb_claim_interface(hdev, 0))
 	{
-		LogFatal("Failed to claim interface\n");
+		LogError("Failed to claim interface\n");
+		return NULL;
 	}
 
 	return hdev;
 }
 
 //Gets a string descriptor as a STL string
-string GetStringDescriptor(hdevice hdev, uint8_t index)
+bool GetStringDescriptor(hdevice hdev, uint8_t index, string &desc)
 {
 	char strbuf[128];
 	if(libusb_get_string_descriptor_ascii(hdev, index, (unsigned char*)strbuf, sizeof(strbuf)) < 0)
 	{
 		LogFatal("libusb_get_string_descriptor_ascii failed\n");
+		return false;
 	}
 
-	return string(strbuf);
+	desc = strbuf;
+	return true;
 }

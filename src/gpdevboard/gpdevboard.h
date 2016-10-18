@@ -30,13 +30,13 @@
 
 typedef struct libusb_device_handle* hdevice;
 
-void USBSetup();
+bool USBSetup();
 void USBCleanup(hdevice hdev);
 
 hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct);
-std::string GetStringDescriptor(hdevice hdev, uint8_t index);
-void SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size);
-void ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size);
+bool GetStringDescriptor(hdevice hdev, uint8_t index, std::string &desc);
+bool SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size);
+bool ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Board protocol stuff

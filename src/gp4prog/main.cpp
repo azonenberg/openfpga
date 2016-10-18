@@ -256,7 +256,8 @@ int main(int argc, char* argv[])
 		ShowVersion();
 
 	//Set up libusb
-	USBSetup();
+	if(!USBSetup())
+		return 1;
 
 	// Try opening the board in "orange" mode
 	LogNotice("\nSearching for developer board\n");
@@ -288,8 +289,12 @@ int main(int argc, char* argv[])
 	}
 
 	//Get string descriptors
-	string name = GetStringDescriptor(hdev, 1);			//board name
-	string vendor = GetStringDescriptor(hdev, 2);		//manufacturer
+	string name, vendor;
+	if(!GetStringDescriptor(hdev, 1, name) || //board name
+	   !GetStringDescriptor(hdev, 2, vendor)) //manufacturer
+	{
+		return 1;
+	}
 	LogNotice("Found: %s %s\n", vendor.c_str(), name.c_str());
 	//string 0x80 is 02 03 for this board... what does that mean? firmware rev or something?
 	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
