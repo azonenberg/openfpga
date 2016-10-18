@@ -228,8 +228,8 @@ bool Greenpak4RCOscillator::Save(bool* bitstream)
 			break;
 
 		default:
-			LogFatal("GP_RCOSC pre divider is bogus");
-			break;
+			LogError("GP_RCOSC pre divider is bogus");
+			return false;
 	}
 
 	//Output post-divider
@@ -284,8 +284,8 @@ bool Greenpak4RCOscillator::Save(bool* bitstream)
 			break;
 
 		default:
-			LogFatal("GP_RCOSC post divider is bogus");
-			break;
+			LogError("GP_RCOSC post divider is bogus");
+			return false;
 	}
 
 	return true;

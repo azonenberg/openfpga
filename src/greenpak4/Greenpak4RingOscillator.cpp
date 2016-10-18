@@ -205,8 +205,8 @@ bool Greenpak4RingOscillator::Save(bool* bitstream)
 			break;
 
 		default:
-			LogFatal("GP_RINGOSC pre divider is bogus");
-			break;
+			LogError("GP_RINGOSC pre divider is bogus");
+			return false;
 	}
 
 	//Output post-divider
@@ -261,8 +261,8 @@ bool Greenpak4RingOscillator::Save(bool* bitstream)
 			break;
 
 		default:
-			LogFatal("GP_RINGOSC post divider is bogus");
-			break;
+			LogError("GP_RINGOSC post divider is bogus");
+			return false;
 	}
 
 	return true;

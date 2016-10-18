@@ -59,12 +59,14 @@ void Greenpak4CrossConnection::SetInput(std::string /*port*/, Greenpak4EntityOut
 	//Complain if input has a dual, they should never go through the cross connections
 	else if(input.HasDual())
 	{
-		LogFatal("tried to set cross-connection input from node with dual\n");
+		LogError("Tried to set cross-connection input from node with dual. This is probably a bug.\n");
+		return;
 	}
 
 	else if(input.GetMatrix() == m_matrix)
 	{
-		LogFatal("tried to set cross-connection input from wrong matrix\n");
+		LogError("Tried to set cross-connection input from wrong matrix. This is probably a bug.\n");
+		return;
 	}
 
 	m_input = input;

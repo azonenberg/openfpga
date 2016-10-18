@@ -179,8 +179,8 @@ bool Greenpak4LFOscillator::Save(bool* bitstream)
 			break;
 
 		default:
-			LogFatal("GP4_LFOSC output divider must be 1, 2, 4, or 16\n");
-			break;
+			LogError("GP4_LFOSC output divider must be 1, 2, 4, or 16\n");
+			return false;
 	}
 
 	return true;
