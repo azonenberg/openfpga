@@ -81,7 +81,7 @@ DataFrame::DataFrame(const char *ascii)
 		m_payload.resize(size - 3);
 }
 
-void DataFrame::Send(hdevice hdev)
+bool DataFrame::Send(hdevice hdev)
 {
 	uint8_t data[64] = {};
 
@@ -106,14 +106,15 @@ void DataFrame::Send(hdevice hdev)
 	}
 	LogDebug("\n");
 
-	SendInterruptTransfer(hdev, data, sizeof(data));
+	return SendInterruptTransfer(hdev, data, sizeof(data));
 }
 
-void DataFrame::Receive(hdevice hdev)
+bool DataFrame::Receive(hdevice hdev)
 {
 	uint8_t data[64];
 
-	ReceiveInterruptTransfer(hdev, data, sizeof(data));
+	if(!ReceiveInterruptTransfer(hdev, data, sizeof(data)))
+		return false;
 
 	LogDebug("D→H: ");
 	for(int i=0; i<64; i++)
@@ -139,15 +140,19 @@ void DataFrame::Receive(hdevice hdev)
 	m_payload.resize(size);
 	for(size_t i=0; i<m_payload.size(); i++)
 		m_payload[i] = data[4+i];
+
+	return true;
 }
 
-void DataFrame::Roundtrip(hdevice hdev, uint8_t ack_type)
+bool DataFrame::Roundtrip(hdevice hdev, uint8_t ack_type)
 {
-	Send(hdev);
+	if(!Send(hdev))
+		return false;
 
 	// Receive an acknowledgement frame
 	DataFrame ack_frame;
-	ack_frame.Receive(hdev);
+	if(!ack_frame.Receive(hdev))
+		return false;
 
 	// Compare the two frames.
 	// Received frame will usually have length 0x3f; it is unimportant.
@@ -158,49 +163,52 @@ void DataFrame::Roundtrip(hdevice hdev, uint8_t ack_type)
 	     std::equal(m_payload.begin(), m_payload.end(),
 	                ack_frame.m_payload.begin())))
 	{
-		LogFatal("Unexpected acknowledgement frame\n");
+		LogError("Unexpected acknowledgement frame\n");
+		return false;
 	}
+
+	return true;
 }
 
-void DataFrame::Roundtrip(hdevice hdev)
+bool DataFrame::Roundtrip(hdevice hdev)
 {
-	Roundtrip(hdev, m_type);
+	return Roundtrip(hdev, m_type);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Device I/O
 
-void SwitchMode(hdevice hdev)
+bool SwitchMode(hdevice hdev)
 {
 	uint8_t data[64] = {};
 	data[60] = 0x09;
-	SendInterruptTransfer(hdev, data, sizeof(data));
+	return SendInterruptTransfer(hdev, data, sizeof(data));
 }
 
-void SetPart(hdevice hdev, SilegoPart part)
+bool SetPart(hdevice hdev, SilegoPart part)
 {
 	DataFrame frame(DataFrame::SET_PART);
 	frame.push_back((uint8_t)part);
 	frame.push_back(0x00);
 	frame.push_back(0x00);
 	frame.push_back(0x00);
-	frame.Roundtrip(hdev);
+	return frame.Roundtrip(hdev);
 }
 
-void Reset(hdevice hdev)
+bool Reset(hdevice hdev)
 {
 	DataFrame frame(DataFrame::RESET);
-	frame.Roundtrip(hdev);
+	return frame.Roundtrip(hdev);
 }
 
-void SetStatusLED(hdevice hdev, bool status)
+bool SetStatusLED(hdevice hdev, bool status)
 {
 	DataFrame frame(DataFrame::SET_STATUS_LED);
 	frame.push_back(status);
-	frame.Roundtrip(hdev);
+	return frame.Roundtrip(hdev);
 }
 
-void SetIOConfig(hdevice hdev, IOConfig& config)
+bool SetIOConfig(hdevice hdev, IOConfig& config)
 {
 	DataFrame frame(DataFrame::CONFIG_IO);
 
@@ -299,14 +307,14 @@ void SetIOConfig(hdevice hdev, IOConfig& config)
 	frame.push_back(0x0);
 
 	//Done, send it
-	frame.Send(hdev);
+	return frame.Send(hdev);
 }
 
 static const double VOLTAGE_FACTOR = 0.001362; //mV/LSB
 
 //ch1 = Vdd, CH2...20 = TP2...20
 //TODO: more than just a dummy placeholder
-void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage)
+bool ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage)
 {
 	DataFrame frame(DataFrame::CONFIG_SIGGEN);
 
@@ -326,10 +334,10 @@ void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage)
 	// frame.push_back(0);					//step sign and fractional step part
 	// frame.push_back(0);
 
-	frame.Roundtrip(hdev);
+	return frame.Roundtrip(hdev);
 }
 
-void ResetAllSiggens(hdevice hdev)
+bool ResetAllSiggens(hdevice hdev)
 {
 	DataFrame frame(DataFrame::ENABLE_SIGGEN);
 
@@ -338,10 +346,10 @@ void ResetAllSiggens(hdevice hdev)
 		frame.push_back((int)SiggenCommand::RESET);
 	}
 
-	frame.Send(hdev);
+	return frame.Send(hdev);
 }
 
-void ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd)
+bool ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd)
 {
 	DataFrame frame(DataFrame::ENABLE_SIGGEN);
 
@@ -354,10 +362,10 @@ void ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd)
 			frame.push_back((int)SiggenCommand::NOP);	//no change
 	}
 
-	frame.Send(hdev);
+	return frame.Send(hdev);
 }
 
-void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, DownloadMode mode)
+bool DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, DownloadMode mode)
 {
 	DataFrame::PacketType reqType, ack1Type, ack2Type;
 	if(mode == DownloadMode::PROGRAMMING)
@@ -391,16 +399,22 @@ void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, DownloadMod
 
 		if(frame.IsFull())
 		{
-			frame.Roundtrip(hdev, ack1Type);
+			if(!frame.Roundtrip(hdev, ack1Type))
+				return false;
 			frame = frame.Next();
 		}
 	}
 
 	if(!frame.IsEmpty())
-		frame.Roundtrip(hdev, ack2Type);
+	{
+		if(!frame.Roundtrip(hdev, ack2Type))
+			return false;
+	}
+
+	return true;
 }
 
-std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets)
+bool UploadBitstream(hdevice hdev, size_t octets, vector<uint8_t> &bitstream)
 {
 	DataFrame reqFrame(DataFrame::READ_BITSTREAM_START);
 	reqFrame.push_back(0xc0);
@@ -411,16 +425,21 @@ std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets)
 	reqFrame.push_back(cycles >> 8);
 	reqFrame.push_back(cycles & 0xff);
 
-	std::vector<uint8_t> bitstream;
+	bitstream = {};
 	while(true)
 	{
-		reqFrame.Send(hdev);
+		if(!reqFrame.Send(hdev))
+			return false;
 
 		DataFrame repFrame;
-		repFrame.Receive(hdev);
+		if(!repFrame.Receive(hdev))
+			return false;
 		if(!(repFrame.m_sequenceA == reqFrame.m_sequenceA &&
 		     repFrame.m_type == DataFrame::READ_BITSTREAM_ACK))
-			LogFatal("Unexpected reply\n");
+		{
+			LogError("Unexpected reply\n");
+			return false;
+		}
 
 		bitstream.insert(bitstream.end(), repFrame.m_payload.begin(), repFrame.m_payload.end());
 		if(repFrame.m_sequenceB == 0)
@@ -432,12 +451,15 @@ std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets)
 	}
 
 	if(bitstream.size() != octets)
-		LogFatal("Unexpected size of uploaded bitstream\n");
+	{
+		LogError("Unexpected size of uploaded bitstream\n");
+		return false;
+	}
 
-	return bitstream;
+	return true;
 }
 
-void SelectADCChannel(hdevice hdev, unsigned int chan)
+bool SelectADCChannel(hdevice hdev, unsigned int chan)
 {
 	DataFrame frame(DataFrame::CONFIG_ADC_MUX);
 	frame.push_back(0x00);
@@ -448,27 +470,33 @@ void SelectADCChannel(hdevice hdev, unsigned int chan)
 	else
 		LogFatal("Unexpected ADC channel\n");
 	frame.push_back(0x00);
-	frame.Send(hdev);
+	return frame.Send(hdev);
 }
 
-double ReadADC(hdevice hdev)
+bool ReadADC(hdevice hdev, double &value)
 {
 	DataFrame frame(DataFrame::READ_ADC);
 	frame.push_back(0x01); // conversion time
-	frame.Send(hdev);
+	if(!frame.Send(hdev))
+		return false;
 
-	frame.Receive(hdev);
+	if(!frame.Receive(hdev))
+		return false;
 	if(!(frame.m_type == DataFrame::READ_ADC))
-		LogFatal("Unexpected reply\n");
-	uint32_t value =
+	{
+		LogError("Unexpected reply\n");
+		return false;
+	}
+	uint32_t intValue =
 		(frame.m_payload[0] << 24) |
 		(frame.m_payload[1] << 16) |
 		(frame.m_payload[2] <<  8) |
 		(frame.m_payload[3] <<  0);
-	return (double)(((int32_t)value) >> 8) / 0x90000;
+	value = (double)(((int32_t)intValue) >> 8) / 0x90000;
+	return true;
 }
 
-void TrimOscillator(hdevice hdev, uint8_t ftw)
+bool TrimOscillator(hdevice hdev, uint8_t ftw)
 {
 	DataFrame reqFrame = DataFrame(DataFrame::TRIM_OSC);
 	reqFrame.push_back(0x00);
@@ -479,53 +507,68 @@ void TrimOscillator(hdevice hdev, uint8_t ftw)
 	reqFrame.push_back(0x11);
 	reqFrame.push_back(0x02);
 	reqFrame.push_back(0x01);
-	reqFrame.Send(hdev);
+	if(!reqFrame.Send(hdev))
+		return false;
 
 	DataFrame repFrame;
-	repFrame.Receive(hdev);
+	if(!repFrame.Receive(hdev))
+		return false;
 	if(!(repFrame.m_type == reqFrame.m_type))
-		LogFatal("Unexpected reply\n");
+	{
+		LogError("Unexpected reply\n");
+		return false;
+	}
+	return true;
 }
 
-unsigned MeasureOscillatorFrequency(hdevice hdev)
+bool MeasureOscillatorFrequency(hdevice hdev, unsigned &freq)
 {
 	DataFrame reqFrame = DataFrame(DataFrame::GET_OSC_FREQ);
 	reqFrame.push_back(0x00);
-	reqFrame.Send(hdev);
+	if(!reqFrame.Send(hdev))
+		return false;
 
 	DataFrame repFrame;
-	repFrame.Receive(hdev);
+	if(!repFrame.Receive(hdev))
+		return false;
 	if(!(repFrame.m_type == reqFrame.m_type))
-		LogFatal("Unexpected reply\n");
+	{
+		LogError("Unexpected reply\n");
+		return false;
+	}
 
-	uint32_t value =
+	freq =
 		(repFrame.m_payload[0] << 24) |
 		(repFrame.m_payload[1] << 16) |
 		(repFrame.m_payload[2] <<  8) |
 		(repFrame.m_payload[3] <<  0);
-	return value;
+	return true;
 }
 
-BoardStatus GetStatus(hdevice hdev)
+bool GetStatus(hdevice hdev, BoardStatus &status)
 {
 	DataFrame frame(DataFrame::GET_STATUS);
-	frame.Send(hdev);
+	if(!frame.Send(hdev))
+		return false;
 
 	// FIXME: we don't get any nonzero measurements here. It seems we are missing some sort of enable
 	// command for this feature. I haven't a faintest clue as to which.
-	frame.Receive(hdev);
+	if(!frame.Receive(hdev))
+		return false;
 	if(!(frame.m_type == DataFrame::GET_STATUS))
-		LogFatal("Unexpected reply\n");
+	{
+		LogError("Unexpected reply\n");
+		return false;
+	}
 
 	// uint16_t rawCurrent  = (frame.m_payload[10] << 8) | frame.m_payload[11];
 	uint16_t rawVoltageA = (frame.m_payload[12] << 8) | frame.m_payload[13];
 	uint16_t rawVoltageB = (frame.m_payload[14] << 8) | frame.m_payload[15];
 
-	BoardStatus status;
 	status.externalOverCurrent  = (frame.m_payload[7] == 0x01);
 	status.internalUnderVoltage = (frame.m_payload[8] == 0x01);
 	status.internalOverCurrent  = (frame.m_payload[9] == 0x02);
 	status.voltageA = rawVoltageA * VOLTAGE_FACTOR / 2;
 	status.voltageB = rawVoltageB * VOLTAGE_FACTOR / 2;
-	return status;
+	return true;
 }

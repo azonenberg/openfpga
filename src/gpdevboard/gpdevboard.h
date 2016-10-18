@@ -175,10 +175,10 @@ public:
 		TRIM_OSC					= 0x49
 	};
 
-	void Send(hdevice hdev);
-	void Receive(hdevice hdev);
-	void Roundtrip(hdevice hdev);
-	void Roundtrip(hdevice hdev, uint8_t ack_type);
+	bool Send(hdevice hdev);
+	bool Receive(hdevice hdev);
+	bool Roundtrip(hdevice hdev);
+	bool Roundtrip(hdevice hdev, uint8_t ack_type);
 
 	bool IsEmpty()
 	{ return m_payload.size() == 0; }
@@ -204,14 +204,14 @@ public:
 	std::vector<uint8_t> m_payload;
 };
 
-void SwitchMode(hdevice hdev);
+bool SwitchMode(hdevice hdev);
 
-void SetPart(hdevice hdev, SilegoPart part);
+bool SetPart(hdevice hdev, SilegoPart part);
 
-void Reset(hdevice hdev);
+bool Reset(hdevice hdev);
 
-void SetStatusLED(hdevice hdev, bool status);
-void SetIOConfig(hdevice hdev, IOConfig& config);
+bool SetStatusLED(hdevice hdev, bool status);
+bool SetIOConfig(hdevice hdev, IOConfig& config);
 
 enum class SiggenCommand
 {
@@ -222,9 +222,9 @@ enum class SiggenCommand
 	RESET	= 0x07
 };
 
-void ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage);
-void ResetAllSiggens(hdevice hdev);
-void ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd);
+bool ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage);
+bool ResetAllSiggens(hdevice hdev);
+bool ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd);
 
 enum class DownloadMode
 {
@@ -233,15 +233,15 @@ enum class DownloadMode
 	PROGRAMMING
 };
 
-std::vector<uint8_t> UploadBitstream(hdevice hdev, size_t octets);
-void DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, DownloadMode mode);
+bool UploadBitstream(hdevice hdev, size_t octets, std::vector<uint8_t> &bitstream);
+bool DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, DownloadMode mode);
 
-void SelectADCChannel(hdevice hdev, unsigned int chan);
-double ReadADC(hdevice hdev);
+bool SelectADCChannel(hdevice hdev, unsigned int chan);
+bool ReadADC(hdevice hdev, double &value);
 
-void TrimOscillator(hdevice hdev, uint8_t ftw);
-unsigned MeasureOscillatorFrequency(hdevice hdev);
+bool TrimOscillator(hdevice hdev, uint8_t ftw);
+bool MeasureOscillatorFrequency(hdevice hdev, unsigned &freq);
 
-BoardStatus GetStatus(hdevice hdev);
+bool GetStatus(hdevice hdev, BoardStatus &status);
 
 #endif

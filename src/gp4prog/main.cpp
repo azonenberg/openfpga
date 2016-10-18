@@ -32,7 +32,7 @@ size_t BitstreamLength(SilegoPart part);
 const char *BitFunction(SilegoPart part, size_t bitno);
 
 bool SocketTest(hdevice hdev, SilegoPart part);
-uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq);
+bool TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq, uint8_t &ftw);
 bool CheckStatus(hdevice hdev);
 
 enum class BitstreamKind {
@@ -274,7 +274,8 @@ int main(int argc, char* argv[])
 
 		// Change the board into "orange" mode
 		LogVerbose("Switching developer board from bootloader mode\n");
-		SwitchMode(hdev);
+		if(!SwitchMode(hdev))
+			return 1;
 
 		// Takes a while to switch and re-enumerate
 		usleep(1200 * 1000);
@@ -314,7 +315,8 @@ int main(int argc, char* argv[])
 	}
 
 	//Light up the status LED
-	SetStatusLED(hdev, 1);
+	if(!SetStatusLED(hdev, 1))
+		return 1;
 
 	//See if any of the options require knowing what part we use.
 	SilegoPart detectedPart = SilegoPart::UNRECOGNIZED;
@@ -330,11 +332,13 @@ int main(int argc, char* argv[])
 		for(SilegoPart part : parts)
 		{
 			LogVerbose("Selecting part %s\n", PartName(part));
-			SetPart(hdev, part);
+			if(!SetPart(hdev, part))
+				return 1;
 
 			//Read extant bitstream and determine part status.
 			LogVerbose("Reading bitstream from part\n");
-			programmedBitstream = UploadBitstream(hdev, BitstreamLength(part) / 8);
+			if(!UploadBitstream(hdev, BitstreamLength(part) / 8, programmedBitstream))
+				return 1;
 
 			uint8_t patternId = 0;
 			bitstreamKind = ClassifyBitstream(part, programmedBitstream, patternId);
@@ -407,7 +411,8 @@ int main(int argc, char* argv[])
 	if(reset)
 	{
 		LogNotice("Resetting board I/O and signal generators\n");
-		Reset(hdev);
+		if(!Reset(hdev))
+			return 1;
 	}
 
 	//If we need to trim oscillator, do that before programming
@@ -422,7 +427,8 @@ int main(int argc, char* argv[])
 
 		LogNotice("Trimming oscillator for %d Hz at %.3g V\n", rcOscFreq, voltage);
 		LogIndenter li;
-		rcFtw = TrimOscillator(hdev, detectedPart, voltage, rcOscFreq);
+		if(!TrimOscillator(hdev, detectedPart, voltage, rcOscFreq, rcFtw))
+			return 1;
 	}
 
 	//If we're programming, do that first
@@ -471,19 +477,23 @@ int main(int argc, char* argv[])
 			//Load bitstream into SRAM
 			LogNotice("Downloading bitstream into SRAM\n");
 			LogIndenter li;
-			DownloadBitstream(hdev, newBitstream, DownloadMode::EMULATION);
+			if(!DownloadBitstream(hdev, newBitstream, DownloadMode::EMULATION))
+				return 1;
 		}
 		else
 		{
 			//Program bitstream into NVM
 			LogNotice("Programming bitstream into NVM\n");
 			LogIndenter li;
-			DownloadBitstream(hdev, newBitstream, DownloadMode::PROGRAMMING);
+			if(!DownloadBitstream(hdev, newBitstream, DownloadMode::PROGRAMMING))
+				return 1;
 
 			//TODO: Figure out how to make this play nicely with read protection?
 			LogNotice("Verifying programmed bitstream\n");
 			size_t bitstreamLength = BitstreamLength(detectedPart) / 8;
-			vector<uint8_t> bitstreamToVerify = UploadBitstream(hdev, bitstreamLength);
+			vector<uint8_t> bitstreamToVerify;
+			if(!UploadBitstream(hdev, bitstreamLength, bitstreamToVerify))
+				return 1;
 			bool failed = false;
 			for(size_t i = 0; i < bitstreamLength * 8; i++)
 			{
@@ -517,14 +527,16 @@ int main(int argc, char* argv[])
 		IOConfig ioConfig;
 		for(size_t i = 2; i <= 20; i++)
 			ioConfig.driverConfigs[i] = TP_RESET;
-		SetIOConfig(hdev, ioConfig);
+		if(!SetIOConfig(hdev, ioConfig))
+			return 1;
 	}
 
 	if(voltage != 0.0)
 	{
 		//Configure the signal generator for Vdd
 		LogNotice("Setting Vdd to %.3g V\n", voltage);
-		ConfigureSiggen(hdev, 1, voltage);
+		if(!ConfigureSiggen(hdev, 1, voltage))
+			return 1;
 	}
 
 	if(!nets.empty())
@@ -539,7 +551,8 @@ int main(int argc, char* argv[])
 			config.ledEnabled[net] = true;
 			config.expansionEnabled[net] = true;
 		}
-		SetIOConfig(hdev, config);
+		if(!SetIOConfig(hdev, config))
+			return 1;
 	}
 
 	//Check that we didn't break anything
@@ -704,7 +717,9 @@ bool CheckStatus(hdevice hdev)
 {
 	LogDebug("Requesting board status\n");
 
-	BoardStatus status = GetStatus(hdev);
+	BoardStatus status;
+	if(!GetStatus(hdev, status))
+		return false;
 	LogVerbose("Board voltages: A = %.3f V, B = %.3f V\n", status.voltageA, status.voltageB);
 
 	if(status.externalOverCurrent)
@@ -748,16 +763,19 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 	}
 
 	LogVerbose("Downloading test bitstream\n");
-	DownloadBitstream(hdev, loopbackBitstream, DownloadMode::EMULATION);
+	if(!DownloadBitstream(hdev, loopbackBitstream, DownloadMode::EMULATION))
+		return false;
 
 	LogVerbose("Initializing test I/O\n");
 	double supplyVoltage = 5.0;
-	ConfigureSiggen(hdev, 1, supplyVoltage);
+	if(!ConfigureSiggen(hdev, 1, supplyVoltage))
+		return false;
 
 	IOConfig ioConfig;
 	for(size_t i = 2; i <= 20; i++)
 		ioConfig.driverConfigs[i] = TP_RESET;
-	SetIOConfig(hdev, ioConfig);
+	if(!SetIOConfig(hdev, ioConfig))
+		return false;
 
 	bool ok = true;
 	tuple<TPConfig, TPConfig, double> sequence[] =
@@ -776,14 +794,18 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 		ioConfig.driverConfigs[2] = get<0>(config);
 		for(size_t i = 3; i <= 20; i++)
 			ioConfig.driverConfigs[i] = get<1>(config);
-		SetIOConfig(hdev, ioConfig);
+		if(!SetIOConfig(hdev, ioConfig))
+			return false;
 
 		for(int i = 2; i <= 20; i++)
 		{
 			if(i == 11) continue;
 
-			SelectADCChannel(hdev, i);
-			double value = ReadADC(hdev);
+			if(!SelectADCChannel(hdev, i))
+				return false;
+			double value;
+			if(!ReadADC(hdev, value))
+				return false;
 			LogDebug("P%d = %.3f V\n", i, supplyVoltage * value);
 
 			if(fabs(value - get<2>(config)) > 0.01)
@@ -796,14 +818,15 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 	}
 
 	LogVerbose("Resetting board after socket test\n");
-	Reset(hdev);
+	if(!Reset(hdev))
+		return false;
 	return ok;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Oscillator trimming
 
-uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq)
+bool TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq, uint8_t &ftw)
 {
 	vector<uint8_t> trimBitstream;
 
@@ -831,10 +854,12 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 	}
 
 	LogVerbose("Resetting board before oscillator trimming\n");
-	Reset(hdev);
+	if(!Reset(hdev))
+		return false;
 
 	LogVerbose("Downloading oscillator trimming bitstream\n");
-	DownloadBitstream(hdev, trimBitstream, DownloadMode::TRIMMING);
+	if(!DownloadBitstream(hdev, trimBitstream, DownloadMode::TRIMMING))
+		return false;
 
 	LogVerbose("Configuring I/O for oscillator trimming\n");
 	IOConfig config;
@@ -849,10 +874,12 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 	config.driverConfigs[10] = TP_VDD;
 	config.driverConfigs[12] = TP_VDD;
 	config.driverConfigs[15] = TP_VDD;
-	SetIOConfig(hdev, config);
+	if(!SetIOConfig(hdev, config))
+		return false;
 
 	LogVerbose("Setting voltage for oscillator trimming\n");
-	ConfigureSiggen(hdev, 1, voltage);
+	if(!ConfigureSiggen(hdev, 1, voltage))
+		return false;
 
 	//The frequency tuning word is 7-bit
 	uint8_t low = 0, high = 0x7f, mid;
@@ -861,8 +888,10 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 	{
 		mid = low + (high - low) / 2;
 		LogDebug("Trimming with FTW %d\n", mid);
-		TrimOscillator(hdev, mid);
-		actualFreq = MeasureOscillatorFrequency(hdev);
+		if(!TrimOscillator(hdev, mid))
+			return false;
+		if(!MeasureOscillatorFrequency(hdev, actualFreq))
+			return false;
 		LogDebug("Oscillator frequency is %d Hz\n", actualFreq);
 		if(actualFreq > freq)
 		{
@@ -876,10 +905,13 @@ uint8_t TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned f
 			break;
 	}
 	LogNotice("Trimmed RC oscillator to %d Hz\n", actualFreq);
+	ftw = mid;
 
 	LogVerbose("Resetting board after oscillator trimming\n");
-	Reset(hdev);
-	return mid;
+	if(!Reset(hdev))
+		return false;
+
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
