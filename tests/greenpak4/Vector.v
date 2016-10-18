@@ -16,69 +16,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#include <log.h>
-#include <Greenpak4.h>
+`default_nettype none
 
-using namespace std;
+/**
+	OUTPUTS:
+		2-bit status signal on pins 16, 15
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Construction / destruction
+	TEST PROCEDURE:
+		Sweep all 16 values across pins 17-18-19-20.
 
-Greenpak4NetlistCell::~Greenpak4NetlistCell()
-{
-	//do not delete wires, module dtor handles that
-}
+		P16 should be P18 & P20.
+		P15 should be P17 & P19.
+ */
+module Vector(a, b, c);
 
-string Greenpak4NetlistCell::GetLOC()
-{
-	string loc = m_attributes.at("LOC");
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// I/O declarations
 
-	//If we're an IOB, do vector processing
-	if(IsIOB())
-	{
-		//Get the top-level pad signal as this is always the vector
-		string port;
-		if( (m_type == "GP_OBUF") || (m_type == "GP_OBUFT") )
-			port = "OUT";
-		else if(m_type == "GP_IBUF")
-			port = "IN";
-		else if(m_type == "GP_IOBUF")
-			port = "IO";
-		auto cn = m_connections[port];
+	(* LOC = "P20 P19" *)
+	input wire[1:0] a;
 
-		//Should be a scalar, get the single bit
-		if(cn.empty())
-			return "<invalid LOC>";
-		auto nodename = cn[0]->m_name;
+	(* LOC = "P18 P17" *)
+	input wire[1:0] b;
 
-		//If the node name is a scalar, return the LOC as is
-		size_t pos = nodename.find("[");
-		if(pos == string::npos)
-			return loc;
+	(* LOC = "P16 P15" *)
+	output wire[1:0] c;
 
-		//It's a vector... get the bit index
-		string sindex = nodename.substr(pos + 1);	//skip the [ character
-		int index = atoi(sindex.c_str());
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// The actual logic
 
-		//Find our LOC
-		pos = 0;
-		for(int i=0; i<index; i++)
-		{
-			pos = loc.find(" ", pos);
-			if(pos == string::npos)
-				return "<invalid LOC>";
+	assign c = a & b;
 
-			pos++;	//skip the space
-		}
-		size_t nextpos = loc.find(" ", pos);
-		if(nextpos == string::npos)
-			nextpos = loc.length();
-		nextpos -= pos;
-
-		return loc.substr(pos, nextpos);
-	}
-
-	//Single bit signal, just return the attribute
-	else
-		return loc;
-}
+endmodule

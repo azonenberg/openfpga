@@ -155,10 +155,10 @@ If you have questions, comments, suggestions, or wish to contribute to the proje
 
 \subsection{Design Flow}
 
-\namestyle{gp4par} is \emph{not} a synthesis tool and cannot be run directly on HDL source code. Your HDL must be synthesized to
-a JSON netlist by a separate tool before \namestyle{gp4par} is be invoked. The recommended synthesis tool is
-\namestyle{Yosys}, which may be obtained from the \namestyle{Yosys} website, \mbox{\url{http://www.clifford.at/yosys/}}. The flow of data
-between components is shown in Figure \ref{flow}.
+\namestyle{gp4par} is \emph{not} a synthesis tool and cannot be run directly on HDL source code. Your HDL must be
+synthesized to a JSON netlist by a separate tool before \namestyle{gp4par} is be invoked. The recommended synthesis
+tool is \namestyle{Yosys}, which may be obtained from the \namestyle{Yosys} website,
+\mbox{\url{http://www.clifford.at/yosys/}}. The flow of data between components is shown in Figure \ref{flow}.
 
 \begin{figure}[h]
 \centering
@@ -197,9 +197,9 @@ between components is shown in Figure \ref{flow}.
 \label{flow}
 \end{figure}
 
-\namestyle{gp4par} is being developed in tandem with \namestyle{GreenPak} support in \namestyle{Yosys}. Most of the \namestyle{GreenPak} features are only available in
-the latest development version of \namestyle{Yosys} and have not made it into a stable release yet. We recommend use of the latest
-\namestyle{Yosys} from GitHub for testing.
+\namestyle{gp4par} is being developed in tandem with \namestyle{GreenPak} support in \namestyle{Yosys}. Most of the
+\namestyle{GreenPak} features are only available in the latest development version of \namestyle{Yosys} and have not
+made it into a stable release yet. We recommend use of the latest \namestyle{Yosys} from GitHub for testing.
 
 \subsection{Synthesis Example}
 
@@ -221,14 +221,6 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json Blinky.json
 
 \pagebreak
 \section{\namestyle{gp4par} Limitations}
-
-The following legal Verilog-2001 features are not supported by \namestyle{gp4par} as of this writing:
-
-\begin{itemize}
-\item \whenstyle{Non-scalar top-level module ports}\\All ports on top-level modules must be one bit wide, since there 
-is currently no supported syntax for constraining them to package pins. Vector nets may be used at lower levels of the 
-hierarchy without restriction.
-\end{itemize}
 
 The following \namestyle{SLG46620V} device features are not supported by \namestyle{gp4par} as of this writing:
 
@@ -468,6 +460,9 @@ constraint LUT2_0 (site is of type GP_2LUT, instance is of type GP_3LUT)
 \caption{Error message produced by invalid \tokenstyle{LOC} constraint}
 \label{invalid-loc}
 \end{figure}
+
+To constrain a multi-bit signal, separate the locations with spaces. For example, ``P18 P17" constrains bit 0 to P17
+and bit 1 to P18.
 
 \subsubsection{Applicable Elements}
 

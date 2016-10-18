@@ -51,8 +51,7 @@ public:
 	bool IsIOB()
 	{ return (m_type == "GP_IBUF") || (m_type == "GP_IOBUF") || (m_type == "GP_OBUF") || (m_type == "GP_OBUFT"); }
 
-	std::string GetLOC()
-	{ return m_attributes.at("LOC"); }
+	std::string GetLOC();
 
 	bool HasLOC()
 	{ return (m_attributes.find("LOC") != m_attributes.end()); }
