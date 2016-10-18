@@ -53,15 +53,17 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 	{
 		LogError("Failed to seek to start of netlist file %s\n", fname.c_str());
 		m_parseOK = false;
+		fclose(fp);
 		return;
 	}
 	char* json_string = new char[len + 1];
 	json_string[len] = '\0';
 	if(len != fread(json_string, 1, len, fp))
 	{
-		delete[] json_string;
 		LogError("Failed read contents of netlist file %s\n", fname.c_str());
 		m_parseOK = false;
+		delete[] json_string;
+		fclose(fp);
 		return;
 	}
 	fclose(fp);
@@ -72,6 +74,7 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 	{
 		LogError("Failed to create JSON tokenizer object\n");
 		m_parseOK = false;
+		delete[] json_string;
 		return;
 	}
 	json_tokener_error err;
@@ -81,6 +84,7 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 		const char* desc = json_tokener_error_desc(err);
 		LogError("JSON parsing failed (err = %s)\n", desc);
 		m_parseOK = false;
+		delete[] json_string;
 		return;
 	}
 
