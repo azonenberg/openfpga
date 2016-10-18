@@ -41,7 +41,7 @@ uint32_t AllocateLabel(
 	PARGraph*& dgraph,
 	labelmap& lmap,
 	std::string description);
-void BuildGraphs(
+bool BuildGraphs(
 	Greenpak4Netlist* netlist,
 	Greenpak4Device* device,
 	PARGraph*& ngraph,

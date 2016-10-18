@@ -20,10 +20,10 @@
 
 using namespace std;
 
-void MakeNetlistEdges(Greenpak4Netlist* netlist);
+bool MakeNetlistEdges(Greenpak4Netlist* netlist);
 void MakeDeviceEdges(Greenpak4Device* device);
 
-void MakeNetlistNodes(
+bool MakeNetlistNodes(
 	Greenpak4Netlist* netlist,
 	PARGraph*& ngraph,
 	ilabelmap& ilmap);
@@ -63,7 +63,7 @@ void ReplicateVREF(
 /**
 	@brief Build the graphs
  */
-void BuildGraphs(
+bool BuildGraphs(
 	Greenpak4Netlist* netlist,
 	Greenpak4Device* device,
 	PARGraph*& ngraph,
@@ -86,11 +86,15 @@ void BuildGraphs(
 
 	//Create all of the nodes for the netlist, then connect with edges.
 	//This requires breaking point-to-multipoint nets into multiple point-to-point links.
-	MakeNetlistNodes(netlist, ngraph, ilmap);
-	MakeNetlistEdges(netlist);
+	if(!MakeNetlistNodes(netlist, ngraph, ilmap))
+		return false;
+	if(!MakeNetlistEdges(netlist))
+		return false;
 
 	//Infer extra support nodes for things that use hidden functions of others
 	InferExtraNodes(netlist, device, ngraph, ilmap);
+
+	return true;
 }
 
 /**
@@ -331,7 +335,7 @@ void InferExtraNodes(
 /**
 	@brief Make all of the nodes for the netlist graph
  */
-void MakeNetlistNodes(
+bool MakeNetlistNodes(
 	Greenpak4Netlist* netlist,
 	PARGraph*& ngraph,
 	ilabelmap& ilmap)
@@ -359,7 +363,7 @@ void MakeNetlistNodes(
 			LogError(
 				"Cell \"%s\" is of type \"%s\" which is not a valid GreenPak4 primitive\n",
 				cell->m_name.c_str(), cell->m_type.c_str());
-			exit(-1);
+			return false;
 		}
 
 		//Create a node for the cell
@@ -367,6 +371,8 @@ void MakeNetlistNodes(
 		cell->m_parnode = nnode;
 		ngraph->AddNode(nnode);
 	}
+
+	return true;
 }
 
 /**
@@ -535,7 +541,7 @@ void MakeDeviceNodes(
 /**
 	@brief Make all of the edges in the netlist
  */
-void MakeNetlistEdges(Greenpak4Netlist* netlist)
+bool MakeNetlistEdges(Greenpak4Netlist* netlist)
 {
 	LogDebug("Creating PAR netlist...\n");
 	LogIndenter li;
@@ -595,7 +601,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 				LogError(
 					"Net \"%s\" is connected directly to multiple top-level ports (need an IOB)\n",
 					node->m_name.c_str());
-				exit(-1);
+				return false;
 			}
 
 			for(auto c : node->m_nodeports)
@@ -618,7 +624,7 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 					c.m_portname.c_str(),
 					c.m_cell->m_type.c_str()
 					);
-				exit(-1);
+				return false;
 			}
 		}
 
@@ -662,11 +668,13 @@ void MakeNetlistEdges(Greenpak4Netlist* netlist)
 			LogError(
 				"Net \"%s\" has loads, but no driver\n",
 				node->m_name.c_str());
-			exit(-1);
+			return false;
 		}
 		else if(!has_loads)
 			LogDebug("[NULL]\n");
 	}
+
+	return true;
 }
 
 /**

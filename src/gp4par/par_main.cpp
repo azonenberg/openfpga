@@ -33,7 +33,8 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 	LogNotice("\nCreating netlist graphs...\n");
 	PARGraph* ngraph = NULL;
 	PARGraph* dgraph = NULL;
-	BuildGraphs(netlist, device, ngraph, dgraph, lmap);
+	if(!BuildGraphs(netlist, device, ngraph, dgraph, lmap))
+		return false;
 
 	//Create and run the PAR engine
 	Greenpak4PAREngine engine(ngraph, dgraph, lmap);
