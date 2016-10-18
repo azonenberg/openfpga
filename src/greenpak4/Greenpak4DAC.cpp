@@ -124,7 +124,8 @@ bool Greenpak4DAC::CommitChanges()
 bool Greenpak4DAC::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4DAC::Save(bool* bitstream)

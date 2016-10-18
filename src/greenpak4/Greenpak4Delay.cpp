@@ -100,7 +100,8 @@ bool Greenpak4Delay::CommitChanges()
 bool Greenpak4Delay::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4Delay::Save(bool* bitstream)

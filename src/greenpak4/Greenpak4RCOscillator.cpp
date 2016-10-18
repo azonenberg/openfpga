@@ -158,7 +158,8 @@ bool Greenpak4RCOscillator::CommitChanges()
 
 bool Greenpak4RCOscillator::Load(bool* /*bitstream*/)
 {
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4RCOscillator::Save(bool* bitstream)

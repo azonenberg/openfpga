@@ -108,7 +108,8 @@ bool Greenpak4PowerOnReset::CommitChanges()
 
 bool Greenpak4PowerOnReset::Load(bool* /*bitstream*/)
 {
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4PowerOnReset::Save(bool* bitstream)

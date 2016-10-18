@@ -102,7 +102,8 @@ unsigned int Greenpak4CrossConnection::GetOutputNetNumber(string /*port*/)
 bool Greenpak4CrossConnection::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4CrossConnection::Save(bool* bitstream)

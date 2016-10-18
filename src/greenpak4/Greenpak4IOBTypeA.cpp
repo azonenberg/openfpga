@@ -58,7 +58,8 @@ string Greenpak4IOBTypeA::GetDescription()
 bool Greenpak4IOBTypeA::Load(bool* /*bitstream*/)
 {
 	//TODO
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4IOBTypeA::Save(bool* bitstream)

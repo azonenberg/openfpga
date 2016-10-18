@@ -161,7 +161,8 @@ bool Greenpak4PGA::CommitChanges()
 bool Greenpak4PGA::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4PGA::Save(bool* bitstream)

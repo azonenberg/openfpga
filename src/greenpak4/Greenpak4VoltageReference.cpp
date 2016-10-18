@@ -104,7 +104,8 @@ bool Greenpak4VoltageReference::CommitChanges()
 bool Greenpak4VoltageReference::Load(bool* /*bitstream*/)
 {
 	//TODO: how do we do this?
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4VoltageReference::Save(bool* /*bitstream*/)

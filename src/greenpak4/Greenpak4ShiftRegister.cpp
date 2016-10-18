@@ -133,7 +133,8 @@ bool Greenpak4ShiftRegister::CommitChanges()
 bool Greenpak4ShiftRegister::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4ShiftRegister::Save(bool* bitstream)

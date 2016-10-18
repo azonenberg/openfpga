@@ -49,6 +49,7 @@ bool Greenpak4PowerRail::CommitChanges()
 
 bool Greenpak4PowerRail::Load(bool* /*bitstream*/)
 {
+	//no error, we have no config to read
 	return true;
 }
 

@@ -132,7 +132,8 @@ bool Greenpak4Comparator::CommitChanges()
 bool Greenpak4Comparator::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4Comparator::Save(bool* bitstream)

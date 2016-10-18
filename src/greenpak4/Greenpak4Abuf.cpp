@@ -83,7 +83,8 @@ bool Greenpak4Abuf::CommitChanges()
 bool Greenpak4Abuf::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4Abuf::Save(bool* /*bitstream*/)

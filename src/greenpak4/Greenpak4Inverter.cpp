@@ -91,7 +91,8 @@ bool Greenpak4Inverter::CommitChanges()
 bool Greenpak4Inverter::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4Inverter::Save(bool* bitstream)

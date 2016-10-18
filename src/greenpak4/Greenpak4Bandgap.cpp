@@ -126,7 +126,8 @@ bool Greenpak4Bandgap::CommitChanges()
 
 bool Greenpak4Bandgap::Load(bool* /*bitstream*/)
 {
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4Bandgap::Save(bool* bitstream)

@@ -125,7 +125,8 @@ bool Greenpak4LFOscillator::CommitChanges()
 
 bool Greenpak4LFOscillator::Load(bool* /*bitstream*/)
 {
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4LFOscillator::Save(bool* bitstream)

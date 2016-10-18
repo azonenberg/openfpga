@@ -141,7 +141,8 @@ bool Greenpak4RingOscillator::CommitChanges()
 
 bool Greenpak4RingOscillator::Load(bool* /*bitstream*/)
 {
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4RingOscillator::Save(bool* bitstream)

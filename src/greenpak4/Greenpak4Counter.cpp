@@ -174,7 +174,8 @@ unsigned int Greenpak4Counter::GetOutputNetNumber(string port)
 
 bool Greenpak4Counter::Load(bool* /*bitstream*/)
 {
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4Counter::Save(bool* bitstream)

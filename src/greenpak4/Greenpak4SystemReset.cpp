@@ -127,7 +127,8 @@ bool Greenpak4SystemReset::CommitChanges()
 
 bool Greenpak4SystemReset::Load(bool* /*bitstream*/)
 {
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4SystemReset::Save(bool* bitstream)

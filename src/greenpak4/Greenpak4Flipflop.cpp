@@ -134,7 +134,8 @@ bool Greenpak4Flipflop::CommitChanges()
 
 bool Greenpak4Flipflop::Load(bool* /*bitstream*/)
 {
-	LogFatal("Unimplemented\n");
+	LogError("Unimplemented\n");
+	return false;
 }
 
 bool Greenpak4Flipflop::Save(bool* bitstream)
