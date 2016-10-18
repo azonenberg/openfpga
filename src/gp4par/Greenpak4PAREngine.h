@@ -35,7 +35,7 @@ protected:
 	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot);
 
 	virtual uint32_t ComputeCongestionCost();
-	virtual void InitialPlacement_core();
+	virtual bool InitialPlacement_core();
 
 	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate);
 
