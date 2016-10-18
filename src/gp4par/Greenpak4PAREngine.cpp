@@ -39,7 +39,7 @@ Greenpak4PAREngine::~Greenpak4PAREngine()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Initial placement
 
-void Greenpak4PAREngine::InitialPlacement_core()
+bool Greenpak4PAREngine::InitialPlacement_core()
 {
 	//Make a map of all nodes to their names
 	map<string, Greenpak4BitstreamEntity*> nmap;
@@ -58,7 +58,8 @@ void Greenpak4PAREngine::InitialPlacement_core()
 		auto cell = dynamic_cast<Greenpak4NetlistCell*>(entity);
 		if(cell == NULL)
 		{
-			LogFatal("Cell in netlist is not a Greenpak4NetlistCell\n");
+			LogError("Cell in netlist is not a Greenpak4NetlistCell\n");
+			return false;
 		}
 
 		//Search for a LOC constraint, if there is one
@@ -71,7 +72,7 @@ void Greenpak4PAREngine::InitialPlacement_core()
 		{
 			LogError("Cell %s has invalid LOC constraint %s (no matching site in device)\n",
 				cell->m_name.c_str(), loc.c_str());
-			exit(-1);
+			return false;
 		}
 
 		//If it exists, is it a legal site?
@@ -86,7 +87,7 @@ void Greenpak4PAREngine::InitialPlacement_core()
 				m_lmap[site->GetPARNode()->GetLabel()].c_str(),
 				m_lmap[node->GetLabel()].c_str()
 				);
-			exit(-1);
+			return false;
 		}
 
 		//The site exists, is valid, and we're constrained to it.
@@ -96,7 +97,7 @@ void Greenpak4PAREngine::InitialPlacement_core()
 			LogError(
 				"Cell %s has invalid LOC constraint %s (another instance is already constrained there)\n",
 				cell->m_name.c_str(), loc.c_str());
-			exit(-1);
+			return false;
 		}
 
 		//Everything is good, apply the constraint
@@ -151,10 +152,12 @@ void Greenpak4PAREngine::InitialPlacement_core()
 					cell->m_name.c_str(),
 					m_lmap[label].c_str()
 					);
-				exit(1);
+				return false;
 			}
 		}
 	}
+
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

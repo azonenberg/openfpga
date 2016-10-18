@@ -20,7 +20,7 @@
 
 using namespace std;
 
-void CheckAnalogIbuf(Greenpak4BitstreamEntity* load, Greenpak4IOB* iob);
+bool CheckAnalogIbuf(Greenpak4BitstreamEntity* load, Greenpak4IOB* iob);
 
 /**
 	@brief The main place-and-route logic
@@ -184,20 +184,23 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 	for(unsigned int i=0; i<device->GetAcmpCount(); i++)
 	{
 		auto acmp = device->GetAcmp(i);
-		CheckAnalogIbuf(acmp, dynamic_cast<Greenpak4IOB*>(acmp->GetInput().GetRealEntity()));
+		if(!CheckAnalogIbuf(acmp, dynamic_cast<Greenpak4IOB*>(acmp->GetInput().GetRealEntity())))
+			ok = false;
 	}
 
 	//Check for ABUF with inputs driven from non-analog IOs
 	auto abuf = device->GetAbuf();
-	if(abuf)
-		CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(abuf->GetInput().GetRealEntity()));
+	if(abuf && !CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(abuf->GetInput().GetRealEntity())))
+		return false;
 
 	//Check for PGA with inputs driven from non-analog IOs
 	auto pga = device->GetPGA();
 	if(pga)
 	{
-		CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(pga->GetInputP().GetRealEntity()));
-		CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(pga->GetInputN().GetRealEntity()));
+		if(!CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(pga->GetInputP().GetRealEntity())))
+			ok = false;
+		if(!CheckAnalogIbuf(abuf, dynamic_cast<Greenpak4IOB*>(pga->GetInputN().GetRealEntity())))
+			ok = false;
 	}
 
 	//TODO: Check for VREF with inputs driven from non-analog IOs
@@ -382,19 +385,19 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 	return ok;
 }
 
-void CheckAnalogIbuf(Greenpak4BitstreamEntity* load, Greenpak4IOB* iob)
+bool CheckAnalogIbuf(Greenpak4BitstreamEntity* load, Greenpak4IOB* iob)
 {
 	if(!iob)
-		return;
+		return true;
 	if(iob->IsAnalogIbuf())
-		return;
+		return true;
 
 	LogError("%s is driven by IOB %s, which does not have IBUF_TYPE = ANALOG\n",
 		load->GetDescription().c_str(),
 		iob->GetDescription().c_str()
 		);
 
-	exit(-1);
+	return false;
 }
 
 /**

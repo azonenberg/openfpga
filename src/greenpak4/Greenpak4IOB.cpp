@@ -184,7 +184,7 @@ bool Greenpak4IOB::CommitChanges()
 		{
 			LogError("Top-level port \"%s\" has attribute %s with unrecognized value \"%s\"\n",
 				cell->m_name.c_str(), x.first.c_str(), x.second.c_str());
-			exit(-1);
+			return false;
 		}
 
 		//LogNotice("        %s = %s\n", x.first.c_str(), x.second.c_str());

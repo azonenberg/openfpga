@@ -58,7 +58,8 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 		return false;
 
 	//Do an initial valid, but not necessarily routable, placement
-	InitialPlacement(label_names);
+	if(!InitialPlacement(label_names))
+		return false;
 
 	//Converge until we get a passing placement
 	LogNotice("\nOptimizing placement...\n");
@@ -195,7 +196,7 @@ bool PAREngine::SanityCheck(map<uint32_t, string> label_names)
 /**
 	@brief Generate an initial placement that is legal, but may or may not be routable
  */
-void PAREngine::InitialPlacement(map<uint32_t, string>& label_names)
+bool PAREngine::InitialPlacement(map<uint32_t, string>& label_names)
 {
 	LogVerbose("Global placement of %d instances into %d sites...\n",
 		m_netlist->GetNumNodes(),
@@ -212,7 +213,8 @@ void PAREngine::InitialPlacement(map<uint32_t, string>& label_names)
 	m_device->IndexNodesByLabel();
 
 	//Do the actual placement (technology specific)
-	InitialPlacement_core();
+	if(!InitialPlacement_core())
+		return false;
 
 	//Post-placement sanity check
 	LogVerbose("Running post-placement sanity checks...\n");
@@ -224,14 +226,17 @@ void PAREngine::InitialPlacement(map<uint32_t, string>& label_names)
 		if(!mate->MatchesLabel(node->GetLabel()))
 		{
 			std::string node_types = GetNodeTypes(mate, label_names);
-			LogFatal(
+			LogError(
 				"Found a node during initial placement that was assigned to an illegal site.\n"
 				"    The node is type \"%s\". It was placed in a site valid for types:\n%s",
 				label_names[node->GetLabel()].c_str(),
 				node_types.c_str()
 				);
+			return false;
 		}
 	}
+
+	return true;
 }
 
 /**
