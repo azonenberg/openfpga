@@ -39,8 +39,7 @@ void SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size)
 	if(0 != (err = libusb_interrupt_transfer(hdev, 2|LIBUSB_ENDPOINT_OUT, 
 	                                         const_cast<uint8_t*>(buf), size, &transferred, 250)))
 	{
-		LogError("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
-		exit(-1);
+		LogFatal("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
 	}
 }
 
@@ -51,8 +50,7 @@ void ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size)
 	if(0 != (err = libusb_interrupt_transfer(hdev, 1|LIBUSB_ENDPOINT_IN, 
 	                                         buf, size, &transferred, 250)))
 	{
-		LogError("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
-		exit(-1);
+		LogFatal("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
 	}
 }
 
@@ -64,8 +62,7 @@ void USBSetup()
 {
 	if(0 != libusb_init(NULL))
 	{
-		LogError("libusb_init failed\n");
-		exit(-1);
+		LogFatal("libusb_init failed\n");
 	}
 }
 
@@ -82,8 +79,7 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 	ssize_t devcount = libusb_get_device_list(NULL, &list);
 	if(devcount < 0)
 	{
-		LogError("libusb_get_device_list failed\n");
-		exit(-1);
+		LogFatal("libusb_get_device_list failed\n");
 	}
 	libusb_device* device = NULL;
 	bool found = false;
@@ -107,8 +103,7 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 	{
 		if(0 != libusb_open(device, &hdev))
 		{
-			LogError("libusb_open failed\n");
-			exit(-1);
+			LogFatal("libusb_open failed\n");
 		}
 	}
 	libusb_free_device_list(list, 1);
@@ -121,22 +116,19 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 	int err = libusb_detach_kernel_driver(hdev, 0);
 	if( (0 != err) && (LIBUSB_ERROR_NOT_FOUND != err) )
 	{
-		LogError("Can't detach kernel driver\n");
-		exit(-1);
+		LogFatal("Can't detach kernel driver\n");
 	}
 
 	//Set the device configuration
 	if(0 != (err = libusb_set_configuration(hdev, 1)))
 	{
-		LogError("Failed to select device configuration (err = %d)\n", err);
-		exit(-1);
+		LogFatal("Failed to select device configuration (err = %d)\n", err);
 	}
 
 	//Claim interface 0
 	if(0 != libusb_claim_interface(hdev, 0))
 	{
-		LogError("Failed to claim interface\n");
-		exit(-1);
+		LogFatal("Failed to claim interface\n");
 	}
 
 	return hdev;
@@ -148,8 +140,7 @@ string GetStringDescriptor(hdevice hdev, uint8_t index)
 	char strbuf[128];
 	if(libusb_get_string_descriptor_ascii(hdev, index, (unsigned char*)strbuf, sizeof(strbuf)) < 0)
 	{
-		LogError("libusb_get_string_descriptor_ascii failed\n");
-		exit(-1);
+		LogFatal("libusb_get_string_descriptor_ascii failed\n");
 	}
 
 	return string(strbuf);
