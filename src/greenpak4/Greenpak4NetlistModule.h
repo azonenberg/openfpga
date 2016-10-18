@@ -88,6 +88,10 @@ public:
 		m_nodes[m_nextNetNumber ++] = net;
 	}
 
+	//Returns true if we're good, false if parsing failed for some reason
+	bool Validate()
+	{ return m_parseOK; }
+
 protected:
 	Greenpak4Netlist* m_parent;
 
@@ -113,6 +117,8 @@ protected:
 	cellmap m_cells;
 
 	int32_t m_nextNetNumber;
+
+	bool m_parseOK;
 };
 
 #endif

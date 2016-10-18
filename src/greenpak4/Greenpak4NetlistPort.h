@@ -48,6 +48,13 @@ public:
 
 	//The graph node for this IOB (only valid during place-and-route)
 	PARGraphNode* m_parnode;
+
+	//Returns true if we're good, false if parsing failed for some reason
+	bool Validate()
+	{ return m_parseOK; }
+
+protected:
+	bool m_parseOK;
 };
 
 #endif

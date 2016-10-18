@@ -52,6 +52,10 @@ public:
 
 	void Reindex(bool verbose = true);
 
+	//Returns true if we're good, false if parsing failed for some reason
+	bool Validate()
+	{ return m_parseOK; }
+
 protected:
 
 	void IndexNets(bool verbose);
@@ -71,6 +75,8 @@ protected:
 
 	//All of the nets in the netlist
 	nodeset m_nodes;
+
+	bool m_parseOK;
 };
 
 #endif

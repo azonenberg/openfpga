@@ -31,31 +31,36 @@ Greenpak4NetlistEntity::~Greenpak4NetlistEntity()
 
 Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 	: m_topModule(NULL)
+	, m_parseOK(true)
 {
 	//Read the netlist
 	FILE* fp = fopen(fname.c_str(), "rb");
 	if(fp == NULL)
 	{
 		LogError("Failed to open netlist file %s\n", fname.c_str());
-		exit(-1);
+		m_parseOK = false;
+		return;
 	}
 	if(0 != fseek(fp, 0, SEEK_END))
 	{
 		LogError("Failed to seek to end of netlist file %s\n", fname.c_str());
-		exit(-1);
+		m_parseOK = false;
+		return;
 	}
 	size_t len = ftell(fp);
 	if(0 != fseek(fp, 0, SEEK_SET))
 	{
 		LogError("Failed to seek to start of netlist file %s\n", fname.c_str());
-		exit(-1);
+		m_parseOK = false;
+		return;
 	}
 	char* json_string = new char[len + 1];
 	json_string[len] = '\0';
 	if(len != fread(json_string, 1, len, fp))
 	{
 		LogError("Failed read contents of netlist file %s\n", fname.c_str());
-		exit(-1);
+		m_parseOK = false;
+		return;
 	}
 	fclose(fp);
 
@@ -64,7 +69,8 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 	if(!tok)
 	{
 		LogError("Failed to create JSON tokenizer object\n");
-		exit(-1);
+		m_parseOK = false;
+		return;
 	}
 	json_tokener_error err;
 	json_object* object = json_tokener_parse_verbose(json_string, &err);
@@ -72,7 +78,8 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 	{
 		const char* desc = json_tokener_error_desc(err);
 		LogError("JSON parsing failed (err = %s)\n", desc);
-		exit(-1);
+		m_parseOK = false;
+		return;
 	}
 
 	//Read stuff from it
@@ -117,7 +124,8 @@ void Greenpak4Netlist::Load(json_object* object)
 			if(!json_object_is_type(child, json_type_string))
 			{
 				LogError("netlist creator should be of type string but isn't\n");
-				exit(-1);
+				m_parseOK = false;
+				return;
 			}
 			m_creator = json_object_get_string(child);
 			LogNotice("Netlist creator: %s\n", m_creator.c_str());
@@ -129,7 +137,8 @@ void Greenpak4Netlist::Load(json_object* object)
 			if(!json_object_is_type(child, json_type_object))
 			{
 				LogError("netlist modules should be of type object but isn't\n");
-				exit(-1);
+				m_parseOK = false;
+				return;
 			}
 
 			//Load them
@@ -140,7 +149,8 @@ void Greenpak4Netlist::Load(json_object* object)
 		else
 		{
 			LogError("Unknown top-level JSON object \"%s\"\n", name.c_str());
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 	}
 
@@ -276,20 +286,29 @@ void Greenpak4Netlist::LoadModules(json_object* object)
 		if(!json_object_is_type(child, json_type_object))
 		{
 			LogError("netlist module entry should be of type object but isn't\n");
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 
 		//TODO: If the child object is a standard library cell, don't bother parsing it?
 
 		//Load it
 		Greenpak4NetlistModule *module = new Greenpak4NetlistModule(this, name, child);
+		if(!module->Validate())
+		{
+			m_parseOK = false;
+			return;
+		}
 		m_modules[name] = module;
 
 		//Did we get a top-level module?
-		if(module->m_attributes.find("top") != module->m_attributes.end()) {
-			if(m_topModule) {
+		if(module->m_attributes.find("top") != module->m_attributes.end())
+		{
+			if(m_topModule)
+			{
 				LogError("More than one top-level module in netlist\n");
-				exit(-1);
+				m_parseOK = false;
+				return;
 			}
 			m_topModule = module;
 		}
@@ -299,6 +318,7 @@ void Greenpak4Netlist::LoadModules(json_object* object)
 	if(m_topModule == NULL)
 	{
 		LogError("Unable to find a top-level module in netlist\n");
-		exit(-1);
+		m_parseOK = false;
+		return;
 	}
 }

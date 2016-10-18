@@ -214,6 +214,8 @@ int main(int argc, char* argv[])
 	//Parse the unplaced netlist
 	LogNotice("\nLoading Yosys JSON file \"%s\".\n", fname.c_str());
 	Greenpak4Netlist netlist(fname);
+	if(!netlist.Validate())
+		return 1;
 
 	//Create the device and initialize all IO pins
 	Greenpak4Device device(part, unused_pull, unused_drive);
@@ -221,7 +223,7 @@ int main(int argc, char* argv[])
 	//Do the actual P&R
 	LogNotice("\nSynthesizing top-level module \"%s\".\n", netlist.GetTopModule()->GetName().c_str());
 	if(!DoPAR(&netlist, &device))
-		return 2;
+		return 1;
 
 	//Write the final bitstream
 	LogNotice("\nWriting final bitstream to output file \"%s\", using ID code 0x%x.\n",

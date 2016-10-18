@@ -32,6 +32,7 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 	: m_parent(parent)
 	, m_name(name)
 	, m_nextNetNumber(0)
+	, m_parseOK(true)
 {
 	CreatePowerNets();
 
@@ -50,7 +51,8 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 		if(!json_object_is_type(child, json_type_object))
 		{
 			LogError("module child should be of type object but isn't\n");
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 
 		if(name == "attributes")
@@ -72,7 +74,8 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 				if(!json_object_is_type(cobject, json_type_object))
 				{
 					LogError("module child should be of type object but isn't\n");
-					exit(-1);
+					m_parseOK = false;
+					return;
 				}
 
 				//Load ports
@@ -82,11 +85,17 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 					if(m_ports.find(cname) != m_ports.end())
 					{
 						LogError("Attempted redeclaration of module port \"%s\"\n", name.c_str());
-						exit(-1);
+						m_parseOK = false;
+						return;
 					}
 
 					//Create the port
 					Greenpak4NetlistPort* port = new Greenpak4NetlistPort(this, cname, cobject);
+					if(!port->Validate())
+					{
+						m_parseOK = false;
+						return;
+					}
 					m_ports[cname] = port;
 				}
 
@@ -102,7 +111,8 @@ Greenpak4NetlistModule::Greenpak4NetlistModule(Greenpak4Netlist* parent, std::st
 				else
 				{
 					LogError("Unknown top-level JSON object \"%s\"\n", name.c_str());
-					exit(-1);
+					m_parseOK = false;
+					return;
 				}
 			}
 		}
@@ -184,7 +194,8 @@ void Greenpak4NetlistModule::LoadAttributes(json_object* object)
 		if(m_attributes.find(cname) != m_attributes.end())
 		{
 			LogError("Attempted redeclaration of module attribute \"%s\"\n", cname.c_str());
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 
 		//Save the attribute
@@ -235,7 +246,8 @@ void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
 			if(!json_object_is_type(child, json_type_string))
 			{
 				LogError("Cell type should be of type string but isn't\n");
-				exit(-1);
+				m_parseOK = false;
+				return;
 			}
 
 			cell->m_type = json_object_get_string(child);
@@ -259,7 +271,8 @@ void Greenpak4NetlistModule::LoadCell(std::string name, json_object* object)
 		else
 		{
 			LogError("Unknown cell child object \"%s\"\n", cname.c_str());
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 	}
 }
@@ -270,7 +283,8 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 	if(m_nets.find(name) != m_nets.end())
 	{
 		LogError("Attempted redeclaration of net \"%s\" \n", name.c_str());
-		exit(-1);
+		m_parseOK = false;
+		return;
 	}
 
 	vector<Greenpak4NetlistNode*> nodes;
@@ -294,7 +308,8 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 			if(!json_object_is_type(child, json_type_array))
 			{
 				LogError("Net name bits should be of type array but isn't\n");
-				exit(-1);
+				m_parseOK = false;
+				return;
 			}
 
 			//Walk the array
@@ -312,7 +327,8 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 					if(value != "x")
 					{
 						LogError("Net number in module should be of type integer, or \"x\", but isn't\n");
-						exit(-1);
+						m_parseOK = false;
+						return;
 					}
 				}
 
@@ -322,7 +338,8 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 					if(!json_object_is_type(jnode, json_type_int))
 					{
 						LogError("Net number in module should be of type integer but isn't\n");
-						exit(-1);
+						m_parseOK = false;
+						return;
 					}
 
 					netnum = json_object_get_int(jnode);
@@ -360,7 +377,8 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 			if(!json_object_is_type(child, json_type_object))
 			{
 				LogError("Net attributes should be of type object but isn't\n");
-				exit(-1);
+				m_parseOK = false;
+				return;
 			}
 
 			//Same attributes for all nodes in the vector net
@@ -372,7 +390,8 @@ void Greenpak4NetlistModule::LoadNetName(std::string name, json_object* object)
 		else
 		{
 			LogError("Unknown netname child object \"%s\"\n", cname.c_str());
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 	}
 }
@@ -401,7 +420,8 @@ void Greenpak4NetlistModule::LoadNetAttributes(Greenpak4NetlistNode* net, json_o
 		if(net->m_attributes.find(cname) != net->m_attributes.end())
 		{
 			LogError("Attempted redeclaration of net attribute \"%s\"\n", cname.c_str());
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 
 		//LogNotice("    net %s attribute %s = %s\n", net->m_name.c_str(), cname.c_str(), json_object_get_string(child));
@@ -425,7 +445,8 @@ void Greenpak4NetlistModule::LoadCellAttributes(Greenpak4NetlistCell* cell, json
 		if(cell->m_attributes.find(cname) != cell->m_attributes.end())
 		{
 			LogError("Attempted redeclaration of cell attribute \"%s\"\n", cname.c_str());
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 
 		//Save the attribute
@@ -449,7 +470,8 @@ void Greenpak4NetlistModule::LoadCellParameters(Greenpak4NetlistCell* cell, json
 		if(cell->m_parameters.find(cname) != cell->m_parameters.end())
 		{
 			LogError("Attempted redeclaration of cell parameter \"%s\"\n", cname.c_str());
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 
 		//Save the attribute
@@ -470,7 +492,8 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 		if(!json_object_is_type(child, json_type_array))
 		{
 			LogError("Cell connection value should be of type array but isn't\n");
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 
 		//Sanity check the length. If empty, bail without creating a floating net.
@@ -500,7 +523,8 @@ void Greenpak4NetlistModule::LoadCellConnections(Greenpak4NetlistCell* cell, jso
 			else if(!json_object_is_type(jnode, json_type_int))
 			{
 				LogError("Net number for cell should be of type integer but isn't\n");
-				exit(-1);
+				m_parseOK = false;
+				return;
 			}
 
 			else

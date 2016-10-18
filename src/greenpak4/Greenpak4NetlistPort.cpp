@@ -36,6 +36,7 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 	, m_module(module)
 	, m_net(NULL)
 	, m_parnode(NULL)
+	, m_parseOK(true)
 {
 	json_object_iterator end = json_object_iter_end(object);
 	for(json_object_iterator it = json_object_iter_begin(object);
@@ -52,7 +53,8 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 			if(!json_object_is_type(child, json_type_string))
 			{
 				LogError("Port direction should be of type string but isn't\n");
-				exit(-1);
+				m_parseOK = false;
+				return;
 			}
 
 			//See what the direction is
@@ -66,7 +68,8 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 			else
 			{
 				LogError("Invalid port direction \"%s\"\n", str.c_str());
-				exit(-1);
+				m_parseOK = false;
+				return;
 			}
 		}
 
@@ -77,7 +80,8 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 			{
 				LogError("Port bits (for module %s, port %s) should be of type array but isn't\n",
 					module->GetName().c_str(), name.c_str());
-				exit(-1);
+				m_parseOK = false;
+				return;
 			}
 
 			//Walk the array
@@ -89,7 +93,8 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 				{
 					LogError("Net number of port \"%s\" should be of type integer but isn't\n",
 						m_name.c_str());
-					exit(-1);
+					m_parseOK = false;
+				return;
 				}
 
 				m_nodes.push_back(module->GetNode(json_object_get_int(jnode)));
@@ -100,7 +105,8 @@ Greenpak4NetlistPort::Greenpak4NetlistPort(Greenpak4NetlistModule* module, std::
 		else
 		{
 			LogError("Unknown JSON blob \"%s\" under module port list\n", name.c_str());
-			exit(-1);
+			m_parseOK = false;
+			return;
 		}
 	}
 }
