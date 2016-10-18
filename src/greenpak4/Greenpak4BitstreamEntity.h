@@ -26,7 +26,7 @@ class Greenpak4NetlistEntity;
 
 #include <string>
 #include <vector>
-#include "../xbpar/xbpar.h"
+#include <xbpar.h>
 
 class Greenpak4EntityOutput;
 

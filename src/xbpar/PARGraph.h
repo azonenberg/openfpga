@@ -19,6 +19,7 @@
 #ifndef PARGraph_h
 #define PARGraph_h
 
+#include <cstdint>
 #include <vector>
 
 class PARGraphNode;

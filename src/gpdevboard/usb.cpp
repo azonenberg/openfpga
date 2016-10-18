@@ -24,8 +24,8 @@
 	#undef ERROR
 #endif
 
-#include "../log/log.h"
-#include "gpdevboard.h"
+#include <log.h>
+#include <gpdevboard.h>
 
 using namespace std;
 

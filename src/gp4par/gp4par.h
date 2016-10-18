@@ -19,17 +19,17 @@
 #ifndef gp4par_h
 #define gp4par_h
 
-#include "../greenpak4/Greenpak4.h"
-#include "../xbpar/xbpar.h"
-
+#include <cstdio>
+#include <string>
 #include <map>
+#include <log.h>
+#include <xbpar.h>
+#include <Greenpak4.h>
+
 typedef std::map<uint32_t, std::string> labelmap;
 typedef std::map<std::string, uint32_t> ilabelmap;
 
 #include "Greenpak4PAREngine.h"
-
-#include <stdio.h>
-#include <string>
 
 //Console help
 void ShowUsage();

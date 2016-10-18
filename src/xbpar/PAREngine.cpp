@@ -16,8 +16,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#include "xbpar.h"
 #include <cstdlib>
+#include <log.h>
+#include <xbpar.h>
 
 using namespace std;
 

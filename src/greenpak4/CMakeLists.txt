@@ -1,4 +1,4 @@
-ADD_LIBRARY(greenpak4 STATIC
+add_library(greenpak4 STATIC
 
 	# Post-PAR netlist
 	Greenpak4Abuf.cpp
@@ -36,6 +36,8 @@ ADD_LIBRARY(greenpak4 STATIC
 	Greenpak4NetlistPort.cpp
 )
 
+target_include_directories(greenpak4
+	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 target_link_libraries(greenpak4
-	json-c xbpar log
-	)
+	json-c xbpar log)

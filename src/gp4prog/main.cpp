@@ -19,8 +19,8 @@
 #include <cstring>
 #include <cmath>
 #include <unistd.h>
-#include "../log/log.h"
-#include "../gpdevboard/gpdevboard.h"
+#include <log.h>
+#include <gpdevboard.h>
 
 using namespace std;
 
