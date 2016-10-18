@@ -296,6 +296,7 @@ void Greenpak4Netlist::LoadModules(json_object* object)
 		Greenpak4NetlistModule *module = new Greenpak4NetlistModule(this, name, child);
 		if(!module->Validate())
 		{
+			delete module;
 			m_parseOK = false;
 			return;
 		}
