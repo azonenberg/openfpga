@@ -16,22 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef gp4prog_h
-#define gp4prog_h
+#ifndef gpdevboard_h
+#define gpdevboard_h
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // System / library headers
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <string>
 #include <vector>
-
-#include <unistd.h>
-#include <fcntl.h>
-
-#include "../log/log.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USB command wrappers

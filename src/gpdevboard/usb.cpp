@@ -20,16 +20,14 @@
 
 //Windows appears to define an ERROR macro in its headers.
 //Conflicts with ERROR enum defined in log.h.
-#if defined(_WIN32) && defined(ERROR)
+#if defined(_WIN32)
 	#undef ERROR
 #endif
 
-#include "gp4prog.h"
+#include "../log/log.h"
+#include "gpdevboard.h"
 
 using namespace std;
-
-#define EP_OUT 0x02
-#define EP_IN  0x81
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USB command helpers
@@ -38,7 +36,8 @@ void SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size)
 {
 	int transferred;
 	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, EP_OUT, const_cast<uint8_t*>(buf), size, &transferred, 250)))
+	if(0 != (err = libusb_interrupt_transfer(hdev, 2|LIBUSB_ENDPOINT_OUT, 
+	                                         const_cast<uint8_t*>(buf), size, &transferred, 250)))
 	{
 		LogError("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
 		exit(-1);
@@ -49,7 +48,8 @@ void ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size)
 {
 	int transferred;
 	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, EP_IN, buf, size, &transferred, 250)))
+	if(0 != (err = libusb_interrupt_transfer(hdev, 1|LIBUSB_ENDPOINT_IN, 
+	                                         buf, size, &transferred, 250)))
 	{
 		LogError("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
 		exit(-1);

@@ -16,7 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#include "gp4prog.h"
+#include "../log/log.h"
+#include "gpdevboard.h"
 
 using namespace std;
 
