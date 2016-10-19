@@ -251,6 +251,9 @@ void InferExtraNodes(
 				acmp_id ++);
 			acmp->m_name = tmp;
 
+			//Set a special attribute so that we don't give a "has no loads" warning
+			acmp->m_attributes["__IGNORE__NOLOAD__"] = "1";
+
 			//Add the cell to the module
 			module->AddCell(acmp);
 

@@ -117,6 +117,11 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		if( (cell != NULL) &&  ( (cell->m_type == "GP_IOBUF") || (cell->m_type == "GP_OBUF") ) )
 			continue;
 
+		//If we have a magic attribute set, it's OK
+		//(for example, inferred ACMP for a VREF we used for another purpose)
+		if(cell->HasAttribute("__IGNORE__NOLOAD__"))
+			continue;
+
 		//If we have no loads, warn
 		if(node->GetEdgeCount() == 0)
 		{

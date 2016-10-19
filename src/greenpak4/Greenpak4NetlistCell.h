@@ -47,6 +47,9 @@ public:
 	bool HasParameter(std::string att)
 	{ return m_parameters.find(att) != m_parameters.end(); }
 
+	bool HasAttribute(std::string att)
+	{ return m_attributes.find(att) != m_attributes.end(); }
+
 	//Indicates whether the cell is an I/O buffer
 	bool IsIOB()
 	{ return (m_type == "GP_IBUF") || (m_type == "GP_IOBUF") || (m_type == "GP_OBUF") || (m_type == "GP_OBUFT"); }
