@@ -235,7 +235,6 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item PGEN mode of LUT4/PGEN block
 \item Wake-Sleep
 \item DCMP/PWM
-\item Edge detector mode of PDELAY/edge detect block
 \item Slave SPI
 \end{itemize}
 
@@ -1676,14 +1675,13 @@ GP_DAC dac(
 
 \subsubsection{Introduction}
 This primitive corresponds to a programmable digital delay line with four taps. It uniformly delays an incoming digital
-waveform by a fixed amount.
+waveform by a fixed amount. A glitch filter may be enabled to add an additional ~200 ns delay (PTV dependent) while
+rejecting glitches during this period.
 
 For the SLG46620V each tap is nominally 165 ns at 3.3V. The exact range of tap delay values is PTV dependent; see
 device datasheet for values.
 
 TODO: is jitter characterized anywhere?
-
-TODO: Add parameter for glitch filter?
 
 \subsubsection{Port Descriptions}
 
@@ -1705,6 +1703,8 @@ TODO: Add parameter for glitch filter?
 \thickhline
 \tokenstyle{DELAY\_STEPS} & Integer & 3 & Number of delay taps (1-4) \\
 \thinhline
+\tokenstyle{GLITCH\_FILTER} & Boolean & 1 & True to enable the glitch filter (approximately 200 ns delay) \\
+\thinhline
 \end{tabularx}
 
 \subsubsection{Verilog Usage Example}
@@ -1713,7 +1713,10 @@ The example shown in figure \ref{gp-delay-example} shows a delay with a nominal 
 
 \begin{figure}[h]
 \begin{lstlisting}
-GP_DELAY #(.DELAY_STEPS(1)) delay(
+GP_DELAY #(
+	.DELAY_STEPS(1),
+	.GLITCH_FILTER(0)
+) delay(
 	.IN(clk),
 	.OUT(clk_delayed)
 	);
@@ -2233,6 +2236,72 @@ GP_DFFSRI #(
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_DFFSRI}}
 \label{gp-dffsri-example}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_EDGEDET
+
+\pagebreak
+\subsection{\tokenstyle{GP\_EDGEDET}: Edge detector}
+\label{gp-edgedet}
+
+%parameter EDGE_DIRECTION = "RISING";
+%parameter DELAY_STEPS = 1;
+%parameter GLITCH_FILTER = 0;
+
+\subsubsection{Introduction}
+
+This primitive is a monostable delay line with four taps. It can be configured to detect rising edges, falling, or
+both. An additional delay can be added for glitch filtering.
+
+For the SLG46620V each tap is nominally 150 ns at 3.3V. The exact range of tap delay values is PTV dependent; see
+device datasheet for values.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{IN} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{OUT} & Output & 1 & Edge detector output. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{DELAY\_STEPS} & Integer & 3 & Number of delay taps (1-4) \\
+\thinhline
+\tokenstyle{EDGE\_DIRECTION} & String & & One of ``RISING", ``FALLING", ``BOTH" \\
+\thinhline
+\tokenstyle{GLITCH\_FILTER} & Boolean & 1 & True to enable the glitch filter (approximately 200 ns delay) \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-edgedet-example} drives clk\_edge high for approximately 150 ns each time clk goes
+high.
+
+\begin{figure}[h]
+\begin{lstlisting}
+GP_EDGEDET #(
+    .DELAY_STEPS(1),
+    .EDGE_DIRECTION("RISING"),
+    .GLITCH_FILTER(0)
+) edgedet(
+	.IN(clk),
+	.OUT(clk_edge)
+	);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_EDGEDET}}
+\label{gp-edgedet-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -71,19 +71,17 @@ module Ethernet(rst_done, clk_debug, txd);
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Delay line + LUT for generating 125 ns pulses
+	// Edge detector for producing ~150 ns FLPs
 
-	//TODO: just use an edge detector once that's implemented?
-
-	wire pulse_en_delayed;
-	GP_DELAY #(
-		.DELAY_STEPS(1)
+	wire pulse_out;
+	GP_EDGEDET #(
+		.DELAY_STEPS(1),
+		.EDGE_DIRECTION("RISING"),
+		.GLITCH_FILTER(0)
 	) delay(
 		.IN(pulse_en),
-		.OUT(pulse_en_delayed)
+		.OUT(pulse_out)
 		);
-
-	wire pulse_out = pulse_en_delayed && !pulse_en;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Debug outputs

@@ -53,6 +53,16 @@ protected:
 	Greenpak4EntityOutput m_input;
 
 	int m_delayTap;
+
+	enum modes
+	{
+		DELAY,
+		RISING_EDGE,
+		FALLING_EDGE,
+		BOTH_EDGE
+	} m_mode;
+
+	bool m_glitchFilter;
 };
 
 #endif	//Greenpak4Delay_h

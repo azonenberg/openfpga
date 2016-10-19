@@ -33,6 +33,8 @@ Greenpak4Delay::Greenpak4Delay(
 		: Greenpak4BitstreamEntity(device, matrix, ibase, obase, cbase)
 		, m_input(device->GetGround())
 		, m_delayTap(1)
+		, m_mode(DELAY)
+		, m_glitchFilter(false)
 {
 }
 
@@ -91,8 +93,37 @@ bool Greenpak4Delay::CommitChanges()
 	if(ncell == NULL)
 		return true;
 
+	//Delay line
+	if(ncell->m_type == "GP_DELAY")
+		m_mode = DELAY;
+
+	//Edge detector
+	else
+	{
+		m_mode = RISING_EDGE;
+
+		if(ncell->HasParameter("EDGE_DIRECTION"))
+		{
+			string dir = ncell->m_parameters["EDGE_DIRECTION"];
+			if(dir == "RISING")
+				m_mode = RISING_EDGE;
+			else if(dir == "FALLING")
+				m_mode = FALLING_EDGE;
+			else if(dir == "BOTH")
+				m_mode = BOTH_EDGE;
+			else
+			{
+				LogError("Invalid delay specifier %s (must be one of RISING, FALLING, BOTH)\n", dir.c_str());
+				return false;
+			}
+		}
+	}
+
 	if(ncell->HasParameter("DELAY_STEPS"))
 		m_delayTap = atoi(ncell->m_parameters["DELAY_STEPS"].c_str());
+
+	if(ncell->HasParameter("GLITCH_FILTER"))
+		m_glitchFilter = atoi(ncell->m_parameters["GLITCH_FILTER"].c_str()) ? true : false;
 
 	return true;
 }
@@ -108,16 +139,36 @@ bool Greenpak4Delay::Save(bool* bitstream)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
-	
+
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input))
 		return false;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
-	//Mode: for now, hard code to delay (no edge detect supported)
-	bitstream[m_configBase + 0] = true;
-	bitstream[m_configBase + 1] = true;
+	//Mode selector
+	switch(m_mode)
+	{
+		case RISING_EDGE:
+			bitstream[m_configBase + 0] = false;
+			bitstream[m_configBase + 1] = false;
+			break;
+
+		case FALLING_EDGE:
+			bitstream[m_configBase + 0] = true;
+			bitstream[m_configBase + 1] = false;
+			break;
+
+		case BOTH_EDGE:
+			bitstream[m_configBase + 0] = false;
+			bitstream[m_configBase + 1] = true;
+			break;
+
+		case DELAY:
+			bitstream[m_configBase + 0] = true;
+			bitstream[m_configBase + 1] = true;
+			break;
+	}
 
 	//Select the number of delay taps
 	int ntap = m_delayTap - 1;
@@ -131,8 +182,8 @@ bool Greenpak4Delay::Save(bool* bitstream)
 	bitstream[m_configBase + 2] = (ntap & 1) ? true : false;
 	bitstream[m_configBase + 3] = (ntap & 2) ? true : false;
 
-	//Output delay (for now, always off)
-	bitstream[m_configBase + 4] = false;
+	//Glitch filter
+	bitstream[m_configBase + 4] = m_glitchFilter;
 
 	return true;
 }

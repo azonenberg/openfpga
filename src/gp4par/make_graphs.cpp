@@ -465,8 +465,12 @@ void MakeDeviceNodes(
 
 	//Make device nodes for the delay lines
 	uint32_t delay_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DELAY");
+	uint32_t edgedet_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_EDGEDET");
 	for(unsigned int i=0; i<device->GetDelayCount(); i++)
-		MakeNode(delay_label, device->GetDelay(i), dgraph);
+	{
+		auto node = MakeNode(delay_label, device->GetDelay(i), dgraph);
+		node->AddAlternateLabel(edgedet_label);
+	}
 
 	//Make device nodes for each type of flipflop
 	uint32_t dff_label = AllocateLabel(ngraph, dgraph, lmap, "GP_DFF");
