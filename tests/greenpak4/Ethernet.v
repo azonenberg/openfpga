@@ -21,13 +21,13 @@
 /**
 	@brief Minimal 10baseT autonegotiation implementation
  */
-module Ethernet(rst_done, txd, lcw, burst_start, lcw_advance, link_up);
+module Ethernet(txd, lcw, burst_start, lcw_advance, link_up);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 
 	(* LOC = "P20" *)
-	output reg rst_done = 0;
+	output link_up;
 
 	(* LOC = "P19" *)
 	(* DRIVE_STRENGTH = "2X" *)
@@ -41,9 +41,6 @@ module Ethernet(rst_done, txd, lcw, burst_start, lcw_advance, link_up);
 
 	(* LOC = "P16" *)
 	output lcw_advance;
-
-	(* LOC = "P15" *)
-	output link_up;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Power-on-reset configuration
@@ -251,12 +248,5 @@ module Ethernet(rst_done, txd, lcw, burst_start, lcw_advance, link_up);
 		end
 
 	end
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Debug outputs
-
-	//Detect when the system reset has completed
-	always @(posedge clk_fabric)
-		rst_done <= 1;
 
 endmodule
