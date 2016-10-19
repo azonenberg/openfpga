@@ -21,7 +21,7 @@
 /**
 	@brief Minimal 10baseT autonegotiation implementation
  */
-module Ethernet(rst_done, txd, lcw, pulse_start, burst_start, lcw_advance, pgen_reset);
+module Ethernet(rst_done, txd, lcw, burst_start);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -36,16 +36,7 @@ module Ethernet(rst_done, txd, lcw, pulse_start, burst_start, lcw_advance, pgen_
 	output wire lcw;
 
 	(* LOC = "P17" *)
-	output wire pulse_start;
-
-	(* LOC = "P16" *)
 	output burst_start;
-
-	(* LOC = "P15" *)
-	output lcw_advance;
-
-	(* LOC = "P14" *)
-	output pgen_reset;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Power-on-reset configuration
