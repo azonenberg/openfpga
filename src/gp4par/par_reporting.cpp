@@ -67,6 +67,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int acmp_used = 0;
 	unsigned int pga_used = 0;
 	unsigned int abuf_used = 0;
+	unsigned int delay_used = 0;
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
@@ -117,6 +118,8 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 			pga_used ++;
 		else if(dynamic_cast<Greenpak4Abuf*>(entity))
 			abuf_used ++;
+		else if(dynamic_cast<Greenpak4Delay*>(entity))
+			delay_used ++;
 	}
 	if(device->GetLFOscillator()->GetPARNode()->GetMate() != NULL)
 		lfosc_used = 1;
@@ -147,6 +150,8 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	PrintRow("  COUNT8_ADV:",	counters_8_adv_used,	device->Get8BitCounterCount(true));
 	PrintRow("  COUNT14:",		counters_14_used,		device->Get14BitCounterCount(false));
 	PrintRow("  COUNT14_ADV:",	counters_14_adv_used,	device->Get14BitCounterCount(true));
+	PrintRow("DELAY:",			delay_used,				device->GetDelayCount());
+	//TODO: print {as DELAY / as EDGEDET}
 	PrintRow("FF:",				total_dff_used,			device->GetTotalFFCount());
 	PrintRow("  DFF:",			dff_used,				device->GetDFFCount());
 	PrintRow("  DFFSR:",		dffsr_used,				device->GetDFFSRCount());

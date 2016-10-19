@@ -19,9 +19,9 @@
 `default_nettype none
 
 /**
-	@brief Minimal 10baseT autonegotiation
+	@brief Minimal 10baseT autonegotiation implementation
  */
-module Ethernet(rst_done, clk_debug, txd);
+module Ethernet(rst_done, clk_debug, txd, lcw);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -35,17 +35,17 @@ module Ethernet(rst_done, clk_debug, txd);
 	(* LOC = "P18" *)
 	output wire txd;
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// System reset stuff
+	(* LOC = "P17" *)
+	output wire lcw;
 
-	//Power-on reset flag
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Power-on-reset configuration
+
 	wire por_done;
 	GP_POR #(.POR_TIME(500)) por (.RST_DONE(por_done));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Clock source - 2 MHz RC oscillator
-
-	//500 ns per cycle
+	// Clock source - 2 MHz RC oscillator (500 ns per cycle)
 
 	wire clk_hardip;
 	wire clk_fabric;
@@ -60,37 +60,46 @@ module Ethernet(rst_done, clk_debug, txd);
 		.CLKOUT_HARDIP(clk_hardip),
 		.CLKOUT_FABRIC(clk_fabric)
 	);
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// The actual logic
+	// Edge detector for producing ~150 ns FLP/NLPs
 
 	reg pulse_en = 0;
-
-	always @(posedge clk_fabric) begin
-		pulse_en <= ~pulse_en;
-	end
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Edge detector for producing ~150 ns FLPs
-
-	wire pulse_out;
 	GP_EDGEDET #(
 		.DELAY_STEPS(1),
 		.EDGE_DIRECTION("RISING"),
 		.GLITCH_FILTER(0)
 	) delay(
 		.IN(pulse_en),
-		.OUT(pulse_out)
+		.OUT(txd)
 		);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Link codeword generation
+
+	GP_PGEN #(
+		.PATTERN_DATA(16'h55aa),
+		.PATTERN_LEN(5'd16)
+	) pgen (
+		.nRST(1'b1),
+		.CLK(clk_fabric),
+		.OUT(lcw)
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// The actual logic
+
+	always @(posedge clk_fabric) begin
+		pulse_en <= ~pulse_en;
+	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Debug outputs
 
 	//Detect when the system reset has completed
 	always @(posedge clk_fabric)
-		rst_done <= 1;	
+		rst_done <= 1;
 
 	assign clk_debug = clk_fabric;
-	assign txd = pulse_out;
 
 endmodule

@@ -443,6 +443,13 @@ void MakeDeviceNodes(
 		node->AddAlternateLabel(inv_label);
 	}
 
+	//Add the second label for the LUT/pattern generator cell, if present
+	uint32_t pgen_label = AllocateLabel(ngraph, dgraph, lmap, "GP_PGEN");
+	auto pgen = device->GetPgen();
+	LogDebug("pgen = %p\n", pgen);
+	if(pgen)
+		pgen->GetPARNode()->AddAlternateLabel(pgen_label);
+
 	//Make device nodes for the shift registers
 	uint32_t shreg_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_SHREG");
 	for(unsigned int i=0; i<device->GetShiftRegisterCount(); i++)

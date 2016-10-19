@@ -232,7 +232,6 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Comparators: Global buffer bandwidth selection, speed doubler
 \item ADC
 \item DAC (partially implemented)
-\item PGEN mode of LUT4/PGEN block
 \item Wake-Sleep
 \item DCMP/PWM
 \item Slave SPI
@@ -2734,6 +2733,65 @@ GP_PGA #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_PGEN
+
+\pagebreak
+\clearpage
+\subsection{\tokenstyle{GP\_PGEN}: Pattern Generator}
+\label{gp-pgen}
+
+\subsubsection{Introduction}
+This primitive represents a digital sequence generator. It outputs a repeating sequence of 2...16 user-selected bits
+on successive clock edges.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{nRST} & Input & 1 & Active-low reset. OUT is set to PATTERN\_DATA[0] during reset.\\
+\thinhline
+\tokenstyle{CLK} & Input & 1 & Pattern clock\\
+\thinhline
+\tokenstyle{OUT} & Output & 1 & Generated pattern data.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{PATTERN\_DATA} & Integer & 16 & The pattern to be generated (LSB sent first). \\
+\thinhline
+\tokenstyle{PATTERN\_LEN} & Integer & 5 & Length of the pattern to send. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-pgen-example} outputs an alternating sequence of 1s and 0s on the signal
+\namestyle{data}, shifting phase after 8 bits have been sent.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire por_done;
+GP_PGEN #(
+	.PATTERN_DATA(16'h55AA),
+	.PATTERN_LEN(5'd16)
+) pgen (
+	.nRST(nrst),
+	.CLK(clk),
+	.OUT(data)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_PGEN}}
+\label{gp-pgen-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_POR
 
 \pagebreak
@@ -2783,7 +2841,6 @@ GP_POR #(
 \caption{Example usage of \tokenstyle{GP\_POR}}
 \label{gp-por-example}
 \end{figure}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_PWRCTL

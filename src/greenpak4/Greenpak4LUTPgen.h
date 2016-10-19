@@ -41,7 +41,15 @@ public:
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
 
+	virtual bool CommitChanges();
+
+	virtual std::vector<std::string> GetInputPorts() const;
+
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+
 protected:
+	bool m_pgenMode;
+	int m_patternLen;
 };
 
 #endif
