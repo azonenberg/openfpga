@@ -21,7 +21,7 @@
 /**
 	@brief Minimal 10baseT autonegotiation implementation
  */
-module Ethernet(rst_done, txd, lcw, burst_start);
+module Ethernet(rst_done, txd, lcw, burst_start, lcw_advance, pulse_start_gated);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -30,6 +30,7 @@ module Ethernet(rst_done, txd, lcw, burst_start);
 	output reg rst_done = 0;
 
 	(* LOC = "P19" *)
+	(* DRIVE_STRENGTH = "2X" *)
 	output wire txd;
 
 	(* LOC = "P18" *)
@@ -37,6 +38,12 @@ module Ethernet(rst_done, txd, lcw, burst_start);
 
 	(* LOC = "P17" *)
 	output burst_start;
+
+	(* LOC = "P16" *)
+	output lcw_advance;
+
+	(* LOC = "P15" *)
+	output pulse_start_gated;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Power-on-reset configuration
@@ -128,15 +135,17 @@ module Ethernet(rst_done, txd, lcw, burst_start);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Link codeword generation
 
-	//Send the link codeword LSB first on the wire
-	//0x4000 = acknowledgement (always send this since we don't have enough FFs to actually check the LCW)
-	//0x0001 = 10baseT half duplex
-	//0x0002 = 10baseT full duplex
+	//Send the link codeword onto the wire.
+	//Ethernet bit ordering is backwards so send MSB first in Verilog ordering
+	//0x8000 = selector (802.3)
+	//0x0400 = 10baseT half duplex
+	//0x0200 = 10baseT full duplex
+	//0x0002 = ACK (always send this since we don't have enough FFs to actually check the LCW)
 
 	reg pgen_reset	= 1;
 	reg lcw_advance	= 0;
 	GP_PGEN #(
-		.PATTERN_DATA(16'h4003),
+		.PATTERN_DATA(16'h8602),
 		.PATTERN_LEN(5'd16)
 	) pgen (
 		.nRST(pgen_reset),
@@ -169,7 +178,6 @@ module Ethernet(rst_done, txd, lcw, burst_start);
 	reg next_pulse_is_lcw = 0;
 	reg burst_active = 0;
 	reg pulse_start_gated = 0;
-	reg first_flp = 0;
 	always @(posedge clk_fabric) begin
 
 		//Default to not sending a pulse or advancing the LCW
@@ -179,40 +187,36 @@ module Ethernet(rst_done, txd, lcw, burst_start);
 
 		//Start a new burst every 16 ms.
 		//Always start the burst with a clock pulse, then the first LCW bit.
+		//Whack the pgen with a clock now to get the first output bit ready.
 		if(burst_start) begin
 			burst_active		<= 1;
-			pgen_reset			<= 0;
 			next_pulse_is_lcw	<= 0;
-			first_flp			<= 1;
+			lcw_advance			<= 1;
 		end
 
 		//Stop the burst after 33 pulses.
-		else if(burst_done)
+		else if(burst_done) begin
 			burst_active	<= 0;
+			pgen_reset		<= 0;
+		end
 
 		//Indicates a new pulse is coming
 		//Move this up one clock to reduce fan-in on the pulse generation logic
 		pulse_start_gated <= burst_active && pulse_start;
 
+		if(pulse_en && next_pulse_is_lcw)
+			lcw_advance				<= 1;
+
 		//Send a pulse if we're currently in a burst
 		if(pulse_start_gated) begin
 
 			//Sending a bit from the LCW
-			if(next_pulse_is_lcw) begin
+			if(next_pulse_is_lcw)
 				pulse_en			<= lcw;
-				lcw_advance			<= 1;
-			end
 
 			//Not sending LCW bit, send a FLP instead
-			else begin
+			else
 				pulse_en			<= 1'b1;
-				first_flp			<= 0;
-			end
-
-			//If we just sent the first FLP, whack the PGEN with an extra clock
-			//to complete the reset
-			if(first_flp)
-				lcw_advance			<= 1;
 
 			//Alternate LCW and FLP bits
 			next_pulse_is_lcw		<= ~next_pulse_is_lcw;
