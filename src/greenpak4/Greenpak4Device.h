@@ -254,9 +254,9 @@ public:
 	//TODO: Make this work for parts other than SLG46620V!!!
 	Greenpak4LUTPgen* GetPgen()
 	{
-		if(m_lut4s.size() < 1)
+		if(m_lut4s.size() < 2)
 			return NULL;
-		return dynamic_cast<Greenpak4LUTPgen*>(m_lut4s[0]);
+		return dynamic_cast<Greenpak4LUTPgen*>(m_lut4s[1]);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

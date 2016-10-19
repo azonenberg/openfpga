@@ -117,6 +117,18 @@ void Greenpak4Device::CreateDevice_SLG46620()
 			3));		//this is a LUT3
 	}
 
+	//Create the second LUT4 (no special functionality)
+	//Put it FIRST in the array so that initial placement prefers it
+	//and doesn't take up the PGEN site right away
+	m_lut4s.push_back(new Greenpak4LUT(
+		this,
+		1,
+		1,		//Attached to crossbar #1
+		32,		//LUT4 base is row 32
+		13,		//we come after the last LUT3
+		778,	//LUT4s start at bitstream offset 778, 2^4 bits per LUT
+		4));	//this is a LUT4
+
 	//Create the first LUT4 (pattern generator capable)
 	//For now, no PGEN support, only usable as a LUT
 	m_lut4s.push_back(new Greenpak4LUTPgen(
@@ -126,16 +138,6 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		32,		//LUT4 base is row 32
 		13,		//we come after the last LUT3
 		656,	//LUT4 starts after last LUT3
-		4));	//this is a LUT4
-
-	//Create the second LUT4 (no special functionality)
-	m_lut4s.push_back(new Greenpak4LUT(
-		this,
-		1,
-		1,		//Attached to crossbar #1
-		32,		//LUT4 base is row 32
-		13,		//we come after the last LUT3
-		778,	//LUT4s start at bitstream offset 778, 2^4 bits per LUT
 		4));	//this is a LUT4
 
 	//Create the Type-A IOBs (with output enable)
