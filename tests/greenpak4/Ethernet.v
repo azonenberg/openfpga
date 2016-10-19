@@ -21,7 +21,7 @@
 /**
 	@brief Minimal 10baseT autonegotiation implementation
  */
-module Ethernet(rst_done, clk_debug, txd, lcw);
+module Ethernet(rst_done, txd, lcw, pulse_start, burst_start);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -30,13 +30,16 @@ module Ethernet(rst_done, clk_debug, txd, lcw);
 	output reg rst_done = 0;
 
 	(* LOC = "P19" *)
-	output wire clk_debug;
-
-	(* LOC = "P18" *)
 	output wire txd;
 
-	(* LOC = "P17" *)
+	(* LOC = "P18" *)
 	output wire lcw;
+
+	(* LOC = "P17" *)
+	output wire pulse_start;
+
+	(* LOC = "P16" *)
+	output burst_start;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Power-on-reset configuration
@@ -75,22 +78,136 @@ module Ethernet(rst_done, clk_debug, txd, lcw);
 		);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Interval timer for pulses within a burst
+
+	//Delay between successive pulses is 62.5 us (125 clocks)
+	localparam PULSE_INTERVAL = 124;
+	reg[7:0] pulse_count = PULSE_INTERVAL;
+	wire pulse_start = (pulse_count == 0);
+	always @(posedge clk_hardip) begin
+
+		if(pulse_count == 0)
+			pulse_count <= PULSE_INTERVAL;
+
+		else
+			pulse_count <= pulse_count - 1'd1;
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Interval timer for bursts
+
+	//Delay between successive bursts is ~16 ms (32000 clocks)
+	//This is too big for one counter at our clock speed so do an 8ms counter plus one more stage in DFF logic
+
+	//8ms counter
+	localparam BURST_INTERVAL = 15999;
+	reg[13:0] interval_count = BURST_INTERVAL;
+	wire burst_start_raw = (interval_count == 0);
+	always @(posedge clk_hardip) begin
+
+		if(interval_count == 0)
+			interval_count <= BURST_INTERVAL;
+
+		else
+			interval_count <= interval_count - 1'd1;
+
+	end
+
+	//Post-divider to give one short pulse every 16 ms
+	reg burst_start_t = 0;
+	reg burst_start = 0;
+	always @(posedge clk_fabric) begin
+		burst_start <= 0;
+
+		if(burst_start_raw)
+			burst_start_t	<= !burst_start_t;
+
+		if(burst_start_t && burst_start_raw)
+			burst_start		<= 1;
+
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Link codeword generation
 
+	//TODO: Bit ordering fix
+	//We should send the LSB first on the wire... is this correct?
+
+	//0x4000 = acknowledgement (always send this since we don't have enough FFs to actually check the LCW)
+	//0x0001 = 10baseT half duplex
+	//0x0002 = 10baseT full duplex
+	reg pgen_reset	= 1;				//TODO
+	reg lcw_advance	= 0;
 	GP_PGEN #(
-		.PATTERN_DATA(16'h55aa),
+		//.PATTERN_DATA(16'h4003),
+		.PATTERN_DATA(16'h5555),
 		.PATTERN_LEN(5'd16)
 	) pgen (
-		.nRST(1'b1),
-		.CLK(clk_fabric),
+		.nRST(pgen_reset),
+		.CLK(lcw_advance),
 		.OUT(lcw)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// The actual logic
+	// FLP bursting logic
 
+	//We have a total of 33 pulse times in our burst.
+	//End the burst after the 33rd pulse.
+	/*
+	localparam BURST_MAX = 32;
+	reg[7:0] burst_count = BURST_MAX;
+	wire burst_done = (burst_count == 0);
+	always @(posedge pulse_start) begin
+
+		if(burst_count == 0)
+			burst_count <= BURST_MAX;
+
+		else
+			burst_count <= burst_count - 1'd1;
+
+	end
+	*/
+
+	//When a burst starts send 16 FLPs, with a LCW pulse in between each
+	//Send one more pulse at the end
+	reg next_pulse_is_lcw = 0;
+	reg burst_active = 0;
 	always @(posedge clk_fabric) begin
-		pulse_en <= ~pulse_en;
+
+		//Default to not sending a pulse or advancing the LCW
+		lcw_advance		<= 0;
+		pulse_en		<= 0;
+
+		//Start a new burst every 16 ms.
+		//Stop it after 33 pulses.
+		if(burst_start)
+			burst_active	<= 1;
+		//else if(burst_done)
+		//	burst_active	<= 0;
+
+		//DEBUG: always send a pulse
+		pulse_en <= burst_active;
+
+		/*
+		//Send a pulse
+		if(pulse_start) begin
+
+			//Sending a bit from the LCW
+			if(next_pulse_is_lcw) begin
+				pulse_en			<= lcw;
+				lcw_advance			<= 1;
+			end
+
+			//Not sending LCW bit, send a FLP instead
+			else
+				pulse_en			<= 1'b1;
+
+			//Alternate LCW and FLP bits
+			next_pulse_is_lcw	<= ~next_pulse_is_lcw;
+
+		end
+		*/
+
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +216,5 @@ module Ethernet(rst_done, clk_debug, txd, lcw);
 	//Detect when the system reset has completed
 	always @(posedge clk_fabric)
 		rst_done <= 1;
-
-	assign clk_debug = clk_fabric;
 
 endmodule
