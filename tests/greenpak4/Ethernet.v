@@ -21,7 +21,7 @@
 /**
 	@brief Minimal 10baseT autonegotiation implementation
  */
-module Ethernet(rst_done, txd, lcw, burst_start, lcw_advance, pulse_start_gated);
+module Ethernet(rst_done, txd, lcw, burst_start, lcw_advance, link_up);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -43,7 +43,7 @@ module Ethernet(rst_done, txd, lcw, burst_start, lcw_advance, pulse_start_gated)
 	output lcw_advance;
 
 	(* LOC = "P15" *)
-	output pulse_start_gated;
+	output link_up;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Power-on-reset configuration
@@ -133,6 +133,23 @@ module Ethernet(rst_done, txd, lcw, burst_start, lcw_advance, pulse_start_gated)
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// HACK: Interval timer for declaring the link up (we ignore incoming FLPs/LITs for now)
+
+	wire linkup_en;
+	GP_COUNT14_ADV #(
+		.CLKIN_DIVIDE(1),
+		.COUNT_TO(128),
+		.RESET_MODE("RISING"),
+		.RESET_VALUE("COUNT_TO")
+	) linkup_count (
+		.CLK(clk_hardip),
+		.RST(1'b0),
+		.UP(1'b0),
+		.KEEP(!burst_start),
+		.OUT(linkup_en)
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Link codeword generation
 
 	//Send the link codeword onto the wire.
@@ -178,12 +195,17 @@ module Ethernet(rst_done, txd, lcw, burst_start, lcw_advance, pulse_start_gated)
 	reg next_pulse_is_lcw = 0;
 	reg burst_active = 0;
 	reg pulse_start_gated = 0;
+	reg link_up = 0;
 	always @(posedge clk_fabric) begin
 
 		//Default to not sending a pulse or advancing the LCW
 		lcw_advance		<= 0;
 		pulse_en		<= 0;
 		pgen_reset		<= 1;
+
+		//TODO: detect this properly
+		if(linkup_en)
+			link_up		<= 1;
 
 		//Start a new burst every 16 ms.
 		//Always start the burst with a clock pulse, then the first LCW bit.
@@ -198,6 +220,11 @@ module Ethernet(rst_done, txd, lcw, burst_start, lcw_advance, pulse_start_gated)
 		else if(burst_done) begin
 			burst_active	<= 0;
 			pgen_reset		<= 0;
+		end
+
+		//If the link is up, stop the burst after one FLP (which is really a LIT at this point)
+		else if(link_up && pulse_start) begin
+			burst_active	<= 0;
 		end
 
 		//Indicates a new pulse is coming
