@@ -21,7 +21,7 @@
 /**
 	@brief Minimal 10baseT autonegotiation implementation
  */
-module Ethernet(rst_done, txd, lcw, pulse_start, burst_start);
+module Ethernet(rst_done, txd, lcw, pulse_start, burst_start, lcw_advance, pgen_reset);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -40,6 +40,12 @@ module Ethernet(rst_done, txd, lcw, pulse_start, burst_start);
 
 	(* LOC = "P16" *)
 	output burst_start;
+
+	(* LOC = "P15" *)
+	output lcw_advance;
+
+	(* LOC = "P14" *)
+	output pgen_reset;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Power-on-reset configuration
@@ -98,6 +104,7 @@ module Ethernet(rst_done, txd, lcw, pulse_start, burst_start);
 
 	//Delay between successive bursts is ~16 ms (32000 clocks)
 	//This is too big for one counter at our clock speed so do an 8ms counter plus one more stage in DFF logic
+	//TODO: make gp4_counters pass infer cascaded counters and/or fabric post-dividers automatically?
 
 	//8ms counter
 	localparam BURST_INTERVAL = 15999;
@@ -130,17 +137,15 @@ module Ethernet(rst_done, txd, lcw, pulse_start, burst_start);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Link codeword generation
 
-	//TODO: Bit ordering fix
-	//We should send the LSB first on the wire... is this correct?
-
+	//Send the link codeword LSB first on the wire
 	//0x4000 = acknowledgement (always send this since we don't have enough FFs to actually check the LCW)
 	//0x0001 = 10baseT half duplex
 	//0x0002 = 10baseT full duplex
-	reg pgen_reset	= 1;				//TODO
+
+	reg pgen_reset	= 1;
 	reg lcw_advance	= 0;
 	GP_PGEN #(
-		//.PATTERN_DATA(16'h4003),
-		.PATTERN_DATA(16'h5555),
+		.PATTERN_DATA(16'h4003),
 		.PATTERN_LEN(5'd16)
 	) pgen (
 		.nRST(pgen_reset),
@@ -153,44 +158,53 @@ module Ethernet(rst_done, txd, lcw, pulse_start, burst_start);
 
 	//We have a total of 33 pulse times in our burst.
 	//End the burst after the 33rd pulse.
-	/*
-	localparam BURST_MAX = 32;
-	reg[7:0] burst_count = BURST_MAX;
-	wire burst_done = (burst_count == 0);
-	always @(posedge pulse_start) begin
-
-		if(burst_count == 0)
-			burst_count <= BURST_MAX;
-
-		else
-			burst_count <= burst_count - 1'd1;
-
-	end
-	*/
+	//TODO: Add inference support to greenpak4_counters pass so we can infer GP_COUNTx_ADV cells from behavioral logic
+	wire burst_done;
+	GP_COUNT8_ADV #(
+		.CLKIN_DIVIDE(1),
+		.COUNT_TO(33),
+		.RESET_MODE("RISING"),
+		.RESET_VALUE("COUNT_TO")
+	) burst_count (
+		.CLK(clk_hardip),
+		.RST(burst_start),
+		.UP(1'b0),
+		.KEEP(!pulse_start),
+		.OUT(burst_done)
+	);
 
 	//When a burst starts send 16 FLPs, with a LCW pulse in between each
 	//Send one more pulse at the end
 	reg next_pulse_is_lcw = 0;
 	reg burst_active = 0;
+	reg pulse_start_gated = 0;
+	reg first_flp = 0;
 	always @(posedge clk_fabric) begin
 
 		//Default to not sending a pulse or advancing the LCW
 		lcw_advance		<= 0;
 		pulse_en		<= 0;
+		pgen_reset		<= 1;
 
 		//Start a new burst every 16 ms.
-		//Stop it after 33 pulses.
-		if(burst_start)
-			burst_active	<= 1;
-		//else if(burst_done)
-		//	burst_active	<= 0;
+		//Always start the burst with a clock pulse, then the first LCW bit.
+		if(burst_start) begin
+			burst_active		<= 1;
+			pgen_reset			<= 0;
+			next_pulse_is_lcw	<= 0;
+			first_flp			<= 1;
+		end
 
-		//DEBUG: always send a pulse
-		pulse_en <= burst_active;
+		//Stop the burst after 33 pulses.
+		else if(burst_done)
+			burst_active	<= 0;
 
-		/*
-		//Send a pulse
-		if(pulse_start) begin
+		//Indicates a new pulse is coming
+		//Move this up one clock to reduce fan-in on the pulse generation logic
+		pulse_start_gated <= burst_active && pulse_start;
+
+		//Send a pulse if we're currently in a burst
+		if(pulse_start_gated) begin
 
 			//Sending a bit from the LCW
 			if(next_pulse_is_lcw) begin
@@ -199,14 +213,20 @@ module Ethernet(rst_done, txd, lcw, pulse_start, burst_start);
 			end
 
 			//Not sending LCW bit, send a FLP instead
-			else
+			else begin
 				pulse_en			<= 1'b1;
+				first_flp			<= 0;
+			end
+
+			//If we just sent the first FLP, whack the PGEN with an extra clock
+			//to complete the reset
+			if(first_flp)
+				lcw_advance			<= 1;
 
 			//Alternate LCW and FLP bits
-			next_pulse_is_lcw	<= ~next_pulse_is_lcw;
+			next_pulse_is_lcw		<= ~next_pulse_is_lcw;
 
 		end
-		*/
 
 	end
 
