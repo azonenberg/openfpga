@@ -332,14 +332,14 @@ int main(int argc, char* argv[])
 	{
 		//Read the bitstream and check that it's the right size
 		vector<uint8_t> newBitstream;
-		if(!ReadBitstream(downloadFilename, newBitstream, detectedPart);
+		if(!ReadBitstream(downloadFilename, newBitstream, detectedPart))
 		{
 			SetStatusLED(hdev, 0);
 			return 1;
 		}
 
 		//Tweak the bitstream to apply all of the changes specified on the command line
-		if(!TweakBitstream(newBitstream, detectedPart, rcFtw, patternID, readProtect))
+		if(!TweakBitstream(newBitstream, detectedPart, rcFtw, patternId, readProtect))
 			return 1;
 
 		if(!programNvram)
