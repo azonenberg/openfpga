@@ -71,7 +71,6 @@ add_greenpak4_test(Ethernet)
 add_greenpak4_test(Inverters)
 add_greenpak4_test(Location)
 add_greenpak4_test(Loop)
-#add_greenpak4_test(PGA)
 add_greenpak4_test(POR)
 add_greenpak4_test(Tristate)
 add_greenpak4_test(Vector)
@@ -80,3 +79,12 @@ add_greenpak4_test(Vector)
 # Compile bitstreams for HiL tests
 
 add_greenpak4_bitstream(PGA)
+
+########################################################################################################################
+# Compile binaries for HiL tests (no install required here)
+
+add_executable(HIL_PGA
+	HIL_PGA.cpp)
+
+target_link_libraries(HIL_PGA
+	gpdevboard)
