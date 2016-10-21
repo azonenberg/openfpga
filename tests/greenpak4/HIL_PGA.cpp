@@ -63,9 +63,11 @@ int main(int argc, char* argv[])
 	}
 
 	//Turn off the LED before declaring success
-	LogDebug("Test complete, resetting board\n");
+	LogVerbose("\n");
+	LogVerbose("Test complete, resetting board\n");
 	SetStatusLED(hdev, 0);
 	Reset(hdev);
+	USBCleanup(hdev);
 	return 0;
 }
 
@@ -76,7 +78,53 @@ bool RunTest(hdevice hdev)
 {
 	LogIndenter li;
 
-	//
+	//Set up the I/O config we need for this test (?)
+	IOConfig ioConfig;
+	for(size_t i = 2; i <= 20; i++)
+		ioConfig.driverConfigs[i] = TP_RESET;
+	if(!SetIOConfig(hdev, ioConfig))
+		return false;
+
+	const int INPUT_PIN = 8;
+	const int OUTPUT_PIN = 7;
+
+	//Sweep input and verify output
+	LogVerbose("Running PGA voltage sweep\n");
+	LogVerbose("|%10s|%10s|%10s|%10s|%10s|%10s|\n", "Requested", "Actual", "Output", "Expected", "Error", "% error");
+	double step = 0.05;
+	for(double vtest = step; vtest < 0.51; vtest += step)
+	{
+		//Set up a signal generator on the input
+		if(!ConfigureSiggen(hdev, INPUT_PIN, vtest))
+			return false;
+
+		//Read the input
+		if(!SelectADCChannel(hdev, INPUT_PIN))
+			return false;
+		double vin;
+		if(!ReadADC(hdev, vin))
+			return false;
+
+		//Read the output
+		if(!SelectADCChannel(hdev, OUTPUT_PIN))
+			return false;
+		double vout;
+		if(!ReadADC(hdev, vout))
+			return false;
+
+		double expected = vin * 2;
+		double error = expected - vout;
+		double pctError = (error * 100) / expected;
+
+		LogVerbose("|%10.3f|%10.3f|%10.3f|%10.3f|%10.3f|%10.3f|\n", vtest, vin, vout, expected, error, pctError);
+
+		//TODO: Decide on an appropriate tolerance
+		if(pctError > 5)
+		{
+			LogError("Percent error is too big, test failed\n");
+			return false;
+		}
+	}
 
 	return true;
 }
