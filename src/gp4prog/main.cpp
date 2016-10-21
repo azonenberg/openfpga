@@ -27,19 +27,10 @@ using namespace std;
 void ShowUsage();
 void ShowVersion();
 
-const char *PartName(SilegoPart part);
-size_t BitstreamLength(SilegoPart part);
 const char *BitFunction(SilegoPart part, size_t bitno);
 
 bool SocketTest(hdevice hdev, SilegoPart part);
 bool TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq, uint8_t &ftw);
-
-enum class BitstreamKind {
-	UNRECOGNIZED,
-	EMPTY,
-	PROGRAMMED
-};
-BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream, uint8_t &patternId);
 
 vector<uint8_t> BitstreamFromHex(string hex);
 vector<uint8_t> ReadBitstream(string fname);
@@ -277,49 +268,8 @@ int main(int argc, char* argv[])
 	BitstreamKind bitstreamKind;
 	if(!(uploadFilename.empty() && downloadFilename.empty() && rcOscFreq == 0 && !test && !programNvram))
 	{
-		//Detect the part that's plugged in.
-		LogNotice("Detecting part\n");
-		LogIndenter li;
-
-		SilegoPart parts[] = { SLG46140V, SLG46620V };
-		for(SilegoPart part : parts)
+		if(!DetectPart(hdev, detectedPart, programmedBitstream, bitstreamKind))
 		{
-			LogVerbose("Selecting part %s\n", PartName(part));
-			if(!SetPart(hdev, part))
-				return 1;
-
-			//Read extant bitstream and determine part status.
-			LogVerbose("Reading bitstream from part\n");
-			if(!UploadBitstream(hdev, BitstreamLength(part) / 8, programmedBitstream))
-				return 1;
-
-			uint8_t patternId = 0;
-			bitstreamKind = ClassifyBitstream(part, programmedBitstream, patternId);
-			switch(bitstreamKind)
-			{
-				case BitstreamKind::EMPTY:
-					LogNotice("Detected empty %s\n", PartName(part));
-					break;
-
-				case BitstreamKind::PROGRAMMED:
-					LogNotice("Detected programmed %s (pattern ID %d)\n", PartName(part), patternId);
-					break;
-
-				case BitstreamKind::UNRECOGNIZED:
-					LogVerbose("Unrecognized bitstream\n");
-					continue;
-			}
-
-			if(bitstreamKind != BitstreamKind::UNRECOGNIZED)
-			{
-				detectedPart = part;
-				break;
-			}
-		}
-
-		if(detectedPart == SilegoPart::UNRECOGNIZED)
-		{
-			LogError("Could not detect a supported part\n");
 			SetStatusLED(hdev, 0);
 			return 1;
 		}
@@ -340,7 +290,8 @@ int main(int argc, char* argv[])
 	}
 
 	//We already have the programmed bitstream, so simply write it to a file
-	if(!uploadFilename.empty()) {
+	if(!uploadFilename.empty())
+	{
 		LogNotice("Writing programmed bitstream to %s\n", uploadFilename.c_str());
 		WriteBitstream(uploadFilename, programmedBitstream);
 	}
@@ -581,28 +532,6 @@ void ShowVersion()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Part database
 
-const char *PartName(SilegoPart part)
-{
-	switch(part)
-	{
-		case SLG46620V: return "SLG46620V";
-		case SLG46140V: return "SLG46140V";
-
-		default: LogFatal("Unknown part\n");
-	}
-}
-
-size_t BitstreamLength(SilegoPart part)
-{
-	switch(part)
-	{
-		case SLG46620V: return 2048;
-		case SLG46140V: return 1024;
-
-		default: LogFatal("Unknown part\n");
-	}
-}
-
 const char *BitFunction(SilegoPart part, size_t bitno)
 {
 	//The conditionals in this function are structured to resemble the structure of the datasheet.
@@ -841,82 +770,6 @@ bool TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq
 		return false;
 
 	return true;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Bitstream classification
-
-BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream, uint8_t &patternId)
-{
-	vector<uint8_t> emptyBitstream(BitstreamLength(part) / 8);
-	vector<uint8_t> factoryMask(BitstreamLength(part) / 8);
-
-	switch(part) {
-		case SLG46620V:
-			emptyBitstream[0x7f] = 0x5a;
-			emptyBitstream[0xff] = 0xa5;
-			//TODO: RC oscillator trim value, why is it factory programmed?
-			factoryMask[0xf7] = 0xff;
-			factoryMask[0xf8] = 0xff;
-			break;
-
-		case SLG46140V:
-			emptyBitstream[0x7b] = 0x5a;
-			emptyBitstream[0x7f] = 0xa5;
-			//TODO: RC oscillator trim value, why is it factory programmed?
-			factoryMask[0x77] = 0xff;
-			factoryMask[0x78] = 0xff;
-			break;
-
-		default:
-			LogFatal("Unknown part\n");
-	}
-
-	if(bitstream.size() != emptyBitstream.size())
-		return BitstreamKind::UNRECOGNIZED;
-
-	//Iterate over the bitstream, and print our decisions after every octet, in --debug mode.
-	bool isPresent = true;
-	bool isProgrammed = false;
-	for(size_t i = bitstream.size() - 1; i > 0; i--)
-	{
-		uint8_t maskedOctet = bitstream[i] & ~factoryMask[i];
-		if(maskedOctet != 0x00)
-			LogDebug("mask(bitstream[0x%02zx]) = 0x%02hhx\n", i, maskedOctet);
-
-		if(emptyBitstream[i] != 0x00 && maskedOctet != emptyBitstream[i] && isPresent)
-		{
-			LogDebug("Bitstream does not match empty bitstream signature, part not present.\n");
-			isPresent = false;
-			break;
-		}
-		else if(emptyBitstream[i] == 0x00 && maskedOctet != 0x00 && !isProgrammed)
-		{
-			LogDebug("Bitstream nonzero where empty bitstream isn't, part programmed.\n");
-			isProgrammed = true;
-		}
-	}
-
-	switch(part)
-	{
-		case SLG46620V:
-			patternId = (bitstream[0xfd] >> 7) | (bitstream[0xfe] << 1);
-			break;
-
-		case SLG46140V:
-			patternId = (bitstream[0x7d] >> 7) | (bitstream[0x7e] << 1);
-			break;
-
-		default:
-			LogFatal("Unknown part\n");
-	}
-
-	if(isPresent && isProgrammed)
-		return BitstreamKind::PROGRAMMED;
-	else if(isPresent)
-		return BitstreamKind::EMPTY;
-	else
-		return BitstreamKind::UNRECOGNIZED;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

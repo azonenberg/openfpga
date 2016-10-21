@@ -27,7 +27,10 @@ int main(int argc, char* argv[])
 
 	//expect one arg: the bitstream
 	if(argc != 2)
-		LogFatal("Usage: [testcase] bitstream.txt");
+	{
+		LogNotice("Usage: [testcase] bitstream.txt\n");
+		return 1;
+	}
 
 	//
 

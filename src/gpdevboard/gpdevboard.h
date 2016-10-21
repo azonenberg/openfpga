@@ -247,7 +247,23 @@ bool GetStatus(hdevice hdev, BoardStatus &status);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // High-level command helpers
 
+enum class BitstreamKind
+{
+	UNRECOGNIZED,
+	EMPTY,
+	PROGRAMMED
+};
+
 bool CheckStatus(hdevice hdev);
 hdevice OpenBoard();
+bool DetectPart(
+	hdevice hdev,
+	SilegoPart& detectedPart,
+	std::vector<uint8_t>& programmedBitstream,
+	BitstreamKind& bitstreamKind);
+BitstreamKind ClassifyBitstream(SilegoPart part, std::vector<uint8_t> bitstream, uint8_t &patternId);
+
+const char *PartName(SilegoPart part);
+size_t BitstreamLength(SilegoPart part);
 
 #endif
