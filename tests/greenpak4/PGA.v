@@ -26,7 +26,7 @@
 		PGA output on pin 7
 
 	TEST PROCEDURE:
-		Sweep analog wavefrom from 0 to 500 mV on pin 8
+		Sweep analog waveform from 0 to 500 mV on pin 8
 		Output should be 2x the input voltage
  */
 module PGA(bg_ok, vin, pgaout);
