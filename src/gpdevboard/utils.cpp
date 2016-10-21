@@ -293,7 +293,6 @@ size_t BitstreamLength(SilegoPart part)
 	}
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Socket test
 
@@ -495,13 +494,13 @@ vector<uint8_t> BitstreamFromHex(string hex)
 	return bitstream;
 }
 
-vector<uint8_t> ReadBitstream(string fname)
+bool ReadBitstream(string fname, vector<uint8_t>& bitstream, SilegoPart part)
 {
 	FILE* fp = fopen(fname.c_str(), "rt");
 	if(!fp)
 	{
 		LogError("Couldn't open %s for reading\n", fname.c_str());
-		return {};
+		return false;
 	}
 
 	char signature[64];
@@ -512,10 +511,9 @@ vector<uint8_t> ReadBitstream(string fname)
 	{
 		LogError("%s is not a GreenPAK bitstream\n", fname.c_str());
 		fclose(fp);
-		return {};
+		return false;
 	}
 
-	vector<uint8_t> bitstream;
 	while(!feof(fp))
 	{
 		int index;
@@ -527,7 +525,7 @@ vector<uint8_t> ReadBitstream(string fname)
 		{
 			LogError("%s contains a malformed GreenPAK bitstream\n", fname.c_str());
 			fclose(fp);
-			return {};
+			return false;
 		}
 
 		if(byteindex >= (int)bitstream.size())
@@ -537,5 +535,108 @@ vector<uint8_t> ReadBitstream(string fname)
 
 	fclose(fp);
 
-	return bitstream;
+	//TODO: check ID words?
+
+	//Verify that the bitstream is a sane length
+	if(bitstream.size() != BitstreamLength(part) / 8)
+	{
+		LogError("Provided bitstream has incorrect length for selected part\n");
+		return false;
+	}
+
+	return true;
+}
+
+/**
+	@brief Take a bitstream and modify some of the configuration
+
+	OR in the read protect and pattern ID... only meaningful if the old values were unprotected and 0 resp
+ */
+bool TweakBitstream(vector<uint8_t>& bitstream, SilegoPart part, uint8_t oscTrim, uint8_t patternID, bool readProtect)
+{
+	LogNotice("Applying requested configuration to bitstream\n");
+	LogIndenter li;
+
+	//TODO: implement for other parts
+	if(part != SilegoPart::SLG46620V)
+	{
+		LogError("TweakBitstream only implemented for SLG46620V\n");
+		return false;
+	}
+
+	//Set trim value reg<1981:1975>
+	bitstream[246] &= 0xFE;
+	bitstream[247] &= 0x01;
+	bitstream[246] |= oscTrim << 7;
+	bitstream[247] |= oscTrim >> 1;
+	LogVerbose("Oscillator trim value: %d\n", oscTrim);
+
+	//Set pattern ID reg<2031:2038>
+	if(patternID != 0)
+	{
+		bitstream[253] &= 0xFE;
+		bitstream[254] &= 0x01;
+	}
+	bitstream[253] |= patternID << 7;
+	bitstream[254] |= patternID >> 1;
+	LogNotice("Bitstream ID code: 0x%02x\n", patternID);
+
+	//Set read protection reg<2039>
+	//OR with the existing value: we can set the read protect bit here, but not overwrite the bit if
+	//it was set by gp4par. If you REALLY need to unprotect a bitstream, do it by hand in a text editor.
+	bitstream[254] |= ((uint8_t)readProtect) << 7;
+	if(bitstream[254] & 0x80)
+		LogNotice("Read protection: enabled\n");
+	else
+		LogNotice("Read protection: disabled\n");
+
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper for HiL tests
+
+/**
+	@brief Wrapper around the test to do some board setup etc
+ */
+bool TestSetup(hdevice hdev, string fname, int rcOscFreq, double voltage, SilegoPart targetPart)
+{
+	//Make sure we have the right part
+	if(!VerifyDevicePresent(hdev, targetPart))
+	{
+		LogNotice("Couldn't find the expected part, giving up\n");
+		return false;
+	}
+
+	//Make sure the board is electrically functional
+	if(!SocketTest(hdev, targetPart))
+	{
+		LogError("Target board self-test failed\n");
+		return false;
+	}
+
+	//Trim the oscillator
+	uint8_t rcFtw = 0;
+	if(!TrimOscillator(hdev, targetPart, voltage, rcOscFreq, rcFtw))
+		return false;
+
+	//No need to reset board, the trim does that for us
+
+	//Read the bitstream
+	vector<uint8_t> bitstream;
+	if(!ReadBitstream(fname, bitstream, targetPart))
+		return false;
+
+	//Apply the oscillator trim
+	if(!TweakBitstream(bitstream, targetPart, rcFtw, 0xCC, false))
+		return false;
+
+	//Program the device
+	LogNotice("Downloading bitstream to board\n");
+	if(!DownloadBitstream(hdev, bitstream, DownloadMode::EMULATION))
+		return false;
+
+	LogNotice("Test setup complete\n");
+
+	return true;
 }

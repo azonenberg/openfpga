@@ -272,6 +272,15 @@ bool TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq
 bool SocketTest(hdevice hdev, SilegoPart part);
 
 std::vector<uint8_t> BitstreamFromHex(std::string hex);
-std::vector<uint8_t> ReadBitstream(std::string fname);
+bool ReadBitstream(std::string fname, std::vector<uint8_t>& bitstream, SilegoPart part);
+
+bool TweakBitstream(
+	std::vector<uint8_t>& bitstream,
+	SilegoPart part,
+	uint8_t oscTrim,
+	uint8_t patternID,
+	bool readProtect);
+
+bool TestSetup(hdevice hdev, std::string fname, int rcOscFreq, double voltage, SilegoPart targetPart);
 
 #endif

@@ -45,7 +45,6 @@ int main(int argc, char* argv[])
 	bool programNvram = false;
 	bool force = false;
 	uint8_t patternId = 0;
-	bool patternIdSpecified = false;
 	bool readProtect = false;
 	double voltage = 0.0;
 	vector<int> nets;
@@ -147,8 +146,6 @@ int main(int argc, char* argv[])
 			force = true;
 		else if(s == "--pattern-id")
 		{
-			patternIdSpecified = true;
-
 			if(i+1 < argc)
 			{
 				char *arg = argv[++i];
@@ -333,43 +330,17 @@ int main(int argc, char* argv[])
 	//If we're programming, do that first
 	if(!downloadFilename.empty())
 	{
-		vector<uint8_t> newBitstream = ReadBitstream(downloadFilename);
-		if(newBitstream.empty())
-			return 1;
-		if(newBitstream.size() != BitstreamLength(detectedPart) / 8)
+		//Read the bitstream and check that it's the right size
+		vector<uint8_t> newBitstream;
+		if(!ReadBitstream(downloadFilename, newBitstream, detectedPart);
 		{
-			LogError("Provided bitstream has incorrect length for selected part\n");
 			SetStatusLED(hdev, 0);
 			return 1;
 		}
 
-		//TODO: Make this work for chips other than SLG46620V?
-
-		//Set trim value reg<1981:1975>
-		newBitstream[246] |= rcFtw << 7;
-		newBitstream[247] |= rcFtw >> 1;
-
-		//Set pattern ID reg<2031:2038>
-		if(patternIdSpecified)
-		{
-			newBitstream[253] |= patternId << 7;
-			newBitstream[254] |= patternId >> 1;
-		}
-
-		//Read out the pattern ID and print it
-		unsigned int patternID =
-			( (newBitstream[254] << 1) & 0xff ) |
-			( (newBitstream[253] >> 7) & 0xff );
-		LogNotice("Bitstream ID code: 0x%02x\n", patternID);
-
-		//Set read protection reg<2039>
-		//OR with the existing value: we can set the read protect bit here, but not overwrite the bit if
-		//it was set by gp4par. If you REALLY need to unprotect a bitstream, do it by hand in a text editor.
-		newBitstream[254] |= ((uint8_t)readProtect) << 7;
-		if(newBitstream[254] & 0x80)
-			LogNotice("Read protection: enabled\n");
-		else
-			LogNotice("Read protection: disabled\n");
+		//Tweak the bitstream to apply all of the changes specified on the command line
+		if(!TweakBitstream(newBitstream, detectedPart, rcFtw, patternID, readProtect))
+			return 1;
 
 		if(!programNvram)
 		{
