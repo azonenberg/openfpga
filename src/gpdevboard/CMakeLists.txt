@@ -1,5 +1,6 @@
 add_library(gpdevboard STATIC
 	usb.cpp
+	utils.cpp
 	protocol.cpp)
 
 target_include_directories(gpdevboard

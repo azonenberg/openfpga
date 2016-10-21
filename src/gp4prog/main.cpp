@@ -33,7 +33,6 @@ const char *BitFunction(SilegoPart part, size_t bitno);
 
 bool SocketTest(hdevice hdev, SilegoPart part);
 bool TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq, uint8_t &ftw);
-bool CheckStatus(hdevice hdev);
 
 enum class BitstreamKind {
 	UNRECOGNIZED,
@@ -255,50 +254,10 @@ int main(int argc, char* argv[])
 	if(console_verbosity >= Severity::NOTICE)
 		ShowVersion();
 
-	//Set up libusb
-	if(!USBSetup())
-		return 1;
-
-	// Try opening the board in "orange" mode
-	LogNotice("\nSearching for developer board\n");
-	hdevice hdev = OpenDevice(0x0f0f, 0x0006);
+	//Open the dev board
+	hdevice hdev = OpenBoard();
 	if(!hdev)
-	{
-		// Try opening the board in "white" mode
- 		hdev = OpenDevice(0x0f0f, 0x8006);
-		if(!hdev)
-		{
-			LogError("No device found, giving up\n");
-			return 1;
-		}
-
-		// Change the board into "orange" mode
-		LogVerbose("Switching developer board from bootloader mode\n");
-		if(!SwitchMode(hdev))
-			return 1;
-
-		// Takes a while to switch and re-enumerate
-		usleep(1200 * 1000);
-
-		// Try opening the board in "orange" mode again
-		hdev = OpenDevice(0x0f0f, 0x0006);
-		if(!hdev)
-		{
-			LogError("Could not switch mode, giving up\n");
-			return 1;
-		}
-	}
-
-	//Get string descriptors
-	string name, vendor;
-	if(!GetStringDescriptor(hdev, 1, name) || //board name
-	   !GetStringDescriptor(hdev, 2, vendor)) //manufacturer
-	{
 		return 1;
-	}
-	LogNotice("Found: %s %s\n", vendor.c_str(), name.c_str());
-	//string 0x80 is 02 03 for this board... what does that mean? firmware rev or something?
-	//it's read by emulator during startup but no "2" and "3" are printed anywhere...
 
 	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
 	if(downloadFilename.empty() && uploadFilename.empty() && voltage == 0.0 && nets.empty() &&
@@ -306,12 +265,6 @@ int main(int argc, char* argv[])
 	{
 		LogNotice("No actions requested, exiting\n");
 		return 0;
-	}
-
-	//Check that we're in good standing
-	if(!CheckStatus(hdev)) {
-		LogError("Fault condition detected during initial check, exiting\n");
-		return 1;
 	}
 
 	//Light up the status LED
@@ -708,30 +661,6 @@ const char *BitFunction(SilegoPart part, size_t bitno)
 		bitFunction = "unknown--reserved";
 
 	return bitFunction;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Status check
-
-bool CheckStatus(hdevice hdev)
-{
-	LogDebug("Requesting board status\n");
-
-	BoardStatus status;
-	if(!GetStatus(hdev, status))
-		return false;
-	LogVerbose("Board voltages: A = %.3f V, B = %.3f V\n", status.voltageA, status.voltageB);
-
-	if(status.externalOverCurrent)
-		LogError("Overcurrent condition detected on external supply\n");
-	if(status.internalOverCurrent)
-		LogError("Overcurrent condition detected on internal supply\n");
-	if(status.internalUnderVoltage)
-		LogError("Undervoltage condition detected on internal supply\n");
-
-	return !(status.externalOverCurrent &&
-			 status.internalOverCurrent &&
-			 status.internalUnderVoltage);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

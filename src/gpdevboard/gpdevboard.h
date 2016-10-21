@@ -244,4 +244,10 @@ bool MeasureOscillatorFrequency(hdevice hdev, unsigned &freq);
 
 bool GetStatus(hdevice hdev, BoardStatus &status);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// High-level command helpers
+
+bool CheckStatus(hdevice hdev);
+hdevice OpenBoard();
+
 #endif
