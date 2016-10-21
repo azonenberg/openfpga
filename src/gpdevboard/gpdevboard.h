@@ -263,7 +263,15 @@ bool DetectPart(
 	BitstreamKind& bitstreamKind);
 BitstreamKind ClassifyBitstream(SilegoPart part, std::vector<uint8_t> bitstream, uint8_t &patternId);
 
+bool VerifyDevicePresent(hdevice hdev, SilegoPart expectedPart);
+
 const char *PartName(SilegoPart part);
 size_t BitstreamLength(SilegoPart part);
+
+bool TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq, uint8_t &ftw);
+bool SocketTest(hdevice hdev, SilegoPart part);
+
+std::vector<uint8_t> BitstreamFromHex(std::string hex);
+std::vector<uint8_t> ReadBitstream(std::string fname);
 
 #endif

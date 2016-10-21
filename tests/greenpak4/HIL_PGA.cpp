@@ -21,9 +21,14 @@
 
 using namespace std;
 
+bool RunTest(hdevice hdev, string bitstream, int rcOscFreq);
+
+//The device our test is targeting
+const SilegoPart g_targetPart = SilegoPart::SLG46620V;
+
 int main(int argc, char* argv[])
 {
-	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(Severity::DEBUG));
+	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(Severity::VERBOSE));
 
 	//expect one arg: the bitstream
 	if(argc != 2)
@@ -32,7 +37,56 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	//
+	//Do standard board bringup
+	hdevice hdev = OpenBoard();
+	if(!hdev)
+	{
+		LogError("Failed to open board\n");
+		return 1;
+	}
+	if(!SetStatusLED(hdev, 1))
+		return 1;
 
+	//Run the test
+	if(!RunTest(hdev, argv[1], 25000))
+	{
+		SetStatusLED(hdev, 0);
+		return 1;
+	}
+
+	//Turn off the LED before declaring success
+	SetStatusLED(hdev, 0);
 	return 0;
+}
+
+/**
+	@brief Wrapper around the test to do some board setup etc
+ */
+bool RunTest(hdevice hdev, string bitstream, int rcOscFreq)
+{
+	//We're targeting a SLG46620V so make sure we've got one there
+	if(!VerifyDevicePresent(hdev, g_targetPart))
+	{
+		LogNotice("Couldn't find the expected part, giving up\n");
+		return false;
+	}
+
+	//Make sure the board is electrically functional
+	if(!SocketTest(hdev, g_targetPart))
+	{
+		LogError("Target board self-test failed\n");
+		return false;
+	}
+
+	//TODO: take this as a parameter?
+	double voltage = 3.3;
+
+	//Trim the oscillator
+	uint8_t rcFtw = 0;
+	if(!TrimOscillator(hdev, g_targetPart, voltage, rcOscFreq, rcFtw))
+		return false;
+
+	//No need to reset board, the trim does that for us
+
+	return true;
 }
