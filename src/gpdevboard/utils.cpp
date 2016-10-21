@@ -35,7 +35,7 @@ bool CheckStatus(hdevice hdev)
 	BoardStatus status;
 	if(!GetStatus(hdev, status))
 		return false;
-	LogVerbose("Board voltages: A = %.3f V, B = %.3f V\n", status.voltageA, status.voltageB);
+	LogDebug("Board voltages: A = %.3f V, B = %.3f V\n", status.voltageA, status.voltageB);
 
 	if(status.externalOverCurrent)
 		LogError("Overcurrent condition detected on external supply\n");
