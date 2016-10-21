@@ -636,7 +636,27 @@ bool TestSetup(hdevice hdev, string fname, int rcOscFreq, double voltage, Silego
 	if(!DownloadBitstream(hdev, bitstream, DownloadMode::EMULATION))
 		return false;
 
-	LogNotice("Test setup complete\n");
+	//Developer board I/O pins become stuck after both SRAM and NVM programming;
+	//resetting them explicitly makes LEDs and outputs work again.
+	LogDebug("Resetting board I/O pins after programming\n");
+	IOConfig ioConfig;
+	for(size_t i = 2; i <= 20; i++)
+		ioConfig.driverConfigs[i] = TP_RESET;
+	if(!SetIOConfig(hdev, ioConfig))
+		return false;
 
+	//Configure the signal generator for Vdd
+	LogNotice("Setting Vdd to %.3g V\n", voltage);
+	if(!ConfigureSiggen(hdev, 1, voltage))
+		return false;
+
+	//Final fault check after programming
+	if(!CheckStatus(hdev))
+	{
+		LogError("Fault condition detected during final check\n");
+		return false;
+	}
+
+	LogNotice("Test setup complete\n");
 	return true;
 }
