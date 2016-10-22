@@ -168,5 +168,5 @@ bool Greenpak4PatternGenerator::Save(bool* bitstream)
 	bitstream[m_configBase + 18] = (len & 4) ? true : false;
 	bitstream[m_configBase + 19] = (len & 8) ? true : false;
 
-	return false;
+	return true;
 }
