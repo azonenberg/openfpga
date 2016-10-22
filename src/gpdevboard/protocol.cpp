@@ -188,7 +188,7 @@ bool SwitchMode(hdevice hdev)
 bool SetPart(hdevice hdev, SilegoPart part)
 {
 	DataFrame frame(DataFrame::SET_PART);
-	frame.push_back((uint8_t)part);
+	frame.push_back((uint8_t)(part >> 4));
 	frame.push_back(0x00);
 	frame.push_back(0x00);
 	frame.push_back(0x00);

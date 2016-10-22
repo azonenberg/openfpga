@@ -128,7 +128,7 @@ bool DetectPart(
 	LogNotice("Detecting part\n");
 	LogIndenter li;
 
-	SilegoPart parts[] = { SLG46140V, SLG46620V };
+	SilegoPart parts[] = { SLG46140V, SLG4662XV };
 	for(SilegoPart part : parts)
 	{
 		LogVerbose("Trying part %s\n", PartName(part));
@@ -202,6 +202,8 @@ BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream, uint
 	switch(part)
 	{
 		case SLG46620V:
+		case SLG46621V:
+		case SLG4662XV:
 			emptyBitstream[0x7f] = 0x5a;
 			emptyBitstream[0xff] = 0xa5;
 			//TODO: RC oscillator trim value, why is it factory programmed?
@@ -249,6 +251,8 @@ BitstreamKind ClassifyBitstream(SilegoPart part, vector<uint8_t> bitstream, uint
 	switch(part)
 	{
 		case SLG46620V:
+		case SLG46621V:
+		case SLG4662XV:
 			patternId = (bitstream[0xfd] >> 7) | (bitstream[0xfe] << 1);
 			break;
 
@@ -276,6 +280,8 @@ const char *PartName(SilegoPart part)
 	switch(part)
 	{
 		case SLG46620V: return "SLG46620V";
+		case SLG46621V: return "SLG46621V";
+		case SLG4662XV: return "SLG46620V/SLG46621V";
 		case SLG46140V: return "SLG46140V";
 
 		default: LogFatal("Unknown part\n");
@@ -286,7 +292,9 @@ size_t BitstreamLength(SilegoPart part)
 {
 	switch(part)
 	{
-		case SLG46620V: return 2048;
+		case SLG46620V:
+		case SLG46621V:
+		case SLG4662XV: return 2048;
 		case SLG46140V: return 1024;
 
 		default: LogFatal("Unknown part\n");
@@ -398,6 +406,8 @@ bool TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq
 	switch(part)
 	{
 		case SLG46620V:
+		case SLG46621V:
+		case SLG4662XV:
 			// To reproduce:
 			// module top((* LOC="P13" *) output q);
 			// 	GP_RCOSC rcosc (.CLKOUT_FABRIC(q));
@@ -558,10 +568,16 @@ bool TweakBitstream(vector<uint8_t>& bitstream, SilegoPart part, uint8_t oscTrim
 	LogIndenter li;
 
 	//TODO: implement for other parts
-	if(part != SilegoPart::SLG46620V)
+	switch(part)
 	{
-		LogError("TweakBitstream only implemented for SLG46620V\n");
-		return false;
+		case SLG46620V:
+		case SLG46621V:
+		case SLG4662XV:
+			break;
+
+		default:
+			LogError("TweakBitstream only implemented for SLG4662XV\n");
+			return false;
 	}
 
 	//Set trim value reg<1981:1975>

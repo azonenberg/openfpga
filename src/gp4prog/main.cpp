@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
 	uint8_t patternId = 0;
 	bool readProtect = false;
 	double voltage = 0.0;
+	double voltage2 = 0.0;
 	vector<int> nets;
 
 	//Parse command-line arguments
@@ -189,6 +190,34 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 		}
+		else if(s == "-v2" || s == "--voltage-2")
+		{
+			if(i+1 < argc)
+			{
+				char *endptr;
+				voltage2 = strtod(argv[++i], &endptr);
+				if(*endptr)
+				{
+					printf("--voltage-2 must be a decimal value\n");
+					return 1;
+				}
+				if(!(voltage2 == 0.0 || (voltage2 >= 1.71 && voltage2 <= 5.5)))
+				{
+					printf("--voltage-2 %.3g outside of valid range\n", voltage2);
+					return 1;
+				}
+				if(!(voltage2 == 0.0 || (voltage2 <= voltage)))
+				{
+					printf("--voltage-2 %.3g must not be less than --voltage %.3g\n", voltage2, voltage);
+					return 1;					
+				}
+			}
+			else
+			{
+				printf("--voltage-2 requires an argument\n");
+				return 1;
+			}
+		}
 		else if(s == "-n" || s == "--nets")
 		{
 			if(i+1 < argc)
@@ -265,6 +294,14 @@ int main(int argc, char* argv[])
 			SetStatusLED(hdev, 0);
 			return 1;
 		}
+	}
+
+	if(voltage2 != 0.0 && detectedPart != SilegoPart::SLG46621V)
+	{
+		LogError("Part %s is detected, but --voltage-2 can only be used with SLG46621V\n",
+		         PartName(detectedPart));
+		SetStatusLED(hdev, 0);
+		return 1;
 	}
 
 	if(programNvram && bitstreamKind != BitstreamKind::EMPTY)
@@ -407,6 +444,14 @@ int main(int argc, char* argv[])
 		LogNotice("Setting Vdd to %.3g V\n", voltage);
 		if(!ConfigureSiggen(hdev, 1, voltage))
 			return 1;
+	}
+
+	if(voltage2 != 0.0)
+	{
+		//Configure the signal generator for Vdd2
+		LogNotice("Setting Vdd2 to %.3g V\n", voltage2);
+		if(!ConfigureSiggen(hdev, 14, voltage2))
+			return 1;		
 	}
 
 	if(!nets.empty())

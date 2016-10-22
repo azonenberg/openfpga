@@ -41,12 +41,14 @@ bool ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Board protocol stuff
 
-//Part numbers (actual bitstream coding)
+//Part numbers (low 4 bits: gpdevboard-specific data; high 8 bits: actual bitstream coding)
 enum SilegoPart
 {
-	SLG46140V = 0x14,
-	SLG46620V = 0x62,
-	UNRECOGNIZED = 0xff,
+	SLG46140V = 0x140,
+	SLG46620V = 0x620,
+	SLG46621V = 0x621,
+	SLG4662XV = 0x62f,
+	UNRECOGNIZED = 0xfff,
 };
 
 //Test point config (actual bitstream coding)
