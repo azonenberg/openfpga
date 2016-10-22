@@ -53,7 +53,7 @@ protected:
 	Greenpak4EntityOutput m_clk;
 	Greenpak4EntityOutput m_reset;
 
-	bool m_truthTable[16];
+	bool m_truthtable[16];
 	int m_patternLen;
 };
 

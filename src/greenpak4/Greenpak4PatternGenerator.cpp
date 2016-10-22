@@ -35,7 +35,8 @@ Greenpak4PatternGenerator::Greenpak4PatternGenerator(
 	, m_reset(device->GetGround())
 	, m_patternLen(2)
 {
-
+	for(unsigned int i=0; i<16; i++)
+		m_truthtable[i] = false;
 }
 
 Greenpak4PatternGenerator::~Greenpak4PatternGenerator()
@@ -45,7 +46,7 @@ Greenpak4PatternGenerator::~Greenpak4PatternGenerator()
 
 string Greenpak4PatternGenerator::GetDescription()
 {
-	return "PGEN0";
+	return "PGEN_0";
 }
 
 unsigned int Greenpak4PatternGenerator::GetOutputNetNumber(string port)
@@ -61,62 +62,45 @@ unsigned int Greenpak4PatternGenerator::GetOutputNetNumber(string port)
 
 bool Greenpak4PatternGenerator::CommitChanges()
 {
-	/*
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return true;
 
-	//It's a pattern generator
-	if(ncell->m_type == "GP_PGEN")
+	for(auto x : ncell->m_parameters)
 	{
-		m_pgenMode = true;
-
-		for(auto x : ncell->m_parameters)
+		if(x.first == "PATTERN_DATA")
 		{
-			if(x.first == "PATTERN_DATA")
+			//convert to bit array format
+			uint32_t truth_table = atoi(x.second.c_str());
+			for(unsigned int i=0; i<16; i++)
 			{
-				//convert to bit array format
-				uint32_t truth_table = atoi(x.second.c_str());
-				unsigned int nbits = 1 << m_order;
-				for(unsigned int i=0; i<nbits; i++)
-				{
-					bool a3 = (i & 8) ? true : false;
-					bool a2 = (i & 4) ? true : false;
-					bool a1 = (i & 2) ? true : false;
-					bool a0 = (i & 1) ? true : false;
-					m_truthtable[a3*8 | a2*4 | a1*2 | a0] = (truth_table & (1 << i)) ? true : false;
-				}
-			}
-
-			else if(x.first == "PATTERN_LEN")
-			{
-				m_patternLen = atoi(x.second.c_str());
-				if( (m_patternLen < 2) || (m_patternLen > 16) )
-				{
-					LogError("GP_PGEN PATTERN_LEN must be between 2 and 16 (requested %d)\n", m_patternLen);
-					return false;
-				}
-			}
-
-			else
-			{
-				LogWarning("Cell \"%s\" has unrecognized parameter %s, ignoring\n",
-					ncell->m_name.c_str(), x.first.c_str());
+				bool a3 = (i & 8) ? true : false;
+				bool a2 = (i & 4) ? true : false;
+				bool a1 = (i & 2) ? true : false;
+				bool a0 = (i & 1) ? true : false;
+				m_truthtable[a3*8 | a2*4 | a1*2 | a0] = (truth_table & (1 << i)) ? true : false;
 			}
 		}
 
-		return true;
+		else if(x.first == "PATTERN_LEN")
+		{
+			m_patternLen = atoi(x.second.c_str());
+			if( (m_patternLen < 2) || (m_patternLen > 16) )
+			{
+				LogError("GP_PGEN PATTERN_LEN must be between 2 and 16 (requested %d)\n", m_patternLen);
+				return false;
+			}
+		}
+
+		else
+		{
+			LogWarning("Cell \"%s\" has unrecognized parameter %s, ignoring\n",
+				ncell->m_name.c_str(), x.first.c_str());
+		}
 	}
 
-	//Nope, it's a LUT (or remapped INV etc)
-	else
-	{
-		m_pgenMode = false;
-		return Greenpak4LUT::CommitChanges();
-	}
-	*/
-	return false;
+	return true;
 }
 
 vector<string> Greenpak4PatternGenerator::GetOutputPorts() const
@@ -147,7 +131,7 @@ void Greenpak4PatternGenerator::SetInput(string port, Greenpak4EntityOutput src)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4PatternGenerator::Load(bool* bitstream)
+bool Greenpak4PatternGenerator::Load(bool* /*bitstream*/)
 {
 	LogError("unimplemented\n");
 	return false;
@@ -155,26 +139,34 @@ bool Greenpak4PatternGenerator::Load(bool* bitstream)
 
 bool Greenpak4PatternGenerator::Save(bool* bitstream)
 {
-	/*
-	//Save the mode regardless
-	bitstream[m_configBase + 20] = m_pgenMode;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
 
-	//Save pattern gen stuff
-	if(m_pgenMode)
-	{
-		//Pattern data is stored in LUT truth table
+	//0/1 are unused in PGEN mode, tie them to ground
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_device->GetGround()))
+		return false;
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_device->GetGround()))
+		return false;
 
-		//4-bit counter data
-		int len = m_patternLen - 1;
-		bitstream[m_configBase + 16] = (len & 1) ? true : false;
-		bitstream[m_configBase + 17] = (len & 2) ? true : false;
-		bitstream[m_configBase + 18] = (len & 4) ? true : false;
-		bitstream[m_configBase + 19] = (len & 8) ? true : false;
-	}
+	//Write clock and reset
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 2, m_clk))
+		return false;
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 3, m_reset))
+		return false;
 
-	//Save LUT stuff (input bus etc) regardless
-	return Greenpak4LUT::Save(bitstream);
-	*/
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CONFIGURATION
+
+	//The pattern we generate
+	for(unsigned int i=0; i<16; i++)
+		bitstream[m_configBase + i] = m_truthtable[i];
+
+	//4-bit counter data
+	int len = m_patternLen - 1;
+	bitstream[m_configBase + 16] = (len & 1) ? true : false;
+	bitstream[m_configBase + 17] = (len & 2) ? true : false;
+	bitstream[m_configBase + 18] = (len & 4) ? true : false;
+	bitstream[m_configBase + 19] = (len & 8) ? true : false;
 
 	return false;
 }
