@@ -107,7 +107,7 @@ module Blinky(
 	GP_RINGOSC #(
 		.PWRDN_EN(1),
 		.AUTO_PWRDN(0),
-		.PRE_DIV(16),
+		.HARDIP_DIV(16),
 		.FABRIC_DIV(1)
 	) ringosc (
 		.PWRDN(osc_pwrdn),
@@ -122,7 +122,7 @@ module Blinky(
 		.PWRDN_EN(1),
 		.AUTO_PWRDN(0),
 		.OSC_FREQ("25k"),		//osc can run at 25 kHz or 2 MHz
-		.PRE_DIV(4),
+		.HARDIP_DIV(4),
 		.FABRIC_DIV(1)
 	) rcosc (
 		.PWRDN(osc_pwrdn),
