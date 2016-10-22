@@ -161,6 +161,9 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 	{
 		auto num = dynamic_cast<Greenpak4DAC*>(m_vin.GetRealEntity())->GetDACNum();
 
+		if(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46140)
+			LogError("Greenpak4VoltageReference: not implemented for 46140 yet\n");
+
 		switch(num)
 		{
 			//Constant for SLG46620V, TODO check other parts?

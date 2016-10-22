@@ -176,11 +176,14 @@ bool Greenpak4DAC::Save(bool* bitstream)
 	//Turn our DAC on
 	bitstream[m_cbasePwr] = true;
 
-	//SLG46620V: If we're using DAC1, turn on DAC0
+	//SLG4662x: If we're using DAC1, turn on DAC0
 	//This is a legal no-op in other situations.
 	//TODO: maybe add a routing preference so that DAC0 is preferred to DAC1 in a single-DAC design
 	//(otherwise we're wasting a bit of power)
 	bitstream[m_cbaseAon] = true;
+
+	if(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46140)
+		LogError("Greenpak4DAC: not implemented for 46140 yet\n");
 
 	//Input selector (hard code to "register" for now)
 	//WTF, the config is flipped from DAC0 to DAC1??? (see SLG46620V table 40)

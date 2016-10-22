@@ -34,12 +34,20 @@ Greenpak4Device::Greenpak4Device(
 	//Initialize everything
 	switch(part)
 	{
+	case GREENPAK4_SLG46140:
+		CreateDevice_SLG46140();
+		break;
+
 	case GREENPAK4_SLG46620:
-		CreateDevice_SLG46620();
+		CreateDevice_SLG4662x(false);
+		break;
+
+	case GREENPAK4_SLG46621:
+		CreateDevice_SLG4662x(true);
 		break;
 
 	default:
-		assert(false);
+		LogFatal("Invalid part number requested\n");
 		break;
 	}
 
@@ -59,7 +67,12 @@ Greenpak4Device::~Greenpak4Device()
 	m_bitstuff.clear();
 }
 
-void Greenpak4Device::CreateDevice_SLG46620()
+void Greenpak4Device::CreateDevice_SLG46140()
+{
+	LogFatal("unimplemented\n");
+}
+
+void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 {
 	//64 inputs per routing matrix
 	m_matrixBits = 6;
@@ -161,7 +174,8 @@ void Greenpak4Device::CreateDevice_SLG46620()
 
 	m_lut4s.push_back(lpgen);
 
-	//Create the Type-A IOBs (with output enable)
+	//Create the Type-A IOBs (with output enable).
+	//Pin 14 is a used as VCCIO in the SLG46621, the GPIO driver is not bonded out
 	m_iobs[2] =  new Greenpak4IOBTypeA(this, 2,  0, -1, 24, 941, Greenpak4IOB::IOB_FLAG_INPUTONLY);
 	m_iobs[3] =  new Greenpak4IOBTypeA(this, 3,  0, 56, 25, 946);
 	m_iobs[5] =  new Greenpak4IOBTypeA(this, 5,  0, 59, 27, 960);
@@ -169,7 +183,8 @@ void Greenpak4Device::CreateDevice_SLG46620()
 	m_iobs[9] =  new Greenpak4IOBTypeA(this, 9,  0, 65, 31, 988);
 	m_iobs[10] = new Greenpak4IOBTypeA(this, 10, 0, 67, 32, 995, Greenpak4IOB::IOB_FLAG_X4DRIVE);
 	m_iobs[13] = new Greenpak4IOBTypeA(this, 13, 1, 57, 25, 1919);
-	m_iobs[14] = new Greenpak4IOBTypeA(this, 14, 1, 59, 26, 1926);
+	if(!dual_rail)
+		m_iobs[14] = new Greenpak4IOBTypeA(this, 14, 1, 59, 26, 1926);
 	m_iobs[16] = new Greenpak4IOBTypeA(this, 16, 1, 62, 28, 1940);
 	m_iobs[18] = new Greenpak4IOBTypeA(this, 18, 1, 65, 30, 1954);
 	m_iobs[19] = new Greenpak4IOBTypeA(this, 19, 1, 67, 31, 1961);
@@ -630,6 +645,14 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 	//Write chip-wide tuning data and ID code
 	switch(m_part)
 	{
+		case GREENPAK4_SLG46621:
+
+			//Tie the unused on-die IOB for pin 14 to ground
+			for(int i=1378; i<=1389; i++)
+				bitstream[i] = false;
+
+			//fall through to 46620 for shared config
+
 		case GREENPAK4_SLG46620:
 
 			//FIXME: Disable ADC block (until we have the logic for that implemented)
@@ -679,6 +702,10 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			//Read protection flag
 			bitstream[2039] = readProtect;
 
+			break;
+
+		case GREENPAK4_SLG46140:
+			LogError("Greenpak4Device: Not implemented for SLG46140 yet\n");
 			break;
 	}
 

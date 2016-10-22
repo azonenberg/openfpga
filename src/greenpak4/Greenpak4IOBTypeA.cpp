@@ -114,9 +114,17 @@ bool Greenpak4IOBTypeA::Save(bool* bitstream)
 				return false;
 
 			//Set the analog selector to constant 2'b11
-			//SLG46620V specific!
-			bitstream[m_analogConfigBase + 1] = true;
-			bitstream[m_analogConfigBase + 0] = true;
+			//SLG4662x specific!
+			if(
+				(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620) ||
+				(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46621)
+			)
+			{
+				bitstream[m_analogConfigBase + 1] = true;
+				bitstream[m_analogConfigBase + 0] = true;
+			}
+			else
+				LogError("Greenpak4IOBTypeA: not implemented for 46140 yet\n");
 		}
 
 		//If our output is from a PGA, special processing needed

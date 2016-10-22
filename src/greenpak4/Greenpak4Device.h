@@ -32,7 +32,9 @@ public:
 
 	enum GREENPAK4_PART
 	{
-		GREENPAK4_SLG46620
+		GREENPAK4_SLG46140,
+		GREENPAK4_SLG46620,
+		GREENPAK4_SLG46621
 	};
 
 	Greenpak4Device(
@@ -272,7 +274,8 @@ public:
 
 protected:
 
-	void CreateDevice_SLG46620();
+	void CreateDevice_SLG46140();
+	void CreateDevice_SLG4662x(bool dual_rail);
 	void CreateDevice_common();
 
 	///The part number

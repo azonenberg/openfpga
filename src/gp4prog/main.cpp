@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
 				}
 				if(!(voltage2 == 0.0 || (voltage2 <= voltage)))
 				{
-					printf("--voltage-2 %.3g must not be less than --voltage %.3g\n", voltage2, voltage);
+					printf("--voltage-2 %.3g must be less than or equal to --voltage %.3g\n", voltage2, voltage);
 					return 1;					
 				}
 			}
@@ -298,7 +298,7 @@ int main(int argc, char* argv[])
 
 	if(voltage2 != 0.0 && detectedPart != SilegoPart::SLG46621V)
 	{
-		LogError("Part %s is detected, but --voltage-2 can only be used with SLG46621V\n",
+		LogError("Part %s is detected, but --voltage-2 can only be used with dual-supply parts (SLG46621V)\n",
 		         PartName(detectedPart));
 		SetStatusLED(hdev, 0);
 		return 1;
@@ -554,6 +554,7 @@ const char *BitFunction(SilegoPart part, size_t bitno)
 	switch(part)
 	{
 		case SLG46620V:
+		case SLG46621V:
 			if(bitno >= 570 && bitno <= 575)
 				bitFunction = NULL;
 			else if(bitno == 833)
