@@ -619,7 +619,9 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 	//Get the config data from each of our blocks
 	for(auto x : m_bitstuff)
 	{
-		if(!x->Save(bitstream)) {
+		if(!x->Save(bitstream))
+		{
+			LogError("Bitstream node %s failed to save\n", x->GetDescription().c_str());
 			fclose(fp);
 			return false;
 		}
