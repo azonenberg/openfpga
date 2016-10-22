@@ -16,26 +16,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4LUTPgen_h
-#define Greenpak4LUTPgen_h
+#ifndef Greenpak4PatternGenerator_h
+#define Greenpak4PatternGenerator_h
 
 /**
 	@brief A single LUT with pattern-generator mode
  */
-class Greenpak4LUTPgen : public Greenpak4LUT
+class Greenpak4PatternGenerator : public Greenpak4BitstreamEntity
 {
 public:
 
 	//Construction / destruction
-	Greenpak4LUTPgen(
+	Greenpak4PatternGenerator(
 		Greenpak4Device* device,
-		unsigned int lutnum,
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword,
-		unsigned int cbase,
-		unsigned int order);
-	virtual ~Greenpak4LUTPgen();
+		unsigned int cbase);
+	virtual ~Greenpak4PatternGenerator();
 
 	//Serialization
 	virtual bool Load(bool* bitstream);
@@ -43,12 +41,19 @@ public:
 
 	virtual bool CommitChanges();
 
+	virtual std::string GetDescription();
+	virtual unsigned int GetOutputNetNumber(std::string port);
+
 	virtual std::vector<std::string> GetInputPorts() const;
+	virtual std::vector<std::string> GetOutputPorts() const;
 
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 
 protected:
-	bool m_pgenMode;
+	Greenpak4EntityOutput m_clk;
+	Greenpak4EntityOutput m_reset;
+
+	bool m_truthTable[16];
 	int m_patternLen;
 };
 

@@ -129,16 +129,37 @@ void Greenpak4Device::CreateDevice_SLG46620()
 		778,	//LUT4s start at bitstream offset 778, 2^4 bits per LUT
 		4));	//this is a LUT4
 
-	//Create the first LUT4 (pattern generator capable)
-	//For now, no PGEN support, only usable as a LUT
-	m_lut4s.push_back(new Greenpak4LUTPgen(
+	//Create the first LUT, and its pattern-generator alter ego
+	auto lut40 = new Greenpak4LUT(
 		this,
 		0,
 		0,		//Attached to crossbar #0
 		32,		//LUT4 base is row 32
 		13,		//we come after the last LUT3
 		656,	//LUT4 starts after last LUT3
-		4));	//this is a LUT4
+		4);	//this is a LUT4
+	auto pgen = new Greenpak4PatternGenerator(
+		this,
+		0,
+		32,
+		13,
+		656);
+
+	//Create the paired cell for them
+	auto lpgen = new Greenpak4PairedEntity(
+		this,
+		0,		//Attached to crossbar #0
+		676,	//Selector bit for LUT or PGEN mode
+		lut40,	//select=0 means we're a LUT
+		pgen);	//select=1 means we're a PGEN
+
+	lpgen->AddType("GP_INV", 0);	//Combinatorial logic all uses the LUT
+	lpgen->AddType("GP_2LUT", 0);
+	lpgen->AddType("GP_3LUT", 0);
+	lpgen->AddType("GP_4LUT", 0);
+	lpgen->AddType("GP_PGEN", 1);	//Pattern generator is the only block mapped to the PGEN
+
+	m_lut4s.push_back(lpgen);
 
 	//Create the Type-A IOBs (with output enable)
 	m_iobs[2] =  new Greenpak4IOBTypeA(this, 2,  0, -1, 24, 941, Greenpak4IOB::IOB_FLAG_INPUTONLY);
@@ -532,28 +553,28 @@ Greenpak4IOB* Greenpak4Device::GetIOB(unsigned int pin)
 	return m_iobs[pin];
 }
 
-Greenpak4LUT* Greenpak4Device::GetLUT(unsigned int i)
+Greenpak4BitstreamEntity* Greenpak4Device::GetLUT(unsigned int i)
 {
 	if(i >= m_luts.size())
 		return NULL;
 	return m_luts[i];
 }
 
-Greenpak4LUT* Greenpak4Device::GetLUT2(unsigned int i)
+Greenpak4BitstreamEntity* Greenpak4Device::GetLUT2(unsigned int i)
 {
 	if(i >= m_lut2s.size())
 		return NULL;
 	return m_lut2s[i];
 }
 
-Greenpak4LUT* Greenpak4Device::GetLUT3(unsigned int i)
+Greenpak4BitstreamEntity* Greenpak4Device::GetLUT3(unsigned int i)
 {
 	if(i >= m_lut3s.size())
 		return NULL;
 	return m_lut3s[i];
 }
 
-Greenpak4LUT* Greenpak4Device::GetLUT4(unsigned int i)
+Greenpak4BitstreamEntity* Greenpak4Device::GetLUT4(unsigned int i)
 {
 	if(i >= m_lut4s.size())
 		return NULL;

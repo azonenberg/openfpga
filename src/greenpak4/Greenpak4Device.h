@@ -94,10 +94,10 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LUTS
 
-	Greenpak4LUT* GetLUT(unsigned int i);
-	Greenpak4LUT* GetLUT2(unsigned int i);
-	Greenpak4LUT* GetLUT3(unsigned int i);
-	Greenpak4LUT* GetLUT4(unsigned int i);
+	Greenpak4BitstreamEntity* GetLUT(unsigned int i);
+	Greenpak4BitstreamEntity* GetLUT2(unsigned int i);
+	Greenpak4BitstreamEntity* GetLUT3(unsigned int i);
+	Greenpak4BitstreamEntity* GetLUT4(unsigned int i);
 
 	unsigned int GetLUTCount()
 	{ return m_luts.size(); }
@@ -251,12 +251,14 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Pattern generator
 
-	//TODO: Make this work for parts other than SLG46620V!!!
-	Greenpak4LUTPgen* GetPgen()
+	//LUT4_0 is the PGEN for all GreenPAK4 devices.
+	//Note that it's at array position 1 so it's lower priority in initial placement.
+	//TODO: better handle conflicts in initial placement
+	Greenpak4BitstreamEntity* GetPgen()
 	{
 		if(m_lut4s.size() < 2)
 			return NULL;
-		return dynamic_cast<Greenpak4LUTPgen*>(m_lut4s[1]);
+		return m_lut4s[1];
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -290,7 +292,7 @@ protected:
 
 		Sorted with LUT2s, LUT3s, LUT4s in that order
 	 */
-	std::vector<Greenpak4LUT*> m_luts;
+	std::vector<Greenpak4BitstreamEntity*> m_luts;
 
 	///Just the LUT2s
 	std::vector<Greenpak4LUT*> m_lut2s;
@@ -299,7 +301,7 @@ protected:
 	std::vector<Greenpak4LUT*> m_lut3s;
 
 	///Just the LUT4s
-	std::vector<Greenpak4LUT*> m_lut4s;
+	std::vector<Greenpak4BitstreamEntity*> m_lut4s;
 
 	///I/O pins (map from pin numbers to IOBs)
 	iobmap m_iobs;

@@ -24,31 +24,44 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4LUTPgen::Greenpak4LUTPgen(
+Greenpak4PatternGenerator::Greenpak4PatternGenerator(
 	Greenpak4Device* device,
-	unsigned int lutnum,
 	unsigned int matrix,
 	unsigned int ibase,
 	unsigned int oword,
-	unsigned int cbase,
-	unsigned int order)
-	: Greenpak4LUT(device, lutnum, matrix, ibase, oword, cbase, order)
-	, m_pgenMode(false)
+	unsigned int cbase)
+	: Greenpak4BitstreamEntity(device,  matrix, ibase, oword, cbase)
+	, m_clk(device->GetGround())
+	, m_reset(device->GetGround())
 	, m_patternLen(2)
 {
 
 }
 
-Greenpak4LUTPgen::~Greenpak4LUTPgen()
+Greenpak4PatternGenerator::~Greenpak4PatternGenerator()
 {
 
+}
+
+string Greenpak4PatternGenerator::GetDescription()
+{
+	return "PGEN0";
+}
+
+unsigned int Greenpak4PatternGenerator::GetOutputNetNumber(string port)
+{
+	if(port == "OUT")
+		return m_outputBaseWord;
+	else
+		return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Pattern generator specific logic
 
-bool Greenpak4LUTPgen::CommitChanges()
+bool Greenpak4PatternGenerator::CommitChanges()
 {
+	/*
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
@@ -102,40 +115,47 @@ bool Greenpak4LUTPgen::CommitChanges()
 		m_pgenMode = false;
 		return Greenpak4LUT::CommitChanges();
 	}
+	*/
+	return false;
 }
 
-vector<string> Greenpak4LUTPgen::GetInputPorts() const
+vector<string> Greenpak4PatternGenerator::GetOutputPorts() const
 {
-	vector<string> ret = Greenpak4LUT::GetInputPorts();
+	vector<string> ret;
+	ret.push_back("OUT");
+	return ret;
+}
+
+
+vector<string> Greenpak4PatternGenerator::GetInputPorts() const
+{
+	vector<string> ret;
 	ret.push_back("nRST");
 	ret.push_back("CLK");
 	return ret;
 }
 
-void Greenpak4LUTPgen::SetInput(string port, Greenpak4EntityOutput src)
+void Greenpak4PatternGenerator::SetInput(string port, Greenpak4EntityOutput src)
 {
-	//Pattern gen specific stuff
 	if(port == "CLK")
-		m_inputs[2] = src;
+		m_clk = src;
 
 	else if(port == "nRST")
-		m_inputs[3] = src;
-
-	else
-		Greenpak4LUT::SetInput(port, src);
+		m_reset = src;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4LUTPgen::Load(bool* bitstream)
+bool Greenpak4PatternGenerator::Load(bool* bitstream)
 {
-	//TODO: load Pgen stuff
-	return Greenpak4LUT::Load(bitstream);
+	LogError("unimplemented\n");
+	return false;
 }
 
-bool Greenpak4LUTPgen::Save(bool* bitstream)
+bool Greenpak4PatternGenerator::Save(bool* bitstream)
 {
+	/*
 	//Save the mode regardless
 	bitstream[m_configBase + 20] = m_pgenMode;
 
@@ -154,4 +174,7 @@ bool Greenpak4LUTPgen::Save(bool* bitstream)
 
 	//Save LUT stuff (input bus etc) regardless
 	return Greenpak4LUT::Save(bitstream);
+	*/
+
+	return false;
 }

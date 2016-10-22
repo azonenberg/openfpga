@@ -49,9 +49,27 @@ public:
 
 	virtual bool CommitChanges();
 
+	Greenpak4BitstreamEntity* GetEntity(std::string type)
+	{ return m_entities[m_emap[type]]; }
+
+	Greenpak4BitstreamEntity* GetActiveEntity()
+	{ return m_entities[m_activeEntity]; }
+
+	void AddType(std::string type, bool entity);
+	bool SetEntityType(std::string type);
+
 protected:
+
+	//Address of the select bit
 	unsigned int m_select;
 
+	//The currently selected entity
+	bool m_activeEntity;
+
+	//Map of HDL module names to entity types
+	std::map<std::string, bool> m_emap;
+
+	//The underlying entities
 	Greenpak4BitstreamEntity* m_entities[2];
 };
 

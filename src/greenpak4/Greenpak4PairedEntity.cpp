@@ -31,12 +31,18 @@ Greenpak4PairedEntity::Greenpak4PairedEntity(
 	Greenpak4BitstreamEntity* a,
 	Greenpak4BitstreamEntity* b)
 	: Greenpak4BitstreamEntity(device, matrix, -1, -1, select)
+	, m_select(select)
+	, m_activeEntity(false)
 {
+	m_entities[0] = a;
+	m_entities[1] = b;
 }
 
 Greenpak4PairedEntity::~Greenpak4PairedEntity()
 {
-
+	//Delete both entities (we own them)
+	delete m_entities[0];
+	delete m_entities[1];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,34 +50,74 @@ Greenpak4PairedEntity::~Greenpak4PairedEntity()
 
 string Greenpak4PairedEntity::GetDescription()
 {
-	return "";
+	return GetActiveEntity()->GetDescription();
 }
 
 vector<string> Greenpak4PairedEntity::GetInputPorts() const
 {
+	auto pa = m_entities[0]->GetInputPorts();
+	auto pb = m_entities[1]->GetInputPorts();
+
+	//return the union of both devices' ports
+	set<string> p;
+	for(auto s : pa)
+		p.emplace(s);
+	for(auto s : pb)
+		p.emplace(s);
+
 	vector<string> r;
-	//no inputs
+	for(auto s : p)
+		r.push_back(s);
 	return r;
 }
 
-void Greenpak4PairedEntity::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
+void Greenpak4PairedEntity::SetInput(string port, Greenpak4EntityOutput src)
 {
-	//no inputs
+	GetActiveEntity()->SetInput(port, src);
 }
 
 vector<string> Greenpak4PairedEntity::GetOutputPorts() const
 {
+	auto pa = m_entities[0]->GetOutputPorts();
+	auto pb = m_entities[1]->GetOutputPorts();
+
+	//return the union of both devices' ports
+	set<string> p;
+	for(auto s : pa)
+		p.emplace(s);
+	for(auto s : pb)
+		p.emplace(s);
+
 	vector<string> r;
-	//r.push_back("OK");
+	for(auto s : p)
+		r.push_back(s);
 	return r;
 }
 
 unsigned int Greenpak4PairedEntity::GetOutputNetNumber(string port)
 {
-	/*if(port == "OK")
-		return m_outputBaseWord;
-	else*/
-		return -1;
+	return GetActiveEntity()->GetOutputNetNumber(port);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Module selection
+
+void Greenpak4PairedEntity::AddType(string type, bool entity)
+{
+	m_emap[type] = entity;
+}
+
+bool Greenpak4PairedEntity::SetEntityType(string type)
+{
+	if(m_emap.find(type) == m_emap.end())
+		return false;
+
+	m_activeEntity = m_emap[type];
+
+	//Need to copy the PAR node over so it can reference things
+	GetActiveEntity()->SetPARNode(m_parnode);
+
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,19 +130,25 @@ bool Greenpak4PairedEntity::CommitChanges()
 	if(ncell == NULL)
 		return true;
 
+	//Select the right entity based on which type we're using
+	if(!SetEntityType(ncell->m_type))
+		return false;
 
-	return true;
+	//and commit those changes
+	return GetActiveEntity()->CommitChanges();
 }
 
-bool Greenpak4PairedEntity::Load(bool* /*bitstream*/)
+bool Greenpak4PairedEntity::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	m_activeEntity = bitstream[m_configBase];
+	return GetActiveEntity()->Load(bitstream);
 }
 
 bool Greenpak4PairedEntity::Save(bool* bitstream)
 {
-	//bitstream[m_configBase + 15] = false;
+	//Write the select bit
+	bitstream[m_configBase] = m_activeEntity;
 
-	return true;
+	//and the config data
+	return GetActiveEntity()->Save(bitstream);
 }
