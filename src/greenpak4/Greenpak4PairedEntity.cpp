@@ -16,49 +16,87 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#include <log.h>
+#include <Greenpak4.h>
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
+using namespace std;
 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4EntityOutput.h"
-#include "Greenpak4DualEntity.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-#include "Greenpak4Abuf.h"
-#include "Greenpak4Bandgap.h"
-#include "Greenpak4Counter.h"
-#include "Greenpak4Comparator.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4DAC.h"
-#include "Greenpak4Delay.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4LUTPgen.h"
-#include "Greenpak4PGA.h"
-#include "Greenpak4PairedEntity.h"
-#include "Greenpak4PowerOnReset.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4RCOscillator.h"
-#include "Greenpak4RingOscillator.h"
-#include "Greenpak4ShiftRegister.h"
-#include "Greenpak4SystemReset.h"
-#include "Greenpak4VoltageReference.h"
+Greenpak4PairedEntity::Greenpak4PairedEntity(
+	Greenpak4Device* device,
+	unsigned int matrix,
+	unsigned int select,
+	Greenpak4BitstreamEntity* a,
+	Greenpak4BitstreamEntity* b)
+	: Greenpak4BitstreamEntity(device, matrix, -1, -1, select)
+{
+}
 
-#include "Greenpak4NetlistNode.h"
-#include "Greenpak4NetlistCell.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
-#include "Greenpak4Netlist.h"
+Greenpak4PairedEntity::~Greenpak4PairedEntity()
+{
 
-#include "Greenpak4Device.h"
+}
 
-#endif
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+string Greenpak4PairedEntity::GetDescription()
+{
+	return "";
+}
+
+vector<string> Greenpak4PairedEntity::GetInputPorts() const
+{
+	vector<string> r;
+	//no inputs
+	return r;
+}
+
+void Greenpak4PairedEntity::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
+{
+	//no inputs
+}
+
+vector<string> Greenpak4PairedEntity::GetOutputPorts() const
+{
+	vector<string> r;
+	//r.push_back("OK");
+	return r;
+}
+
+unsigned int Greenpak4PairedEntity::GetOutputNetNumber(string port)
+{
+	/*if(port == "OK")
+		return m_outputBaseWord;
+	else*/
+		return -1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization
+
+bool Greenpak4PairedEntity::CommitChanges()
+{
+	//Get our cell, or bail if we're unassigned
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell == NULL)
+		return true;
+
+
+	return true;
+}
+
+bool Greenpak4PairedEntity::Load(bool* /*bitstream*/)
+{
+	LogError("Unimplemented\n");
+	return false;
+}
+
+bool Greenpak4PairedEntity::Save(bool* bitstream)
+{
+	//bitstream[m_configBase + 15] = false;
+
+	return true;
+}

@@ -20,6 +20,7 @@ add_library(greenpak4 STATIC
 	Greenpak4LFOscillator.cpp
 	Greenpak4LUT.cpp
 	Greenpak4LUTPgen.cpp
+	Greenpak4PairedEntity.cpp
 	Greenpak4PGA.cpp
 	Greenpak4PowerOnReset.cpp
 	Greenpak4PowerRail.cpp
