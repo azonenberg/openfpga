@@ -74,7 +74,6 @@ add_greenpak4_test(Inverters SLG46620V)
 add_greenpak4_test(Location SLG46620V)
 add_greenpak4_test(Loop SLG46620V)
 add_greenpak4_test(POR SLG46620V)
-add_greenpak4_test(SocketTestLoopback_STQFN14 SLG46140V)
 add_greenpak4_test(Tristate SLG46620V)
 add_greenpak4_test(Vector SLG46620V)
 
@@ -82,6 +81,7 @@ add_greenpak4_test(Vector SLG46620V)
 # Compile bitstreams for HiL tests
 
 add_greenpak4_bitstream(PGA SLG46620V)
+#add_greenpak4_bitstream(SocketTestLoopback_STQFN14 SLG46140V)
 
 ########################################################################################################################
 # Compile binaries for HiL tests (no install required here)
