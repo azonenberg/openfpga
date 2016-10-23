@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
 				if(!(voltage2 == 0.0 || (voltage2 <= voltage)))
 				{
 					printf("--voltage-2 %.3g must be less than or equal to --voltage %.3g\n", voltage2, voltage);
-					return 1;					
+					return 1;
 				}
 			}
 			else
@@ -271,31 +271,30 @@ int main(int argc, char* argv[])
 	if(!hdev)
 		return 1;
 
-	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
-	if(downloadFilename.empty() && uploadFilename.empty() && voltage == 0.0 && nets.empty() &&
-	   rcOscFreq == 0 && !test && !reset)
-	{
-		LogNotice("No actions requested, exiting\n");
-		return 0;
-	}
-
 	//Light up the status LED
 	if(!SetStatusLED(hdev, 1))
 		return 1;
 
-	//See if any of the options require knowing what part we use.
+	//Figure out which part to use
 	SilegoPart detectedPart = SilegoPart::UNRECOGNIZED;
 	vector<uint8_t> programmedBitstream;
 	BitstreamKind bitstreamKind;
-	if(!(uploadFilename.empty() && downloadFilename.empty() && rcOscFreq == 0 && !test && !programNvram))
+	if(!DetectPart(hdev, detectedPart, programmedBitstream, bitstreamKind))
 	{
-		if(!DetectPart(hdev, detectedPart, programmedBitstream, bitstreamKind))
-		{
-			SetStatusLED(hdev, 0);
-			return 1;
-		}
+		SetStatusLED(hdev, 0);
+		return 1;
 	}
 
+	//If we're run with no bitstream and no reset flag, stop now without changing board configuration
+	if(downloadFilename.empty() && uploadFilename.empty() && voltage == 0.0 && nets.empty() &&
+	   rcOscFreq == 0 && !test && !reset)
+	{
+		LogNotice("No actions requested, exiting (use --help for help)\n");
+		SetStatusLED(hdev, 0);
+		return 0;
+	}
+
+	//It makes no sense to apply vccio to a single-rail part
 	if(voltage2 != 0.0 && detectedPart != SilegoPart::SLG46621V)
 	{
 		LogError("Part %s is detected, but --voltage-2 can only be used with dual-supply parts (SLG46621V)\n",
@@ -451,7 +450,7 @@ int main(int argc, char* argv[])
 		//Configure the signal generator for Vdd2
 		LogNotice("Setting Vdd2 to %.3g V\n", voltage2);
 		if(!ConfigureSiggen(hdev, 14, voltage2))
-			return 1;		
+			return 1;
 	}
 
 	if(!nets.empty())
