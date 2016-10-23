@@ -31,6 +31,26 @@ Greenpak4Device::Greenpak4Device(
 	Greenpak4IOB::PullStrength default_drive)
 	: m_part(part)
 {
+	//Create power rails
+	//These have to come first, since all other nodes will refer to these during construction
+	m_constantZero = new Greenpak4PowerRail(this, 0, 0);
+	m_constantOne = new Greenpak4PowerRail(this, 0, 63);
+
+	//NULL out all of the non-array objects in case we don't have them in the device being created
+	m_lfosc = NULL;
+	m_rcosc = NULL;
+	m_ringosc = NULL;
+	m_abuf = NULL;
+	m_sysrst = NULL;
+	m_bandgap = NULL;
+	m_pga = NULL;
+	m_por = NULL;
+	for(int i=0; i<2; i++)
+	{
+		for(int j=0; j<10; j++)
+			m_crossConnections[i][j] = NULL;
+	}
+
 	//Initialize everything
 	switch(part)
 	{
@@ -69,18 +89,25 @@ Greenpak4Device::~Greenpak4Device()
 
 void Greenpak4Device::CreateDevice_SLG46140()
 {
-	LogFatal("unimplemented\n");
+	//64 inputs per routing matrix
+	m_matrixBits = 6;
+
+	//TODO: Add everything of consequence here
+
+	//Initialize matrix base addresses
+	m_matrixBase[0] = 0;
+	m_matrixBase[1] = 0;		//initialize for completeness's sake, but there is no matrix 1
+
+	//no cross connections
+
+	//Do final initialization
+	CreateDevice_common();
 }
 
 void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 {
 	//64 inputs per routing matrix
 	m_matrixBits = 6;
-
-	//Create power rails
-	//These have to come first, since all other devices will refer to these during construction
-	m_constantZero = new Greenpak4PowerRail(this, 0, 0);
-	m_constantOne = new Greenpak4PowerRail(this, 0, 63);
 
 	//Create the LUT2s (4 per device half)
 	for(int i=0; i<4; i++)
@@ -535,19 +562,32 @@ void Greenpak4Device::CreateDevice_common()
 		m_bitstuff.push_back(x);
 	m_bitstuff.push_back(m_constantZero);
 	m_bitstuff.push_back(m_constantOne);
-	m_bitstuff.push_back(m_lfosc);
-	m_bitstuff.push_back(m_ringosc);
-	m_bitstuff.push_back(m_rcosc);
-	m_bitstuff.push_back(m_sysrst);
-	m_bitstuff.push_back(m_bandgap);
-	m_bitstuff.push_back(m_por);
-	m_bitstuff.push_back(m_pga);
-	m_bitstuff.push_back(m_abuf);
 
-	//TODO: this might be device specific - not all parts have exactly two matrices and ten cross connections?
-	for(unsigned int matrix=0; matrix<2; matrix++)
-		for(unsigned int i=0; i<10; i++)
-			m_bitstuff.push_back(m_crossConnections[matrix][i]);
+	//Add global objects if we have them
+	if(m_lfosc)
+		m_bitstuff.push_back(m_lfosc);
+	if(m_ringosc)
+		m_bitstuff.push_back(m_ringosc);
+	if(m_rcosc)
+		m_bitstuff.push_back(m_rcosc);
+	if(m_sysrst)
+		m_bitstuff.push_back(m_sysrst);
+	if(m_bandgap)
+		m_bitstuff.push_back(m_bandgap);
+	if(m_por)
+		m_bitstuff.push_back(m_por);
+	if(m_pga)
+		m_bitstuff.push_back(m_pga);
+	if(m_abuf)
+		m_bitstuff.push_back(m_abuf);
+
+	//Add cross connections iff we have them
+	if(m_matrixBase[0] != m_matrixBase[1])
+	{
+		for(unsigned int matrix=0; matrix<2; matrix++)
+			for(unsigned int i=0; i<10; i++)
+				m_bitstuff.push_back(m_crossConnections[matrix][i]);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

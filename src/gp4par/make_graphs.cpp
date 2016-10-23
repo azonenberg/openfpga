@@ -70,6 +70,8 @@ bool BuildGraphs(
 	PARGraph*& dgraph,
 	labelmap& lmap)
 {
+	LogIndenter li;
+
 	//Create the graphs
 	ngraph = new PARGraph;
 	dgraph = new PARGraph;
@@ -701,6 +703,15 @@ void MakeSingleNode(
 	labelmap& lmap)
 {
 	uint32_t label = AllocateLabel(ngraph, dgraph, lmap, type);
+
+	//If the entity is NULL, the device probably has none of them!
+	//Warn because this smells fishy
+	if(entity == NULL)
+	{
+		LogWarning("MakeSingleNode type %s: entity was null\n", type.c_str());
+		return;
+	}
+
 	MakeNode(label, entity, dgraph);
 }
 
