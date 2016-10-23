@@ -300,11 +300,11 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 	Greenpak4RingOscillator* rosc = device->GetRingOscillator();
 	Greenpak4RCOscillator* rcosc = device->GetRCOscillator();
 	vector<spair> powerdowns;
-	if(lfosc->IsUsed() && lfosc->GetPowerDownEn() && !lfosc->IsConstantPowerDown())
+	if(lfosc && lfosc->IsUsed() && lfosc->GetPowerDownEn() && !lfosc->IsConstantPowerDown())
 		powerdowns.push_back(spair(lfosc->GetDescription(), lfosc->GetPowerDown()));
-	if(rosc->IsUsed() && rosc->GetPowerDownEn() && !rosc->IsConstantPowerDown())
+	if(rosc && rosc->IsUsed() && rosc->GetPowerDownEn() && !rosc->IsConstantPowerDown())
 		powerdowns.push_back(spair(rosc->GetDescription(), rosc->GetPowerDown()));
-	if(rcosc->IsUsed() && rcosc->GetPowerDownEn() && !rcosc->IsConstantPowerDown())
+	if(rcosc && rcosc->IsUsed() && rcosc->GetPowerDownEn() && !rcosc->IsConstantPowerDown())
 		powerdowns.push_back(spair(rcosc->GetDescription(), rcosc->GetPowerDown()));
 	if(!powerdowns.empty())
 	{
@@ -330,9 +330,10 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 	}
 
 	//ADC/DAC conflicts
-	if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
+	if( (device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620) ||
+		(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46621))
 	{
-		//null check on pga is unnecessary for the 46620v, but necessary to avoid false positive from static analysis
+		//null check on pga is unnecessary for the 4662x, but necessary to avoid false positive from static analysis
 		auto dac1 = device->GetDAC(1);
 		if(pga && pga->IsUsed() && dac1->IsUsed())
 		{
@@ -357,7 +358,10 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 
 	//If POR is driven to an IOB, it should be pin 8 using dedicated routing
 	//If not, warn about timing
-	if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
+	if(
+		(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620) ||
+		(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46621)
+		)
 	{
 		//Get all IOB loads of the POR
 		auto p8 = device->GetIOB(8);

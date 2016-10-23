@@ -92,7 +92,35 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	//64 inputs per routing matrix
 	m_matrixBits = 6;
 
-	//TODO: Add everything of consequence here
+	//TODO: Create LUT2s
+
+	//TODO: Create LUT3s
+
+	//TODO: Create LUT4s
+
+	//Create the Type-A IOBs (with output enable).
+	m_iobs[2] =  new Greenpak4IOBTypeA(this, 2,  0, -1, 22, 761, Greenpak4IOB::IOB_FLAG_INPUTONLY);
+	m_iobs[3] =  new Greenpak4IOBTypeA(this, 3,  0, 44, 23, 766);
+	m_iobs[4] =  new Greenpak4IOBTypeA(this, 4,  0, 46, 24, 773);
+	m_iobs[5] =  new Greenpak4IOBTypeA(this, 5,  0, 48, 25, 780);
+	m_iobs[7] =  new Greenpak4IOBTypeA(this, 7,  0, 51, 27, 795);
+	m_iobs[9] =  new Greenpak4IOBTypeA(this, 9,  0, 53, 28, 802);
+	m_iobs[12] = new Greenpak4IOBTypeA(this, 12, 0, 57, 31, 827);
+	m_iobs[13] = new Greenpak4IOBTypeA(this, 13, 0, 59, 32, 834);
+	m_iobs[14] = new Greenpak4IOBTypeA(this, 14, 0, 61, 33, 841);
+
+	//m_iobs[19]->SetAnalogConfigBase(878);
+	//m_iobs[18]->SetAnalogConfigBase(876);
+
+	//Create the Type-B IOBs (no output enable)
+	m_iobs[6]  = new Greenpak4IOBTypeB(this,  6, 0, 50, 26, 788);
+	m_iobs[10] = new Greenpak4IOBTypeB(this, 10, 0, 55, 29, 811, Greenpak4IOB::IOB_FLAG_X4DRIVE);
+	m_iobs[11] = new Greenpak4IOBTypeB(this, 11, 0, 56, 30, 820);
+
+	//TODO: Stuff after IOBs
+
+	//Total length of our bitstream
+	m_bitlen = 1024;
 
 	//Initialize matrix base addresses
 	m_matrixBase[0] = 0;
@@ -703,7 +731,8 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[490] = true;
 			bitstream[491] = true;
 
-			//Vref fine tune, magic value from datasheet
+			//Vref fine tune, magic value from datasheet (TODO do calibration?)
+			//Seems to have been removed from most recent datasheet
 			bitstream[891] = true;
 			bitstream[890] = false;
 			bitstream[889] = false;
@@ -711,6 +740,7 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[887] = false;
 
 			//Device ID; immutable on the device but added to aid verification
+			//5A: more data to follow
 			bitstream[1016] = false;
 			bitstream[1017] = true;
 			bitstream[1018] = false;
@@ -720,6 +750,7 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[1022] = true;
 			bitstream[1023] = false;
 
+			//A5: end of bitstream
 			bitstream[2040] = true;
 			bitstream[2041] = false;
 			bitstream[2042] = true;
@@ -745,8 +776,52 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			break;
 
 		case GREENPAK4_SLG46140:
-			LogError("Greenpak4Device: Not implemented for SLG46140 yet\n");
+
+			//FIXME: Disable ADC block (until we have the logic for that implemented)
+			bitstream[378] = true;
+			bitstream[379] = true;
+			bitstream[380] = true;
+			bitstream[381] = true;
+			bitstream[383] = true;
+			bitstream[383] = true;
+
+			//Vref fine tune, magic value from datasheet (TODO do calibration?)
+			//Seems to have been removed from most recent datasheet, used rev 079 for this
+			bitstream[495] = true;
+			bitstream[494] = false;
+			bitstream[493] = false;
+			bitstream[492] = true;
+			bitstream[491] = false;
+
+			//Device ID; immutable on the device but added to aid verification
+			//A5: end of bitstream
+			bitstream[1016] = true;
+			bitstream[1017] = false;
+			bitstream[1018] = true;
+			bitstream[1019] = false;
+			bitstream[1020] = false;
+			bitstream[1021] = true;
+			bitstream[1022] = false;
+			bitstream[1023] = true;
+
+			//User ID of the bitstream
+			bitstream[1007] = (userid & 0x01) ? true : false;
+			bitstream[1008] = (userid & 0x02) ? true : false;
+			bitstream[1009] = (userid & 0x04) ? true : false;
+			bitstream[1010] = (userid & 0x08) ? true : false;
+			bitstream[1011] = (userid & 0x10) ? true : false;
+			bitstream[1012] = (userid & 0x20) ? true : false;
+			bitstream[1013] = (userid & 0x40) ? true : false;
+			bitstream[1014] = (userid & 0x80) ? true : false;
+
 			break;
+
+		//Invalid device
+		default:
+			LogError("Greenpak4Device: WriteToFile(): unknown device\n");
+			fclose(fp);
+			delete[] bitstream;
+			return false;
 	}
 
 	//Write the bitfile

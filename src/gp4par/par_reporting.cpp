@@ -121,13 +121,13 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		else if(dynamic_cast<Greenpak4Delay*>(entity))
 			delay_used ++;
 	}
-	if(device->GetLFOscillator()->GetPARNode()->GetMate() != NULL)
+	if(device->GetLFOscillator() && device->GetLFOscillator()->GetPARNode()->GetMate() != NULL)
 		lfosc_used = 1;
-	if(device->GetRingOscillator()->GetPARNode()->GetMate() != NULL)
+	if(device->GetRingOscillator() && device->GetRingOscillator()->GetPARNode()->GetMate() != NULL)
 		ringosc_used = 1;
-	if(device->GetRCOscillator()->GetPARNode()->GetMate() != NULL)
+	if(device->GetRCOscillator() && device->GetRCOscillator()->GetPARNode()->GetMate() != NULL)
 		rcosc_used = 1;
-	if(device->GetSystemReset()->GetPARNode()->GetMate() != NULL)
+	if(device->GetSystemReset() && device->GetSystemReset()->GetPARNode()->GetMate() != NULL)
 		sysrst_used = 1;
 
 	//Print the actual report
