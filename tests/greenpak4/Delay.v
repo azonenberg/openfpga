@@ -46,7 +46,7 @@ module Delay(clk, clk_delayed);
 		.PWRDN_EN(0),
 		.AUTO_PWRDN(0),
 		.OSC_FREQ("2M"),
-		.PRE_DIV(1),
+		.HARDIP_DIV(1),
 		.FABRIC_DIV(4)
 	) rcosc (
 		.PWRDN(1'b0),

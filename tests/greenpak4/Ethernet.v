@@ -54,7 +54,7 @@ module Ethernet(txd, lcw, burst_start, link_up);
 		.PWRDN_EN(0),
 		.AUTO_PWRDN(0),
 		.OSC_FREQ("2M"),
-		.PRE_DIV(1),
+		.HARDIP_DIV(1),
 		.FABRIC_DIV(1)
 	) rcosc (
 		.PWRDN(1'b0),
