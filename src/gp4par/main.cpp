@@ -116,6 +116,38 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 		}
+		else if( (s == "--part") || (s == "-p") )
+		{
+			if(i+1 < argc)
+			{
+				int p;
+				sscanf(argv[++i], "SLG%d", &p);
+
+				switch(p)
+				{
+					case 46620:
+						part = Greenpak4Device::GREENPAK4_SLG46620;
+						break;
+
+					case 46621:
+						part = Greenpak4Device::GREENPAK4_SLG46621;
+						break;
+
+					case 46140:
+						part = Greenpak4Device::GREENPAK4_SLG46140;
+						break;
+
+					default:
+						printf("invalid part (supported: 46620, 46621, 46140)\n");
+						return 1;
+				}
+			}
+			else
+			{
+				printf("--usercode requires an argument\n");
+				return 1;
+			}
+		}
 		else if(s == "--read-protect")
 			readProtect = true;
 		else if(s == "-o" || s == "--output")
@@ -158,7 +190,24 @@ int main(int argc, char* argv[])
 	LogNotice("\nDevice configuration:\n");
 	{
 		LogIndenter li;
-		LogNotice("Target device:   SLG46620V\n");
+
+		string dev = "<invalid>";
+		switch(part)
+		{
+			case Greenpak4Device::GREENPAK4_SLG46620:
+				dev = "SLG46620V";
+				break;
+
+			case Greenpak4Device::GREENPAK4_SLG46621:
+				dev = "SLG46621V";
+				break;
+
+			case Greenpak4Device::GREENPAK4_SLG46140:
+				dev = "SLG46140V";
+				break;
+		}
+
+		LogNotice("Target device:   %s", dev.c_str());
 		LogNotice("VCC range:       not yet implemented\n");
 
 		string pull;
@@ -242,7 +291,9 @@ int main(int argc, char* argv[])
 void ShowUsage()
 {
 	printf(//                                                                               v 80th column
-		"Usage: gp4par -o bitstream.txt netlist.json\n"
+		"Usage: gp4par -p part -o bitstream.txt netlist.json\n"
+		"    -p, --part\n"
+		"        Specifies the part to target (SLG46620V, SLG46621V, or SLG46140V)\n"
 		"    -q, --quiet\n"
 		"        Causes only warnings and errors to be written to the console.\n"
 		"        Specify twice to also silence warnings.\n"

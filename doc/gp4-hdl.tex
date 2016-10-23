@@ -3355,12 +3355,13 @@ GP_VSS vss(
 
 The current version of \namestyle{gp4par} takes long-form arguments only. All argument and value names are case sensitive.
 
-The example shown in figure \ref{gp-cmd-example} runs place-and-route on the netlist Analog.json, with top-level module
-Analog, and saves the generated bitstream to Analog-hdl.txt. Unused pins are pulled down with $10 k\Omega$ resistors.
+The example shown in figure \ref{gp-cmd-example} runs place-and-route on the netlist Analog.json, targeting the
+SLG46620V, with top-level module Analog, and saves the generated bitstream to Analog-hdl.txt. Unused pins are pulled
+down with $10 k\Omega$ resistors.
 
 \begin{figure}[h]
 \begin{lstlisting}[language=sh]
-gp4par Analog.json -o Analog-hdl.txt --unused-pull down --unused-drive 10k
+gp4par -p SLG46620V Analog.json -o Analog-hdl.txt --unused-pull down --unused-drive 10k
 \end{lstlisting}
 \caption{Example usage of \namestyle{gp4par}}
 \label{gp-cmd-example}
@@ -3397,6 +3398,11 @@ as it is completely emitted by \namestyle{gp4par}.
 
 The \texttt{--output} argument is required for all place-and-route operations. It must be immediately followed by the
 filename to which the generated bitstream will be written.
+
+\subsection{\texttt{--part}, \texttt{-p}}
+
+The \texttt{--part} argument is required for all place-and-route operations. It must be immediately followed by the
+part number (ex: SLG46620V, SLG46140V).
 
 \subsection{\texttt{--quiet}, \texttt{-q}}
 
