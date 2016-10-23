@@ -158,6 +158,7 @@ void PAREngine::PrintUnroutes(vector<PARGraphEdge*>& /*unroutes*/)
 bool PAREngine::SanityCheck(map<uint32_t, string> label_names)
 {
 	LogVerbose("Initial design feasibility check...\n");
+	LogIndenter li;
 
 	uint32_t nmax_net = m_netlist->GetMaxLabel();
 	uint32_t nmax_dev = m_device->GetMaxLabel();
