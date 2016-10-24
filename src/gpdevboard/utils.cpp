@@ -329,6 +329,11 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 				"0000000000000000000000000000000200800020000004000000000200000000");
 			break;
 
+		case SLG46140V:
+			LogWarning("FIXME: not doing anything in SocketTest\n");
+			return true;
+			break;
+
 		default: LogFatal("Unknown part\n");
 	}
 
@@ -424,6 +429,10 @@ bool TrimOscillator(hdevice hdev, SilegoPart part, double voltage, unsigned freq
 			if(freq == 2000000) // set the .OSC_FREQ("2M") bit at reg<1650>
 				trimBitstream[1650/8] |= 1 << (1650%8);
 			break;
+
+		case SLG46140V:
+			LogWarning("FIXME: not doing anything in SocketTest\n");
+			return true;
 
 		default: LogFatal("Unknown part\n");
 	}
@@ -567,44 +576,69 @@ bool TweakBitstream(vector<uint8_t>& bitstream, SilegoPart part, uint8_t oscTrim
 	LogNotice("Applying requested configuration to bitstream\n");
 	LogIndenter li;
 
-	//TODO: implement for other parts
-	switch(part)
+	if( (part == SLG46621V) || (part == SLG46620V) || (part == SLG4662XV) )
 	{
-		case SLG46620V:
-		case SLG46621V:
-		case SLG4662XV:
-			break;
+		//Set trim value reg<1981:1975>
+		bitstream[246] &= 0xFE;
+		bitstream[247] &= 0x01;
+		bitstream[246] |= oscTrim << 7;
+		bitstream[247] |= oscTrim >> 1;
+		LogVerbose("Oscillator trim value: %d\n", oscTrim);
 
-		default:
-			LogError("TweakBitstream only implemented for SLG4662XV\n");
-			return false;
+		//Set pattern ID reg<2031:2038>
+		if(patternID != 0)
+		{
+			bitstream[253] &= 0xFE;
+			bitstream[254] &= 0x01;
+		}
+		bitstream[253] |= patternID << 7;
+		bitstream[254] |= patternID >> 1;
+		LogNotice("Bitstream ID code: 0x%02x\n", patternID);
+
+		//Set read protection reg<2039>
+		//OR with the existing value: we can set the read protect bit here, but not overwrite the bit if
+		//it was set by gp4par. If you REALLY need to unprotect a bitstream, do it by hand in a text editor.
+		bitstream[254] |= ((uint8_t)readProtect) << 7;
+		if(bitstream[254] & 0x80)
+			LogNotice("Read protection: enabled\n");
+		else
+			LogNotice("Read protection: disabled\n");
 	}
 
-	//Set trim value reg<1981:1975>
-	bitstream[246] &= 0xFE;
-	bitstream[247] &= 0x01;
-	bitstream[246] |= oscTrim << 7;
-	bitstream[247] |= oscTrim >> 1;
-	LogVerbose("Oscillator trim value: %d\n", oscTrim);
-
-	//Set pattern ID reg<2031:2038>
-	if(patternID != 0)
+	else if(part == SLG46140V)
 	{
-		bitstream[253] &= 0xFE;
-		bitstream[254] &= 0x01;
-	}
-	bitstream[253] |= patternID << 7;
-	bitstream[254] |= patternID >> 1;
-	LogNotice("Bitstream ID code: 0x%02x\n", patternID);
+		LogWarning("Oscillator trim value: NOT IMPLEMENTED\n");
 
-	//Set read protection reg<2039>
-	//OR with the existing value: we can set the read protect bit here, but not overwrite the bit if
-	//it was set by gp4par. If you REALLY need to unprotect a bitstream, do it by hand in a text editor.
-	bitstream[254] |= ((uint8_t)readProtect) << 7;
-	if(bitstream[254] & 0x80)
-		LogNotice("Read protection: enabled\n");
+		//Set pattern ID reg<1014:1007>
+		if(patternID != 0)
+		{
+			bitstream[125] &= 0xFE;
+			bitstream[126] &= 0x01;
+		}
+		bitstream[125] |= patternID << 7;
+		bitstream[126] |= patternID >> 1;
+		LogNotice("Bitstream ID code: 0x%02x\n", patternID);
+
+		//Set read protection... 1015 probably, but not sure?
+		LogWarning("Read protection: NOT IMPLEMENTED\n");
+
+		/*
+		//Set read protection reg<2039>
+		//OR with the existing value: we can set the read protect bit here, but not overwrite the bit if
+		//it was set by gp4par. If you REALLY need to unprotect a bitstream, do it by hand in a text editor.
+		bitstream[254] |= ((uint8_t)readProtect) << 7;
+		if(bitstream[254] & 0x80)
+			LogNotice("Read protection: enabled\n");
+		else
+			LogNotice("Read protection: disabled\n");
+		*/
+	}
+
 	else
-		LogNotice("Read protection: disabled\n");
+	{
+		LogError("TweakBitstream: unrecognized part\n");
+		return false;
+	}
 
 	return true;
 }

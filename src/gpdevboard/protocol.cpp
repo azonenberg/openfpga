@@ -468,7 +468,7 @@ bool SelectADCChannel(hdevice hdev, unsigned int chan)
 	else if(chan >= 12 && chan <= 20)
 		frame.push_back(chan - 2);
 	else
-		LogFatal("Unexpected ADC channel\n");
+		LogFatal("Unexpected ADC channel (%d)\n", chan);
 	frame.push_back(0x00);
 	return frame.Send(hdev);
 }

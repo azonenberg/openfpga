@@ -12,6 +12,10 @@ function(add_greenpak4_netlist name part)
 		COMMENT "Synthesizing Verilog file ${CMAKE_CURRENT_SOURCE_DIR}/${name}"
 		VERBATIM)
 
+	add_custom_target(netlist-gp4-${name}
+		ALL
+		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${name}.json")
+
 endfunction()
 
 ########################################################################################################################
@@ -88,6 +92,10 @@ add_greenpak4_bitstream(SocketTestLoopback_STQFN14 SLG46140V)
 
 add_executable(HIL_PGA
 	HIL_PGA.cpp)
-
 target_link_libraries(HIL_PGA
+	gpdevboard)
+
+add_executable(HIL_SocketTestLoopback_SLG46140
+	HIL_SocketTestLoopback_SLG46140.cpp)
+target_link_libraries(HIL_SocketTestLoopback_SLG46140
 	gpdevboard)
