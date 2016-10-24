@@ -60,22 +60,38 @@ string Greenpak4NetlistCell::GetLOC()
 		string sindex = nodename.substr(pos + 1);	//skip the [ character
 		int index = atoi(sindex.c_str());
 
-		//Find our LOC
-		pos = 0;
-		for(int i=0; i<index; i++)
+		//Split the vector of LOCs into individual locations
+		LogDebug("Get LOC for %s index %d\n", loc.c_str(), index);
+		vector<string> locs;
+		string tmp;
+		for(size_t i=0; i<loc.length(); i++)
 		{
-			pos = loc.find(" ", pos);
-			if(pos == string::npos)
-				return "<invalid LOC>";
+			if(loc[i] == ' ')
+			{
+				if(tmp != "")
+					locs.push_back(tmp);
+				tmp = "";
+			}
 
-			pos++;	//skip the space
+			else
+				tmp += loc[i];
 		}
-		size_t nextpos = loc.find(" ", pos);
-		if(nextpos == string::npos)
-			nextpos = loc.length();
-		nextpos -= pos;
+		if(tmp != "")
+			locs.push_back(tmp);
 
-		return loc.substr(pos, nextpos);
+		//Count from the RIGHT
+		if(index >= (int)locs.size() )
+		{
+			LogError(
+				"LOC constraint \"%s\" on cell %s is invalid.\n"
+				"Cannot constrain vector element[%d] because there are only %d elements in the constraint list\n",
+				loc.c_str(), m_name.c_str(), index, (int)locs.size());
+			return "<invalid>";
+		}
+		string ret = locs[locs.size() - 1 - index];
+		LogDebug("    %s\n", ret.c_str());
+
+		return ret;
 	}
 
 	//Single bit signal, just return the attribute
