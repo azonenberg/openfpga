@@ -92,11 +92,65 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	//64 inputs per routing matrix
 	m_matrixBits = 6;
 
-	//TODO: Create LUT2s
+	//Create the dedicated LUT2s (4 total)
+	for(int i=0; i<4; i++)
+	{
+		m_lut2s.push_back(new Greenpak4LUT(
+			this,
+			i,
+			0,			//everything is in matrix 0
+			i*2,		//LUT2 base is row 0, then 2 inputs per LUT
+			i+1,		//First mux entry is ground, then the LUT2s
+			848 + i*4,	//LUT2s start at bitstream offset 848, 2^2 bits per LUT
+			2));		//this is a LUT2
+	}
 
-	//TODO: Create LUT3s
+	//Create the dedicated LUT3s (4 total)
+	for(int i=0; i<4; i++)
+	{
+		m_lut2s.push_back(new Greenpak4LUT(
+			this,
+			i,
+			0,			//everything is in matrix 0
+			i*3 + 12,	//LUT3 base is row 12, then 3 inputs per LUT
+			i+7,		//we come after the last LUT3
+			874 + i*8,	//LUT3s start at bitstream offset 874, 2^3 bits per LUT
+			3));		//this is a LUT3
+	}
 
-	//TODO: Create LUT4s
+	/*
+	//Create the first LUT, and its pattern-generator alter ego
+	auto lut40 = new Greenpak4LUT(
+		this,
+		0,
+		0,		//Attached to crossbar #0
+		32,		//LUT4 base is row 32
+		13,		//we come after the last LUT3
+		656,	//LUT4 starts after last LUT3
+		4);	//this is a LUT4
+	auto pgen = new Greenpak4PatternGenerator(
+		this,
+		0,
+		32,
+		13,
+		656);
+
+	//Create the paired cell for them
+	auto lpgen = new Greenpak4PairedEntity(
+		this,
+		0,		//Attached to crossbar #0
+		676,	//Selector bit for LUT or PGEN mode
+		lut40,	//select=0 means we're a LUT
+		pgen);	//select=1 means we're a PGEN
+
+	lpgen->AddType("GP_INV", 0);	//Combinatorial logic all uses the LUT
+	lpgen->AddType("GP_2LUT", 0);
+	lpgen->AddType("GP_3LUT", 0);
+	lpgen->AddType("GP_4LUT", 0);
+	lpgen->AddType("GP_PGEN", 1);	//Pattern generator is the only block mapped to the PGEN
+
+	m_lut4s.push_back(lpgen);
+	*/
 
 	//Create the Type-A IOBs (with output enable).
 	m_iobs[2] =  new Greenpak4IOBTypeA(this, 2,  0, -1, 22, 761, Greenpak4IOB::IOB_FLAG_INPUTONLY);
@@ -117,7 +171,267 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	m_iobs[10] = new Greenpak4IOBTypeB(this, 10, 0, 55, 29, 811, Greenpak4IOB::IOB_FLAG_X4DRIVE);
 	m_iobs[11] = new Greenpak4IOBTypeB(this, 11, 0, 56, 30, 820);
 
-	//TODO: Stuff after IOBs
+	//Dedicated DFF/latches (2 total)
+
+	/*
+	//DFF/latches
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 0,  true,  0, 36, 14, 677));
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 1,  true,  0, 39, 15, 681));
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 2,  true,  0, 42, 16, 685));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 3,  false, 0, 45, 17, 689));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 4,  false, 0, 47, 18, 692));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 5,  false, 0, 49, 19, 695));
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 6,  true,  1, 36, 14, 794));
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 7,  true,  1, 39, 15, 798));
+	m_dffsr.push_back(new Greenpak4Flipflop(this, 8,  true,  1, 42, 16, 802));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 9,  false, 1, 45, 17, 806));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 10, false, 1, 47, 18, 809));
+	m_dffs.push_back( new Greenpak4Flipflop(this, 11, false, 1, 49, 19, 812));
+
+	//Shift registers
+	m_shregs.push_back(new Greenpak4ShiftRegister(this, 0, 51, 20, 1610));
+	m_shregs.push_back(new Greenpak4ShiftRegister(this, 1, 51, 20, 1619));
+
+	//Edge detector/prog delays
+	m_delays.push_back(new Greenpak4Delay(this, 0, 54, 22, 1600));
+	m_delays.push_back(new Greenpak4Delay(this, 1, 54, 22, 1609));
+
+	//Inverters
+	m_inverters.push_back(new Greenpak4Inverter(this, 0, 55, 23));
+	m_inverters.push_back(new Greenpak4Inverter(this, 1, 55, 23));
+
+	//TODO: External clocks??
+
+	//Low-frequency oscillator
+	m_lfosc = new Greenpak4LFOscillator(
+		this,
+		0, 		//Matrix applies to inputs, we can route output globally
+		84,		//input base (single power-down input)
+		50,		//output word (plus dedicated routing to counters etc)
+		1652);	//bitstream location
+
+	//Ring oscillator
+	m_ringosc = new Greenpak4RingOscillator(
+		this,
+		0,		//Matrix applies to inputs, we can route output globally
+		84,		//input base (single power-down input)
+		48,		//output word (plus dedicated routing to counters etc)
+		1630);	//bitstream location
+
+	//RC oscillator
+	m_rcosc = new Greenpak4RCOscillator(
+		this,
+		0,		//Matrix applies to inputs, we can route output globally
+		84,		//input base (single power-down input)
+		49,		//output word (plus dedicated routing to counters etc)
+		1642);	//bitstream location
+
+	//Counters
+	m_counters14bit.push_back(new Greenpak4Counter(
+		this,
+		14,		//depth
+		false,	//no FSM mode
+		true,	//wake-sleep powerdown bit
+		false,	//no edge detector
+		false,	//no PWM
+		0,		//counter number
+		0,		//matrix
+		74,		//ibase
+		36,		//oword
+		1731));	//cbase
+	m_counters14bit.push_back(new Greenpak4Counter(
+		this,
+		14,		//depth
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		false,	//no PWM
+		1,		//counter number
+		1,		//matrix
+		75,		//ibase
+		36,		//oword
+		1753));	//cbase
+	m_counters14bit.push_back(new Greenpak4Counter(
+		this,
+		14,		//depth
+		true,	//we have FSM mode
+		false,	//no wake-sleep powerdown
+		true,	//we have edge detector
+		false,	//no PWM
+		2,		//counter number
+		0,		//matrix
+		75,		//ibase
+		37,		//oword
+		1774));	//cbase
+	m_counters14bit.push_back(new Greenpak4Counter(
+		this,
+		14,		//depth
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		false,	//no PWM
+		3,		//counter number
+		1,		//matrix
+		76,		//ibase
+		37,		//oword
+		1799));	//cbase (datasheet has a typo, this is correct)
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth
+		true,	//we have FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		false,	//no PWM
+		4,		//counter number
+		1,		//matrix
+		77,		//ibase
+		38,		//oword,
+		1820));	//cbase
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		false,	//no PWM
+		5,		//counter number
+		0,		//matrix
+		78,		//ibase
+		38,		//oword,
+		1838));	//cbase
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		false,	//no PWM
+		6,		//counter number
+		0,		//matrix
+		79,		//ibase
+		39,		//oword,
+		1852));	//cbase
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		false,	//no PWM
+		7,		//counter number
+		1,		//matrix (datasheet has a typo, this is correct)
+		80,		//ibase
+		39,		//oword,
+		1866));	//cbase
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		true,	//PWM mode
+		8,		//counter number
+		1,		//matrix
+		81,		//ibase
+		40,		//oword,
+		1880));	//cbase
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth
+		false,	//no FSM mode
+		false,	//no wake-sleep powerdown
+		false,	//no edge detector
+		true,	//PWM mode
+		9,		//counter number
+		0,		//matrix
+		80,		//ibase
+		40,		//oword,
+		1895));	//cbase
+
+	//TODO: Slave SPI
+
+	//TODO: ADC
+
+	//The DACs
+	m_dacs.push_back(new Greenpak4DAC(this, 844, 840, 843, 840, 0));
+	m_dacs.push_back(new Greenpak4DAC(this, 823, 834, 883, 840, 1));
+
+	//Bandgap reference
+	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923);
+
+	//Voltage references for comparators
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 0, 1));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 1, 2));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 2, 1));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 3, 2));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 4));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 5));
+
+	//Extra voltage references for the DACs (always 1.0V but having them declared as GP_VREF makes HDL cleaner)
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 6));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 7));
+
+	//Analog comparators
+	//TODO speed doubler for ACMP5? Need to double check latest datasheet, this may have been changed
+	m_acmps.push_back(new Greenpak4Comparator(this, 0, 0, 69, 33, 832, 852, 853, 855, 934, 892));
+	m_acmps.push_back(new Greenpak4Comparator(this, 1, 1, 70, 33, 831, 861, 857, 859, 932, 897));
+	m_acmps.push_back(new Greenpak4Comparator(this, 2, 1, 71, 34,  0,  862, 864, 863, 930, 902));
+	m_acmps.push_back(new Greenpak4Comparator(this, 3, 1, 72, 35,  0,  866, 867, 869, 928, 907));
+	m_acmps.push_back(new Greenpak4Comparator(this, 4, 0, 70, 34,  0,  875, 871, 873, 926, 912));
+	m_acmps.push_back(new Greenpak4Comparator(this, 5, 0, 71, 35,  0,  880,  0,   0,  924, 917));
+
+	//PGA
+	m_pga = new Greenpak4PGA(this, 815);
+
+	//Analog buffer
+	m_abuf = new Greenpak4Abuf(this);
+
+	//Comparator input routing
+	auto pin3 = m_iobs[3]->GetOutput("OUT");
+	auto pin4 = m_iobs[4]->GetOutput("OUT");
+	auto pin6 = m_iobs[6]->GetOutput("OUT");
+	auto pin12 = m_iobs[12]->GetOutput("OUT");
+	auto pin13 = m_iobs[13]->GetOutput("OUT");
+	auto pin15 = m_iobs[15]->GetOutput("OUT");
+	auto vdd = m_constantOne->GetOutput("OUT");
+	auto pga = m_pga->GetOutput("VOUT");
+	auto pin6_buf = m_abuf->GetOutput("OUT");
+	m_acmps[0]->AddInputMuxEntry(pin6, 0);
+	m_acmps[0]->AddInputMuxEntry(pin6_buf, 1);
+	m_acmps[0]->AddInputMuxEntry(vdd, 2);
+	m_acmps[1]->AddInputMuxEntry(pin12, 0);
+	m_acmps[1]->AddInputMuxEntry(pga, 1);
+	m_acmps[1]->AddInputMuxEntry(pin6, 2);
+	m_acmps[1]->AddInputMuxEntry(pin6_buf, 2);
+	m_acmps[1]->AddInputMuxEntry(vdd, 2);
+	m_acmps[2]->AddInputMuxEntry(pin13, 0);
+	m_acmps[2]->AddInputMuxEntry(pin6, 1);
+	m_acmps[2]->AddInputMuxEntry(pin6_buf, 1);
+	m_acmps[2]->AddInputMuxEntry(vdd, 1);
+	m_acmps[3]->AddInputMuxEntry(pin15, 0);
+	m_acmps[3]->AddInputMuxEntry(pin13, 1);
+	m_acmps[3]->AddInputMuxEntry(pin6, 2);
+	m_acmps[3]->AddInputMuxEntry(pin6_buf, 2);
+	m_acmps[3]->AddInputMuxEntry(vdd, 2);
+	m_acmps[4]->AddInputMuxEntry(pin3, 0);
+	m_acmps[4]->AddInputMuxEntry(pin15, 1);
+	m_acmps[4]->AddInputMuxEntry(pin6, 2);
+	m_acmps[4]->AddInputMuxEntry(pin6_buf, 2);
+	m_acmps[4]->AddInputMuxEntry(vdd, 2);
+	m_acmps[5]->AddInputMuxEntry(pin4, 0);
+
+	//TODO: Reserved bits
+
+	//TODO: Vdd bypass
+
+	//Power-on reset
+	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 2009);
+
+	//TODO: IO pad precharge? what does this involve?
+
+	//System reset
+	m_sysrst = new Greenpak4SystemReset(this, 0, 24, -1, 2018);
+	*/
 
 	//Total length of our bitstream
 	m_bitlen = 1024;
