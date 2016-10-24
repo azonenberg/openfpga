@@ -85,7 +85,12 @@ add_greenpak4_test(Vector SLG46620V)
 # Compile bitstreams for HiL tests
 
 add_greenpak4_bitstream(PGA SLG46620V)
+
+# These bitstreams are hard coded in gpdevboard/SocketTest
+# but we ship source for standalone HiL test support and verification
 add_greenpak4_bitstream(SocketTestLoopback_STQFN14 SLG46140V)
+add_greenpak4_bitstream(SocketTestLoopback_STQFN20 SLG46620V)
+add_greenpak4_bitstream(SocketTestLoopback_STQFN20D SLG46621V)
 
 ########################################################################################################################
 # Compile binaries for HiL tests (no install required here)
