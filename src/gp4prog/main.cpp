@@ -49,6 +49,7 @@ int main(int argc, char* argv[])
 	double voltage = 0.0;
 	double voltage2 = 0.0;
 	vector<int> nets;
+	bool hexdump = false;
 
 	//Parse command-line arguments
 	for(int i=1; i<argc; i++)
@@ -145,6 +146,8 @@ int main(int argc, char* argv[])
 		}
 		else if(s == "--force")
 			force = true;
+		else if(s == "--hexdump")
+			hexdump = true;
 		else if(s == "--pattern-id")
 		{
 			if(i+1 < argc)
@@ -378,6 +381,19 @@ int main(int argc, char* argv[])
 		if(!TweakBitstream(newBitstream, detectedPart, rcFtw, patternId, readProtect))
 			return 1;
 
+		//Dump to the console if requested
+		if(hexdump)
+		{
+			LogNotice("Dumping bitstream as hex\n");
+			LogIndenter li;
+			for(size_t i=0; i<newBitstream.size(); i++)
+			{
+				LogNotice("%02x", (unsigned int)newBitstream[i]);
+				if((i & 31) == 31)
+					LogNotice("\n");
+			}
+		}
+
 		if(!programNvram)
 		{
 			//Load bitstream into SRAM
@@ -526,7 +542,10 @@ void ShowUsage()
 		"    -n, --nets           <net list>\n"
 		"        For every test point in the specified comma-separated list:\n"
 		"          * enables a non-inverted LED, if any;\n"
-		"          * enables expansion connector passthrough.\n");
+		"          * enables expansion connector passthrough.\n"
+		"    --hexdump\n"
+		"         Prints a hex dump of the bitstream (after applying ID code etc)\n"
+		"         suitable for passing to BitstreamToHex\n");
 }
 
 void ShowVersion()

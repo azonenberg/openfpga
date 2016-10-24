@@ -311,13 +311,12 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 
 	vector<uint8_t> loopbackBitstream;
 
+	int avail_gpios = 18;
+
 	switch(part)
 	{
 		case SLG46620V:
-			// To reproduce:
-			// module top((* LOC="P2" *) input i, output [16:0] o));
-			// 	assign o = {17{i}};
-			// endmodule
+			//To reproduce: build SocketTestLoopback_STQFN20 for SLG46620V
 			loopbackBitstream = BitstreamFromHex(
 				"0000000000000000000000000000000000000000000000000000000000000000"
 				"00000000000000000000d88f613f86fd18f6633f000000000000000000000000"
@@ -327,14 +326,32 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 				"0000000000000000000034fdd33f4dff34fdd33f0d0000000000000000000000"
 				"0000000000000000000000002004000000000000000000000000000000000000"
 				"0000000000000000000000000000000200800020000004000000000200000000");
+
+			avail_gpios = 18;	//single rail STQFN-20
+			break;
+
+		case SLG46621V:
+			//To reproduce: build SocketTestLoopback_STQFN20D for SLG46621V
+
+			LogWarning("FIXME: not doing anything in SocketTest for SLG46621V\n");
+			return true;
+
+			avail_gpios = 17;	//dual rail STQFN-20
 			break;
 
 		case SLG46140V:
-			LogWarning("FIXME: not doing anything in SocketTest\n");
-			return true;
+			//To reproduce: build SocketTestLoopback_STQFN14 for SLG46140V
+			loopbackBitstream = BitstreamFromHex(
+				"0000000000000000000000000000000000000000000000000000000000000000"
+				"00d66ffdd66f59bff55b96f55bbff5bf00000000000000000000000000900000"
+				"0000000000000000000000000000000000000000000000000000000000000000"
+				"00004000002040000000000000000000000000000000000000000000008020a5");
+
+			avail_gpios = 12;	//single rail STQFN-14
 			break;
 
-		default: LogFatal("Unknown part\n");
+		default:
+			LogFatal("Unknown part\n");
 	}
 
 	LogVerbose("Downloading test bitstream\n");
@@ -368,13 +385,28 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 
 		ioConfig.driverConfigs[2] = get<0>(config);
 		for(size_t i = 3; i <= 20; i++)
+		{
+			//Don't mess with the VCCIO2 driver in dual-rail parts
+			if( (avail_gpios == 17) && (i == 14) )
+				continue;
+
 			ioConfig.driverConfigs[i] = get<1>(config);
+		}
 		if(!SetIOConfig(hdev, ioConfig))
 			return false;
 
 		for(int i = 2; i <= 20; i++)
 		{
 			if(i == 11) continue;
+
+			//Skip un-bonded pins for lower pin count packages
+			if(avail_gpios == 12)
+			{
+				if( (i == 8) || (i == 9) || (i == 10) || (i == 18) || (i == 19) || (i == 20) )
+					continue;
+			}
+			else if( (avail_gpios == 17) && (i == 14) )
+				continue;
 
 			if(!SelectADCChannel(hdev, i))
 				return false;
