@@ -201,15 +201,18 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	m_inverters.push_back(new Greenpak4Inverter(this, 1, 55, 23));
 
 	//TODO: External clocks??
+	*/
 
 	//Low-frequency oscillator
 	m_lfosc = new Greenpak4LFOscillator(
 		this,
-		0, 		//Matrix applies to inputs, we can route output globally
-		84,		//input base (single power-down input)
-		50,		//output word (plus dedicated routing to counters etc)
-		1652);	//bitstream location
+		0, 		//everything is matrix 0
+		66,		//input base (single power-down input)
+		36,		//output word (plus dedicated routing to counters etc)
+		562,	//bitstream location of power management stuff
+		560);	//bitstream location of clock divider
 
+	/*
 	//Ring oscillator
 	m_ringosc = new Greenpak4RingOscillator(
 		this,
@@ -608,7 +611,8 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 		0, 		//Matrix applies to inputs, we can route output globally
 		84,		//input base (single power-down input)
 		50,		//output word (plus dedicated routing to counters etc)
-		1652);	//bitstream location
+		1652,	//bitstream location of power management stuff
+		1654);	//bitstream location of clock divider
 
 	//Ring oscillator
 	m_ringosc = new Greenpak4RingOscillator(

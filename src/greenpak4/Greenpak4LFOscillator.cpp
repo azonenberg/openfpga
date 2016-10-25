@@ -29,12 +29,14 @@ Greenpak4LFOscillator::Greenpak4LFOscillator(
 	unsigned int matrix,
 	unsigned int ibase,
 	unsigned int oword,
-	unsigned int cbase)
+	unsigned int cbase,
+	unsigned int cbase_clkdiv)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 	, m_powerDown(device->GetGround())	//default to auto powerdown only
 	, m_powerDownEn(false)
 	, m_autoPowerDown(true)
 	, m_outDiv(1)
+	, m_cbaseClkdiv(cbase_clkdiv)
 {
 	m_dual = new Greenpak4DualEntity(this);
 }
@@ -159,23 +161,23 @@ bool Greenpak4LFOscillator::Save(bool* bitstream)
 	switch(m_outDiv)
 	{
 		case 1:
-			bitstream[m_configBase + 3] = false;
-			bitstream[m_configBase + 2] = false;
+			bitstream[m_cbaseClkdiv + 1] = false;
+			bitstream[m_cbaseClkdiv + 0] = false;
 			break;
 
 		case 2:
-			bitstream[m_configBase + 3] = false;
-			bitstream[m_configBase + 2] = true;
+			bitstream[m_cbaseClkdiv + 1] = false;
+			bitstream[m_cbaseClkdiv + 0] = true;
 			break;
 
 		case 4:
-			bitstream[m_configBase + 3] = true;
-			bitstream[m_configBase + 2] = false;
+			bitstream[m_cbaseClkdiv + 1] = true;
+			bitstream[m_cbaseClkdiv + 0] = false;
 			break;
 
 		case 16:
-			bitstream[m_configBase + 3] = true;
-			bitstream[m_configBase + 2] = true;
+			bitstream[m_cbaseClkdiv + 1] = true;
+			bitstream[m_cbaseClkdiv + 0] = true;
 			break;
 
 		default:

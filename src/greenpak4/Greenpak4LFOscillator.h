@@ -34,7 +34,8 @@ public:
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword,
-		unsigned int cbase);
+		unsigned int cbase,
+		unsigned int cbase_clkdiv);
 	virtual ~Greenpak4LFOscillator();
 
 	//Serialization
@@ -75,6 +76,9 @@ protected:
 
 	///Output divider
 	int m_outDiv;
+
+	//Bitstream location of the clock divider (not always right after power block)
+	unsigned int m_cbaseClkdiv;
 };
 
 #endif
