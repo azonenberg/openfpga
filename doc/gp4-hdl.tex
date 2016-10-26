@@ -83,8 +83,9 @@ azonenberg@drawersteak.com}
 
 \maketitle
 \begin{abstract}
-\normalsize This document is the primary reference manual for \namestyle{gp4par}, Andrew Zonenberg's place-and-route tool for \namestyle{Silego GreenPak4} devices. As of this writing, the toolchain is \emph{not} officially supported by \namestyle{Silego}, and only works with the
-\namestyle{SLG46620V}. It is under active development and should be considered alpha quality.\vspace*{\fill}
+\normalsize This document is the primary reference manual for \namestyle{gp4par}, Andrew Zonenberg's place-and-route
+tool for \namestyle{Silego GreenPak4} devices. As of this writing, the toolchain is \emph{not} officially supported by
+\namestyle{Silego}. It is under active development and should be considered alpha quality.\vspace*{\fill}
 \end{abstract}
 \thispagestyle{empty}
 
@@ -102,8 +103,14 @@ azonenberg@drawersteak.com}
 \section{Introduction}
 
 \subsection{Architecture Support}
-This guide will eventually apply to all \namestyle{Silego GreenPak4} devices. As of this writing the toolchain is still under early
-development and only the \namestyle{SLG46620V} is supported.
+This guide applies to all \namestyle{Silego GreenPak4} devices, however not all are fully supported by the current
+software version.
+
+\begin{itemize}
+\item \namestyle{SLG46620V}: All features described in this document are supported.
+\item \namestyle{SLG46621V}: All features described in this document are supported, but not as well tested.
+\item \namestyle{SLG46140V}: Preliminary support, many features are not yet implemented.
+\end{itemize}
 
 \subsection{Coding Examples}
 The coding examples in this guide are accurate as of the date of publication. The most up-to-date version of this
@@ -222,7 +229,7 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json Blinky.json
 \pagebreak
 \section{\namestyle{gp4par} Limitations}
 
-The following \namestyle{SLG46620V} device features are not supported by \namestyle{gp4par} as of this writing:
+The following device features are not supported by \namestyle{gp4par} for any device as of this writing:
 
 \begin{itemize}
 \item Storage elements: latch mode
@@ -235,6 +242,21 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Wake-Sleep
 \item DCMP/PWM
 \item Slave SPI
+\end{itemize}
+
+In addition, the following \namestyle{SLG46140V} device features are not yet supported by \namestyle{gp4par}:
+
+\begin{itemize}
+\item Comparators
+\item DAC
+\item PGA
+\item POR
+\item Voltage reference
+\item Ring oscillator
+\item RC oscillator
+\item Dedicated DFF cells
+\item Counters
+\item Combination function macrocells
 \end{itemize}
 
 \pagebreak
@@ -2981,7 +3003,8 @@ GP_RCOSC #(
 \label{gp-ringosc}
 
 \subsubsection{Introduction}
-This primitive represents the ring (27 MHz) oscillator block.
+This primitive represents the ring oscillator block. The output frequency is highly PTV dependent but is nominally 25
+MHz for the SLG46140V and 27 MHz for the SLG46620V.
 
 The oscillator has two cascaded dividers on its output: a pre-divider and post-divider. The pre-divider output drives
 some hard IP blocks (counters and PWM) via dedicated routing, as well as the input of the post-divider. The

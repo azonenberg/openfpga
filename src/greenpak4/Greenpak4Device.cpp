@@ -172,26 +172,11 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	m_iobs[11] = new Greenpak4IOBTypeB(this, 11, 0, 56, 30, 820);
 
 	//Dedicated DFF/latches (2 total)
-
-	/*
-	//DFF/latches
-	m_dffsr.push_back(new Greenpak4Flipflop(this, 0,  true,  0, 36, 14, 677));
-	m_dffsr.push_back(new Greenpak4Flipflop(this, 1,  true,  0, 39, 15, 681));
-	m_dffsr.push_back(new Greenpak4Flipflop(this, 2,  true,  0, 42, 16, 685));
-	m_dffs.push_back( new Greenpak4Flipflop(this, 3,  false, 0, 45, 17, 689));
-	m_dffs.push_back( new Greenpak4Flipflop(this, 4,  false, 0, 47, 18, 692));
-	m_dffs.push_back( new Greenpak4Flipflop(this, 5,  false, 0, 49, 19, 695));
-	m_dffsr.push_back(new Greenpak4Flipflop(this, 6,  true,  1, 36, 14, 794));
-	m_dffsr.push_back(new Greenpak4Flipflop(this, 7,  true,  1, 39, 15, 798));
-	m_dffsr.push_back(new Greenpak4Flipflop(this, 8,  true,  1, 42, 16, 802));
-	m_dffs.push_back( new Greenpak4Flipflop(this, 9,  false, 1, 45, 17, 806));
-	m_dffs.push_back( new Greenpak4Flipflop(this, 10, false, 1, 47, 18, 809));
-	m_dffs.push_back( new Greenpak4Flipflop(this, 11, false, 1, 49, 19, 812));
+	//m_dffsr.push_back(new Greenpak4Flipflop(this, 2,  true,  0, 42, 16, 685));
+	//m_dffs.push_back( new Greenpak4Flipflop(this, 3,  false, 0, 45, 17, 689));
 
 	//Shift registers
-	m_shregs.push_back(new Greenpak4ShiftRegister(this, 0, 51, 20, 1610));
-	m_shregs.push_back(new Greenpak4ShiftRegister(this, 1, 51, 20, 1619));
-	*/
+	//m_shregs.push_back(new Greenpak4ShiftRegister(this, 0, 40, 19, 750));
 
 	//Edge detector/prog delay line
 	m_delays.push_back(new Greenpak4Delay(this, 0, 43, 21, 486));
@@ -211,13 +196,16 @@ void Greenpak4Device::CreateDevice_SLG46140()
 
 	/*
 	//Ring oscillator
+	//TODO: Addresses are right, but bitstream coding is different
 	m_ringosc = new Greenpak4RingOscillator(
 		this,
-		0,		//Matrix applies to inputs, we can route output globally
-		84,		//input base (single power-down input)
-		48,		//output word (plus dedicated routing to counters etc)
-		1630);	//bitstream location
+		0,		//everything is matrix 0
+		66,		//input base (single power-down input)
+		34,		//output word (plus dedicated routing to counters etc)
+		574);	//bitstream location
+	*/
 
+	/*
 	//RC oscillator
 	m_rcosc = new Greenpak4RCOscillator(
 		this,
