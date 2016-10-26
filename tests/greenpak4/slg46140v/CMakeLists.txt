@@ -1,1 +1,2 @@
-
+add_greenpak4_netlist(Cosim_LFOSC SLG46140V)
+add_sim_netlist(Cosim_LFOSC_TB)

@@ -9,6 +9,7 @@ include(GNUInstallDirs)
 # Project configuration
 set(BUILD_DOC     ON      CACHE BOOL   "Build documentation")
 set(YOSYS_COMMAND "yosys" CACHE STRING "Command used to run yosys")
+set(IVERILOG_COMMAND "iverilog" CACHE STRING "Command used to run Icarus Verilog")
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)

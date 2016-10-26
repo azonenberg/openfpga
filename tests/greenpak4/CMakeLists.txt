@@ -1,10 +1,25 @@
 ########################################################################################################################
-# Add our subdirectories
+# Synthesize an HDL file for simulation
 
-include_directories(slg46140v)
+function(add_sim_netlist name)
+
+	add_custom_command(
+		OUTPUT  "${CMAKE_CURRENT_BINARY_DIR}/${name}.vvp"
+		COMMAND "${IVERILOG_COMMAND}" "${CMAKE_CURRENT_SOURCE_DIR}/${name}.v"
+				-o "${CMAKE_CURRENT_BINARY_DIR}/${name}.vvp"
+		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${name}.v"
+		COMMENT "Synthesizing Verilog file ${CMAKE_CURRENT_SOURCE_DIR}/${name}"
+		VERBATIM)
+
+	add_custom_target(sim-gp4-${name}
+		ALL
+		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${name}.vvp")
+
+endfunction()
 
 ########################################################################################################################
-# Synthesize an HDL file for GP4 (TODO specify device family as arg?)
+# Synthesize an HDL file for GP4
+
 function(add_greenpak4_netlist name part)
 
 	add_custom_command(
@@ -109,3 +124,8 @@ add_executable(HIL_SocketTestLoopback_SLG46140
 	HIL_SocketTestLoopback_SLG46140.cpp)
 target_link_libraries(HIL_SocketTestLoopback_SLG46140
 	gpdevboard)
+
+########################################################################################################################
+# Add our subdirectories
+
+add_subdirectory(slg46140v)
