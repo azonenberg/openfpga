@@ -29,11 +29,15 @@ Greenpak4Bandgap::Greenpak4Bandgap(
 	unsigned int matrix,
 	unsigned int ibase,
 	unsigned int oword,
-	unsigned int cbase)
+	unsigned int cbase,
+	unsigned int cbase_pwren,
+	unsigned int cbase_chopper)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 	, m_autoPowerDown(true)
 	, m_chopperEn(true)
 	, m_outDelay(100)
+	, m_cbasePowerEn(cbase_pwren)
+	, m_cbaseChopper(cbase_chopper)
 {
 	m_dual = new Greenpak4DualEntity(this);
 }
@@ -134,21 +138,24 @@ bool Greenpak4Bandgap::Save(bool* bitstream)
 {
 	//Startup delay
 	if(m_outDelay == 100)
-		bitstream[m_configBase + 0] = true;
+		bitstream[m_configBase] = true;
 	else
-		bitstream[m_configBase + 0] = false;
+		bitstream[m_configBase] = false;
 
 	//Power-down 936
 	if(m_autoPowerDown)
-		bitstream[m_configBase + 13] = false;
+		bitstream[m_cbasePowerEn] = false;
 	else
-		bitstream[m_configBase + 13] = true;
+		bitstream[m_cbasePowerEn] = true;
 
 	//Chopper enable flag
-	if(m_chopperEn)
-		bitstream[m_configBase + 15] = true;
-	else
-		bitstream[m_configBase + 15] = false;
+	if(m_cbaseChopper)
+	{
+		if(m_chopperEn)
+			bitstream[m_cbaseChopper] = true;
+		else
+			bitstream[m_cbaseChopper] = false;
+	}
 
 	return true;
 }

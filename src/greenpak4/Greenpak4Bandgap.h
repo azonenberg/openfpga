@@ -32,7 +32,9 @@ public:
 		unsigned int matrix,
 		unsigned int ibase,
 		unsigned int oword,
-		unsigned int cbase);
+		unsigned int cbase,
+		unsigned int cbase_pwren,
+		unsigned int cbase_chopper);
 	virtual ~Greenpak4Bandgap();
 
 	//Serialization
@@ -59,6 +61,10 @@ protected:
 
 	///Delay from bandgap startup to output stable
 	int m_outDelay;
+
+	//Configuration addresses
+	unsigned int m_cbasePowerEn;
+	unsigned int m_cbaseChopper;
 };
 
 #endif

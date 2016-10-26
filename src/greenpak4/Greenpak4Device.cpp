@@ -213,8 +213,25 @@ void Greenpak4Device::CreateDevice_SLG46140()
 		84,		//input base (single power-down input)
 		49,		//output word (plus dedicated routing to counters etc)
 		1642);	//bitstream location
+	*/
 
 	//Counters
+	/*
+	m_counters8bit.push_back(new Greenpak4Counter(
+		this,
+		8,		//depth
+		false,	//no FSM mode
+		true,	//we have wake-sleep powerdown
+		true,	//we have edge detector
+		false,	//no PWM
+		0,		//counter number
+		0,		//matrix
+		68,		//ibase
+		37,		//oword,
+		722));	//cbase
+	*/
+
+	/*
 	m_counters14bit.push_back(new Greenpak4Counter(
 		this,
 		14,		//depth
@@ -227,126 +244,20 @@ void Greenpak4Device::CreateDevice_SLG46140()
 		74,		//ibase
 		36,		//oword
 		1731));	//cbase
-	m_counters14bit.push_back(new Greenpak4Counter(
-		this,
-		14,		//depth
-		false,	//no FSM mode
-		false,	//no wake-sleep powerdown
-		false,	//no edge detector
-		false,	//no PWM
-		1,		//counter number
-		1,		//matrix
-		75,		//ibase
-		36,		//oword
-		1753));	//cbase
-	m_counters14bit.push_back(new Greenpak4Counter(
-		this,
-		14,		//depth
-		true,	//we have FSM mode
-		false,	//no wake-sleep powerdown
-		true,	//we have edge detector
-		false,	//no PWM
-		2,		//counter number
-		0,		//matrix
-		75,		//ibase
-		37,		//oword
-		1774));	//cbase
-	m_counters14bit.push_back(new Greenpak4Counter(
-		this,
-		14,		//depth
-		false,	//no FSM mode
-		false,	//no wake-sleep powerdown
-		false,	//no edge detector
-		false,	//no PWM
-		3,		//counter number
-		1,		//matrix
-		76,		//ibase
-		37,		//oword
-		1799));	//cbase (datasheet has a typo, this is correct)
-	m_counters8bit.push_back(new Greenpak4Counter(
-		this,
-		8,		//depth
-		true,	//we have FSM mode
-		false,	//no wake-sleep powerdown
-		false,	//no edge detector
-		false,	//no PWM
-		4,		//counter number
-		1,		//matrix
-		77,		//ibase
-		38,		//oword,
-		1820));	//cbase
-	m_counters8bit.push_back(new Greenpak4Counter(
-		this,
-		8,		//depth
-		false,	//no FSM mode
-		false,	//no wake-sleep powerdown
-		false,	//no edge detector
-		false,	//no PWM
-		5,		//counter number
-		0,		//matrix
-		78,		//ibase
-		38,		//oword,
-		1838));	//cbase
-	m_counters8bit.push_back(new Greenpak4Counter(
-		this,
-		8,		//depth
-		false,	//no FSM mode
-		false,	//no wake-sleep powerdown
-		false,	//no edge detector
-		false,	//no PWM
-		6,		//counter number
-		0,		//matrix
-		79,		//ibase
-		39,		//oword,
-		1852));	//cbase
-	m_counters8bit.push_back(new Greenpak4Counter(
-		this,
-		8,		//depth
-		false,	//no FSM mode
-		false,	//no wake-sleep powerdown
-		false,	//no edge detector
-		false,	//no PWM
-		7,		//counter number
-		1,		//matrix (datasheet has a typo, this is correct)
-		80,		//ibase
-		39,		//oword,
-		1866));	//cbase
-	m_counters8bit.push_back(new Greenpak4Counter(
-		this,
-		8,		//depth
-		false,	//no FSM mode
-		false,	//no wake-sleep powerdown
-		false,	//no edge detector
-		true,	//PWM mode
-		8,		//counter number
-		1,		//matrix
-		81,		//ibase
-		40,		//oword,
-		1880));	//cbase
-	m_counters8bit.push_back(new Greenpak4Counter(
-		this,
-		8,		//depth
-		false,	//no FSM mode
-		false,	//no wake-sleep powerdown
-		false,	//no edge detector
-		true,	//PWM mode
-		9,		//counter number
-		0,		//matrix
-		80,		//ibase
-		40,		//oword,
-		1895));	//cbase
+	*/
 
 	//TODO: Slave SPI
 
 	//TODO: ADC
 
+	/*
 	//The DACs
 	m_dacs.push_back(new Greenpak4DAC(this, 844, 840, 843, 840, 0));
 	m_dacs.push_back(new Greenpak4DAC(this, 823, 834, 883, 840, 1));
-
+	*/
 	//Bandgap reference
-	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923);
-
+	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 51, 507, 512, 0);
+	/*
 	//Voltage references for comparators
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 0, 1));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 1, 2));
@@ -354,11 +265,11 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 3, 2));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 4));
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 5));
-
+	*/
 	//Extra voltage references for the DACs (always 1.0V but having them declared as GP_VREF makes HDL cleaner)
-	m_vrefs.push_back(new Greenpak4VoltageReference(this, 6));
-	m_vrefs.push_back(new Greenpak4VoltageReference(this, 7));
-
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 2));
+	m_vrefs.push_back(new Greenpak4VoltageReference(this, 3));
+	/*
 	//Analog comparators
 	//TODO speed doubler for ACMP5? Need to double check latest datasheet, this may have been changed
 	m_acmps.push_back(new Greenpak4Comparator(this, 0, 0, 69, 33, 832, 852, 853, 855, 934, 892));
@@ -370,10 +281,9 @@ void Greenpak4Device::CreateDevice_SLG46140()
 
 	//PGA
 	m_pga = new Greenpak4PGA(this, 815);
-
-	//Analog buffer
-	m_abuf = new Greenpak4Abuf(this);
-
+	*/
+	//No analog buffer in SLG46140
+	/*
 	//Comparator input routing
 	auto pin3 = m_iobs[3]->GetOutput("OUT");
 	auto pin4 = m_iobs[4]->GetOutput("OUT");
@@ -392,29 +302,12 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	m_acmps[1]->AddInputMuxEntry(pin6, 2);
 	m_acmps[1]->AddInputMuxEntry(pin6_buf, 2);
 	m_acmps[1]->AddInputMuxEntry(vdd, 2);
-	m_acmps[2]->AddInputMuxEntry(pin13, 0);
-	m_acmps[2]->AddInputMuxEntry(pin6, 1);
-	m_acmps[2]->AddInputMuxEntry(pin6_buf, 1);
-	m_acmps[2]->AddInputMuxEntry(vdd, 1);
-	m_acmps[3]->AddInputMuxEntry(pin15, 0);
-	m_acmps[3]->AddInputMuxEntry(pin13, 1);
-	m_acmps[3]->AddInputMuxEntry(pin6, 2);
-	m_acmps[3]->AddInputMuxEntry(pin6_buf, 2);
-	m_acmps[3]->AddInputMuxEntry(vdd, 2);
-	m_acmps[4]->AddInputMuxEntry(pin3, 0);
-	m_acmps[4]->AddInputMuxEntry(pin15, 1);
-	m_acmps[4]->AddInputMuxEntry(pin6, 2);
-	m_acmps[4]->AddInputMuxEntry(pin6_buf, 2);
-	m_acmps[4]->AddInputMuxEntry(vdd, 2);
-	m_acmps[5]->AddInputMuxEntry(pin4, 0);
-
-	//TODO: Reserved bits
 
 	//TODO: Vdd bypass
-
+	*/
 	//Power-on reset
-	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 2009);
-
+	//m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 2009);
+	/*
 	//TODO: IO pad precharge? what does this involve?
 
 	//System reset
@@ -746,7 +639,7 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_dacs.push_back(new Greenpak4DAC(this, 823, 834, 883, 840, 1));
 
 	//Bandgap reference
-	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923);
+	m_bandgap = new Greenpak4Bandgap(this, 0, 0, 41, 923, 936, 938);
 
 	//Voltage references for comparators
 	m_vrefs.push_back(new Greenpak4VoltageReference(this, 0, 1));
@@ -808,8 +701,6 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_acmps[4]->AddInputMuxEntry(pin6_buf, 2);
 	m_acmps[4]->AddInputMuxEntry(vdd, 2);
 	m_acmps[5]->AddInputMuxEntry(pin4, 0);
-
-	//TODO: Reserved bits
 
 	//TODO: Vdd bypass
 
