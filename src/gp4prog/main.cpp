@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
 	double voltage2 = 0.0;
 	vector<int> nets;
 	bool hexdump = false;
+	bool blink = false;
 
 	//Parse command-line arguments
 	for(int i=1; i<argc; i++)
@@ -148,6 +149,8 @@ int main(int argc, char* argv[])
 			force = true;
 		else if(s == "--hexdump")
 			hexdump = true;
+		else if((s == "-b") || (s == "--blink") )
+			blink = true;
 		else if(s == "--pattern-id")
 		{
 			if(i+1 < argc)
@@ -277,6 +280,21 @@ int main(int argc, char* argv[])
 	//Light up the status LED
 	if(!SetStatusLED(hdev, 1))
 		return 1;
+
+	//If we're blinking, run 5 seconds of blinking at 2 Hz
+	if(blink)
+	{
+		for(int i=0; i<5; i++)
+		{
+			usleep(500 * 1000);
+			if(!SetStatusLED(hdev, 0))
+				return 1;
+
+			usleep(500 * 1000);
+			if(!SetStatusLED(hdev, 1))
+				return 1;
+		}
+	}
 
 	//Figure out which part to use
 	SilegoPart detectedPart = SilegoPart::UNRECOGNIZED;
@@ -518,6 +536,9 @@ void ShowUsage()
 		"\n"
 		"    The following options are instructions for the developer board. They are\n"
 		"    executed in the order listed here, regardless of their order on command line.\n"
+		"    -b, --blink\n"
+		"        Blinks the status LED on the board for five seconds.\n"
+		"        This can be used to distinguish multiple boards in a lab environment.\n"
 		"    -r, --reset\n"
 		"        Resets the board:\n"
 		"          * disables every LED;\n"
@@ -529,6 +550,9 @@ void ShowUsage()
 		"        Verifies that every connection between socket and device is intact.\n"
 		"    -T, --trim           [25k|2M]\n"
 		"        Trims the RC oscillator to achieve the specified frequency.\n"
+		"    --hexdump\n"
+		"         Prints a hex dump of the bitstream (after patching trim values)\n"
+		"         suitable for passing to BitstreamToHex()\n"
 		"    -e, --emulate        <bitstream filename>\n"
 		"        Downloads the specified bitstream into volatile memory.\n"
 		"        Implies --reset --voltage 3.3.\n"
@@ -542,10 +566,7 @@ void ShowUsage()
 		"    -n, --nets           <net list>\n"
 		"        For every test point in the specified comma-separated list:\n"
 		"          * enables a non-inverted LED, if any;\n"
-		"          * enables expansion connector passthrough.\n"
-		"    --hexdump\n"
-		"         Prints a hex dump of the bitstream (after applying ID code etc)\n"
-		"         suitable for passing to BitstreamToHex\n");
+		"          * enables expansion connector passthrough.\n");
 }
 
 void ShowVersion()
