@@ -311,7 +311,7 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	//TODO: IO pad precharge? what does this involve?
 
 	//System reset
-	//m_sysrst = new Greenpak4SystemReset(this, 0, 24, -1, 2018);
+	m_sysrst = new Greenpak4SystemReset(this, 0, 22, -1, 1000);
 
 	//Total length of our bitstream
 	m_bitlen = 1024;
