@@ -1,4 +1,9 @@
 ########################################################################################################################
+# Add our subdirectories
+
+include_directories(slg46140v)
+
+########################################################################################################################
 # Synthesize an HDL file for GP4 (TODO specify device family as arg?)
 function(add_greenpak4_netlist name part)
 
