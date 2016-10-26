@@ -356,37 +356,49 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		//TODO: Cannot use DAC1 when ADC is used
 	}
 
-	//If POR is driven to an IOB, it should be pin 8 using dedicated routing
+	//If POR is driven to an IOB, it should use dedicated routing
 	//If not, warn about timing
-	if(
-		(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620) ||
-		(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46621)
-		)
+	auto por = device->GetPowerOnReset()->GetPARNode()->GetMate();
+	if(por)
 	{
-		//Get all IOB loads of the POR
-		auto p8 = device->GetIOB(8);
-		auto por = device->GetPowerOnReset()->GetPARNode()->GetMate();
-		if(por)
+		Greenpak4IOB* reset_iob = NULL;
+
+		//Find the dedicated reset pin
+		auto part = device->GetPart();
+		switch(part)
 		{
-			for(uint32_t i=0; i<por->GetEdgeCount(); i++)
+			case Greenpak4Device::GREENPAK4_SLG46620:
+			case Greenpak4Device::GREENPAK4_SLG46621:
+				reset_iob = device->GetIOB(8);
+				break;
+
+			case Greenpak4Device::GREENPAK4_SLG46140:
+				reset_iob = device->GetIOB(13);
+				break;
+
+			default:
+				LogError("unrecognized device, cannot DRC POR routing\n");
+		}
+
+		//Look for IOBs driven by the PAR
+		for(uint32_t i=0; i<por->GetEdgeCount(); i++)
+		{
+			auto dest = por->GetEdgeByIndex(i)->m_destnode->GetMate();
+			auto n = static_cast<Greenpak4BitstreamEntity*>(dest->GetData())->GetRealEntity();
+
+			auto ioba = dynamic_cast<Greenpak4IOBTypeA*>(n);
+			auto iobb = dynamic_cast<Greenpak4IOBTypeB*>(n);
+
+			if( (ioba == NULL) && (iobb == NULL) )
+				continue;
+
+			if(n != reset_iob)
 			{
-				auto dest = por->GetEdgeByIndex(i)->m_destnode->GetMate();
-				auto n = static_cast<Greenpak4BitstreamEntity*>(dest->GetData())->GetRealEntity();
-
-				auto ioba = dynamic_cast<Greenpak4IOBTypeA*>(n);
-				auto iobb = dynamic_cast<Greenpak4IOBTypeB*>(n);
-
-				if( (ioba == NULL) && (iobb == NULL) )
-					continue;
-
-				if(n != p8)
-				{
-					LogWarning(
-						"Pin %s is driven by the power-on reset, but is does not have dedicated reset routing.\n"
-						"This may lead to synchronization issues or glitches if this pin is used to drive resets on "
-						"external logic.\n",
-						n->GetDescription().c_str());
-				}
+				LogWarning(
+					"Pin %s is driven by the power-on reset, but is does not have dedicated reset routing.\n"
+					"This may lead to synchronization issues or glitches if this pin is used to drive resets on "
+					"external logic.\n",
+					n->GetDescription().c_str());
 			}
 		}
 	}

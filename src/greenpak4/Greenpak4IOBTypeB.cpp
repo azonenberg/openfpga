@@ -79,20 +79,25 @@ bool Greenpak4IOBTypeB::Save(bool* bitstream)
 	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_outputSignal))
 		return false;
 
-	//If we are pin 8 on the SLG4662x, use dedicated routing when driven by the POR block
-	if((m_pinNumber == 8) && (m_outputSignal.GetRealEntity() == m_device->GetPowerOnReset()) )
+	//Use dedicated routing when driven by the POR block
+	if(m_outputSignal.GetRealEntity() == m_device->GetPowerOnReset())
 	{
-		if(
-			(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620) ||
-			(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46621)
+		if( (m_pinNumber == 8) &&
+			(
+				(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620) ||
+				(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46621)
+			)
 		)
 		{
 			bitstream[2012] = true;
 			bitstream[2011] = false;
 		}
 
-		else
-			LogError("Greenpak4IOBTypeB: not implemented for 46140 yet\n");
+		else if( (m_pinNumber == 13) && (m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46140) )
+		{
+			bitstream[999] = 1;
+			bitstream[998] = 0;
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
