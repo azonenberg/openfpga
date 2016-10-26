@@ -191,17 +191,14 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	//Shift registers
 	m_shregs.push_back(new Greenpak4ShiftRegister(this, 0, 51, 20, 1610));
 	m_shregs.push_back(new Greenpak4ShiftRegister(this, 1, 51, 20, 1619));
+	*/
 
-	//Edge detector/prog delays
-	m_delays.push_back(new Greenpak4Delay(this, 0, 54, 22, 1600));
-	m_delays.push_back(new Greenpak4Delay(this, 1, 54, 22, 1609));
+	//Edge detector/prog delay line
+	m_delays.push_back(new Greenpak4Delay(this, 0, 43, 21, 486));
 
-	//Inverters
-	m_inverters.push_back(new Greenpak4Inverter(this, 0, 55, 23));
-	m_inverters.push_back(new Greenpak4Inverter(this, 1, 55, 23));
+	//No discrete inverters
 
 	//TODO: External clocks??
-	*/
 
 	//Low-frequency oscillator
 	m_lfosc = new Greenpak4LFOscillator(
