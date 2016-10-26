@@ -302,17 +302,16 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	m_acmps[1]->AddInputMuxEntry(pin6, 2);
 	m_acmps[1]->AddInputMuxEntry(pin6_buf, 2);
 	m_acmps[1]->AddInputMuxEntry(vdd, 2);
-
-	//TODO: Vdd bypass
 	*/
+	//TODO: Vdd bypass
+	
 	//Power-on reset
-	//m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 2009);
-	/*
+	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 1004);
+	
 	//TODO: IO pad precharge? what does this involve?
 
 	//System reset
-	m_sysrst = new Greenpak4SystemReset(this, 0, 24, -1, 2018);
-	*/
+	//m_sysrst = new Greenpak4SystemReset(this, 0, 24, -1, 2018);
 
 	//Total length of our bitstream
 	m_bitlen = 1024;

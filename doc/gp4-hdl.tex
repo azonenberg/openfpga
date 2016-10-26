@@ -15,7 +15,7 @@
 \usepackage[libertine,cmbraces]{newtxmath}
 
 % tikz configuration
-\usetikzlibrary{arrows,positioning} 
+\usetikzlibrary{arrows,positioning}
 \tikzset{
 	% standard arrow tip
 	>=stealth',
@@ -171,13 +171,13 @@ tool is \namestyle{Yosys}, which may be obtained from the \namestyle{Yosys} webs
 \centering
 
 \begin{tikzpicture}[node distance=1cm, auto,]
-	\node[box,align=center] (yosys) 
+	\node[box,align=center] (yosys)
 		{Synthesis \\ (yosys)};
-	\node[box,align=center,right=of yosys] (gp4par) 
+	\node[box,align=center,right=of yosys] (gp4par)
 		{Place and Route \\ (gp4par)};
-	\node[box,align=center,right=of gp4par] (gp4prog) 
+	\node[box,align=center,right=of gp4par] (gp4prog)
 		{Device Programming \\ (gp4prog)};
-	\node[box,align=center,right=of gp4par,below=of gp4prog] (gp4vendor) 
+	\node[box,align=center,right=of gp4par,below=of gp4prog] (gp4vendor)
 		{Device Programming \\ (GreenPak4 Designer)};
 
 	\draw[arrow] (yosys) -- (gp4par);
@@ -210,10 +210,10 @@ made it into a stable release yet. We recommend use of the latest \namestyle{Yos
 
 \subsection{Synthesis Example}
 
-A simple synthesis script for \namestyle{Yosys} is shown in figure \ref{yscript}. The script synthesizes a single 
-Verilog source file \texttt{Blinky.v}, with a top-level module \texttt{BlinkyTop}, to the netlist \texttt{Blinky.json} 
-and targets the \namestyle{SLG46620V}. This script is only a starting point and may be customized as needed. This 
-document does not cover synthesis commands; please see the online documentation for \namestyle{Yosys} for command 
+A simple synthesis script for \namestyle{Yosys} is shown in figure \ref{yscript}. The script synthesizes a single
+Verilog source file \texttt{Blinky.v}, with a top-level module \texttt{BlinkyTop}, to the netlist \texttt{Blinky.json}
+and targets the \namestyle{SLG46620V}. This script is only a starting point and may be customized as needed. This
+document does not cover synthesis commands; please see the online documentation for \namestyle{Yosys} for command
 documentation.
 
 \begin{figure}[h]
@@ -242,6 +242,10 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Wake-Sleep
 \item DCMP/PWM
 \item Slave SPI
+\item Power detector
+\item Regulator bypass
+\item Power detector disable
+\item NVM repeat control
 \end{itemize}
 
 In addition, the following \namestyle{SLG46140V} device features are not yet supported by \namestyle{gp4par}:
@@ -250,7 +254,6 @@ In addition, the following \namestyle{SLG46140V} device features are not yet sup
 \item Comparators
 \item DAC
 \item PGA
-\item POR
 \item Voltage reference
 \item Ring oscillator
 \item RC oscillator
@@ -465,11 +468,11 @@ input wire vin;
 \subsection{Physical Location (\tokenstyle{LOC})}
 
 The \tokenstyle{LOC} constraint instructs \namestyle{gp4par} to place the constrained entity at a specific physical
-site of the device. This is most commonly used to lock IOBs to specific pins on the package, however advanced users can 
+site of the device. This is most commonly used to lock IOBs to specific pins on the package, however advanced users can
 use it to force arbitrary logic to use specific device resources.
 
-The specified location must be valid for the entity being constrained. Attempting to constrain a cell to an illegal 
-site causes the initial placement to fail with an error message. For example, figure \ref{invalid-loc} shows the 
+The specified location must be valid for the entity being constrained. Attempting to constrain a cell to an illegal
+site causes the initial placement to fail with an error message. For example, figure \ref{invalid-loc} shows the
 results of attempting to constrain a 3-input combinatorial expression to a 2LUT site.
 
 \begin{figure}[h]
@@ -490,16 +493,16 @@ and bit 1 to P18.
 
 \item IOBs may be constrained by placing a \tokenstyle{LOC} constraint on the top-level module port declaration.
 
-\item Inferred LUTs and flipflops may be constrained by placing a \tokenstyle{LOC} constraint on the net driven by the 
-entity to be constrained. This technique cannot constrain inferred multiple-bit registers or inferred 
+\item Inferred LUTs and flipflops may be constrained by placing a \tokenstyle{LOC} constraint on the net driven by the
+entity to be constrained. This technique cannot constrain inferred multiple-bit registers or inferred
 combinatorial logic with multiple levels of LUTs; these must be broken up or replaced with primitive instantiation.
 
-\item Instantiated primitives may be constrained by placing a \tokenstyle{LOC} constraint on the primitive declaration 
-OR on any net driven by the primitive. Multiple \tokenstyle{LOC} constraints with the same value are ignored; if 
-multiple \tokenstyle{LOC} constraints with different values apply to the same element placement will fail with an error 
+\item Instantiated primitives may be constrained by placing a \tokenstyle{LOC} constraint on the primitive declaration
+OR on any net driven by the primitive. Multiple \tokenstyle{LOC} constraints with the same value are ignored; if
+multiple \tokenstyle{LOC} constraints with different values apply to the same element placement will fail with an error
 message (figure \ref{conflicting-loc}).
 
-\item The \tokenstyle{LOC} constraint cannot be applied to inferred counters or shift registers. This will be fixed in 
+\item The \tokenstyle{LOC} constraint cannot be applied to inferred counters or shift registers. This will be fixed in
 a future software release.
 
 \end{itemize}
@@ -528,19 +531,19 @@ Example: \strvaluestyle{COUNT8\_5}.
 \strvaluestyle{Pn} where \tokenstyle{n} is the pin number of the device. Example: \strvaluestyle{P3}.
 \item \whenstyle{\tokenref{LUT}{gp-2lut}}\\
 \strvaluestyle{LUTm\_n} where \tokenstyle{m} is the number of inputs for the LUT and \tokenstyle{n} is the LUT number.
-Example: \strvaluestyle{LUT3\_0}. Note that it is legal to constrain a smaller LUT to a larger site (but not vice 
+Example: \strvaluestyle{LUT3\_0}. Note that it is legal to constrain a smaller LUT to a larger site (but not vice
 versa); for example a 2-input function may be constrained to a 3LUT or 4LUT site.
 \item \whenstyle{\tokenref{Inverter}{gp-inv}}\\
 \strvaluestyle{INV\_n} where \tokenstyle{n} is the number of matrix the inverter is located in. Example:
 \strvaluestyle{INV\_0}.
 \item \whenstyle{\tokenref{Shift register}{gp-shreg}}\\
-\strvaluestyle{SHREG\_n} where \tokenstyle{n} is the number of matrix the shift register is located in. 
+\strvaluestyle{SHREG\_n} where \tokenstyle{n} is the number of matrix the shift register is located in.
 Example: \strvaluestyle{SHREG\_0}.
 \item \whenstyle{\tokenref{Voltage reference}{gp-vref}}\\
-\strvaluestyle{VREF\_n} where \tokenstyle{n} is the number of the attached comparator. Example: 
+\strvaluestyle{VREF\_n} where \tokenstyle{n} is the number of the attached comparator. Example:
 \strvaluestyle{VREF\_2}.
 \item \whenstyle{Other} \\
-While this constraint is legal to use on primitives that only have one instance in the device, this is redundant so the 
+While this constraint is legal to use on primitives that only have one instance in the device, this is redundant so the
 names of these sites are not documented here (although they may be obtained from the placement report).
 \end{itemize}
 
@@ -551,11 +554,11 @@ Figure \ref{constraint-loc} is an example of a top-level module with four ports 
 \wirestyle{o}, and \wirestyle{p}. These ports are constrained to package pins 20, 19, 18, and 17 respectively.
 
 Signal \wirestyle{o} is driven by the inferred register \wirestyle{o\_int}, which is constrained to D flipflop
-number 5. Note that \wirestyle{o} could not be directly declared as \tokenstyle{output reg} because this infers both a 
+number 5. Note that \wirestyle{o} could not be directly declared as \tokenstyle{output reg} because this infers both a
 DFF and IOB cell with the same net name. The attached LOC attribute would then apply to the IOB cell and not the DFF.
 
-Signal \wirestyle{p} is driven by the inferred LUT \wirestyle{p\_int}, which is constrained to 3-input LUT number 0 
-(rather than one of the 2-input LUTs, as would normally be the case). As with \wirestyle{o}, a separate named net is 
+Signal \wirestyle{p} is driven by the inferred LUT \wirestyle{p\_int}, which is constrained to 3-input LUT number 0
+(rather than one of the 2-input LUTs, as would normally be the case). As with \wirestyle{o}, a separate named net is
 required in this case in order to avoid inferring both an IOB and LUT with ambiguous constraints.
 
 \begin{figure}[h]
@@ -570,18 +573,18 @@ module Foo(a, b, o, p);
 
 	(* LOC = "P18" *)
 	output wire o;
-	
+
 	(* LOC = "P17" *)
 	output wire p;
-	
+
 	(* LOC = "DFF_5" *)
 	reg o_int = 0;
-	
+
 	assign o = o_int;
-	
+
 	(* LOC = "LUT3_0" *)
 	wire p_int = (a & b);
-	
+
 	assign p = p_int;
 
 endmodule
@@ -949,8 +952,8 @@ The LUT output is the \{\tokenstyle{IN1}, \tokenstyle{IN0}\}'th bit of the truth
 This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we
 recommend inferring logic.
 
-Note that the placer may re-map \tokenref{GP\_2LUT}{gp-2lut} primitives to 3- or 4-input LUT sites to reduce routing 
-congestion. The \tokenref{LOC}{LOC} constraint may be used to force the primitive to a specific 2-input LUT if 
+Note that the placer may re-map \tokenref{GP\_2LUT}{gp-2lut} primitives to 3- or 4-input LUT sites to reduce routing
+congestion. The \tokenref{LOC}{LOC} constraint may be used to force the primitive to a specific 2-input LUT if
 necessary.
 
 \subsubsection{Port Descriptions}
@@ -1014,8 +1017,8 @@ The LUT output is the \{\tokenstyle{IN2}, \tokenstyle{IN1}, \tokenstyle{IN0}\}'t
 This primitive may be manually instantiated if exact control over LUT packing is required, but for most applications we
 recommend inferring logic.
 
-Note that the placer may re-map \tokenref{GP\_3LUT}{gp-3lut} primitives to 4-input LUT sites to reduce routing 
-congestion. The \tokenref{LOC}{LOC} constraint may be used to force the primitive to a specific 3-input LUT if 
+Note that the placer may re-map \tokenref{GP\_3LUT}{gp-3lut} primitives to 4-input LUT sites to reduce routing
+congestion. The \tokenref{LOC}{LOC} constraint may be used to force the primitive to a specific 3-input LUT if
 necessary.
 
 \subsubsection{Port Descriptions}
@@ -1269,8 +1272,8 @@ GP_ACMP #(
 \subsection{\tokenstyle{GP\_BANDGAP}: Bandgap Voltage Reference}
 
 \subsubsection{Introduction}
-This primitive allows configuration of the bandgap voltage reference. It produces a 1.0V reference which is used 
-internally by the \tokenref{GP\_VREF}{gp-vref} block. (This connection is implicit and does not need to be provided in 
+This primitive allows configuration of the bandgap voltage reference. It produces a 1.0V reference which is used
+internally by the \tokenref{GP\_VREF}{gp-vref} block. (This connection is implicit and does not need to be provided in
 your HDL.)
 
 \subsubsection{Port Descriptions}
@@ -1329,7 +1332,7 @@ GP_BANDGAP #(
 \label{gp-count8}
 
 \subsubsection{Introduction}
-This primitive represents an 8-bit down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at 
+This primitive represents an 8-bit down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at
 power-on reset, and to 0 by the reset pin.
 
 Note that this primitive does \emph{not} always map to a hard IP block with \emph{exactly} 8 bit depth. The technology
@@ -1373,8 +1376,8 @@ In this case, the high 6 bits of the counter will always be zero.
 \subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-count8-example} begins counting from \datastyle{8'hcc} down to zero,
-on rising edges of \wirestyle{clk}, as soon as the device exits power-on reset. When the counter reaches zero 
-\wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to \datastyle{8'hcc}. 
+on rising edges of \wirestyle{clk}, as soon as the device exits power-on reset. When the counter reaches zero
+\wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to \datastyle{8'hcc}.
 The counter also resets immediately to zero, and is held in reset, when \wirestyle{count\_rst} is high.
 
 \begin{figure}[h]
@@ -1452,7 +1455,7 @@ power-on reset, underflow or overflow, and to a configurable value by the reset 
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-count8-adv-example} begins counting from \datastyle{8'hcc} up to \datastyle{8'hff}, 
+The example shown in figure \ref{gp-count8-adv-example} begins counting from \datastyle{8'hcc} up to \datastyle{8'hff},
 on rising edges of \wirestyle{clk}, as soon as the device exits power-on reset.
 When the counter reaches \datastyle{8'hff}, \wirestyle{overflow} goes high for one \wirestyle{clk} cycle and
 the counter is reset to \datastyle{8'hcc}. The counter also resets immediately to \datastyle{8'hcc}, and is held
@@ -1488,7 +1491,7 @@ GP_COUNT8_ADV #(
 \label{gp-count14}
 
 \subsubsection{Introduction}
-This primitive represents an 14-bit down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at 
+This primitive represents an 14-bit down counter. The count register is initialized to \tokenstyle{COUNT\_TO} at
 power-on reset, and to 0 by the reset pin.
 
 In the current software, this primitive currently will always map to a 14-bit counter cell in the device. A planned
@@ -1531,8 +1534,8 @@ containing counters of variable depth.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-count14-example} begins counting from \datastyle{14'd3141} down to zero, on 
-rising edges of \wirestyle{clk}, as soon as the device exits power-on reset. When the counter reaches zero 
+The example shown in figure \ref{gp-count14-example} begins counting from \datastyle{14'd3141} down to zero, on
+rising edges of \wirestyle{clk}, as soon as the device exits power-on reset. When the counter reaches zero
 \wirestyle{underflow} goes high for one \wirestyle{clk} cycle and the counter is reset to \datastyle{14'd3141}.
 The counter also resets immediately to zero, and is held in reset, when \wirestyle{count\_rst} is high.
 
@@ -1611,10 +1614,10 @@ power-on reset, underflow or overflow, and to a configurable value by the reset 
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-count14-adv-example} begins counting from \datastyle{14'd3141} up to 
+The example shown in figure \ref{gp-count14-adv-example} begins counting from \datastyle{14'd3141} up to
 \datastyle{14'h3fff}, on rising edges of \wirestyle{clk}, as soon as the device exits power-on reset.
-When the counter reaches \datastyle{14'h3fff}, \wirestyle{overflow} goes high for one \wirestyle{clk} cycle and 
-the counter is reset to \datastyle{14'd3141}. The counter also resets immediately to \datastyle{14'd0}, and 
+When the counter reaches \datastyle{14'h3fff}, \wirestyle{overflow} goes high for one \wirestyle{clk} cycle and
+the counter is reset to \datastyle{14'd3141}. The counter also resets immediately to \datastyle{14'd0}, and
 is held in reset, when \wirestyle{count\_rst} is high.
 
 \begin{figure}[h]
@@ -1647,7 +1650,7 @@ GP_COUNT14_ADV #(
 \label{gp-dac}
 
 \subsubsection{Introduction}
-This primitive corresponds to an 8-bit digital to analog converter. The DAC operates combinatorially and does not 
+This primitive corresponds to an 8-bit digital to analog converter. The DAC operates combinatorially and does not
 require a clock.
 
 \subsubsection{Port Descriptions}
@@ -1813,8 +1816,8 @@ GP_DFF #(
 \label{gp-dff}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D flipflop with an inverted output. It may be mapped to either a 
-\tokenref{GP\_DFF}{gp-dff} or a \tokenref{GP\_DFFSR}{gp-dffsr} cell by the placer depending on resource utilization and 
+This primitive corresponds to a single D flipflop with an inverted output. It may be mapped to either a
+\tokenref{GP\_DFF}{gp-dff} or a \tokenref{GP\_DFFSR}{gp-dffsr} cell by the placer depending on resource utilization and
 routing congestion.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -1840,7 +1843,7 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop. \newline The power-up value of Q is inverted 
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop. \newline The power-up value of Q is inverted
 with respect to INIT.\\
 \thinhline
 \end{tabularx}
@@ -1938,7 +1941,7 @@ GP_DFFR #(
 \label{gp-dffr}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D flipflop with active-low reset and an inverted output. It is internally 
+This primitive corresponds to a single D flipflop with active-low reset and an inverted output. It is internally
 remapped to a \tokenref{GP\_DFFSR}{gp-dffsr} cell by the placer.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -1966,7 +1969,7 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop.\newline The power-up value of Q is inverted 
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop.\newline The power-up value of Q is inverted
 with respect to INIT.\\
 \thinhline
 \end{tabularx}
@@ -2067,7 +2070,7 @@ GP_DFFS #(
 \label{gp-dffs}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D flipflop with active-low set and an inverted output. It is internally remapped 
+This primitive corresponds to a single D flipflop with active-low set and an inverted output. It is internally remapped
 to a \tokenref{GP\_DFFSR}{gp-dffsr} cell by the placer.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -2095,7 +2098,7 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop.\newline The power-up value of Q is 
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop.\newline The power-up value of Q is
 inverted with respect to INIT.\\
 \thinhline
 \end{tabularx}
@@ -2227,7 +2230,7 @@ recommend inferring logic.
 \thinhline
 \whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop.\newline The power-up value of Q is 
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the flipflop.\newline The power-up value of Q is
 inverted with respect to INIT.\\
 \thinhline
 \tokenstyle{SRMODE} & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset. \\
@@ -3254,16 +3257,16 @@ GP_VDD vdd(
 \label{gp-vref}
 
 \subsubsection{Introduction}
-This primitive represents an \textit{abstracted view} of a reference voltage source. It buffers and optionally divides 
-the incoming voltage, or a constant voltage from the on-chip bandgap reference, to drive the reference input to 
+This primitive represents an \textit{abstracted view} of a reference voltage source. It buffers and optionally divides
+the incoming voltage, or a constant voltage from the on-chip bandgap reference, to drive the reference input to
 \tokenref{GP\_ACMP}{gp-acmp} cells, \tokenref{GP\_DAC}{gp-dac} cells, and external reference output pins.
 
-One \tokenstyle{GP\_VREF} block may drive any number of loads which use the same voltage, however internal device 
-connectivity restrictions must be observed (for example, off-die reference inputs cannot be used for GreenPAK4 DACs). 
+One \tokenstyle{GP\_VREF} block may drive any number of loads which use the same voltage, however internal device
+connectivity restrictions must be observed (for example, off-die reference inputs cannot be used for GreenPAK4 DACs).
 See the device datasheet for full details on which reference configurations are legal for which analog IP blocks.
 
-Note that this block does \textit{not} directly correspond to a physical GreenPAK device primitive (one GP\_VREF may 
-configure multiple reference generators attached to different hard IP) and thus the \tokenref{LOC}{constraint-loc} 
+Note that this block does \textit{not} directly correspond to a physical GreenPAK device primitive (one GP\_VREF may
+configure multiple reference generators attached to different hard IP) and thus the \tokenref{LOC}{constraint-loc}
 constraint cannot be used with it.
 
 \subsubsection{Port Descriptions}
@@ -3457,13 +3460,13 @@ The length of the ID code varies by device family. For the \namestyle{SLG46620V}
 
 \subsection{\texttt{--unused-drive}}
 
-The \texttt{--unused-drive} argument is optional. If used, it must be immediately followed by ``\tokenstyle{10k}", 
+The \texttt{--unused-drive} argument is optional. If used, it must be immediately followed by ``\tokenstyle{10k}",
 ``\tokenstyle{100k}", or ``\tokenstyle{1M}", to specify the nominal value in ohms of the pull-up/down resistor on
 unused I/O pins. The default behavior if not specified is ``\tokenstyle{1M}".
 
 \subsection{\texttt{--unused-pull}}
 
-The \texttt{--unused-pull} argument is optional. If used, it must be immediately followed by ``\tokenstyle{down}", 
+The \texttt{--unused-pull} argument is optional. If used, it must be immediately followed by ``\tokenstyle{down}",
 ``\tokenstyle{up}", ``\tokenstyle{none}", or ``\tokenstyle{float}", to specify which direction to pull unused I/O pins.
 The default behavior if not specified is ``\tokenstyle{float}".
 
