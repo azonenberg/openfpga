@@ -2503,9 +2503,10 @@ endmodule
 \label{gp-lfosc}
 
 \subsubsection{Introduction}
-This primitive represents the low-frequency (1730 Hz) oscillator block.
+This primitive represents the low-frequency oscillator block. It has a nominal frequency of 1730 Hz on the
+\namestyle{SLG46620V} and \namestyle{SLG46621V}, and 1900 Hz on the \namestyle{SLG46140V}.
 
-Note that all of the oscillator blocks in \namestyle{GreenPak4} internally share the \tokenstyle{PWRDN} input. As a result, all oscillator
+Note that all of the oscillator blocks in \namestyle{GreenPAK4} internally share the \tokenstyle{PWRDN} input. As a result, all oscillator
 blocks in the design that have \tokenstyle{PWRDN\_EN} set to 1 must have \tokenstyle{PWRDN} connected to the same net. Failure to follow this
 rule will result in a physical DRC failure.
 
@@ -2519,7 +2520,7 @@ rule will result in a physical DRC failure.
 	\whenstyle{When \tokenstyle{PWRDN\_EN} is 1:} Set high to power down the oscillator. \newline
 	\whenstyle{When \tokenstyle{PWRDN\_EN} is 0:} Ignored, tie to \datastyle{1'b0}.\\
 \thinhline
-\tokenstyle{CLKOUT} & Output & 1 & 1730 Hz (nominal) clock signal. \\
+\tokenstyle{CLKOUT} & Output & 1 & Clock signal. \\
 \thinhline
 \end{tabularx}
 
@@ -2534,11 +2535,7 @@ rule will result in a physical DRC failure.
 	\whenstyle{When 0:} Automatic power-down is disabled. The \tokenstyle{PWRDN\_EN} and \tokenstyle{PWRDN} inputs are unaffected.\\
 \thinhline
 \tokenstyle{OUT\_DIV} & Integer & 8 &
-	Output divider. Legal values: \newline
-	\textbf{1:} 1730 Hz output \newline
-	\textbf{2:} 865 Hz output \newline
-	\textbf{4:} 432 Hz output \newline
-	\textbf{16:} 108 Hz output
+	Output divider. Legal values: 1, 2, 4, 16 \\
 \\
 \thinhline
 \tokenstyle{PWRDN\_EN} & Boolean & 1 & Set to 1 to enable the \tokenstyle{PWRDN} pin, or 0 to disable. \\
