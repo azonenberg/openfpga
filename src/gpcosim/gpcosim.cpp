@@ -16,23 +16,53 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-`default_nettype none
+#include <log.h>
+#include <vpi_user.h>
 
-module Cosim_TB();
+void cosim_register();
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// TODO
+int hello_compiletf(char* data);
+int hello_calltf(char* data);
 
-	integer i;
-	initial begin
-		$display("hello world");
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Table of functions used by iverilog
 
-		i = $hello(0);
+extern "C"
+{
+	void (*vlog_startup_routines[])() =
+	{
+		cosim_register,
+		NULL
+	};
+}
 
-		//iverilog specific task for sim exit codes
-		$finish_and_return(0);
-	end
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Exported stuff called by iverilog
 
-endmodule
+void cosim_register()
+{
+	//Set up logging
+	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(Severity::VERBOSE));
 
+	//Register stuff
+	s_vpi_systf_data tf_data;
+	tf_data.type      = vpiSysFunc;
+	tf_data.tfname    = "$hello";
+	tf_data.calltf    = hello_calltf;
+	tf_data.compiletf = hello_compiletf;
+	tf_data.sizetf    = 0;
+	tf_data.user_data = 0;
+	vpi_register_systf(&tf_data);
+}
 
+int hello_compiletf(char* /*data*/)
+{
+	return 0;
+}
+
+int hello_calltf(char* /*data*/)
+{
+	LogNotice("function called!!!\n");
+
+	return 0;
+}
