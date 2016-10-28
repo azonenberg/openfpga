@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 	}
 
 	//Do standard board bringup
-	hdevice hdev = OpenBoard();
+	hdevice hdev = OpenBoard(0);
 	if(!hdev)
 	{
 		LogError("Failed to open board\n");
