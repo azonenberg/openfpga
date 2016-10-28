@@ -192,6 +192,10 @@ bool DistinguishSLG4662X(hdevice hdev, SilegoPart& detectedPart)
 	if(!Reset(hdev))
 		return false;
 
+	//Turn off pin 14 power
+	if(!ControlSiggen(hdev, 14, SiggenCommand::RESET))
+		return false;
+
 	return true;
 }
 
@@ -769,6 +773,43 @@ bool TweakBitstream(vector<uint8_t>& bitstream, SilegoPart part, uint8_t oscTrim
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Helper for HiL tests
+
+/**
+	@brief Test helper for running tests when we have one or more dev boards attached.
+
+	NO CONFLICT AVOIDANCE! Assumes the following:
+	1) Test cases are run sequentially, not in parallel
+	2) No developer is currently running an interactive debug job on the node in question
+ */
+hdevice MultiBoardTestSetup(string fname, int rcOscFreq, double voltage, SilegoPart targetPart)
+{
+	LogNotice("Searching for a board with a %s installed...\n", PartName(targetPart));
+	LogIndenter li;
+	
+	for(int i=0; i<25; i++)
+	{
+		//Try to open the next dev board.
+		//Failure is not fatal, we may have a perms error on one board but the next might be OK
+		hdevice hdev = OpenBoard(i);
+		if(!hdev)
+			continue;
+
+		//Try to set up the test case on it
+		if(!TestSetup(hdev, fname, rcOscFreq, voltage, targetPart))
+		{
+			SetStatusLED(hdev, 0);
+			Reset(hdev);
+			USBCleanup(hdev);
+			continue;
+		}
+
+		//Test case configured OK, proceed
+		return hdev;
+	}
+
+	//If we've run out of boards without finding a match, give up and declare failure
+	return NULL;
+}
 
 /**
 	@brief Selects an ADC channel and reads a single value

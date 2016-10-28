@@ -498,6 +498,12 @@ int main(int argc, char* argv[])
 		if(!ConfigureSiggen(hdev, 14, voltage2))
 			return 1;
 	}
+	else
+	{
+		//Make sure pin 14 power is off if we're not using it
+		if(!ControlSiggen(hdev, 14, SiggenCommand::RESET))
+			return false;
+	}
 
 	if(!nets.empty())
 	{
