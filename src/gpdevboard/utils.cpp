@@ -144,15 +144,13 @@ bool DistinguishSLG4662X(hdevice hdev, SilegoPart& detectedPart)
 		return 1;
 
 	//Set Vdd to 3.3V and Vdd2 to something much lower
-	//Note that we have to go below the usual minimum b/c
-	//we're sampling with an ADC that tops out at 1.0V!
 	double vdd = 3.3;
-	double vdd2 = 0.5;
-	LogVerbose("Setting voltages for ID bitstream (vccint/vcco_1=%.3f, vcco_2 = %.3f)\n", vdd, vdd2);
+	LogVerbose("Setting voltages for ID bitstream (vccint/vcco_1=%.3f, vcco_2 = weak pulldown)\n", vdd);
 	if(!ConfigureSiggen(hdev, 1, vdd))
 		return false;
-	if(!ConfigureSiggen(hdev, 14, vdd2))
-		return false;
+	ioConfig.driverConfigs[14] = TP_PULLDOWN;
+	if(!SetIOConfig(hdev, ioConfig))
+		return 1;
 
 	//Read the ADC on pin 10 (sanity check) and 20 (device ID)
 	double pin10_value;
@@ -166,13 +164,6 @@ bool DistinguishSLG4662X(hdevice hdev, SilegoPart& detectedPart)
 	if(pin10_value < 0.95)
 	{
 		LogError("Device didn't pull pin 10 high during device ID test\n");
-		return false;
-	}
-
-	//If pin 20 is too low, something is wrong
-	if(pin20_value < 0.3)
-	{
-		LogError("Device didn't pull pin 20 high during device ID test\n");
 		return false;
 	}
 
@@ -470,10 +461,6 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 		LogVerbose("Turning off pin 14 power (%d)...\n", avail_gpios);
 
 		//Make sure pin 14 power is off if we're not using it
-		if(!ConfigureSiggenAsLogic(hdev, 14))
-			return false;
-		if(!ControlSiggen(hdev, 14, SiggenCommand::STOP))
-			return false;
 		if(!ControlSiggen(hdev, 14, SiggenCommand::RESET))
 			return false;
 	}
