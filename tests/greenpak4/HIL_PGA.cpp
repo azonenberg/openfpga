@@ -56,6 +56,7 @@ int main(int argc, char* argv[])
 	LogVerbose("\n");
 	LogVerbose("Test complete, resetting board\n");
 	SetStatusLED(hdev, 0);
+	ResetAllSiggens(hdev);
 	Reset(hdev);
 	USBCleanup(hdev);
 	return 0;

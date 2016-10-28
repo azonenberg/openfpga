@@ -145,16 +145,12 @@ bool DistinguishSLG4662X(hdevice hdev, SilegoPart& detectedPart)
 
 	//Set Vdd to 1.8V and Vdd2 to something much lower
 	double vdd = 1.8;
-	LogVerbose("Setting voltages for ID bitstream (vccint/vcco_1=%.3f, vcco_2 = 0V)\n", vdd);
+	double vdd2 = 0.5;
+	LogVerbose("Setting voltages for ID bitstream (vccint/vcco_1=%.3f, vcco_2 = %.3f)\n", vdd, vdd2);
 	if(!ConfigureSiggen(hdev, 1, vdd))
 		return false;
-
-	//Set all I/Os to weak pulldowns, except pin 14 gets a hard 0
-	for(size_t i = 2; i <= 20; i++)
-		ioConfig.driverConfigs[i] = TP_PULLDOWN;
-	ioConfig.driverConfigs[14] = TP_GND;
-	if(!SetIOConfig(hdev, ioConfig))
-		return 1;
+	if(!ConfigureSiggen(hdev, 14, vdd2))
+		return false;
 
 	//Read the ADC on pin 10 (sanity check) and 20 (device ID)
 	double pin10_value;
@@ -187,6 +183,8 @@ bool DistinguishSLG4662X(hdevice hdev, SilegoPart& detectedPart)
 
 	//Done, wipe our test bitstream
 	LogVerbose("Resetting board after detecting part\n");
+	if(!ResetAllSiggens(hdev))
+		return false;
 	if(!Reset(hdev))
 		return false;
 
@@ -805,6 +803,7 @@ hdevice MultiBoardTestSetup(string fname, int rcOscFreq, double voltage, SilegoP
 		{
 			SetStatusLED(hdev, 0);
 			Reset(hdev);
+			ResetAllSiggens(hdev);
 			USBCleanup(hdev);
 			continue;
 		}
@@ -835,6 +834,10 @@ bool SingleReadADC(hdevice hdev, unsigned int chan, double &value)
  */
 bool TestSetup(hdevice hdev, string fname, int rcOscFreq, double voltage, SilegoPart targetPart)
 {
+	//Clear signal generators when we start up
+	if(!ResetAllSiggens(hdev))
+		return false;
+
 	//Make sure we have the right part
 	if(!VerifyDevicePresent(hdev, targetPart))
 	{
@@ -848,6 +851,10 @@ bool TestSetup(hdevice hdev, string fname, int rcOscFreq, double voltage, Silego
 		LogError("Target board self-test failed\n");
 		return false;
 	}
+
+	//Clear signal generators again before we go further
+	if(!ResetAllSiggens(hdev))
+		return false;
 
 	//Trim the oscillator
 	uint8_t rcFtw = 0;

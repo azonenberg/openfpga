@@ -483,6 +483,10 @@ int main(int argc, char* argv[])
 			return 1;
 	}
 
+	//Reset all signal generators we may have used during setup
+	if(!ResetAllSiggens(hdev))
+		return 1;
+
 	if(voltage != 0.0)
 	{
 		//Configure the signal generator for Vdd
@@ -497,12 +501,6 @@ int main(int argc, char* argv[])
 		LogNotice("Setting Vdd2 to %.3g V\n", voltage2);
 		if(!ConfigureSiggen(hdev, 14, voltage2))
 			return 1;
-	}
-	else
-	{
-		//Make sure pin 14 power is off if we're not using it
-		//if(!ControlSiggen(hdev, 14, SiggenCommand::RESET))
-		//	return false;
 	}
 
 	if(!nets.empty())
