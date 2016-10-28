@@ -225,7 +225,6 @@ enum class SiggenCommand
 };
 
 bool ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage);
-bool ConfigureSiggenAsLogic(hdevice hdev, uint8_t channel);
 bool ResetAllSiggens(hdevice hdev);
 bool ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd);
 

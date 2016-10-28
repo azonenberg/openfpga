@@ -336,27 +336,6 @@ bool ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage)
 	return frame.Roundtrip(hdev);
 }
 
-bool ConfigureSiggenAsLogic(hdevice hdev, uint8_t channel)
-{
-	DataFrame frame(DataFrame::CONFIG_SIGGEN);
-
-	frame.push_back(1);					//logic generator
-	frame.push_back(channel);			//channel number
-	frame.push_back(1);					//hold at start value before starting
-	frame.push_back(0);					//repeat waveform forever
-	frame.push_back(0);					//end state: wipe to zero
-	frame.push_back(0);					//voltage
-	frame.push_back(0);
-	// frame.push_back(0);					//ramp delay
-	// frame.push_back(0);
-	// frame.push_back(0);					//integral step part
-	// frame.push_back(0);
-	// frame.push_back(0);					//step sign and fractional step part
-	// frame.push_back(0);
-
-	return frame.Roundtrip(hdev);
-}
-
 bool ResetAllSiggens(hdevice hdev)
 {
 	DataFrame frame(DataFrame::ENABLE_SIGGEN);
