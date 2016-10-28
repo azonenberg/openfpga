@@ -149,7 +149,7 @@ bool DetectPart(
 				break;
 
 			case BitstreamKind::PROGRAMMED:
-				LogNotice("Detected programmed %s (pattern ID %d)\n", PartName(part), patternId);
+				LogNotice("Detected programmed %s (pattern ID 0x%d)\n", PartName(part), patternId);
 				break;
 
 			case BitstreamKind::UNRECOGNIZED:
