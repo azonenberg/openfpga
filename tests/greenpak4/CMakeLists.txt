@@ -129,3 +129,4 @@ target_link_libraries(HIL_SocketTestLoopback_SLG46140
 # Add our subdirectories
 
 add_subdirectory(slg46140v)
+add_subdirectory(slg46621v)

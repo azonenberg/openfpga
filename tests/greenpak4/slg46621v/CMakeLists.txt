@@ -1,0 +1,1 @@
+add_greenpak4_netlist(PowerRailDetector_STQFN20 SLG46621V)
