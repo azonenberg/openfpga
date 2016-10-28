@@ -265,6 +265,7 @@ bool DetectPart(
 	std::vector<uint8_t>& programmedBitstream,
 	BitstreamKind& bitstreamKind);
 BitstreamKind ClassifyBitstream(SilegoPart part, std::vector<uint8_t> bitstream, uint8_t &patternId);
+bool DistinguishSLG4662X(hdevice hdev, SilegoPart& detectedPart);
 
 bool VerifyDevicePresent(hdevice hdev, SilegoPart expectedPart);
 

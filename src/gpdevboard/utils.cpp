@@ -113,10 +113,92 @@ hdevice OpenBoard(int nboard)
 	return hdev;
 }
 
+bool DistinguishSLG4662X(hdevice hdev, SilegoPart& detectedPart)
+{
+	LogVerbose("Detected a SLG4662x, loading test bitstream to tell which is present\n");
+	LogIndenter li;
+
+	//To reproduce: build PowerRailDetector_STQFN20 for SLG46621V
+	vector<uint8_t> idBitstream = BitstreamFromHex(
+		"0000000000000000000000000000000000000000000000000000000000000000"
+		"000000000000000000000000000000000000fc3f0000000000000000c00f0000"
+		"0000000000000000000000000000000000000000000000000000000000000000"
+		"0000000000000800000000000000000900000008000400000000000000000000"
+		"0000000000000000000000000000000000000000000000000000000000000000"
+		"00000000000000000000000000000000000000c00f0000000000000000000000"
+		"0000000000000000030600002004040000000000000000000000000000000000"
+		"0000000000000000000000000000000000000000000004000000000208802000");
+	if(!DownloadBitstream(hdev, idBitstream, DownloadMode::EMULATION))
+		return false;
+
+	//Developer board I/O pins become stuck after both SRAM and NVM programming;
+	//resetting them explicitly makes LEDs and outputs work again.
+	LogDebug("Unstucking I/O pins after programming\n");
+	IOConfig ioConfig;
+	for(size_t i = 2; i <= 20; i++)
+		ioConfig.driverConfigs[i] = TP_RESET;
+	if(!SetIOConfig(hdev, ioConfig))
+		return 1;
+
+	//Set Vdd to 3.3V and Vdd2 to something much lower
+	//Note that we have to go below the usual minimum b/c
+	//we're sampling with an ADC that tops out at 1.0V!
+	double vdd = 3.3;
+	double vdd2 = 0.5;
+	LogVerbose("Setting voltages for ID bitstream (vccint/vcco_1=%.3f, vcco_2 = %.3f)\n", vdd, vdd2);
+	if(!ConfigureSiggen(hdev, 1, vdd))
+		return false;
+	if(!ConfigureSiggen(hdev, 14, vdd2))
+		return false;
+
+	//Read the ADC on pin 10 (sanity check) and 20 (device ID)
+	double pin10_value;
+	double pin20_value;
+	if(!SingleReadADC(hdev, 10, pin10_value))
+		return false;
+	if(!SingleReadADC(hdev, 20, pin20_value))
+		return false;
+
+	//If pin 10 is not saturated, something is wrong
+	if(pin10_value < 0.95)
+	{
+		LogError("Device didn't pull pin 10 high during device ID test\n");
+		return false;
+	}
+
+	//If pin 20 is too low, something is wrong
+	if(pin20_value < 0.3)
+	{
+		LogError("Device didn't pull pin 20 high during device ID test\n");
+		return false;
+	}
+
+	//If pin 20 is >> 0.5V, it's a 46620 (since pin 20 is on vcore instead of vccio)
+	LogVerbose("Pin 20 value: %.3f V\n", pin20_value);
+	if(pin20_value > 0.6)
+	{
+		LogVerbose("Pin 20 is on vccint/vcco_1 rail, it's a 46620\n");
+		detectedPart = SilegoPart::SLG46620V;
+	}
+
+	else
+	{
+		LogVerbose("Pin 20 is on vcco_2 rail, it's a 46621\n");
+		detectedPart = SilegoPart::SLG46621V;
+	}
+
+	//Done, wipe our test bitstream
+	LogVerbose("Resetting board after detecting part\n");
+	if(!Reset(hdev))
+		return false;
+
+	return true;
+}
+
 /**
 	@brief Detect the part that's currently installed on the board
 
-	(this requires dumping the current firmware)
+	(this requires dumping the current firmware and possibly overwriting it in RAM)
  */
 bool DetectPart(
 	hdevice hdev,
@@ -132,6 +214,7 @@ bool DetectPart(
 	for(SilegoPart part : parts)
 	{
 		LogVerbose("Trying part %s\n", PartName(part));
+		detectedPart = part;
 		if(!SetPart(hdev, part))
 			return false;
 
@@ -140,17 +223,26 @@ bool DetectPart(
 		if(!UploadBitstream(hdev, BitstreamLength(part) / 8, programmedBitstream))
 			return false;
 
+		//Figure out what it is
 		uint8_t patternId = 0;
 		bitstreamKind = ClassifyBitstream(part, programmedBitstream, patternId);
+
+		//If we detected a 4662x, figure out which part it is
+		if(detectedPart == SLG4662XV)
+		{
+			if(!DistinguishSLG4662X(hdev, detectedPart))
+				return false;
+		}
+
 		switch(bitstreamKind)
 		{
 			case BitstreamKind::EMPTY:
-				LogNotice("Detected empty %s\n", PartName(part));
-				break;
+				LogNotice("Detected empty %s\n", PartName(detectedPart));
+				return true;
 
 			case BitstreamKind::PROGRAMMED:
-				LogNotice("Detected programmed %s (pattern ID 0x%02x)\n", PartName(part), patternId);
-				break;
+				LogNotice("Detected programmed %s (pattern ID 0x%02x)\n", PartName(detectedPart), patternId);
+				return true;
 
 			case BitstreamKind::UNRECOGNIZED:
 				LogVerbose("Unrecognized bitstream\n");
@@ -158,101 +250,13 @@ bool DetectPart(
 		}
 
 		if(bitstreamKind != BitstreamKind::UNRECOGNIZED)
-		{
-			detectedPart = part;
 			break;
-		}
 	}
 
-	//If we detected a 4662x, try to tell them apart
-	if(detectedPart == SLG4662XV)
-	{
-		LogVerbose("We detected a 4662x, but not sure which one it is yet\n");
-		LogIndenter li;
-
-		//To reproduce: build PowerRailDetector_STQFN20 for SLG46621V
-		LogVerbose("Loading identification bitstream\n");
-		vector<uint8_t> idBitstream = BitstreamFromHex(
-			"0000000000000000000000000000000000000000000000000000000000000000"
-			"000000000000000000000000000000000000fc3f0000000000000000c00f0000"
-			"0000000000000000000000000000000000000000000000000000000000000000"
-			"0000000000000800000000000000000900000008000400000000000000000000"
-			"0000000000000000000000000000000000000000000000000000000000000000"
-			"00000000000000000000000000000000000000c00f0000000000000000000000"
-			"0000000000000000030600002004040000000000000000000000000000000000"
-			"0000000000000000000000000000000000000000000004000000000208802000");
-		if(!DownloadBitstream(hdev, idBitstream, DownloadMode::EMULATION))
-			return false;
-
-		//Developer board I/O pins become stuck after both SRAM and NVM programming;
-		//resetting them explicitly makes LEDs and outputs work again.
-		LogDebug("Unstucking I/O pins after programming\n");
-		IOConfig ioConfig;
-		for(size_t i = 2; i <= 20; i++)
-			ioConfig.driverConfigs[i] = TP_RESET;
-		if(!SetIOConfig(hdev, ioConfig))
-			return 1;
-
-		//Set Vdd to 3.3V and Vdd2 to something much lower
-		//Note that we have to go below the usual minimum b/c
-		//we're sampling with an ADC that tops out at 1.0V!
-		double vdd = 3.3;
-		double vdd2 = 0.5;
-		LogVerbose("Setting voltages for ID bitstream (vccint/vcco_1=%.3f, vcco_2 = %.3f)\n", vdd, vdd2);
-		if(!ConfigureSiggen(hdev, 1, vdd))
-			return false;
-		if(!ConfigureSiggen(hdev, 14, vdd2))
-			return false;
-
-		//Read the ADC on pin 10 (sanity check) and 20 (device ID)
-		double pin10_value;
-		double pin20_value;
-		if(!SingleReadADC(hdev, 10, pin10_value))
-			return false;
-		if(!SingleReadADC(hdev, 20, pin20_value))
-			return false;
-
-		//If pin 10 is not saturated, something is wrong
-		if(pin10_value < 0.95)
-		{
-			LogError("Device didn't pull pin 10 high during device ID test\n");
-			return false;
-		}
-
-		//If pin 20 is too low, something is wrong
-		if(pin20_value < 0.3)
-		{
-			LogError("Device didn't pull pin 20 high during device ID test\n");
-			return false;
-		}
-
-		//If pin 20 is >> 0.5V, it's a 46620 (since pin 20 is on vcore instead of vccio)
-		LogVerbose("Pin 20 value: %.3f V\n", pin20_value);
-		if(pin20_value > 0.6)
-		{
-			LogVerbose("Pin 20 is on vccint/vcco_1 rail, it's a 46620\n");
-			detectedPart = SilegoPart::SLG46620V;
-		}
-
-		else
-		{
-			LogVerbose("Pin 20 is on vcco_2 rail, it's a 46621\n");
-			detectedPart = SilegoPart::SLG46621V;
-		}
-
-		//Done, wipe our test bitstream
-		LogVerbose("Resetting board after detecting part\n");
-		if(!Reset(hdev))
-			return false;
-	}
-
-	if(detectedPart == SilegoPart::UNRECOGNIZED)
-	{
-		LogError("Could not detect a supported part\n");
-		return false;
-	}
-
-	return true;
+	//If wre get here, no parts matched
+	detectedPart = SilegoPart::UNRECOGNIZED;
+	LogError("Could not detect a supported part\n");
+	return false;
 }
 
 /**
