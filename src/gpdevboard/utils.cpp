@@ -785,7 +785,7 @@ hdevice MultiBoardTestSetup(string fname, int rcOscFreq, double voltage, SilegoP
 {
 	LogNotice("Searching for a board with a %s installed...\n", PartName(targetPart));
 	LogIndenter li;
-	
+
 	for(int i=0; i<25; i++)
 	{
 		//Try to open the next dev board.
