@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
 	vector<int> nets;
 	bool hexdump = false;
 	bool blink = false;
+	int nboard = 0;
 
 	//Parse command-line arguments
 	for(int i=1; i<argc; i++)
@@ -151,6 +152,17 @@ int main(int argc, char* argv[])
 			hexdump = true;
 		else if((s == "-b") || (s == "--blink") )
 			blink = true;
+		else if((s == "--device") || (s == "--device") )
+		{
+			if(i+1 < argc)
+				nboard = atoi(argv[++i]);
+
+			else
+			{
+				printf("--device requires an argument\n");
+				return 1;
+			}
+		}
 		else if(s == "--pattern-id")
 		{
 			if(i+1 < argc)
@@ -273,7 +285,7 @@ int main(int argc, char* argv[])
 		ShowVersion();
 
 	//Open the dev board
-	hdevice hdev = OpenBoard();
+	hdevice hdev = OpenBoard(nboard);
 	if(!hdev)
 		return 1;
 
@@ -533,12 +545,15 @@ void ShowUsage()
 		"        Prints lots of internal debugging information.\n"
 		"    --force\n"
 		"        Perform actions that may be potentially inadvisable.\n"
+		"    -d, --device <board index>\n"
+		"        Specifies which board to connect to, if multiple units are plugged in.\n"
+		"        The first board is index 0.\n"
 		"\n"
 		"    The following options are instructions for the developer board. They are\n"
 		"    executed in the order listed here, regardless of their order on command line.\n"
 		"    -b, --blink\n"
 		"        Blinks the status LED on the board for five seconds.\n"
-		"        This can be used to distinguish multiple boards in a lab environment.\n"
+		"        This can be used with --device to distinguish multiple boards in a lab.\n"
 		"    -r, --reset\n"
 		"        Resets the board:\n"
 		"          * disables every LED;\n"

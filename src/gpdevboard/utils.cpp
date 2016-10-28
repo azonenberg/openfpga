@@ -55,7 +55,7 @@ bool CheckStatus(hdevice hdev)
 /**
 	@brief Connect to the board, but don't change anything
  */
-hdevice OpenBoard()
+hdevice OpenBoard(int nboard)
 {
 	//Set up libusb
 	if(!USBSetup())
@@ -63,11 +63,11 @@ hdevice OpenBoard()
 
 	//Try opening the board in "orange" mode
 	LogNotice("\nSearching for developer board\n");
-	hdevice hdev = OpenDevice(0x0f0f, 0x0006);
+	hdevice hdev = OpenDevice(0x0f0f, 0x0006, nboard);
 	if(!hdev)
 	{
 		//Try opening the board in "white" mode
- 		hdev = OpenDevice(0x0f0f, 0x8006);
+		hdev = OpenDevice(0x0f0f, 0x8006, nboard);
 		if(!hdev)
 		{
 			LogError("No device found, giving up\n");
@@ -83,7 +83,7 @@ hdevice OpenBoard()
 		usleep(1200 * 1000);
 
 		//Try opening the board in "orange" mode again
-		hdev = OpenDevice(0x0f0f, 0x0006);
+		hdev = OpenDevice(0x0f0f, 0x0006, nboard);
 		if(!hdev)
 		{
 			LogError("Could not switch mode, giving up\n");

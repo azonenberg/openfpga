@@ -36,7 +36,7 @@ bool SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size)
 {
 	int transferred;
 	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, 2|LIBUSB_ENDPOINT_OUT, 
+	if(0 != (err = libusb_interrupt_transfer(hdev, 2|LIBUSB_ENDPOINT_OUT,
 	                                         const_cast<uint8_t*>(buf), size, &transferred, 250)))
 	{
 		LogError("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
@@ -49,7 +49,7 @@ bool ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size)
 {
 	int transferred;
 	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, 1|LIBUSB_ENDPOINT_IN, 
+	if(0 != (err = libusb_interrupt_transfer(hdev, 1|LIBUSB_ENDPOINT_IN,
 	                                         buf, size, &transferred, 250)))
 	{
 		LogError("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
@@ -78,9 +78,24 @@ void USBCleanup(hdevice hdev)
 	libusb_exit(NULL);
 }
 
-//Gets the device handle (assume only one for now)
-hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
+/**
+	@brief Gets the device handle
+
+	@param idVendor		USB VID
+	@param idProduct	USB PID
+	@param nboard		Number of the board to open.
+						Note that this index is counted for all VID matches regardless of PID!
+						This is important so we can match both bootloader and operating dev boards.
+ */
+hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct, int nboard)
 {
+	//initial sanity check
+	if(nboard < 0)
+	{
+		LogError("invalid device index (should be >0)\n");
+		return NULL;
+	}
+
 	libusb_device** list;
 	ssize_t devcount = libusb_get_device_list(NULL, &list);
 	if(devcount < 0)
@@ -98,8 +113,19 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct)
 		if(0 != libusb_get_device_descriptor(device, &desc))
 			continue;
 
-		//Silego devkit
-		if( (desc.idVendor == idVendor) && (desc.idProduct == idProduct) )
+		//Skip anything from the wrong vendor
+		if(desc.idVendor != idVendor)
+			continue;
+
+		//If we are looking for one of several boards, skip the early ones
+		if(nboard > 0)
+		{
+			nboard --;
+			continue;
+		}
+
+		//If we match the PID, we're good to go
+		if(desc.idProduct == idProduct)
 		{
 			found = true;
 			break;
