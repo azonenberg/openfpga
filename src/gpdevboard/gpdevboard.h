@@ -240,6 +240,7 @@ bool DownloadBitstream(hdevice hdev, std::vector<uint8_t> bitstream, DownloadMod
 
 bool SelectADCChannel(hdevice hdev, unsigned int chan);
 bool ReadADC(hdevice hdev, double &value);
+bool SingleReadADC(hdevice hdev, unsigned int chan, double &value);
 
 bool TrimOscillator(hdevice hdev, uint8_t ftw);
 bool MeasureOscillatorFrequency(hdevice hdev, unsigned &freq);

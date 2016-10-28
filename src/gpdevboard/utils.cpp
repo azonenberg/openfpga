@@ -164,6 +164,88 @@ bool DetectPart(
 		}
 	}
 
+	//If we detected a 4662x, try to tell them apart
+	if(detectedPart == SLG4662XV)
+	{
+		LogVerbose("We detected a 4662x, but not sure which one it is yet\n");
+		LogIndenter li;
+
+		//To reproduce: build PowerRailDetector_STQFN20 for SLG46621V
+		LogVerbose("Loading identification bitstream\n");
+		vector<uint8_t> idBitstream = BitstreamFromHex(
+			"0000000000000000000000000000000000000000000000000000000000000000"
+			"000000000000000000000000000000000000fc3f0000000000000000c00f0000"
+			"0000000000000000000000000000000000000000000000000000000000000000"
+			"0000000000000800000000000000000900000008000400000000000000000000"
+			"0000000000000000000000000000000000000000000000000000000000000000"
+			"00000000000000000000000000000000000000c00f0000000000000000000000"
+			"0000000000000000030600002004040000000000000000000000000000000000"
+			"0000000000000000000000000000000000000000000004000000000208802000");
+		if(!DownloadBitstream(hdev, idBitstream, DownloadMode::EMULATION))
+			return false;
+
+		//Developer board I/O pins become stuck after both SRAM and NVM programming;
+		//resetting them explicitly makes LEDs and outputs work again.
+		LogDebug("Unstucking I/O pins after programming\n");
+		IOConfig ioConfig;
+		for(size_t i = 2; i <= 20; i++)
+			ioConfig.driverConfigs[i] = TP_RESET;
+		if(!SetIOConfig(hdev, ioConfig))
+			return 1;
+
+		//Set Vdd to 3.3V and Vdd2 to something much lower
+		//Note that we have to go below the usual minimum b/c
+		//we're sampling with an ADC that tops out at 1.0V!
+		double vdd = 3.3;
+		double vdd2 = 0.5;
+		LogVerbose("Setting voltages for ID bitstream (vccint/vcco_1=%.3f, vcco_2 = %.3f)\n", vdd, vdd2);
+		if(!ConfigureSiggen(hdev, 1, vdd))
+			return false;
+		if(!ConfigureSiggen(hdev, 14, vdd2))
+			return false;
+
+		//Read the ADC on pin 10 (sanity check) and 20 (device ID)
+		double pin10_value;
+		double pin20_value;
+		if(!SingleReadADC(hdev, 10, pin10_value))
+			return false;
+		if(!SingleReadADC(hdev, 20, pin20_value))
+			return false;
+
+		//If pin 10 is not saturated, something is wrong
+		if(pin10_value < 0.95)
+		{
+			LogError("Device didn't pull pin 10 high during device ID test\n");
+			return false;
+		}
+
+		//If pin 20 is too low, something is wrong
+		if(pin20_value < 0.3)
+		{
+			LogError("Device didn't pull pin 20 high during device ID test\n");
+			return false;
+		}
+
+		//If pin 20 is >> 0.5V, it's a 46620 (since pin 20 is on vcore instead of vccio)
+		LogVerbose("Pin 20 value: %.3f V\n", pin20_value);
+		if(pin20_value > 0.6)
+		{
+			LogVerbose("Pin 20 is on vccint/vcco_1 rail, it's a 46620\n");
+			detectedPart = SilegoPart::SLG46620V;
+		}
+
+		else
+		{
+			LogVerbose("Pin 20 is on vcco_2 rail, it's a 46621\n");
+			detectedPart = SilegoPart::SLG46621V;
+		}
+
+		//Done, wipe our test bitstream
+		LogVerbose("Resetting board after detecting part\n");
+		if(!Reset(hdev))
+			return false;
+	}
+
 	if(detectedPart == SilegoPart::UNRECOGNIZED)
 	{
 		LogError("Could not detect a supported part\n");
@@ -332,9 +414,15 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 
 		case SLG46621V:
 			//To reproduce: build SocketTestLoopback_STQFN20D for SLG46621V
-
-			LogWarning("FIXME: not doing anything in SocketTest for SLG46621V\n");
-			return true;
+			loopbackBitstream = BitstreamFromHex(
+				"0000000000000000000000000000000000000000000000000000000000000000"
+				"00000000000000000000d88f613f86fd18f6633f0000000000000000c00f0000"
+				"0600000000000000000000000000000000000000000000000000000000000000"
+				"000000000000080000000000000000090000000800040008000280000000005a"
+				"0000000000000000000000000000000000000000000000000000000000000000"
+				"0000000000000000000034fd03004dff34fdd33f0d0000000000000000000000"
+				"0000000000000000030600002004040000000000000000000000000000000000"
+				"00000000000000000000000000000002008000200000040000000002088020a5");
 
 			avail_gpios = 17;	//dual rail STQFN-20
 			break;
@@ -677,6 +765,19 @@ bool TweakBitstream(vector<uint8_t>& bitstream, SilegoPart part, uint8_t oscTrim
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Helper for HiL tests
+
+/**
+	@brief Selects an ADC channel and reads a single value
+ */
+bool SingleReadADC(hdevice hdev, unsigned int chan, double &value)
+{
+	if(!SelectADCChannel(hdev, chan))
+		return false;
+	if(!ReadADC(hdev, value))
+		return false;
+
+	return true;
+}
 
 /**
 	@brief Wrapper around the test to do some board setup etc
