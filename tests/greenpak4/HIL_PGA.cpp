@@ -42,28 +42,6 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	/*
-	//Do standard board bringup
-	hdevice hdev = OpenBoard(0);
-	if(!hdev)
-	{
-		LogError("Failed to open board\n");
-		return 1;
-	}
-	if(!SetStatusLED(hdev, 1))
-		return 1;
-
-	//Prepare to run the test
-	if(!TestSetup(hdev, argv[1], 25000, 3.3, SilegoPart::SLG46620V))
-	{
-		SetStatusLED(hdev, 0);
-		Reset(hdev);
-		return 1;
-	}
-	*/
-
-	return 0;
-
 	//Run the actual test case
 	LogNotice("\n");
 	LogNotice("Running application test case\n");

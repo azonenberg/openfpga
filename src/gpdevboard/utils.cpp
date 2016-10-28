@@ -143,12 +143,16 @@ bool DistinguishSLG4662X(hdevice hdev, SilegoPart& detectedPart)
 	if(!SetIOConfig(hdev, ioConfig))
 		return 1;
 
-	//Set Vdd to 3.3V and Vdd2 to something much lower
-	double vdd = 3.3;
-	LogVerbose("Setting voltages for ID bitstream (vccint/vcco_1=%.3f, vcco_2 = weak pulldown)\n", vdd);
+	//Set Vdd to 1.8V and Vdd2 to something much lower
+	double vdd = 1.8;
+	LogVerbose("Setting voltages for ID bitstream (vccint/vcco_1=%.3f, vcco_2 = 0V)\n", vdd);
 	if(!ConfigureSiggen(hdev, 1, vdd))
 		return false;
-	ioConfig.driverConfigs[14] = TP_PULLDOWN;
+
+	//Set all I/Os to weak pulldowns, except pin 14 gets a hard 0
+	for(size_t i = 2; i <= 20; i++)
+		ioConfig.driverConfigs[i] = TP_PULLDOWN;
+	ioConfig.driverConfigs[14] = TP_GND;
 	if(!SetIOConfig(hdev, ioConfig))
 		return 1;
 
@@ -445,26 +449,19 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 		return false;
 
 	LogVerbose("Initializing test I/O\n");
-	double supplyVoltage = 3.3;
+	double supplyVoltage = 1.8;
 	if(!ConfigureSiggen(hdev, 1, supplyVoltage))
 		return false;
 
-	//Configure pin 14 power supply iff we're a SLG46621
+	//TODO: Configure pin 14 power supply iff we're a SLG46621
 	if(part == SLG46621V)
 	{
-		double supplyVoltage2 = 2.5;
-		if(!ConfigureSiggen(hdev, 14, supplyVoltage2))
-			return false;
-	}
-	else
-	{
-		LogVerbose("Turning off pin 14 power (%d)...\n", avail_gpios);
-
-		//Make sure pin 14 power is off if we're not using it
-		if(!ControlSiggen(hdev, 14, SiggenCommand::RESET))
-			return false;
+		//double supplyVoltage2 = 2.5;
+		//if(!ConfigureSiggen(hdev, 14, supplyVoltage2))
+		//	return false;
 	}
 
+	//Unstick the I/O pins
 	IOConfig ioConfig;
 	for(size_t i = 2; i <= 20; i++)
 		ioConfig.driverConfigs[i] = TP_RESET;
@@ -489,9 +486,10 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 		for(size_t i = 3; i <= 20; i++)
 		{
 			//Don't mess with the VCCIO2 driver in dual-rail parts
+			//FIXME: drive Vdd here manually
 			if( (avail_gpios == 17) && (i == 14) )
 			{
-				LogVerbose("skipping config on vccio2\n");
+				ioConfig.driverConfigs[i] = TP_VDD;
 				continue;
 			}
 
@@ -516,7 +514,7 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 			double value;;
 			if(!SingleReadADC(hdev, i, value))
 				return false;
-			LogVerbose("P%d = %.3f V\n", i, value);
+			LogDebug("P%d = %.3f V\n", i, value);
 
 			if(fabs(value - get<2>(config)) > 0.01)
 			{

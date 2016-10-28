@@ -501,8 +501,8 @@ int main(int argc, char* argv[])
 	else
 	{
 		//Make sure pin 14 power is off if we're not using it
-		if(!ControlSiggen(hdev, 14, SiggenCommand::RESET))
-			return false;
+		//if(!ControlSiggen(hdev, 14, SiggenCommand::RESET))
+		//	return false;
 	}
 
 	if(!nets.empty())
