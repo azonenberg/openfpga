@@ -1,1 +1,1 @@
-add_greenpak4_netlist(PowerRailDetector_STQFN20 SLG46621V)
+add_greenpak4_bitstream(PowerRailDetector_STQFN20 SLG46621V)
