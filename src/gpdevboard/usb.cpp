@@ -89,8 +89,6 @@ void USBCleanup(hdevice hdev)
  */
 hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct, int nboard)
 {
-	LogIndenter li;
-
 	//initial sanity check
 	if(nboard < 0)
 	{
@@ -119,9 +117,14 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct, int nboard)
 		if(desc.idVendor != idVendor)
 			continue;
 
+		LogVerbose("Found Silego device at bus %d, port %d\n",
+			libusb_get_bus_number(device),
+			libusb_get_port_number(device));
+
 		//If we are looking for one of several boards, skip the early ones
 		if(nboard > 0)
 		{
+			LogVerbose("skipping\n");
 			nboard --;
 			continue;
 		}

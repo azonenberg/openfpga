@@ -34,6 +34,15 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	//Set up the test
+	hdevice hdev = MultiBoardTestSetup(argv[1], 25000, 3.3, SilegoPart::SLG46620V);
+	if(!hdev)
+	{
+		LogError("Failed to open board\n");
+		return 1;
+	}
+
+	/*
 	//Do standard board bringup
 	hdevice hdev = OpenBoard(0);
 	if(!hdev)
@@ -51,6 +60,9 @@ int main(int argc, char* argv[])
 		Reset(hdev);
 		return 1;
 	}
+	*/
+
+	return 0;
 
 	//Run the actual test case
 	LogNotice("\n");

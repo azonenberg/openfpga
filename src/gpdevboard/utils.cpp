@@ -54,26 +54,25 @@ bool CheckStatus(hdevice hdev)
 
 /**
 	@brief Connect to the board, but don't change anything
+
+	@param nboard	0-based index of board to connect to
+	@param test		Set true to not print setup message, or errors if no device was found
+					(use to check if a board is present)
  */
-hdevice OpenBoard(int nboard)
+hdevice OpenBoard(int nboard, bool test)
 {
 	//Set up libusb
 	if(!USBSetup())
 		return NULL;
 
-	//Try opening the board in "orange" mode
-	LogNotice("\nSearching for developer board\n");
-	hdevice hdev = OpenDevice(0x0f0f, 0x0006, nboard);
-	if(!hdev)
-	{
-		//Try opening the board in "white" mode
-		hdev = OpenDevice(0x0f0f, 0x8006, nboard);
-		if(!hdev)
-		{
-			LogError("No device found, giving up\n");
-			return NULL;
-		}
+	LogNotice("Searching for developer board at index %d\n", nboard);
+	LogIndenter li;
 
+	//Try opening the board in "white" mode first
+	hdevice hdev = OpenDevice(0x0f0f, 0x8006, nboard);
+	bool switching = false;
+	if(hdev)
+	{
 		//Change the board into "orange" mode
 		LogVerbose("Switching developer board from bootloader mode\n");
 		if(!SwitchMode(hdev))
@@ -81,14 +80,18 @@ hdevice OpenBoard(int nboard)
 
 		//Takes a while to switch and re-enumerate
 		usleep(1200 * 1000);
+		switching = true;
+	}
 
-		//Try opening the board in "orange" mode again
-		hdev = OpenDevice(0x0f0f, 0x0006, nboard);
-		if(!hdev)
-		{
-			LogError("Could not switch mode, giving up\n");
-			return NULL;
-		}
+	//By this point, it should be in "orange" mode
+	hdev = OpenDevice(0x0f0f, 0x0006, nboard);
+	if(!hdev)
+	{
+		if(switching)
+			LogError("Device failed to switch mode\n");
+		if(!test)
+			LogError("No device found, giving up\n");
+		return NULL;
 	}
 
 	//Get string descriptors
@@ -190,10 +193,6 @@ bool DistinguishSLG4662X(hdevice hdev, SilegoPart& detectedPart)
 	//Done, wipe our test bitstream
 	LogVerbose("Resetting board after detecting part\n");
 	if(!Reset(hdev))
-		return false;
-
-	//Turn off pin 14 power
-	if(!ControlSiggen(hdev, 14, SiggenCommand::RESET))
 		return false;
 
 	return true;
@@ -455,9 +454,29 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 		return false;
 
 	LogVerbose("Initializing test I/O\n");
-	double supplyVoltage = 5.0;
+	double supplyVoltage = 3.3;
 	if(!ConfigureSiggen(hdev, 1, supplyVoltage))
 		return false;
+
+	//Configure pin 14 power supply iff we're a SLG46621
+	if(part == SLG46621V)
+	{
+		double supplyVoltage2 = 2.5;
+		if(!ConfigureSiggen(hdev, 14, supplyVoltage2))
+			return false;
+	}
+	else
+	{
+		LogVerbose("Turning off pin 14 power (%d)...\n", avail_gpios);
+
+		//Make sure pin 14 power is off if we're not using it
+		if(!ConfigureSiggenAsLogic(hdev, 14))
+			return false;
+		if(!ControlSiggen(hdev, 14, SiggenCommand::STOP))
+			return false;
+		if(!ControlSiggen(hdev, 14, SiggenCommand::RESET))
+			return false;
+	}
 
 	IOConfig ioConfig;
 	for(size_t i = 2; i <= 20; i++)
@@ -484,7 +503,10 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 		{
 			//Don't mess with the VCCIO2 driver in dual-rail parts
 			if( (avail_gpios == 17) && (i == 14) )
+			{
+				LogVerbose("skipping config on vccio2\n");
 				continue;
+			}
 
 			ioConfig.driverConfigs[i] = get<1>(config);
 		}
@@ -504,12 +526,10 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 			else if( (avail_gpios == 17) && (i == 14) )
 				continue;
 
-			if(!SelectADCChannel(hdev, i))
+			double value;;
+			if(!SingleReadADC(hdev, i, value))
 				return false;
-			double value;
-			if(!ReadADC(hdev, value))
-				return false;
-			LogDebug("P%d = %.3f V\n", i, supplyVoltage * value);
+			LogVerbose("P%d = %.3f V\n", i, value);
 
 			if(fabs(value - get<2>(config)) > 0.01)
 			{
@@ -786,11 +806,12 @@ hdevice MultiBoardTestSetup(string fname, int rcOscFreq, double voltage, SilegoP
 	LogNotice("Searching for a board with a %s installed...\n", PartName(targetPart));
 	LogIndenter li;
 
-	for(int i=0; i<25; i++)
+	//TODO: pick reasonable max
+	for(int i=0; i<10; i++)
 	{
 		//Try to open the next dev board.
 		//Failure is not fatal, we may have a perms error on one board but the next might be OK
-		hdevice hdev = OpenBoard(i);
+		hdevice hdev = OpenBoard(i, true);
 		if(!hdev)
 			continue;
 

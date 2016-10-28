@@ -225,6 +225,7 @@ enum class SiggenCommand
 };
 
 bool ConfigureSiggen(hdevice hdev, uint8_t channel, double voltage);
+bool ConfigureSiggenAsLogic(hdevice hdev, uint8_t channel);
 bool ResetAllSiggens(hdevice hdev);
 bool ControlSiggen(hdevice hdev, unsigned int chan, SiggenCommand cmd);
 
@@ -258,7 +259,7 @@ enum class BitstreamKind
 };
 
 bool CheckStatus(hdevice hdev);
-hdevice OpenBoard(int nboard);
+hdevice OpenBoard(int nboard, bool test = false);
 bool DetectPart(
 	hdevice hdev,
 	SilegoPart& detectedPart,
@@ -286,5 +287,7 @@ bool TweakBitstream(
 	bool readProtect);
 
 bool TestSetup(hdevice hdev, std::string fname, int rcOscFreq, double voltage, SilegoPart targetPart);
+
+hdevice MultiBoardTestSetup(std::string fname, int rcOscFreq, double voltage, SilegoPart targetPart);
 
 #endif
