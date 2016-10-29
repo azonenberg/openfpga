@@ -23,7 +23,55 @@
 #include <log.h>
 #include "gpdevboard.h"
 
+#include <sys/file.h>
+
 using namespace std;
+
+int g_deviceLock = -1;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Board locking
+
+/**
+	@brief Try to acquire a global lock (for now, shared across all dev boards) to prevent conflicts.
+
+	Blocks until lock is acquired. Returns false if we get a non-recoverable error.
+
+	TODO: Windows etc support?
+ */
+bool LockDevice()
+{
+	LogNotice("Acquiring shared lock...\n");
+
+	//Create the lock file
+	g_deviceLock = open("/var/tmp/gpdevboard.lock", O_CREAT | O_WRONLY, 0666);
+	if(g_deviceLock < 0)
+	{
+		LogError("create lock\n");
+		return false;
+	}
+
+	//Try to lock it
+	if(0 != flock(g_deviceLock, LOCK_EX))
+	{
+		LogError("get lock\n");
+		return false;
+	}
+
+	//we're good
+	return true;
+}
+
+void UnlockDevice()
+{
+	LogNotice("Freeing shared lock\n");
+
+	if(g_deviceLock)
+	{
+		flock(g_deviceLock, LOCK_UN);
+		close(g_deviceLock);
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Status check
