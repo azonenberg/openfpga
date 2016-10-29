@@ -492,6 +492,11 @@ bool ReadADC(hdevice hdev, double &value)
 		(frame.m_payload[2] <<  8) |
 		(frame.m_payload[3] <<  0);
 	value = (double)(((int32_t)intValue) >> 8) / 0x90000;
+
+	//Datasheet comes back as a fraction of full scale
+	//Multiply by the 1.024V reference
+	value *= 1.024;
+
 	return true;
 }
 

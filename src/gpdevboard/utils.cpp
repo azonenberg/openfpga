@@ -470,7 +470,7 @@ bool SocketTest(hdevice hdev, SilegoPart part)
 	tuple<TPConfig, TPConfig, double> sequence[] =
 	{
 		make_tuple(TP_GND, TP_FLIMSY_PULLUP,   0.0),
-		make_tuple(TP_VDD, TP_FLIMSY_PULLDOWN, 1.0),
+		make_tuple(TP_VDD, TP_FLIMSY_PULLDOWN, 1.024),
 	};
 
 	for(auto config : sequence)
