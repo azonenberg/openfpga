@@ -856,6 +856,9 @@ hdevice MultiBoardTestSetup(string fname, int rcOscFreq, double voltage, SilegoP
 			continue;
 		}
 
+		//Turn on status LED so board is visibly in use
+		SetStatusLED(hdev, 1);
+
 		//Test case configured OK, proceed
 		return hdev;
 	}
