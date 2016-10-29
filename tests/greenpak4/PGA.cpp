@@ -18,6 +18,7 @@
 
 #include <log.h>
 #include <gpdevboard.h>
+#include <unistd.h>
 
 using namespace std;
 
