@@ -58,8 +58,6 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	usleep(1000 * 5000);
-
 	//Turn off the LED before declaring success
 	LogVerbose("\n");
 	LogVerbose("Test complete, resetting board\n");
