@@ -582,7 +582,7 @@ void ShowUsage()
 		"    The following options are instructions for the developer board. They are\n"
 		"    executed in the order listed here, regardless of their order on command line.\n"
 		"    -l, --lock\n"
-		"        Acquires the lock file /var/tmp/gpdevboard.lock before proceeding.\n"
+		"        Acquires the lock file /tmp/gpdevboard.lock before proceeding.\n"
 		"        gp4prog will continue to hold the lock after completing all requested\n"
 		"        operations, until released by pressing a key.\n"
 		"    -b, --blink\n"
