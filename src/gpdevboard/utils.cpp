@@ -44,17 +44,17 @@ bool LockDevice()
 	LogNotice("Acquiring shared lock...\n");
 
 	//Create the lock file
-	g_deviceLock = open("/var/tmp/gpdevboard.lock", O_CREAT | O_WRONLY, 0666);
+	g_deviceLock = open("/tmp/gpdevboard.lock", O_CREAT | O_WRONLY, 0666);
 	if(g_deviceLock < 0)
 	{
-		LogError("create lock\n");
+		LogError("Failed to create lock\n");
 		return false;
 	}
 
 	//Try to lock it
 	if(0 != flock(g_deviceLock, LOCK_EX))
 	{
-		LogError("get lock\n");
+		LogError("Failed to get lock\n");
 		return false;
 	}
 
