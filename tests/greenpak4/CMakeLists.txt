@@ -39,6 +39,26 @@ function(add_greenpak4_netlist name part)
 endfunction()
 
 ########################################################################################################################
+# Add a HiL test and run it
+
+function(add_greenpak4_hiltest name part)
+
+	add_greenpak4_bitstream(${name} ${part})
+	
+	add_executable(hiltest-${name}
+		${name}.cpp)
+	target_link_libraries(hiltest-${name}
+		gpdevboard)
+
+	add_test(
+		NAME "${name}"
+		COMMAND hiltest-${name}
+			"${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
+			)
+
+endfunction()
+
+########################################################################################################################
 # PAR an HDL file
 
 function(add_greenpak4_bitstream name part)
@@ -87,7 +107,7 @@ function(add_greenpak4_test name part)
 endfunction()
 
 ########################################################################################################################
-# Run all of the PAR-only tests
+# Run all of the PAR-only tests (TODO: set up HiL for these?)
 
 add_greenpak4_test(Bargraph SLG46620V)
 add_greenpak4_test(Blinky SLG46620V)
@@ -101,11 +121,6 @@ add_greenpak4_test(POR SLG46620V)
 add_greenpak4_test(Tristate SLG46620V)
 add_greenpak4_test(Vector SLG46620V)
 
-########################################################################################################################
-# Compile bitstreams for HiL tests
-
-add_greenpak4_bitstream(PGA SLG46620V)
-
 # These bitstreams are hard coded in gpdevboard/SocketTest
 # but we ship source for standalone HiL test support and verification
 add_greenpak4_bitstream(SocketTestLoopback_STQFN14 SLG46140V)
@@ -113,12 +128,12 @@ add_greenpak4_bitstream(SocketTestLoopback_STQFN20 SLG46620V)
 add_greenpak4_bitstream(SocketTestLoopback_STQFN20D SLG46621V)
 
 ########################################################################################################################
-# Compile binaries for HiL tests (no install required here)
+# Run all of the HiL tests
 
-add_executable(HIL_PGA
-	HIL_PGA.cpp)
-target_link_libraries(HIL_PGA
-	gpdevboard)
+add_greenpak4_hiltest(PGA SLG46620V)
+
+########################################################################################################################
+# Compile binaries for HiL tests (no install required here)
 
 add_executable(HIL_SocketTestLoopback_SLG46140
 	HIL_SocketTestLoopback_SLG46140.cpp)
