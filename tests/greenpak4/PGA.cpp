@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 	if(!LockDevice())
 	{
 		LogError("Failed to lock dev board\n");
-		return false;
+		return 1;
 	}
 	hdevice hdev = MultiBoardTestSetup(argv[1], 25000, 3.3, SilegoPart::SLG46620V);
 	if(!hdev)
