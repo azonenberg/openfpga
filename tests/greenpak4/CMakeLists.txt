@@ -52,7 +52,7 @@ function(add_greenpak4_hiltest name part)
 
 	add_test(
 		NAME "${name}"
-		COMMAND ${name}
+		COMMAND hiltest-${name}
 			"${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
 			)
 
