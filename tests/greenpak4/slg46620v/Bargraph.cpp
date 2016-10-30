@@ -181,34 +181,6 @@ bool RunTest(hdevice hdev)
 			//Save pin state
 			pin_states[i] = b;
 		}
-
-		/*
-		//Read the input
-		if(!SelectADCChannel(hdev, INPUT_PIN))
-			return false;
-		double vin;
-		if(!ReadADC(hdev, vin))
-			return false;
-
-		//Read the output
-		if(!SelectADCChannel(hdev, OUTPUT_PIN))
-			return false;
-		double vout;
-		if(!ReadADC(hdev, vout))
-			return false;
-
-		double expected = vin * 2;
-		double error = expected - vout;
-		double pctError = (error * 100) / expected;
-
-		LogVerbose("|%10.3f|%10.3f|%10.3f|%10.3f|%10.3f|%10.3f|\n", vtest, vin, vout, expected, error, pctError);
-
-		//TODO: Decide on an appropriate tolerance
-		if(pctError > 5)
-		{
-			LogError("Percent error is too big, test failed\n");
-			return false;
-		}*/
 	}
 
 	return true;
