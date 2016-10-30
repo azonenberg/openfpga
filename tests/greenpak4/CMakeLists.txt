@@ -86,62 +86,8 @@ function(add_greenpak4_bitstream name part)
 endfunction()
 
 ########################################################################################################################
-# Run PAR as a test
-
-function(add_greenpak4_test name part)
-	add_greenpak4_netlist(${name} ${part})
-
-	add_custom_target(testcase-gp4-${name}
-		ALL
-		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${name}.json")
-
-	add_test(
-		NAME    "${name}"
-		COMMAND gp4par "--stdout-only"
-		               --usercode a3
-		               --part ${part}
-					   --output  "${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
-		               --logfile "${CMAKE_CURRENT_BINARY_DIR}/${name}.log"
-		               "${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
-		               "--debug")
-endfunction()
-
-########################################################################################################################
-# Run all of the PAR-only tests (TODO: set up HiL for these?)
-
-add_greenpak4_test(Bargraph SLG46620V)
-add_greenpak4_test(Blinky SLG46620V)
-add_greenpak4_test(Dac SLG46620V)
-add_greenpak4_test(Delay SLG46620V)
-add_greenpak4_test(Ethernet SLG46620V)
-add_greenpak4_test(Inverters SLG46620V)
-add_greenpak4_test(Location SLG46620V)
-add_greenpak4_test(Loop SLG46620V)
-add_greenpak4_test(POR SLG46620V)
-add_greenpak4_test(Tristate SLG46620V)
-add_greenpak4_test(Vector SLG46620V)
-
-# These bitstreams are hard coded in gpdevboard/SocketTest
-# but we ship source for standalone HiL test support and verification
-add_greenpak4_bitstream(SocketTestLoopback_STQFN14 SLG46140V)
-add_greenpak4_bitstream(SocketTestLoopback_STQFN20 SLG46620V)
-add_greenpak4_bitstream(SocketTestLoopback_STQFN20D SLG46621V)
-
-########################################################################################################################
-# Run all of the HiL tests
-
-add_greenpak4_hiltest(PGA SLG46620V)
-
-########################################################################################################################
-# Compile binaries for HiL tests (no install required here)
-
-add_executable(HIL_SocketTestLoopback_SLG46140
-	HIL_SocketTestLoopback_SLG46140.cpp)
-target_link_libraries(HIL_SocketTestLoopback_SLG46140
-	gpdevboard)
-
-########################################################################################################################
 # Add our subdirectories
 
 add_subdirectory(slg46140v)
+add_subdirectory(slg46620v)
 add_subdirectory(slg46621v)
