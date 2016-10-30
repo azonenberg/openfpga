@@ -21,3 +21,8 @@ add_greenpak4_bitstream(SocketTestLoopback_STQFN20 SLG46620V)
 # HiL tests
 
 add_greenpak4_hiltest(PGA SLG46620V)
+
+########################################################################################################################
+# Cosimulation tests
+
+# none yet
