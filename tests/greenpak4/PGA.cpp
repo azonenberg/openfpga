@@ -36,11 +36,6 @@ int main(int argc, char* argv[])
 	}
 
 	//Set up the test
-	if(!LockDevice())
-	{
-		LogError("Failed to lock dev board\n");
-		return 1;
-	}
 	hdevice hdev = MultiBoardTestSetup(argv[1], 25000, 3.3, SilegoPart::SLG46620V);
 	if(!hdev)
 	{
@@ -65,7 +60,6 @@ int main(int argc, char* argv[])
 	ResetAllSiggens(hdev);
 	Reset(hdev);
 	USBCleanup(hdev);
-	UnlockDevice();
 	return 0;
 }
 

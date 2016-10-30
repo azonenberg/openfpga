@@ -288,10 +288,6 @@ int main(int argc, char* argv[])
 	if(console_verbosity >= Severity::NOTICE)
 		ShowVersion();
 
-	//Lock the board if we requested exclusive access
-	if(lock)
-		LockDevice();
-
 	//Open the dev board
 	hdevice hdev = OpenBoard(nboard);
 	if(!hdev)
@@ -538,7 +534,7 @@ int main(int argc, char* argv[])
 	//Hold the lock until something happens
 	if(lock)
 	{
-		LogNotice("Holding exclusive lock on board, press any key to exit...\n");
+		LogNotice("Holding lock on board, press any key to exit...\n");
 		SetStatusLED(hdev, 1);
 
 		struct termios oldt, newt;
@@ -554,9 +550,6 @@ int main(int argc, char* argv[])
 	LogNotice("Done\n");
 	SetStatusLED(hdev, 0);
 	USBCleanup(hdev);
-
-	if(lock)
-		UnlockDevice();
 
 	return 0;
 }
@@ -582,8 +575,8 @@ void ShowUsage()
 		"    The following options are instructions for the developer board. They are\n"
 		"    executed in the order listed here, regardless of their order on command line.\n"
 		"    -l, --lock\n"
-		"        Acquires the lock file /tmp/gpdevboard.lock before proceeding.\n"
-		"        gp4prog will continue to hold the lock after completing all requested\n"
+		"        Keeps the USB device open and locked to prevent another process from using\n"
+		"        it. gp4prog will continue to hold the lock after completing all requested\n"
 		"        operations, until released by pressing a key.\n"
 		"    -b, --blink\n"
 		"        Blinks the status LED on the board for five seconds.\n"

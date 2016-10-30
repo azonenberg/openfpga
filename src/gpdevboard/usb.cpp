@@ -26,6 +26,7 @@
 
 #include <log.h>
 #include <gpdevboard.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -162,10 +163,35 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct, int nboard)
 	}
 
 	//Set the device configuration
+	//If this fails, with LIBUSB_ERROR_BUSY, poll every 100 ms until the device is free
 	if(0 != (err = libusb_set_configuration(hdev, 1)))
 	{
-		LogError("Failed to select device configuration (err = %d)\n", err);
-		return NULL;
+		if(err == LIBUSB_ERROR_BUSY)
+		{
+			LogNotice("USB device is currently busy, blocking until it's free...\n");
+			while(true)
+			{
+				err = libusb_set_configuration(hdev, 1);
+
+				if(err == LIBUSB_ERROR_BUSY)
+				{
+					usleep(1000 * 100);
+					continue;
+				}
+
+				if(err == LIBUSB_SUCCESS)
+					break;
+
+				LogError("Failed to select device configuration (err = %d)\n", err);
+				return NULL;
+			}
+		}
+
+		else
+		{
+			LogError("Failed to select device configuration (err = %d)\n", err);
+			return NULL;
+		}
 	}
 
 	//Claim interface 0

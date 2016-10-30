@@ -289,10 +289,4 @@ bool TestSetup(hdevice hdev, std::string fname, int rcOscFreq, double voltage, S
 
 hdevice MultiBoardTestSetup(std::string fname, int rcOscFreq, double voltage, SilegoPart targetPart);
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Device locking
-
-bool LockDevice();
-void UnlockDevice();
-
 #endif
