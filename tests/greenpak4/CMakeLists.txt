@@ -51,8 +51,8 @@ function(add_greenpak4_hiltest name part)
 		gpdevboard)
 
 	add_test(
-		NAME "HIL-${name}"
-		COMMAND hiltest-${name}
+		NAME "${name}"
+		COMMAND ${name}
 			"${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
 			)
 
