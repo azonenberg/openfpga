@@ -133,7 +133,7 @@ bool RunTest(hdevice hdev)
 	//Sweep input and verify output
 	LogVerbose("Running comparator voltage sweep\n");
 	double step = 0.025;
-	bool pin_states[5] = {false};
+	bool pin_states[6] = {false};
 	for(double vtest = step; vtest < 1.1; vtest += step)
 	{
 		LogIndenter li;
