@@ -1,7 +1,6 @@
 ########################################################################################################################
 # Bitstreams that are not (yet) part of a HiL test
 
-add_greenpak4_bitstream(Bargraph SLG46620V)
 add_greenpak4_bitstream(Blinky SLG46620V)
 add_greenpak4_bitstream(Dac SLG46620V)
 add_greenpak4_bitstream(Delay SLG46620V)
@@ -20,6 +19,7 @@ add_greenpak4_bitstream(SocketTestLoopback_STQFN20 SLG46620V)
 ########################################################################################################################
 # HiL tests
 
+add_greenpak4_hiltest(Bargraph SLG46620V)
 add_greenpak4_hiltest(PGA SLG46620V)
 
 ########################################################################################################################
