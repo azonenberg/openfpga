@@ -45,14 +45,14 @@ function(add_greenpak4_hiltest name part)
 
 	add_greenpak4_bitstream(${name} ${part})
 	
-	add_executable(hiltest-${name}
+	add_executable(hiltest-${part}-${name}
 		${name}.cpp)
-	target_link_libraries(hiltest-${name}
+	target_link_libraries(hiltest-${part}-${name}
 		gpdevboard)
 
 	add_test(
-		NAME "${name}"
-		COMMAND hiltest-${name}
+		NAME "${part}-${name}"
+		COMMAND hiltest-${part}-${name}
 			"${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
 			)
 
