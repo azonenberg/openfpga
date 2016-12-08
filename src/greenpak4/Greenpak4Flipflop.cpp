@@ -38,6 +38,7 @@ Greenpak4Flipflop::Greenpak4Flipflop(
 	, m_initValue(false)
 	, m_srmode(false)
 	, m_outputInvert(false)
+	, m_latchMode(false)
 	, m_input(device->GetGround())
 	, m_clock(device->GetGround())
 	, m_nsr(device->GetPower())
@@ -57,6 +58,7 @@ vector<string> Greenpak4Flipflop::GetInputPorts() const
 	vector<string> r;
 	r.push_back("D");
 	r.push_back("CLK");
+	r.push_back("nCLK");
 	if(m_hasSR)
 		r.push_back("nSR");
 	return r;
@@ -64,7 +66,7 @@ vector<string> Greenpak4Flipflop::GetInputPorts() const
 
 void Greenpak4Flipflop::SetInput(string port, Greenpak4EntityOutput src)
 {
-	if(port == "CLK")
+	if( (port == "CLK") || (port == "nCLK") )
 		m_clock = src;
 	else if(port == "D")
 		m_input = src;
@@ -118,6 +120,10 @@ bool Greenpak4Flipflop::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return true;
+
+	//If our primitive name contains "LATCH" we're a latch, not a FF
+	if(ncell->m_type.find("LATCH") != string::npos)
+		m_latchMode = true;
 
 	//If our primitive name ends in "I" we're inverting the output
 	if(ncell->m_type[ncell->m_type.length()-1] == 'I')
@@ -185,14 +191,14 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration
 
+	//Mode select
+	bitstream[m_configBase + 0] = m_latchMode;
+
+	//Output polarity
+	bitstream[m_configBase + 1] = m_outputInvert;
+
 	if(m_hasSR)
 	{
-		//Mode select (hard wire to DFF for now)
-		bitstream[m_configBase + 0] = false;
-
-		//Output polarity
-		bitstream[m_configBase + 1] = m_outputInvert;
-
 		//Set/reset mode
 		bitstream[m_configBase + 2] = m_srmode;
 
@@ -202,12 +208,6 @@ bool Greenpak4Flipflop::Save(bool* bitstream)
 
 	else
 	{
-		//Mode select (hard wire to DFF for now)
-		bitstream[m_configBase + 0] = false;
-
-		//Output polarity
-		bitstream[m_configBase + 1] = m_outputInvert;
-
 		//Initial state
 		bitstream[m_configBase + 2] = m_initValue;
 	}

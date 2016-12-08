@@ -16,77 +16,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Flipflop_h
-#define Greenpak4Flipflop_h
+`default_nettype none
 
-/**
-	@brief A single flipflop/latch (TODO: support latch mode)
- */
-class Greenpak4Flipflop : public Greenpak4BitstreamEntity
-{
-public:
+module Latch(d, q, clk, nrst);
 
-	//Construction / destruction
-	Greenpak4Flipflop(
-		Greenpak4Device* device,
-		unsigned int ffnum,
-		bool has_sr,
-		unsigned int matrix,
-		unsigned int ibase,
-		unsigned int oword,
-		unsigned int cbase);
-	virtual ~Greenpak4Flipflop();
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// I/O declarations
 
-	bool HasSetReset()
-	{ return m_hasSR; }
+	(* LOC = "P3" *)
+	input wire d;
 
-	//Serialization
-	virtual bool Load(bool* bitstream);
-	virtual bool Save(bool* bitstream);
+	(* LOC = "P4" *)
+	output wire q;
 
-	//Set inputs
+	(* LOC = "P5" *)
+	input wire clk;
 
-	unsigned int GetFlipflopIndex()
-	{ return m_ffnum; }
+	(* LOC = "P6" *)
+	input wire nrst;
 
-	virtual std::string GetDescription();
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// An inverted flipflop
 
-	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
-	virtual unsigned int GetOutputNetNumber(std::string port);
+	GP_DLATCHR #(
+		.INIT(1'b0)
+	) latch (
+		.D(d),
+		.Q(q),
+		.nCLK(clk),
+		.nRST(nrst)
+	);
 
-	virtual std::vector<std::string> GetInputPorts() const;
-	virtual std::vector<std::string> GetOutputPorts() const;
-
-	virtual bool CommitChanges();
-
-protected:
-
-	///Index of our flipflop
-	unsigned int m_ffnum;
-
-	///True if we have a set/reset input
-	bool m_hasSR;
-
-	///Power-on reset value
-	bool m_initValue;
-
-	///Set/reset mode (1=set, 0=reset)
-	bool m_srmode;
-
-	///Output inverter flag (1 = QB, 0=Q)
-	bool m_outputInvert;
-
-	///Latch mode (1=latch, 0=ff)
-	bool m_latchMode;
-
-	///Input signal
-	Greenpak4EntityOutput m_input;
-
-	///Clock signal
-	Greenpak4EntityOutput m_clock;
-
-	///Negative set/reset signal
-	Greenpak4EntityOutput m_nsr;
-};
-
-#endif
+endmodule

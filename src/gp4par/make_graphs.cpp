@@ -354,6 +354,18 @@ bool MakeNetlistNodes(
 	ilmap["GP_DFFRI"] = ilmap["GP_DFFR"];
 	ilmap["GP_DFFSRI"] = ilmap["GP_DFFSR"];
 
+	ilmap["GP_DLATCH"] = ilmap["GP_DFF"];
+	ilmap["GP_DLATCHI"] = ilmap["GP_DFF"];
+
+	ilmap["GP_DLATCHR"] = ilmap["GP_DFFSR"];
+	ilmap["GP_DLATCHRI"] = ilmap["GP_DFFSR"];
+
+	ilmap["GP_DLATCHS"] = ilmap["GP_DFFSR"];
+	ilmap["GP_DLATCHSI"] = ilmap["GP_DFFSR"];
+
+	ilmap["GP_DLATCHSR"] = ilmap["GP_DFFSR"];
+	ilmap["GP_DLATCHSRI"] = ilmap["GP_DFFSR"];
+
 	//Create the actual nodes in the netlist
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
