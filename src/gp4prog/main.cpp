@@ -331,6 +331,13 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	//It makes no sense to emulate without applying any Vdd
+	if(voltage == 0.0 && !downloadFilename.empty() && !programNvram)
+	{
+		LogError("--emulate is specified but --voltage isn't; chip must be powered for emulation\n");
+		return 1;
+	}
+
 	//It makes no sense to apply vccio to a single-rail part
 	if(voltage2 != 0.0 && detectedPart != SilegoPart::SLG46621V)
 	{
@@ -597,7 +604,7 @@ void ShowUsage()
 		"         suitable for passing to BitstreamToHex()\n"
 		"    -e, --emulate        <bitstream filename>\n"
 		"        Downloads the specified bitstream into volatile memory.\n"
-		"        Implies --reset --voltage 3.3.\n"
+		"        Implies --reset.\n"
 		"    --program            <bitstream filename>\n"
 		"        Programs the specified bitstream into non-volatile memory.\n"
 		"        THIS CAN BE DONE ONLY ONCE FOR EVERY INTEGRATED CIRCUIT.\n"
