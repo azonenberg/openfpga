@@ -116,8 +116,6 @@ bool Greenpak4VoltageReference::Save(bool* /*bitstream*/)
 
 unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 {
-	unsigned int select = 0;
-
 	//Constants
 	if(m_vin.IsPowerRail())
 	{
@@ -145,14 +143,24 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 				return 0xff;
 			}
 
-			select = (m_vref / 50) - 1;
+			return (m_vref / 50) - 1;
 		}
 
 		//Divided Vdd
 		else
 		{
-			LogError("Greenpak4VoltageReference inputs for divided Vdd not implemented yet\n");
-			return 0xff;
+			switch(m_vinDiv)
+			{
+				case 3:
+					return 0x18;
+
+				case 4:
+					return 0x19;
+
+				default:
+					LogError("Greenpak4VoltageReference: Only legal divisors for Vdd are 3 and 4\n");
+					return 0xff;
+			}
 		}
 	}
 
@@ -184,6 +192,4 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 		LogError("Greenpak4VoltageReference inputs other than constant not implemented yet\n");
 		return 0xff;
 	}
-
-	return select;
 }
