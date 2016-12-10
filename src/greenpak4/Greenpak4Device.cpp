@@ -476,7 +476,7 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 
 	//Edge detector/prog delays
 	m_delays.push_back(new Greenpak4Delay(this, 0, 54, 22, 1600));
-	m_delays.push_back(new Greenpak4Delay(this, 1, 54, 22, 1609));
+	m_delays.push_back(new Greenpak4Delay(this, 1, 54, 22, 1605));
 
 	//Inverters
 	m_inverters.push_back(new Greenpak4Inverter(this, 0, 55, 23));
