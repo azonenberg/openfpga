@@ -269,6 +269,12 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 		Greenpak4VoltageReference* vref = dynamic_cast<Greenpak4VoltageReference*>(m_vref.GetRealEntity());
 		muxsel = vref->GetACMPMuxSel();
 
+		if(muxsel > 0x1F)
+		{
+			LogError("Invalid mux selector %u (should be 0...31)\n", muxsel);
+			return false;
+		}
+
 		//TODO: how do we do routing when there's a dedicated reference input used?
 	}
 
