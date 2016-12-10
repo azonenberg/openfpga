@@ -185,21 +185,6 @@ tool is \namestyle{Yosys}, which may be obtained from the \namestyle{Yosys} webs
 	\draw[arrow] (gp4par) -- (gp4vendor.west);
 \end{tikzpicture}
 
- % %nodes
- % \node[punkt] (market) {Market (b)};
- % \node[punkt, inner sep=5pt,below=0.5cm of market]
- % (formidler) {Intermediaries (c)};
- % % We make a dummy figure to make everything look nice.
- % \node[above=of market] (dummy) {};
- % \node[right=of dummy] (t) {Ultimate borrower}
- %   edge[pil,bend left=45] (market.east) % edges are used to connect two nodes
- %   edge[pil, bend left=45] (formidler.east); % .east since we want
- %                                             % consistent style
- % \node[left=of dummy] (g) {Ultimate lender}
- %   edge[pil, bend right=45] (market.west)
- %   edge[pil, bend right=45] (formidler.west)
- %   edge[pil,<->, bend left=45] node[auto] {Direct (a)} (t);
-
 \caption{Data flow between toolchain components}
 \label{flow}
 \end{figure}
