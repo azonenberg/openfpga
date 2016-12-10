@@ -128,21 +128,21 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 			{
 				LogError("DRC: Voltage reference %s must be set to a multiple of 50 mV (requested %d)\n",
 					GetDescription().c_str(), m_vref);
-				return false;
+				return 0xff;
 			}
 
 			if(m_vref < 50 || m_vref > 1200)
 			{
 				LogError("DRC: Voltage reference %s must be set between 50mV and 1200 mV inclusive (requested %d)\n",
 					GetDescription().c_str(), m_vref);
-				return false;
+				return 0xff;
 			}
 
 			if(m_vinDiv != 1)
 			{
 				LogError("DRC: Voltage reference %s must have divisor of 1 when using constant voltage\n",
 					GetDescription().c_str());
-				return false;
+				return 0xff;
 			}
 
 			select = (m_vref / 50) - 1;
@@ -152,7 +152,7 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 		else
 		{
 			LogError("Greenpak4VoltageReference inputs for divided Vdd not implemented yet\n");
-			return false;
+			return 0xff;
 		}
 	}
 
@@ -174,7 +174,7 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 
 			default:
 				LogError("Greenpak4VoltageReference: invalid DAC\n");
-				break;
+				return 0xff;
 		}
 	}
 
@@ -182,7 +182,7 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 	else
 	{
 		LogError("Greenpak4VoltageReference inputs other than constant not implemented yet\n");
-		return false;
+		return 0xff;
 	}
 
 	return select;
