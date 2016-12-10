@@ -31,6 +31,7 @@ Greenpak4Device::Greenpak4Device(
 	Greenpak4IOB::PullStrength default_drive)
 	: m_part(part)
 	, m_ioPrecharge(false)
+	, m_disableChargePump(false)
 {
 	//Create power rails
 	//These have to come first, since all other nodes will refer to these during construction
@@ -871,6 +872,11 @@ void Greenpak4Device::SetIOPrecharge(bool precharge)
 	m_ioPrecharge = precharge;
 }
 
+void Greenpak4Device::SetDisableChargePump(bool disable)
+{
+	m_disableChargePump = disable;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File I/O
 
@@ -958,6 +964,9 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[1022] = true;
 			bitstream[1023] = false;
 
+			//Charge pump disable
+			bitstream[2010] = m_disableChargePump;
+
 			//User ID of the bitstream
 			bitstream[2031] = (userid & 0x01) ? true : false;
 			bitstream[2032] = (userid & 0x02) ? true : false;
@@ -1011,6 +1020,9 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 
 			//I/O precharge
 			bitstream[760] = m_ioPrecharge;
+
+			//Charge pump disable
+			bitstream[1005] = m_disableChargePump;
 
 			//User ID of the bitstream
 			bitstream[1007] = (userid & 0x01) ? true : false;

@@ -227,9 +227,7 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Wake-Sleep
 \item DCMP/PWM
 \item Slave SPI
-\item Power detector
 \item Regulator bypass
-\item Power detector disable
 \item NVM repeat control
 \end{itemize}
 
@@ -3893,6 +3891,13 @@ list, although we recommend it be the first argument for better readability of t
 
 The \texttt{--debug} argument is optional. When it is specified once, it causes \namestyle{gp4par} to print
 many debugging messages, normally useful only for development of \namestyle{gp4par}.
+
+\subsection{\texttt{--disable-charge-pump}}
+
+The \texttt{--disable-charge-pump} argument is optional. If set, the on-die charge pump is disabled, rather than 
+automatically turning on when the supply voltage drops below 2.7V. This may cause analog components to malfunction if the 
+supply voltage drops below 2.7V. It's unclear from Silego's documentation why this would ever be desirable, but the option 
+is provided for completeness.
 
 \subsection{\texttt{--help}}
 

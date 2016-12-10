@@ -276,6 +276,7 @@ public:
 	// CONFIGURATION
 
 	void SetIOPrecharge(bool precharge);
+	void SetDisableChargePump(bool disable);
 
 protected:
 
@@ -397,6 +398,14 @@ protected:
 		external signals stabilize faster.
 	 */
 	bool m_ioPrecharge;
+
+	/**
+		@brief Specifies that the charge pump should be disabled
+
+		By default the on-die charge pump automatically powers the analog hard IP when Vdd drops below 2.7V.
+		This bit turns it off regardless of supply voltage. Why would you ever want that?
+	 */
+	bool m_disableChargePump;
 };
 
 #endif
