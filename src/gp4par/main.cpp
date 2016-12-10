@@ -286,7 +286,8 @@ int main(int argc, char* argv[])
 		ofname.c_str(), (int)userid);
 	{
 		LogIndenter li;
-		device.WriteToFile(ofname, userid, readProtect);
+		if(!device.WriteToFile(ofname, userid, readProtect))
+			return 1;
 	}
 
 	//TODO: Static timing analysis
