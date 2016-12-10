@@ -232,7 +232,7 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json Blinky.json
 The following device features are not supported by \namestyle{gp4par} for any device as of this writing:
 
 \begin{itemize}
-\item Storage elements: latch mode
+\item Storage elements: Latches can be instantiated from primitives, but not inferred from behavioral RTL
 \item Counters: Delay, edge detector, PWM, wake-sleep mode, counter cascading.
 All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Voltage reference: DAC, divided Vdd, external references
@@ -2196,11 +2196,11 @@ GP_DFFSR #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% GP_DFFSR
+% GP_DFFSRI
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DFFSR}: Positive Edge Triggered D Flipflop with Set or Reset and Inverted Output}
-\label{gp-dffsr}
+\subsection{\tokenstyle{GP\_DFFSRI}: Positive Edge Triggered D Flipflop with Set or Reset and Inverted Output}
+\label{gp-dffsri}
 
 \subsubsection{Introduction}
 This primitive corresponds to a single D flipflop with active-low set or reset (but not both), selectable at synthesis
@@ -2263,6 +2263,52 @@ GP_DFFSRI #(
 \label{gp-dffsri-example}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCH
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCH}: Negative level triggered D latch}
+\label{gp-dlatch}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHI}: Negative level triggered D latch with Inverted Output}
+\label{gp-dlatchi}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHR
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHR}: Negative level triggered D latch with Reset}
+\label{gp-dlatchr}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHRI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHRI}: Negative level triggered D latch with Reset and Inverted Output}
+\label{gp-dlatchri}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHS
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHS}: Negative level triggered D latch with Set}
+\label{gp-dlatchs}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHSI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHSI}: Negative level triggered D latch with Set and Inverted Output}
+\label{gp-dlatchsi}
+
+% GP_DLATCHSR
+% GP_DLATCHSRI
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_EDGEDET
@@ -2270,10 +2316,6 @@ GP_DFFSRI #(
 \pagebreak
 \subsection{\tokenstyle{GP\_EDGEDET}: Edge detector}
 \label{gp-edgedet}
-
-%parameter EDGE_DIRECTION = "RISING";
-%parameter DELAY_STEPS = 1;
-%parameter GLITCH_FILTER = 0;
 
 \subsubsection{Introduction}
 
