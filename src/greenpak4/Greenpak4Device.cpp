@@ -958,16 +958,6 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[1022] = true;
 			bitstream[1023] = false;
 
-			//A5: end of bitstream
-			bitstream[2040] = true;
-			bitstream[2041] = false;
-			bitstream[2042] = true;
-			bitstream[2043] = false;
-			bitstream[2044] = false;
-			bitstream[2045] = true;
-			bitstream[2046] = false;
-			bitstream[2047] = true;
-
 			//User ID of the bitstream
 			bitstream[2031] = (userid & 0x01) ? true : false;
 			bitstream[2032] = (userid & 0x02) ? true : false;
@@ -980,6 +970,16 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 
 			//Read protection flag
 			bitstream[2039] = readProtect;
+
+			//A5: end of bitstream
+			bitstream[2040] = true;
+			bitstream[2041] = false;
+			bitstream[2042] = true;
+			bitstream[2043] = false;
+			bitstream[2044] = false;
+			bitstream[2045] = true;
+			bitstream[2046] = false;
+			bitstream[2047] = true;
 
 			break;
 
@@ -1012,6 +1012,16 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			//I/O precharge
 			bitstream[760] = m_ioPrecharge;
 
+			//User ID of the bitstream
+			bitstream[1007] = (userid & 0x01) ? true : false;
+			bitstream[1008] = (userid & 0x02) ? true : false;
+			bitstream[1009] = (userid & 0x04) ? true : false;
+			bitstream[1010] = (userid & 0x08) ? true : false;
+			bitstream[1011] = (userid & 0x10) ? true : false;
+			bitstream[1012] = (userid & 0x20) ? true : false;
+			bitstream[1013] = (userid & 0x40) ? true : false;
+			bitstream[1014] = (userid & 0x80) ? true : false;
+
 			//Device ID; immutable on the device but added to aid verification
 			//A5: end of bitstream
 			bitstream[1016] = true;
@@ -1022,16 +1032,6 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[1021] = true;
 			bitstream[1022] = false;
 			bitstream[1023] = true;
-
-			//User ID of the bitstream
-			bitstream[1007] = (userid & 0x01) ? true : false;
-			bitstream[1008] = (userid & 0x02) ? true : false;
-			bitstream[1009] = (userid & 0x04) ? true : false;
-			bitstream[1010] = (userid & 0x08) ? true : false;
-			bitstream[1011] = (userid & 0x10) ? true : false;
-			bitstream[1012] = (userid & 0x20) ? true : false;
-			bitstream[1013] = (userid & 0x40) ? true : false;
-			bitstream[1014] = (userid & 0x80) ? true : false;
 
 			break;
 
