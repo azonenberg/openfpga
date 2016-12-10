@@ -331,6 +331,13 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	//It makes no sense to emulate without applying any Vdd
+	if(voltage == 0.0 && !downloadFilename.empty() && !programNvram)
+	{
+		LogError("--emulate is specified but --voltage isn't; chip must be powered for emulation\n");
+		return 1;
+	}
+
 	//It makes no sense to apply vccio to a single-rail part
 	if(voltage2 != 0.0 && detectedPart != SilegoPart::SLG46621V)
 	{
