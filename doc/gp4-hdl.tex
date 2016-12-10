@@ -217,8 +217,7 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json Blinky.json
 The following device features are not supported by \namestyle{gp4par} for any device as of this writing:
 
 \begin{itemize}
-\item Storage elements: Latches with set/reset cannot be inferred from behavioral RTL. Output inverters are not absorbed
-into latch cells.
+\item Storage elements: Latches with set/reset cannot be inferred from behavioral RTL, but can be instantiated as primitives.
 \item Counters: Delay, edge detector, PWM, wake-sleep mode, counter cascading.
 All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Voltage reference: DAC, external references

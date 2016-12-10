@@ -41,11 +41,11 @@ module Latch(d, q, q2, clk, nrst);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// An inverted flipflop
 
-	GP_DLATCHR #(
+	GP_DLATCHRI #(
 		.INIT(1'b0)
 	) latch (
 		.D(d),
-		.Q(q),
+		.nQ(q),
 		.nCLK(clk),
 		.nRST(nrst)
 	);
@@ -55,7 +55,7 @@ module Latch(d, q, q2, clk, nrst);
 
 	always @(*) begin
 		if(!clk)
-			q2 <= d;
+			q2 <= ~d;
 	end
 
 endmodule
