@@ -34,6 +34,9 @@ int main(int argc, char* argv[])
 	Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_NONE;
 	Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
 
+	//Specifies whether we should increase drive current of pullups/downs during boot to reach a stable state faster
+	bool ioPrecharge = false;
+
 	//Target chip
 	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
 
@@ -150,6 +153,8 @@ int main(int argc, char* argv[])
 		}
 		else if(s == "--read-protect")
 			readProtect = true;
+		else if(s == "--io-precharge")
+			ioPrecharge = true;
 		else if(s == "-o" || s == "--output")
 		{
 			if(i+1 < argc)
@@ -258,6 +263,7 @@ int main(int argc, char* argv[])
 
 		LogNotice("User ID code:    %02x\n", userid);
 		LogNotice("Read protection: %s\n", readProtect ? "enabled" : "disabled");
+		LogNotice("I/O precharge:   %s\n", ioPrecharge ? "enabled" : "disabled");
 	}
 
 	//Parse the unplaced netlist
@@ -268,6 +274,7 @@ int main(int argc, char* argv[])
 
 	//Create the device and initialize all IO pins
 	Greenpak4Device device(part, unused_pull, unused_drive);
+	device.SetIOPrecharge(ioPrecharge);
 
 	//Do the actual P&R
 	LogNotice("\nSynthesizing top-level module \"%s\".\n", netlist.GetTopModule()->GetName().c_str());

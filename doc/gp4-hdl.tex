@@ -231,7 +231,6 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Regulator bypass
 \item Power detector disable
 \item NVM repeat control
-\item I/O pad precharge
 \end{itemize}
 
 In addition, the following \namestyle{SLG46140V} device features are not yet supported by \namestyle{gp4par}:
@@ -3899,6 +3898,11 @@ many debugging messages, normally useful only for development of \namestyle{gp4p
 
 The \texttt{--help} argument must be used alone, with no other arguments. It causes \namestyle{gp4par} to print a usage
 example to the console and then quit.
+
+\subsection{\texttt{--io-precharge}}
+
+The \texttt{--io-precharge} argument is optional. If set, a nominal $2K \Omega$ resistor is connected in parallel with any
+pull-up/down resistors during boot, so that external signals will reach stable values sooner.
 
 \subsection{\texttt{--logfile}, \texttt{-l}}
 

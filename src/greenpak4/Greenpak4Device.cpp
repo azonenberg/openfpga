@@ -30,6 +30,7 @@ Greenpak4Device::Greenpak4Device(
 	Greenpak4IOB::PullDirection default_pull,
 	Greenpak4IOB::PullStrength default_drive)
 	: m_part(part)
+	, m_ioPrecharge(false)
 {
 	//Create power rails
 	//These have to come first, since all other nodes will refer to these during construction
@@ -304,10 +305,10 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	m_acmps[1]->AddInputMuxEntry(vdd, 2);
 	*/
 	//TODO: Vdd bypass
-	
+
 	//Power-on reset
 	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 1004);
-	
+
 	//TODO: IO pad precharge? what does this involve?
 
 	//System reset
@@ -865,6 +866,11 @@ unsigned int Greenpak4Device::GetMatrixBase(unsigned int matrix)
 	return m_matrixBase[matrix];
 }
 
+void Greenpak4Device::SetIOPrecharge(bool precharge)
+{
+	m_ioPrecharge = precharge;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File I/O
 
@@ -912,7 +918,8 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			for(int i=1378; i<=1389; i++)
 				bitstream[i] = false;
 
-			//fall through to 46620 for shared config
+			//Fall through to 46620 for shared config.
+			//Other than the bondout for this IOB the devices are identical.
 
 		case GREENPAK4_SLG46620:
 
@@ -931,6 +938,9 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[889] = false;
 			bitstream[888] = true;
 			bitstream[887] = false;
+
+			//I/O precharge
+			bitstream[940] = m_ioPrecharge;
 
 			//Device ID; immutable on the device but added to aid verification
 			//5A: more data to follow
@@ -985,6 +995,9 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[493] = false;
 			bitstream[492] = true;
 			bitstream[491] = false;
+
+			//I/O precharge
+			bitstream[760] = m_ioPrecharge;
 
 			//Device ID; immutable on the device but added to aid verification
 			//A5: end of bitstream

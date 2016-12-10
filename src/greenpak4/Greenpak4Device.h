@@ -272,6 +272,11 @@ public:
 	Greenpak4BitstreamEntity* GetEntity(unsigned int i)
 	{ return m_bitstuff[i]; }
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CONFIGURATION
+
+	void SetIOPrecharge(bool precharge);
+
 protected:
 
 	void CreateDevice_SLG46140();
@@ -384,6 +389,14 @@ protected:
 
 	//Base address of each routing matrix
 	unsigned int m_matrixBase[2];
+
+	/**
+		@brief Indicates whether I/O pin precharge should be enabled.
+
+		If enabled, connect 2K ohms nominal across each pullup/down resistor during POR to help
+		external signals stabilize faster.
+	 */
+	bool m_ioPrecharge;
 };
 
 #endif
