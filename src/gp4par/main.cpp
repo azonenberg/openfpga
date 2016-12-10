@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 	Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_NONE;
 	Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
 
-	//TODO: make this switchable via command line args
+	//Target chip
 	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
 
 	//Bitstream metadata
