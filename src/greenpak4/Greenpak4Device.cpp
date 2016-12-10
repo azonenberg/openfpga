@@ -931,6 +931,11 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[490] = true;
 			bitstream[491] = true;
 
+			//Force ADC block speed to 100 kHz (all other speeds not supported according to GreenPAK Designer)
+			//TODO: Do this in the ADC class once that exists
+			bitstream[838] = 0;
+			bitstream[839] = 1;
+
 			//Vref fine tune, magic value from datasheet (TODO do calibration?)
 			//Seems to have been removed from most recent datasheet
 			bitstream[891] = true;
@@ -987,6 +992,14 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[381] = true;
 			bitstream[383] = true;
 			bitstream[383] = true;
+
+			//Force ADC block speed to 100 kHz (all other speeds not supported according to GreenPAK Designer)
+			//Note that the SLG46140V datasheet r100 still lists the other speed values, but SLG46620 rev 100 does not.
+			//Furthermore, GreenPAK Designer v6.02 complains about bitstreams generated using 2'b11.
+			//It says "setting speed to 100 kHz" and writes to 2'b10 instead. One of these is wrong, need to ask Silego.
+			//TODO: Do this in the ADC class once that exists
+			bitstream[542] = 1;
+			bitstream[543] = 1;
 
 			//Vref fine tune, magic value from datasheet (TODO do calibration?)
 			//Seems to have been removed from most recent datasheet, used rev 079 for this
