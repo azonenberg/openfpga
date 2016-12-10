@@ -33,8 +33,7 @@ Greenpak4ShiftRegister::Greenpak4ShiftRegister(
 		: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
 		, m_clock(device->GetGround())
 		, m_input(device->GetGround())
-		, m_reset(device->GetPower())	//If we hold the shreg in reset forever, GreenPAK Designer gives a DRC error.
-										//This is harmless if the shreg is unused, but warnings are bad so don't do that
+		, m_reset(device->GetGround())	//Hold shreg in reset if not used
 		, m_delayA(1)					//default must be 0xf so that unused ones show as unused
 		, m_delayB(1)
 		, m_invertA(false)
