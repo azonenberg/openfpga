@@ -2067,7 +2067,7 @@ GP_DFFS #(
 % GP_DFFSI
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DFFSU}: Positive Edge Triggered D Flipflop with Set and Inverted Output}
+\subsection{\tokenstyle{GP\_DFFSI}: Positive Edge Triggered D Flipflop with Set and Inverted Output}
 \label{gp-dffs}
 
 \subsubsection{Introduction}
@@ -2267,48 +2267,515 @@ GP_DFFSRI #(
 % GP_DLATCH
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DLATCH}: Negative level triggered D latch}
-\label{gp-dlatch}
+\subsection{\tokenstyle{GP\_DLATCH}: Negative Level Triggered D Latch}
+\label{gp-latch}
 
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch. The latch updates when the clock is negative and holds 
+when the clock is positive.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatch-example} shows a latch initialized to zero at power-up
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+GP_DLATCH #(
+	.INIT(1'b0)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.Q(dout)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCH}}
+\label{gp-dlatch-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DLATCHI
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DLATCHI}: Negative level triggered D latch with Inverted Output}
-\label{gp-dlatchi}
+\subsection{\tokenstyle{GP\_DLATCHI}: Negative Level Triggered D Latch with Inverted Output}
+\label{gp-latchi}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch. The latch updates when the clock is negative and holds 
+when the clock is positive. The flipflop output is inverted.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\newline The power-up value of nQ is
+inverted with respect to INIT.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchri-example} shows a latch initialized to zero at power-up.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+GP_DLATCHI #(
+	.INIT(1'b0)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.nQ(dout)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHI}}
+\label{gp-dlatchi-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DLATCHR
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DLATCHR}: Negative level triggered D latch with Reset}
-\label{gp-dlatchr}
+\subsection{\tokenstyle{GP\_DLATCHR}: Negative Level Triggered D Latch with Reset}
+\label{gp-latchr}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low reset. The latch updates when the clock is negative and holds 
+when the clock is positive.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nRST} & Input & 1 & Active-low reset. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchr-example} shows a latch initialized to zero at power-up, and cleared to zero
+when \wirestyle{nrst} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nrst;
+GP_DLATCHR #(
+	.INIT(1'b0)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nRST(nrst)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHR}}
+\label{gp-dlatchr-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DLATCHRI
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DLATCHRI}: Negative level triggered D latch with Reset and Inverted Output}
-\label{gp-dlatchri}
+\subsection{\tokenstyle{GP\_DLATCHRI}: Negative Level Triggered D Latch with Reset and Inverted Output}
+\label{gp-latchri}
 
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low reset. The latch updates when the clock is negative and holds 
+when the clock is positive. The flipflop output is inverted.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nRST} & Input & 1 & Active-low reset. \\
+\thinhline
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\newline The power-up value of nQ is
+inverted with respect to INIT.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchri-example} shows a latch initialized to zero at power-up, and cleared to zero
+when \wirestyle{nrst} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nrst;
+GP_DLATCHRI #(
+	.INIT(1'b0)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.nQ(dout),
+	.nRST(nrst)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHRI}}
+\label{gp-dlatchri-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DLATCHS
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DLATCHS}: Negative level triggered D latch with Set}
-\label{gp-dlatchs}
+\subsection{\tokenstyle{GP\_DLATCHS}: Negative Level Triggered D Latch with Set}
+\label{gp-latchs}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low set. The latch updates when the clock is negative and holds 
+when the clock is positive.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nSET} & Input & 1 & Active-low set. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchs-example} shows a latch initialized to zero at power-up, and set to one
+when \wirestyle{nset} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DLATCHS #(
+	.INIT(1'b0),
+	.SRMODE(1'b1)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nSET(nset)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHS}}
+\label{gp-dlatchs-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DLATCHSI
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DLATCHSI}: Negative level triggered D latch with Set and Inverted Output}
-\label{gp-dlatchsi}
+\subsection{\tokenstyle{GP\_DLATCHSI}: Negative Level Triggered D Latch with Set and Inverted Output}
+\label{gp-latchsi}
 
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low set. The latch updates when the clock is negative and holds 
+when the clock is positive. The flipflop output is inverted.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nSET} & Input & 1 & Active-low set. \\
+\thinhline
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\newline The power-up value of nQ is
+inverted with respect to INIT.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchsi-example} shows a latch initialized to zero at power-up, and set to one
+when \wirestyle{nset} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DLATCHSI #(
+	.INIT(1'b0)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.nQ(dout),
+	.nSET(nset)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHSI}}
+\label{gp-dlatchsi-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DLATCHSR
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHSR}: Negative Level Triggered D Latch with Set or Reset}
+\label{gp-latchsr}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low set or reset (but not both), selectable at synthesis time by 
+a parameter. The latch updates when the clock is negative and holds when the clock is positive.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nSR} & Input & 1 & Active-low set/reset. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\\
+\thinhline
+\tokenstyle{SRMODE} & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchsr-example} shows a latch initialized to zero at power-up, and set to one
+when \wirestyle{nset} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DLATCHSR #(
+	.INIT(1'b0),
+	.SRMODE(1'b1)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nSR(nset)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHSR}}
+\label{gp-dlatchsr-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DLATCHSRI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHSRI}: Negative Level Triggered D Latch with Set or Reset and Inverted Output}
+\label{gp-latchsri}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low set or reset (but not both), selectable at synthesis time by 
+a parameter. The latch updates when the clock is negative and holds when the clock is positive. The flipflop output is 
+inverted.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nSR} & Input & 1 & Active-low set/reset. \\
+\thinhline
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\newline The power-up value of nQ is
+inverted with respect to INIT.\\
+\thinhline
+\tokenstyle{SRMODE} & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchsri-example} shows a latch initialized to zero at power-up, and set to one
+when \wirestyle{nset} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DLATCHSRI #(
+	.INIT(1'b0),
+	.SRMODE(1'b1)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.nQ(dout),
+	.nSR(nset)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHSRI}}
+\label{gp-dlatchsri-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_EDGEDET
