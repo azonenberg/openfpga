@@ -152,7 +152,7 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 		else
 		{
 			LogError("Greenpak4VoltageReference inputs for divided Vdd not implemented yet\n");
-			return 0;
+			return false;
 		}
 	}
 
