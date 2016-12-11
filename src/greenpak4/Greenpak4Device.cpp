@@ -33,6 +33,7 @@ Greenpak4Device::Greenpak4Device(
 	, m_ioPrecharge(false)
 	, m_disableChargePump(false)
 	, m_ldoBypass(false)
+	, m_nvmLoadRetryCount(1)
 {
 	//Create power rails
 	//These have to come first, since all other nodes will refer to these during construction
@@ -888,6 +889,11 @@ void Greenpak4Device::SetLDOBypass(bool bypass)
 	m_ldoBypass = bypass;
 }
 
+void Greenpak4Device::SetNVMRetryCount(int count)
+{
+	m_nvmLoadRetryCount = count;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File I/O
 
@@ -975,6 +981,9 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[1022] = true;
 			bitstream[1023] = false;
 
+			if(m_nvmLoadRetryCount != 1)
+				LogWarning("NVM retry count values other than 1 are not currently supported for SLG4662x\n");
+
 			//Internal LDO disable
 			bitstream[2008] = m_ldoBypass;
 
@@ -1034,6 +1043,34 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 
 			//I/O precharge
 			bitstream[760] = m_ioPrecharge;
+
+			//NVM boot retry
+			switch(m_nvmLoadRetryCount)
+			{
+				case 1:
+					bitstream[995] = false;
+					bitstream[994] = false;
+					break;
+
+				case 2:
+					bitstream[995] = false;
+					bitstream[994] = true;
+					break;
+
+				case 3:
+					bitstream[995] = true;
+					bitstream[994] = false;
+					break;
+
+				case 4:
+					bitstream[995] = true;
+					bitstream[994] = true;
+					break;
+
+				default:
+					LogError("NVM retry count for SLG46140 must be 1...4\n");
+					return false;
+			}
 
 			//Internal LDO disable
 			bitstream[1003] = m_ldoBypass;

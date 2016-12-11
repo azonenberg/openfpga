@@ -43,6 +43,9 @@ int main(int argc, char* argv[])
 	//Turns off the internal LDO and connects Vdd directly to Vcore
 	bool ldoBypass = false;
 
+	//Number of times to re-try the boot process
+	int bootRetry = 1;
+
 	//Target chip
 	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
 
@@ -165,6 +168,16 @@ int main(int argc, char* argv[])
 			disableChargePump = true;
 		else if(s == "--ldo-bypass")
 			ldoBypass = true;
+		else if(s == "--boot-retry")
+		{
+			if(i+1 < argc)
+				bootRetry = atoi(argv[++i]);
+			else
+			{
+				printf("--boot-retry requires an argument\n");
+				return 1;
+			}
+		}
 		else if(s == "-o" || s == "--output")
 		{
 			if(i+1 < argc)
@@ -276,6 +289,7 @@ int main(int argc, char* argv[])
 		LogNotice("I/O precharge:   %s\n", ioPrecharge ? "enabled" : "disabled");
 		LogNotice("Charge pump:     %s\n", disableChargePump ? "off" : "auto");
 		LogNotice("LDO:             %s\n", ldoBypass ? "bypassed" : "enabled");
+		LogNotice("Boot retry:      %d times\n", bootRetry);
 	}
 
 	//Parse the unplaced netlist
@@ -289,6 +303,7 @@ int main(int argc, char* argv[])
 	device.SetIOPrecharge(ioPrecharge);
 	device.SetDisableChargePump(disableChargePump);
 	device.SetLDOBypass(ldoBypass);
+	device.SetNVMRetryCount(bootRetry);
 
 	//Do the actual P&R
 	LogNotice("\nSynthesizing top-level module \"%s\".\n", netlist.GetTopModule()->GetName().c_str());

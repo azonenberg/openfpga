@@ -227,7 +227,6 @@ from behavioral RTL, but can be instantiated as primitives.
 \item Wake-Sleep
 \item DCMP/PWM
 \item Slave SPI
-\item NVM repeat control
 \end{itemize}
 
 In addition, the following \namestyle{SLG46140V} device features are not yet supported by \namestyle{gp4par}:
@@ -3890,6 +3889,12 @@ gp4par -p SLG46620V Analog.json -o Analog-hdl.txt --unused-pull down --unused-dr
 
 The netlist filename must be supplied for all place-and-route operations. It may be included anywhere in the argument
 list, although we recommend it be the first argument for better readability of the command.
+
+\subsection{\texttt{--boot-retry}}
+
+The \texttt{--boot-retry} argument is optional. It must be followed by an integer from 1 to 4, specifying the number of times
+to re-try the boot process in case of a NVM read failure. If not specified, the retry count defaults to 1. This option is
+only supported for the SLG46140V.
 
 \subsection{\texttt{--debug}}
 

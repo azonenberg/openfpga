@@ -288,6 +288,8 @@ public:
 	bool IsChargePumpDisabled()
 	{ return m_disableChargePump; }
 
+	void SetNVMRetryCount(int count);
+
 protected:
 
 	void CreateDevice_SLG46140();
@@ -426,6 +428,11 @@ protected:
 		This requires Vdd = 1.8V.
 	 */
 	bool m_ldoBypass;
+
+	/**
+		@brief Number of times to attempt re-reading NVM in case of boot failure
+	 */
+	int m_nvmLoadRetryCount;
 };
 
 #endif
