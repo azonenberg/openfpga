@@ -24,10 +24,10 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4Abuf::Greenpak4Abuf(
-		Greenpak4Device* device)
-		: Greenpak4BitstreamEntity(device, 0, -1, -1, -1)
+Greenpak4Abuf::Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase)
+		: Greenpak4BitstreamEntity(device, 0, -1, -1, cbase)
 		, m_input(device->GetGround())
+		, m_bufferBandwidth(1)
 {
 }
 
@@ -76,6 +76,14 @@ unsigned int Greenpak4Abuf::GetOutputNetNumber(string /*port*/)
 
 bool Greenpak4Abuf::CommitChanges()
 {
+	//Get our cell, or bail if we're unassigned
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell == NULL)
+		return true;
+
+	if(ncell->HasParameter("BANDWIDTH_KHZ"))
+		m_bufferBandwidth = atoi(ncell->m_parameters["BANDWIDTH_KHZ"].c_str());
+
 	//No configuration
 	return true;
 }
@@ -87,9 +95,42 @@ bool Greenpak4Abuf::Load(bool* /*bitstream*/)
 	return false;
 }
 
-bool Greenpak4Abuf::Save(bool* /*bitstream*/)
+bool Greenpak4Abuf::Save(bool* bitstream)
 {
-	//no configuration, we just exist to help configure the comparator input muxes
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+
+	//none
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CONFIGURATION
+
+	switch(m_bufferBandwidth)
+	{
+		case 1:
+			bitstream[m_configBase + 1] = false;
+			bitstream[m_configBase + 0] = false;
+			break;
+
+		case 5:
+			bitstream[m_configBase + 1] = false;
+			bitstream[m_configBase + 0] = true;
+			break;
+
+		case 20:
+			bitstream[m_configBase + 1] = true;
+			bitstream[m_configBase + 0] = false;
+			break;
+
+		case 50:
+			bitstream[m_configBase + 1] = true;
+			bitstream[m_configBase + 0] = true;
+			break;
+
+		default:
+			LogError("GP_ABUF buffer bandwidth must be one of 1, 5, 20, 50\n");
+			return false;
+	}
 
 	return true;
 }

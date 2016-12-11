@@ -26,7 +26,7 @@ class Greenpak4Abuf : public Greenpak4BitstreamEntity
 public:
 
 	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device);
+	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
 
 	//Serialization
 	virtual bool Load(bool* bitstream);
@@ -49,6 +49,8 @@ public:
 
 protected:
 	Greenpak4EntityOutput m_input;
+
+	int m_bufferBandwidth;
 };
 
 #endif	//Greenpak4Abuf_h

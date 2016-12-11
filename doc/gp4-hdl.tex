@@ -221,7 +221,6 @@ The following device features are not supported by \namestyle{gp4par} for any de
 \item Counters: Delay, edge detector, PWM, wake-sleep mode, counter cascading.
 All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Voltage reference: DAC, external references
-\item Comparators: Global buffer bandwidth selection
 \item ADC
 \item DAC (partially implemented)
 \item Wake-Sleep
@@ -1148,17 +1147,28 @@ comparators have buffers on the input; see device datasheet for details.
 
 \subsubsection{Parameter Descriptions}
 
-No parameters.
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{BANDWIDTH\_KHZ} & Integer & 8 & Buffer bandwidth, in kHz. \newline
+Must be one of 1, 5, 20, 50.\newline
+Values greater than 1 require Vdd $> 2.7V$ and use more power. \\
+\thinhline
+\end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-abuf-example} buffers the signal \wirestyle{vin} to \wirestyle{vin\_buf}.
+The example shown in figure \ref{gp-abuf-example} buffers the signal \wirestyle{vin} to \wirestyle{vin\_buf} with 5 kHz
+bandwidth.
 
 \begin{figure}[h]
 \begin{lstlisting}
 wire vin;
 wire vin_buf;
-GP_ABUF abuf(
+GP_ABUF #(
+	.BANDWIDTH_KHZ(5)
+) abuf(
 	.IN(vin),
 	.OUT(vin_buf)
 );
@@ -3357,20 +3367,17 @@ GP_POR #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% GP_PWRCTL
+% GP_PWRDET
 
 \pagebreak
 \clearpage
-\subsection{\tokenstyle{GP\_PWRCTL}: Power Control (NOT IMPLEMENTED)}
+\subsection{\tokenstyle{GP\_PWRDET}: Power Detector (NOT IMPLEMENTED)}
 \label{gp-pwrctl}
 
 \subsubsection{Introduction}
-This primitive represents the system power control block. TODO
+This primitive represents the power detector for the charge pump driving the analog circuitry.
 
-%FIXME: POR_TIME = bit 2009
-
-TODO
-Bit 2010: Disable power detector for charge pump
+(FIXME: check this) This block is only active when --disable-charge-pump is not specified.
 
 \subsubsection{Port Descriptions}
 
@@ -3378,30 +3385,24 @@ Bit 2010: Disable power detector for charge pump
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{PWRDET} & Output & 1 & Power-detect output. High when Vdd is less than 2.7V.\\
+\tokenstyle{VDD\_LOW} & Output & 1 & Power-detect output. High when Vdd is less than 2.7V.\\
 \thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{lllX}
-\thinhline
-\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
-\thickhline
-\tokenstyle{POR\_TIME} & Integer & 16 & Delay, in microseconds, from power-good to release of POR. Legal values are 4, 500.\\
-\thinhline
-\end{tabularx}
+No parameters.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-pwrctl-example} FIXME.
+The example shown in figure \ref{gp-pwrdet-example} FIXME.
 
 \begin{figure}[h]
 \begin{lstlisting}
 xx
 \end{lstlisting}
-\caption{Example usage of \tokenstyle{GP\_PWRCTL}}
-\label{gp-pwrctl-example}
+\caption{Example usage of \tokenstyle{GP\_PWRDET}}
+\label{gp-pwrdet-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -667,7 +667,7 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_pga = new Greenpak4PGA(this, 815);
 
 	//Analog buffer
-	m_abuf = new Greenpak4Abuf(this);
+	m_abuf = new Greenpak4Abuf(this, 836);
 
 	//Comparator input routing
 	auto pin3 = m_iobs[3]->GetOutput("OUT");
