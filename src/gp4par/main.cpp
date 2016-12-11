@@ -235,7 +235,7 @@ int main(int argc, char* argv[])
 				break;
 		}
 
-		LogNotice("Target device:   %s", dev.c_str());
+		LogNotice("Target device:   %s\n", dev.c_str());
 		LogNotice("VCC range:       not yet implemented\n");
 
 		string pull;
