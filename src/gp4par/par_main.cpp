@@ -395,7 +395,7 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 			if(n != reset_iob)
 			{
 				LogWarning(
-					"Pin %s is driven by the power-on reset, but is does not have dedicated reset routing.\n"
+					"Pin %s is driven by the power-on reset, but does not have dedicated reset routing available.\n"
 					"This may lead to synchronization issues or glitches if this pin is used to drive resets on "
 					"external logic.\n",
 					n->GetDescription().c_str());
