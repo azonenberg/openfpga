@@ -3372,8 +3372,8 @@ GP_POR #(
 
 \pagebreak
 \clearpage
-\subsection{\tokenstyle{GP\_PWRDET}: Power Detector (NOT IMPLEMENTED)}
-\label{gp-pwrctl}
+\subsection{\tokenstyle{GP\_PWRDET}: Power Detector}
+\label{gp-pwrdet}
 
 \subsubsection{Introduction}
 This primitive represents the power detector for the charge pump driving the analog circuitry.
@@ -3396,11 +3396,14 @@ No parameters.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-pwrdet-example} FIXME.
+The example shown in figure \ref{gp-pwrdet-example} drives \tokenstyle{analog\_brownout} high when VDD drops below 2.7V.
 
 \begin{figure}[h]
 \begin{lstlisting}
-xx
+wire analog_brownout;
+GP_PWRDET det(
+	.VDD_LOW(analog_brownout)
+	);
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_PWRDET}}
 \label{gp-pwrdet-example}

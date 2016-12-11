@@ -68,6 +68,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int pga_used = 0;
 	unsigned int abuf_used = 0;
 	unsigned int delay_used = 0;
+	unsigned int pwrdet_used = 0;
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
@@ -129,6 +130,8 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		rcosc_used = 1;
 	if(device->GetSystemReset() && device->GetSystemReset()->GetPARNode()->GetMate() != NULL)
 		sysrst_used = 1;
+	if(device->GetPowerDetector() && device->GetPowerDetector()->GetPARNode()->GetMate() != NULL)
+		pwrdet_used = 1;
 
 	//Print the actual report
 	//TODO: Figure out how to use indentation framework here for better columnar indents?
@@ -164,6 +167,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		         				luts_used[i],			lut_counts[i]);
 	PrintRow("PGA:",			pga_used,				1);
 	PrintRow("POR:",			por_used,				1);
+	PrintRow("PWRDET:",			pwrdet_used,			1);
 	PrintRow("RCOSC:",			rcosc_used,				1);
 	PrintRow("RINGOSC:",		ringosc_used,			1);
 	PrintRow("SHREG:",			shreg_used,				device->GetShiftRegisterCount());

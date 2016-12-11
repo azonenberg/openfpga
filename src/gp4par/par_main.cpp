@@ -403,6 +403,17 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		}
 	}
 
+	//Charge pump must be ENABLED for brownout detector to work
+	auto pwrdet = device->GetPowerDetector();
+	if(pwrdet && (pwrdet->GetPARNode()->GetMate() != NULL) & device->IsChargePumpDisabled())
+	{
+		LogError(
+			"The power detector is being used, but the charge pump is disabled.\n"
+			"Enable the charge pump to use the power detector.\n"
+			);
+		ok = false;
+	}
+
 	//Done
 	return ok;
 }

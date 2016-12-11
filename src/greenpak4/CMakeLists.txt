@@ -22,6 +22,7 @@ add_library(greenpak4 STATIC
 	Greenpak4PairedEntity.cpp
 	Greenpak4PatternGenerator.cpp
 	Greenpak4PGA.cpp
+	Greenpak4PowerDetector.cpp
 	Greenpak4PowerOnReset.cpp
 	Greenpak4PowerRail.cpp
 	Greenpak4RCOscillator.cpp

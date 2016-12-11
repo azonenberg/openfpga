@@ -515,6 +515,7 @@ void MakeDeviceNodes(
 	MakeSingleNode("GP_LFOSC",		device->GetLFOscillator(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_PGA",		device->GetPGA(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_POR",		device->GetPowerOnReset(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_PWRDET",		device->GetPowerDetector(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_RCOSC",		device->GetRCOscillator(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_RINGOSC",	device->GetRingOscillator(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_SYSRESET",	device->GetSystemReset(), ngraph, dgraph, lmap);

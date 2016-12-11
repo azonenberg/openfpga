@@ -25,11 +25,13 @@
 	OUTPUTS:
 		Bandgap-OK on pin 20
 		Vdd/4 on pin 19
+		Vdd/3 on pin 18
+		Brownout-detect on pin 17
 
 	TEST PROCEDURE:
 		FIXME
  */
-module VrefVDD(bg_ok, vref_vdiv4);
+module VrefVDD(bg_ok, vref_vdiv4, vref_vdiv3, vdd_low);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -40,6 +42,13 @@ module VrefVDD(bg_ok, vref_vdiv4);
 	(* LOC = "P19" *)
 	(* IBUF_TYPE = "ANALOG" *)
 	output wire vref_vdiv4;
+
+	(* LOC = "P18" *)
+	(* IBUF_TYPE = "ANALOG" *)
+	output wire vref_vdiv3;
+
+	(* LOC = "P17" *)
+	output wire vdd_low;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
@@ -64,12 +73,14 @@ module VrefVDD(bg_ok, vref_vdiv4);
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Voltage references for the five bargraph steps
-
-	wire vref_200;
-	wire vref_400;
-	wire vref_1000;
+	// Voltage references for Vdd/3 and Vdd/4
 
 	GP_VREF #( .VIN_DIV(4'd4), .VREF(16'd0)  ) vdiv4  ( .VIN(1'b1), .VOUT(vref_vdiv4)  );
+	GP_VREF #( .VIN_DIV(4'd3), .VREF(16'd0)  ) vdiv3  ( .VIN(1'b1), .VOUT(vref_vdiv3)  );
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Brownout detector
+
+	GP_PWRDET pwrdet(.VDD_LOW(vdd_low));
 
 endmodule

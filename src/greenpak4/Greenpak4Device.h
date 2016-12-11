@@ -233,6 +233,12 @@ public:
 	{ return m_abuf; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ANALOG BUFFERS
+
+	Greenpak4PowerDetector* GetPowerDetector()
+	{ return m_pwrdet; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DACS
 
 	Greenpak4DAC* GetDAC(unsigned int i)
@@ -277,6 +283,9 @@ public:
 
 	void SetIOPrecharge(bool precharge);
 	void SetDisableChargePump(bool disable);
+
+	bool IsChargePumpDisabled()
+	{ return m_disableChargePump; }
 
 protected:
 
@@ -377,6 +386,9 @@ protected:
 
 	///Power-on reset
 	Greenpak4PowerOnReset* m_por;
+
+	///Power detector
+	Greenpak4PowerDetector* m_pwrdet;
 
 	/**
 		@brief Cross-connections between our matrices

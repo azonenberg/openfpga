@@ -47,6 +47,7 @@ Greenpak4Device::Greenpak4Device(
 	m_bandgap = NULL;
 	m_pga = NULL;
 	m_por = NULL;
+	m_pwrdet = NULL;
 	for(int i=0; i<2; i++)
 	{
 		for(int j=0; j<10; j++)
@@ -310,7 +311,8 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	//Power-on reset
 	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 1004);
 
-	//TODO: IO pad precharge? what does this involve?
+	//Power detector
+	m_pwrdet = new Greenpak4PowerDetector(this, 0, 52);
 
 	//System reset
 	m_sysrst = new Greenpak4SystemReset(this, 0, 22, -1, 1000);
@@ -708,7 +710,8 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	//Power-on reset
 	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 2009);
 
-	//TODO: IO pad precharge? what does this involve?
+	//Power detector
+	m_pwrdet = new Greenpak4PowerDetector(this, 0, 42);
 
 	//System reset
 	m_sysrst = new Greenpak4SystemReset(this, 0, 24, -1, 2018);
@@ -799,6 +802,8 @@ void Greenpak4Device::CreateDevice_common()
 		m_bitstuff.push_back(m_bandgap);
 	if(m_por)
 		m_bitstuff.push_back(m_por);
+	if(m_pwrdet)
+		m_bitstuff.push_back(m_pwrdet);
 	if(m_pga)
 		m_bitstuff.push_back(m_pga);
 	if(m_abuf)
