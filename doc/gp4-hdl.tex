@@ -219,7 +219,8 @@ The following device features are not supported by \namestyle{gp4par} for any de
 \begin{itemize}
 \item Storage elements: Latches with set/reset cannot be inferred from behavioral RTL, but can be instantiated as primitives.
 \item Counters: Delay, edge detector, PWM, wake-sleep mode, counter cascading.
-All clock sources other than on-chip oscillator. Pre-divider value of 12.
+All clock sources other than on-chip oscillator. Pre-divider value of 12. Counters with input divider cannot be inferred 
+from behavioral RTL, but can be instantiated as primitives.
 \item Voltage reference: DAC, external references
 \item ADC
 \item DAC (partially implemented)
