@@ -32,6 +32,7 @@ Greenpak4Device::Greenpak4Device(
 	: m_part(part)
 	, m_ioPrecharge(false)
 	, m_disableChargePump(false)
+	, m_ldoBypass(false)
 {
 	//Create power rails
 	//These have to come first, since all other nodes will refer to these during construction
@@ -882,6 +883,11 @@ void Greenpak4Device::SetDisableChargePump(bool disable)
 	m_disableChargePump = disable;
 }
 
+void Greenpak4Device::SetLDOBypass(bool bypass)
+{
+	m_ldoBypass = bypass;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File I/O
 
@@ -969,6 +975,9 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[1022] = true;
 			bitstream[1023] = false;
 
+			//Internal LDO disable
+			bitstream[2008] = m_ldoBypass;
+
 			//Charge pump disable
 			bitstream[2010] = m_disableChargePump;
 
@@ -1025,6 +1034,9 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 
 			//I/O precharge
 			bitstream[760] = m_ioPrecharge;
+
+			//Internal LDO disable
+			bitstream[1003] = m_ldoBypass;
 
 			//Charge pump disable
 			bitstream[1005] = m_disableChargePump;

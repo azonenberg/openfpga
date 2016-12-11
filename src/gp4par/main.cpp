@@ -40,6 +40,9 @@ int main(int argc, char* argv[])
 	//Specifies that we should disable the on-die charge pump for the analog IP
 	bool disableChargePump = false;
 
+	//Turns off the internal LDO and connects Vdd directly to Vcore
+	bool ldoBypass = false;
+
 	//Target chip
 	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
 
@@ -160,6 +163,8 @@ int main(int argc, char* argv[])
 			ioPrecharge = true;
 		else if(s == "--disable-charge-pump")
 			disableChargePump = true;
+		else if(s == "--ldo-bypass")
+			ldoBypass = true;
 		else if(s == "-o" || s == "--output")
 		{
 			if(i+1 < argc)
@@ -270,6 +275,7 @@ int main(int argc, char* argv[])
 		LogNotice("Read protection: %s\n", readProtect ? "enabled" : "disabled");
 		LogNotice("I/O precharge:   %s\n", ioPrecharge ? "enabled" : "disabled");
 		LogNotice("Charge pump:     %s\n", disableChargePump ? "off" : "auto");
+		LogNotice("LDO:             %s\n", ldoBypass ? "bypassed" : "enabled");
 	}
 
 	//Parse the unplaced netlist
@@ -282,6 +288,7 @@ int main(int argc, char* argv[])
 	Greenpak4Device device(part, unused_pull, unused_drive);
 	device.SetIOPrecharge(ioPrecharge);
 	device.SetDisableChargePump(disableChargePump);
+	device.SetLDOBypass(ldoBypass);
 
 	//Do the actual P&R
 	LogNotice("\nSynthesizing top-level module \"%s\".\n", netlist.GetTopModule()->GetName().c_str());
@@ -321,6 +328,9 @@ void ShowUsage()
 		"    -L, --logfile-lines  <file>\n"
 		"        Causes verbose log messages to be written to <file>, flushing after\n"
 		"        each line.\n"
+		"    --ldo-bypass\n"
+		"        Disable the on-die LDO and use an external 1.8V Vdd as Vcore.\n"
+		"        May cause device damage if set with higher Vdd supply.\n"
 		"    -o, --output         <bitstream>\n"
 		"        Writes bitstream into the specified file.\n"
 		"    -p, --part\n"

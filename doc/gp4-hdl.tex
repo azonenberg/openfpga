@@ -227,7 +227,6 @@ from behavioral RTL, but can be instantiated as primitives.
 \item Wake-Sleep
 \item DCMP/PWM
 \item Slave SPI
-\item Regulator bypass
 \item NVM repeat control
 \end{itemize}
 
@@ -3913,6 +3912,12 @@ example to the console and then quit.
 
 The \texttt{--io-precharge} argument is optional. If set, a nominal $2K \Omega$ resistor is connected in parallel with any
 pull-up/down resistors during boot, so that external signals will reach stable values sooner.
+
+\subsection{\texttt{--ldo-bypass}}
+
+The \texttt{--ldo-bypass} argument is optional. If set, the internal LDO is disabled and the \tokenstyle{Vdd} pin drives the
+on-chip core voltage directly. This may result in lower power consumption, but requires the external supply to be a regulated
+1.8V source.
 
 \subsection{\texttt{--logfile}, \texttt{-l}}
 

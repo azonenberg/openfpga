@@ -283,6 +283,7 @@ public:
 
 	void SetIOPrecharge(bool precharge);
 	void SetDisableChargePump(bool disable);
+	void SetLDOBypass(bool bypass);
 
 	bool IsChargePumpDisabled()
 	{ return m_disableChargePump; }
@@ -418,6 +419,13 @@ protected:
 		This bit turns it off regardless of supply voltage. Why would you ever want that?
 	 */
 	bool m_disableChargePump;
+
+	/**
+		@brief Bypasses the on-chip LDO and runs Vcore directly from Vdd.
+
+		This requires Vdd = 1.8V.
+	 */
+	bool m_ldoBypass;
 };
 
 #endif
