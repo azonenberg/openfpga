@@ -57,7 +57,6 @@ string Greenpak4VoltageReference::GetDescription()
 vector<string> Greenpak4VoltageReference::GetInputPorts() const
 {
 	vector<string> r;
-	r.push_back("VIN");
 	return r;
 }
 
@@ -182,10 +181,73 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 		}
 	}
 
-	//TODO: external Vref
+	//See if it's an IOB
+	else if(m_vin.IsIOB())
+	{
+		auto iob = dynamic_cast<Greenpak4IOB*>(m_vin.GetRealEntity());
+		auto pin = iob->GetPinNumber();
+
+		//SLG46140
+		auto part = m_device->GetPart();
+		if(part == Greenpak4Device::GREENPAK4_SLG46140)
+		{
+			if( (pin == 4) && (m_vinDiv == 2) )
+				return 0x1d;
+			else if( (pin == 5) && (m_vinDiv == 2) )
+				return 0x1c;
+			else if( (pin == 4) && (m_vinDiv == 1) )
+				return 0x1b;
+			else if( (pin == 5) && (m_vinDiv == 1) )
+				return 0x1a;
+			else
+			{
+				LogError("Invalid voltage reference input (pin %d, divisor %d)\n", pin, m_vinDiv);
+				return 0xff;
+			}
+		}
+
+		//SLG4662x
+		else if( (part == Greenpak4Device::GREENPAK4_SLG46620) || (part == Greenpak4Device::GREENPAK4_SLG46621) )
+		{
+			//Same mux selector for all vrefs
+			if(pin == 10)
+			{
+				if(m_vinDiv == 2)
+					return 0x1c;
+				else if(m_vinDiv == 1)
+					return 0x1a;
+				else
+				{
+					LogError("Invalid voltage reference input (pin %d, divisor %d)\n", pin, m_vinDiv);
+					return 0xff;
+				}
+			}
+
+			//All other pins use the same mux setting (different pins for each vref though)
+			//No need to check for invalid pins as those will fail routing due to missing paths
+			else
+			{
+				if(m_vinDiv == 2)
+					return 0x1d;
+				else if(m_vinDiv == 1)
+					return 0x1b;
+				else
+				{
+					LogError("Invalid voltage reference input (pin %d, divisor %d)\n", pin, m_vinDiv);
+					return 0xff;
+				}
+
+			}
+		}
+
+		LogError("Invalid voltage reference input (pin %d)\n", iob->GetPinNumber());
+		return 0xff;
+	}
+
+	//should never happen, we'd fail routing before we get here
 	else
 	{
-		LogError("Greenpak4VoltageReference inputs other than constant not implemented yet\n");
+		LogError("Invalid voltage reference input\n");
 		return 0xff;
 	}
 }

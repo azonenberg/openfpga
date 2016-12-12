@@ -11,6 +11,7 @@ add_greenpak4_bitstream(Loop SLG46620V)
 add_greenpak4_bitstream(POR SLG46620V)
 add_greenpak4_bitstream(Tristate SLG46620V)
 add_greenpak4_bitstream(Vector SLG46620V)
+add_greenpak4_bitstream(VrefEXT SLG46620V)
 add_greenpak4_bitstream(VrefVDD SLG46620V)
 
 # Not strictly a HiL test, but we use the (cached) version of this for socket loopback testing

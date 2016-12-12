@@ -789,12 +789,15 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		auto pin2 = device->GetIOB(2)->GetPARNode();
 		auto pin3 = device->GetIOB(3)->GetPARNode();
 		auto pin4 = device->GetIOB(4)->GetPARNode();
+		auto pin5 = device->GetIOB(5)->GetPARNode();
 		auto pin6 = device->GetIOB(6)->GetPARNode();
 		auto pin7 = device->GetIOB(7)->GetPARNode();
 		auto pin8 = device->GetIOB(8)->GetPARNode();
 		auto pin9 = device->GetIOB(9)->GetPARNode();
+		auto pin10 = device->GetIOB(10)->GetPARNode();
 		auto pin12 = device->GetIOB(12)->GetPARNode();
 		auto pin13 = device->GetIOB(13)->GetPARNode();
+		auto pin14 = device->GetIOB(14)->GetPARNode();
 		auto pin15 = device->GetIOB(15)->GetPARNode();
 		auto pin16 = device->GetIOB(16)->GetPARNode();
 		auto pin18 = device->GetIOB(18)->GetPARNode();
@@ -904,6 +907,39 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		vrefs[3]->AddEdge("VOUT", pin18, "IN");
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// INPUTS TO REFERENCES
+
+		//All comparator references can be driven by Vdd (for Vdd/3 and Vdd/4) and Vss (for constant voltages)
+		for(auto i=0; i<=5; i++)
+		{
+			vdd->AddEdge("OUT", vrefs[i], "VIN");
+			gnd->AddEdge("OUT", vrefs[i], "VIN");
+		}
+
+		//DAC references can be driven by Vss only
+		gnd->AddEdge("OUT", vrefs[6], "VIN");
+		gnd->AddEdge("OUT", vrefs[7], "VIN");
+
+		//External pins
+		pin7->AddEdge("OUT", vrefs[0], "VIN");
+		pin10->AddEdge("OUT", vrefs[0], "VIN");
+
+		pin7->AddEdge("OUT", vrefs[1], "VIN");
+		pin10->AddEdge("OUT", vrefs[1], "VIN");
+
+		pin10->AddEdge("OUT", vrefs[2], "VIN");
+		pin14->AddEdge("OUT", vrefs[2], "VIN");
+
+		pin10->AddEdge("OUT", vrefs[3], "VIN");
+		pin14->AddEdge("OUT", vrefs[3], "VIN");
+
+		pin10->AddEdge("OUT", vrefs[4], "VIN");
+		pin14->AddEdge("OUT", vrefs[4], "VIN");
+
+		pin10->AddEdge("OUT", vrefs[5], "VIN");
+		pin5->AddEdge("OUT", vrefs[5], "VIN");
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// REFERENCE TO COMPARATORS
 
 		PARGraphNode* acmps[] =
@@ -916,18 +952,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			device->GetAcmp(5)->GetPARNode()
 		};
 
-		/*
-		//Any vref can drive any comparator, we hide the complexity of the actual routing structure
-		//TODO: add a 6th vref for the DACs?
-		for(auto acmp : acmps)
-		{
-			for(auto vref : vrefs)
-				vref->AddEdge("VOUT", acmp, "VREF");
-		}
-		*/
-
 		//Only allow one VREF to drive its attached comparator.
-		//TODO: Add a 6th vref for DAC reference
 		for(unsigned int i=0; i<6; i++)
 			vrefs[i]->AddEdge("VOUT", acmps[i], "VREF");
 
