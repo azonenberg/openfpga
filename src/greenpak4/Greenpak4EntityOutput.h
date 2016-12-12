@@ -54,6 +54,7 @@ public:
 	bool IsVoltageReference();
 	bool IsPowerRail();
 	bool IsDAC();
+	bool IsIOB();
 	bool GetPowerRailValue();
 
 	bool HasDual()
