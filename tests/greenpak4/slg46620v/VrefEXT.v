@@ -20,11 +20,12 @@
 
 /**
 	INPUTS:
-		FIXME
+		VrefA on pin 10
+		VrefB on pin 14
 
 	OUTPUTS:
-		FIXME Vdd/4 on pin 19
-		FIXME Vdd/3 on pin 18
+		VrefA/2 on pin 19
+		VrefB/2 on pin 18
 
 	TEST PROCEDURE:
 		FIXME
