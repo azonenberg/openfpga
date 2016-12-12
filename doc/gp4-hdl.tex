@@ -212,16 +212,14 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json Blinky.json
 \end{figure}
 
 \pagebreak
-\section{\namestyle{gp4par} Limitations}
+\section{Toolchain Limitations}
+\subsection{\namestyle{gp4par} Device Limitations}
 
 The following device features are not supported by \namestyle{gp4par} for any device as of this writing:
 
 \begin{itemize}
-\item Storage elements: Latches with set/reset cannot be inferred from behavioral RTL, but can be instantiated as primitives.
-(This is a \namestyle{Yosys} issue, not \namestyle{gp4par}.)
 \item Counters: Delay, edge detector, PWM, wake-sleep mode, counter cascading.
-All clock sources other than on-chip oscillator. Pre-divider value of 12. Counters with input divider cannot be inferred 
-from behavioral RTL, but can be instantiated as primitives.
+All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item Voltage reference: external references
 \item ADC
 \item DAC (partially implemented)
@@ -242,6 +240,16 @@ In addition, the following \namestyle{SLG46140V} device features are not yet sup
 \item Dedicated DFF cells
 \item Counters
 \item Combination function macrocells
+\end{itemize}
+
+\subsection{\namestyle{Yosys} Verilog Inference Limitations for GreenPAK}
+
+The following device features cannot be inferred from behavioral Verilog, but are supported if primitives are directly
+instantiated.
+
+\begin{itemize}
+\item Latches with set/reset
+\item Counters with input divider, clock enable, or upward/adjustable direction
 \end{itemize}
 
 \pagebreak
