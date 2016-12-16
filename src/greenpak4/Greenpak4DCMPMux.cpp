@@ -48,13 +48,14 @@ string Greenpak4DCMPMux::GetDescription()
 vector<string> Greenpak4DCMPMux::GetInputPorts() const
 {
 	vector<string> r;
-	//no inputs
+	r.push_back("SEL[0]");
+	r.push_back("SEL[1]");
 	return r;
 }
 
 void Greenpak4DCMPMux::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
 {
-	//no inputs
+	//TODO hook up
 }
 
 vector<string> Greenpak4DCMPMux::GetOutputPorts() const

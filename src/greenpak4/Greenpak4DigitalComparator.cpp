@@ -54,7 +54,7 @@ string Greenpak4DigitalComparator::GetDescription()
 vector<string> Greenpak4DigitalComparator::GetInputPorts() const
 {
 	vector<string> r;
-	//no inputs
+	r.push_back("PWRDN");
 	return r;
 }
 
@@ -66,15 +66,18 @@ void Greenpak4DigitalComparator::SetInput(string /*port*/, Greenpak4EntityOutput
 vector<string> Greenpak4DigitalComparator::GetOutputPorts() const
 {
 	vector<string> r;
-	//r.push_back("VDD_LOW");
+	r.push_back("OUTP");
+	r.push_back("OUTN");
 	return r;
 }
 
 unsigned int Greenpak4DigitalComparator::GetOutputNetNumber(string port)
 {
-	/*if(port == "VDD_LOW")
+	if(port == "OUTN")
 		return m_outputBaseWord;
-	else*/
+	else if(port == "OUTP")
+		return m_outputBaseWord + 1;
+	else
 		return -1;
 }
 

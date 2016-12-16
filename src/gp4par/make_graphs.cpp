@@ -1020,6 +1020,56 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO DIGITAL COMPARATORS
 
+		PARGraphNode* dcmps[]=
+		{
+			device->GetDcmp(0)->GetPARNode(),
+			device->GetDcmp(1)->GetPARNode(),
+			device->GetDcmp(2)->GetPARNode()
+		};
+
+		PARGraphNode* dcrefs[]=
+		{
+			device->GetDcmpRef(0)->GetPARNode(),
+			device->GetDcmpRef(1)->GetPARNode(),
+			device->GetDcmpRef(2)->GetPARNode(),
+			device->GetDcmpRef(3)->GetPARNode()
+		};
+
+		auto dcmux = device->GetDCMPMux()->GetPARNode();
+
+		//Inputs to DCMPMUX
+		char inname[16];
+		for(int j=0; j<4; j++)
+		{
+			for(int i=0; i<8; i++)
+			{
+				snprintf(inname, sizeof(inname), "IN%d[%d]", j, i);
+				dcrefs[j]->AddEdge("OUT", dcmux, inname);
+			}
+		}
+
+		//Mux driving DCMP0/1
+		for(int i=0; i<8; i++)
+		{
+			snprintf(inname, sizeof(inname), "INP[%d]", i);
+			dcmux->AddEdge("OUTA", dcmps[0], inname);
+			snprintf(inname, sizeof(inname), "INN[%d]", i);
+			dcmux->AddEdge("OUTB", dcmps[1], inname);
+		}
+
+		//Constant inputs from DCREF to DCMP
+		for(int i=0; i<8; i++)
+		{
+			snprintf(inname, sizeof(inname), "INN[%d]", i);
+			dcrefs[0]->AddEdge("OUT", dcmps[0], inname);
+
+			snprintf(inname, sizeof(inname), "INP[%d]", i);
+			dcrefs[1]->AddEdge("OUT", dcmps[1], inname);
+			dcrefs[3]->AddEdge("OUT", dcmps[2], inname);
+		}
+
+		//TODO: Other inputs: ADC, SPI, counters
+
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO PGA
 
