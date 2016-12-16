@@ -101,6 +101,12 @@ bool Greenpak4DCMPRef::Save(bool* bitstream)
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
+	if(m_referenceValue > 0xff)
+	{
+		LogError("GP_DCMPREF reference value must be less than 0xFF (got 0x%x\n", m_referenceValue);
+		return false;
+	}
+
 	bitstream[m_configBase + 0] = (m_referenceValue & 1) ? true : false;
 	bitstream[m_configBase + 1] = (m_referenceValue & 2) ? true : false;
 	bitstream[m_configBase + 2] = (m_referenceValue & 4) ? true : false;
