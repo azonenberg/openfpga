@@ -154,7 +154,7 @@ This guide uses several distinct text styles for:
 
 \subsection{Support}
 
-If you have questions, comments, suggestions, or wish to contribute to the project please join our IRC channel 
+If you have questions, comments, suggestions, or wish to contribute to the project please join our IRC channel
 (\#\#openfpga on Freenode). This is the sole support forum available at this time.
 
 \pagebreak
@@ -1710,9 +1710,9 @@ GP_DAC dac(
 
 \subsubsection{Introduction}
 
-This primitive is a 4:1 mux that can drive the inputs of a \tokenref{GP\_DCMP}{gp-dcmp} block. 
+This primitive is a 4:1 mux that can drive the inputs of a \tokenref{GP\_DCMP}{gp-dcmp} block.
 
-The inputs must be sourced by a \tokenref{GP\_DCMPREF}{gp-dcmpref} block in the current toolchain. A future version of the 
+The inputs must be sourced by a \tokenref{GP\_DCMPREF}{gp-dcmpref} block in the current toolchain. A future version of the
 toolchain may support inferring DCMPREF blocks driving the input of the mux.
 
 \subsubsection{Port Descriptions}
@@ -2395,7 +2395,7 @@ GP_DFFSRI #(
 \label{gp-latch}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D latch. The latch updates when the clock is negative and holds 
+This primitive corresponds to a single D latch. The latch updates when the clock is negative and holds
 when the clock is positive.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -2454,7 +2454,7 @@ GP_DLATCH #(
 \label{gp-latchi}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D latch. The latch updates when the clock is negative and holds 
+This primitive corresponds to a single D latch. The latch updates when the clock is negative and holds
 when the clock is positive. The flipflop output is inverted.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -2514,7 +2514,7 @@ GP_DLATCHI #(
 \label{gp-latchr}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D latch with active-low reset. The latch updates when the clock is negative and holds 
+This primitive corresponds to a single D latch with active-low reset. The latch updates when the clock is negative and holds
 when the clock is positive.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -2578,7 +2578,7 @@ GP_DLATCHR #(
 \label{gp-latchri}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D latch with active-low reset. The latch updates when the clock is negative and holds 
+This primitive corresponds to a single D latch with active-low reset. The latch updates when the clock is negative and holds
 when the clock is positive. The flipflop output is inverted.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -2643,7 +2643,7 @@ GP_DLATCHRI #(
 \label{gp-latchs}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D latch with active-low set. The latch updates when the clock is negative and holds 
+This primitive corresponds to a single D latch with active-low set. The latch updates when the clock is negative and holds
 when the clock is positive.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -2708,7 +2708,7 @@ GP_DLATCHS #(
 \label{gp-latchsi}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D latch with active-low set. The latch updates when the clock is negative and holds 
+This primitive corresponds to a single D latch with active-low set. The latch updates when the clock is negative and holds
 when the clock is positive. The flipflop output is inverted.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -2773,7 +2773,7 @@ GP_DLATCHSI #(
 \label{gp-latchsr}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D latch with active-low set or reset (but not both), selectable at synthesis time by 
+This primitive corresponds to a single D latch with active-low set or reset (but not both), selectable at synthesis time by
 a parameter. The latch updates when the clock is negative and holds when the clock is positive.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -2840,8 +2840,8 @@ GP_DLATCHSR #(
 \label{gp-latchsri}
 
 \subsubsection{Introduction}
-This primitive corresponds to a single D latch with active-low set or reset (but not both), selectable at synthesis time by 
-a parameter. The latch updates when the clock is negative and holds when the clock is positive. The flipflop output is 
+This primitive corresponds to a single D latch with active-low set or reset (but not both), selectable at synthesis time by
+a parameter. The latch updates when the clock is negative and holds when the clock is positive. The flipflop output is
 inverted.
 
 This primitive may be manually instantiated if exact control over packing is required, but for most applications we
@@ -4036,9 +4036,9 @@ many debugging messages, normally useful only for development of \namestyle{gp4p
 
 \subsection{\texttt{--disable-charge-pump}}
 
-The \texttt{--disable-charge-pump} argument is optional. If set, the on-die charge pump is disabled, rather than 
-automatically turning on when the supply voltage drops below 2.7V. This may cause analog components to malfunction if the 
-supply voltage drops below 2.7V. It's unclear from Silego's documentation why this would ever be desirable, but the option 
+The \texttt{--disable-charge-pump} argument is optional. If set, the on-die charge pump is disabled, rather than
+automatically turning on when the supply voltage drops below 2.7V. This may cause analog components to malfunction if the
+supply voltage drops below 2.7V. It's unclear from Silego's documentation why this would ever be desirable, but the option
 is provided for completeness.
 
 \subsection{\texttt{--help}}
