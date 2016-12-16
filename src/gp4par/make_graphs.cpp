@@ -786,7 +786,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 	}
 
 	//Add dedicated routing between hard IP
-	if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
+	if( (device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620) ||
+		(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46621) )
 	{
 		auto lfosc = device->GetLFOscillator()->GetPARNode();
 		auto rosc = device->GetRingOscillator()->GetPARNode();
@@ -808,11 +809,15 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		auto pin10 = device->GetIOB(10)->GetPARNode();
 		auto pin12 = device->GetIOB(12)->GetPARNode();
 		auto pin13 = device->GetIOB(13)->GetPARNode();
-		auto pin14 = device->GetIOB(14)->GetPARNode();
 		auto pin15 = device->GetIOB(15)->GetPARNode();
 		auto pin16 = device->GetIOB(16)->GetPARNode();
 		auto pin18 = device->GetIOB(18)->GetPARNode();
 		auto pin19 = device->GetIOB(19)->GetPARNode();
+
+		//SLG46621 is missing pin 14 so don't die if it's not there
+		PARGraphNode* pin14 = NULL;
+		if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
+			pin14 = device->GetIOB(14)->GetPARNode();
 
 		auto vdd = device->GetPowerRail(true)->GetPARNode();
 		auto gnd = device->GetPowerRail(false)->GetPARNode();
@@ -939,13 +944,16 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		pin10->AddEdge("OUT", vrefs[1], "VIN");
 
 		pin10->AddEdge("OUT", vrefs[2], "VIN");
-		pin14->AddEdge("OUT", vrefs[2], "VIN");
+		if(pin14)
+			pin14->AddEdge("OUT", vrefs[2], "VIN");
 
 		pin10->AddEdge("OUT", vrefs[3], "VIN");
-		pin14->AddEdge("OUT", vrefs[3], "VIN");
+		if(pin14)
+			pin14->AddEdge("OUT", vrefs[3], "VIN");
 
 		pin10->AddEdge("OUT", vrefs[4], "VIN");
-		pin14->AddEdge("OUT", vrefs[4], "VIN");
+		if(pin14)
+			pin14->AddEdge("OUT", vrefs[4], "VIN");
 
 		pin10->AddEdge("OUT", vrefs[5], "VIN");
 		pin5->AddEdge("OUT", vrefs[5], "VIN");
