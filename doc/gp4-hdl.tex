@@ -1693,6 +1693,129 @@ GP_DAC dac(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DCMP
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DCMP}: Digital Comparator (NOT IMPLEMENTED)}
+\label{gp-dcmp}
+
+\subsubsection{Introduction}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DCMPMUX
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DCMPMUX}: Digital Comparator Constant Multiplexer}
+\label{gp-dcmpmux}
+
+\subsubsection{Introduction}
+
+This primitive is a 4:1 mux that can drive the inputs of a \tokenref{GP\_DCMP}{gp-dcmp} block. 
+
+The inputs must be sourced by a \tokenref{GP\_DCMPREF}{gp-dcmpref} block in the current toolchain. A future version of the 
+toolchain may support inferring DCMPREF blocks driving the input of the mux.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{SEL} & Input & 2 & Mux selector \\
+\thinhline
+\tokenstyle{IN0} & Output & 8 & Input from \tokenref{GP\_DCMPREF}{gp-dcmpref} block\\
+\thinhline
+\tokenstyle{IN1} & Output & 8 & Input from \tokenref{GP\_DCMPREF}{gp-dcmpref} block\\
+\thinhline
+\tokenstyle{IN2} & Output & 8 & Input from \tokenref{GP\_DCMPREF}{gp-dcmpref} block\\
+\thinhline
+\tokenstyle{IN3} & Output & 8 & Input from \tokenref{GP\_DCMPREF}{gp-dcmpref} block\\
+\thinhline
+\tokenstyle{OUTA} & Output & 8 & Multiplexer output to \tokenstyle{DCMP0} \tokenstyle{INP} input, indexed by \tokenstyle{SEL} \\
+\thinhline
+\tokenstyle{OUTB} & Output & 8 & Multiplexer output to \tokenstyle{DCMP1} \tokenstyle{INN} input, indexed by \tokenstyle{3-SEL}. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+None
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dcmpmux-example} drives \namestyle{in0} to \namestyle{refA} and \namestyle{in3} to
+\namestyle{refB}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire[7:0] refA;
+wire[7:0] refB;
+wire[1:0] select = 2'b0;
+wire[7:0] in0;
+wire[7:0] in1;
+wire[7:0] in2;
+wire[7:0] in3;
+GP_DCMPMUX mux(
+	.SEL(select),
+	.IN0(in0),
+	.IN1(in1),
+	.IN2(in2),
+	.IN3(in3),
+	.OUTA(refA),
+	.OUTB(refB)
+	);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DCMPMUX}}
+\label{gp-dcmpmux-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DCMPREF
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DCMPREF}: Digital Comparator Constant Reference}
+\label{gp-dcmpref}
+
+\subsubsection{Introduction}
+
+This primitive drives an 8-bit constant value to the input of one or more \tokenref{GP\_DCMP}{gp-dcmp} or
+\tokenref{GP\_DCMPMUX}{gp-dcmpmux} blocks.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{OUT} & Output & 8 & Constant output, always equal to \namestyle{REF\_VAL}. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{REF\_VAL} & Integer & 8 & Constant reference value \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dcmpref-example} drives \datastyle{8'ha3} to the signal \namestyle{dcref}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire[7:0] dcref;
+GP_DCMPREF #(.REF_VAL(8'ha3))
+	ref (.OUT(dcref));
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DCMPREF}}
+\label{gp-dcmpref-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DELAY
 
 \pagebreak
