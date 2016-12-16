@@ -478,6 +478,16 @@ void MakeDeviceNodes(
 	for(unsigned int i=0; i<device->GetAcmpCount(); i++)
 		MakeNode(acmp_label, device->GetAcmp(i), dgraph);
 
+	//Make device nodes for the digital comparators
+	uint32_t dcmp_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DCMP");
+	for(unsigned int i=0; i<device->GetDcmpCount(); i++)
+		MakeNode(dcmp_label, device->GetDcmp(i), dgraph);
+
+	//Make device nodes for the digital comparator references
+	uint32_t dcmpref_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DCMPREF");
+	for(unsigned int i=0; i<device->GetDcmpRefCount(); i++)
+		MakeNode(dcmpref_label, device->GetDcmpRef(i), dgraph);
+
 	//Make device nodes for the DACs
 	uint32_t dac_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DAC");
 	for(unsigned int i=0; i<device->GetDACCount(); i++)
@@ -512,6 +522,7 @@ void MakeDeviceNodes(
 	//Make device nodes for all of the single-instance cells
 	MakeSingleNode("GP_ABUF",		device->GetAbuf(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_BANDGAP",	device->GetBandgap(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_DCMPMUX",	device->GetDCMPMux(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_LFOSC",		device->GetLFOscillator(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_PGA",		device->GetPGA(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_POR",		device->GetPowerOnReset(), ngraph, dgraph, lmap);
@@ -1005,6 +1016,9 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		pin6->AddEdge("OUT", acmps[4], "VIN");
 		vdd->AddEdge("OUT", acmps[4], "VIN");
 		abuf->AddEdge("OUT", acmps[4], "VIN");
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// INPUTS TO DIGITAL COMPARATORS
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO PGA

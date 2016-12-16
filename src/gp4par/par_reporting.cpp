@@ -69,6 +69,9 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int abuf_used = 0;
 	unsigned int delay_used = 0;
 	unsigned int pwrdet_used = 0;
+	unsigned int dcmp_used = 0;
+	unsigned int dcmpref_used = 0;
+	unsigned int dcmpmux_used = 0;
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
@@ -115,10 +118,12 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 			vref_used ++;
 		else if(dynamic_cast<Greenpak4Comparator*>(entity))
 			acmp_used ++;
+		else if(dynamic_cast<Greenpak4DigitalComparator*>(entity))
+			dcmp_used ++;
+		else if(dynamic_cast<Greenpak4DCMPRef*>(entity))
+			dcmpref_used ++;
 		else if(dynamic_cast<Greenpak4PGA*>(entity))
 			pga_used ++;
-		else if(dynamic_cast<Greenpak4Abuf*>(entity))
-			abuf_used ++;
 		else if(dynamic_cast<Greenpak4Delay*>(entity))
 			delay_used ++;
 	}
@@ -132,6 +137,10 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		sysrst_used = 1;
 	if(device->GetPowerDetector() && device->GetPowerDetector()->GetPARNode()->GetMate() != NULL)
 		pwrdet_used = 1;
+	if(device->GetAbuf() && device->GetAbuf()->GetPARNode()->GetMate() != NULL)
+		abuf_used = 1;
+	if(device->GetDCMPMux() && device->GetDCMPMux()->GetPARNode()->GetMate() != NULL)
+		dcmpmux_used = 1;
 
 	//Print the actual report
 	//TODO: Figure out how to use indentation framework here for better columnar indents?
@@ -153,6 +162,9 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	PrintRow("  COUNT8_ADV:",	counters_8_adv_used,	device->Get8BitCounterCount(true));
 	PrintRow("  COUNT14:",		counters_14_used,		device->Get14BitCounterCount(false));
 	PrintRow("  COUNT14_ADV:",	counters_14_adv_used,	device->Get14BitCounterCount(true));
+	PrintRow("DCMP:",			dcmp_used,				device->GetDcmpCount());
+	PrintRow("DCMPREF:",		dcmpref_used,			device->GetDcmpRefCount());
+	PrintRow("DCMPMUX:",		dcmpmux_used,			1);
 	PrintRow("DELAY:",			delay_used,				device->GetDelayCount());
 	//TODO: print {as DELAY / as EDGEDET}
 	PrintRow("FF:",				total_dff_used,			device->GetTotalFFCount());
