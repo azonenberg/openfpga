@@ -34,9 +34,11 @@ public:
 
 	virtual ~Greenpak4MuxedClockBuffer();
 
+	void AddInputMuxEntry(Greenpak4EntityOutput node, unsigned int select)
+	{ m_inputs[node] = select; }
+
 protected:
-	Greenpak4EntityOutput m_input;
-	unsigned int m_bufferNum;
+	std::map<Greenpak4EntityOutput, unsigned int> m_inputs;
 };
 
 #endif	//Greenpak4MuxedClockBuffer_h

@@ -1051,7 +1051,10 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		PARGraphNode* clkbufs[]=
 		{
 			device->GetClockBuffer(0)->GetPARNode(),
-			device->GetClockBuffer(1)->GetPARNode()
+			device->GetClockBuffer(1)->GetPARNode(),
+			device->GetClockBuffer(2)->GetPARNode(),
+			device->GetClockBuffer(3)->GetPARNode(),
+			device->GetClockBuffer(4)->GetPARNode(),
 		};
 
 		auto dcmux = device->GetDCMPMux()->GetPARNode();
@@ -1089,11 +1092,19 @@ void MakeDeviceEdges(Greenpak4Device* device)
 
 		//TODO: Other inputs: ADC, SPI, counters
 
-		//Clock mux: 1628, 1629... inputs are RINGOSC, CLKBUF_2, RCOSC, and CLKBUF_4
+		//ADC/DCMP Clock mux routing
+		auto mbuf = dynamic_cast<Greenpak4MuxedClockBuffer*>(device->GetClockBuffer(5))->GetPARNode();
+		rosc->AddEdge("CLKOUT_HARDIP", mbuf, "IN");
+		rcosc->AddEdge("CLKOUT_HARDIP", mbuf, "IN");
+		clkbufs[2]->AddEdge("OUT", mbuf, "IN");
+		clkbufs[4]->AddEdge("OUT", mbuf, "IN");
 
 		//Clock inputs to DCMP
 		for(int i=0; i<3; i++)
+		{
 			clkbufs[1]->AddEdge("OUT", dcmps[i], "CLK");
+			mbuf->AddEdge("OUT", dcmps[i], "CLK");
+		}
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO PGA

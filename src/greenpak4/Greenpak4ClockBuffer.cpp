@@ -30,9 +30,9 @@ Greenpak4ClockBuffer::Greenpak4ClockBuffer(
 	unsigned int matrix,
 	unsigned int ibase,
 	unsigned int cbase)
-		: Greenpak4BitstreamEntity(device, matrix, ibase, -1, cbase)
-		, m_input(device->GetGround())
-		, m_bufferNum(bufnum)
+	: Greenpak4BitstreamEntity(device, matrix, ibase, -1, cbase)
+	, m_input(device->GetGround())
+	, m_bufferNum(bufnum)
 {
 }
 

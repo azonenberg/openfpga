@@ -688,6 +688,14 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 3, 1, 74));	//clk_matrix3
 	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 4, 0, 83));	//SPI SCK
 
+	//Clock mux buffer for ADC and PWM
+	auto mbuf = new Greenpak4MuxedClockBuffer(this, 5, 0, 1628);
+	m_clkbufs.push_back(mbuf);
+	mbuf->AddInputMuxEntry(m_ringosc->GetOutput("CLKOUT_HARDIP"), 0);
+	mbuf->AddInputMuxEntry(m_clkbufs[2]->GetOutput("OUT"), 1);
+	mbuf->AddInputMuxEntry(m_rcosc->GetOutput("CLKOUT_HARDIP"), 2);
+	mbuf->AddInputMuxEntry(m_clkbufs[4]->GetOutput("OUT"), 3);
+
 	//Digital comparator input mux
 	m_dcmpmux = new Greenpak4DCMPMux(this, 1, 83);
 

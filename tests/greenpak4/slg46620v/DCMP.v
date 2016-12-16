@@ -28,7 +28,7 @@
 	TEST PROCEDURE:
 		FIXME
  */
-module DCMP(muxsel, outp, outn, clkin);
+module DCMP(muxsel, outp, outn);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -41,9 +41,6 @@ module DCMP(muxsel, outp, outn, clkin);
 
 	(* LOC = "P17" *)
 	output wire outn;
-
-	(* LOC = "P3" *)
-	input wire clkin;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
@@ -81,12 +78,29 @@ module DCMP(muxsel, outp, outn, clkin);
 		.IN3(ref3));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Buffer the input clock
+	// Ring oscillator clock
 
-	wire clkin_buf;
+	wire clk_2mhz;
+	GP_RCOSC #(
+		.PWRDN_EN(0),
+		.AUTO_PWRDN(0),
+		.OSC_FREQ("2M"),
+		.HARDIP_DIV(1),
+		.FABRIC_DIV(1)
+	) rcosc (
+		.PWRDN(1'b0),
+		.CLKOUT_HARDIP(clk_2mhz),
+		.CLKOUT_FABRIC()
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Buffer the RC oscillator clock
+
+	//This drives the MuxedClockBuffer for the ADC/DCMP
+	wire clk_2mhz_buf;
 	GP_CLKBUF clkbuf (
-		.IN(clkin),
-		.OUT(clkin_buf));
+		.IN(clk_2mhz),
+		.OUT(clk_2mhz_buf));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The DCMP itself
@@ -94,7 +108,7 @@ module DCMP(muxsel, outp, outn, clkin);
 	GP_DCMP dcmp(
 		.INP(muxouta),
 		.INN(ref0),
-		.CLK(clkin_buf),
+		.CLK(clk_2mhz_buf),
 		.PWRDN(1'b0),
 		.OUTP(outp),
 		.OUTN(outn)

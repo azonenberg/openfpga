@@ -58,7 +58,16 @@ bool Greenpak4MuxedClockBuffer::Save(bool* bitstream)
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
-	//mux selector
+	if(m_inputs.find(m_input) == m_inputs.end())
+	{
+		LogError("Greenpak4MuxedClockBuffer: invalid input\n");
+		return false;
+	}
+
+	unsigned int muxsel = m_inputs[m_input];
+
+	bitstream[m_configBase + 0] = (muxsel & 1) ? true : false;
+	bitstream[m_configBase + 1] = (muxsel & 2) ? true : false;
 
 	return true;
 }
