@@ -30,6 +30,7 @@ Greenpak4DCMPRef::Greenpak4DCMPRef(
 		unsigned int cbase)
 	: Greenpak4BitstreamEntity(device, 1, -1, -1, cbase)
 	, m_blocknum(blocknum)
+	, m_referenceValue(0)
 {
 }
 
@@ -63,16 +64,14 @@ void Greenpak4DCMPRef::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
 vector<string> Greenpak4DCMPRef::GetOutputPorts() const
 {
 	vector<string> r;
-	//r.push_back("VDD_LOW");
+	//no general fabric outputs
 	return r;
 }
 
 unsigned int Greenpak4DCMPRef::GetOutputNetNumber(string port)
 {
-	/*if(port == "VDD_LOW")
-		return m_outputBaseWord;
-	else*/
-		return -1;
+	//no general fabric outputs
+	return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,7 +79,14 @@ unsigned int Greenpak4DCMPRef::GetOutputNetNumber(string port)
 
 bool Greenpak4DCMPRef::CommitChanges()
 {
-	//no parameters
+	//Get our cell, or bail if we're unassigned
+	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
+	if(ncell == NULL)
+		return true;
+
+	if(ncell->HasParameter("REF_VAL"))
+		m_referenceValue = (atoi(ncell->m_parameters["REF_VAL"].c_str()));
+
 	return true;
 }
 
@@ -90,8 +96,19 @@ bool Greenpak4DCMPRef::Load(bool* /*bitstream*/)
 	return false;
 }
 
-bool Greenpak4DCMPRef::Save(bool* /*bitstream*/)
+bool Greenpak4DCMPRef::Save(bool* bitstream)
 {
-	//no configuration - output only
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CONFIGURATION
+
+	bitstream[m_configBase + 0] = (m_referenceValue & 1) ? true : false;
+	bitstream[m_configBase + 1] = (m_referenceValue & 2) ? true : false;
+	bitstream[m_configBase + 2] = (m_referenceValue & 4) ? true : false;
+	bitstream[m_configBase + 3] = (m_referenceValue & 8) ? true : false;
+	bitstream[m_configBase + 4] = (m_referenceValue & 16) ? true : false;
+	bitstream[m_configBase + 5] = (m_referenceValue & 32) ? true : false;
+	bitstream[m_configBase + 6] = (m_referenceValue & 64) ? true : false;
+	bitstream[m_configBase + 7] = (m_referenceValue & 128) ? true : false;
+
 	return true;
 }

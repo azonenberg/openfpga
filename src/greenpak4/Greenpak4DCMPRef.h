@@ -49,6 +49,7 @@ public:
 
 protected:
 	unsigned int m_blocknum;
+	unsigned int m_referenceValue;
 };
 
 #endif

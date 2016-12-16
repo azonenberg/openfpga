@@ -674,7 +674,7 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_dcmps.push_back(new Greenpak4DigitalComparator(this, 2, 1, 82, 46, 1711));
 
 	//Digital comparator references
-	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 0, 1725));
+	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 0, 1723));
 	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 1, 1703));
 	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 2, 1683));
 	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 3, 1662));
