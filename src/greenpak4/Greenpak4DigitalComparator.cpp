@@ -16,53 +16,85 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4_h
-#define Greenpak4_h
+#include <log.h>
+#include <Greenpak4.h>
 
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
+using namespace std;
 
-#include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4EntityOutput.h"
-#include "Greenpak4DualEntity.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-#include "Greenpak4Abuf.h"
-#include "Greenpak4Bandgap.h"
-#include "Greenpak4Counter.h"
-#include "Greenpak4Comparator.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4DAC.h"
-#include "Greenpak4DCMPMux.h"
-#include "Greenpak4DCMPRef.h"
-#include "Greenpak4Delay.h"
-#include "Greenpak4DigitalComparator.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PatternGenerator.h"
-#include "Greenpak4PGA.h"
-#include "Greenpak4PairedEntity.h"
-#include "Greenpak4PowerDetector.h"
-#include "Greenpak4PowerOnReset.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4RCOscillator.h"
-#include "Greenpak4RingOscillator.h"
-#include "Greenpak4ShiftRegister.h"
-#include "Greenpak4SystemReset.h"
-#include "Greenpak4VoltageReference.h"
+Greenpak4DigitalComparator::Greenpak4DigitalComparator(
+	Greenpak4Device* device,
+	unsigned int cmpnum,
+	unsigned int matrix,
+	unsigned int ibase,
+	unsigned int oword,
+	unsigned int cbase)
+	: Greenpak4BitstreamEntity(device, matrix, ibase, oword, cbase)
+	, m_cmpNum(cmpnum)
+{
+}
 
-#include "Greenpak4NetlistNode.h"
-#include "Greenpak4NetlistCell.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
-#include "Greenpak4Netlist.h"
+Greenpak4DigitalComparator::~Greenpak4DigitalComparator()
+{
 
-#include "Greenpak4Device.h"
+}
 
-#endif
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+string Greenpak4DigitalComparator::GetDescription()
+{
+	char buf[128];
+	snprintf(buf, sizeof(buf), "DCMP_%u", m_cmpNum);
+	return string(buf);
+}
+
+vector<string> Greenpak4DigitalComparator::GetInputPorts() const
+{
+	vector<string> r;
+	//no inputs
+	return r;
+}
+
+void Greenpak4DigitalComparator::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
+{
+	//no inputs
+}
+
+vector<string> Greenpak4DigitalComparator::GetOutputPorts() const
+{
+	vector<string> r;
+	//r.push_back("VDD_LOW");
+	return r;
+}
+
+unsigned int Greenpak4DigitalComparator::GetOutputNetNumber(string port)
+{
+	/*if(port == "VDD_LOW")
+		return m_outputBaseWord;
+	else*/
+		return -1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization
+
+bool Greenpak4DigitalComparator::CommitChanges()
+{
+	//no parameters
+	return true;
+}
+
+bool Greenpak4DigitalComparator::Load(bool* /*bitstream*/)
+{
+	LogError("Unimplemented\n");
+	return false;
+}
+
+bool Greenpak4DigitalComparator::Save(bool* /*bitstream*/)
+{
+	//no configuration - output only
+	return true;
+}

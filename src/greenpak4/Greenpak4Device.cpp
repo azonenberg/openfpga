@@ -50,6 +50,7 @@ Greenpak4Device::Greenpak4Device(
 	m_pga = NULL;
 	m_por = NULL;
 	m_pwrdet = NULL;
+	m_dcmpmux = NULL;
 	for(int i=0; i<2; i++)
 	{
 		for(int j=0; j<10; j++)
@@ -667,6 +668,20 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_acmps.push_back(new Greenpak4Comparator(this, 4, 0, 70, 34,  0,  875, 871, 873, 926, 912));
 	m_acmps.push_back(new Greenpak4Comparator(this, 5, 0, 71, 35,  0,  880,  0,   0,  924, 917));
 
+	//Digital comparators
+	m_dcmps.push_back(new Greenpak4DigitalComparator(this, 0, 1, 82, 42, 1670));
+	m_dcmps.push_back(new Greenpak4DigitalComparator(this, 1, 1, 82, 44, 1691));
+	m_dcmps.push_back(new Greenpak4DigitalComparator(this, 2, 1, 82, 46, 1711));
+
+	//Digital comparator references
+	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 0, 1725));
+	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 1, 1703));
+	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 2, 1683));
+	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 3, 1662));
+
+	//Digital comparator input mux
+	m_dcmpmux = new Greenpak4DCMPMux(this, 1, 83);
+
 	//PGA
 	m_pga = new Greenpak4PGA(this, 815);
 
@@ -784,6 +799,10 @@ void Greenpak4Device::CreateDevice_common()
 		m_bitstuff.push_back(x);
 	for(auto x : m_acmps)
 		m_bitstuff.push_back(x);
+	for(auto x : m_dcmps)
+		m_bitstuff.push_back(x);
+	for(auto x : m_dcmprefs)
+		m_bitstuff.push_back(x);
 	for(auto x : m_dacs)
 		m_bitstuff.push_back(x);
 	for(auto x : m_delays)
@@ -810,6 +829,8 @@ void Greenpak4Device::CreateDevice_common()
 		m_bitstuff.push_back(m_pga);
 	if(m_abuf)
 		m_bitstuff.push_back(m_abuf);
+	if(m_dcmpmux)
+		m_bitstuff.push_back(m_dcmpmux);
 
 	//Add cross connections iff we have them
 	if(m_matrixBase[0] != m_matrixBase[1])

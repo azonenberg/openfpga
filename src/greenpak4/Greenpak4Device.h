@@ -218,13 +218,31 @@ public:
 	{ return m_vrefs[i]; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// COMPARATORS
+	// ANALOG COMPARATORS
 
 	unsigned int GetAcmpCount()
 	{ return m_acmps.size(); }
 
 	Greenpak4Comparator* GetAcmp(unsigned int i)
 	{ return m_acmps[i]; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// DIGITAL COMPARATORS
+
+	unsigned int GetDcmpCount()
+	{ return m_dcmps.size(); }
+
+	Greenpak4DigitalComparator* GetDcmp(unsigned int i)
+	{ return m_dcmps[i]; }
+
+	unsigned int GetDcmpRefCount()
+	{ return m_dcmprefs.size(); }
+
+	Greenpak4DCMPRef* GetDcmpRef(unsigned int i)
+	{ return m_dcmprefs[i]; }
+
+	Greenpak4DCMPMux* GetDCMPMux()
+	{ return m_dcmpmux; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ANALOG BUFFERS
@@ -354,6 +372,12 @@ protected:
 	///Analog comparators
 	std::vector<Greenpak4Comparator*> m_acmps;
 
+	///Digital comparators
+	std::vector<Greenpak4DigitalComparator*> m_dcmps;
+
+	///Digital comparator references
+	std::vector<Greenpak4DCMPRef*> m_dcmprefs;
+
 	///Digital to analog converters
 	std::vector<Greenpak4DAC*> m_dacs;
 
@@ -374,6 +398,9 @@ protected:
 
 	///Analog buffer
 	Greenpak4Abuf* m_abuf;
+
+	///Digital comparator mux
+	Greenpak4DCMPMux* m_dcmpmux;
 
 	///System reset
 	Greenpak4SystemReset* m_sysrst;

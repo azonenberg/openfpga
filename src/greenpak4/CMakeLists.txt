@@ -8,7 +8,10 @@ add_library(greenpak4 STATIC
 	Greenpak4Counter.cpp
 	Greenpak4CrossConnection.cpp
 	Greenpak4DAC.cpp
+	Greenpak4DCMPMux.cpp
+	Greenpak4DCMPRef.cpp
 	Greenpak4Delay.cpp
+	Greenpak4DigitalComparator.cpp
 	Greenpak4DualEntity.cpp
 	Greenpak4Device.cpp
 	Greenpak4EntityOutput.cpp
