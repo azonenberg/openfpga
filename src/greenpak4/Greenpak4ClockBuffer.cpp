@@ -16,88 +16,95 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-`default_nettype none
+#include <log.h>
+#include <Greenpak4.h>
 
-/**
-	INPUTS:
-		FIXME
+using namespace std;
 
-	OUTPUTS:
-		FIXME
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
 
-	TEST PROCEDURE:
-		FIXME
- */
-module DCMP(muxsel, outp, outn, clkin);
+Greenpak4ClockBuffer::Greenpak4ClockBuffer(
+	Greenpak4Device* device,
+	unsigned int bufnum,
+	unsigned int matrix,
+	unsigned int ibase)
+		: Greenpak4BitstreamEntity(device, matrix, ibase, -1, -1)
+		, m_input(device->GetGround())
+		, m_bufferNum(bufnum)
+{
+}
+
+Greenpak4ClockBuffer::~Greenpak4ClockBuffer()
+{
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
+string Greenpak4ClockBuffer::GetDescription()
+{
+	char buf[128];
+	snprintf(buf, sizeof(buf), "CLKBUF_%u", m_bufferNum);
+	return string(buf);
+}
+
+vector<string> Greenpak4ClockBuffer::GetInputPorts() const
+{
+	vector<string> r;
+	r.push_back("IN");
+	return r;
+}
+
+void Greenpak4ClockBuffer::SetInput(string port, Greenpak4EntityOutput src)
+{
+	if(port == "IN")
+		m_input = src;
+
+	//ignore anything else silently (should not be possible since synthesis would error out)
+}
+
+vector<string> Greenpak4ClockBuffer::GetOutputPorts() const
+{
+	vector<string> r;
+	//no general fabric outputs
+	return r;
+}
+
+unsigned int Greenpak4ClockBuffer::GetOutputNetNumber(string /*port*/)
+{
+	return -1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization
+
+bool Greenpak4ClockBuffer::CommitChanges()
+{
+	//No configuration
+	return true;
+}
+
+bool Greenpak4ClockBuffer::Load(bool* /*bitstream*/)
+{
+	//TODO: Do our inputs
+	LogError("Unimplemented\n");
+	return false;
+}
+
+bool Greenpak4ClockBuffer::Save(bool* bitstream)
+{
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input))
+		return false;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// I/O declarations
+	// CONFIGURATION
 
-	(* LOC = "P20 P19" *)
-	input wire[1:0] muxsel;
+	//none
 
-	(* LOC = "P18" *)
-	output wire outp;
-
-	(* LOC = "P17" *)
-	output wire outn;
-
-	(* LOC = "P16" *)
-	input wire clkin;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// System reset stuff
-
-	//Power-on reset
-	wire por_done;
-	GP_POR #(
-		.POR_TIME(500)
-	) por (
-		.RST_DONE(por_done)
-	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Reference inputs to the DCMP
-
-	wire[7:0] ref0;
-	wire[7:0] ref1;
-	wire[7:0] ref2;
-	wire[7:0] ref3;
-
-	GP_DCMPREF #(.REF_VAL(8'h40)) rs0(.OUT(ref0));
-	GP_DCMPREF #(.REF_VAL(8'h80)) rs1(.OUT(ref1));
-	GP_DCMPREF #(.REF_VAL(8'hc0)) rs2(.OUT(ref2));
-	GP_DCMPREF #(.REF_VAL(8'hf0)) rs3(.OUT(ref3));
-
-	wire[7:0] muxouta;
-	wire[7:0] muxoutb;
-	GP_DCMPMUX mux(
-		.SEL(muxsel),
-		.OUTA(muxouta),
-		.OUTB(muxoutb),
-		.IN0(ref0),
-		.IN1(ref1),
-		.IN2(ref2),
-		.IN3(ref3));
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Buffer the input clock
-
-	wire clkin_buf;
-	GP_CLKBUF clkbuf (
-		.IN(clkin),
-		.OUT(clkin_buf));
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// The DCMP itself
-
-	GP_DCMP dcmp(
-		.INP(muxouta),
-		.INN(ref0),
-		.CLK(clkin_buf),
-		.PWRDN(1'b0),
-		.OUTP(outp),
-		.OUTN(outn)
-		);
-
-endmodule
+	return true;
+}

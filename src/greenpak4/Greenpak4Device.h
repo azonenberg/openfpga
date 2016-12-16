@@ -251,7 +251,16 @@ public:
 	{ return m_abuf; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// ANALOG BUFFERS
+	// CLOCK BUFFERS
+
+	unsigned int GetClockBufferCount()
+	{ return m_clkbufs.size(); }
+
+	Greenpak4ClockBuffer* GetClockBuffer(unsigned int i)
+	{ return m_clkbufs[i]; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// POWER DETECTOR
 
 	Greenpak4PowerDetector* GetPowerDetector()
 	{ return m_pwrdet; }
@@ -377,6 +386,9 @@ protected:
 
 	///Digital comparator references
 	std::vector<Greenpak4DCMPRef*> m_dcmprefs;
+
+	///Clock buffers
+	std::vector<Greenpak4ClockBuffer*> m_clkbufs;
 
 	///Digital to analog converters
 	std::vector<Greenpak4DAC*> m_dacs;

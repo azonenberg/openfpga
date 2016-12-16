@@ -1327,6 +1327,52 @@ GP_BANDGAP #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_CLKBUF
+
+\pagebreak
+\subsection{\tokenstyle{GP\_CLKBUF}: Clock Buffer}
+\label{gp-clkbuf}
+
+\subsubsection{Introduction}
+This primitive is a buffer that drives the a clock signal from fabric to a dedicated clock network used by hard IP cores.
+
+A \tokenstyle{GP\_CLKBUF} must be explicitly instantiated to use a general fabric signal as a clock for counters, DCMP/PWM 
+blocks, and the ADC. A future toolchain version may support inferring clock buffers in these cases.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{IN} & Input & 1 & Input clock from fabric routing. \\
+\thinhline
+\tokenstyle{OUT} & Output & 1 & Buffered output to hard IP. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+No parameters.
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-clkbuf-example} buffers the signal \tokenstyle{clkin} to \tokenstyle{clkbuf}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clkin;
+wire clkbuf;
+GP_CLKBUF cbuf(
+	.IN(clkin),
+	.OUT(clkbuf)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_CLKBUF}}
+\label{gp-clkbuf-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_COUNT8
 
 \pagebreak

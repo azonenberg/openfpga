@@ -72,6 +72,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int dcmp_used = 0;
 	unsigned int dcmpref_used = 0;
 	unsigned int dcmpmux_used = 0;
+	unsigned int clkbuf_used = 0;
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
@@ -126,6 +127,8 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 			pga_used ++;
 		else if(dynamic_cast<Greenpak4Delay*>(entity))
 			delay_used ++;
+		else if(dynamic_cast<Greenpak4ClockBuffer*>(entity))
+			clkbuf_used ++;
 	}
 	if(device->GetLFOscillator() && device->GetLFOscillator()->GetPARNode()->GetMate() != NULL)
 		lfosc_used = 1;
@@ -157,6 +160,7 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	PrintRow("ABUF:",			abuf_used,				1);
 	PrintRow("ACMP:",			acmp_used,				device->GetAcmpCount());
 	PrintRow("BANDGAP:",		bandgap_used,			1);
+	PrintRow("CLKBUF:",			clkbuf_used,			device->GetClockBufferCount());
 	PrintRow("COUNT:",			total_counters_used,	device->GetCounterCount());
 	PrintRow("  COUNT8:",		counters_8_used,		device->Get8BitCounterCount(false));
 	PrintRow("  COUNT8_ADV:",	counters_8_adv_used,	device->Get8BitCounterCount(true));

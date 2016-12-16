@@ -493,6 +493,11 @@ void MakeDeviceNodes(
 	for(unsigned int i=0; i<device->GetDACCount(); i++)
 		MakeNode(dac_label, device->GetDAC(i), dgraph);
 
+	//Make device nodes for the clock buffers
+	uint32_t clkbuf_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_CLKBUF");
+	for(unsigned int i=0; i<device->GetClockBufferCount(); i++)
+		MakeNode(clkbuf_label, device->GetClockBuffer(i), dgraph);
+
 	//Make device nodes for the delay lines
 	uint32_t delay_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DELAY");
 	uint32_t edgedet_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_EDGEDET");
@@ -1043,6 +1048,12 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			device->GetDcmpRef(3)->GetPARNode()
 		};
 
+		PARGraphNode* clkbufs[]=
+		{
+			device->GetClockBuffer(0)->GetPARNode(),
+			device->GetClockBuffer(1)->GetPARNode()
+		};
+
 		auto dcmux = device->GetDCMPMux()->GetPARNode();
 
 		//Inputs to DCMPMUX
@@ -1077,6 +1088,12 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		}
 
 		//TODO: Other inputs: ADC, SPI, counters
+
+		//Clock mux: 1628, 1629... inputs are RINGOSC, CLKBUF_2, RCOSC, and CLKBUF_4
+
+		//Clock inputs to DCMP
+		for(int i=0; i<3; i++)
+			clkbufs[1]->AddEdge("OUT", dcmps[i], "CLK");
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO PGA

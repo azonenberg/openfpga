@@ -4,6 +4,7 @@ add_library(greenpak4 STATIC
 	Greenpak4Abuf.cpp
 	Greenpak4Bandgap.cpp
 	Greenpak4BitstreamEntity.cpp
+	Greenpak4ClockBuffer.cpp
 	Greenpak4Comparator.cpp
 	Greenpak4Counter.cpp
 	Greenpak4CrossConnection.cpp

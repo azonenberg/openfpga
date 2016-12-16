@@ -16,54 +16,40 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4_h
-#define Greenpak4_h
-
-/**
-	@file
-	@brief Master include file for all Greenpak4 related stuff
- */
+#ifndef Greenpak4ClockBuffer_h
+#define Greenpak4ClockBuffer_h
 
 #include "Greenpak4BitstreamEntity.h"
-#include "Greenpak4EntityOutput.h"
-#include "Greenpak4DualEntity.h"
 
-#include "Greenpak4Abuf.h"
-#include "Greenpak4Bandgap.h"
-#include "Greenpak4ClockBuffer.h"
-#include "Greenpak4Counter.h"
-#include "Greenpak4Comparator.h"
-#include "Greenpak4CrossConnection.h"
-#include "Greenpak4DAC.h"
-#include "Greenpak4DCMPMux.h"
-#include "Greenpak4DCMPRef.h"
-#include "Greenpak4Delay.h"
-#include "Greenpak4DigitalComparator.h"
-#include "Greenpak4Flipflop.h"
-#include "Greenpak4Inverter.h"
-#include "Greenpak4IOB.h"
-#include "Greenpak4IOBTypeA.h"
-#include "Greenpak4IOBTypeB.h"
-#include "Greenpak4LFOscillator.h"
-#include "Greenpak4LUT.h"
-#include "Greenpak4PatternGenerator.h"
-#include "Greenpak4PGA.h"
-#include "Greenpak4PairedEntity.h"
-#include "Greenpak4PowerDetector.h"
-#include "Greenpak4PowerOnReset.h"
-#include "Greenpak4PowerRail.h"
-#include "Greenpak4RCOscillator.h"
-#include "Greenpak4RingOscillator.h"
-#include "Greenpak4ShiftRegister.h"
-#include "Greenpak4SystemReset.h"
-#include "Greenpak4VoltageReference.h"
+class Greenpak4ClockBuffer : public Greenpak4BitstreamEntity
+{
+public:
 
-#include "Greenpak4NetlistNode.h"
-#include "Greenpak4NetlistCell.h"
-#include "Greenpak4NetlistModule.h"
-#include "Greenpak4NetlistPort.h"
-#include "Greenpak4Netlist.h"
+	//Construction / destruction
+	Greenpak4ClockBuffer(Greenpak4Device* device, unsigned int bufnum, unsigned int matrix, unsigned int ibase);
 
-#include "Greenpak4Device.h"
+	//Serialization
+	virtual bool Load(bool* bitstream);
+	virtual bool Save(bool* bitstream);
 
-#endif
+	virtual ~Greenpak4ClockBuffer();
+
+	virtual std::string GetDescription();
+
+	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual unsigned int GetOutputNetNumber(std::string port);
+
+	virtual std::vector<std::string> GetInputPorts() const;
+	virtual std::vector<std::string> GetOutputPorts() const;
+
+	virtual bool CommitChanges();
+
+	Greenpak4EntityOutput GetInput()
+	{ return m_input; }
+
+protected:
+	Greenpak4EntityOutput m_input;
+	unsigned int m_bufferNum;
+};
+
+#endif	//Greenpak4ClockBuffer_h

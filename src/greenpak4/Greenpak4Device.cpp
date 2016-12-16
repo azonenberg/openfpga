@@ -674,10 +674,19 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_dcmps.push_back(new Greenpak4DigitalComparator(this, 2, 1, 82, 46, 1711));
 
 	//Digital comparator references
+	//SLG46620 datasheet r100 page 140-141 fig 94-95 are wrong.
+	//reg0 base is 1723, not 1725
 	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 0, 1723));
 	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 1, 1703));
 	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 2, 1683));
 	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 3, 1662));
+
+	//Clock buffers
+	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 0, 0, 72));	//clk_matrix0
+	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 1, 0, 73));	//clk_matrix1
+	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 2, 1, 73));	//clk_matrix2
+	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 3, 1, 74));	//clk_matrix3
+	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 4, 0, 83));	//SPI SCK
 
 	//Digital comparator input mux
 	m_dcmpmux = new Greenpak4DCMPMux(this, 1, 83);
@@ -806,6 +815,8 @@ void Greenpak4Device::CreateDevice_common()
 	for(auto x : m_dacs)
 		m_bitstuff.push_back(x);
 	for(auto x : m_delays)
+		m_bitstuff.push_back(x);
+	for(auto x : m_clkbufs)
 		m_bitstuff.push_back(x);
 	m_bitstuff.push_back(m_constantZero);
 	m_bitstuff.push_back(m_constantOne);
