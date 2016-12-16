@@ -48,6 +48,8 @@ public:
 	virtual bool CommitChanges();
 
 protected:
+	Greenpak4EntityOutput m_sel0;
+	Greenpak4EntityOutput m_sel1;
 };
 
 #endif

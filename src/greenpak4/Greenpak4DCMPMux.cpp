@@ -29,6 +29,8 @@ Greenpak4DCMPMux::Greenpak4DCMPMux(
 		unsigned int matrix,
 		unsigned int ibase)
 	: Greenpak4BitstreamEntity(device, matrix, ibase, -1, -1)
+	, m_sel0(device->GetGround())
+	, m_sel1(device->GetGround())
 {
 }
 
@@ -53,24 +55,27 @@ vector<string> Greenpak4DCMPMux::GetInputPorts() const
 	return r;
 }
 
-void Greenpak4DCMPMux::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
+void Greenpak4DCMPMux::SetInput(string port, Greenpak4EntityOutput src)
 {
-	//TODO hook up
+	if(port == "SEL[0]")
+		m_sel0 = src;
+	else if(port == "SEL[1]")
+		m_sel1 = src;
+
+	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
 vector<string> Greenpak4DCMPMux::GetOutputPorts() const
 {
 	vector<string> r;
-	//r.push_back("VDD_LOW");
+	//no general fabric outputs
 	return r;
 }
 
-unsigned int Greenpak4DCMPMux::GetOutputNetNumber(string port)
+unsigned int Greenpak4DCMPMux::GetOutputNetNumber(string /*port*/)
 {
-	/*if(port == "VDD_LOW")
-		return m_outputBaseWord;
-	else*/
-		return -1;
+	//no general fabric outputs
+	return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -88,8 +93,15 @@ bool Greenpak4DCMPMux::Load(bool* /*bitstream*/)
 	return false;
 }
 
-bool Greenpak4DCMPMux::Save(bool* /*bitstream*/)
+bool Greenpak4DCMPMux::Save(bool* bitstream)
 {
-	//no configuration - output only
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_sel0))
+		return false;
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_sel1))
+		return false;
+
 	return true;
 }

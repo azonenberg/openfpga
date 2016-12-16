@@ -68,7 +68,7 @@ vector<string> Greenpak4DCMPRef::GetOutputPorts() const
 	return r;
 }
 
-unsigned int Greenpak4DCMPRef::GetOutputNetNumber(string port)
+unsigned int Greenpak4DCMPRef::GetOutputNetNumber(string /*port*/)
 {
 	//no general fabric outputs
 	return -1;
