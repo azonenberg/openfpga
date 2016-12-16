@@ -3,6 +3,7 @@
 
 add_greenpak4_bitstream(Blinky SLG46620V)
 add_greenpak4_bitstream(Dac SLG46620V)
+add_greenpak4_bitstream(DCMP SLG46620V)
 add_greenpak4_bitstream(Delay SLG46620V)
 add_greenpak4_bitstream(Ethernet SLG46620V)
 add_greenpak4_bitstream(Inverters SLG46620V)
