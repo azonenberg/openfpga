@@ -24,88 +24,41 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4ClockBuffer::Greenpak4ClockBuffer(
+Greenpak4MuxedClockBuffer::Greenpak4MuxedClockBuffer(
 	Greenpak4Device* device,
 	unsigned int bufnum,
 	unsigned int matrix,
-	unsigned int ibase,
 	unsigned int cbase)
-		: Greenpak4BitstreamEntity(device, matrix, ibase, -1, cbase)
-		, m_input(device->GetGround())
-		, m_bufferNum(bufnum)
+	: Greenpak4ClockBuffer(device, bufnum, matrix, -1, cbase)
 {
 }
 
-Greenpak4ClockBuffer::~Greenpak4ClockBuffer()
+Greenpak4MuxedClockBuffer::~Greenpak4MuxedClockBuffer()
 {
 
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Accessors
-
-string Greenpak4ClockBuffer::GetDescription()
-{
-	char buf[128];
-	snprintf(buf, sizeof(buf), "CLKBUF_%u", m_bufferNum);
-	return string(buf);
-}
-
-vector<string> Greenpak4ClockBuffer::GetInputPorts() const
-{
-	vector<string> r;
-	r.push_back("IN");
-	return r;
-}
-
-void Greenpak4ClockBuffer::SetInput(string port, Greenpak4EntityOutput src)
-{
-	if(port == "IN")
-		m_input = src;
-
-	//ignore anything else silently (should not be possible since synthesis would error out)
-}
-
-vector<string> Greenpak4ClockBuffer::GetOutputPorts() const
-{
-	vector<string> r;
-	//no general fabric outputs
-	return r;
-}
-
-unsigned int Greenpak4ClockBuffer::GetOutputNetNumber(string /*port*/)
-{
-	return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4ClockBuffer::CommitChanges()
-{
-	//No configuration
-	return true;
-}
-
-bool Greenpak4ClockBuffer::Load(bool* /*bitstream*/)
+bool Greenpak4MuxedClockBuffer::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
 	LogError("Unimplemented\n");
 	return false;
 }
 
-bool Greenpak4ClockBuffer::Save(bool* bitstream)
+bool Greenpak4MuxedClockBuffer::Save(bool* bitstream)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
 
-	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input))
-		return false;
+	//none
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
-	//none
+	//mux selector
 
 	return true;
 }

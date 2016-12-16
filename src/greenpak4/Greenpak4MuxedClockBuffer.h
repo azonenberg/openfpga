@@ -16,40 +16,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4ClockBuffer_h
-#define Greenpak4ClockBuffer_h
+#ifndef Greenpak4MuxedClockBuffer_h
+#define Greenpak4MuxedClockBuffer_h
 
 #include "Greenpak4BitstreamEntity.h"
 
-class Greenpak4ClockBuffer : public Greenpak4BitstreamEntity
+class Greenpak4MuxedClockBuffer : public Greenpak4ClockBuffer
 {
 public:
 
 	//Construction / destruction
-	Greenpak4ClockBuffer(Greenpak4Device* device, unsigned int bufnum, unsigned int matrix, unsigned int ibase, unsigned int cbase = -1);
+	Greenpak4MuxedClockBuffer(Greenpak4Device* device, unsigned int bufnum, unsigned int matrix, unsigned int cbase);
 
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
 
-	virtual ~Greenpak4ClockBuffer();
-
-	virtual std::string GetDescription();
-
-	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
-	virtual unsigned int GetOutputNetNumber(std::string port);
-
-	virtual std::vector<std::string> GetInputPorts() const;
-	virtual std::vector<std::string> GetOutputPorts() const;
-
-	virtual bool CommitChanges();
-
-	Greenpak4EntityOutput GetInput()
-	{ return m_input; }
+	virtual ~Greenpak4MuxedClockBuffer();
 
 protected:
 	Greenpak4EntityOutput m_input;
 	unsigned int m_bufferNum;
 };
 
-#endif	//Greenpak4ClockBuffer_h
+#endif	//Greenpak4MuxedClockBuffer_h

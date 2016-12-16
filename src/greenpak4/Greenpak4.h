@@ -46,6 +46,7 @@
 #include "Greenpak4IOBTypeB.h"
 #include "Greenpak4LFOscillator.h"
 #include "Greenpak4LUT.h"
+#include "Greenpak4MuxedClockBuffer.h"
 #include "Greenpak4PatternGenerator.h"
 #include "Greenpak4PGA.h"
 #include "Greenpak4PairedEntity.h"
