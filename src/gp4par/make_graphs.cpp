@@ -1084,6 +1084,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		{
 			snprintf(inname, sizeof(inname), "INN[%d]", i);
 			dcrefs[0]->AddEdge("OUT", dcmps[0], inname);
+			dcrefs[2]->AddEdge("OUT", dcmps[2], inname);
 
 			snprintf(inname, sizeof(inname), "INP[%d]", i);
 			dcrefs[1]->AddEdge("OUT", dcmps[1], inname);
