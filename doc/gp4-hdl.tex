@@ -1742,10 +1742,70 @@ GP_DAC dac(
 % GP_DCMP
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DCMP}: Digital Comparator (NOT IMPLEMENTED)}
+\subsection{\tokenstyle{GP\_DCMP}: Digital Comparator}
 \label{gp-dcmp}
 
 \subsubsection{Introduction}
+
+This primitive compares two 8-bit unsigned integers. It outputs the the comparison result as a binary ``greater than"
+and ``equal" bit.
+
+Note that the inputs use dedicated routing and cannot be driven by general fabric routing. See device datasheet for 
+connectivity options.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INP} & Input & 8 & Input to left side of comparison \\
+\thinhline
+\tokenstyle{INN} & Input & 8 & Input to right side of comparison \\
+\thinhline
+\tokenstyle{CLK} & Input & 1 & Clock source \\
+\thinhline
+\tokenstyle{PWRDN} & Input & 1 & Power-down input. Shared by all \tokenref{GP\_DCMP}{gp-dcmp} blocks. \\
+\thinhline
+\tokenstyle{GREATER} & Output & 1 & True if \tokenstyle{INP} is greater than (or, optionally, equal to) \tokenstyle{INN}. \\
+\thinhline
+\tokenstyle{EQUAL} & Output & 1 & True if \tokenstyle{INP} is equal to \tokenstyle{INN}. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{GREATER\_OR\_EQUAL} & Boolean & 1 &
+	\whenstyle{When 1:} \namestyle{GREATER} is high when \namestyle{INP} $\geq$ \namestyle{INN} \newline
+	\whenstyle{When 0:} \namestyle{GREATER} is high when \namestyle{INP} $>$ \namestyle{INN} \\
+\thinhline
+\tokenstyle{CLKIN\_INVERT} & Boolean & 1 & Set true to invert the \namestyle{CLK} input \\
+\thinhline
+\tokenstyle{PWRDN\_SYNC} & Boolean & 1 & Set true to synchronize \namestyle{PWRDN} with \namestyle{CLK}. This adds two
+cycles of latency when waking the comparator from sleep mode, and holds the output at its current state in sleep. When false,
+the output is reset to zero in sleep. \\
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dcmp-example} FIXME
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire[7:0] in3;
+GP_DCMP comparator(
+	.OUTA(refA),
+	.OUTB(refB)
+	);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DCMP}}
+\label{gp-dcmp-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_DCMPMUX
