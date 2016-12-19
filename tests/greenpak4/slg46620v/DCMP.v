@@ -28,7 +28,7 @@
 	TEST PROCEDURE:
 		FIXME
  */
-module DCMP(muxsel, outp, outn);
+module DCMP(muxsel, greater, equal);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -37,10 +37,10 @@ module DCMP(muxsel, outp, outn);
 	input wire[1:0] muxsel;
 
 	(* LOC = "P18" *)
-	output wire outp;
+	output wire greater;
 
 	(* LOC = "P17" *)
-	output wire outn;
+	output wire equal;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
@@ -105,13 +105,17 @@ module DCMP(muxsel, outp, outn);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The DCMP itself
 
-	GP_DCMP dcmp(
+	GP_DCMP #(
+		.GREATER_OR_EQUAL(1'b0),
+		.CLK_EDGE("RISING"),
+		.PWRDN_SYNC(1'b1)
+	) dcmp(
 		.INP(muxouta),
 		.INN(ref0),
 		.CLK(clk_2mhz_buf),
 		.PWRDN(1'b0),
-		.OUTP(outp),
-		.OUTN(outn)
-		);
+		.GREATER(greater),
+		.EQUAL(equal)
+	);
 
 endmodule
