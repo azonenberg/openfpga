@@ -1336,7 +1336,7 @@ GP_BANDGAP #(
 \subsubsection{Introduction}
 This primitive is a buffer that drives the a clock signal from fabric to a dedicated clock network used by hard IP cores.
 
-A \tokenstyle{GP\_CLKBUF} must be explicitly instantiated to use a general fabric signal as a clock for counters, DCMP/PWM 
+A \tokenstyle{GP\_CLKBUF} must be explicitly instantiated to use a general fabric signal as a clock for counters, DCMP/PWM
 blocks, and the ADC. A future toolchain version may support inferring clock buffers in these cases.
 
 \subsubsection{Port Descriptions}
@@ -1750,7 +1750,7 @@ GP_DAC dac(
 This primitive compares two 8-bit unsigned integers. It outputs the the comparison result as a binary ``greater than"
 and ``equal" bit.
 
-Note that the inputs use dedicated routing and cannot be driven by general fabric routing. See device datasheet for 
+Note that the inputs use dedicated routing and cannot be driven by general fabric routing. See device datasheet for
 connectivity options.
 
 \subsubsection{Port Descriptions}
@@ -1784,7 +1784,9 @@ connectivity options.
 	\whenstyle{When 1:} \namestyle{GREATER} is high when \namestyle{INP} $\geq$ \namestyle{INN} \newline
 	\whenstyle{When 0:} \namestyle{GREATER} is high when \namestyle{INP} $>$ \namestyle{INN} \\
 \thinhline
-\tokenstyle{CLKIN\_INVERT} & Boolean & 1 & Set true to invert the \namestyle{CLK} input \\
+\tokenstyle{CLK\_EDGE} & String & N/A &
+	\strexamplestyle{RISING} Outputs are updated on the rising edge of \namestyle{CLK} \newline
+	\strexamplestyle{FALLING} Outputs are updated on the falling edge of \namestyle{CLK} \\
 \thinhline
 \tokenstyle{PWRDN\_SYNC} & Boolean & 1 & Set true to synchronize \namestyle{PWRDN} with \namestyle{CLK}. This adds two
 cycles of latency when waking the comparator from sleep mode, and holds the output at its current state in sleep. When false,
@@ -1793,14 +1795,25 @@ the output is reset to zero in sleep. \\
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-dcmp-example} FIXME
+The example shown in figure \ref{gp-dcmp-example} outputs true on \namestyle{result} if \namestyle{foo} is greater than
+\namestyle{bar}.
 
 \begin{figure}[h]
 \begin{lstlisting}
-wire[7:0] in3;
-GP_DCMP comparator(
-	.OUTA(refA),
-	.OUTB(refB)
+wire[7:0] foo;
+wire[7:0] bar;
+wire result;
+GP_DCMP #(
+	.GREATER_OR_EQUAL(1'b0),
+	.CLK_EDGE("RISING"),
+	.PWRDN_SYNC(1'b1)
+) comparator(
+	.INP(foo),
+	.INN(bar),
+	.CLK(clk_2mhz),
+	.PWRDN(1'b0),
+	.GREATER(foo),
+	.EQUAL()
 	);
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_DCMP}}
