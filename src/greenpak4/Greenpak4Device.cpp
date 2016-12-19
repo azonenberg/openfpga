@@ -681,6 +681,9 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 2, 1683));
 	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 3, 1662));
 
+	//Digital comparator input mux
+	m_dcmpmux = new Greenpak4DCMPMux(this, 1, 83);
+
 	//Clock buffers
 	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 0, 0, 72));	//clk_matrix0
 	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 1, 0, 73));	//clk_matrix1
@@ -696,8 +699,35 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	mbuf->AddInputMuxEntry(m_rcosc->GetOutput("CLKOUT_HARDIP"), 2);
 	mbuf->AddInputMuxEntry(m_clkbufs[4]->GetOutput("OUT"), 3);
 
-	//Digital comparator input mux
-	m_dcmpmux = new Greenpak4DCMPMux(this, 1, 83);
+	//inp 0 is ADC, not implemented
+	//inp 1 is SPI, not implemented
+	//inp 2 is FSM0_Q, not implemented
+	m_dcmps[0]->AddInputPMuxEntry(m_dcmpmux->GetOutput("OUTA"), 3);
+
+	//inn 0 is CNT8_Q, not implemented
+	m_dcmps[0]->AddInputNMuxEntry(m_dcmprefs[0]->GetOutput("OUT"), 1);
+	//inn 2 is SPI, not implemented
+	//inn 3 is FSM1_Q, not implemented
+
+	//in0 is ADC, not implemented
+	//in1 is SPI, not implemented
+	//in2 is FSM1, not implemented
+	m_dcmps[1]->AddInputPMuxEntry(m_dcmprefs[1]->GetOutput("OUT"), 3);
+
+	//in0 is CNT11_Q, not implemented
+	m_dcmps[1]->AddInputNMuxEntry(m_dcmpmux->GetOutput("OUTB"), 1);
+	//in2 is SPI, not implemented
+	//in3 is FSM0_Q, not implemented
+
+	//in0 is ADC, not implemented
+	//in1 is SPI, not implemented
+	//in2 is FSM1, not implemented
+	m_dcmps[2]->AddInputPMuxEntry(m_dcmprefs[3]->GetOutput("OUT"), 3);
+
+	//in0 is CNT8_Q, not implemented
+	m_dcmps[2]->AddInputNMuxEntry(m_dcmprefs[2]->GetOutput("OUT"), 1);
+	//in2 is SPI, not implemented
+	//in3 is FSM0_Q, not implemented
 
 	//PGA
 	m_pga = new Greenpak4PGA(this, 815);

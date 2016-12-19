@@ -50,8 +50,33 @@ public:
 
 	virtual bool CommitChanges();
 
+	void AddInputPMuxEntry(Greenpak4EntityOutput net, unsigned int sel)
+	{ m_inpsels[net] = sel; }
+
+	void AddInputNMuxEntry(Greenpak4EntityOutput net, unsigned int sel)
+	{ m_innsels[net] = sel; }
+
 protected:
+	Greenpak4EntityOutput m_powerDown;
+	Greenpak4EntityOutput m_inp[8];
+	Greenpak4EntityOutput m_inn[8];
+	Greenpak4EntityOutput m_clock;
+
 	unsigned int m_cmpNum;
+
+	bool m_dcmpMode;	//true for dmcp, false for pwm
+
+	unsigned int m_pwmDeadband;	//dead time for differential PWM outputs, in ns
+
+	bool m_compareGreaterEqual;	//select >= if true, > if false
+
+	bool m_clockInvert;			//invert input clock
+
+	bool m_pdSync;				//Power-down synchronization
+
+	//Map of <signal, muxsel> tuples for input mux
+	std::map<Greenpak4EntityOutput, unsigned int> m_inpsels;
+	std::map<Greenpak4EntityOutput, unsigned int> m_innsels;
 };
 
 #endif
