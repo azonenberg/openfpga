@@ -58,6 +58,10 @@ bool Greenpak4MuxedClockBuffer::Save(bool* bitstream)
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
+	//Grounded input is legal even if not a valid muxsel
+	if(m_input.IsPowerRail() && !m_input.GetPowerRailValue())
+		return true;
+
 	if(m_inputs.find(m_input) == m_inputs.end())
 	{
 		LogError("Greenpak4MuxedClockBuffer: invalid input\n");
