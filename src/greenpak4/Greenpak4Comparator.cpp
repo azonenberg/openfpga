@@ -274,8 +274,6 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 			LogError("Invalid mux selector %u (should be 0...31)\n", muxsel);
 			return false;
 		}
-
-		//TODO: how do we do routing when there's a dedicated reference input used?
 	}
 
 	//Unused vrefs can be tied to ground
