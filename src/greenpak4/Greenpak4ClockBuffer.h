@@ -47,6 +47,9 @@ public:
 	Greenpak4EntityOutput GetInput()
 	{ return m_input; }
 
+	unsigned int GetBufferNumber()
+	{ return m_bufferNum; }
+
 protected:
 	Greenpak4EntityOutput m_input;
 	unsigned int m_bufferNum;
