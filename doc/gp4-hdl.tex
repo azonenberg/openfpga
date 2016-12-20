@@ -224,7 +224,7 @@ All clock sources other than on-chip oscillator. Pre-divider value of 12.
 \item DAC: Inputs from DCMP.
 \item Wake-Sleep
 \item DCMP/PWM: PWM mode. Inputs from ADC, SPI, and counters.
-\item Slave SPI
+\item SPI: ADC buffer mode, parallel output to fabric.
 \end{itemize}
 
 In addition, the following \namestyle{SLG46140V} device features are not yet supported by \namestyle{gp4par}:
@@ -3895,6 +3895,94 @@ GP_SHREG #(
 \caption{Example usage of \tokenstyle{GP\_SHREG}}
 \label{gp-shreg-example}
 \end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_SPI
+
+\pagebreak
+\clearpage
+\subsection{\tokenstyle{GP\_SPI}: SPI Slave}
+\label{gp-spi}
+
+\subsubsection{Introduction}
+This primitive is a unidirectional SPI slave.
+
+It can receive or transmit up to two bytes of data at a time to the bus master. The direction of data transfer is set 
+statically at compile time and cannot be changed, since the input or output serial data both use the same pin on the device. 
+Chip select and clock inputs are routed through the switch matrix and can connect to arbitrary external pins or even fabric 
+logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{SCK} & Input & 1 & SPI clock signal (must be buffered by \tokenref{GP\_CLKBUF}{gp-clkbuf}). \\
+\thinhline
+\tokenstyle{SDAT} & Inout & 1 & SPI input or output. Must be connected to pin 10 (\namestyle{SLG4662x}) or 
+12 (\namestyle{SLG46140}) \\
+\thinhline
+\tokenstyle{CSN} & Input & 1 & Chip select input from IOB\\
+\thinhline
+\tokenstyle{TXD\_HIGH} & Input & 8 & High word of data to send to master. Must connect to parallel output of a
+\namestyle{GP\_COUNTx} block. Only valid if \namestyle{DATA\_WIDTH} is 16 and \namestyle{DIRECTION} is
+\strvaluestyle{OUTPUT}, connect to \valuestyle{8'h00} otherwise.\\
+\thinhline
+\tokenstyle{TXD\_LOW} & Input & 8 &  Low word of data to send. Must connect to parallel output of a \namestyle{GP\_COUNTx} 
+or \tokenref{GP\_ADC}{gp-adc} block. Only valid if \namestyle{DIRECTION} is \strvaluestyle{OUTPUT}, connect to 
+\valuestyle{8'h00} otherwise.\\
+\thinhline
+\tokenstyle{RXD\_HIGH} & Output & 8 & 8-bit high word of data from master. Must connect to parallel input of a 
+\namestyle{GP\_COUNTx} or \tokenref{GP\_DCMP}{gp-dcmp} block. Only valid if \namestyle{DATA\_WIDTH} is 16 and 
+\namestyle{DIRECTION} is \strvaluestyle{INPUT}, leave unconnected otherwise.\\
+\thinhline
+\tokenstyle{RXD\_LOW} & Output & 8 & 8-bit high word of data from master. Must connect to parallel input of a 
+\namestyle{GP\_COUNTx} or \tokenref{GP\_DCMP}{gp-dcmp} block. (The hardware supports parallel output to general fabric 
+routing however this is not currently implemented in \namestyle{gp4par}.) Only valid if \namestyle{DIRECTION} is 
+\strvaluestyle{INPUT}, leave unconnected otherwise.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{DATA\_WIDTH} & Integer & 5 & Width of the SPI data buffer, in bits. Must be 8 or 16. \\
+\thinhline
+\tokenstyle{SPI\_CPHA} & Boolean & 1 & SPI clock phasing \newline
+\whenstyle{When 0:} active clock edge is centered in data eye \newline
+\whenstyle{When 1:} data changes on active clock edge   \\
+\thinhline
+\tokenstyle{SPI\_CPOL} & Boolean & 1 & SPI clock polarity \newline
+\whenstyle{When 0:} active clock edge is rising \newline
+\whenstyle{When 1:} active clock edge is falling   \\
+\thinhline
+
+\tokenstyle{DIRECTION} & String & N/A &
+\strexamplestyle{INPUT} Receive data from master; \namestyle{RXD\_*} ports are valid \newline
+\strexamplestyle{OUTPUT} Send data to master; \namestyle{TXD\_*} ports are valid \newline \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-spi-example} needs to be written.
+
+\begin{figure}[h]
+\begin{lstlisting}
+GP_SPI #(
+	.FIXME(4)
+) spi (
+	.FIXME(garbage)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_SPI}}
+\label{gp-spi-example}
+\end{figure}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_SYSRESET
