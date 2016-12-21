@@ -1032,6 +1032,30 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		abuf->AddEdge("OUT", acmps[4], "VIN");
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// SPI
+
+		auto spi = device->GetSPI()->GetPARNode();
+
+		//Pin 10 IOB can drive SPI as MOSI
+		pin10->AddEdge("OUT", spi, "SDAT");
+
+		//SPI can drive pin 10 IOB as MISO
+
+		//Routes to TX data:
+		//* ground (unused, for RX mode)
+		char txname[16];
+		for(int i=0; i<8; i++)
+		{
+			snprintf(txname, sizeof(txname), "TXD_LOW[%d]", i);
+			gnd->AddEdge("OUT", spi, txname);
+
+			snprintf(txname, sizeof(txname), "TXD_HIGH[%d]", i);
+			gnd->AddEdge("OUT", spi, txname);
+		}
+
+		//  from cell GP_VSS (mapped to VSS0) port OUT  to cell spi (mapped to SPI_0) pin TXD_LOW[7]
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO DIGITAL COMPARATORS
 
 		PARGraphNode* dcmps[]=
@@ -1092,7 +1116,20 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			dcrefs[3]->AddEdge("OUT", dcmps[2], inname);
 		}
 
-		//TODO: Other inputs: ADC, SPI, counters
+		//SPI data lines
+		for(int i=0; i<8; i++)
+		{
+			snprintf(inname, sizeof(inname), "INP[%d]", i);
+			spi->AddEdge("RXD_HIGH", dcmps[0], inname);
+			spi->AddEdge("RXD_HIGH", dcmps[1], inname);
+
+			snprintf(inname, sizeof(inname), "INN[%d]", i);
+			spi->AddEdge("RXD_LOW", dcmps[0], inname);
+			spi->AddEdge("RXD_LOW", dcmps[1], inname);
+			spi->AddEdge("RXD_LOW", dcmps[2], inname);
+		}
+
+		//TODO: Other inputs: ADC, counters
 
 		//ADC/DCMP Clock mux routing
 		auto mbuf = dynamic_cast<Greenpak4MuxedClockBuffer*>(device->GetClockBuffer(5))->GetPARNode();

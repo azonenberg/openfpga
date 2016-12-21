@@ -55,7 +55,9 @@ string Greenpak4SPI::GetDescription()
 vector<string> Greenpak4SPI::GetInputPorts() const
 {
 	vector<string> r;
-	//r.push_back("IN");
+	r.push_back("SCK");
+	r.push_back("CSN");
+	//SDAT is dedicated routing
 	return r;
 }
 
@@ -80,9 +82,8 @@ unsigned int Greenpak4SPI::GetOutputNetNumber(string port)
 	/*
 	if(port == "OUT")
 		return m_outputBaseWord;
-	else
+	else*/
 		return -1;
-	*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
