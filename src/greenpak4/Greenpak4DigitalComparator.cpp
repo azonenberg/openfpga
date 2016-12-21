@@ -220,7 +220,6 @@ bool Greenpak4DigitalComparator::Save(bool* bitstream)
 	//If null inputs, but not unused, complain
 	if(noClock || noInP || noInN)
 	{
-		asm("int3");
 		LogError("Missing clock or input to DCMP_%d (%s clock, %s inP, %s inN)\n",
 			m_cmpNum,
 			noClock ? "no" : "",
