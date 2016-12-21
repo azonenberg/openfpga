@@ -534,6 +534,7 @@ void MakeDeviceNodes(
 	MakeSingleNode("GP_PWRDET",		device->GetPowerDetector(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_RCOSC",		device->GetRCOscillator(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_RINGOSC",	device->GetRingOscillator(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_SPI",		device->GetSPI(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_SYSRESET",	device->GetSystemReset(), ngraph, dgraph, lmap);
 
 	//Make device nodes for the power rails

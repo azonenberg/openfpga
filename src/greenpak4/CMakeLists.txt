@@ -33,6 +33,7 @@ add_library(greenpak4 STATIC
 	Greenpak4RCOscillator.cpp
 	Greenpak4RingOscillator.cpp
 	Greenpak4ShiftRegister.cpp
+	Greenpak4SPI.cpp
 	Greenpak4SystemReset.cpp
 	Greenpak4VoltageReference.cpp
 

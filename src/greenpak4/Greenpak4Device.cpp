@@ -51,6 +51,7 @@ Greenpak4Device::Greenpak4Device(
 	m_por = NULL;
 	m_pwrdet = NULL;
 	m_dcmpmux = NULL;
+	m_spi = NULL;
 	for(int i=0; i<2; i++)
 	{
 		for(int j=0; j<10; j++)
@@ -487,8 +488,6 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_inverters.push_back(new Greenpak4Inverter(this, 0, 55, 23));
 	m_inverters.push_back(new Greenpak4Inverter(this, 1, 55, 23));
 
-	//TODO: External clocks??
-
 	//Low-frequency oscillator
 	m_lfosc = new Greenpak4LFOscillator(
 		this,
@@ -636,7 +635,8 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 		40,		//oword,
 		1895));	//cbase
 
-	//TODO: Slave SPI
+	//Slave SPI
+	m_spi = new Greenpak4SPI(this, 0, 82, 44, 1656);
 
 	//TODO: ADC
 
@@ -769,8 +769,6 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_acmps[4]->AddInputMuxEntry(vdd, 2);
 	m_acmps[5]->AddInputMuxEntry(pin4, 0);
 
-	//TODO: Vdd bypass
-
 	//Power-on reset
 	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 2009);
 
@@ -880,6 +878,8 @@ void Greenpak4Device::CreateDevice_common()
 		m_bitstuff.push_back(m_abuf);
 	if(m_dcmpmux)
 		m_bitstuff.push_back(m_dcmpmux);
+	if(m_spi)
+		m_bitstuff.push_back(m_spi);
 
 	//Add cross connections iff we have them
 	if(m_matrixBase[0] != m_matrixBase[1])

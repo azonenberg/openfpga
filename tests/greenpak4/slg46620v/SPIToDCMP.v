@@ -25,26 +25,28 @@
 	TEST PROCEDURE:
 		TODO
  */
-module SPIToDCMP();
+module SPIToDCMP(spi_sck, spi_cs_n, spi_mosi, spi_int, dcmp_greater, dcmp_equal);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 
-	/*
-	(* LOC = "P20" *)
-	output wire bg_ok;
+	(* LOC = "P8" *)
+	input wire spi_sck;
 
-	(* LOC = "P18" *)
-	(* IBUF_TYPE = "ANALOG" *)
-	output wire vout;
+	(* LOC = "P9" *)
+	input wire spi_cs_n;
+
+	(* LOC = "P10" *)
+	input wire spi_mosi;
+
+	(* LOC = "P7" *)
+	output wire spi_int;
+
+	(* LOC = "P20" *)
+	output wire dcmp_greater;
 
 	(* LOC = "P19" *)
-	(* IBUF_TYPE = "ANALOG" *)
-	output wire vout2;
-
-	(* LOC = "P17" *)
-	output wire wave_sync;
-	*/
+	output wire dcmp_equal;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
@@ -55,6 +57,70 @@ module SPIToDCMP();
 		.POR_TIME(500)
 	) por (
 		.RST_DONE(por_done)
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// RC oscillator clock and buffers
+
+	wire clk_2mhz;
+	GP_RCOSC #(
+		.PWRDN_EN(0),
+		.AUTO_PWRDN(0),
+		.OSC_FREQ("2M"),
+		.HARDIP_DIV(1),
+		.FABRIC_DIV(1)
+	) rcosc (
+		.PWRDN(1'b0),
+		.CLKOUT_HARDIP(clk_2mhz),
+		.CLKOUT_FABRIC()
+	);
+
+	wire clk_2mhz_buf;
+	GP_CLKBUF clkbuf (
+		.IN(clk_2mhz),
+		.OUT(clk_2mhz_buf));
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// SPI interface
+
+	wire[7:0] rxd_low;
+	wire[7:0] rxd_high;
+	GP_SPI #(
+		.DATA_WIDTH(16),
+		.SPI_CPHA(0),
+		.SPI_CPOL(0),
+		.DIRECTION("INPUT")
+	) spi (
+		.SCK(spi_sck),
+		.SDAT(spi_mosi),
+		.CSN(spi_cs_n),
+		.TXD_HIGH(8'h00),
+		.TXD_LOW(8'h00),
+		.RXD_HIGH(rxd_high),
+		.RXD_LOW(rxd_low)
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// The DCMP
+
+	wire[7:0] ref0;
+	GP_DCMPREF #(
+		.REF_VAL(8'h40)
+	) dcref (
+		.OUT(ref0)
+	);
+
+	GP_DCMP #(
+		.GREATER_OR_EQUAL(1'b0),
+		.CLK_EDGE("RISING"),
+		.PWRDN_SYNC(1'b1)
+	) dcmp(
+		.INP(rxd_high),
+		.INN(ref0),
+		.CLK(clk_2mhz_buf),
+		.PWRDN(1'b0),
+		.GREATER(dcmp_greater),
+		.EQUAL(dcmp_equal)
 	);
 
 endmodule
