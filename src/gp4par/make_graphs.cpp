@@ -1036,10 +1036,20 @@ void MakeDeviceEdges(Greenpak4Device* device)
 
 		auto spi = device->GetSPI()->GetPARNode();
 
+		PARGraphNode* clkbufs[]=
+		{
+			device->GetClockBuffer(0)->GetPARNode(),
+			device->GetClockBuffer(1)->GetPARNode(),
+			device->GetClockBuffer(2)->GetPARNode(),
+			device->GetClockBuffer(3)->GetPARNode(),
+			device->GetClockBuffer(4)->GetPARNode(),
+		};
+
 		//Pin 10 IOB can drive SPI as MOSI
 		pin10->AddEdge("OUT", spi, "SDAT");
 
 		//SPI can drive pin 10 IOB as MISO
+		spi->AddEdge("SDAT", pin10, "IN");
 
 		//Routes to TX data:
 		//* ground (unused, for RX mode)
@@ -1053,7 +1063,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			gnd->AddEdge("OUT", spi, txname);
 		}
 
-		//  from cell GP_VSS (mapped to VSS0) port OUT  to cell spi (mapped to SPI_0) pin TXD_LOW[7]
+		//Routes to SPI SCK: dedicated routing from clkbuf4
+		clkbufs[4]->AddEdge("OUT", spi, "SCK");
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO DIGITAL COMPARATORS
@@ -1071,15 +1082,6 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			device->GetDcmpRef(1)->GetPARNode(),
 			device->GetDcmpRef(2)->GetPARNode(),
 			device->GetDcmpRef(3)->GetPARNode()
-		};
-
-		PARGraphNode* clkbufs[]=
-		{
-			device->GetClockBuffer(0)->GetPARNode(),
-			device->GetClockBuffer(1)->GetPARNode(),
-			device->GetClockBuffer(2)->GetPARNode(),
-			device->GetClockBuffer(3)->GetPARNode(),
-			device->GetClockBuffer(4)->GetPARNode(),
 		};
 
 		auto dcmux = device->GetDCMPMux()->GetPARNode();

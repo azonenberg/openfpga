@@ -50,7 +50,8 @@ public:
 	virtual bool CommitChanges();
 
 protected:
-	//Greenpak4EntityOutput m_input;
+	Greenpak4EntityOutput m_sck;
+	Greenpak4EntityOutput m_csn;
 };
 
 #endif	//Greenpak4SPI_h

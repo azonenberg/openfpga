@@ -76,12 +76,17 @@ module SPIToDCMP(spi_sck, spi_cs_n, spi_mosi, spi_int, dcmp_greater, dcmp_equal)
 	);
 
 	wire clk_2mhz_buf;
-	GP_CLKBUF clkbuf (
+	GP_CLKBUF clkbuf_rcosc (
 		.IN(clk_2mhz),
 		.OUT(clk_2mhz_buf));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// SPI interface
+
+	wire spi_sck_buf;
+	GP_CLKBUF clkbuf_sck(
+		.IN(spi_sck),
+		.OUT(spi_sck_buf));
 
 	wire[7:0] rxd_low;
 	wire[7:0] rxd_high;
@@ -91,7 +96,7 @@ module SPIToDCMP(spi_sck, spi_cs_n, spi_mosi, spi_int, dcmp_greater, dcmp_equal)
 		.SPI_CPOL(0),
 		.DIRECTION("INPUT")
 	) spi (
-		.SCK(spi_sck),
+		.SCK(spi_sck_buf),
 		.SDAT(spi_mosi),
 		.CSN(spi_cs_n),
 		.TXD_HIGH(8'h00),

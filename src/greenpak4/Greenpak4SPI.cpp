@@ -55,7 +55,7 @@ string Greenpak4SPI::GetDescription()
 vector<string> Greenpak4SPI::GetInputPorts() const
 {
 	vector<string> r;
-	r.push_back("SCK");
+	//SCK must come from clock buffer
 	r.push_back("CSN");
 	//SDAT is dedicated routing
 	return r;
