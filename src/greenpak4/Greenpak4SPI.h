@@ -50,8 +50,15 @@ public:
 	virtual bool CommitChanges();
 
 protected:
-	Greenpak4EntityOutput m_sck;
 	Greenpak4EntityOutput m_csn;
+	//all other inputs are dedicated routing
+
+	bool m_useAsBuffer;
+	bool m_cpha;
+	bool m_cpol;
+	bool m_width8Bits;
+	bool m_dirIsOutput;
+	bool m_parallelOutputToFabric;
 };
 
 #endif	//Greenpak4SPI_h

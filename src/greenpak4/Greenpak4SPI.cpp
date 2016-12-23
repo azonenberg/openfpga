@@ -31,10 +31,13 @@ Greenpak4SPI::Greenpak4SPI(
 		unsigned int obase,
 		unsigned int cbase)
 		: Greenpak4BitstreamEntity(device, matrix, ibase, obase, cbase)
-		/*, m_input(device->GetGround())
-		, m_delayTap(1)
-		, m_mode(DELAY)
-		, m_glitchFilter(false)*/
+		, m_csn(device->GetGround())
+		, m_useAsBuffer(false)
+		, m_cpha(false)
+		, m_cpol(false)
+		, m_width8Bits(false)
+		, m_dirIsOutput(false)
+		, m_parallelOutputToFabric(false)
 {
 }
 
@@ -63,10 +66,11 @@ vector<string> Greenpak4SPI::GetInputPorts() const
 
 void Greenpak4SPI::SetInput(string port, Greenpak4EntityOutput src)
 {
-	/*
-	if(port == "IN")
-		m_input = src;
-	*/
+	if(port == "CSN")
+		m_csn = src;
+
+	//Ignore inputs from dedicated routing as there's not much muxing going on
+
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
@@ -95,39 +99,41 @@ bool Greenpak4SPI::CommitChanges()
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return true;
-/*
-	//Delay line
-	if(ncell->m_type == "GP_DELAY")
-		m_mode = DELAY;
 
-	//Edge detector
-	else
+	if(ncell->HasParameter("DATA_WIDTH"))
 	{
-		m_mode = RISING_EDGE;
-
-		if(ncell->HasParameter("EDGE_DIRECTION"))
+		int width = atoi(ncell->m_parameters["DATA_WIDTH"].c_str());
+		if(width == 8)
+			m_width8Bits = true;
+		else if(width == 16)
+			m_width8Bits = false;
+		else
 		{
-			string dir = ncell->m_parameters["EDGE_DIRECTION"];
-			if(dir == "RISING")
-				m_mode = RISING_EDGE;
-			else if(dir == "FALLING")
-				m_mode = FALLING_EDGE;
-			else if(dir == "BOTH")
-				m_mode = BOTH_EDGE;
-			else
-			{
-				LogError("Invalid delay specifier %s (must be one of RISING, FALLING, BOTH)\n", dir.c_str());
-				return false;
-			}
+			LogError("Greenpak4SPI: only supported data widths are 8 and 16\n");
+			return false;
 		}
 	}
 
-	if(ncell->HasParameter("DELAY_STEPS"))
-		m_delayTap = atoi(ncell->m_parameters["DELAY_STEPS"].c_str());
+	if(ncell->HasParameter("SPI_CPHA"))
+		m_cpha = atoi(ncell->m_parameters["SPI_CPHA"].c_str()) ? true : false;
 
-	if(ncell->HasParameter("GLITCH_FILTER"))
-		m_glitchFilter = atoi(ncell->m_parameters["GLITCH_FILTER"].c_str()) ? true : false;
-*/
+	if(ncell->HasParameter("SPI_CPOL"))
+		m_cpol = atoi(ncell->m_parameters["SPI_CPOL"].c_str()) ? true : false;
+
+	if(ncell->HasParameter("DIRECTION"))
+	{
+		auto s = ncell->m_parameters["DIRECTION"];
+		if(s == "INPUT")
+			m_dirIsOutput = false;
+		else if(s == "OUTPUT")
+			m_dirIsOutput = true;
+		else
+		{
+			LogError("Greenpak4SPI: Direction must be OUTPUT or INPUT\n");
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -140,54 +146,34 @@ bool Greenpak4SPI::Load(bool* /*bitstream*/)
 
 bool Greenpak4SPI::Save(bool* bitstream)
 {
-	/*
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
 
-	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input))
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_csn))
 		return false;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
-	//Mode selector
-	switch(m_mode)
-	{
-		case RISING_EDGE:
-			bitstream[m_configBase + 0] = false;
-			bitstream[m_configBase + 1] = false;
-			break;
+	//SPI as ADC buffer
+	bitstream[m_configBase + 0] = m_useAsBuffer;
 
-		case FALLING_EDGE:
-			bitstream[m_configBase + 0] = true;
-			bitstream[m_configBase + 1] = false;
-			break;
+	//+1 = input source (FSMs or ADC)
 
-		case BOTH_EDGE:
-			bitstream[m_configBase + 0] = false;
-			bitstream[m_configBase + 1] = true;
-			break;
+	//Clock phase/polarity
+	bitstream[m_configBase + 2] = m_cpha;
+	bitstream[m_configBase + 3] = m_cpol;
 
-		case DELAY:
-			bitstream[m_configBase + 0] = true;
-			bitstream[m_configBase + 1] = true;
-			break;
-	}
+	//Width selector
+	bitstream[m_configBase + 4] = m_width8Bits;
 
-	//Select the number of delay taps
-	int ntap = m_delayTap - 1;
-	if( (ntap < 0) || (ntap > 3) )
-	{
-		LogError("DRC: GP_DELAY must have 1-4 steps of delay\n");
-		return false;
-	}
+	//Direction
+	bitstream[m_configBase + 5] = m_dirIsOutput;
 
-	//Number of taps
-	bitstream[m_configBase + 2] = (ntap & 1) ? true : false;
-	bitstream[m_configBase + 3] = (ntap & 2) ? true : false;
+	//Parallel output enable
+	bitstream[m_configBase + 6] = m_parallelOutputToFabric;
 
-	//Glitch filter
-	bitstream[m_configBase + 4] = m_glitchFilter;
-	*/
+	//TODO: SDIO mux selector
+
 	return true;
 }
