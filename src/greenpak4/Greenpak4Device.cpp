@@ -30,6 +30,10 @@ Greenpak4Device::Greenpak4Device(
 	Greenpak4IOB::PullDirection default_pull,
 	Greenpak4IOB::PullStrength default_drive)
 	: m_part(part)
+	, m_ioPrecharge(false)
+	, m_disableChargePump(false)
+	, m_ldoBypass(false)
+	, m_nvmLoadRetryCount(1)
 {
 	//Create power rails
 	//These have to come first, since all other nodes will refer to these during construction
@@ -45,6 +49,9 @@ Greenpak4Device::Greenpak4Device(
 	m_bandgap = NULL;
 	m_pga = NULL;
 	m_por = NULL;
+	m_pwrdet = NULL;
+	m_dcmpmux = NULL;
+	m_spi = NULL;
 	for(int i=0; i<2; i++)
 	{
 		for(int j=0; j<10; j++)
@@ -304,11 +311,12 @@ void Greenpak4Device::CreateDevice_SLG46140()
 	m_acmps[1]->AddInputMuxEntry(vdd, 2);
 	*/
 	//TODO: Vdd bypass
-	
+
 	//Power-on reset
 	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 1004);
-	
-	//TODO: IO pad precharge? what does this involve?
+
+	//Power detector
+	m_pwrdet = new Greenpak4PowerDetector(this, 0, 52);
 
 	//System reset
 	m_sysrst = new Greenpak4SystemReset(this, 0, 22, -1, 1000);
@@ -474,13 +482,11 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 
 	//Edge detector/prog delays
 	m_delays.push_back(new Greenpak4Delay(this, 0, 54, 22, 1600));
-	m_delays.push_back(new Greenpak4Delay(this, 1, 54, 22, 1609));
+	m_delays.push_back(new Greenpak4Delay(this, 1, 54, 22, 1605));
 
 	//Inverters
 	m_inverters.push_back(new Greenpak4Inverter(this, 0, 55, 23));
 	m_inverters.push_back(new Greenpak4Inverter(this, 1, 55, 23));
-
-	//TODO: External clocks??
 
 	//Low-frequency oscillator
 	m_lfosc = new Greenpak4LFOscillator(
@@ -629,7 +635,8 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 		40,		//oword,
 		1895));	//cbase
 
-	//TODO: Slave SPI
+	//Slave SPI
+	m_spi = new Greenpak4SPI(this, 0, 82, 44, 1656);
 
 	//TODO: ADC
 
@@ -661,11 +668,72 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_acmps.push_back(new Greenpak4Comparator(this, 4, 0, 70, 34,  0,  875, 871, 873, 926, 912));
 	m_acmps.push_back(new Greenpak4Comparator(this, 5, 0, 71, 35,  0,  880,  0,   0,  924, 917));
 
+	//Digital comparators
+	m_dcmps.push_back(new Greenpak4DigitalComparator(this, 0, 1, 82, 42, 1670));
+	m_dcmps.push_back(new Greenpak4DigitalComparator(this, 1, 1, 82, 44, 1691));
+	m_dcmps.push_back(new Greenpak4DigitalComparator(this, 2, 1, 82, 46, 1711));
+
+	//Digital comparator references
+	//SLG46620 datasheet r100 page 140-141 fig 94-95 are wrong.
+	//reg0 base is 1723, not 1725
+	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 0, 1723));
+	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 1, 1703));
+	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 2, 1683));
+	m_dcmprefs.push_back(new Greenpak4DCMPRef(this, 3, 1662));
+
+	//Digital comparator input mux
+	m_dcmpmux = new Greenpak4DCMPMux(this, 1, 83);
+
+	//Clock buffers
+	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 0, 0, 72));	//clk_matrix0
+	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 1, 0, 73));	//clk_matrix1
+	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 2, 1, 73));	//clk_matrix2
+	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 3, 1, 74));	//clk_matrix3
+	m_clkbufs.push_back(new Greenpak4ClockBuffer(this, 4, 0, 83));	//SPI SCK
+
+	//Clock mux buffer for ADC and PWM
+	auto mbuf = new Greenpak4MuxedClockBuffer(this, 5, 0, 1628);
+	m_clkbufs.push_back(mbuf);
+	mbuf->AddInputMuxEntry(m_ringosc->GetOutput("CLKOUT_HARDIP"), 0);
+	mbuf->AddInputMuxEntry(m_clkbufs[2]->GetOutput("OUT"), 1);
+	mbuf->AddInputMuxEntry(m_rcosc->GetOutput("CLKOUT_HARDIP"), 2);
+	mbuf->AddInputMuxEntry(m_clkbufs[4]->GetOutput("OUT"), 3);
+
+	//inp 0 is ADC, not implemented
+	m_dcmps[0]->AddInputPMuxEntry(m_spi->GetOutput("RXD_HIGH"), 1);
+	//inp 2 is FSM0_Q, not implemented
+	m_dcmps[0]->AddInputPMuxEntry(m_dcmpmux->GetOutput("OUTA"), 3);
+
+	//inn 0 is CNT8_Q, not implemented
+	m_dcmps[0]->AddInputNMuxEntry(m_dcmprefs[0]->GetOutput("OUT"), 1);
+	m_dcmps[0]->AddInputNMuxEntry(m_spi->GetOutput("RXD_LOW"), 2);
+	//inn 3 is FSM1_Q, not implemented
+
+	//in0 is ADC, not implemented
+	m_dcmps[1]->AddInputPMuxEntry(m_spi->GetOutput("RXD_LOW"), 1);
+	//in2 is FSM1, not implemented
+	m_dcmps[1]->AddInputPMuxEntry(m_dcmprefs[1]->GetOutput("OUT"), 3);
+
+	//in0 is CNT11_Q, not implemented
+	m_dcmps[1]->AddInputNMuxEntry(m_dcmpmux->GetOutput("OUTB"), 1);
+	m_dcmps[1]->AddInputNMuxEntry(m_spi->GetOutput("RXD_LOW"), 2);
+	//in3 is FSM0_Q, not implemented
+
+	//in0 is ADC, not implemented
+	m_dcmps[2]->AddInputPMuxEntry(m_spi->GetOutput("RXD_HIGH"), 1);
+	//in2 is FSM1, not implemented
+	m_dcmps[2]->AddInputPMuxEntry(m_dcmprefs[3]->GetOutput("OUT"), 3);
+
+	//in0 is CNT8_Q, not implemented
+	m_dcmps[2]->AddInputNMuxEntry(m_dcmprefs[2]->GetOutput("OUT"), 1);
+	m_dcmps[2]->AddInputNMuxEntry(m_spi->GetOutput("RXD_LOW"), 2);
+	//in3 is FSM0_Q, not implemented
+
 	//PGA
 	m_pga = new Greenpak4PGA(this, 815);
 
 	//Analog buffer
-	m_abuf = new Greenpak4Abuf(this);
+	m_abuf = new Greenpak4Abuf(this, 836);
 
 	//Comparator input routing
 	auto pin3 = m_iobs[3]->GetOutput("OUT");
@@ -701,12 +769,11 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	m_acmps[4]->AddInputMuxEntry(vdd, 2);
 	m_acmps[5]->AddInputMuxEntry(pin4, 0);
 
-	//TODO: Vdd bypass
-
 	//Power-on reset
 	m_por = new Greenpak4PowerOnReset(this, 0, -1, 62, 2009);
 
-	//TODO: IO pad precharge? what does this involve?
+	//Power detector
+	m_pwrdet = new Greenpak4PowerDetector(this, 0, 42);
 
 	//System reset
 	m_sysrst = new Greenpak4SystemReset(this, 0, 24, -1, 2018);
@@ -777,9 +844,15 @@ void Greenpak4Device::CreateDevice_common()
 		m_bitstuff.push_back(x);
 	for(auto x : m_acmps)
 		m_bitstuff.push_back(x);
+	for(auto x : m_dcmps)
+		m_bitstuff.push_back(x);
+	for(auto x : m_dcmprefs)
+		m_bitstuff.push_back(x);
 	for(auto x : m_dacs)
 		m_bitstuff.push_back(x);
 	for(auto x : m_delays)
+		m_bitstuff.push_back(x);
+	for(auto x : m_clkbufs)
 		m_bitstuff.push_back(x);
 	m_bitstuff.push_back(m_constantZero);
 	m_bitstuff.push_back(m_constantOne);
@@ -797,10 +870,16 @@ void Greenpak4Device::CreateDevice_common()
 		m_bitstuff.push_back(m_bandgap);
 	if(m_por)
 		m_bitstuff.push_back(m_por);
+	if(m_pwrdet)
+		m_bitstuff.push_back(m_pwrdet);
 	if(m_pga)
 		m_bitstuff.push_back(m_pga);
 	if(m_abuf)
 		m_bitstuff.push_back(m_abuf);
+	if(m_dcmpmux)
+		m_bitstuff.push_back(m_dcmpmux);
+	if(m_spi)
+		m_bitstuff.push_back(m_spi);
 
 	//Add cross connections iff we have them
 	if(m_matrixBase[0] != m_matrixBase[1])
@@ -865,6 +944,26 @@ unsigned int Greenpak4Device::GetMatrixBase(unsigned int matrix)
 	return m_matrixBase[matrix];
 }
 
+void Greenpak4Device::SetIOPrecharge(bool precharge)
+{
+	m_ioPrecharge = precharge;
+}
+
+void Greenpak4Device::SetDisableChargePump(bool disable)
+{
+	m_disableChargePump = disable;
+}
+
+void Greenpak4Device::SetLDOBypass(bool bypass)
+{
+	m_ldoBypass = bypass;
+}
+
+void Greenpak4Device::SetNVMRetryCount(int count)
+{
+	m_nvmLoadRetryCount = count;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File I/O
 
@@ -912,7 +1011,8 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			for(int i=1378; i<=1389; i++)
 				bitstream[i] = false;
 
-			//fall through to 46620 for shared config
+			//Fall through to 46620 for shared config.
+			//Other than the bondout for this IOB the devices are identical.
 
 		case GREENPAK4_SLG46620:
 
@@ -924,6 +1024,11 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[490] = true;
 			bitstream[491] = true;
 
+			//Force ADC block speed to 100 kHz (all other speeds not supported according to GreenPAK Designer)
+			//TODO: Do this in the ADC class once that exists
+			bitstream[838] = 0;
+			bitstream[839] = 1;
+
 			//Vref fine tune, magic value from datasheet (TODO do calibration?)
 			//Seems to have been removed from most recent datasheet
 			bitstream[891] = true;
@@ -931,6 +1036,9 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[889] = false;
 			bitstream[888] = true;
 			bitstream[887] = false;
+
+			//I/O precharge
+			bitstream[940] = m_ioPrecharge;
 
 			//Device ID; immutable on the device but added to aid verification
 			//5A: more data to follow
@@ -943,15 +1051,14 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[1022] = true;
 			bitstream[1023] = false;
 
-			//A5: end of bitstream
-			bitstream[2040] = true;
-			bitstream[2041] = false;
-			bitstream[2042] = true;
-			bitstream[2043] = false;
-			bitstream[2044] = false;
-			bitstream[2045] = true;
-			bitstream[2046] = false;
-			bitstream[2047] = true;
+			if(m_nvmLoadRetryCount != 1)
+				LogWarning("NVM retry count values other than 1 are not currently supported for SLG4662x\n");
+
+			//Internal LDO disable
+			bitstream[2008] = m_ldoBypass;
+
+			//Charge pump disable
+			bitstream[2010] = m_disableChargePump;
 
 			//User ID of the bitstream
 			bitstream[2031] = (userid & 0x01) ? true : false;
@@ -966,6 +1073,16 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			//Read protection flag
 			bitstream[2039] = readProtect;
 
+			//A5: end of bitstream
+			bitstream[2040] = true;
+			bitstream[2041] = false;
+			bitstream[2042] = true;
+			bitstream[2043] = false;
+			bitstream[2044] = false;
+			bitstream[2045] = true;
+			bitstream[2046] = false;
+			bitstream[2047] = true;
+
 			break;
 
 		case GREENPAK4_SLG46140:
@@ -978,6 +1095,14 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[383] = true;
 			bitstream[383] = true;
 
+			//Force ADC block speed to 100 kHz (all other speeds not supported according to GreenPAK Designer)
+			//Note that the SLG46140V datasheet r100 still lists the other speed values, but SLG46620 rev 100 does not.
+			//Furthermore, GreenPAK Designer v6.02 complains about bitstreams generated using 2'b11.
+			//It says "setting speed to 100 kHz" and writes to 2'b10 instead. One of these is wrong, need to ask Silego.
+			//TODO: Do this in the ADC class once that exists
+			bitstream[542] = 1;
+			bitstream[543] = 1;
+
 			//Vref fine tune, magic value from datasheet (TODO do calibration?)
 			//Seems to have been removed from most recent datasheet, used rev 079 for this
 			bitstream[495] = true;
@@ -985,6 +1110,53 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[493] = false;
 			bitstream[492] = true;
 			bitstream[491] = false;
+
+			//I/O precharge
+			bitstream[760] = m_ioPrecharge;
+
+			//NVM boot retry
+			switch(m_nvmLoadRetryCount)
+			{
+				case 1:
+					bitstream[995] = false;
+					bitstream[994] = false;
+					break;
+
+				case 2:
+					bitstream[995] = false;
+					bitstream[994] = true;
+					break;
+
+				case 3:
+					bitstream[995] = true;
+					bitstream[994] = false;
+					break;
+
+				case 4:
+					bitstream[995] = true;
+					bitstream[994] = true;
+					break;
+
+				default:
+					LogError("NVM retry count for SLG46140 must be 1...4\n");
+					return false;
+			}
+
+			//Internal LDO disable
+			bitstream[1003] = m_ldoBypass;
+
+			//Charge pump disable
+			bitstream[1005] = m_disableChargePump;
+
+			//User ID of the bitstream
+			bitstream[1007] = (userid & 0x01) ? true : false;
+			bitstream[1008] = (userid & 0x02) ? true : false;
+			bitstream[1009] = (userid & 0x04) ? true : false;
+			bitstream[1010] = (userid & 0x08) ? true : false;
+			bitstream[1011] = (userid & 0x10) ? true : false;
+			bitstream[1012] = (userid & 0x20) ? true : false;
+			bitstream[1013] = (userid & 0x40) ? true : false;
+			bitstream[1014] = (userid & 0x80) ? true : false;
 
 			//Device ID; immutable on the device but added to aid verification
 			//A5: end of bitstream
@@ -996,16 +1168,6 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			bitstream[1021] = true;
 			bitstream[1022] = false;
 			bitstream[1023] = true;
-
-			//User ID of the bitstream
-			bitstream[1007] = (userid & 0x01) ? true : false;
-			bitstream[1008] = (userid & 0x02) ? true : false;
-			bitstream[1009] = (userid & 0x04) ? true : false;
-			bitstream[1010] = (userid & 0x08) ? true : false;
-			bitstream[1011] = (userid & 0x10) ? true : false;
-			bitstream[1012] = (userid & 0x20) ? true : false;
-			bitstream[1013] = (userid & 0x40) ? true : false;
-			bitstream[1014] = (userid & 0x80) ? true : false;
 
 			break;
 

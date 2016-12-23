@@ -113,7 +113,9 @@ module Bargraph(bg_ok, vref_800, vref_600, vin, vin2, cout1, cout2, cout3, cout4
 	// Analog buffer on the input voltage to reduce loading since we feed it to a couple of comparators
 
 	wire vin_buf;
-	GP_ABUF abuf(
+	GP_ABUF #(
+		.BANDWIDTH_KHZ(5)
+	) abuf (
 		.IN(vin),
 		.OUT(vin_buf)
 	);

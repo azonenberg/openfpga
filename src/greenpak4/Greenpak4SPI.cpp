@@ -24,14 +24,24 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4Abuf::Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase)
-		: Greenpak4BitstreamEntity(device, 0, -1, -1, cbase)
-		, m_input(device->GetGround())
-		, m_bufferBandwidth(1)
+Greenpak4SPI::Greenpak4SPI(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int obase,
+		unsigned int cbase)
+		: Greenpak4BitstreamEntity(device, matrix, ibase, obase, cbase)
+		, m_csn(device->GetGround())
+		, m_useAsBuffer(false)
+		, m_cpha(false)
+		, m_cpol(false)
+		, m_width8Bits(false)
+		, m_dirIsOutput(false)
+		, m_parallelOutputToFabric(false)
 {
 }
 
-Greenpak4Abuf::~Greenpak4Abuf()
+Greenpak4SPI::~Greenpak4SPI()
 {
 
 }
@@ -39,98 +49,131 @@ Greenpak4Abuf::~Greenpak4Abuf()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-string Greenpak4Abuf::GetDescription()
+string Greenpak4SPI::GetDescription()
 {
-	return "ABUF0";	//only one of us for now
+	//only one SPI core
+	return "SPI_0";
 }
 
-vector<string> Greenpak4Abuf::GetInputPorts() const
+vector<string> Greenpak4SPI::GetInputPorts() const
 {
 	vector<string> r;
-	//no general fabric inputs
+	//SCK must come from clock buffer
+	r.push_back("CSN");
+	//SDAT is dedicated routing
 	return r;
 }
 
-void Greenpak4Abuf::SetInput(string port, Greenpak4EntityOutput src)
+void Greenpak4SPI::SetInput(string port, Greenpak4EntityOutput src)
 {
-	if(port == "IN")
-		m_input = src;
+	if(port == "CSN")
+		m_csn = src;
+
+	//Ignore inputs from dedicated routing as there's not much muxing going on
 
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4Abuf::GetOutputPorts() const
+vector<string> Greenpak4SPI::GetOutputPorts() const
 {
 	vector<string> r;
-	//no general fabric outputs
+	//r.push_back("OUT");
 	return r;
 }
 
-unsigned int Greenpak4Abuf::GetOutputNetNumber(string /*port*/)
+unsigned int Greenpak4SPI::GetOutputNetNumber(string port)
 {
-	return -1;
+	/*
+	if(port == "OUT")
+		return m_outputBaseWord;
+	else*/
+		return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4Abuf::CommitChanges()
+bool Greenpak4SPI::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return true;
 
-	if(ncell->HasParameter("BANDWIDTH_KHZ"))
-		m_bufferBandwidth = atoi(ncell->m_parameters["BANDWIDTH_KHZ"].c_str());
+	if(ncell->HasParameter("DATA_WIDTH"))
+	{
+		int width = atoi(ncell->m_parameters["DATA_WIDTH"].c_str());
+		if(width == 8)
+			m_width8Bits = true;
+		else if(width == 16)
+			m_width8Bits = false;
+		else
+		{
+			LogError("Greenpak4SPI: only supported data widths are 8 and 16\n");
+			return false;
+		}
+	}
 
-	//No configuration
+	if(ncell->HasParameter("SPI_CPHA"))
+		m_cpha = atoi(ncell->m_parameters["SPI_CPHA"].c_str()) ? true : false;
+
+	if(ncell->HasParameter("SPI_CPOL"))
+		m_cpol = atoi(ncell->m_parameters["SPI_CPOL"].c_str()) ? true : false;
+
+	if(ncell->HasParameter("DIRECTION"))
+	{
+		auto s = ncell->m_parameters["DIRECTION"];
+		if(s == "INPUT")
+			m_dirIsOutput = false;
+		else if(s == "OUTPUT")
+			m_dirIsOutput = true;
+		else
+		{
+			LogError("Greenpak4SPI: Direction must be OUTPUT or INPUT\n");
+			return false;
+		}
+	}
+
 	return true;
 }
 
-bool Greenpak4Abuf::Load(bool* /*bitstream*/)
+bool Greenpak4SPI::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
 	LogError("Unimplemented\n");
 	return false;
 }
 
-bool Greenpak4Abuf::Save(bool* bitstream)
+bool Greenpak4SPI::Save(bool* bitstream)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
 
-	//none
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_csn))
+		return false;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
-	switch(m_bufferBandwidth)
-	{
-		case 1:
-			bitstream[m_configBase + 1] = false;
-			bitstream[m_configBase + 0] = false;
-			break;
+	//SPI as ADC buffer
+	bitstream[m_configBase + 0] = m_useAsBuffer;
 
-		case 5:
-			bitstream[m_configBase + 1] = false;
-			bitstream[m_configBase + 0] = true;
-			break;
+	//+1 = input source (FSMs or ADC)
 
-		case 20:
-			bitstream[m_configBase + 1] = true;
-			bitstream[m_configBase + 0] = false;
-			break;
+	//Clock phase/polarity
+	bitstream[m_configBase + 2] = m_cpha;
+	bitstream[m_configBase + 3] = m_cpol;
 
-		case 50:
-			bitstream[m_configBase + 1] = true;
-			bitstream[m_configBase + 0] = true;
-			break;
+	//Width selector
+	bitstream[m_configBase + 4] = m_width8Bits;
 
-		default:
-			LogError("GP_ABUF buffer bandwidth must be one of 1, 5, 20, 50\n");
-			return false;
-	}
+	//Direction
+	bitstream[m_configBase + 5] = m_dirIsOutput;
+
+	//Parallel output enable
+	bitstream[m_configBase + 6] = m_parallelOutputToFabric;
+
+	//TODO: SDIO mux selector
 
 	return true;
 }

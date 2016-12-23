@@ -16,41 +16,46 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Abuf_h
-#define Greenpak4Abuf_h
+`default_nettype none
 
-#include "Greenpak4BitstreamEntity.h"
+module Latch(d, q, q2, clk, nrst);
 
-class Greenpak4Abuf : public Greenpak4BitstreamEntity
-{
-public:
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// I/O declarations
 
-	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
+	(* LOC = "P3" *)
+	input wire d;
 
-	//Serialization
-	virtual bool Load(bool* bitstream);
-	virtual bool Save(bool* bitstream);
+	(* LOC = "P4" *)
+	output wire q;
 
-	virtual ~Greenpak4Abuf();
+	(* LOC = "P5" *)
+	input wire clk;
 
-	virtual std::string GetDescription();
+	(* LOC = "P6" *)
+	input wire nrst;
 
-	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
-	virtual unsigned int GetOutputNetNumber(std::string port);
+	(* LOC = "P7" *)
+	output reg q2 = 0;
 
-	virtual std::vector<std::string> GetInputPorts() const;
-	virtual std::vector<std::string> GetOutputPorts() const;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// An inverted flipflop
 
-	virtual bool CommitChanges();
+	GP_DLATCHRI #(
+		.INIT(1'b0)
+	) latch (
+		.D(d),
+		.nQ(q),
+		.nCLK(clk),
+		.nRST(nrst)
+	);
 
-	Greenpak4EntityOutput GetInput()
-	{ return m_input; }
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// A D latch inferred from behavioral verilog
 
-protected:
-	Greenpak4EntityOutput m_input;
+	always @(*) begin
+		if(!clk)
+			q2 <= ~d;
+	end
 
-	int m_bufferBandwidth;
-};
-
-#endif	//Greenpak4Abuf_h
+endmodule

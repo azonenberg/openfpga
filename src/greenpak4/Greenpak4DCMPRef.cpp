@@ -24,14 +24,17 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4Abuf::Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase)
-		: Greenpak4BitstreamEntity(device, 0, -1, -1, cbase)
-		, m_input(device->GetGround())
-		, m_bufferBandwidth(1)
+Greenpak4DCMPRef::Greenpak4DCMPRef(
+	Greenpak4Device* device,
+		unsigned int blocknum,
+		unsigned int cbase)
+	: Greenpak4BitstreamEntity(device, 1, -1, -1, cbase)
+	, m_blocknum(blocknum)
+	, m_referenceValue(0)
 {
 }
 
-Greenpak4Abuf::~Greenpak4Abuf()
+Greenpak4DCMPRef::~Greenpak4DCMPRef()
 {
 
 }
@@ -39,98 +42,79 @@ Greenpak4Abuf::~Greenpak4Abuf()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-string Greenpak4Abuf::GetDescription()
+string Greenpak4DCMPRef::GetDescription()
 {
-	return "ABUF0";	//only one of us for now
+	char buf[128];
+	snprintf(buf, sizeof(buf), "DCMPREF_%u", m_blocknum);
+	return string(buf);
 }
 
-vector<string> Greenpak4Abuf::GetInputPorts() const
+vector<string> Greenpak4DCMPRef::GetInputPorts() const
 {
 	vector<string> r;
-	//no general fabric inputs
+	//no inputs
 	return r;
 }
 
-void Greenpak4Abuf::SetInput(string port, Greenpak4EntityOutput src)
+void Greenpak4DCMPRef::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
 {
-	if(port == "IN")
-		m_input = src;
-
-	//ignore anything else silently (should not be possible since synthesis would error out)
+	//no inputs
 }
 
-vector<string> Greenpak4Abuf::GetOutputPorts() const
+vector<string> Greenpak4DCMPRef::GetOutputPorts() const
 {
 	vector<string> r;
 	//no general fabric outputs
 	return r;
 }
 
-unsigned int Greenpak4Abuf::GetOutputNetNumber(string /*port*/)
+unsigned int Greenpak4DCMPRef::GetOutputNetNumber(string /*port*/)
 {
+	//no general fabric outputs
 	return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4Abuf::CommitChanges()
+bool Greenpak4DCMPRef::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned
 	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
 	if(ncell == NULL)
 		return true;
 
-	if(ncell->HasParameter("BANDWIDTH_KHZ"))
-		m_bufferBandwidth = atoi(ncell->m_parameters["BANDWIDTH_KHZ"].c_str());
+	if(ncell->HasParameter("REF_VAL"))
+		m_referenceValue = (atoi(ncell->m_parameters["REF_VAL"].c_str()));
 
-	//No configuration
 	return true;
 }
 
-bool Greenpak4Abuf::Load(bool* /*bitstream*/)
+bool Greenpak4DCMPRef::Load(bool* /*bitstream*/)
 {
-	//TODO: Do our inputs
 	LogError("Unimplemented\n");
 	return false;
 }
 
-bool Greenpak4Abuf::Save(bool* bitstream)
+bool Greenpak4DCMPRef::Save(bool* bitstream)
 {
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// INPUT BUS
-
-	//none
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
-	switch(m_bufferBandwidth)
+	if(m_referenceValue > 0xff)
 	{
-		case 1:
-			bitstream[m_configBase + 1] = false;
-			bitstream[m_configBase + 0] = false;
-			break;
-
-		case 5:
-			bitstream[m_configBase + 1] = false;
-			bitstream[m_configBase + 0] = true;
-			break;
-
-		case 20:
-			bitstream[m_configBase + 1] = true;
-			bitstream[m_configBase + 0] = false;
-			break;
-
-		case 50:
-			bitstream[m_configBase + 1] = true;
-			bitstream[m_configBase + 0] = true;
-			break;
-
-		default:
-			LogError("GP_ABUF buffer bandwidth must be one of 1, 5, 20, 50\n");
-			return false;
+		LogError("GP_DCMPREF reference value must be less than 0xFF (got 0x%x\n", m_referenceValue);
+		return false;
 	}
+
+	bitstream[m_configBase + 0] = (m_referenceValue & 1) ? true : false;
+	bitstream[m_configBase + 1] = (m_referenceValue & 2) ? true : false;
+	bitstream[m_configBase + 2] = (m_referenceValue & 4) ? true : false;
+	bitstream[m_configBase + 3] = (m_referenceValue & 8) ? true : false;
+	bitstream[m_configBase + 4] = (m_referenceValue & 16) ? true : false;
+	bitstream[m_configBase + 5] = (m_referenceValue & 32) ? true : false;
+	bitstream[m_configBase + 6] = (m_referenceValue & 64) ? true : false;
+	bitstream[m_configBase + 7] = (m_referenceValue & 128) ? true : false;
 
 	return true;
 }

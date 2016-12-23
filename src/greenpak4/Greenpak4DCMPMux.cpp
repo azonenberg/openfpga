@@ -16,41 +16,92 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Abuf_h
-#define Greenpak4Abuf_h
+#include <log.h>
+#include <Greenpak4.h>
 
-#include "Greenpak4BitstreamEntity.h"
+using namespace std;
 
-class Greenpak4Abuf : public Greenpak4BitstreamEntity
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
+
+Greenpak4DCMPMux::Greenpak4DCMPMux(
+	Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase)
+	: Greenpak4BitstreamEntity(device, matrix, ibase, -1, -1)
+	, m_sel0(device->GetGround())
+	, m_sel1(device->GetGround())
 {
-public:
+}
 
-	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
+Greenpak4DCMPMux::~Greenpak4DCMPMux()
+{
 
-	//Serialization
-	virtual bool Load(bool* bitstream);
-	virtual bool Save(bool* bitstream);
+}
 
-	virtual ~Greenpak4Abuf();
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
 
-	virtual std::string GetDescription();
+string Greenpak4DCMPMux::GetDescription()
+{
+	return "DCMPMUX_0";
+}
 
-	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
-	virtual unsigned int GetOutputNetNumber(std::string port);
+vector<string> Greenpak4DCMPMux::GetInputPorts() const
+{
+	vector<string> r;
+	r.push_back("SEL[0]");
+	r.push_back("SEL[1]");
+	return r;
+}
 
-	virtual std::vector<std::string> GetInputPorts() const;
-	virtual std::vector<std::string> GetOutputPorts() const;
+void Greenpak4DCMPMux::SetInput(string port, Greenpak4EntityOutput src)
+{
+	if(port == "SEL[0]")
+		m_sel0 = src;
+	else if(port == "SEL[1]")
+		m_sel1 = src;
 
-	virtual bool CommitChanges();
+	//ignore anything else silently (should not be possible since synthesis would error out)
+}
 
-	Greenpak4EntityOutput GetInput()
-	{ return m_input; }
+vector<string> Greenpak4DCMPMux::GetOutputPorts() const
+{
+	vector<string> r;
+	//no general fabric outputs
+	return r;
+}
 
-protected:
-	Greenpak4EntityOutput m_input;
+unsigned int Greenpak4DCMPMux::GetOutputNetNumber(string /*port*/)
+{
+	//no general fabric outputs
+	return -1;
+}
 
-	int m_bufferBandwidth;
-};
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization
 
-#endif	//Greenpak4Abuf_h
+bool Greenpak4DCMPMux::CommitChanges()
+{
+	//no parameters
+	return true;
+}
+
+bool Greenpak4DCMPMux::Load(bool* /*bitstream*/)
+{
+	LogError("Unimplemented\n");
+	return false;
+}
+
+bool Greenpak4DCMPMux::Save(bool* bitstream)
+{
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_sel0))
+		return false;
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_sel1))
+		return false;
+
+	return true;
+}

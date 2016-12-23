@@ -16,23 +16,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Abuf_h
-#define Greenpak4Abuf_h
+#ifndef Greenpak4DigitalComparator_h
+#define Greenpak4DigitalComparator_h
 
-#include "Greenpak4BitstreamEntity.h"
-
-class Greenpak4Abuf : public Greenpak4BitstreamEntity
+/**
+	@brief The DCMP/PWM block
+ */
+class Greenpak4DigitalComparator : public Greenpak4BitstreamEntity
 {
 public:
 
 	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
+	Greenpak4DigitalComparator(
+		Greenpak4Device* device,
+		unsigned int cmpnum,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int oword,
+		unsigned int cbase);
+	virtual ~Greenpak4DigitalComparator();
 
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-
-	virtual ~Greenpak4Abuf();
 
 	virtual std::string GetDescription();
 
@@ -44,13 +50,33 @@ public:
 
 	virtual bool CommitChanges();
 
-	Greenpak4EntityOutput GetInput()
-	{ return m_input; }
+	void AddInputPMuxEntry(Greenpak4EntityOutput net, unsigned int sel)
+	{ m_inpsels[net] = sel; }
+
+	void AddInputNMuxEntry(Greenpak4EntityOutput net, unsigned int sel)
+	{ m_innsels[net] = sel; }
 
 protected:
-	Greenpak4EntityOutput m_input;
+	Greenpak4EntityOutput m_powerDown;
+	Greenpak4EntityOutput m_inp[8];
+	Greenpak4EntityOutput m_inn[8];
+	Greenpak4EntityOutput m_clock;
 
-	int m_bufferBandwidth;
+	unsigned int m_cmpNum;
+
+	bool m_dcmpMode;	//true for dmcp, false for pwm
+
+	unsigned int m_pwmDeadband;	//dead time for differential PWM outputs, in ns
+
+	bool m_compareGreaterEqual;	//select >= if true, > if false
+
+	bool m_clockInvert;			//invert input clock
+
+	bool m_pdSync;				//Power-down synchronization
+
+	//Map of <signal, muxsel> tuples for input mux
+	std::map<Greenpak4EntityOutput, unsigned int> m_inpsels;
+	std::map<Greenpak4EntityOutput, unsigned int> m_innsels;
 };
 
-#endif	//Greenpak4Abuf_h
+#endif

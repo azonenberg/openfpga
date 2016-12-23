@@ -16,41 +16,62 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Abuf_h
-#define Greenpak4Abuf_h
+#include <log.h>
+#include <Greenpak4.h>
 
-#include "Greenpak4BitstreamEntity.h"
+using namespace std;
 
-class Greenpak4Abuf : public Greenpak4BitstreamEntity
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
+
+Greenpak4MuxedClockBuffer::Greenpak4MuxedClockBuffer(
+	Greenpak4Device* device,
+	unsigned int bufnum,
+	unsigned int matrix,
+	unsigned int cbase)
+	: Greenpak4ClockBuffer(device, bufnum, matrix, -1, cbase)
 {
-public:
+}
 
-	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
+Greenpak4MuxedClockBuffer::~Greenpak4MuxedClockBuffer()
+{
 
-	//Serialization
-	virtual bool Load(bool* bitstream);
-	virtual bool Save(bool* bitstream);
+}
 
-	virtual ~Greenpak4Abuf();
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization
 
-	virtual std::string GetDescription();
+bool Greenpak4MuxedClockBuffer::Load(bool* /*bitstream*/)
+{
+	//TODO: Do our inputs
+	LogError("Unimplemented\n");
+	return false;
+}
 
-	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
-	virtual unsigned int GetOutputNetNumber(std::string port);
+bool Greenpak4MuxedClockBuffer::Save(bool* bitstream)
+{
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
 
-	virtual std::vector<std::string> GetInputPorts() const;
-	virtual std::vector<std::string> GetOutputPorts() const;
+	//none
 
-	virtual bool CommitChanges();
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CONFIGURATION
 
-	Greenpak4EntityOutput GetInput()
-	{ return m_input; }
+	//Grounded input is legal even if not a valid muxsel
+	if(m_input.IsPowerRail() && !m_input.GetPowerRailValue())
+		return true;
 
-protected:
-	Greenpak4EntityOutput m_input;
+	if(m_inputs.find(m_input) == m_inputs.end())
+	{
+		LogError("Greenpak4MuxedClockBuffer: invalid input\n");
+		return false;
+	}
 
-	int m_bufferBandwidth;
-};
+	unsigned int muxsel = m_inputs[m_input];
 
-#endif	//Greenpak4Abuf_h
+	bitstream[m_configBase + 0] = (muxsel & 1) ? true : false;
+	bitstream[m_configBase + 1] = (muxsel & 2) ? true : false;
+
+	return true;
+}

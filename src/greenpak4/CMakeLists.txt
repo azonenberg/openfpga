@@ -4,11 +4,15 @@ add_library(greenpak4 STATIC
 	Greenpak4Abuf.cpp
 	Greenpak4Bandgap.cpp
 	Greenpak4BitstreamEntity.cpp
+	Greenpak4ClockBuffer.cpp
 	Greenpak4Comparator.cpp
 	Greenpak4Counter.cpp
 	Greenpak4CrossConnection.cpp
 	Greenpak4DAC.cpp
+	Greenpak4DCMPMux.cpp
+	Greenpak4DCMPRef.cpp
 	Greenpak4Delay.cpp
+	Greenpak4DigitalComparator.cpp
 	Greenpak4DualEntity.cpp
 	Greenpak4Device.cpp
 	Greenpak4EntityOutput.cpp
@@ -19,14 +23,17 @@ add_library(greenpak4 STATIC
 	Greenpak4IOBTypeB.cpp
 	Greenpak4LFOscillator.cpp
 	Greenpak4LUT.cpp
+	Greenpak4MuxedClockBuffer.cpp
 	Greenpak4PairedEntity.cpp
 	Greenpak4PatternGenerator.cpp
 	Greenpak4PGA.cpp
+	Greenpak4PowerDetector.cpp
 	Greenpak4PowerOnReset.cpp
 	Greenpak4PowerRail.cpp
 	Greenpak4RCOscillator.cpp
 	Greenpak4RingOscillator.cpp
 	Greenpak4ShiftRegister.cpp
+	Greenpak4SPI.cpp
 	Greenpak4SystemReset.cpp
 	Greenpak4VoltageReference.cpp
 

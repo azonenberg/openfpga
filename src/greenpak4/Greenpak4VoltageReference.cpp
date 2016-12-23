@@ -57,7 +57,6 @@ string Greenpak4VoltageReference::GetDescription()
 vector<string> Greenpak4VoltageReference::GetInputPorts() const
 {
 	vector<string> r;
-	r.push_back("VIN");
 	return r;
 }
 
@@ -116,8 +115,6 @@ bool Greenpak4VoltageReference::Save(bool* /*bitstream*/)
 
 unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 {
-	unsigned int select = 0;
-
 	//Constants
 	if(m_vin.IsPowerRail())
 	{
@@ -128,31 +125,41 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 			{
 				LogError("DRC: Voltage reference %s must be set to a multiple of 50 mV (requested %d)\n",
 					GetDescription().c_str(), m_vref);
-				return false;
+				return 0xff;
 			}
 
 			if(m_vref < 50 || m_vref > 1200)
 			{
 				LogError("DRC: Voltage reference %s must be set between 50mV and 1200 mV inclusive (requested %d)\n",
 					GetDescription().c_str(), m_vref);
-				return false;
+				return 0xff;
 			}
 
 			if(m_vinDiv != 1)
 			{
 				LogError("DRC: Voltage reference %s must have divisor of 1 when using constant voltage\n",
 					GetDescription().c_str());
-				return false;
+				return 0xff;
 			}
 
-			select = (m_vref / 50) - 1;
+			return (m_vref / 50) - 1;
 		}
 
 		//Divided Vdd
 		else
 		{
-			LogError("Greenpak4VoltageReference inputs for divided Vdd not implemented yet\n");
-			return 0;
+			switch(m_vinDiv)
+			{
+				case 3:
+					return 0x18;
+
+				case 4:
+					return 0x19;
+
+				default:
+					LogError("Greenpak4VoltageReference: Only legal divisors for Vdd are 3 and 4\n");
+					return 0xff;
+			}
 		}
 	}
 
@@ -161,12 +168,8 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 	{
 		auto num = dynamic_cast<Greenpak4DAC*>(m_vin.GetRealEntity())->GetDACNum();
 
-		if(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46140)
-			LogError("Greenpak4VoltageReference: not implemented for 46140 yet\n");
-
 		switch(num)
 		{
-			//Constant for SLG46620V, TODO check other parts?
 			case 0:
 				return 0x1F;
 			case 1:
@@ -174,16 +177,77 @@ unsigned int Greenpak4VoltageReference::GetACMPMuxSel()
 
 			default:
 				LogError("Greenpak4VoltageReference: invalid DAC\n");
-				break;
+				return 0xff;
 		}
 	}
 
-	//TODO: external Vref
-	else
+	//See if it's an IOB
+	else if(m_vin.IsIOB())
 	{
-		LogError("Greenpak4VoltageReference inputs other than constant not implemented yet\n");
-		return false;
+		auto iob = dynamic_cast<Greenpak4IOB*>(m_vin.GetRealEntity());
+		auto pin = iob->GetPinNumber();
+
+		//SLG46140
+		auto part = m_device->GetPart();
+		if(part == Greenpak4Device::GREENPAK4_SLG46140)
+		{
+			if( (pin == 4) && (m_vinDiv == 2) )
+				return 0x1d;
+			else if( (pin == 5) && (m_vinDiv == 2) )
+				return 0x1c;
+			else if( (pin == 4) && (m_vinDiv == 1) )
+				return 0x1b;
+			else if( (pin == 5) && (m_vinDiv == 1) )
+				return 0x1a;
+			else
+			{
+				LogError("Invalid voltage reference input (pin %d, divisor %d)\n", pin, m_vinDiv);
+				return 0xff;
+			}
+		}
+
+		//SLG4662x
+		else if( (part == Greenpak4Device::GREENPAK4_SLG46620) || (part == Greenpak4Device::GREENPAK4_SLG46621) )
+		{
+			//Same mux selector for all vrefs
+			if(pin == 10)
+			{
+				if(m_vinDiv == 2)
+					return 0x1c;
+				else if(m_vinDiv == 1)
+					return 0x1a;
+				else
+				{
+					LogError("Invalid voltage reference input (pin %d, divisor %d)\n", pin, m_vinDiv);
+					return 0xff;
+				}
+			}
+
+			//All other pins use the same mux setting (different pins for each vref though)
+			//No need to check for invalid pins as those will fail routing due to missing paths
+			else
+			{
+				if(m_vinDiv == 2)
+					return 0x1d;
+				else if(m_vinDiv == 1)
+					return 0x1b;
+				else
+				{
+					LogError("Invalid voltage reference input (pin %d, divisor %d)\n", pin, m_vinDiv);
+					return 0xff;
+				}
+
+			}
+		}
+
+		LogError("Invalid voltage reference input (pin %d)\n", iob->GetPinNumber());
+		return 0xff;
 	}
 
-	return select;
+	//should never happen, we'd fail routing before we get here
+	else
+	{
+		LogError("Invalid voltage reference input\n");
+		return 0xff;
+	}
 }

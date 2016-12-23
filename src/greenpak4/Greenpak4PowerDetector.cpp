@@ -16,41 +16,79 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Abuf_h
-#define Greenpak4Abuf_h
+#include <log.h>
+#include <Greenpak4.h>
 
-#include "Greenpak4BitstreamEntity.h"
+using namespace std;
 
-class Greenpak4Abuf : public Greenpak4BitstreamEntity
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Construction / destruction
+
+Greenpak4PowerDetector::Greenpak4PowerDetector(
+	Greenpak4Device* device,
+	unsigned int matrix,
+	unsigned int oword)
+	: Greenpak4BitstreamEntity(device, matrix, -1, oword, -1)
 {
-public:
+}
 
-	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
+Greenpak4PowerDetector::~Greenpak4PowerDetector()
+{
 
-	//Serialization
-	virtual bool Load(bool* bitstream);
-	virtual bool Save(bool* bitstream);
+}
 
-	virtual ~Greenpak4Abuf();
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
 
-	virtual std::string GetDescription();
+string Greenpak4PowerDetector::GetDescription()
+{
+	return "PWRDET0";
+}
 
-	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
-	virtual unsigned int GetOutputNetNumber(std::string port);
+vector<string> Greenpak4PowerDetector::GetInputPorts() const
+{
+	vector<string> r;
+	//no inputs
+	return r;
+}
 
-	virtual std::vector<std::string> GetInputPorts() const;
-	virtual std::vector<std::string> GetOutputPorts() const;
+void Greenpak4PowerDetector::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
+{
+	//no inputs
+}
 
-	virtual bool CommitChanges();
+vector<string> Greenpak4PowerDetector::GetOutputPorts() const
+{
+	vector<string> r;
+	r.push_back("VDD_LOW");
+	return r;
+}
 
-	Greenpak4EntityOutput GetInput()
-	{ return m_input; }
+unsigned int Greenpak4PowerDetector::GetOutputNetNumber(string port)
+{
+	if(port == "VDD_LOW")
+		return m_outputBaseWord;
+	else
+		return -1;
+}
 
-protected:
-	Greenpak4EntityOutput m_input;
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Serialization
 
-	int m_bufferBandwidth;
-};
+bool Greenpak4PowerDetector::CommitChanges()
+{
+	//no parameters
+	return true;
+}
 
-#endif	//Greenpak4Abuf_h
+bool Greenpak4PowerDetector::Load(bool* /*bitstream*/)
+{
+	LogError("Unimplemented\n");
+	return false;
+}
+
+bool Greenpak4PowerDetector::Save(bool* /*bitstream*/)
+{
+	//no configuration - output only
+	return true;
+}

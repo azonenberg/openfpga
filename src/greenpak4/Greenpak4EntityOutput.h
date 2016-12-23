@@ -45,6 +45,9 @@ public:
 	std::string GetOutputName() const
 	{ return m_src->GetDescription() + " port " + m_port; }
 
+	std::string GetPortName() const
+	{ return m_port; }
+
 	Greenpak4EntityOutput GetDual();
 
 	Greenpak4BitstreamEntity* GetRealEntity()
@@ -54,6 +57,7 @@ public:
 	bool IsVoltageReference();
 	bool IsPowerRail();
 	bool IsDAC();
+	bool IsIOB();
 	bool GetPowerRailValue();
 
 	bool HasDual()

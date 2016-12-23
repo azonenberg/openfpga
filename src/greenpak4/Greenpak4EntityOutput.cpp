@@ -39,6 +39,11 @@ bool Greenpak4EntityOutput::IsVoltageReference()
 	return dynamic_cast<Greenpak4VoltageReference*>(m_src) != NULL;
 }
 
+bool Greenpak4EntityOutput::IsIOB()
+{
+	return dynamic_cast<Greenpak4IOB*>(m_src) != NULL;
+}
+
 bool Greenpak4EntityOutput::IsPGA()
 {
 	return dynamic_cast<Greenpak4PGA*>(m_src) != NULL;

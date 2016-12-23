@@ -16,23 +16,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Abuf_h
-#define Greenpak4Abuf_h
+#ifndef Greenpak4DCMPMux_h
+#define Greenpak4DCMPMux_h
 
-#include "Greenpak4BitstreamEntity.h"
-
-class Greenpak4Abuf : public Greenpak4BitstreamEntity
+/**
+	@brief Mux feeding input to the DCMPs
+ */
+class Greenpak4DCMPMux : public Greenpak4BitstreamEntity
 {
 public:
 
 	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
+	Greenpak4DCMPMux(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase);
+	virtual ~Greenpak4DCMPMux();
 
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
-
-	virtual ~Greenpak4Abuf();
 
 	virtual std::string GetDescription();
 
@@ -44,13 +47,9 @@ public:
 
 	virtual bool CommitChanges();
 
-	Greenpak4EntityOutput GetInput()
-	{ return m_input; }
-
 protected:
-	Greenpak4EntityOutput m_input;
-
-	int m_bufferBandwidth;
+	Greenpak4EntityOutput m_sel0;
+	Greenpak4EntityOutput m_sel1;
 };
 
-#endif	//Greenpak4Abuf_h
+#endif

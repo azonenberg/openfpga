@@ -16,41 +16,71 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Abuf_h
-#define Greenpak4Abuf_h
+`default_nettype none
 
-#include "Greenpak4BitstreamEntity.h"
+/**
+	INPUTS:
+		FIXME
 
-class Greenpak4Abuf : public Greenpak4BitstreamEntity
-{
-public:
+	OUTPUTS:
+		Bandgap-OK on pin 20
+		Vdd/4 on pin 19
+		Vdd/3 on pin 18
+		Brownout-detect on pin 17
 
-	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
+	TEST PROCEDURE:
+		FIXME
+ */
+module VrefVDD(bg_ok, vref_vdiv4, vref_vdiv3, vdd_low);
 
-	//Serialization
-	virtual bool Load(bool* bitstream);
-	virtual bool Save(bool* bitstream);
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// I/O declarations
 
-	virtual ~Greenpak4Abuf();
+	(* LOC = "P20" *)
+	output wire bg_ok;
 
-	virtual std::string GetDescription();
+	(* LOC = "P19" *)
+	(* IBUF_TYPE = "ANALOG" *)
+	output wire vref_vdiv4;
 
-	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
-	virtual unsigned int GetOutputNetNumber(std::string port);
+	(* LOC = "P18" *)
+	(* IBUF_TYPE = "ANALOG" *)
+	output wire vref_vdiv3;
 
-	virtual std::vector<std::string> GetInputPorts() const;
-	virtual std::vector<std::string> GetOutputPorts() const;
+	(* LOC = "P17" *)
+	output wire vdd_low;
 
-	virtual bool CommitChanges();
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// System reset stuff
 
-	Greenpak4EntityOutput GetInput()
-	{ return m_input; }
+	//Power-on reset
+	wire por_done;
+	GP_POR #(
+		.POR_TIME(500)
+	) por (
+		.RST_DONE(por_done)
+	);
 
-protected:
-	Greenpak4EntityOutput m_input;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// 1.0V bandgap voltage reference (used by a lot of the mixed signal IP)
 
-	int m_bufferBandwidth;
-};
+	GP_BANDGAP #(
+		.AUTO_PWRDN(0),
+		.CHOPPER_EN(1),
+		.OUT_DELAY(550)
+	) bandgap (
+		.OK(bg_ok)
+	);
 
-#endif	//Greenpak4Abuf_h
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Voltage references for Vdd/3 and Vdd/4
+
+	GP_VREF #( .VIN_DIV(4'd4), .VREF(16'd0)  ) vdiv4  ( .VIN(1'b1), .VOUT(vref_vdiv4)  );
+	GP_VREF #( .VIN_DIV(4'd3), .VREF(16'd0)  ) vdiv3  ( .VIN(1'b1), .VOUT(vref_vdiv3)  );
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Brownout detector
+
+	GP_PWRDET pwrdet(.VDD_LOW(vdd_low));
+
+endmodule

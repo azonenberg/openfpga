@@ -16,41 +16,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Abuf_h
-#define Greenpak4Abuf_h
+#ifndef Greenpak4MuxedClockBuffer_h
+#define Greenpak4MuxedClockBuffer_h
 
 #include "Greenpak4BitstreamEntity.h"
 
-class Greenpak4Abuf : public Greenpak4BitstreamEntity
+class Greenpak4MuxedClockBuffer : public Greenpak4ClockBuffer
 {
 public:
 
 	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
+	Greenpak4MuxedClockBuffer(Greenpak4Device* device, unsigned int bufnum, unsigned int matrix, unsigned int cbase);
 
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
 
-	virtual ~Greenpak4Abuf();
+	virtual ~Greenpak4MuxedClockBuffer();
 
-	virtual std::string GetDescription();
-
-	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
-	virtual unsigned int GetOutputNetNumber(std::string port);
-
-	virtual std::vector<std::string> GetInputPorts() const;
-	virtual std::vector<std::string> GetOutputPorts() const;
-
-	virtual bool CommitChanges();
-
-	Greenpak4EntityOutput GetInput()
-	{ return m_input; }
+	void AddInputMuxEntry(Greenpak4EntityOutput node, unsigned int select)
+	{ m_inputs[node] = select; }
 
 protected:
-	Greenpak4EntityOutput m_input;
-
-	int m_bufferBandwidth;
+	std::map<Greenpak4EntityOutput, unsigned int> m_inputs;
 };
 
-#endif	//Greenpak4Abuf_h
+#endif	//Greenpak4MuxedClockBuffer_h

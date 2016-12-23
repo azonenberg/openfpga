@@ -68,6 +68,12 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	unsigned int pga_used = 0;
 	unsigned int abuf_used = 0;
 	unsigned int delay_used = 0;
+	unsigned int pwrdet_used = 0;
+	unsigned int dcmp_used = 0;
+	unsigned int dcmpref_used = 0;
+	unsigned int dcmpmux_used = 0;
+	unsigned int clkbuf_used = 0;
+	unsigned int spi_used = 0;
 	for(uint32_t i=0; i<netlist->GetNumNodes(); i++)
 	{
 		auto entity = static_cast<Greenpak4BitstreamEntity*>(netlist->GetNodeByIndex(i)->GetMate()->GetData());
@@ -114,12 +120,16 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 			vref_used ++;
 		else if(dynamic_cast<Greenpak4Comparator*>(entity))
 			acmp_used ++;
+		else if(dynamic_cast<Greenpak4DigitalComparator*>(entity))
+			dcmp_used ++;
+		else if(dynamic_cast<Greenpak4DCMPRef*>(entity))
+			dcmpref_used ++;
 		else if(dynamic_cast<Greenpak4PGA*>(entity))
 			pga_used ++;
-		else if(dynamic_cast<Greenpak4Abuf*>(entity))
-			abuf_used ++;
 		else if(dynamic_cast<Greenpak4Delay*>(entity))
 			delay_used ++;
+		else if(dynamic_cast<Greenpak4ClockBuffer*>(entity))
+			clkbuf_used ++;
 	}
 	if(device->GetLFOscillator() && device->GetLFOscillator()->GetPARNode()->GetMate() != NULL)
 		lfosc_used = 1;
@@ -129,6 +139,14 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		rcosc_used = 1;
 	if(device->GetSystemReset() && device->GetSystemReset()->GetPARNode()->GetMate() != NULL)
 		sysrst_used = 1;
+	if(device->GetPowerDetector() && device->GetPowerDetector()->GetPARNode()->GetMate() != NULL)
+		pwrdet_used = 1;
+	if(device->GetAbuf() && device->GetAbuf()->GetPARNode()->GetMate() != NULL)
+		abuf_used = 1;
+	if(device->GetDCMPMux() && device->GetDCMPMux()->GetPARNode()->GetMate() != NULL)
+		dcmpmux_used = 1;
+	if(device->GetSPI() && device->GetSPI()->GetPARNode()->GetMate() != NULL)
+		spi_used = 1;
 
 	//Print the actual report
 	//TODO: Figure out how to use indentation framework here for better columnar indents?
@@ -145,11 +163,15 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 	PrintRow("ABUF:",			abuf_used,				1);
 	PrintRow("ACMP:",			acmp_used,				device->GetAcmpCount());
 	PrintRow("BANDGAP:",		bandgap_used,			1);
+	PrintRow("CLKBUF:",			clkbuf_used,			device->GetClockBufferCount());
 	PrintRow("COUNT:",			total_counters_used,	device->GetCounterCount());
 	PrintRow("  COUNT8:",		counters_8_used,		device->Get8BitCounterCount(false));
 	PrintRow("  COUNT8_ADV:",	counters_8_adv_used,	device->Get8BitCounterCount(true));
 	PrintRow("  COUNT14:",		counters_14_used,		device->Get14BitCounterCount(false));
 	PrintRow("  COUNT14_ADV:",	counters_14_adv_used,	device->Get14BitCounterCount(true));
+	PrintRow("DCMP:",			dcmp_used,				device->GetDcmpCount());
+	PrintRow("DCMPREF:",		dcmpref_used,			device->GetDcmpRefCount());
+	PrintRow("DCMPMUX:",		dcmpmux_used,			1);
 	PrintRow("DELAY:",			delay_used,				device->GetDelayCount());
 	//TODO: print {as DELAY / as EDGEDET}
 	PrintRow("FF:",				total_dff_used,			device->GetTotalFFCount());
@@ -164,9 +186,11 @@ void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned
 		         				luts_used[i],			lut_counts[i]);
 	PrintRow("PGA:",			pga_used,				1);
 	PrintRow("POR:",			por_used,				1);
+	PrintRow("PWRDET:",			pwrdet_used,			1);
 	PrintRow("RCOSC:",			rcosc_used,				1);
 	PrintRow("RINGOSC:",		ringosc_used,			1);
 	PrintRow("SHREG:",			shreg_used,				device->GetShiftRegisterCount());
+	PrintRow("SPI:",			spi_used,				1);
 	PrintRow("SYSRST:",			sysrst_used,			1);
 	PrintRow("VREF:",			vref_used,				device->GetVrefCount());
 	PrintRow("X-conn:",			total_routes_used,		20);

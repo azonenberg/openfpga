@@ -76,6 +76,9 @@ protected:
 	///Output inverter flag (1 = QB, 0=Q)
 	bool m_outputInvert;
 
+	///Latch mode (1=latch, 0=ff)
+	bool m_latchMode;
+
 	///Input signal
 	Greenpak4EntityOutput m_input;
 

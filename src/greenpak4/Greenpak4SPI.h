@@ -16,23 +16,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Abuf_h
-#define Greenpak4Abuf_h
+#ifndef Greenpak4SPI_h
+#define Greenpak4SPI_h
 
 #include "Greenpak4BitstreamEntity.h"
 
-class Greenpak4Abuf : public Greenpak4BitstreamEntity
+class Greenpak4SPI : public Greenpak4BitstreamEntity
 {
 public:
 
 	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
+	Greenpak4SPI(
+		Greenpak4Device* device,
+		unsigned int matrix,
+		unsigned int ibase,
+		unsigned int obase,
+		unsigned int cbase);
 
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
 
-	virtual ~Greenpak4Abuf();
+	virtual ~Greenpak4SPI();
 
 	virtual std::string GetDescription();
 
@@ -44,13 +49,16 @@ public:
 
 	virtual bool CommitChanges();
 
-	Greenpak4EntityOutput GetInput()
-	{ return m_input; }
-
 protected:
-	Greenpak4EntityOutput m_input;
+	Greenpak4EntityOutput m_csn;
+	//all other inputs are dedicated routing
 
-	int m_bufferBandwidth;
+	bool m_useAsBuffer;
+	bool m_cpha;
+	bool m_cpol;
+	bool m_width8Bits;
+	bool m_dirIsOutput;
+	bool m_parallelOutputToFabric;
 };
 
-#endif	//Greenpak4Abuf_h
+#endif	//Greenpak4SPI_h

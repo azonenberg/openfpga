@@ -34,7 +34,19 @@ int main(int argc, char* argv[])
 	Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_NONE;
 	Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
 
-	//TODO: make this switchable via command line args
+	//Specifies whether we should increase drive current of pullups/downs during boot to reach a stable state faster
+	bool ioPrecharge = false;
+
+	//Specifies that we should disable the on-die charge pump for the analog IP
+	bool disableChargePump = false;
+
+	//Turns off the internal LDO and connects Vdd directly to Vcore
+	bool ldoBypass = false;
+
+	//Number of times to re-try the boot process
+	int bootRetry = 1;
+
+	//Target chip
 	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
 
 	//Bitstream metadata
@@ -150,6 +162,22 @@ int main(int argc, char* argv[])
 		}
 		else if(s == "--read-protect")
 			readProtect = true;
+		else if(s == "--io-precharge")
+			ioPrecharge = true;
+		else if(s == "--disable-charge-pump")
+			disableChargePump = true;
+		else if(s == "--ldo-bypass")
+			ldoBypass = true;
+		else if(s == "--boot-retry")
+		{
+			if(i+1 < argc)
+				bootRetry = atoi(argv[++i]);
+			else
+			{
+				printf("--boot-retry requires an argument\n");
+				return 1;
+			}
+		}
 		else if(s == "-o" || s == "--output")
 		{
 			if(i+1 < argc)
@@ -207,7 +235,7 @@ int main(int argc, char* argv[])
 				break;
 		}
 
-		LogNotice("Target device:   %s", dev.c_str());
+		LogNotice("Target device:   %s\n", dev.c_str());
 		LogNotice("VCC range:       not yet implemented\n");
 
 		string pull;
@@ -258,6 +286,10 @@ int main(int argc, char* argv[])
 
 		LogNotice("User ID code:    %02x\n", userid);
 		LogNotice("Read protection: %s\n", readProtect ? "enabled" : "disabled");
+		LogNotice("I/O precharge:   %s\n", ioPrecharge ? "enabled" : "disabled");
+		LogNotice("Charge pump:     %s\n", disableChargePump ? "off" : "auto");
+		LogNotice("LDO:             %s\n", ldoBypass ? "bypassed" : "enabled");
+		LogNotice("Boot retry:      %d times\n", bootRetry);
 	}
 
 	//Parse the unplaced netlist
@@ -268,6 +300,10 @@ int main(int argc, char* argv[])
 
 	//Create the device and initialize all IO pins
 	Greenpak4Device device(part, unused_pull, unused_drive);
+	device.SetIOPrecharge(ioPrecharge);
+	device.SetDisableChargePump(disableChargePump);
+	device.SetLDOBypass(ldoBypass);
+	device.SetNVMRetryCount(bootRetry);
 
 	//Do the actual P&R
 	LogNotice("\nSynthesizing top-level module \"%s\".\n", netlist.GetTopModule()->GetName().c_str());
@@ -279,7 +315,8 @@ int main(int argc, char* argv[])
 		ofname.c_str(), (int)userid);
 	{
 		LogIndenter li;
-		device.WriteToFile(ofname, userid, readProtect);
+		if(!device.WriteToFile(ofname, userid, readProtect))
+			return 1;
 	}
 
 	//TODO: Static timing analysis
@@ -292,26 +329,36 @@ void ShowUsage()
 {
 	printf(//                                                                               v 80th column
 		"Usage: gp4par -p part -o bitstream.txt netlist.json\n"
-		"    -p, --part\n"
-		"        Specifies the part to target (SLG46620V, SLG46621V, or SLG46140V)\n"
-		"    -q, --quiet\n"
-		"        Causes only warnings and errors to be written to the console.\n"
-		"        Specify twice to also silence warnings.\n"
-		"    --verbose\n"
-		"        Prints additional information about the design.\n"
 		"    --debug\n"
 		"        Prints lots of internal debugging information.\n"
-		"    -o, --output         <bitstream>\n"
-		"        Writes bitstream into the specified file.\n"
+		"    --disable-charge-pump\n"
+		"        Disables the on-die charge pump which powers the analog hard IP when the\n"
+		"        supply voltage drops below 2.7V. Provided for completeness since the\n"
+		"        Silego GUI lets you specify it; there's no obvious reason to use it.\n"
+		"    --io-precharge\n"
+		"        Hooks a 2K resistor in parallel with pullup/down resistors during POR.\n"
+		"        This can help external capacitive loads to reach a stable voltage faster.\n"
 		"    -l, --logfile        <file>\n"
 		"        Causes verbose log messages to be written to <file>.\n"
 		"    -L, --logfile-lines  <file>\n"
 		"        Causes verbose log messages to be written to <file>, flushing after\n"
 		"        each line.\n"
+		"    --ldo-bypass\n"
+		"        Disable the on-die LDO and use an external 1.8V Vdd as Vcore.\n"
+		"        May cause device damage if set with higher Vdd supply.\n"
+		"    -o, --output         <bitstream>\n"
+		"        Writes bitstream into the specified file.\n"
+		"    -p, --part\n"
+		"        Specifies the part to target (SLG46620V, SLG46621V, or SLG46140V)\n"
+		"    -q, --quiet\n"
+		"        Causes only warnings and errors to be written to the console.\n"
+		"        Specify twice to also silence warnings.\n"
 		"    --unused-pull        [down|up|float]\n"
 		"        Specifies direction to pull unused pins.\n"
 		"    --unused-drive       [10k|100k|1m]\n"
-		"        Specifies strength of pullup/down resistor on unused pins.\n");
+		"        Specifies strength of pullup/down resistor on unused pins.\n"
+		"    --verbose\n"
+		"        Prints additional information about the design.\n");
 }
 
 void ShowVersion()

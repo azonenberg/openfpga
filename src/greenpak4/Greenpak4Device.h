@@ -218,7 +218,7 @@ public:
 	{ return m_vrefs[i]; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// COMPARATORS
+	// ANALOG COMPARATORS
 
 	unsigned int GetAcmpCount()
 	{ return m_acmps.size(); }
@@ -227,10 +227,49 @@ public:
 	{ return m_acmps[i]; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// DIGITAL COMPARATORS
+
+	unsigned int GetDcmpCount()
+	{ return m_dcmps.size(); }
+
+	Greenpak4DigitalComparator* GetDcmp(unsigned int i)
+	{ return m_dcmps[i]; }
+
+	unsigned int GetDcmpRefCount()
+	{ return m_dcmprefs.size(); }
+
+	Greenpak4DCMPRef* GetDcmpRef(unsigned int i)
+	{ return m_dcmprefs[i]; }
+
+	Greenpak4DCMPMux* GetDCMPMux()
+	{ return m_dcmpmux; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ANALOG BUFFERS
 
 	Greenpak4Abuf* GetAbuf()
 	{ return m_abuf; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CLOCK BUFFERS
+
+	unsigned int GetClockBufferCount()
+	{ return m_clkbufs.size(); }
+
+	Greenpak4ClockBuffer* GetClockBuffer(unsigned int i)
+	{ return m_clkbufs[i]; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// POWER DETECTOR
+
+	Greenpak4PowerDetector* GetPowerDetector()
+	{ return m_pwrdet; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// SPI SLAVE
+
+	Greenpak4SPI* GetSPI()
+	{ return m_spi; }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DACS
@@ -271,6 +310,18 @@ public:
 
 	Greenpak4BitstreamEntity* GetEntity(unsigned int i)
 	{ return m_bitstuff[i]; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CONFIGURATION
+
+	void SetIOPrecharge(bool precharge);
+	void SetDisableChargePump(bool disable);
+	void SetLDOBypass(bool bypass);
+
+	bool IsChargePumpDisabled()
+	{ return m_disableChargePump; }
+
+	void SetNVMRetryCount(int count);
 
 protected:
 
@@ -336,6 +387,15 @@ protected:
 	///Analog comparators
 	std::vector<Greenpak4Comparator*> m_acmps;
 
+	///Digital comparators
+	std::vector<Greenpak4DigitalComparator*> m_dcmps;
+
+	///Digital comparator references
+	std::vector<Greenpak4DCMPRef*> m_dcmprefs;
+
+	///Clock buffers
+	std::vector<Greenpak4ClockBuffer*> m_clkbufs;
+
 	///Digital to analog converters
 	std::vector<Greenpak4DAC*> m_dacs;
 
@@ -357,8 +417,14 @@ protected:
 	///Analog buffer
 	Greenpak4Abuf* m_abuf;
 
+	///Digital comparator mux
+	Greenpak4DCMPMux* m_dcmpmux;
+
 	///System reset
 	Greenpak4SystemReset* m_sysrst;
+
+	///SPI slave
+	Greenpak4SPI* m_spi;
 
 	///Bandgap reference
 	Greenpak4Bandgap* m_bandgap;
@@ -372,6 +438,9 @@ protected:
 	///Power-on reset
 	Greenpak4PowerOnReset* m_por;
 
+	///Power detector
+	Greenpak4PowerDetector* m_pwrdet;
+
 	/**
 		@brief Cross-connections between our matrices
 
@@ -384,6 +453,34 @@ protected:
 
 	//Base address of each routing matrix
 	unsigned int m_matrixBase[2];
+
+	/**
+		@brief Indicates whether I/O pin precharge should be enabled.
+
+		If enabled, connect 2K ohms nominal across each pullup/down resistor during POR to help
+		external signals stabilize faster.
+	 */
+	bool m_ioPrecharge;
+
+	/**
+		@brief Specifies that the charge pump should be disabled
+
+		By default the on-die charge pump automatically powers the analog hard IP when Vdd drops below 2.7V.
+		This bit turns it off regardless of supply voltage. Why would you ever want that?
+	 */
+	bool m_disableChargePump;
+
+	/**
+		@brief Bypasses the on-chip LDO and runs Vcore directly from Vdd.
+
+		This requires Vdd = 1.8V.
+	 */
+	bool m_ldoBypass;
+
+	/**
+		@brief Number of times to attempt re-reading NVM in case of boot failure
+	 */
+	int m_nvmLoadRetryCount;
 };
 
 #endif

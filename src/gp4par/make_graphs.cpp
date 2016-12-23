@@ -354,6 +354,18 @@ bool MakeNetlistNodes(
 	ilmap["GP_DFFRI"] = ilmap["GP_DFFR"];
 	ilmap["GP_DFFSRI"] = ilmap["GP_DFFSR"];
 
+	ilmap["GP_DLATCH"] = ilmap["GP_DFF"];
+	ilmap["GP_DLATCHI"] = ilmap["GP_DFF"];
+
+	ilmap["GP_DLATCHR"] = ilmap["GP_DFFSR"];
+	ilmap["GP_DLATCHRI"] = ilmap["GP_DFFSR"];
+
+	ilmap["GP_DLATCHS"] = ilmap["GP_DFFSR"];
+	ilmap["GP_DLATCHSI"] = ilmap["GP_DFFSR"];
+
+	ilmap["GP_DLATCHSR"] = ilmap["GP_DFFSR"];
+	ilmap["GP_DLATCHSRI"] = ilmap["GP_DFFSR"];
+
 	//Create the actual nodes in the netlist
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
@@ -466,10 +478,25 @@ void MakeDeviceNodes(
 	for(unsigned int i=0; i<device->GetAcmpCount(); i++)
 		MakeNode(acmp_label, device->GetAcmp(i), dgraph);
 
+	//Make device nodes for the digital comparators
+	uint32_t dcmp_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DCMP");
+	for(unsigned int i=0; i<device->GetDcmpCount(); i++)
+		MakeNode(dcmp_label, device->GetDcmp(i), dgraph);
+
+	//Make device nodes for the digital comparator references
+	uint32_t dcmpref_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DCMPREF");
+	for(unsigned int i=0; i<device->GetDcmpRefCount(); i++)
+		MakeNode(dcmpref_label, device->GetDcmpRef(i), dgraph);
+
 	//Make device nodes for the DACs
 	uint32_t dac_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DAC");
 	for(unsigned int i=0; i<device->GetDACCount(); i++)
 		MakeNode(dac_label, device->GetDAC(i), dgraph);
+
+	//Make device nodes for the clock buffers
+	uint32_t clkbuf_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_CLKBUF");
+	for(unsigned int i=0; i<device->GetClockBufferCount(); i++)
+		MakeNode(clkbuf_label, device->GetClockBuffer(i), dgraph);
 
 	//Make device nodes for the delay lines
 	uint32_t delay_label  = AllocateLabel(ngraph, dgraph, lmap, "GP_DELAY");
@@ -500,11 +527,14 @@ void MakeDeviceNodes(
 	//Make device nodes for all of the single-instance cells
 	MakeSingleNode("GP_ABUF",		device->GetAbuf(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_BANDGAP",	device->GetBandgap(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_DCMPMUX",	device->GetDCMPMux(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_LFOSC",		device->GetLFOscillator(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_PGA",		device->GetPGA(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_POR",		device->GetPowerOnReset(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_PWRDET",		device->GetPowerDetector(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_RCOSC",		device->GetRCOscillator(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_RINGOSC",	device->GetRingOscillator(), ngraph, dgraph, lmap);
+	MakeSingleNode("GP_SPI",		device->GetSPI(), ngraph, dgraph, lmap);
 	MakeSingleNode("GP_SYSRESET",	device->GetSystemReset(), ngraph, dgraph, lmap);
 
 	//Make device nodes for the power rails
@@ -762,7 +792,8 @@ void MakeDeviceEdges(Greenpak4Device* device)
 	}
 
 	//Add dedicated routing between hard IP
-	if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
+	if( (device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620) ||
+		(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46621) )
 	{
 		auto lfosc = device->GetLFOscillator()->GetPARNode();
 		auto rosc = device->GetRingOscillator()->GetPARNode();
@@ -776,16 +807,23 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		auto pin2 = device->GetIOB(2)->GetPARNode();
 		auto pin3 = device->GetIOB(3)->GetPARNode();
 		auto pin4 = device->GetIOB(4)->GetPARNode();
+		auto pin5 = device->GetIOB(5)->GetPARNode();
 		auto pin6 = device->GetIOB(6)->GetPARNode();
 		auto pin7 = device->GetIOB(7)->GetPARNode();
 		auto pin8 = device->GetIOB(8)->GetPARNode();
 		auto pin9 = device->GetIOB(9)->GetPARNode();
+		auto pin10 = device->GetIOB(10)->GetPARNode();
 		auto pin12 = device->GetIOB(12)->GetPARNode();
 		auto pin13 = device->GetIOB(13)->GetPARNode();
 		auto pin15 = device->GetIOB(15)->GetPARNode();
 		auto pin16 = device->GetIOB(16)->GetPARNode();
 		auto pin18 = device->GetIOB(18)->GetPARNode();
 		auto pin19 = device->GetIOB(19)->GetPARNode();
+
+		//SLG46621 is missing pin 14 so don't die if it's not there
+		PARGraphNode* pin14 = NULL;
+		if(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620)
+			pin14 = device->GetIOB(14)->GetPARNode();
 
 		auto vdd = device->GetPowerRail(true)->GetPARNode();
 		auto gnd = device->GetPowerRail(false)->GetPARNode();
@@ -891,6 +929,42 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		vrefs[3]->AddEdge("VOUT", pin18, "IN");
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// INPUTS TO REFERENCES
+
+		//All comparator references can be driven by Vdd (for Vdd/3 and Vdd/4) and Vss (for constant voltages)
+		for(auto i=0; i<=5; i++)
+		{
+			vdd->AddEdge("OUT", vrefs[i], "VIN");
+			gnd->AddEdge("OUT", vrefs[i], "VIN");
+		}
+
+		//DAC references can be driven by Vss only
+		gnd->AddEdge("OUT", vrefs[6], "VIN");
+		gnd->AddEdge("OUT", vrefs[7], "VIN");
+
+		//External pins
+		pin7->AddEdge("OUT", vrefs[0], "VIN");
+		pin10->AddEdge("OUT", vrefs[0], "VIN");
+
+		pin7->AddEdge("OUT", vrefs[1], "VIN");
+		pin10->AddEdge("OUT", vrefs[1], "VIN");
+
+		pin10->AddEdge("OUT", vrefs[2], "VIN");
+		if(pin14)
+			pin14->AddEdge("OUT", vrefs[2], "VIN");
+
+		pin10->AddEdge("OUT", vrefs[3], "VIN");
+		if(pin14)
+			pin14->AddEdge("OUT", vrefs[3], "VIN");
+
+		pin10->AddEdge("OUT", vrefs[4], "VIN");
+		if(pin14)
+			pin14->AddEdge("OUT", vrefs[4], "VIN");
+
+		pin10->AddEdge("OUT", vrefs[5], "VIN");
+		pin5->AddEdge("OUT", vrefs[5], "VIN");
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// REFERENCE TO COMPARATORS
 
 		PARGraphNode* acmps[] =
@@ -903,18 +977,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			device->GetAcmp(5)->GetPARNode()
 		};
 
-		/*
-		//Any vref can drive any comparator, we hide the complexity of the actual routing structure
-		//TODO: add a 6th vref for the DACs?
-		for(auto acmp : acmps)
-		{
-			for(auto vref : vrefs)
-				vref->AddEdge("VOUT", acmp, "VREF");
-		}
-		*/
-
 		//Only allow one VREF to drive its attached comparator.
-		//TODO: Add a 6th vref for DAC reference
 		for(unsigned int i=0; i<6; i++)
 			vrefs[i]->AddEdge("VOUT", acmps[i], "VREF");
 
@@ -967,6 +1030,122 @@ void MakeDeviceEdges(Greenpak4Device* device)
 		pin6->AddEdge("OUT", acmps[4], "VIN");
 		vdd->AddEdge("OUT", acmps[4], "VIN");
 		abuf->AddEdge("OUT", acmps[4], "VIN");
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// SPI
+
+		auto spi = device->GetSPI()->GetPARNode();
+
+		PARGraphNode* clkbufs[]=
+		{
+			device->GetClockBuffer(0)->GetPARNode(),
+			device->GetClockBuffer(1)->GetPARNode(),
+			device->GetClockBuffer(2)->GetPARNode(),
+			device->GetClockBuffer(3)->GetPARNode(),
+			device->GetClockBuffer(4)->GetPARNode(),
+		};
+
+		//Pin 10 IOB can drive SPI as MOSI
+		pin10->AddEdge("OUT", spi, "SDAT");
+
+		//SPI can drive pin 10 IOB as MISO
+		spi->AddEdge("SDAT", pin10, "IN");
+
+		//Routes to TX data:
+		//* ground (unused, for RX mode)
+		char txname[16];
+		for(int i=0; i<8; i++)
+		{
+			snprintf(txname, sizeof(txname), "TXD_LOW[%d]", i);
+			gnd->AddEdge("OUT", spi, txname);
+
+			snprintf(txname, sizeof(txname), "TXD_HIGH[%d]", i);
+			gnd->AddEdge("OUT", spi, txname);
+		}
+
+		//Routes to SPI SCK: dedicated routing from clkbuf4
+		clkbufs[4]->AddEdge("OUT", spi, "SCK");
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// INPUTS TO DIGITAL COMPARATORS
+
+		PARGraphNode* dcmps[]=
+		{
+			device->GetDcmp(0)->GetPARNode(),
+			device->GetDcmp(1)->GetPARNode(),
+			device->GetDcmp(2)->GetPARNode()
+		};
+
+		PARGraphNode* dcrefs[]=
+		{
+			device->GetDcmpRef(0)->GetPARNode(),
+			device->GetDcmpRef(1)->GetPARNode(),
+			device->GetDcmpRef(2)->GetPARNode(),
+			device->GetDcmpRef(3)->GetPARNode()
+		};
+
+		auto dcmux = device->GetDCMPMux()->GetPARNode();
+
+		//Inputs to DCMPMUX
+		char inname[16];
+		for(int j=0; j<4; j++)
+		{
+			for(int i=0; i<8; i++)
+			{
+				snprintf(inname, sizeof(inname), "IN%d[%d]", j, i);
+				dcrefs[j]->AddEdge("OUT", dcmux, inname);
+			}
+		}
+
+		//Mux driving DCMP0/1
+		for(int i=0; i<8; i++)
+		{
+			snprintf(inname, sizeof(inname), "INP[%d]", i);
+			dcmux->AddEdge("OUTA", dcmps[0], inname);
+			snprintf(inname, sizeof(inname), "INN[%d]", i);
+			dcmux->AddEdge("OUTB", dcmps[1], inname);
+		}
+
+		//Constant inputs from DCREF to DCMP
+		for(int i=0; i<8; i++)
+		{
+			snprintf(inname, sizeof(inname), "INN[%d]", i);
+			dcrefs[0]->AddEdge("OUT", dcmps[0], inname);
+			dcrefs[2]->AddEdge("OUT", dcmps[2], inname);
+
+			snprintf(inname, sizeof(inname), "INP[%d]", i);
+			dcrefs[1]->AddEdge("OUT", dcmps[1], inname);
+			dcrefs[3]->AddEdge("OUT", dcmps[2], inname);
+		}
+
+		//SPI data lines
+		for(int i=0; i<8; i++)
+		{
+			snprintf(inname, sizeof(inname), "INP[%d]", i);
+			spi->AddEdge("RXD_HIGH", dcmps[0], inname);
+			spi->AddEdge("RXD_HIGH", dcmps[1], inname);
+
+			snprintf(inname, sizeof(inname), "INN[%d]", i);
+			spi->AddEdge("RXD_LOW", dcmps[0], inname);
+			spi->AddEdge("RXD_LOW", dcmps[1], inname);
+			spi->AddEdge("RXD_LOW", dcmps[2], inname);
+		}
+
+		//TODO: Other inputs: ADC, counters
+
+		//ADC/DCMP Clock mux routing
+		auto mbuf = dynamic_cast<Greenpak4MuxedClockBuffer*>(device->GetClockBuffer(5))->GetPARNode();
+		rosc->AddEdge("CLKOUT_HARDIP", mbuf, "IN");
+		rcosc->AddEdge("CLKOUT_HARDIP", mbuf, "IN");
+		clkbufs[2]->AddEdge("OUT", mbuf, "IN");
+		clkbufs[4]->AddEdge("OUT", mbuf, "IN");
+
+		//Clock inputs to DCMP
+		for(int i=0; i<3; i++)
+		{
+			clkbufs[1]->AddEdge("OUT", dcmps[i], "CLK");
+			mbuf->AddEdge("OUT", dcmps[i], "CLK");
+		}
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// INPUTS TO PGA

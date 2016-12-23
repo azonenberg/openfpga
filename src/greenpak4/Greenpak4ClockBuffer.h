@@ -16,23 +16,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef Greenpak4Abuf_h
-#define Greenpak4Abuf_h
+#ifndef Greenpak4ClockBuffer_h
+#define Greenpak4ClockBuffer_h
 
 #include "Greenpak4BitstreamEntity.h"
 
-class Greenpak4Abuf : public Greenpak4BitstreamEntity
+class Greenpak4ClockBuffer : public Greenpak4BitstreamEntity
 {
 public:
 
 	//Construction / destruction
-	Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase);
+	Greenpak4ClockBuffer(Greenpak4Device* device, unsigned int bufnum, unsigned int matrix, unsigned int ibase, unsigned int cbase = -1);
 
 	//Serialization
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
 
-	virtual ~Greenpak4Abuf();
+	virtual ~Greenpak4ClockBuffer();
 
 	virtual std::string GetDescription();
 
@@ -47,10 +47,12 @@ public:
 	Greenpak4EntityOutput GetInput()
 	{ return m_input; }
 
+	unsigned int GetBufferNumber()
+	{ return m_bufferNum; }
+
 protected:
 	Greenpak4EntityOutput m_input;
-
-	int m_bufferBandwidth;
+	unsigned int m_bufferNum;
 };
 
-#endif	//Greenpak4Abuf_h
+#endif	//Greenpak4ClockBuffer_h

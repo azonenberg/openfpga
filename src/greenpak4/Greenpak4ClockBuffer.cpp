@@ -24,14 +24,19 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4Abuf::Greenpak4Abuf(Greenpak4Device* device, unsigned int cbase)
-		: Greenpak4BitstreamEntity(device, 0, -1, -1, cbase)
-		, m_input(device->GetGround())
-		, m_bufferBandwidth(1)
+Greenpak4ClockBuffer::Greenpak4ClockBuffer(
+	Greenpak4Device* device,
+	unsigned int bufnum,
+	unsigned int matrix,
+	unsigned int ibase,
+	unsigned int cbase)
+	: Greenpak4BitstreamEntity(device, matrix, ibase, -1, cbase)
+	, m_input(device->GetGround())
+	, m_bufferNum(bufnum)
 {
 }
 
-Greenpak4Abuf::~Greenpak4Abuf()
+Greenpak4ClockBuffer::~Greenpak4ClockBuffer()
 {
 
 }
@@ -39,19 +44,21 @@ Greenpak4Abuf::~Greenpak4Abuf()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-string Greenpak4Abuf::GetDescription()
+string Greenpak4ClockBuffer::GetDescription()
 {
-	return "ABUF0";	//only one of us for now
+	char buf[128];
+	snprintf(buf, sizeof(buf), "CLKBUF_%u", m_bufferNum);
+	return string(buf);
 }
 
-vector<string> Greenpak4Abuf::GetInputPorts() const
+vector<string> Greenpak4ClockBuffer::GetInputPorts() const
 {
 	vector<string> r;
-	//no general fabric inputs
+	r.push_back("IN");
 	return r;
 }
 
-void Greenpak4Abuf::SetInput(string port, Greenpak4EntityOutput src)
+void Greenpak4ClockBuffer::SetInput(string port, Greenpak4EntityOutput src)
 {
 	if(port == "IN")
 		m_input = src;
@@ -59,14 +66,14 @@ void Greenpak4Abuf::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
-vector<string> Greenpak4Abuf::GetOutputPorts() const
+vector<string> Greenpak4ClockBuffer::GetOutputPorts() const
 {
 	vector<string> r;
 	//no general fabric outputs
 	return r;
 }
 
-unsigned int Greenpak4Abuf::GetOutputNetNumber(string /*port*/)
+unsigned int Greenpak4ClockBuffer::GetOutputNetNumber(string /*port*/)
 {
 	return -1;
 }
@@ -74,63 +81,31 @@ unsigned int Greenpak4Abuf::GetOutputNetNumber(string /*port*/)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4Abuf::CommitChanges()
+bool Greenpak4ClockBuffer::CommitChanges()
 {
-	//Get our cell, or bail if we're unassigned
-	auto ncell = dynamic_cast<Greenpak4NetlistCell*>(GetNetlistEntity());
-	if(ncell == NULL)
-		return true;
-
-	if(ncell->HasParameter("BANDWIDTH_KHZ"))
-		m_bufferBandwidth = atoi(ncell->m_parameters["BANDWIDTH_KHZ"].c_str());
-
 	//No configuration
 	return true;
 }
 
-bool Greenpak4Abuf::Load(bool* /*bitstream*/)
+bool Greenpak4ClockBuffer::Load(bool* /*bitstream*/)
 {
 	//TODO: Do our inputs
 	LogError("Unimplemented\n");
 	return false;
 }
 
-bool Greenpak4Abuf::Save(bool* bitstream)
+bool Greenpak4ClockBuffer::Save(bool* bitstream)
 {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
 
-	//none
+	if(!WriteMatrixSelector(bitstream, m_inputBaseWord, m_input))
+		return false;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
 
-	switch(m_bufferBandwidth)
-	{
-		case 1:
-			bitstream[m_configBase + 1] = false;
-			bitstream[m_configBase + 0] = false;
-			break;
-
-		case 5:
-			bitstream[m_configBase + 1] = false;
-			bitstream[m_configBase + 0] = true;
-			break;
-
-		case 20:
-			bitstream[m_configBase + 1] = true;
-			bitstream[m_configBase + 0] = false;
-			break;
-
-		case 50:
-			bitstream[m_configBase + 1] = true;
-			bitstream[m_configBase + 0] = true;
-			break;
-
-		default:
-			LogError("GP_ABUF buffer bandwidth must be one of 1, 5, 20, 50\n");
-			return false;
-	}
+	//none
 
 	return true;
 }

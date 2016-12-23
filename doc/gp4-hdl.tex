@@ -145,7 +145,7 @@ RTL & Register Transfer Level. \\
 This guide uses several distinct text styles for:
 \begin{itemize}
 	\item Proper names, such as \namestyle{Silego GreenPak4};
-	\item Well-known names, such as \tokenstyle{AUTO\_PWRDN};
+	\item Port and parameter names, such as \tokenstyle{AUTO\_PWRDN};
 	\item References, such as \tokenref{GP\_IBUF}{gp-ibuf};
 	\item Signal names, such as \wirestyle{out};
 	\item Property values, such as \strvaluestyle{\textbf{YES}};
@@ -154,8 +154,8 @@ This guide uses several distinct text styles for:
 
 \subsection{Support}
 
-If you have questions, comments, suggestions, or wish to contribute to the project please join our IRC channel,
-\#\#openfpga on Freenode. This is the sole support forum available at this time.
+If you have questions, comments, suggestions, or wish to contribute to the project please join our IRC channel
+(\#\#openfpga on Freenode). This is the sole support forum available at this time.
 
 \pagebreak
 \section{Synthesizing a Netlist}
@@ -185,21 +185,6 @@ tool is \namestyle{Yosys}, which may be obtained from the \namestyle{Yosys} webs
 	\draw[arrow] (gp4par) -- (gp4vendor.west);
 \end{tikzpicture}
 
- % %nodes
- % \node[punkt] (market) {Market (b)};
- % \node[punkt, inner sep=5pt,below=0.5cm of market]
- % (formidler) {Intermediaries (c)};
- % % We make a dummy figure to make everything look nice.
- % \node[above=of market] (dummy) {};
- % \node[right=of dummy] (t) {Ultimate borrower}
- %   edge[pil,bend left=45] (market.east) % edges are used to connect two nodes
- %   edge[pil, bend left=45] (formidler.east); % .east since we want
- %                                             % consistent style
- % \node[left=of dummy] (g) {Ultimate lender}
- %   edge[pil, bend right=45] (market.west)
- %   edge[pil, bend right=45] (formidler.west)
- %   edge[pil,<->, bend left=45] node[auto] {Direct (a)} (t);
-
 \caption{Data flow between toolchain components}
 \label{flow}
 \end{figure}
@@ -227,40 +212,50 @@ synth_greenpak4 -top BlinkyTop -part SLG46620V -json Blinky.json
 \end{figure}
 
 \pagebreak
-\section{\namestyle{gp4par} Limitations}
+\section{Toolchain Limitations}
+\subsection{\namestyle{gp4par} Device Limitations}
 
 The following device features are not supported by \namestyle{gp4par} for any device as of this writing:
 
 \begin{itemize}
-\item Storage elements: latch mode
 \item Counters: Delay, edge detector, PWM, wake-sleep mode, counter cascading.
 All clock sources other than on-chip oscillator. Pre-divider value of 12.
-\item Voltage reference: DAC, divided Vdd, external references
-\item Comparators: Global buffer bandwidth selection, speed doubler
 \item ADC
-\item DAC (partially implemented)
+\item DAC: Inputs from DCMP.
 \item Wake-Sleep
-\item DCMP/PWM
-\item Slave SPI
-\item Power detector
-\item Regulator bypass
-\item Power detector disable
-\item NVM repeat control
-\item I/O pad precharge
+\item DCMP/PWM: PWM mode. Inputs from ADC and counters.
+\item SPI: ADC buffer mode, parallel output to fabric, clock synchronization.
 \end{itemize}
 
 In addition, the following \namestyle{SLG46140V} device features are not yet supported by \namestyle{gp4par}:
 
 \begin{itemize}
 \item Comparators
+\item ADC
 \item DAC
 \item PGA
+\item DCMP/PWM
+\item Slave SPI
+\item Wake-Sleep
 \item Voltage reference
 \item Ring oscillator
 \item RC oscillator
 \item Dedicated DFF cells
 \item Counters
 \item Combination function macrocells
+\item Power detector
+\end{itemize}
+
+\subsection{\namestyle{Yosys} Verilog Inference Limitations for GreenPAK}
+
+The following device features cannot be inferred from behavioral Verilog, but are supported if primitives are directly
+instantiated.
+
+\begin{itemize}
+\item Latches with set/reset
+\item Counters with input divider, clock enable, or upward/adjustable direction
+\item Voltage reference blocks must be explicitly instantiated. (A future version of the toolchain will support inferring
+\namestyle{GP\_VREF} blocks when driving a comparator via an external reference voltage or DAC.)
 \end{itemize}
 
 \pagebreak
@@ -1166,17 +1161,28 @@ comparators have buffers on the input; see device datasheet for details.
 
 \subsubsection{Parameter Descriptions}
 
-No parameters.
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{BANDWIDTH\_KHZ} & Integer & 8 & Buffer bandwidth, in kHz. \newline
+Must be one of 1, 5, 20, 50.\newline
+Values greater than 1 require Vdd $> 2.7V$ and use more power. \\
+\thinhline
+\end{tabularx}
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-abuf-example} buffers the signal \wirestyle{vin} to \wirestyle{vin\_buf}.
+The example shown in figure \ref{gp-abuf-example} buffers the signal \wirestyle{vin} to \wirestyle{vin\_buf} with 5 kHz
+bandwidth.
 
 \begin{figure}[h]
 \begin{lstlisting}
 wire vin;
 wire vin_buf;
-GP_ABUF abuf(
+GP_ABUF #(
+	.BANDWIDTH_KHZ(5)
+) abuf(
 	.IN(vin),
 	.OUT(vin_buf)
 );
@@ -1323,6 +1329,52 @@ GP_BANDGAP #(
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_BANDGAP}}
 \label{gp-bandgap-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_CLKBUF
+
+\pagebreak
+\subsection{\tokenstyle{GP\_CLKBUF}: Clock Buffer}
+\label{gp-clkbuf}
+
+\subsubsection{Introduction}
+This primitive is a buffer that drives the a clock signal from fabric to a dedicated clock network used by hard IP cores.
+
+A \tokenstyle{GP\_CLKBUF} must be explicitly instantiated to use a general fabric signal as a clock for counters, DCMP/PWM
+blocks, and the ADC. A future toolchain version may support inferring clock buffers in these cases.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{IN} & Input & 1 & Input clock from fabric routing. \\
+\thinhline
+\tokenstyle{OUT} & Output & 1 & Buffered output to hard IP. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+No parameters.
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-clkbuf-example} buffers the signal \tokenstyle{clkin} to \tokenstyle{clkbuf}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clkin;
+wire clkbuf;
+GP_CLKBUF cbuf(
+	.IN(clkin),
+	.OUT(clkbuf)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_CLKBUF}}
+\label{gp-clkbuf-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1689,6 +1741,202 @@ GP_DAC dac(
 \end{lstlisting}
 \caption{Example usage of \tokenstyle{GP\_DAC}}
 \label{gp-dac-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DCMP
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DCMP}: Digital Comparator}
+\label{gp-dcmp}
+
+\subsubsection{Introduction}
+
+This primitive compares two 8-bit unsigned integers. It outputs the the comparison result as a binary ``greater than"
+and ``equal" bit.
+
+Note that the inputs use dedicated routing and cannot be driven by general fabric routing. See device datasheet for
+connectivity options.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INP} & Input & 8 & Input to left side of comparison \\
+\thinhline
+\tokenstyle{INN} & Input & 8 & Input to right side of comparison \\
+\thinhline
+\tokenstyle{CLK} & Input & 1 & Clock source \\
+\thinhline
+\tokenstyle{PWRDN} & Input & 1 & Power-down input. Shared by all \tokenref{GP\_DCMP}{gp-dcmp} blocks. \\
+\thinhline
+\tokenstyle{GREATER} & Output & 1 & True if \tokenstyle{INP} is greater than (or, optionally, equal to) \tokenstyle{INN}. \\
+\thinhline
+\tokenstyle{EQUAL} & Output & 1 & True if \tokenstyle{INP} is equal to \tokenstyle{INN}. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{GREATER\_OR\_EQUAL} & Boolean & 1 &
+	\whenstyle{When 1:} \namestyle{GREATER} is high when \namestyle{INP} $\geq$ \namestyle{INN} \newline
+	\whenstyle{When 0:} \namestyle{GREATER} is high when \namestyle{INP} $>$ \namestyle{INN} \\
+\thinhline
+\tokenstyle{CLK\_EDGE} & String & N/A &
+	\strexamplestyle{RISING} Outputs are updated on the rising edge of \namestyle{CLK} \newline
+	\strexamplestyle{FALLING} Outputs are updated on the falling edge of \namestyle{CLK} \\
+\thinhline
+\tokenstyle{PWRDN\_SYNC} & Boolean & 1 & Set true to synchronize \namestyle{PWRDN} with \namestyle{CLK}. This adds two
+cycles of latency when waking the comparator from sleep mode, and holds the output at its current state in sleep. When false,
+the output is reset to zero in sleep. \\
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dcmp-example} outputs true on \namestyle{result} if \namestyle{foo} is greater than
+\namestyle{bar}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire[7:0] foo;
+wire[7:0] bar;
+wire result;
+GP_DCMP #(
+	.GREATER_OR_EQUAL(1'b0),
+	.CLK_EDGE("RISING"),
+	.PWRDN_SYNC(1'b1)
+) comparator(
+	.INP(foo),
+	.INN(bar),
+	.CLK(clk_2mhz),
+	.PWRDN(1'b0),
+	.GREATER(foo),
+	.EQUAL()
+	);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DCMP}}
+\label{gp-dcmp-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DCMPMUX
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DCMPMUX}: Digital Comparator Constant Multiplexer}
+\label{gp-dcmpmux}
+
+\subsubsection{Introduction}
+
+This primitive is a 4:1 mux that can drive the inputs of a \tokenref{GP\_DCMP}{gp-dcmp} block.
+
+The inputs must be sourced by a \tokenref{GP\_DCMPREF}{gp-dcmpref} block in the current toolchain. A future version of the
+toolchain may support inferring DCMPREF blocks driving the input of the mux.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{SEL} & Input & 2 & Mux selector \\
+\thinhline
+\tokenstyle{IN0} & Output & 8 & Input from \tokenref{GP\_DCMPREF}{gp-dcmpref} block\\
+\thinhline
+\tokenstyle{IN1} & Output & 8 & Input from \tokenref{GP\_DCMPREF}{gp-dcmpref} block\\
+\thinhline
+\tokenstyle{IN2} & Output & 8 & Input from \tokenref{GP\_DCMPREF}{gp-dcmpref} block\\
+\thinhline
+\tokenstyle{IN3} & Output & 8 & Input from \tokenref{GP\_DCMPREF}{gp-dcmpref} block\\
+\thinhline
+\tokenstyle{OUTA} & Output & 8 & Multiplexer output to \tokenstyle{DCMP0} \tokenstyle{INP} input, indexed by \tokenstyle{SEL} \\
+\thinhline
+\tokenstyle{OUTB} & Output & 8 & Multiplexer output to \tokenstyle{DCMP1} \tokenstyle{INN} input, indexed by \tokenstyle{3-SEL}. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+None
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dcmpmux-example} drives \namestyle{in0} to \namestyle{refA} and \namestyle{in3} to
+\namestyle{refB}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire[7:0] refA;
+wire[7:0] refB;
+wire[1:0] select = 2'b0;
+wire[7:0] in0;
+wire[7:0] in1;
+wire[7:0] in2;
+wire[7:0] in3;
+GP_DCMPMUX mux(
+	.SEL(select),
+	.IN0(in0),
+	.IN1(in1),
+	.IN2(in2),
+	.IN3(in3),
+	.OUTA(refA),
+	.OUTB(refB)
+	);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DCMPMUX}}
+\label{gp-dcmpmux-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DCMPREF
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DCMPREF}: Digital Comparator Constant Reference}
+\label{gp-dcmpref}
+
+\subsubsection{Introduction}
+
+This primitive drives an 8-bit constant value to the input of one or more \tokenref{GP\_DCMP}{gp-dcmp} or
+\tokenref{GP\_DCMPMUX}{gp-dcmpmux} blocks.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{OUT} & Output & 8 & Constant output, always equal to \namestyle{REF\_VAL}. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{REF\_VAL} & Integer & 8 & Constant reference value \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dcmpref-example} drives \datastyle{8'ha3} to the signal \namestyle{dcref}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire[7:0] dcref;
+GP_DCMPREF #(.REF_VAL(8'ha3))
+	ref (.OUT(dcref));
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DCMPREF}}
+\label{gp-dcmpref-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2067,7 +2315,7 @@ GP_DFFS #(
 % GP_DFFSI
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DFFSU}: Positive Edge Triggered D Flipflop with Set and Inverted Output}
+\subsection{\tokenstyle{GP\_DFFSI}: Positive Edge Triggered D Flipflop with Set and Inverted Output}
 \label{gp-dffs}
 
 \subsubsection{Introduction}
@@ -2196,11 +2444,11 @@ GP_DFFSR #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% GP_DFFSR
+% GP_DFFSRI
 
 \pagebreak
-\subsection{\tokenstyle{GP\_DFFSR}: Positive Edge Triggered D Flipflop with Set or Reset and Inverted Output}
-\label{gp-dffsr}
+\subsection{\tokenstyle{GP\_DFFSRI}: Positive Edge Triggered D Flipflop with Set or Reset and Inverted Output}
+\label{gp-dffsri}
 
 \subsubsection{Introduction}
 This primitive corresponds to a single D flipflop with active-low set or reset (but not both), selectable at synthesis
@@ -2263,6 +2511,519 @@ GP_DFFSRI #(
 \label{gp-dffsri-example}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCH
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCH}: Negative Level Triggered D Latch}
+\label{gp-latch}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch. The latch updates when the clock is negative and holds
+when the clock is positive.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatch-example} shows a latch initialized to zero at power-up
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+GP_DLATCH #(
+	.INIT(1'b0)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.Q(dout)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCH}}
+\label{gp-dlatch-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHI}: Negative Level Triggered D Latch with Inverted Output}
+\label{gp-latchi}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch. The latch updates when the clock is negative and holds
+when the clock is positive. The flipflop output is inverted.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\newline The power-up value of nQ is
+inverted with respect to INIT.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchri-example} shows a latch initialized to zero at power-up.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+GP_DLATCHI #(
+	.INIT(1'b0)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.nQ(dout)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHI}}
+\label{gp-dlatchi-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHR
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHR}: Negative Level Triggered D Latch with Reset}
+\label{gp-latchr}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low reset. The latch updates when the clock is negative and holds
+when the clock is positive.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nRST} & Input & 1 & Active-low reset. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchr-example} shows a latch initialized to zero at power-up, and cleared to zero
+when \wirestyle{nrst} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nrst;
+GP_DLATCHR #(
+	.INIT(1'b0)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nRST(nrst)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHR}}
+\label{gp-dlatchr-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHRI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHRI}: Negative Level Triggered D Latch with Reset and Inverted Output}
+\label{gp-latchri}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low reset. The latch updates when the clock is negative and holds
+when the clock is positive. The flipflop output is inverted.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nRST} & Input & 1 & Active-low reset. \\
+\thinhline
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\newline The power-up value of nQ is
+inverted with respect to INIT.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchri-example} shows a latch initialized to zero at power-up, and cleared to zero
+when \wirestyle{nrst} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nrst;
+GP_DLATCHRI #(
+	.INIT(1'b0)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.nQ(dout),
+	.nRST(nrst)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHRI}}
+\label{gp-dlatchri-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHS
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHS}: Negative Level Triggered D Latch with Set}
+\label{gp-latchs}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low set. The latch updates when the clock is negative and holds
+when the clock is positive.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nSET} & Input & 1 & Active-low set. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchs-example} shows a latch initialized to zero at power-up, and set to one
+when \wirestyle{nset} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DLATCHS #(
+	.INIT(1'b0),
+	.SRMODE(1'b1)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nSET(nset)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHS}}
+\label{gp-dlatchs-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHSI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHSI}: Negative Level Triggered D Latch with Set and Inverted Output}
+\label{gp-latchsi}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low set. The latch updates when the clock is negative and holds
+when the clock is positive. The flipflop output is inverted.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nSET} & Input & 1 & Active-low set. \\
+\thinhline
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\newline The power-up value of nQ is
+inverted with respect to INIT.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchsi-example} shows a latch initialized to zero at power-up, and set to one
+when \wirestyle{nset} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DLATCHSI #(
+	.INIT(1'b0)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.nQ(dout),
+	.nSET(nset)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHSI}}
+\label{gp-dlatchsi-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHSR
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHSR}: Negative Level Triggered D Latch with Set or Reset}
+\label{gp-latchsr}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low set or reset (but not both), selectable at synthesis time by
+a parameter. The latch updates when the clock is negative and holds when the clock is positive.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nSR} & Input & 1 & Active-low set/reset. \\
+\thinhline
+\tokenstyle{Q} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\\
+\thinhline
+\tokenstyle{SRMODE} & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchsr-example} shows a latch initialized to zero at power-up, and set to one
+when \wirestyle{nset} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DLATCHSR #(
+	.INIT(1'b0),
+	.SRMODE(1'b1)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.Q(dout),
+	.nSR(nset)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHSR}}
+\label{gp-dlatchsr-example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_DLATCHSRI
+
+\pagebreak
+\subsection{\tokenstyle{GP\_DLATCHSRI}: Negative Level Triggered D Latch with Set or Reset and Inverted Output}
+\label{gp-latchsri}
+
+\subsubsection{Introduction}
+This primitive corresponds to a single D latch with active-low set or reset (but not both), selectable at synthesis time by
+a parameter. The latch updates when the clock is negative and holds when the clock is positive. The flipflop output is
+inverted.
+
+This primitive may be manually instantiated if exact control over packing is required, but for most applications we
+recommend inferring logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{D} & Input & 1 & Input data. \\
+\thinhline
+\tokenstyle{nCLK} & Input & 1 & Input clock. \\
+\thinhline
+\tokenstyle{nSR} & Input & 1 & Active-low set/reset. \\
+\thinhline
+\tokenstyle{nQ} & Output & 1 & Output signal. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{INIT} & Boolean & 1 & Power-on initialization value of the latch.\newline The power-up value of nQ is
+inverted with respect to INIT.\\
+\thinhline
+\tokenstyle{SRMODE} & Boolean & 1 & Set to 1 for nSR to act as a set, or 0 for reset. \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-dlatchsri-example} shows a latch initialized to zero at power-up, and set to one
+when \wirestyle{nset} goes low.
+
+\begin{figure}[h]
+\begin{lstlisting}
+wire clk;
+wire din;
+wire dout;
+wire nset;
+GP_DLATCHSRI #(
+	.INIT(1'b0),
+	.SRMODE(1'b1)
+) lat (
+	.CLK(clk),
+	.D(din),
+	.nQ(dout),
+	.nSR(nset)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_DLATCHSRI}}
+\label{gp-dlatchsri-example}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_EDGEDET
@@ -2270,10 +3031,6 @@ GP_DFFSRI #(
 \pagebreak
 \subsection{\tokenstyle{GP\_EDGEDET}: Edge detector}
 \label{gp-edgedet}
-
-%parameter EDGE_DIRECTION = "RISING";
-%parameter DELAY_STEPS = 1;
-%parameter GLITCH_FILTER = 0;
 
 \subsubsection{Introduction}
 
@@ -2866,20 +3623,17 @@ GP_POR #(
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% GP_PWRCTL
+% GP_PWRDET
 
 \pagebreak
 \clearpage
-\subsection{\tokenstyle{GP\_PWRCTL}: Power Control (NOT IMPLEMENTED)}
-\label{gp-pwrctl}
+\subsection{\tokenstyle{GP\_PWRDET}: Power Detector}
+\label{gp-pwrdet}
 
 \subsubsection{Introduction}
-This primitive represents the system power control block. TODO
+This primitive represents the power detector for the charge pump driving the analog circuitry.
 
-%FIXME: POR_TIME = bit 2009
-
-TODO
-Bit 2010: Disable power detector for charge pump
+(FIXME: check this) This block is only active when --disable-charge-pump is not specified.
 
 \subsubsection{Port Descriptions}
 
@@ -2887,30 +3641,27 @@ Bit 2010: Disable power detector for charge pump
 \thinhline
 \whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
 \thickhline
-\tokenstyle{PWRDET} & Output & 1 & Power-detect output. High when Vdd is less than 2.7V.\\
+\tokenstyle{VDD\_LOW} & Output & 1 & Power-detect output. High when Vdd is less than 2.7V.\\
 \thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
 
-\begin{tabularx}{\textwidth}{lllX}
-\thinhline
-\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
-\thickhline
-\tokenstyle{POR\_TIME} & Integer & 16 & Delay, in microseconds, from power-good to release of POR. Legal values are 4, 500.\\
-\thinhline
-\end{tabularx}
+No parameters.
 
 \subsubsection{Verilog Usage Example}
 
-The example shown in figure \ref{gp-pwrctl-example} FIXME.
+The example shown in figure \ref{gp-pwrdet-example} drives \tokenstyle{analog\_brownout} high when VDD drops below 2.7V.
 
 \begin{figure}[h]
 \begin{lstlisting}
-xx
+wire analog_brownout;
+GP_PWRDET det(
+	.VDD_LOW(analog_brownout)
+	);
 \end{lstlisting}
-\caption{Example usage of \tokenstyle{GP\_PWRCTL}}
-\label{gp-pwrctl-example}
+\caption{Example usage of \tokenstyle{GP\_PWRDET}}
+\label{gp-pwrdet-example}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3146,6 +3897,97 @@ GP_SHREG #(
 \caption{Example usage of \tokenstyle{GP\_SHREG}}
 \label{gp-shreg-example}
 \end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GP_SPI
+
+\pagebreak
+\clearpage
+\subsection{\tokenstyle{GP\_SPI}: SPI Slave}
+\label{gp-spi}
+
+\subsubsection{Introduction}
+This primitive is a unidirectional SPI slave.
+
+It can receive or transmit up to two bytes of data at a time to the bus master. The direction of data transfer is set
+statically at compile time and cannot be changed, since the input or output serial data both use the same pin on the device.
+Chip select and clock inputs are routed through the switch matrix and can connect to arbitrary external pins or even fabric
+logic.
+
+\subsubsection{Port Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Port} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{SCK} & Input & 1 & SPI clock signal (must be buffered by \tokenref{GP\_CLKBUF}{gp-clkbuf}). \\
+\thinhline
+\tokenstyle{SDAT} & Inout & 1 & SPI input or output. Must be connected to pin 10 (\namestyle{SLG4662x}) or
+12 (\namestyle{SLG46140}) \\
+\thinhline
+\tokenstyle{CSN} & Input & 1 & Chip select input from IOB\\
+\thinhline
+\tokenstyle{INT} & Output & 1 & Transaction-complete status flag. Goes high for one \namestyle{SCK} cycle when transaction
+completes. \\
+\thinhline
+\tokenstyle{TXD\_HIGH} & Input & 8 & High word of data to send to master. Must connect to parallel output of a
+\namestyle{GP\_COUNTx} block. Only valid if \namestyle{DATA\_WIDTH} is 16 and \namestyle{DIRECTION} is
+\strvaluestyle{OUTPUT}, connect to \valuestyle{8'h00} otherwise.\\
+\thinhline
+\tokenstyle{TXD\_LOW} & Input & 8 &  Low word of data to send. Must connect to parallel output of a \namestyle{GP\_COUNTx}
+or \tokenref{GP\_ADC}{gp-adc} block. Only valid if \namestyle{DIRECTION} is \strvaluestyle{OUTPUT}, connect to
+\valuestyle{8'h00} otherwise.\\
+\thinhline
+\tokenstyle{RXD\_HIGH} & Output & 8 & 8-bit high word of data from master. Must connect to parallel input of a
+\namestyle{GP\_COUNTx} or \tokenref{GP\_DCMP}{gp-dcmp} block. Only valid if \namestyle{DATA\_WIDTH} is 16 and
+\namestyle{DIRECTION} is \strvaluestyle{INPUT}, leave unconnected otherwise.\\
+\thinhline
+\tokenstyle{RXD\_LOW} & Output & 8 & 8-bit high word of data from master. Must connect to parallel input of a
+\namestyle{GP\_COUNTx} or \tokenref{GP\_DCMP}{gp-dcmp} block. (The hardware supports parallel output to general fabric
+routing however this is not currently implemented in \namestyle{gp4par}.) Only valid if \namestyle{DIRECTION} is
+\strvaluestyle{INPUT}, leave unconnected otherwise.\\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Parameter Descriptions}
+
+\begin{tabularx}{\textwidth}{lllX}
+\thinhline
+\whenstyle{Parameter} & \whenstyle{Type} & \whenstyle{Width} & \whenstyle{Function} \\
+\thickhline
+\tokenstyle{DATA\_WIDTH} & Integer & 5 & Width of the SPI data buffer, in bits. Must be 8 or 16. \\
+\thinhline
+\tokenstyle{SPI\_CPHA} & Boolean & 1 & SPI clock phasing \newline
+\whenstyle{When 0:} data eye is centered around active clock edge \newline
+\whenstyle{When 1:} data eye is centered around inactive clock edge\\
+\thinhline
+\tokenstyle{SPI\_CPOL} & Boolean & 1 & SPI clock polarity \newline
+\whenstyle{When 0:} active clock edge is rising \newline
+\whenstyle{When 1:} active clock edge is falling   \\
+\thinhline
+
+\tokenstyle{DIRECTION} & String & N/A &
+\strexamplestyle{INPUT} Receive data from master; \namestyle{RXD\_*} ports are valid \newline
+\strexamplestyle{OUTPUT} Send data to master; \namestyle{TXD\_*} ports are valid \newline \\
+\thinhline
+\end{tabularx}
+
+\subsubsection{Verilog Usage Example}
+
+The example shown in figure \ref{gp-spi-example} needs to be written.
+
+\begin{figure}[h]
+\begin{lstlisting}
+GP_SPI #(
+	.FIXME(4)
+) spi (
+	.FIXME(garbage)
+);
+\end{lstlisting}
+\caption{Example usage of \tokenstyle{GP\_SPI}}
+\label{gp-spi-example}
+\end{figure}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GP_SYSRESET
@@ -3396,15 +4238,39 @@ gp4par -p SLG46620V Analog.json -o Analog-hdl.txt --unused-pull down --unused-dr
 The netlist filename must be supplied for all place-and-route operations. It may be included anywhere in the argument
 list, although we recommend it be the first argument for better readability of the command.
 
+\subsection{\texttt{--boot-retry}}
+
+The \texttt{--boot-retry} argument is optional. It must be followed by an integer from 1 to 4, specifying the number of times
+to re-try the boot process in case of a NVM read failure. If not specified, the retry count defaults to 1. This option is
+only supported for the SLG46140V.
+
 \subsection{\texttt{--debug}}
 
 The \texttt{--debug} argument is optional. When it is specified once, it causes \namestyle{gp4par} to print
 many debugging messages, normally useful only for development of \namestyle{gp4par}.
 
+\subsection{\texttt{--disable-charge-pump}}
+
+The \texttt{--disable-charge-pump} argument is optional. If set, the on-die charge pump is disabled, rather than
+automatically turning on when the supply voltage drops below 2.7V. This may cause analog components to malfunction if the
+supply voltage drops below 2.7V. It's unclear from Silego's documentation why this would ever be desirable, but the option
+is provided for completeness.
+
 \subsection{\texttt{--help}}
 
 The \texttt{--help} argument must be used alone, with no other arguments. It causes \namestyle{gp4par} to print a usage
 example to the console and then quit.
+
+\subsection{\texttt{--io-precharge}}
+
+The \texttt{--io-precharge} argument is optional. If set, a nominal $2K \Omega$ resistor is connected in parallel with any
+pull-up/down resistors during boot, so that external signals will reach stable values sooner.
+
+\subsection{\texttt{--ldo-bypass}}
+
+The \texttt{--ldo-bypass} argument is optional. If set, the internal LDO is disabled and the \tokenstyle{Vdd} pin drives the
+on-chip core voltage directly. This may result in lower power consumption, but requires the external supply to be a regulated
+1.8V source.
 
 \subsection{\texttt{--logfile}, \texttt{-l}}
 
