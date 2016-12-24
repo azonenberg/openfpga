@@ -991,14 +991,15 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 	for(unsigned int i=0; i<m_bitlen; i++)
 		bitstream[i] = false;
 
+	bool ok = true;
+
 	//Get the config data from each of our blocks
 	for(auto x : m_bitstuff)
 	{
 		if(!x->Save(bitstream))
 		{
 			LogError("Bitstream node %s failed to save\n", x->GetDescription().c_str());
-			fclose(fp);
-			return false;
+			ok = false;
 		}
 	}
 
@@ -1139,7 +1140,7 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 
 				default:
 					LogError("NVM retry count for SLG46140 must be 1...4\n");
-					return false;
+					ok = false;
 			}
 
 			//Internal LDO disable
@@ -1174,9 +1175,7 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 		//Invalid device
 		default:
 			LogError("Greenpak4Device: WriteToFile(): unknown device\n");
-			fclose(fp);
-			delete[] bitstream;
-			return false;
+			ok = false;
 	}
 
 	//Write the bitfile
@@ -1187,5 +1186,5 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 	//Done
 	delete[] bitstream;
 	fclose(fp);
-	return true;
+	return ok;
 }
