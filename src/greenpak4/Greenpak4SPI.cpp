@@ -77,16 +77,15 @@ void Greenpak4SPI::SetInput(string port, Greenpak4EntityOutput src)
 vector<string> Greenpak4SPI::GetOutputPorts() const
 {
 	vector<string> r;
-	//r.push_back("OUT");
+	r.push_back("INT");
 	return r;
 }
 
 unsigned int Greenpak4SPI::GetOutputNetNumber(string port)
 {
-	/*
-	if(port == "OUT")
+	if(port == "INT")
 		return m_outputBaseWord;
-	else*/
+	else
 		return -1;
 }
 

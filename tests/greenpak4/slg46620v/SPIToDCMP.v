@@ -102,7 +102,8 @@ module SPIToDCMP(spi_sck, spi_cs_n, spi_mosi, spi_int, dcmp_greater, dcmp_equal)
 		.TXD_HIGH(8'h00),
 		.TXD_LOW(8'h00),
 		.RXD_HIGH(rxd_high),
-		.RXD_LOW(rxd_low)
+		.RXD_LOW(rxd_low),
+		.INT(spi_int)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
