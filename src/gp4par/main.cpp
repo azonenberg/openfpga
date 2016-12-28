@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
 			}
 			else
 			{
-				printf("--usercode requires an argument\n");
+				printf("--part requires an argument\n");
 				return 1;
 			}
 		}
