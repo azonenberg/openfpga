@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 	}
 
 	//Set up the test
-	hdevice hdev = MultiBoardTestSetup(argv[1], 25000, 1.8, SilegoPart::SLG46620V);
+	hdevice hdev = MultiBoardTestSetup(argv[1], 25000, 3.3, SilegoPart::SLG46620V);
 	if(!hdev)
 	{
 		LogError("Failed to open board\n");
