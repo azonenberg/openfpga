@@ -91,7 +91,7 @@ bool RunTest(hdevice hdev)
 		bool greater_expected = (muxval > refval);
 
 		//Drive the inputs
-		LogVerbose("Testing:  muxout = %x ref= %x\n", muxval, reval);
+		LogVerbose("Testing:  muxout = %x ref= %x\n", muxval, refval);
 		LogVerbose("    Expected: equal=%d greater=%d\n", equal_expected, greater_expected);
 		ioConfig.driverConfigs[19] = (i & 1) ? TP_VDD : TP_GND;
 		ioConfig.driverConfigs[20] = (i & 2) ? TP_VDD : TP_GND;
