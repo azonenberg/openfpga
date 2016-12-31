@@ -329,6 +329,35 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		}
 	}
 
+	//Check for multiple oscillators with power-down enabled but not the same source
+	powerdowns.clear();
+	for(int i=0; i<device->GetDcmpCount(); i++)
+	{
+		auto d = device->GetDcmp(i);
+		if(d->IsUsed())
+			powerdowns.push_back(spair(d->GetDescription(), d->GetPowerDown()));
+	}
+	if(!powerdowns.empty())
+	{
+		Greenpak4EntityOutput src = powerdowns[0].second;
+		bool xok = true;
+		for(auto p : powerdowns)
+		{
+			if(src != p.second)
+				xok = false;
+		}
+
+		if(!xok)
+		{
+			LogError(
+				"Multiple DCMPs have power-down enabled, but do not share the same power-down signal\n");
+			for(auto p : powerdowns)
+				LogNotice("    DCMPs %10s powerdown is %s\n", p.first.c_str(), p.second.GetOutputName().c_str());
+
+			ok = false;
+		}
+	}
+
 	//ADC/DAC conflicts
 	if( (device->GetPart() == Greenpak4Device::GREENPAK4_SLG46620) ||
 		(device->GetPart() == Greenpak4Device::GREENPAK4_SLG46621))
