@@ -61,8 +61,8 @@ module DCMP(muxsel, greater, equal);
 	wire[7:0] ref2;
 	wire[7:0] ref3;
 
-	GP_DCMPREF #(.REF_VAL(8'h40)) rs0(.OUT(ref0));
-	GP_DCMPREF #(.REF_VAL(8'h80)) rs1(.OUT(ref1));
+	GP_DCMPREF #(.REF_VAL(8'h80)) rs0(.OUT(ref0));
+	GP_DCMPREF #(.REF_VAL(8'h40)) rs1(.OUT(ref1));
 	GP_DCMPREF #(.REF_VAL(8'hc0)) rs2(.OUT(ref2));
 	GP_DCMPREF #(.REF_VAL(8'hf0)) rs3(.OUT(ref3));
 

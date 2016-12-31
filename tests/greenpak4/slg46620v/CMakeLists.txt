@@ -3,7 +3,6 @@
 
 add_greenpak4_bitstream(Blinky SLG46620V)
 add_greenpak4_bitstream(Dac SLG46620V)
-add_greenpak4_bitstream(DCMP SLG46620V)
 add_greenpak4_bitstream(Delay SLG46620V)
 add_greenpak4_bitstream(Ethernet SLG46620V)
 add_greenpak4_bitstream(Inverters SLG46620V)
@@ -24,6 +23,7 @@ add_greenpak4_bitstream(SocketTestLoopback_STQFN20 SLG46620V)
 # HiL tests
 
 add_greenpak4_hiltest(Bargraph SLG46620V)
+add_greenpak4_hiltest(DCMP SLG46620V)
 add_greenpak4_hiltest(Latch SLG46620V)
 add_greenpak4_hiltest(LFOsc SLG46620V)
 add_greenpak4_hiltest(Luts SLG46620V)

@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 	}
 
 	//Set up the test
-	hdevice hdev = MultiBoardTestSetup(argv[1], 25000, 3.3, SilegoPart::SLG46620V);
+	hdevice hdev = MultiBoardTestSetup(argv[1], 25000, 1.8, SilegoPart::SLG46620V);
 	if(!hdev)
 	{
 		LogError("Failed to open board\n");
@@ -71,119 +71,49 @@ bool RunTest(hdevice hdev)
 {
 	LogIndenter li;
 
-	LogError("Test case not yet implemented\n");
-
 	//Set up the I/O config we need for this test
 	IOConfig ioConfig;
 	for(size_t i = 2; i <= 20; i++)
 		ioConfig.driverConfigs[i] = TP_RESET;
 	if(!SetIOConfig(hdev, ioConfig))
 		return false;
-	/*
-	double tolerance_trip = 0.05;
-	double tolerance_vref = 0.15;
 
-	//Check the bandgap outputs
-	LogVerbose("Testing bandgap status\n");
-	double v;
-	if(!SingleReadADC(hdev, 20, v))
-		return false;
-	if(v < 0.5)
+	//Loop over all values for the inputs and see what we get
+	bool ok = true;
+	for(int i=0; i<4; i++)
 	{
-		LogError("Bandgap status should be high\n");
-		return false;
-	}
+		unsigned int values[4] = { 0x80, 0x40, 0xc0, 0xf0 };
 
-	//Check the Vref outputs
-	//TODO: Why is the error so wide here?
-	LogVerbose("Checking ref outputs\n");
-	{
-		LogIndenter li;
+		unsigned int muxval = values[i];
+		unsigned int refval = values[0];
 
-		if(!SingleReadADC(hdev, 19, v))
+		bool equal_expected = (muxval == refval);
+		bool greater_expected = (muxval > refval);
+
+		//Drive the inputs
+		LogVerbose("Testing:  muxout = %x ref= %x\n", muxval, reval);
+		LogVerbose("    Expected: equal=%d greater=%d\n", equal_expected, greater_expected);
+		ioConfig.driverConfigs[19] = (i & 1) ? TP_VDD : TP_GND;
+		ioConfig.driverConfigs[20] = (i & 2) ? TP_VDD : TP_GND;
+		if(!SetIOConfig(hdev, ioConfig))
 			return false;
-		double err = 0.8 - v;
-		LogVerbose("Vref_800 = %.3f V (err = %.3f)\n", v, err);
-		if(fabs(err) > tolerance_vref)
+
+		double value;
+		if(!SingleReadADC(hdev, 18, value))
+			return false;
+		bool greater = (value > 0.5);
+		if(!SingleReadADC(hdev, 17, value))
+			return false;
+		bool equal = (value > 0.5);
+
+		LogVerbose("    Got:     equal=%d greater=%d\n", equal, greater);
+
+		if( (equal != equal_expected) || (greater != greater_expected) )
 		{
-			LogError("Error is too big\n");
-			return false;
-		}
-
-		if(!SingleReadADC(hdev, 18, v))
-			return false;
-		err = 0.6 - v;
-		LogVerbose("Vref_600 = %.3f V (err = %.3f)\n", v, err);
-		if(fabs(err) > tolerance_vref)
-		{
-			LogError("Error is too big\n");
-			return false;
+			LogError("Mismatch!\n");
+			ok = false;
 		}
 	}
 
-	//(pin num, threshold in mV)
-	const int acmps[6][2] =
-	{
-		{12, 200},
-		{13, 400},
-		{14, 600},
-		{15, 800},
-		{16, 1000},
-		{17, 1000}
-	};
-
-	//Sweep input and verify output
-	LogVerbose("Running comparator voltage sweep\n");
-	double step = 0.025;
-	bool pin_states[6] = {false};
-	for(double vtest = step; vtest < 1.1; vtest += step)
-	{
-		LogIndenter li;
-
-		//Set up a signal generator on the inputs
-		//TODO: check 6 and 4 independently?
-		if(!ConfigureSiggen(hdev, 6, vtest))
-			return false;
-		if(!ConfigureSiggen(hdev, 4, vtest))
-			return false;
-
-		//Read the outputs
-		for(int i=0; i<6; i++)
-		{
-			double v;
-			int npin = acmps[i][0];
-			if(!SingleReadADC(hdev, npin, v))
-				return false;
-
-			bool b = (v > 0.5);
-
-			//If we went LOW, something is wrong. We should never turn off on a rising edge
-			if(pin_states[i] && !b)
-			{
-				LogError("Pin %d went low at %.3f V on a rising input waveform - something is wrong\n",
-					npin, vtest);
-				return false;
-			}
-
-			//If we went HIGH, log the trip point and check if it's sane
-			if(!pin_states[i] && b)
-			{
-				double expected_trip = acmps[i][1] * 0.001f;
-				double delta = vtest - expected_trip;
-
-				LogVerbose("Pin %d went high at %.3f V (err = %.3f V)\n", npin, vtest, delta);
-
-				if(fabs(delta) > tolerance_trip)
-				{
-					LogError("Error is too big\n");
-					return false;
-				}
-			}
-
-			//Save pin state
-			pin_states[i] = b;
-		}
-	}
-	*/
-	return false;
+	return ok;
 }
