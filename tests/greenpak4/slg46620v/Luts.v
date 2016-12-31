@@ -43,7 +43,7 @@ module Luts(din, dout_instantiated, dout_inferred);
 
 	GP_INV inv_inst (
 		.IN(din[0]), .OUT(dout_instantiated[0]));
-	GP_2LUT #(.INIT(4'hB)) lut2_inst (
+	GP_2LUT #(.INIT(4'h7)) lut2_inst (
 		.IN0(din[0]), .IN1(din[1]), .OUT(dout_instantiated[1]));
 	GP_3LUT #(.INIT(8'h7F)) lut3_inst (
 		.IN0(din[0]), .IN1(din[1]), .IN2(din[2]), .OUT(dout_instantiated[2]));
