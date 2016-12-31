@@ -29,13 +29,13 @@ module Luts(din, dout_instantiated, dout_inferred);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 
-	(* LOC = "P2 P3 P4 P5" *)
+	(* LOC = "P5 P4 P3 P2" *)
 	input wire[3:0] din;
 
-	(* LOC = "P6 P7 P8 P9" *)
+	(* LOC = "P9 P8 P7 P6" *)
 	output wire[3:0] dout_instantiated;
 
-	(* LOC = "P12 P13 P14 P15" *)
+	(* LOC = "P15 P14 P13 P12" *)
 	output wire[3:0] dout_inferred;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

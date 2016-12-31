@@ -111,12 +111,12 @@ bool RunTest(hdevice hdev)
 		};
 
 		//Drive the inputs
-		LogVerbose("Testing:  %d %d %d %d\n", a, b, c, d);
+		LogVerbose("Testing:  %d %d %d %d\n", d, c, b, a);
 		LogVerbose("Expected: %d %d %d %d\n", nand1_expected, nand2_expected, nand3_expected, nand4_expected);
-		ioConfig.driverConfigs[5] = a ? TP_VDD : TP_GND;
-		ioConfig.driverConfigs[4] = b ? TP_VDD : TP_GND;
-		ioConfig.driverConfigs[3] = c ? TP_VDD : TP_GND;
-		ioConfig.driverConfigs[2] = d ? TP_VDD : TP_GND;
+		ioConfig.driverConfigs[2] = a ? TP_VDD : TP_GND;
+		ioConfig.driverConfigs[3] = b ? TP_VDD : TP_GND;
+		ioConfig.driverConfigs[4] = c ? TP_VDD : TP_GND;
+		ioConfig.driverConfigs[5] = d ? TP_VDD : TP_GND;
 		if(!SetIOConfig(hdev, ioConfig))
 			return false;
 
