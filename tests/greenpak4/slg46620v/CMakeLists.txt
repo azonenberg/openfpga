@@ -28,6 +28,7 @@ add_greenpak4_hiltest(Latch SLG46620V)
 add_greenpak4_hiltest(LFOsc SLG46620V)
 add_greenpak4_hiltest(Luts SLG46620V)
 add_greenpak4_hiltest(PGA SLG46620V)
+add_greenpak4_hiltest(RingOsc SLG46620V)
 
 ########################################################################################################################
 # Cosimulation tests
