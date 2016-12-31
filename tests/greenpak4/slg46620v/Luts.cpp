@@ -98,8 +98,20 @@ bool RunTest(hdevice hdev)
 			nand1_expected, nand2_expected, nand3_expected, nand4_expected
 		};
 
+		const char* descriptions[]=
+		{
+			"instantiated INV",
+			"instantiated LUT2",
+			"instantiated LUT3",
+			"instantiated LUT4",
+			"inferred INV",
+			"inferred LUT2",
+			"inferred LUT3",
+			"inferred LUT4"
+		};
+
 		//Drive the inputs
-		LogVerbose("Testing %d %d %d %d\n", a, b, c, d);
+		LogVerbose("Testing:  %d %d %d %d\n", a, b, c, d);
 		LogVerbose("Expected: %d %d %d %d\n", nand1_expected, nand2_expected, nand3_expected, nand4_expected);
 		ioConfig.driverConfigs[2] = a ? TP_VDD : TP_GND;
 		ioConfig.driverConfigs[3] = b ? TP_VDD : TP_GND;
@@ -124,9 +136,9 @@ bool RunTest(hdevice hdev)
 		{
 			if(expected[j] != results[j])
 			{
-				LogError("input (%d %d %d %d), output pin %d, got %d instead of %d\n",
-					a, b, c, d,
+				LogError("Mismatch at pin %d (%s), got %d instead of %d\n",
 					pin_nums[j],
+					descriptions[j],
 					results[j],
 					expected[j]);
 				ok = false;
