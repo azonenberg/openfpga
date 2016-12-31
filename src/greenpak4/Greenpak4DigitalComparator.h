@@ -56,6 +56,11 @@ public:
 	void AddInputNMuxEntry(Greenpak4EntityOutput net, unsigned int sel)
 	{ m_innsels[net] = sel; }
 
+	bool IsUsed();
+
+	Greenpak4EntityOutput GetPowerDown()
+	{ return m_powerDown; }
+
 protected:
 	Greenpak4EntityOutput m_powerDown;
 	Greenpak4EntityOutput m_inp[8];

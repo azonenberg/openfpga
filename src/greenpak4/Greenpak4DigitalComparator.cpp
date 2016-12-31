@@ -158,8 +158,23 @@ bool Greenpak4DigitalComparator::Load(bool* /*bitstream*/)
 	return false;
 }
 
+bool Greenpak4DigitalComparator::IsUsed()
+{
+	bool noClock = (m_clock.IsPowerRail() && !m_clock.GetPowerRailValue());
+	bool noInP = (m_inp[0].IsPowerRail() && !m_inp[0].GetPowerRailValue());
+	bool noInN = (m_inn[0].IsPowerRail() && !m_inn[0].GetPowerRailValue());
+	if(noClock && noInP && noInN)
+		return false;
+
+	return true;
+}
+
 bool Greenpak4DigitalComparator::Save(bool* bitstream)
 {
+	//If no inputs hooked up, stop
+	if(!IsUsed())
+		return true;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
 
@@ -208,16 +223,10 @@ bool Greenpak4DigitalComparator::Save(bool* bitstream)
 		}
 	}
 
-	//If no input, stop
+	//If null inputs, but not unused, complain
 	bool noClock = (m_clock.IsPowerRail() && !m_clock.GetPowerRailValue());
 	bool noInP = (m_inp[0].IsPowerRail() && !m_inp[0].GetPowerRailValue());
 	bool noInN = (m_inn[0].IsPowerRail() && !m_inn[0].GetPowerRailValue());
-	if(noClock && noInP && noInN)
-	{
-		return true;
-	}
-
-	//If null inputs, but not unused, complain
 	if(noClock || noInP || noInN)
 	{
 		LogError("Missing clock or input to DCMP_%d (%s clock, %s inP, %s inN)\n",
