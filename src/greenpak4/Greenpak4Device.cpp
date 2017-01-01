@@ -702,32 +702,38 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 	//inp 0 is ADC, not implemented
 	m_dcmps[0]->AddInputPMuxEntry(m_spi->GetOutput("RXD_HIGH"), 1);
 	//inp 2 is FSM0_Q, not implemented
+	//CNT14_2
 	m_dcmps[0]->AddInputPMuxEntry(m_dcmpmux->GetOutput("OUTA"), 3);
 
 	//inn 0 is CNT8_Q, not implemented
 	m_dcmps[0]->AddInputNMuxEntry(m_dcmprefs[0]->GetOutput("OUT"), 1);
 	m_dcmps[0]->AddInputNMuxEntry(m_spi->GetOutput("RXD_LOW"), 2);
 	//inn 3 is FSM1_Q, not implemented
+	//CNT8_4
 
 	//in0 is ADC, not implemented
 	m_dcmps[1]->AddInputPMuxEntry(m_spi->GetOutput("RXD_LOW"), 1);
 	//in2 is FSM1, not implemented
+	//CNT8_4
 	m_dcmps[1]->AddInputPMuxEntry(m_dcmprefs[1]->GetOutput("OUT"), 3);
 
-	//in0 is CNT11_Q, not implemented
+	//in0 is CNT9_Q, not implemented
 	m_dcmps[1]->AddInputNMuxEntry(m_dcmpmux->GetOutput("OUTB"), 1);
 	m_dcmps[1]->AddInputNMuxEntry(m_spi->GetOutput("RXD_LOW"), 2);
 	//in3 is FSM0_Q, not implemented
+	//CNT14_2
 
 	//in0 is ADC, not implemented
 	m_dcmps[2]->AddInputPMuxEntry(m_spi->GetOutput("RXD_HIGH"), 1);
 	//in2 is FSM1, not implemented
+	//CNT8_4
 	m_dcmps[2]->AddInputPMuxEntry(m_dcmprefs[3]->GetOutput("OUT"), 3);
 
 	//in0 is CNT8_Q, not implemented
 	m_dcmps[2]->AddInputNMuxEntry(m_dcmprefs[2]->GetOutput("OUT"), 1);
 	m_dcmps[2]->AddInputNMuxEntry(m_spi->GetOutput("RXD_LOW"), 2);
 	//in3 is FSM0_Q, not implemented
+	//CNT14_2
 
 	//PGA
 	m_pga = new Greenpak4PGA(this, 815);
