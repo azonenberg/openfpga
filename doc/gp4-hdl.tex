@@ -1405,6 +1405,8 @@ In this case, the high 6 bits of the counter will always be zero.
 \thinhline
 \tokenstyle{OUT} & Output & 1 & Counter underflow output. High whenever the count register equals zero. \\
 \thinhline
+\tokenstyle{POUT} & Output & 8 & Parallel counter output to \tokenref{GP\_DCMP}{gp-dcmp} or \tokenref{GP\_DAC}{gp-dac} \\
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
@@ -1481,6 +1483,8 @@ power-on reset, underflow or overflow, and to a configurable value by the reset 
 	\whenstyle{When \tokenstyle{UP} is 0:} High whenever the count register equals zero. \newline
 	\whenstyle{When \tokenstyle{UP} is 1:} High whenever the count register equals \datastyle{8'hff}. \\
 \thinhline
+\tokenstyle{POUT} & Output & 8 & Parallel counter output to \tokenref{GP\_DCMP}{gp-dcmp} or \tokenref{GP\_DAC}{gp-dac} \\
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
@@ -1506,6 +1510,7 @@ power-on reset, underflow or overflow, and to a configurable value by the reset 
 \thinhline
 \end{tabularx}
 
+\pagebreak
 \subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-count8-adv-example} begins counting from \datastyle{8'hcc} up to \datastyle{8'hff},
@@ -1640,6 +1645,9 @@ power-on reset, underflow or overflow, and to a configurable value by the reset 
 	\whenstyle{When \tokenstyle{UP} is 0:} High whenever the count register equals zero. \newline
 	\whenstyle{When \tokenstyle{UP} is 1:} High whenever the count register equals \datastyle{14'h3fff}. \\
 \thinhline
+\tokenstyle{POUT} & Output & 8 & Parallel counter output to \tokenref{GP\_DCMP}{gp-dcmp} or \tokenref{GP\_DAC}{gp-dac}.
+Note that only the 8 lowest bits of the count register are routed to \tokenstyle{POUT}. \\
+\thinhline
 \end{tabularx}
 
 \subsubsection{Parameter Descriptions}
@@ -1665,6 +1673,7 @@ power-on reset, underflow or overflow, and to a configurable value by the reset 
 \thinhline
 \end{tabularx}
 
+\pagebreak
 \subsubsection{Verilog Usage Example}
 
 The example shown in figure \ref{gp-count14-adv-example} begins counting from \datastyle{14'd3141} up to
