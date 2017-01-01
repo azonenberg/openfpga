@@ -1133,7 +1133,7 @@ void MakeDeviceEdges(Greenpak4Device* device)
 
 		//TODO: Other inputs: ADC, counters
 
-		//ADC/DCMP Clock mux routing
+		//ADC/DCMP clock mux routing
 		auto mbuf = dynamic_cast<Greenpak4MuxedClockBuffer*>(device->GetClockBuffer(5))->GetPARNode();
 		rosc->AddEdge("CLKOUT_HARDIP", mbuf, "IN");
 		rcosc->AddEdge("CLKOUT_HARDIP", mbuf, "IN");
