@@ -247,8 +247,9 @@ bool Greenpak4Comparator::Save(bool* bitstream)
 		return false;
 	}
 
-	//Valid input, hook it up
-	else
+	//Valid input, hook it up.
+	//BUGFIX: If we only have one input there's no vin config bits so don't write to m_cbaseVin
+	else if(m_muxsels.size() > 1)
 	{
 		unsigned int sel = m_muxsels[m_vin];
 
