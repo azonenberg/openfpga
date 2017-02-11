@@ -69,12 +69,11 @@ function(add_greenpak4_bitstream name part)
 		OUTPUT  "${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
 		COMMAND gp4par "--stdout-only"
 					   --usercode 41
+					   --quiet
 					   --part ${part}
-					   --debug
 					   --output  "${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
 					   --logfile "${CMAKE_CURRENT_BINARY_DIR}/${name}-par.log"
 					   "${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
-					   "--quiet"
 		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
 		DEPENDS gp4par
 		COMMENT "Place and route netlist ${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
