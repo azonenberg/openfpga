@@ -261,10 +261,14 @@ instantiated.
 \pagebreak
 \section{\namestyle{gp4par} HDL Constraints}
 
-There is only one supported constraint entry format at this time, Verilog attributes. There is currently no support for
-adding constraints to netlist entities via external constraint files or command line arguments. The general format of a
-constraint with name \tokenstyle{FOO} and value 42 applied to the register \wirestyle{foobar} is shown in Figure
-\ref{constraint}.
+Constraints may be entered by Verilog attributes or an external Physical Constraints File (.pcf) file. In the event of
+a conflict, the PCF takes precedence over constraints in the Verilog. If two constraints in the same PCF file conflict,
+the later constraint takes precedence.
+
+\subsection{Verilog attributes}
+
+The general format of a constraint with name \tokenstyle{FOO} and value 42 applied to the register \wirestyle{foobar}
+is shown in Figure \ref{constraint-verilog}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -272,7 +276,24 @@ constraint with name \tokenstyle{FOO} and value 42 applied to the register \wire
 reg[3:0] foobar = 0;
 \end{lstlisting}
 \caption{Example Verilog attribute constraint}
-\label{constraint}
+\label{constraint-verilog}
+\end{figure}
+
+\subsection{PCF constraints}
+
+\namestyle{gp4par} PCF files used a syntax similar to that of the industry standard Synopsys Design Constraints (SDC).
+Only constraints are supported; arbitrary TCL cannot be used.
+
+The general format of a constraint with name \tokenstyle{FOO} and value 42 applied to the register \wirestyle{foobar}
+is shown in Figure \ref{constraint-pcf}.
+
+\begin{figure}[h]
+\begin{lstlisting}
+# set some random attribute
+set_foo foobar 42
+\end{lstlisting}
+\caption{Example PCF constraint}
+\label{constraint-pcf}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

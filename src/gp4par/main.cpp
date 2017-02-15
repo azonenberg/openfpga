@@ -328,7 +328,9 @@ int main(int argc, char* argv[])
 void ShowUsage()
 {
 	printf(//                                                                               v 80th column
-		"Usage: gp4par -p part -o bitstream.txt netlist.json\n"
+		"Usage: gp4par [options] -p part -o bitstream.txt netlist.json\n"
+		"    -c <file>\n"
+		"        Reads placement constraints from <file>\n"
 		"    --debug\n"
 		"        Prints lots of internal debugging information.\n"
 		"    --disable-charge-pump\n"

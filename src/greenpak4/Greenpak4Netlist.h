@@ -33,7 +33,7 @@
 class Greenpak4Netlist
 {
 public:
-	Greenpak4Netlist(std::string fname);
+	Greenpak4Netlist(std::string fname, std::string constraint_file = "");
 	virtual ~Greenpak4Netlist();
 
 	Greenpak4NetlistModule* GetTopModule()
@@ -64,6 +64,7 @@ protected:
 	//Init helpers
 	void Load(json_object* object);
 	void LoadModules(json_object* object);
+	void LoadConstraints(FILE* fp);
 
 	std::string m_creator;
 

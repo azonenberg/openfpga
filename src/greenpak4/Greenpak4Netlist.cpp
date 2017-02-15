@@ -28,7 +28,7 @@ Greenpak4NetlistEntity::~Greenpak4NetlistEntity()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
-Greenpak4Netlist::Greenpak4Netlist(std::string fname)
+Greenpak4Netlist::Greenpak4Netlist(string fname, string constraint_file)
 	: m_topModule(NULL)
 	, m_parseOK(true)
 {
@@ -94,6 +94,19 @@ Greenpak4Netlist::Greenpak4Netlist(std::string fname)
 	json_object_put(object);
 	json_tokener_free(tok);
 	delete[] json_string;
+
+	//Read the constraint file (if we have one)
+	if(constraint_file == "")
+		return;
+	fp = fopen(constraint_file.c_str(), "r");
+	if(fp == NULL)
+	{
+		LogError("Failed to open constraint file %s\n", fname.c_str());
+		m_parseOK = false;
+		return;
+	}
+	LoadConstraints(fp);
+	fclose(fp);
 }
 
 Greenpak4Netlist::~Greenpak4Netlist()
@@ -106,6 +119,14 @@ Greenpak4Netlist::~Greenpak4Netlist()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Parsing stuff
+
+/**
+	@brief Parsing for a PCF file
+ */
+void Greenpak4Netlist::LoadConstraints(FILE* fp)
+{
+
+}
 
 /**
 	@brief Top-level parsing routine
