@@ -77,8 +77,7 @@ function(add_greenpak4_bitstream name part)
 		OUTPUT  "${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
 		COMMAND gp4par "--stdout-only"
 					   --usercode 41
-					   # --quiet
-					   --debug
+					   --quiet
 					   --part ${part}
 					   ${pcfargs1}
 					   ${pcfargs2}
