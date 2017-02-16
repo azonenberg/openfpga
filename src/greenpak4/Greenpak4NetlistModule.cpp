@@ -179,6 +179,31 @@ void Greenpak4NetlistModule::CreatePowerNets()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Loading
 
+void Greenpak4NetlistModule::AddWireAttribute(string target, string name, string value)
+{
+	LogDebug("Applying PCF constraint %s (with value %s) to wire %s\n", name.c_str(), value.c_str(), target.c_str());
+	LogIndenter li;
+
+	//For now assume it's a wire and apply that
+	//TODO: Support PCF constraints for cells too?
+	if(m_nets.find(target) == m_nets.end())
+	{
+		LogWarning("Couldn't constrain object \"%s\" because no such wire exists in the design\n", target.c_str());
+		return;
+	}
+
+	//Find the cell that drove the wire and tag it
+	auto net = m_nets[target];
+	auto driver = net->m_driver;
+	if(driver.m_cell == NULL)
+	{
+		LogWarning("Couldn't constrain object \"%s\" because it has no driver\n", target.c_str());
+		return;
+	}
+	LogDebug("Wire is driven by cell %s, constraining that instead\n", driver.m_cell->m_name.c_str());
+	driver.m_cell->m_attributes[name] = value;
+}
+
 void Greenpak4NetlistModule::LoadAttributes(json_object* object)
 {
 	json_object_iterator end = json_object_iter_end(object);

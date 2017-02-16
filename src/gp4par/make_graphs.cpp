@@ -719,6 +719,9 @@ bool MakeNetlistEdges(Greenpak4Netlist* netlist)
 			LogDebug("[NULL]\n");
 	}
 
+	//Load the constraint file once we have the topology figured out
+	netlist->LoadConstraints();
+
 	return true;
 }
 

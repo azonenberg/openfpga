@@ -64,7 +64,7 @@ public:
 	//Source file locations
 	std::vector<std::string> m_src_locations;
 
-	//Net source (only valid after indexing)
+	//Net source (only valid after MakeNetlistEdges)
 	Greenpak4NetlistNodePoint m_driver;
 
 	//List of internal points we link to (only valid after indexing)

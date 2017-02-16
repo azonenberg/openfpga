@@ -30,6 +30,7 @@ Greenpak4NetlistEntity::~Greenpak4NetlistEntity()
 
 Greenpak4Netlist::Greenpak4Netlist(string fname, string constraint_file)
 	: m_topModule(NULL)
+	, m_constraintFname(constraint_file)
 	, m_parseOK(true)
 {
 	//Read the netlist
@@ -94,19 +95,6 @@ Greenpak4Netlist::Greenpak4Netlist(string fname, string constraint_file)
 	json_object_put(object);
 	json_tokener_free(tok);
 	delete[] json_string;
-
-	//Read the constraint file (if we have one)
-	if(constraint_file == "")
-		return;
-	fp = fopen(constraint_file.c_str(), "r");
-	if(fp == NULL)
-	{
-		LogError("Failed to open constraint file %s\n", fname.c_str());
-		m_parseOK = false;
-		return;
-	}
-	LoadConstraints(fp);
-	fclose(fp);
 }
 
 Greenpak4Netlist::~Greenpak4Netlist()
@@ -120,12 +108,60 @@ Greenpak4Netlist::~Greenpak4Netlist()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Parsing stuff
 
+void Greenpak4Netlist::LoadConstraints()
+{
+	//Read the constraint file (if we have one)
+	if(m_constraintFname == "")
+		return;
+	FILE* fp = fopen(m_constraintFname.c_str(), "r");
+	if(fp == NULL)
+	{
+		LogError("Failed to open constraint file %s\n", m_constraintFname.c_str());
+		m_parseOK = false;
+		return;
+	}
+	LoadConstraints(fp);
+	fclose(fp);
+}
+
 /**
 	@brief Parsing for a PCF file
  */
 void Greenpak4Netlist::LoadConstraints(FILE* fp)
 {
+	char line[1024];
+	while(NULL != fgets(line, sizeof(line), fp))
+		LoadConstraint(line);
+}
 
+void Greenpak4Netlist::LoadConstraint(const char* line)
+{
+	//Remove leading spaces
+	while(isspace(line[0]))
+		line++;
+
+	//Skip empty lines and comments
+	if(line[0] == '\0')
+		return;
+	if(line[0] == '#')
+		return;
+
+	//Parse the constraint
+	char target[512];
+	char name[512];
+	char value[512];
+	if(3 != sscanf(line, "set_%511s %511s %511s", name, target, value))
+	{
+		LogError("Ignoring malformed constraint %s\n", line);
+		return;
+	}
+
+	//Convert the name to uppercase
+	for(int i=0; i<512 && name[i]; i++)
+		name[i] = toupper(name[i]);
+
+	//Apply it
+	m_topModule->AddWireAttribute(target, name, value);
 }
 
 /**

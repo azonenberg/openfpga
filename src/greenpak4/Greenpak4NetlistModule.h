@@ -92,6 +92,9 @@ public:
 	bool Validate()
 	{ return m_parseOK; }
 
+	//Adds an extra attribute to a wire (used by PCF parsing)
+	void AddWireAttribute(std::string target, std::string name, std::string value);
+
 protected:
 	Greenpak4Netlist* m_parent;
 

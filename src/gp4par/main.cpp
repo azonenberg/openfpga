@@ -221,7 +221,7 @@ int main(int argc, char* argv[])
 	}
 
 	//Set up logging
-	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
+	g_log_sinks.emplace(g_log_sinks.begin(), new ColoredSTDLogSink(console_verbosity));
 
 	//Print header
 	if(console_verbosity >= Severity::NOTICE)
@@ -307,7 +307,7 @@ int main(int argc, char* argv[])
 
 	//Parse the unplaced netlist
 	LogNotice("\nLoading Yosys JSON file \"%s\".\n", fname.c_str());
-	Greenpak4Netlist netlist(fname);
+	Greenpak4Netlist netlist(fname, pcfname);
 	if(!netlist.Validate())
 		return 1;
 

@@ -107,4 +107,7 @@ module Location(a, b, c, d, e, f);
 	wire d_int = (a & b & e);
 	assign d = d_int;
 
+	//Random other output constrained by PCF
+	assign f = ~d_int;
+
 endmodule

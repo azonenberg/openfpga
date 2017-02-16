@@ -56,6 +56,8 @@ public:
 	bool Validate()
 	{ return m_parseOK; }
 
+	void LoadConstraints();
+
 protected:
 
 	void IndexNets(bool verbose);
@@ -65,6 +67,7 @@ protected:
 	void Load(json_object* object);
 	void LoadModules(json_object* object);
 	void LoadConstraints(FILE* fp);
+	void LoadConstraint(const char* line);
 
 	std::string m_creator;
 
@@ -76,6 +79,8 @@ protected:
 
 	//All of the nets in the netlist
 	nodeset m_nodes;
+
+	std::string m_constraintFname;
 
 	bool m_parseOK;
 };

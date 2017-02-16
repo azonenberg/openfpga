@@ -70,7 +70,7 @@ function(add_greenpak4_bitstream name part)
 	set(pcfargs2 "")
 	if(${ARGC} EQUAL 3)
 		set(pcfargs1 "--constraints")
-		set(pcfargs2 "${ARGV2}")
+		set(pcfargs2 "${CMAKE_CURRENT_SOURCE_DIR}/${ARGV2}")
 	endif()
 
 	add_custom_command(
