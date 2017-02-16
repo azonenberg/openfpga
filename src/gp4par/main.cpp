@@ -27,6 +27,9 @@ int main(int argc, char* argv[])
 	//Netlist file
 	string fname = "";
 
+	//Constraint file name
+	string pcfname = "";
+
 	//Output file
 	string ofname = "";
 
@@ -188,8 +191,18 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 		}
+		else if(s == "-c" || s == "--constraints")
+		{
+			if(i+1 < argc)
+				pcfname = argv[++i];
+			else
+			{
+				printf("--constraints requires an argument\n");
+				return 1;
+			}
+		}
 
-		//assume it's the netlist file if it'[s the first non-switch argument
+		//assume it's the netlist file if it's the first non-switch argument
 		else if( (s[0] != '-') && (fname == "") )
 			fname = s;
 
@@ -329,7 +342,7 @@ void ShowUsage()
 {
 	printf(//                                                                               v 80th column
 		"Usage: gp4par [options] -p part -o bitstream.txt netlist.json\n"
-		"    -c <file>\n"
+		"    -c, --constraints <file>\n"
 		"        Reads placement constraints from <file>\n"
 		"    --debug\n"
 		"        Prints lots of internal debugging information.\n"

@@ -44,7 +44,7 @@ endfunction()
 function(add_greenpak4_hiltest name part)
 
 	add_greenpak4_bitstream(${name} ${part})
-	
+
 	add_executable(hiltest-${part}-${name}
 		${name}.cpp)
 	target_link_libraries(hiltest-${part}-${name}
@@ -65,16 +65,28 @@ function(add_greenpak4_bitstream name part)
 
 	add_greenpak4_netlist(${name} ${part})
 
+	# Add the PCF file if we have one
+	set(pcfargs1 "")
+	set(pcfargs2 "")
+	if(${ARGC} EQUAL 3)
+		set(pcfargs1 "--constraints")
+		set(pcfargs2 "${ARGV2}")
+	endif()
+
 	add_custom_command(
 		OUTPUT  "${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
 		COMMAND gp4par "--stdout-only"
 					   --usercode 41
 					   # --quiet
+					   --debug
 					   --part ${part}
+					   ${pcfargs1}
+					   ${pcfargs2}
 					   --output  "${CMAKE_CURRENT_BINARY_DIR}/${name}.txt"
 					   --logfile "${CMAKE_CURRENT_BINARY_DIR}/${name}-par.log"
 					   "${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
 		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
+		DEPENDS "${pcfargs2}"
 		DEPENDS gp4par
 		COMMENT "Place and route netlist ${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
 		VERBATIM)
