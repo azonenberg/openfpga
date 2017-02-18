@@ -46,6 +46,9 @@ int main(int argc, char* argv[])
 	//Turns off the internal LDO and connects Vdd directly to Vcore
 	bool ldoBypass = false;
 
+	//Disables colored output
+	bool noColors = false;
+
 	//Number of times to re-try the boot process
 	int bootRetry = 1;
 
@@ -171,6 +174,8 @@ int main(int argc, char* argv[])
 			disableChargePump = true;
 		else if(s == "--ldo-bypass")
 			ldoBypass = true;
+		else if(s == "--nocolors")
+			noColors = true;
 		else if(s == "--boot-retry")
 		{
 			if(i+1 < argc)
@@ -221,7 +226,10 @@ int main(int argc, char* argv[])
 	}
 
 	//Set up logging
-	g_log_sinks.emplace(g_log_sinks.begin(), new ColoredSTDLogSink(console_verbosity));
+	if(noColors)
+		g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
+	else
+		g_log_sinks.emplace(g_log_sinks.begin(), new ColoredSTDLogSink(console_verbosity));
 
 	//Print header
 	if(console_verbosity >= Severity::NOTICE)

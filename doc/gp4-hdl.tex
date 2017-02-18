@@ -4249,7 +4249,7 @@ GP_VSS vss(
 
 \subsection{Introduction}
 
-The current version of \namestyle{gp4par} takes long-form arguments only. All argument and value names are case sensitive.
+All argument and value names are case sensitive.
 
 The example shown in figure \ref{gp-cmd-example} runs place-and-route on the netlist Analog.json, targeting the
 SLG46620V, with top-level module Analog, and saves the generated bitstream to Analog-hdl.txt. Unused pins are pulled
@@ -4318,6 +4318,11 @@ followed by a file name, where \namestyle{gp4par} will write all diagnostic mess
 The \texttt{--logfile-lines} argument, which is also accepted as \texttt{-L}, is optional. It is identical to
 \texttt{--logfile}, except that the file is line-buffered, that is every message is written to the file as soon
 as it is completely emitted by \namestyle{gp4par}.
+
+\subsection{\texttt{--nocolors}}
+
+The \texttt{--nocolors} argument is optional. If set, do not use ANSI color escape sequences in stdout (logfiles never use
+colors). This is primarily intended for automated batch flows which do filtering of messages.
 
 \subsection{\texttt{--output}, \texttt{-o}}
 
