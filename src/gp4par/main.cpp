@@ -88,13 +88,13 @@ int main(int argc, char* argv[])
 					unused_pull = Greenpak4IOB::PULL_NONE;
 				else
 				{
-					printf("--unused-pull must be one of up, down, float, none\n");
+					printf("ERROR: --unused-pull must be one of up, down, float, none\n");
 					return 1;
 				}
 			}
 			else
 			{
-				printf("--unused-pull requires an argument\n");
+				printf("ERROR: --unused-pull requires an argument\n");
 				return 1;
 			}
 		}
@@ -111,13 +111,13 @@ int main(int argc, char* argv[])
 					unused_drive = Greenpak4IOB::PULL_1M;
 				else
 				{
-					printf("--unused-drive must be one of 10k, 100k, 1M\n");
+					printf("ERROR: --unused-drive must be one of 10k, 100k, 1M\n");
 					return 1;
 				}
 			}
 			else
 			{
-				printf("--unused-drive requires an argument\n");
+				printf("ERROR: --unused-drive requires an argument\n");
 				return 1;
 			}
 		}
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 				sscanf(argv[++i], "%x", &userid);
 			else
 			{
-				printf("--usercode requires an argument\n");
+				printf("ERROR: --usercode requires an argument\n");
 				return 1;
 			}
 		}
@@ -153,13 +153,13 @@ int main(int argc, char* argv[])
 						break;
 
 					default:
-						printf("invalid part (supported: 46620, 46621, 46140)\n");
+						printf("ERROR: Invalid part (supported: SLG46620, SLG46621, SLG46140)\n");
 						return 1;
 				}
 			}
 			else
 			{
-				printf("--part requires an argument\n");
+				printf("ERROR: --part requires an argument\n");
 				return 1;
 			}
 		}
@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
 				bootRetry = atoi(argv[++i]);
 			else
 			{
-				printf("--boot-retry requires an argument\n");
+				printf("ERROR: --boot-retry requires an argument\n");
 				return 1;
 			}
 		}
@@ -187,7 +187,7 @@ int main(int argc, char* argv[])
 				ofname = argv[++i];
 			else
 			{
-				printf("--output requires an argument\n");
+				printf("ERROR: --output requires an argument\n");
 				return 1;
 			}
 		}
@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
 				pcfname = argv[++i];
 			else
 			{
-				printf("--constraints requires an argument\n");
+				printf("ERROR: --constraints requires an argument\n");
 				return 1;
 			}
 		}
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
 
 		else
 		{
-			printf("Unrecognized command-line argument \"%s\", use --help\n", s.c_str());
+			printf("ERROR: Unrecognized command-line argument \"%s\", use --help\n", s.c_str());
 			return 1;
 		}
 	}
