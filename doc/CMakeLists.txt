@@ -1,7 +1,7 @@
 add_custom_command(
     OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/gp4-hdl.pdf
-    COMMAND pdflatex -halt-on-error -interaction batchmode ${CMAKE_CURRENT_SOURCE_DIR}/gp4-hdl.tex > /dev/null
-    COMMAND pdflatex -halt-on-error -interaction batchmode ${CMAKE_CURRENT_SOURCE_DIR}/gp4-hdl.tex > /dev/null
+    COMMAND ${PDFLATEX} -halt-on-error -interaction batchmode ${CMAKE_CURRENT_SOURCE_DIR}/gp4-hdl.tex > /dev/null
+    COMMAND ${PDFLATEX} -halt-on-error -interaction batchmode ${CMAKE_CURRENT_SOURCE_DIR}/gp4-hdl.tex > /dev/null
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gp4-hdl.tex
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     VERBATIM)

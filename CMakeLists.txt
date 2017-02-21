@@ -7,8 +7,7 @@ enable_testing()
 include(GNUInstallDirs)
 
 # Project configuration
-set(BUILD_DOC     ON      CACHE BOOL   "Build documentation")
-set(YOSYS_COMMAND "yosys" CACHE STRING "Command used to run yosys")
+set(YOSYS_COMMAND    "yosys"    CACHE STRING "Command used to run yosys")
 set(IVERILOG_COMMAND "iverilog" CACHE STRING "Command used to run Icarus Verilog")
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
@@ -54,6 +53,18 @@ if(SANITIZE)
     message(FATAL_ERROR "Sanitizers not supported on compiler ${CMAKE_CXX_COMPILER_ID}")
   endif()
 endif()
+
+# Optional features
+find_program(PDFLATEX pdflatex)
+if(NOT DEFINED BUILD_DOC AND NOT PDFLATEX)
+  message(STATUS "pdflatex not found, documentation will not be built")
+  set(BUILD_DOC OFF)
+else()
+  message(STATUS "pdflatex found, documentation will be built")
+  set(BUILD_DOC ON)
+endif()
+
+set(BUILD_DOC ${BUILD_DOC} CACHE BOOL "Build documentation")
 
 # Subdirectories
 add_subdirectory(src)
