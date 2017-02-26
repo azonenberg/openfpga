@@ -82,13 +82,17 @@ hdevice OpenBoard(int nboard, bool test)
 
 		//Takes a while to switch and re-enumerate
 		switching = true;
-		for(int i=0; i<10; i++)
-		{
-			usleep(1000 * 1000);
-			hdev = OpenDevice(0x0f0f, 0x0006, nboard);
-			if(hdev)
-				break;
-		}
+	}
+
+	//Try up to ten times to open the board if we're switching mode.
+	//Stop after the first failure if we're not switching b/c there's no point.
+	for(int i=0; i<10; i++)
+	{
+		hdev = OpenDevice(0x0f0f, 0x0006, nboard);
+		if(hdev || !switching)
+			break;
+
+		usleep(1000 * 1000);
 	}
 
 	//By this point, it should be in "orange" mode
