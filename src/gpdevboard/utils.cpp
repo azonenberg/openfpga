@@ -92,7 +92,8 @@ hdevice OpenBoard(int nboard, bool test)
 		if(hdev || !switching)
 			break;
 
-		usleep(1000 * 1000);
+		// usleep is only guaranteed to work with <1000000 us of sleeping
+		usleep(1000 * 1000 - 1);
 	}
 
 	//By this point, it should be in "orange" mode
