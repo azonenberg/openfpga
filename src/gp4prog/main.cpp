@@ -22,7 +22,11 @@
 #include <unistd.h>
 #include <log.h>
 #include <gpdevboard.h>
+#ifndef _WIN32
 #include <termios.h>
+#else
+#include <conio.h>
+#endif
 
 using namespace std;
 
@@ -545,6 +549,7 @@ int main(int argc, char* argv[])
 		LogNotice("Holding lock on board, press any key to exit...\n");
 		SetStatusLED(hdev, 1);
 
+#ifndef _WIN32
 		struct termios oldt, newt;
 		tcgetattr ( STDIN_FILENO, &oldt );
 		newt = oldt;
@@ -552,6 +557,9 @@ int main(int argc, char* argv[])
 		tcsetattr ( STDIN_FILENO, TCSANOW, &newt );
 		getchar();
 		tcsetattr ( STDIN_FILENO, TCSANOW, &oldt );
+#else
+		_getch();
+#endif
 	}
 
 	//Done
