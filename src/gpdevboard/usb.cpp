@@ -154,6 +154,7 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct, int nboard)
 		return NULL;
 	}
 
+#if !(defined(_WIN32) || defined(__APPLE__))
 	//Detach the kernel driver, if any
 	int err = libusb_detach_kernel_driver(hdev, 0);
 	if( (0 != err) && (LIBUSB_ERROR_NOT_FOUND != err) )
@@ -161,6 +162,9 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct, int nboard)
 		LogError("Can't detach kernel driver\n");
 		return NULL;
 	}
+#else
+	int err = 0;
+#endif
 
 	//Set the device configuration
 	//If this fails, with LIBUSB_ERROR_BUSY, poll every 100 ms until the device is free
