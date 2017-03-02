@@ -6,5 +6,8 @@ add_library(gpdevboard STATIC
 target_include_directories(gpdevboard
 	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+find_library(HIDAPI_LIBRARY
+	NAMES hidapi hidapi-libusb)
+
 target_link_libraries(gpdevboard
-	usb-1.0 log)
+	${HIDAPI_LIBRARY} log)

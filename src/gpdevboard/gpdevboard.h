@@ -25,10 +25,12 @@
 #include <string>
 #include <vector>
 
+#include <hidapi/hidapi.h>
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // USB command wrappers
 
-typedef struct libusb_device_handle* hdevice;
+typedef hid_device* hdevice;
 
 bool USBSetup();
 void USBCleanup(hdevice hdev);

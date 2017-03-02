@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#include <libusb-1.0/libusb.h>
-
 //Windows appears to define an ERROR macro in its headers.
 //Conflicts with ERROR enum defined in log.h.
 #if defined(_WIN32)
@@ -35,12 +33,9 @@ using namespace std;
 
 bool SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size)
 {
-	int transferred;
-	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, 2|LIBUSB_ENDPOINT_OUT,
-	                                         const_cast<uint8_t*>(buf), size, &transferred, 250)))
+	if(hid_write(hdev, buf, size) < 0)
 	{
-		LogError("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
+		LogError("hid_write failed (%ls)\n", hid_error(hdev));
 		return false;
 	}
 	return true;
@@ -48,12 +43,9 @@ bool SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size)
 
 bool ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size)
 {
-	int transferred;
-	int err = 0;
-	if(0 != (err = libusb_interrupt_transfer(hdev, 1|LIBUSB_ENDPOINT_IN,
-	                                         buf, size, &transferred, 250)))
+	if(hid_read_timeout(hdev, buf, size, 250) < 0)
 	{
-		LogError("libusb_interrupt_transfer failed (%s)\n", libusb_error_name(err));
+		LogError("hid_read_timeout failed (%ls)\n", hid_error(hdev));
 		return false;
 	}
 	return true;
@@ -65,9 +57,9 @@ bool ReceiveInterruptTransfer(hdevice hdev, uint8_t* buf, size_t size)
 //Set up USB stuff
 bool USBSetup()
 {
-	if(0 != libusb_init(NULL))
+	if(0 != hid_init())
 	{
-		LogError("libusb_init failed\n");
+		LogError("hid_init failed\n");
 		return false;
 	}
 	return true;
@@ -75,8 +67,8 @@ bool USBSetup()
 
 void USBCleanup(hdevice hdev)
 {
-	libusb_close(hdev);
-	libusb_exit(NULL);
+	hid_close(hdev);
+	hid_exit();
 }
 
 /**
@@ -97,111 +89,28 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct, int nboard)
 		return NULL;
 	}
 
-	libusb_device** list;
-	ssize_t devcount = libusb_get_device_list(NULL, &list);
-	if(devcount < 0)
-	{
-		LogError("libusb_get_device_list failed\n");
-		return NULL;
-	}
-	libusb_device* device = NULL;
-	bool found = false;
-	for(ssize_t i=0; i<devcount; i++)
-	{
-		device = list[i];
-
-		libusb_device_descriptor desc;
-		if(0 != libusb_get_device_descriptor(device, &desc))
-			continue;
-
-		//Skip anything from the wrong vendor
-		if(desc.idVendor != idVendor)
-			continue;
-
-		LogDebug("Found Silego device at bus %d, port %d\n",
-			libusb_get_bus_number(device),
-			libusb_get_port_number(device));
-
-		//If we are looking for one of several boards, skip the early ones
-		if(nboard > 0)
-		{
-			nboard --;
-			continue;
-		}
-
-		//If we match the PID, we're good to go
-		if(desc.idProduct == idProduct)
-		{
-			found = true;
+	int dev_index = 0;
+	struct hid_device_info *devs, *cur_dev;
+	devs = hid_enumerate(idVendor, idProduct);
+	cur_dev = devs;
+	while (cur_dev) {
+		LogDebug("Found Silego device at %s\n", cur_dev->path);
+		if (dev_index == nboard)
 			break;
-		}
+		cur_dev = cur_dev->next;
+		dev_index++;
 	}
-	libusb_device_handle* hdev;
-	if(found)
-	{
-		LogVerbose("Using device at bus %d, port %d\n",
-			libusb_get_bus_number(device),
-			libusb_get_port_number(device));
-		if(0 != libusb_open(device, &hdev))
-		{
-			LogError("libusb_open failed\n");
-			return NULL;
-		}
-	}
-	libusb_free_device_list(list, 1);
-	if(!found)
-	{
+	hid_free_enumeration(devs);
+
+	hdevice hdev;
+	if (!cur_dev)
 		return NULL;
-	}
 
-#if !(defined(_WIN32) || defined(__APPLE__))
-	//Detach the kernel driver, if any
-	int err = libusb_detach_kernel_driver(hdev, 0);
-	if( (0 != err) && (LIBUSB_ERROR_NOT_FOUND != err) )
+	LogVerbose("Using device at %s\n", cur_dev->path);
+	hdev = hid_open_path(cur_dev->path);
+	if (!hdev)
 	{
-		LogError("Can't detach kernel driver\n");
-		return NULL;
-	}
-#else
-	int err = 0;
-#endif
-
-	//Set the device configuration
-	//If this fails, with LIBUSB_ERROR_BUSY, poll every 100 ms until the device is free
-	if(0 != (err = libusb_set_configuration(hdev, 1)))
-	{
-		if(err == LIBUSB_ERROR_BUSY)
-		{
-			LogNotice("USB device is currently busy, blocking until it's free...\n");
-			while(true)
-			{
-				err = libusb_set_configuration(hdev, 1);
-
-				if(err == LIBUSB_ERROR_BUSY)
-				{
-					usleep(1000 * 100);
-					continue;
-				}
-
-				if(err == LIBUSB_SUCCESS)
-					break;
-
-				LogError("Failed to select device configuration (err = %d)\n", err);
-				return NULL;
-			}
-		}
-
-		else
-		{
-			LogError("Failed to select device configuration (err = %d)\n", err);
-			return NULL;
-		}
-	}
-
-	//Claim interface 0
-	if(0 != libusb_claim_interface(hdev, 0))
-	{
-		LogError("Failed to claim interface\n");
+		LogError("hid_open_path failed\n");
 		return NULL;
 	}
 
@@ -212,11 +121,14 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct, int nboard)
 bool GetStringDescriptor(hdevice hdev, uint8_t index, string &desc)
 {
 	char strbuf[128];
-	if(libusb_get_string_descriptor_ascii(hdev, index, (unsigned char*)strbuf, sizeof(strbuf)) < 0)
+	wchar_t wstrbuf[sizeof(strbuf)];
+	if(hid_get_indexed_string(hdev, index, wstrbuf, sizeof(strbuf)) < 0)
 	{
-		LogFatal("libusb_get_string_descriptor_ascii failed\n");
+		LogFatal("hid_get_indexed_string failed\n");
 		return false;
 	}
+
+	wcstombs(strbuf, wstrbuf, sizeof(strbuf));
 
 	desc = strbuf;
 	return true;
