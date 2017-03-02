@@ -100,14 +100,17 @@ hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct, int nboard)
 		cur_dev = cur_dev->next;
 		dev_index++;
 	}
-	hid_free_enumeration(devs);
 
 	hdevice hdev;
 	if (!cur_dev)
+	{
+		hid_free_enumeration(devs);
 		return NULL;
+	}
 
 	LogVerbose("Using device at %s\n", cur_dev->path);
 	hdev = hid_open_path(cur_dev->path);
+	hid_free_enumeration(devs);
 	if (!hdev)
 	{
 		LogError("hid_open_path failed\n");
