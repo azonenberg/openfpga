@@ -122,10 +122,28 @@ bool GetStringDescriptor(hdevice hdev, uint8_t index, string &desc)
 {
 	char strbuf[128];
 	wchar_t wstrbuf[sizeof(strbuf)];
-	if(hid_get_indexed_string(hdev, index, wstrbuf, sizeof(strbuf)) < 0)
+
+	switch (index)
 	{
-		LogFatal("hid_get_indexed_string failed\n");
-		return false;
+		case 1:
+			if (hid_get_product_string(hdev, wstrbuf, sizeof(strbuf)) < 0)
+			{
+				LogFatal("hid_get_product_string failed\n");
+				return false;
+			}
+			break;
+
+		case 2:
+			if (hid_get_manufacturer_string(hdev, wstrbuf, sizeof(strbuf)) < 0)
+			{
+				LogFatal("hid_get_manufacturer_string failed\n");
+				return false;
+			}
+			break;
+
+		default:
+			LogFatal("Invalid index %d\n", index);
+			return false;
 	}
 
 	wcstombs(strbuf, wstrbuf, sizeof(strbuf));
