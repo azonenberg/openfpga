@@ -24,7 +24,7 @@ add_greenpak4_bitstream(SocketTestLoopback_STQFN20 SLG46620V)
 
 add_greenpak4_hiltest(Bargraph SLG46620V)
 add_greenpak4_hiltest(DCMP SLG46620V)
-add_greenpak4_hiltest(Latch SLG46620V)
+#add_greenpak4_hiltest(Latch SLG46620V)
 #add_greenpak4_hiltest(LFOsc SLG46620V)
 add_greenpak4_hiltest(Luts SLG46620V)
 add_greenpak4_hiltest(PGA SLG46620V)
