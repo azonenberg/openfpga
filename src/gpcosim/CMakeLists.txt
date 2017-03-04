@@ -8,4 +8,3 @@ set_target_properties(gpcosim PROPERTIES SUFFIX ".vpi")
 
 target_link_libraries(gpcosim
 	gpdevboard log)
-

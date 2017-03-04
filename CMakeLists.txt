@@ -14,6 +14,7 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 # Compiler configuration
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if(CMAKE_CXX_COMPILER_ID STREQUAL GNU OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
   set(EXTRA_WARNINGS "-Wcast-align -Winit-self -Wmissing-declarations")
   set(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wswitch -Wwrite-strings")
@@ -24,7 +25,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
   set(CMAKE_LINK_FLAGS "-ggdb")
 endif()
 if(MSYS)
-  string(REPLACE "-fPIC" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   add_definitions(-D__USE_MINGW_ANSI_STDIO=1)
 endif()
 
