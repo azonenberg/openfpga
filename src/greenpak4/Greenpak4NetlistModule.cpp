@@ -195,13 +195,38 @@ void Greenpak4NetlistModule::AddWireAttribute(string target, string name, string
 	//Find the cell that drove the wire and tag it
 	auto net = m_nets[target];
 	auto driver = net->m_driver;
-	if(driver.m_cell == NULL)
+	if(driver.m_cell != NULL)
 	{
-		LogWarning("Couldn't constrain object \"%s\" because it has no driver\n", target.c_str());
+		LogDebug("Wire is driven by cell %s, constraining that instead\n", driver.m_cell->m_name.c_str());
+		driver.m_cell->m_attributes[name] = value;
 		return;
 	}
-	LogDebug("Wire is driven by cell %s, constraining that instead\n", driver.m_cell->m_name.c_str());
-	driver.m_cell->m_attributes[name] = value;
+
+	//If the wire is undriven, maybe it's a top-level input! Should be driving a single GP_I[O]BUF cell
+	if(net->m_nodeports.size() != 1)
+	{
+		LogWarning("Couldn't constrain object \"%s\" because it has no driver and more than one load\n", target.c_str());
+		return;
+	}
+	driver = net->m_nodeports[0];
+	if(driver.m_cell == NULL)
+	{
+		LogWarning("Couldn't constrain object \"%s\" because it has no driver and no loads\n", target.c_str());
+		return;
+	}
+
+	if( (driver.m_portname == "IN") && (driver.m_cell->m_type == "GP_IBUF") )
+	{
+		LogDebug("Wire drives input buffer %s, constraining that instead\n", driver.m_cell->m_name.c_str());
+		driver.m_cell->m_attributes[name] = value;
+	}
+	else if( (driver.m_portname == "IO") && (driver.m_cell->m_type == "GP_IOBUF") )
+	{
+		LogDebug("Wire drives input/output buffer %s, constraining that instead\n", driver.m_cell->m_name.c_str());
+		driver.m_cell->m_attributes[name] = value;
+	}
+	else
+		LogWarning("Couldn't constrain object \"%s\" because it has no driver and does not drive a GP_I[O]BUF\n", target.c_str());
 }
 
 void Greenpak4NetlistModule::LoadAttributes(json_object* object)
