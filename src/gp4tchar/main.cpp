@@ -71,6 +71,7 @@ int main(int argc, char* argv[])
 
 	//Print status message
 	LogNotice("GreenPAK timing characterization helper\n");
+	LogNotice("Right now, just enables pins used by pmod-gpdevboard and sets up IO\n");
 
 	//Open the dev board
 	hdevice hdev = OpenBoard(nboard);
