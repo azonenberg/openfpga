@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2017 Andrew Zonenberg and contributors                                                                *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -48,7 +48,7 @@ PAREngine::~PAREngine()
 bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 {
 	LogVerbose("\nXBPAR initializing...\n");
-	m_temperature = 100;
+	m_temperature = 250;
 
 	//TODO: glibc rand sucks, replace with something a bit more random
 	//(this may not make a difference for a device this tiny though)
@@ -68,12 +68,16 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 
 	uint32_t iteration = 0;
 	vector<PARGraphEdge*> unroutes;
-	uint32_t best_cost = 1000000;
+	uint32_t best_cost = 0xffffffff;
 	uint32_t time_since_best_cost = 0;
 	bool made_change = true;
 	uint32_t newcost = 0;
-	while(m_temperature > 0)
+	while(m_temperature > 1)
 	{
+		//Cool the system down
+		//TODO: Decide on a good rate for this?
+		m_temperature --;
+
 		//Figure out how good we are now.
 		//Don't recompute the cost if we didn't accept the last iteration's changes
 		if(made_change)
@@ -81,20 +85,32 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 		time_since_best_cost ++;
 		iteration ++;
 
-		//If cost is zero, stop now - we found a satisfactory placement!
-		if(newcost == 0)
-			break;
+		LogIndenter li;
 
 		//If the new placement is better than our previous record, make a note of that
 		if(newcost < best_cost)
 		{
 			best_cost = newcost;
 			time_since_best_cost = 0;
+			SaveNewBestPlacement();
 		}
 
-		//If we failed to improve placement after ten iterations it's hopeless, give up
-		//if(time_since_best_cost > 10)
-		//	break;
+		//If cost is zero, stop now - we found a satisfactory placement!
+		if(newcost == 0)
+			break;
+
+		//If we failed to improve placement after a long while we might be stuck in a local minimum
+		//Revert to the best score found to date
+		const int false_path_max = 25;
+		if(time_since_best_cost > false_path_max)
+		{
+			LogVerbose("No improvements for %d iterations on current path, restarting from previous best\n",
+				false_path_max);
+			RestorePreviousBestPlacement();
+			time_since_best_cost = 0;
+			made_change = true;
+			continue;
+		}
 
 		//Find the set of nodes in the netlist that we can optimize
 		//If none were found, give up
@@ -105,10 +121,21 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 
 		//Try to optimize the placement more
 		made_change = OptimizePlacement(badnodes, label_names);
+	}
 
-		//Cool the system down
-		//TODO: Decide on a good rate for this?
-		m_temperature --;
+	//If the current score is worse than the previous best, revert to the optimal placement
+	if(newcost > best_cost)
+	{
+		RestorePreviousBestPlacement();
+
+		//Sanity check that the score was changed
+		newcost = ComputeCost();
+		LogVerbose("Final placement score is %d\n", newcost);
+		if(newcost != best_cost)
+		{
+			LogError("Revert failed (new cost doesn't match previous best)\n");
+			return false;
+		}
 	}
 
 	//Check for any remaining unroutable nets
@@ -238,7 +265,37 @@ bool PAREngine::InitialPlacement(map<uint32_t, string>& label_names)
 		}
 	}
 
+	//We haven't done anything, so the current placement must be the best we've found to date
+	SaveNewBestPlacement();
+
 	return true;
+}
+
+/**
+	@brief Saves the current placement as the best placement yet
+ */
+void PAREngine::SaveNewBestPlacement()
+{
+	uint32_t n = m_netlist->GetNumNodes();
+	for(uint32_t i=0; i<n; i++)
+	{
+		auto node = m_netlist->GetNodeByIndex(i);
+		m_bestPlacementFound[node] = node->GetMate();
+	}
+	LogVerbose("Found new optimal placement\n");
+}
+
+void PAREngine::RestorePreviousBestPlacement()
+{
+	LogVerbose("Restoring previous optimal placement\n");
+
+	//Apply the new placement
+	uint32_t n = m_netlist->GetNumNodes();
+	for(uint32_t i=0; i<n; i++)
+	{
+		auto node = m_netlist->GetNodeByIndex(i);
+		node->MateWith(m_bestPlacementFound[node]);
+	}
 }
 
 /**
@@ -252,8 +309,6 @@ bool PAREngine::OptimizePlacement(
 	vector<PARGraphNode*>& badnodes,
 	map<uint32_t, string>& label_names)
 {
-	LogIndenter li;
-
 	//Pick one of the nodes at random as our pivot node
 	PARGraphNode* pivot = badnodes[rand() % badnodes.size()];
 

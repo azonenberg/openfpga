@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2017 Andrew Zonenberg and contributors                                                                *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -65,6 +65,12 @@ protected:
 
 	PARGraph* m_netlist;
 	PARGraph* m_device;
+
+	//Best solution found so far
+	std::map<PARGraphNode*, PARGraphNode*> m_bestPlacementFound;
+
+	void SaveNewBestPlacement();
+	void RestorePreviousBestPlacement();
 
 	uint32_t m_temperature;
 };
