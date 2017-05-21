@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <cmath>
 #include <cstring>
+#include <libusb-1.0/libusb.h>
 
 #include <log.h>
 #include "gpdevboard.h"
@@ -26,6 +27,8 @@
 #include <sys/file.h>
 
 using namespace std;
+
+static bool g_devicesResetFromBootloader = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Status check
@@ -55,6 +58,39 @@ bool CheckStatus(hdevice hdev)
 // Initialization
 
 /**
+	@brief If any devices are in bootloader, move them to normal mode
+ */
+bool ResetDevicesInBootloader()
+{
+	//Set up libusb
+	if(!USBSetup())
+		return false;
+	
+	LogVerbose("Resetting any devices in bootloader mode\n");
+	LogIndenter li;
+	
+	//Find all of the devices in "white" (bootloader) mode
+	vector<hdevice> handles;	
+	for(int i=100; i>=0; i--)
+	{
+		hdevice hdev = OpenDevice(0x0f0f, 0x8006, i);
+		if(hdev)
+			handles.push_back(hdev);
+	}
+
+	//Switch all of them into normal mode
+	for(auto h : handles)
+	{
+		SwitchMode(h);
+		libusb_close(h);
+	}
+
+	g_devicesResetFromBootloader = true;
+
+	return true;
+}
+
+/**
 	@brief Connect to the board, but don't change anything
 
 	@param nboard	0-based index of board to connect to
@@ -63,44 +99,31 @@ bool CheckStatus(hdevice hdev)
  */
 hdevice OpenBoard(int nboard, bool test)
 {
-	//Set up libusb
-	if(!USBSetup())
-		return NULL;
-
+	if(!g_devicesResetFromBootloader)
+	{
+		if(!ResetDevicesInBootloader())
+			return NULL;
+	}
+	
 	LogNotice("Searching for developer board at index %d\n", nboard);
 	LogIndenter li;
 
-	//Try opening the board in "white" mode first
-	hdevice hdev = OpenDevice(0x0f0f, 0x8006, nboard);
-	bool switching = false;
-	if(hdev)
-	{
-		//Change the board into "orange" mode
-		LogVerbose("Switching developer board from bootloader mode\n");
-		if(!SwitchMode(hdev))
-			return NULL;
-
-		//Takes a while to switch and re-enumerate
-		switching = true;
-	}
-
-	//Try up to ten times to open the board if we're switching mode.
-	//Stop after the first failure if we're not switching b/c there's no point.
+	hdevice hdev = NULL;
+	
+	//Try up to ten times to open the board
 	for(int i=0; i<10; i++)
 	{
 		hdev = OpenDevice(0x0f0f, 0x0006, nboard);
-		if(hdev || !switching)
+		if(hdev)
 			break;
 
 		// usleep is only guaranteed to work with <1000000 us of sleeping
 		usleep(1000 * 1000 - 1);
 	}
 
-	//By this point, it should be in "orange" mode
+	//By this point, it should be in "orange" mode even if it wasn't initially
 	if(!hdev)
 	{
-		if(switching)
-			LogError("Device failed to switch mode\n");
 		if(!test)
 			LogError("No device found, giving up\n");
 		return NULL;

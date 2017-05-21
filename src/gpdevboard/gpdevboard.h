@@ -33,6 +33,7 @@ typedef struct libusb_device_handle* hdevice;
 bool USBSetup();
 void USBCleanup(hdevice hdev);
 
+bool ResetDevicesInBootloader();
 hdevice OpenDevice(uint16_t idVendor, uint16_t idProduct, int nboard);
 bool GetStringDescriptor(hdevice hdev, uint8_t index, std::string &desc);
 bool SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size);
