@@ -73,6 +73,7 @@ protected:
 	void RestorePreviousBestPlacement();
 
 	uint32_t m_temperature;
+	uint32_t m_maxTemperature;
 };
 
 #endif

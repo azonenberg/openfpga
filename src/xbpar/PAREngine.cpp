@@ -29,6 +29,7 @@ PAREngine::PAREngine(PARGraph* netlist, PARGraph* device)
 	: m_netlist(netlist)
 	, m_device(device)
 	, m_temperature(0)
+	, m_maxTemperature(500)	//max number of iterations allowed
 {
 
 }
@@ -48,7 +49,7 @@ PAREngine::~PAREngine()
 bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 {
 	LogVerbose("\nXBPAR initializing...\n");
-	m_temperature = 250;
+	m_temperature = m_maxTemperature;
 
 	//TODO: glibc rand sucks, replace with something a bit more random
 	//(this may not make a difference for a device this tiny though)
@@ -346,11 +347,11 @@ bool PAREngine::OptimizePlacement(
 
 	//LogVerbose("Original cost %u, new cost %u\n", original_cost, new_cost);
 
-	//If new cost is less, or greater with probability temperature, accept it
+	//If new cost is less, or greater with temperature-dependent probability, accept it
 	//TODO: make probability depend on dCost?
 	if(new_cost < original_cost)
 		return true;
-	if( (rand() % 100) < (int)m_temperature )
+	if( (rand() % m_maxTemperature) < m_temperature )
 		return true;
 
 	//If we don't like the change, revert
