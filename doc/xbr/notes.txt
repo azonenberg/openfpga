@@ -86,7 +86,18 @@ Macrocells
 	6:3		Output enable / mode
 				0000	Push-pull output
 				0001	Open-drain output
-				1000	Tri-state output
+				0010	Tri-state output (GTS1)
+				0011	Unknown, not yet seen
+				0100	Tri-state output (PTB)
+				0101	Unknown, not seen yet
+				0110	Tri-state output (GTS3)
+				0111	Unknown, not yet seen
+				1000	Tri-state output (CTE)
+				1001	Unknown, not yet seen
+				1010	Tri-state output (GTS2)
+				1011	Unknown, not yet seen
+				1100	Tri-state output (GTS0)
+				1101	Unknown, not yet seen
 				1110	CGND (drive constant zero to reduce ground bounce?)
 				1111	Floating (used for inputs)
 				Other values unknown
@@ -158,10 +169,14 @@ Some product terms have special functionality beyond their use as general logic.
 
 All product term and function block indexes are zero based.
 
-Control term set:		6
-Control term reset:		5
+No special function(?): 0
+No special function(?): 1
+No special function(?): 2
+No special function(?): 3
 Control term clock:		4
-Control term enable:	7 (conjecture)
+Control term reset:		5
+Control term set:		6
+Control term enable:	7
 Product term A:			3N + 8
-Product term B:			3N + 9 (conjecture)
+Product term B:			3N + 9
 Product term C:      	3N + 10
