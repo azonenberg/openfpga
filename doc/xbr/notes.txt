@@ -132,7 +132,16 @@ Global set/reset mux
 Global OE mux
 -------------------------
 8 bits starting at fuse # 12261
-Unknown functionality, but related to I/O cells somehow
+
+Specifies state of the GTS pins
+	7	GTS0 invert (0 = used as T, 1 = used as !T)
+	6	GTS0 buffer enable
+	5	GTS1 invert
+	4	GTS1 buffer enable
+	3	GTS2 invert
+	2	GTS2 buffer enable
+	1	GTS3 invert
+	0	GTS3 buffer enable
 
 Global termination mode
 -------------------------
