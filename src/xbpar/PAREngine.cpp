@@ -30,12 +30,25 @@ PAREngine::PAREngine(PARGraph* netlist, PARGraph* device)
 	, m_device(device)
 	, m_temperature(0)
 	, m_maxTemperature(500)	//max number of iterations allowed
+	, m_randomSeed(0)
 {
 
 }
 
 PAREngine::~PAREngine()
 {
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Random number generation
+
+//Linear congruential RNG based on glibc coefficients from Wikipedia
+//TODO: glibc rand sucks, replace with something a bit more random!
+//This may not make a difference for a device this tiny though.
+uint32_t PAREngine::RandomNumber()
+{
+	m_randomSeed = ( (1103515245 * m_randomSeed) + 12345) % 0x7FFFFFFF;
+	return m_randomSeed;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,9 +64,7 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 	LogVerbose("\nXBPAR initializing...\n");
 	m_temperature = m_maxTemperature;
 
-	//TODO: glibc rand sucks, replace with something a bit more random
-	//(this may not make a difference for a device this tiny though)
-	srand(seed);
+	m_randomSeed = seed;
 
 	//Detect obviously impossible-to-route designs
 	if(!SanityCheck(label_names))
@@ -311,7 +322,7 @@ bool PAREngine::OptimizePlacement(
 	map<uint32_t, string>& label_names)
 {
 	//Pick one of the nodes at random as our pivot node
-	PARGraphNode* pivot = badnodes[rand() % badnodes.size()];
+	PARGraphNode* pivot = badnodes[RandomNumber() % badnodes.size()];
 
 	//Find a new site for the pivot node (but remember the old site)
 	//If nothing was found, bail out
@@ -351,7 +362,7 @@ bool PAREngine::OptimizePlacement(
 	//TODO: make probability depend on dCost?
 	if(new_cost < original_cost)
 		return true;
-	if( (rand() % m_maxTemperature) < m_temperature )
+	if( (RandomNumber() % m_maxTemperature) < m_temperature )
 		return true;
 
 	//If we don't like the change, revert

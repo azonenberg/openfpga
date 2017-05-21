@@ -74,6 +74,11 @@ protected:
 
 	uint32_t m_temperature;
 	uint32_t m_maxTemperature;
+
+	//libc-independent RNG
+	//Just a simple LCG for now, but could become a mersenne twister etc later on
+	uint32_t RandomNumber();
+	uint32_t m_randomSeed;
 };
 
 #endif

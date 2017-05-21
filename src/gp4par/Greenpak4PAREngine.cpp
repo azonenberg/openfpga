@@ -477,7 +477,7 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(PARGraphNode* pivot)
 		return NULL;
 
 	//Pick one at random
-	auto c = candidates[rand() % ncandidates];
+	auto c = candidates[RandomNumber() % ncandidates];
 	LogDebug("Selected %s\n",
 		static_cast<Greenpak4BitstreamEntity*>(c->GetData())->GetDescription().c_str());
 	return c;
