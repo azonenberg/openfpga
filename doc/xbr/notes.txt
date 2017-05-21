@@ -12,7 +12,7 @@ ZIA
 40 rows, 8 bits per row
 Each row is an 65:1 mux corresponding to one output from the global routing matrix.
 The mux is a two level tree.
-The first level consists of six 11:1 mask-programmed muxes (with a different coding for each row), reducing the 65
+The first level consists of six 11:1 mask-programmed muxes (with a different setting for each row), reducing the 65
 signals on the metal 4 bus down to six. The second level is an 8:1 one-hot bitstream-programmed mux, which selects the
 final routing output as either a constant value or one of the six mask mux outputs.
 
@@ -162,7 +162,7 @@ Macrocells
 				10 = T flipflop
 				11 = D flipflop with clock enable
 	15:14	Input mux of some sort
-				00 = IBUF driving ZIA
+				00 = IBUF driving ZIA or flipflop direct path
 				11 = unused pin
 				Other values unknown
 	13:12	"FB val" - specifies output from macrocell to the ZIA
