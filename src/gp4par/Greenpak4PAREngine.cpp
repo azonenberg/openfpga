@@ -199,8 +199,11 @@ uint32_t Greenpak4PAREngine::ComputeCongestionCost()
 	}
 
 	//Squaring each half makes minimizing the larger one more important
-	//vs if we just summed
-	return sqrt(costs[0]*costs[0] + costs[1]*costs[1]);
+	//vs if we just summed. Also add in a fixed penalty if we are using >100% resources
+	uint32_t cost = sqrt(costs[0]*costs[0] + costs[1]*costs[1]);
+	if( (costs[0] > 10) || (costs[1] > 10) )
+		cost += 20;
+	return cost;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
