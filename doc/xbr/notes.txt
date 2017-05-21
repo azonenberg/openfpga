@@ -1,0 +1,167 @@
+========================================================================================================================
+XC2C32A (JED file bit ordering)
+========================================================================================================================
+
+CONVENTIONS
+-------------------------
+Leftmost bit in a row is MSB (N), rightmost is LSB (0)
+
+ZIA
+-------------------------
+320 bits starting at fuse # 0 (FB0), 6128 (FB1)
+40 rows, 8 bits per row
+Each row is an 8:1 one-hot mux. Inputs are active-low except for bit 7, which is active high.
+This is done so that the all-ones reset state is a constant, low-power value.
+	7    	Constant 1 (active HIGH)
+	6    	Constant 0
+	5:0		Six inputs chosen from the six 11-bit muxes on metal 4
+
+PLA AND
+-------------------------
+
+4480 bits starting at fuse # 320 (FB0), 6448 (FB1)
+56 rows, 80 bits per row
+Each row configures inputs to an 80-input AND gate. 0 selects the signal, 1 selects a constant one.
+Each column corresponds to one ZIA output.
+
+TODO discuss bit ordering
+
+PLA OR
+-------------------------
+896 bits starting at fuse # 4800 (FB0), 10928 (FB1)
+56 rows, 16 bits per row
+Each column configures inputs to a 16-input OR gate. 0 selects the signal, 1 selects a constant zero.
+Each row corresponds to one product term.
+
+TODO discuss bit ordering
+
+Macrocells
+-------------------------
+432 bits starting at fuse # 5696 (FB0), 11824 (FB2)
+16 rows, 27 bits per row
+	26		Selects input to the "11" clock source mux
+				0 = Product Term Clock
+				1 = Control Term Clock
+	25		1 if FF is falling edge triggered, 0 if rising
+	24:23	Clock source for the FF
+				00 = GCK0
+				01 = GCK1
+				10 = GCK2
+				11 = Product Term C or Control Term Clock
+	22		1 if FF is DDR clocked, 0 if SDR
+	21:20	Reset source for the FF
+				00 = Product Term A
+				01 = Global Set/Reset
+				10 = Control Term Reset
+				11 = disabled
+	19:18	Set source for the FF
+				00 = Product Term A
+				01 = Global Set/Reset
+				10 = Control Term Set
+				11 = disabled
+	17:16	Flipflop mode
+				00 = D flipflop
+				01 = latch
+				10 = T flipflop
+				11 = D flipflop with clock enable
+	15:14	Input mux of some sort
+				00 = input to ZIA
+				11 = unused input
+				Other values unknown
+	13:12	"FB val" - no idea what this is yet
+	11		Selects input to the flipflop
+				0 = input buffer
+				1 = XOR gate from PLA
+	10		Schmitt trigger enable
+				0 = normal
+				1 = Schmitt trigger
+	9:8		XOR gate input mux
+				00 = Constant zero (pass-through of OR array)
+				01 = Complement of product term C
+				10 = Product term C
+				11 = Constant one (invert output of OR array)
+	7		Output buffer input source
+				0 = Flipflop
+				1 = XOR gate output
+	6:3		Output enable / mode
+				0000	Push-pull output
+				0001	Open-drain output
+				1000	Tri-state output
+				1110	CGND (drive constant zero to reduce ground bounce?)
+				1111	Floating (used for inputs)
+				Other values unknown
+	2		Termination mode
+				0 = Float
+				1 = Pullup / bus keeper active
+	1		Slew rate
+				0 = fast
+				1 = slow
+	0		Power-up state of flipflop (inverted)
+				0 = initialize to 1
+				1 = initialize to 0
+
+Global clock mux
+-------------------------
+3 bits starting at fuse # 12256
+0 = not used
+1 = used
+	2	GCK0
+	1	GCK1
+	0	GCK2
+
+Global set/reset mux
+-------------------------
+2 bits starting at fuse # 12259
+Most likely one controls GS and one GR but not yet known which is which
+
+Global OE mux
+-------------------------
+8 bits starting at fuse # 12261
+Unknown functionality, but related to I/O cells somehow
+
+Global termination mode
+-------------------------
+Fuse # 12269
+	0	Bus hold
+	1	Pull-up
+
+Legacy I/O standard config (for XC2C32A bitstream compatibility)
+-------------------------
+2 bits starting at fuse # 12270
+	1	Output voltage
+	0	Input voltage
+Both are always 1 in XC2C32A bitstreams. Seems like they're probably ORed with bank I/O config?
+
+Dedicated input mode
+-------------------------
+2 bits starting at fuse # 12272
+Unknown functionality, but related to the input-only pin (not on a macrocell)
+
+Per-bank I/O standard config
+-------------------------
+4 bits starting at fuse # 12274
+	3	Bank 0 input voltage
+	2	Bank 0 output voltage
+	1	Bank 1 input voltage
+	0	Bank 1 output voltage
+
+Meaning of each bit:
+	0	High voltage (LVTTL, LVCMOS33, or LVCMOS25)
+	1	Low voltage (LVCMOS18 or LVCMOS15)
+
+It's unclear why there's separate values for input and output; so far it appears they always have the same value.
+
+Special product terms
+-------------------------
+
+Some product terms have special functionality beyond their use as general logic.
+
+All product term and function block indexes are zero based.
+
+Control term set:		6
+Control term reset:		5
+Control term clock:		4
+Control term enable:	7 (conjecture)
+Product term A:			3N + 8
+Product term B:			3N + 9 (conjecture)
+Product term C:      	3N + 10
