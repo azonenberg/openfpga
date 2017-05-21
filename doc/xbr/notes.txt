@@ -10,11 +10,35 @@ ZIA
 -------------------------
 320 bits starting at fuse # 0 (FB0), 6128 (FB1)
 40 rows, 8 bits per row
-Each row is an 8:1 one-hot mux. Inputs are active-low except for bit 7, which is active high.
+Each row is an 65:1 mux corresponding to one output from the global routing matrix.
+The mux is a two level tree.
+The first level consists of six 11:1 mask-programmed muxes (with a different coding for each row), reducing the 65
+signals on the metal 4 bus down to six. The second level is an 8:1 one-hot bitstream-programmed mux, which selects the
+final routing output as either a constant value or one of the six mask mux outputs.
+
+MASK MUX INPUTS (zero based indexing)
+	Bit 5:
+		FB1 macrocell 15 (row 7, 12, 30, 37)
+		FB1 macrocell 14 (row 10, 18, 25, 38)
+		FB1 macrocell 13 (row 6, 13, 26)
+		FB1 macrocell 12 (row 1, 14, 28, 33)
+		FB1 macrocell 11 (row 2, 16, 22, 34)
+		FB1 macrocell 10 (row 4, 11, 32)
+		FB1 macrocell 9 (row 0, 20, 29, 39)
+		FB1 macrocell 8 (row 8, 17, 27)
+		FB1 macrocell 7 (row 5, 15, 31, 36)
+		FB1 macrocell 6 (row 3, 19, 24)
+		FB1 macrocell 5 (row 9, 21, 23, 35)
+	Bit 4:
+	Bit 3:
+	Bit 2:
+	Bit 1:
+
+Inputs are active-low except for bit 7, which is active high.
 This is done so that the all-ones reset state is a constant, low-power value.
 	7    	Constant 1 (active HIGH)
 	6    	Constant 0
-	5:0		Six inputs chosen from the six 11-bit muxes on metal 4
+	5:0		Mask-programmed mux outputs
 
 PLA AND
 -------------------------
@@ -23,6 +47,10 @@ PLA AND
 56 rows, 80 bits per row
 Each row configures inputs to an 80-input AND gate. 0 selects the signal, 1 selects a constant one.
 Each column corresponds to one ZIA output.
+First row is product term #0, second row product term #1, etc
+Bit 0 is ZIA row #0
+
+Low address in bitstream = low index in PLA OR
 
 TODO discuss bit ordering
 
