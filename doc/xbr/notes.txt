@@ -65,10 +65,11 @@ Macrocells
 				10 = T flipflop
 				11 = D flipflop with clock enable
 	15:14	Input mux of some sort
-				00 = input to ZIA
-				11 = unused input
+				00 = IBUF driving ZIA
+				11 = unused pin
 				Other values unknown
-	13:12	"FB val" - no idea what this is yet
+	13:12	"FB val" - specifies output from macrocell to the ZIA (conjecture)
+				Most likely one-hot to select either FF or XOR output
 	11		Selects input to the flipflop
 				0 = input buffer
 				1 = XOR gate from PLA
@@ -123,7 +124,10 @@ Global clock mux
 Global set/reset mux
 -------------------------
 2 bits starting at fuse # 12259
-Most likely one controls GS and one GR but not yet known which is which
+	00	Not using GSR
+	01	Unknown, not observed
+	10	Unknown, not observed
+	11	Using GSR
 
 Global OE mux
 -------------------------
@@ -146,7 +150,11 @@ Both are always 1 in XC2C32A bitstreams. Seems like they're probably ORed with b
 Dedicated input mode
 -------------------------
 2 bits starting at fuse # 12272
-Unknown functionality, but related to the input-only pin (not on a macrocell)
+I/O configuration for the global input
+	1	Schmitt trigger enable
+	0	Termination mode
+		0	Floating
+		1	Terminate
 
 Per-bank I/O standard config
 -------------------------
