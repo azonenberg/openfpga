@@ -56,7 +56,10 @@ endif()
 
 # Optional features
 find_program(PDFLATEX pdflatex)
-if(NOT DEFINED BUILD_DOC AND NOT PDFLATEX)
+if(DEFINED BUILD_DOC AND NOT BUILD_DOC)
+	message(STATUS "BUILD_DOC turned off, documentation will not be built")
+	set(BUILD_DOC OFF)
+elseif(NOT DEFINED BUILD_DOC AND NOT PDFLATEX)
   message(STATUS "pdflatex not found, documentation will not be built")
   set(BUILD_DOC OFF)
 else()
