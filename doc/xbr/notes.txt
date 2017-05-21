@@ -17,7 +17,7 @@ signals on the metal 4 bus down to six. The second level is an 8:1 one-hot bitst
 final routing output as either a constant value or one of the six mask mux outputs.
 
 Mask ROM mux inputs:
-	Bit 5:
+	Bit 5 (leftmost group on M4 bus):
 		FB1 macrocell 15 (row 7, 12, 30, 37)
 		FB1 macrocell 14 (row 10, 18, 25, 38)
 		FB1 macrocell 13 (row 6, 13, 26)
@@ -42,8 +42,52 @@ Mask ROM mux inputs:
 		FB0 macrocell 11 (row 4, 14, 30, 35)
 		FB0 macrocell 10 (row 8, 20, 32, 34)
 	Bit 3:
+		FB0 macrocell 9 (row 3, 13, 29, 34)
+		FB0 macrocell 8 (row 1, 17, 32)
+		FB0 macrocell 7 (row 5, 20, 28, 35)
+		FB0 macrocell 6 (row 8, 16, 23, 36)
+		FB0 macrocell 5 (row 4, 21, 24, 38)
+		FB0 macrocell 4 (row 9, 12, 26, 33)
+		FB0 macrocell 3 (row 10, 14, 22)
+		FB0 macrocell 2 (row 2, 11, 30, 39)
+		FB0 macrocell 1 (row 0, 18, 27, 37)
+		FB0 macrocell 0 (row 6, 15, 25)
+		FB1 pad 15 (row 7, 19, 31)
 	Bit 2:
+		FB1 pad 14 (row )
+		FB1 pad 13 (row )
+		FB1 pad 12 (row )
+		FB1 pad 11 (row )
+		FB1 pad 10 (row )
+		FB1 pad 9 (row )
+		FB1 pad 8 (row )
+		FB1 pad 7 (row )
+		FB1 pad 6 (row )
+		FB1 pad 5 (row )
+		FB1 pad 4 (row )
 	Bit 1:
+		FB1 pad 3 (row )
+		FB1 pad 2 (row )
+		FB1 pad 1 (row )
+		FB1 pad 0 (row )
+		Dedicated input (row )
+		FB0 pad 15 (row )
+		FB0 pad 14 (row )
+		FB0 pad 13 (row )
+		FB0 pad 12 (row )
+		FB0 pad 11 (row )
+		FB0 pad 10 (row )
+	Bit 0 (rightmost group on M4 bus, only 10 signals vs 11):
+		FB0 pad 9 (row )
+		FB0 pad 8 (row )
+		FB0 pad 7 (row )
+		FB0 pad 6 (row )
+		FB0 pad 5 (row )
+		FB0 pad 4 (row )
+		FB0 pad 3 (row )
+		FB0 pad 2 (row )
+		FB0 pad 1 (row )
+		FB0 pad 0 (row )
 
 Bitstream mux inputs:
 Inputs are active-low except for bit 7, which is active high.
@@ -121,8 +165,11 @@ Macrocells
 				00 = IBUF driving ZIA
 				11 = unused pin
 				Other values unknown
-	13:12	"FB val" - specifies output from macrocell to the ZIA (conjecture)
-				Most likely one-hot to select either FF or XOR output
+	13:12	"FB val" - specifies output from macrocell to the ZIA
+				00 = unknown (not observed)
+				01 = unknown (not observed)
+				10 = flipflop feeding into ZIA
+				11 = ZIA output not used
 	11		Selects input to the flipflop
 				0 = input buffer
 				1 = XOR gate from PLA
