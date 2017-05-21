@@ -42,17 +42,18 @@ This is done so that the all-ones reset state is a constant, low-power value.
 
 PLA AND
 -------------------------
-
 4480 bits starting at fuse # 320 (FB0), 6448 (FB1)
 56 rows, 80 bits per row
 Each row configures inputs to an 80-input AND gate. 0 selects the signal, 1 selects a constant one.
 Each column corresponds to one ZIA output.
 First row is product term #0, second row product term #1, etc
-Bit 0 is ZIA row #0
 
-Low address in bitstream = low index in PLA OR
-
-TODO discuss bit ordering
+Bit ordering for each row:
+	0		ZIA row #0 non-inverted output
+	1		ZIA row #0 inverted output
+	2		ZIA row #1 non-inverted output
+	3		ZIA row #1 inverted output
+	...
 
 PLA OR
 -------------------------
@@ -61,7 +62,19 @@ PLA OR
 Each column configures inputs to a 16-input OR gate. 0 selects the signal, 1 selects a constant zero.
 Each row corresponds to one product term.
 
-TODO discuss bit ordering
+Bit ordering for columns:
+	0		Macrocell 15
+	1		Macrocell 14
+	...
+	14		Macrocell 1
+	15		Macrocell 0
+
+Bit ordering for rows
+	0		Product term 0
+	1		Product term 1
+	...
+	54		Product term 54
+	55		Product term 55
 
 Macrocells
 -------------------------
