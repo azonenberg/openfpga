@@ -124,10 +124,8 @@ Global clock mux
 Global set/reset mux
 -------------------------
 2 bits starting at fuse # 12259
-	00	Not using GSR
-	01	Unknown, not observed
-	10	Unknown, not observed
-	11	Using GSR
+	1	GSR buffer input (1 = no invert, 0 = invert)
+	0	GSR buffer enable (1 = active, 0 = unused)
 
 Global OE mux
 -------------------------
