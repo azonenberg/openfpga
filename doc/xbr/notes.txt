@@ -16,7 +16,7 @@ The first level consists of six 11:1 mask-programmed muxes (with a different cod
 signals on the metal 4 bus down to six. The second level is an 8:1 one-hot bitstream-programmed mux, which selects the
 final routing output as either a constant value or one of the six mask mux outputs.
 
-MASK MUX INPUTS (zero based indexing)
+Mask ROM mux inputs:
 	Bit 5:
 		FB1 macrocell 15 (row 7, 12, 30, 37)
 		FB1 macrocell 14 (row 10, 18, 25, 38)
@@ -30,10 +30,22 @@ MASK MUX INPUTS (zero based indexing)
 		FB1 macrocell 6 (row 3, 19, 24)
 		FB1 macrocell 5 (row 9, 21, 23, 35)
 	Bit 4:
+		FB1 macrocell 4 (row 2, 18, 23)
+		FB1 macrocell 3 (row 6, 21, 29, 36)
+		FB1 macrocell 2 (row 9, 17, 24, 37)
+		FB1 macrocell 1 (row 5, 12, 25, 39)
+		FB1 macrocell 0 (row 10, 13, 27, 33)
+		FB0 macrocell 15 (row 1, 15, 22)
+		FB0 macrocell 14 (row 3, 11, 31)
+		FB0 macrocell 13 (row 0, 19, 28, 38)
+		FB0 macrocell 12 (row 7, 16, 26)
+		FB0 macrocell 11 (row 4, 14, 30, 35)
+		FB0 macrocell 10 (row 8, 20, 32, 34)
 	Bit 3:
 	Bit 2:
 	Bit 1:
 
+Bitstream mux inputs:
 Inputs are active-low except for bit 7, which is active high.
 This is done so that the all-ones reset state is a constant, low-power value.
 	7    	Constant 1 (active HIGH)
