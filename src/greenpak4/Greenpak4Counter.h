@@ -56,6 +56,9 @@ public:
 	bool HasFSM()
 	{ return m_hasFSM; }
 
+	bool HasPWM()
+	{ return m_hasPWM; }
+
 	enum ResetMode
 	{
 		BOTH_EDGE = 0,
