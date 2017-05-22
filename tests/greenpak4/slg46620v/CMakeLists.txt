@@ -2,6 +2,7 @@
 # Bitstreams that are not (yet) part of a HiL test
 
 add_greenpak4_bitstream(Blinky SLG46620V)
+add_greenpak4_bitstream(Count12 SLG46620V)
 add_greenpak4_bitstream(Dac SLG46620V)
 add_greenpak4_bitstream(Delay SLG46620V)
 add_greenpak4_bitstream(Ethernet SLG46620V)
