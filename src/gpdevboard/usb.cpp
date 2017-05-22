@@ -25,11 +25,8 @@
 #include <log.h>
 #include <gpdevboard.h>
 #include <unistd.h>
-
-#if defined(__APPLE__)
-	#include <cstdlib>
-	#include <cstring>
-#endif
+#include <cstdlib>
+#include <cstring>
 
 using namespace std;
 
