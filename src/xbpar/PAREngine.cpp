@@ -76,7 +76,6 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 
 	//Converge until we get a passing placement
 	LogNotice("\nOptimizing placement...\n");
-	LogIndenter li;
 
 	uint32_t iteration = 0;
 	vector<PARGraphEdge*> unroutes;
@@ -84,8 +83,11 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 	uint32_t time_since_best_cost = 0;
 	bool made_change = true;
 	uint32_t newcost = 0;
+	uint32_t best_iteration = 0;
 	while(m_temperature > 1)
 	{
+		LogIndenter li;
+
 		//Cool the system down
 		//TODO: Decide on a good rate for this?
 		m_temperature --;
@@ -97,13 +99,14 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 		time_since_best_cost ++;
 		iteration ++;
 
-		LogIndenter li;
+		LogIndenter li2;
 
 		//If the new placement is better than our previous record, make a note of that
 		if(newcost < best_cost)
 		{
 			best_cost = newcost;
 			time_since_best_cost = 0;
+			best_iteration = iteration;
 			SaveNewBestPlacement();
 		}
 
@@ -149,6 +152,8 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 			return false;
 		}
 	}
+	LogVerbose("Took %u iterations to converge (optimal solution found at iteration %u)\n",
+		iteration, best_iteration);
 
 	//Check for any remaining unroutable nets
 	unroutes.clear();
