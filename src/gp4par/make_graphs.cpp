@@ -383,6 +383,22 @@ bool MakeNetlistNodes(
 			return false;
 		}
 
+		//Special label remapping for counters!
+		//If a GP_COUNT8 asks for a pre-divider of 12, change the label to GP_COUNT8_X4INPUT
+		//TODO: see if any other pre-divider values are special?
+		//Note that GP_COUNT8_ADV always has a 4-bit input mux, as does a GP_COUNT14_ADV
+		//so no special casing needed for those
+		if(cell->m_type == "GP_COUNT8")
+		{
+			//See if we have CLKIN_DIVIDE == 12
+			if(cell->m_parameters["CLKIN_DIVIDE"] == "12")
+			{
+				LogDebug("Found CLKIN_DIVIDE = 12 on GP_COUNT8 instance %s, changing to GP_COUNT8_X4INPUT\n",
+					cell->m_name.c_str());
+				label = ilmap["GP_COUNT8_X4INPUT"];
+			}
+		}
+
 		//Create a node for the cell
 		PARGraphNode* nnode = new PARGraphNode(label, cell);
 		cell->m_parnode = nnode;
@@ -551,7 +567,6 @@ void MakeDeviceNodes(
 	uint32_t count8_adv_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8_ADV");
 	uint32_t count14_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT14");
 	uint32_t count14_adv_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT14_ADV");
-	uint32_t count14_x4input_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT14_X4INPUT");
 	uint32_t count8_x4input_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8_X4INPUT");
 	for(unsigned int i=0; i<device->GetCounterCount(); i++)
 	{
@@ -570,7 +585,7 @@ void MakeDeviceNodes(
 				node->AddAlternateLabel(count8_label);
 				node->AddAlternateLabel(count14_label);
 				node->AddAlternateLabel(count8_x4input_label);
-				node->AddAlternateLabel(count14_x4input_label);
+				//There's no GP_COUNT14_X4INPUT because all GP_COUNT14_ADV cells have 4-bit input muxes
 			}
 			else
 			{

@@ -56,7 +56,7 @@ module Count12(dout);
 
 	GP_COUNT8 #(
 		.RESET_MODE("LEVEL"),
-		.COUNT_TO(12),
+		.COUNT_TO(32),
 		.CLKIN_DIVIDE(12)
 	) cnt (
 		.CLK(clk_6khz_cnt),
