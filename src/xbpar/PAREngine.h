@@ -76,9 +76,11 @@ protected:
 	uint32_t m_maxTemperature;
 
 	//libc-independent RNG
-	//Just a simple LCG for now, but could become a mersenne twister etc later on
+	//A PCG random number generator
+	//Does not currently generate a k-dimensional equidistribution, but is
+	//much better than an LCG.
 	uint32_t RandomNumber();
-	uint32_t m_randomSeed;
+	uint64_t m_randomState;
 };
 
 #endif

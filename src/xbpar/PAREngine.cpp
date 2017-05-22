@@ -30,7 +30,7 @@ PAREngine::PAREngine(PARGraph* netlist, PARGraph* device)
 	, m_device(device)
 	, m_temperature(0)
 	, m_maxTemperature(1000)	//max number of iterations allowed
-	, m_randomSeed(0)
+	, m_randomState(0)
 {
 
 }
@@ -42,13 +42,16 @@ PAREngine::~PAREngine()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Random number generation
 
-//Linear congruential RNG based on glibc coefficients from Wikipedia
-//TODO: glibc rand sucks, replace with something a bit more random!
-//This may not make a difference for a device this tiny though.
+//A PCG random number generator. PCG was developed by Melissa O'Neill.
+//This particular piece of code was stolen from the "simple C implementation."
+//See http://www.pcg-random.org for more information
 uint32_t PAREngine::RandomNumber()
 {
-	m_randomSeed = ( (1103515245 * m_randomSeed) + 12345) % 0x7FFFFFFF;
-	return m_randomSeed;
+	uint64_t oldstate = m_randomState;
+	m_randomState = oldstate * 6364136223846793005ULL + 0xda3e39cb94b95bdbULL;
+	uint32_t xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
+	uint32_t rot = oldstate >> 59u;
+	return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +67,10 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 	LogVerbose("\nXBPAR initializing...\n");
 	m_temperature = m_maxTemperature;
 
-	m_randomSeed = seed;
+	m_randomState = 0;
+	RandomNumber();
+	m_randomState += seed;
+	RandomNumber();
 
 	//Detect obviously impossible-to-route designs
 	if(!SanityCheck(label_names))
