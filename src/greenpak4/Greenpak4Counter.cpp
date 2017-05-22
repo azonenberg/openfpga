@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2017 Andrew Zonenberg and contributors                                                                *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -289,7 +289,6 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		}
 
 		//RC oscillator
-		//TODO: 12 is a legal value for some counters but not others, need to consider this during placement??
 		else if(dynamic_cast<Greenpak4RCOscillator*>(clk) != NULL)
 		{
 			switch(m_preDivide)
@@ -337,7 +336,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 				default:
 					LogError(
 						"Counter %d does not support pre-divider values other than 1/4/12/24/64 "
-						"when clocked by ring osc\n",
+						"when clocked by RC osc\n",
 						m_countnum);
 					return false;
 			}
