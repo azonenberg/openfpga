@@ -29,7 +29,7 @@ PAREngine::PAREngine(PARGraph* netlist, PARGraph* device)
 	: m_netlist(netlist)
 	, m_device(device)
 	, m_temperature(0)
-	, m_maxTemperature(500)	//max number of iterations allowed
+	, m_maxTemperature(1000)	//max number of iterations allowed
 	, m_randomSeed(0)
 {
 
@@ -113,6 +113,15 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 		//If cost is zero, stop now - we found a satisfactory placement!
 		if(newcost == 0)
 			break;
+
+		//If we failed to improve placement after a *really* long time, give up - it's not going to get any better
+		const int wrong_tree_max = 250;
+		if( (iteration - best_iteration) > wrong_tree_max)
+		{
+			LogVerbose("No improvements for %d iterations even after backtracking, giving up\n",
+				wrong_tree_max);
+			break;
+		}
 
 		//If we failed to improve placement after a long while we might be stuck in a local minimum
 		//Revert to the best score found to date
