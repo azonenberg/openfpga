@@ -33,9 +33,12 @@ int main(int argc, char* argv[])
 	//Output file
 	string ofname = "";
 
-	//Action to take with unused pins;
+	//Action to take with unused pins
 	Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_NONE;
 	Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
+	//If these fields were set on the command line, they override the netlist
+	bool unused_pull_forced = false;
+	bool unused_drive_forced = false;
 
 	//Specifies whether we should increase drive current of pullups/downs during boot to reach a stable state faster
 	bool ioPrecharge = false;
@@ -94,6 +97,7 @@ int main(int argc, char* argv[])
 					printf("ERROR: --unused-pull must be one of up, down, float, none\n");
 					return 1;
 				}
+				unused_pull_forced = true;
 			}
 			else
 			{
@@ -117,6 +121,7 @@ int main(int argc, char* argv[])
 					printf("ERROR: --unused-drive must be one of 10k, 100k, 1M\n");
 					return 1;
 				}
+				unused_drive_forced = true;
 			}
 			else
 			{
@@ -235,6 +240,66 @@ int main(int argc, char* argv[])
 	if(console_verbosity >= Severity::NOTICE)
 		ShowVersion();
 
+	//Parse the unplaced netlist
+	//We need to load the netlist first to handle the unused_* attributes
+	LogNotice("\nLoading Yosys JSON file \"%s\".\n", fname.c_str());
+	Greenpak4Netlist netlist(fname, pcfname);
+	if(!netlist.Validate())
+		return 1;
+
+	//Handle unused_* attributes in the netlist file
+	auto top_module = netlist.GetTopModule();
+	auto attrib_val = top_module->m_attributes.find("UNUSED_PULL");
+	if (attrib_val != top_module->m_attributes.end())
+	{
+		Greenpak4IOB::PullDirection module_unused_pull;		
+		if(attrib_val->second == "DOWN")
+			module_unused_pull = Greenpak4IOB::PULL_DOWN;
+		else if(attrib_val->second == "UP")
+			module_unused_pull = Greenpak4IOB::PULL_UP;
+		else if( (attrib_val->second == "NONE") || (attrib_val->second == "FLOAT") )
+			module_unused_pull = Greenpak4IOB::PULL_NONE;
+		else
+		{
+			LogError("UNUSED_PULL must be one of UP, DOWN, FLOAT, NONE\n");
+			return 1;
+		}
+
+		if (!unused_pull_forced)
+			unused_pull = module_unused_pull;
+		else
+		{
+			//The module has an attribute, but the command line overrode it
+			if (unused_pull != module_unused_pull)
+				LogNotice("--unused-pull option overrides UNUSED_PULL attribute\n");
+		}
+	}
+	attrib_val = top_module->m_attributes.find("UNUSED_DRIVE");
+	if (attrib_val != top_module->m_attributes.end())
+	{
+		Greenpak4IOB::PullStrength module_unused_drive;		
+		if(attrib_val->second == "10K")
+			module_unused_drive = Greenpak4IOB::PULL_10K;
+		else if(attrib_val->second == "100K")
+			module_unused_drive = Greenpak4IOB::PULL_100K;
+		else if(attrib_val->second == "1M")
+			module_unused_drive = Greenpak4IOB::PULL_1M;
+		else
+		{
+			LogError("UNUSED_DRIVE must be one of 10K, 100K, 1M\n");
+			return 1;
+		}
+
+		if (!unused_drive_forced)
+			unused_drive = module_unused_drive;
+		else
+		{
+			//The module has an attribute, but the command line overrode it
+			if (unused_drive != module_unused_drive)
+				LogNotice("--unused-drive option overrides UNUSED_DRIVE attribute\n");
+		}
+	}
+
 	//Print configuration
 	LogNotice("\nDevice configuration:\n");
 	{
@@ -303,7 +368,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		LogNotice("Unused pins:     %s %s\n", pull.c_str(), drive.c_str());
+		LogNotice("Unused pins:     %s%s\n", pull.c_str(), drive.c_str());
 
 		LogNotice("User ID code:    %02x\n", userid);
 		LogNotice("Read protection: %s\n", readProtect ? "enabled" : "disabled");
@@ -312,12 +377,6 @@ int main(int argc, char* argv[])
 		LogNotice("LDO:             %s\n", ldoBypass ? "bypassed" : "enabled");
 		LogNotice("Boot retry:      %d times\n", bootRetry);
 	}
-
-	//Parse the unplaced netlist
-	LogNotice("\nLoading Yosys JSON file \"%s\".\n", fname.c_str());
-	Greenpak4Netlist netlist(fname, pcfname);
-	if(!netlist.Validate())
-		return 1;
 
 	//Create the device and initialize all IO pins
 	Greenpak4Device device(part, unused_pull, unused_drive);
