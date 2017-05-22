@@ -35,11 +35,19 @@ using namespace std;
 
 bool SendInterruptTransfer(hdevice hdev, const uint8_t* buf, size_t size)
 {
-	if(hid_write(hdev, buf, size) < 0)
+	//We need to prepend a zero byte here because this is the "report ID."
+	//There aren't actually report IDs in use, but the way hidapi works
+	//always requires this.
+	uint8_t *new_buf = (uint8_t *)malloc(size + 1);
+	new_buf[0] = 0x00;
+	memcpy(&new_buf[1], buf, size);
+	if(hid_write(hdev, new_buf, size + 1) < 0)
 	{
+		free(new_buf);
 		LogError("hid_write failed (%ls)\n", hid_error(hdev));
 		return false;
 	}
+	free(new_buf);
 	return true;
 }
 
