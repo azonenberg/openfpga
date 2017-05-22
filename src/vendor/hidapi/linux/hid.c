@@ -582,41 +582,6 @@ void  HID_API_EXPORT hid_free_enumeration(struct hid_device_info *devs)
 	}
 }
 
-hid_device * hid_open(unsigned short vendor_id, unsigned short product_id, const wchar_t *serial_number)
-{
-	struct hid_device_info *devs, *cur_dev;
-	const char *path_to_open = NULL;
-	hid_device *handle = NULL;
-
-	devs = hid_enumerate(vendor_id, product_id);
-	cur_dev = devs;
-	while (cur_dev) {
-		if (cur_dev->vendor_id == vendor_id &&
-		    cur_dev->product_id == product_id) {
-			if (serial_number) {
-				if (wcscmp(serial_number, cur_dev->serial_number) == 0) {
-					path_to_open = cur_dev->path;
-					break;
-				}
-			}
-			else {
-				path_to_open = cur_dev->path;
-				break;
-			}
-		}
-		cur_dev = cur_dev->next;
-	}
-
-	if (path_to_open) {
-		/* Open the device */
-		handle = hid_open_path(path_to_open);
-	}
-
-	hid_free_enumeration(devs);
-
-	return handle;
-}
-
 hid_device * HID_API_EXPORT hid_open_path(const char *path)
 {
 	hid_device *dev = NULL;
@@ -721,46 +686,6 @@ int HID_API_EXPORT hid_read_timeout(hid_device *dev, unsigned char *data, size_t
 	return bytes_read;
 }
 
-int HID_API_EXPORT hid_read(hid_device *dev, unsigned char *data, size_t length)
-{
-	return hid_read_timeout(dev, data, length, (dev->blocking)? -1: 0);
-}
-
-int HID_API_EXPORT hid_set_nonblocking(hid_device *dev, int nonblock)
-{
-	/* Do all non-blocking in userspace using poll(), since it looks
-	   like there's a bug in the kernel in some versions where
-	   read() will not return -1 on disconnection of the USB device */
-
-	dev->blocking = !nonblock;
-	return 0; /* Success */
-}
-
-
-int HID_API_EXPORT hid_send_feature_report(hid_device *dev, const unsigned char *data, size_t length)
-{
-	int res;
-
-	res = ioctl(dev->device_handle, HIDIOCSFEATURE(length), data);
-	if (res < 0)
-		perror("ioctl (SFEATURE)");
-
-	return res;
-}
-
-int HID_API_EXPORT hid_get_feature_report(hid_device *dev, unsigned char *data, size_t length)
-{
-	int res;
-
-	res = ioctl(dev->device_handle, HIDIOCGFEATURE(length), data);
-	if (res < 0)
-		perror("ioctl (GFEATURE)");
-
-
-	return res;
-}
-
-
 void HID_API_EXPORT hid_close(hid_device *dev)
 {
 	if (!dev)
@@ -779,17 +704,6 @@ int HID_API_EXPORT_CALL hid_get_product_string(hid_device *dev, wchar_t *string,
 {
 	return get_device_string(dev, DEVICE_STRING_PRODUCT, string, maxlen);
 }
-
-int HID_API_EXPORT_CALL hid_get_serial_number_string(hid_device *dev, wchar_t *string, size_t maxlen)
-{
-	return get_device_string(dev, DEVICE_STRING_SERIAL, string, maxlen);
-}
-
-int HID_API_EXPORT_CALL hid_get_indexed_string(hid_device *dev, int string_index, wchar_t *string, size_t maxlen)
-{
-	return -1;
-}
-
 
 HID_API_EXPORT const wchar_t * HID_API_CALL  hid_error(hid_device *dev)
 {

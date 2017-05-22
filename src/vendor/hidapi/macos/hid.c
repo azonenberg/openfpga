@@ -504,42 +504,6 @@ void  HID_API_EXPORT hid_free_enumeration(struct hid_device_info *devs)
 	}
 }
 
-hid_device * HID_API_EXPORT hid_open(unsigned short vendor_id, unsigned short product_id, const wchar_t *serial_number)
-{
-	/* This function is identical to the Linux version. Platform independent. */
-	struct hid_device_info *devs, *cur_dev;
-	const char *path_to_open = NULL;
-	hid_device * handle = NULL;
-
-	devs = hid_enumerate(vendor_id, product_id);
-	cur_dev = devs;
-	while (cur_dev) {
-		if (cur_dev->vendor_id == vendor_id &&
-		    cur_dev->product_id == product_id) {
-			if (serial_number) {
-				if (wcscmp(serial_number, cur_dev->serial_number) == 0) {
-					path_to_open = cur_dev->path;
-					break;
-				}
-			}
-			else {
-				path_to_open = cur_dev->path;
-				break;
-			}
-		}
-		cur_dev = cur_dev->next;
-	}
-
-	if (path_to_open) {
-		/* Open the device */
-		handle = hid_open_path(path_to_open);
-	}
-
-	hid_free_enumeration(devs);
-
-	return handle;
-}
-
 static void hid_device_removal_callback(void *context, IOReturn result,
                                         void *sender)
 {
@@ -921,44 +885,6 @@ ret:
 	return bytes_read;
 }
 
-int HID_API_EXPORT hid_read(hid_device *dev, unsigned char *data, size_t length)
-{
-	return hid_read_timeout(dev, data, length, (dev->blocking)? -1: 0);
-}
-
-int HID_API_EXPORT hid_set_nonblocking(hid_device *dev, int nonblock)
-{
-	/* All Nonblocking operation is handled by the library. */
-	dev->blocking = !nonblock;
-
-	return 0;
-}
-
-int HID_API_EXPORT hid_send_feature_report(hid_device *dev, const unsigned char *data, size_t length)
-{
-	return set_report(dev, kIOHIDReportTypeFeature, data, length);
-}
-
-int HID_API_EXPORT hid_get_feature_report(hid_device *dev, unsigned char *data, size_t length)
-{
-	CFIndex len = length;
-	IOReturn res;
-
-	/* Return if the device has been unplugged. */
-	if (dev->disconnected)
-		return -1;
-
-	res = IOHIDDeviceGetReport(dev->device_handle,
-	                           kIOHIDReportTypeFeature,
-	                           data[0], /* Report ID */
-	                           data, &len);
-	if (res == kIOReturnSuccess)
-		return len;
-	else
-		return -1;
-}
-
-
 void HID_API_EXPORT hid_close(hid_device *dev)
 {
 	if (!dev)
@@ -1014,19 +940,6 @@ int HID_API_EXPORT_CALL hid_get_product_string(hid_device *dev, wchar_t *string,
 {
 	return get_product_string(dev->device_handle, string, maxlen);
 }
-
-int HID_API_EXPORT_CALL hid_get_serial_number_string(hid_device *dev, wchar_t *string, size_t maxlen)
-{
-	return get_serial_number(dev->device_handle, string, maxlen);
-}
-
-int HID_API_EXPORT_CALL hid_get_indexed_string(hid_device *dev, int string_index, wchar_t *string, size_t maxlen)
-{
-	/* TODO: */
-
-	return 0;
-}
-
 
 HID_API_EXPORT const wchar_t * HID_API_CALL  hid_error(hid_device *dev)
 {

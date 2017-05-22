@@ -514,43 +514,6 @@ void  HID_API_EXPORT HID_API_CALL hid_free_enumeration(struct hid_device_info *d
 	}
 }
 
-
-HID_API_EXPORT hid_device * HID_API_CALL hid_open(unsigned short vendor_id, unsigned short product_id, const wchar_t *serial_number)
-{
-	/* TODO: Merge this functions with the Linux version. This function should be platform independent. */
-	struct hid_device_info *devs, *cur_dev;
-	const char *path_to_open = NULL;
-	hid_device *handle = NULL;
-	
-	devs = hid_enumerate(vendor_id, product_id);
-	cur_dev = devs;
-	while (cur_dev) {
-		if (cur_dev->vendor_id == vendor_id &&
-		    cur_dev->product_id == product_id) {
-			if (serial_number) {
-				if (wcscmp(serial_number, cur_dev->serial_number) == 0) {
-					path_to_open = cur_dev->path;
-					break;
-				}
-			}
-			else {
-				path_to_open = cur_dev->path;
-				break;
-			}
-		}
-		cur_dev = cur_dev->next;
-	}
-
-	if (path_to_open) {
-		/* Open the device */
-		handle = hid_open_path(path_to_open);
-	}
-
-	hid_free_enumeration(devs);
-	
-	return handle;
-}
-
 HID_API_EXPORT hid_device * HID_API_CALL hid_open_path(const char *path)
 {
 	hid_device *dev;
@@ -735,77 +698,6 @@ end_of_function:
 	return copy_len;
 }
 
-int HID_API_EXPORT HID_API_CALL hid_read(hid_device *dev, unsigned char *data, size_t length)
-{
-	return hid_read_timeout(dev, data, length, (dev->blocking)? -1: 0);
-}
-
-int HID_API_EXPORT HID_API_CALL hid_set_nonblocking(hid_device *dev, int nonblock)
-{
-	dev->blocking = !nonblock;
-	return 0; /* Success */
-}
-
-int HID_API_EXPORT HID_API_CALL hid_send_feature_report(hid_device *dev, const unsigned char *data, size_t length)
-{
-	BOOL res = HidD_SetFeature(dev->device_handle, (PVOID)data, length);
-	if (!res) {
-		register_error(dev, "HidD_SetFeature");
-		return -1;
-	}
-
-	return length;
-}
-
-
-int HID_API_EXPORT HID_API_CALL hid_get_feature_report(hid_device *dev, unsigned char *data, size_t length)
-{
-	BOOL res;
-#if 0
-	res = HidD_GetFeature(dev->device_handle, data, length);
-	if (!res) {
-		register_error(dev, "HidD_GetFeature");
-		return -1;
-	}
-	return 0; /* HidD_GetFeature() doesn't give us an actual length, unfortunately */
-#else
-	DWORD bytes_returned;
-
-	OVERLAPPED ol;
-	memset(&ol, 0, sizeof(ol));
-
-	res = DeviceIoControl(dev->device_handle,
-		IOCTL_HID_GET_FEATURE,
-		data, length,
-		data, length,
-		&bytes_returned, &ol);
-
-	if (!res) {
-		if (GetLastError() != ERROR_IO_PENDING) {
-			/* DeviceIoControl() failed. Return error. */
-			register_error(dev, "Send Feature Report DeviceIoControl");
-			return -1;
-		}
-	}
-
-	/* Wait here until the write is done. This makes
-	   hid_get_feature_report() synchronous. */
-	res = GetOverlappedResult(dev->device_handle, &ol, &bytes_returned, TRUE/*wait*/);
-	if (!res) {
-		/* The operation failed. */
-		register_error(dev, "Send Feature Report GetOverLappedResult");
-		return -1;
-	}
-
-	/* bytes_returned does not include the first byte which contains the
-	   report ID. The data buffer actually contains one more byte than
-	   bytes_returned. */
-	bytes_returned++;
-
-	return bytes_returned;
-#endif
-}
-
 void HID_API_EXPORT HID_API_CALL hid_close(hid_device *dev)
 {
 	if (!dev)
@@ -839,33 +731,6 @@ int HID_API_EXPORT_CALL HID_API_CALL hid_get_product_string(hid_device *dev, wch
 
 	return 0;
 }
-
-int HID_API_EXPORT_CALL HID_API_CALL hid_get_serial_number_string(hid_device *dev, wchar_t *string, size_t maxlen)
-{
-	BOOL res;
-
-	res = HidD_GetSerialNumberString(dev->device_handle, string, sizeof(wchar_t) * MIN(maxlen, MAX_STRING_WCHARS));
-	if (!res) {
-		register_error(dev, "HidD_GetSerialNumberString");
-		return -1;
-	}
-
-	return 0;
-}
-
-int HID_API_EXPORT_CALL HID_API_CALL hid_get_indexed_string(hid_device *dev, int string_index, wchar_t *string, size_t maxlen)
-{
-	BOOL res;
-
-	res = HidD_GetIndexedString(dev->device_handle, string_index, string, sizeof(wchar_t) * MIN(maxlen, MAX_STRING_WCHARS));
-	if (!res) {
-		register_error(dev, "HidD_GetIndexedString");
-		return -1;
-	}
-
-	return 0;
-}
-
 
 HID_API_EXPORT const wchar_t * HID_API_CALL  hid_error(hid_device *dev)
 {
