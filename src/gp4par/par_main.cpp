@@ -38,7 +38,8 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 
 	//Create and run the PAR engine
 	Greenpak4PAREngine engine(ngraph, dgraph, lmap);
-	if(!engine.PlaceAndRoute(lmap, true))
+	uint32_t seed = 0;
+	if(!engine.PlaceAndRoute(lmap, seed))
 	{
 		//Print the placement we have so far
 		PrintPlacementReport(ngraph, device);
