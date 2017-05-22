@@ -40,16 +40,11 @@ typedef LONG NTSTATUS;
    HidD_Get*String() functions without it failing.*/
 #define MAX_STRING_WCHARS 0xFFF
 
-/*#define HIDAPI_USE_DDK*/
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 	#include <setupapi.h>
 	#include <winioctl.h>
-	#ifdef HIDAPI_USE_DDK
-		#include <hidsdi.h>
-	#endif
 
 	/* Copied from inc/ddk/hidclass.h, part of the Windows DDK. */
 	#define HID_OUT_CTL_CODE(id)  \
@@ -78,58 +73,56 @@ extern "C" {
 extern "C" {
 #endif
 
-#ifndef HIDAPI_USE_DDK
-	/* Since we're not building with the DDK, and the HID header
-	   files aren't part of the SDK, we have to define all this
-	   stuff here. In lookup_functions(), the function pointers
-	   defined below are set. */
-	typedef struct _HIDD_ATTRIBUTES{
-		ULONG Size;
-		USHORT VendorID;
-		USHORT ProductID;
-		USHORT VersionNumber;
-	} HIDD_ATTRIBUTES, *PHIDD_ATTRIBUTES;
+/* Since we're not building with the DDK, and the HID header
+   files aren't part of the SDK, we have to define all this
+   stuff here. In lookup_functions(), the function pointers
+   defined below are set. */
+typedef struct _HIDD_ATTRIBUTES{
+	ULONG Size;
+	USHORT VendorID;
+	USHORT ProductID;
+	USHORT VersionNumber;
+} HIDD_ATTRIBUTES, *PHIDD_ATTRIBUTES;
 
-	typedef USHORT USAGE;
-	typedef struct _HIDP_CAPS {
-		USAGE Usage;
-		USAGE UsagePage;
-		USHORT InputReportByteLength;
-		USHORT OutputReportByteLength;
-		USHORT FeatureReportByteLength;
-		USHORT Reserved[17];
-		USHORT fields_not_used_by_hidapi[10];
-	} HIDP_CAPS, *PHIDP_CAPS;
-	typedef void* PHIDP_PREPARSED_DATA;
-	#define HIDP_STATUS_SUCCESS 0x110000
+typedef USHORT USAGE;
+typedef struct _HIDP_CAPS {
+	USAGE Usage;
+	USAGE UsagePage;
+	USHORT InputReportByteLength;
+	USHORT OutputReportByteLength;
+	USHORT FeatureReportByteLength;
+	USHORT Reserved[17];
+	USHORT fields_not_used_by_hidapi[10];
+} HIDP_CAPS, *PHIDP_CAPS;
+typedef void* PHIDP_PREPARSED_DATA;
+#define HIDP_STATUS_SUCCESS 0x110000
 
-	typedef BOOLEAN (__stdcall *HidD_GetAttributes_)(HANDLE device, PHIDD_ATTRIBUTES attrib);
-	typedef BOOLEAN (__stdcall *HidD_GetSerialNumberString_)(HANDLE device, PVOID buffer, ULONG buffer_len);
-	typedef BOOLEAN (__stdcall *HidD_GetManufacturerString_)(HANDLE handle, PVOID buffer, ULONG buffer_len);
-	typedef BOOLEAN (__stdcall *HidD_GetProductString_)(HANDLE handle, PVOID buffer, ULONG buffer_len);
-	typedef BOOLEAN (__stdcall *HidD_SetFeature_)(HANDLE handle, PVOID data, ULONG length);
-	typedef BOOLEAN (__stdcall *HidD_GetFeature_)(HANDLE handle, PVOID data, ULONG length);
-	typedef BOOLEAN (__stdcall *HidD_GetIndexedString_)(HANDLE handle, ULONG string_index, PVOID buffer, ULONG buffer_len);
-	typedef BOOLEAN (__stdcall *HidD_GetPreparsedData_)(HANDLE handle, PHIDP_PREPARSED_DATA *preparsed_data);
-	typedef BOOLEAN (__stdcall *HidD_FreePreparsedData_)(PHIDP_PREPARSED_DATA preparsed_data);
-	typedef NTSTATUS (__stdcall *HidP_GetCaps_)(PHIDP_PREPARSED_DATA preparsed_data, HIDP_CAPS *caps);
-	typedef BOOLEAN (__stdcall *HidD_SetNumInputBuffers_)(HANDLE handle, ULONG number_buffers);
+typedef BOOLEAN (__stdcall *HidD_GetAttributes_)(HANDLE device, PHIDD_ATTRIBUTES attrib);
+typedef BOOLEAN (__stdcall *HidD_GetSerialNumberString_)(HANDLE device, PVOID buffer, ULONG buffer_len);
+typedef BOOLEAN (__stdcall *HidD_GetManufacturerString_)(HANDLE handle, PVOID buffer, ULONG buffer_len);
+typedef BOOLEAN (__stdcall *HidD_GetProductString_)(HANDLE handle, PVOID buffer, ULONG buffer_len);
+typedef BOOLEAN (__stdcall *HidD_SetFeature_)(HANDLE handle, PVOID data, ULONG length);
+typedef BOOLEAN (__stdcall *HidD_GetFeature_)(HANDLE handle, PVOID data, ULONG length);
+typedef BOOLEAN (__stdcall *HidD_GetIndexedString_)(HANDLE handle, ULONG string_index, PVOID buffer, ULONG buffer_len);
+typedef BOOLEAN (__stdcall *HidD_GetPreparsedData_)(HANDLE handle, PHIDP_PREPARSED_DATA *preparsed_data);
+typedef BOOLEAN (__stdcall *HidD_FreePreparsedData_)(PHIDP_PREPARSED_DATA preparsed_data);
+typedef NTSTATUS (__stdcall *HidP_GetCaps_)(PHIDP_PREPARSED_DATA preparsed_data, HIDP_CAPS *caps);
+typedef BOOLEAN (__stdcall *HidD_SetNumInputBuffers_)(HANDLE handle, ULONG number_buffers);
 
-	static HidD_GetAttributes_ HidD_GetAttributes;
-	static HidD_GetSerialNumberString_ HidD_GetSerialNumberString;
-	static HidD_GetManufacturerString_ HidD_GetManufacturerString;
-	static HidD_GetProductString_ HidD_GetProductString;
-	static HidD_SetFeature_ HidD_SetFeature;
-	static HidD_GetFeature_ HidD_GetFeature;
-	static HidD_GetIndexedString_ HidD_GetIndexedString;
-	static HidD_GetPreparsedData_ HidD_GetPreparsedData;
-	static HidD_FreePreparsedData_ HidD_FreePreparsedData;
-	static HidP_GetCaps_ HidP_GetCaps;
-	static HidD_SetNumInputBuffers_ HidD_SetNumInputBuffers;
+static HidD_GetAttributes_ HidD_GetAttributes;
+static HidD_GetSerialNumberString_ HidD_GetSerialNumberString;
+static HidD_GetManufacturerString_ HidD_GetManufacturerString;
+static HidD_GetProductString_ HidD_GetProductString;
+static HidD_SetFeature_ HidD_SetFeature;
+static HidD_GetFeature_ HidD_GetFeature;
+static HidD_GetIndexedString_ HidD_GetIndexedString;
+static HidD_GetPreparsedData_ HidD_GetPreparsedData;
+static HidD_FreePreparsedData_ HidD_FreePreparsedData;
+static HidP_GetCaps_ HidP_GetCaps;
+static HidD_SetNumInputBuffers_ HidD_SetNumInputBuffers;
 
-	static HMODULE lib_handle = NULL;
-	static BOOLEAN initialized = FALSE;
-#endif /* HIDAPI_USE_DDK */
+static HMODULE lib_handle = NULL;
+static BOOLEAN initialized = FALSE;
 
 struct hid_device_ {
 		HANDLE device_handle;
@@ -199,7 +192,6 @@ static void register_error(hid_device *device, const char *op)
 	device->last_error_str = msg;
 }
 
-#ifndef HIDAPI_USE_DDK
 static int lookup_functions()
 {
 	lib_handle = LoadLibraryA("hid.dll");
@@ -223,7 +215,6 @@ static int lookup_functions()
 
 	return 0;
 }
-#endif
 
 static HANDLE open_device(const char *path, BOOL enumerate)
 {
@@ -244,7 +235,6 @@ static HANDLE open_device(const char *path, BOOL enumerate)
 
 int HID_API_EXPORT hid_init(void)
 {
-#ifndef HIDAPI_USE_DDK
 	if (!initialized) {
 		if (lookup_functions() < 0) {
 			hid_exit();
@@ -252,18 +242,15 @@ int HID_API_EXPORT hid_init(void)
 		}
 		initialized = TRUE;
 	}
-#endif
 	return 0;
 }
 
 int HID_API_EXPORT hid_exit(void)
 {
-#ifndef HIDAPI_USE_DDK
 	if (lib_handle)
 		FreeLibrary(lib_handle);
 	lib_handle = NULL;
 	initialized = FALSE;
-#endif
 	return 0;
 }
 
@@ -736,73 +723,6 @@ HID_API_EXPORT const wchar_t * HID_API_CALL  hid_error(hid_device *dev)
 {
 	return (wchar_t*)dev->last_error_str;
 }
-
-
-/*#define PICPGM*/
-/*#define S11*/
-#define P32
-#ifdef S11 
-  unsigned short VendorID = 0xa0a0;
-	unsigned short ProductID = 0x0001;
-#endif
-
-#ifdef P32
-  unsigned short VendorID = 0x04d8;
-	unsigned short ProductID = 0x3f;
-#endif
-
-
-#ifdef PICPGM
-  unsigned short VendorID = 0x04d8;
-  unsigned short ProductID = 0x0033;
-#endif
-
-
-#if 0
-int __cdecl main(int argc, char* argv[])
-{
-	int res;
-	unsigned char buf[65];
-
-	UNREFERENCED_PARAMETER(argc);
-	UNREFERENCED_PARAMETER(argv);
-
-	/* Set up the command buffer. */
-	memset(buf,0x00,sizeof(buf));
-	buf[0] = 0;
-	buf[1] = 0x81;
-	
-
-	/* Open the device. */
-	int handle = open(VendorID, ProductID, L"12345");
-	if (handle < 0)
-		printf("unable to open device\n");
-
-
-	/* Toggle LED (cmd 0x80) */
-	buf[1] = 0x80;
-	res = write(handle, buf, 65);
-	if (res < 0)
-		printf("Unable to write()\n");
-
-	/* Request state (cmd 0x81) */
-	buf[1] = 0x81;
-	write(handle, buf, 65);
-	if (res < 0)
-		printf("Unable to write() (2)\n");
-
-	/* Read requested state */
-	read(handle, buf, 65);
-	if (res < 0)
-		printf("Unable to read()\n");
-
-	/* Print out the returned buffer. */
-	for (int i = 0; i < 4; i++)
-		printf("buf[%d]: %d\n", i, buf[i]);
-
-	return 0;
-}
-#endif
 
 #ifdef __cplusplus
 } /* extern "C" */
