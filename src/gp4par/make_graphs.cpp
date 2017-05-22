@@ -1168,7 +1168,25 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			spi->AddEdge("RXD_LOW", dcmps[2], inname);
 		}
 
-		//TODO: Other inputs: ADC, counters
+		//Add inputs from counters to DCMP
+		//TODO: read input mux entries so we don't have to do this by hand? Seems error prone
+		for(int i=0; i<8; i++)
+		{
+			snprintf(inname, sizeof(inname), "INN[%d]", i);
+			cnodes[8]->AddEdge("POUT", dcmps[0], inname);
+			cnodes[4]->AddEdge("POUT", dcmps[0], inname);
+			cnodes[9]->AddEdge("POUT", dcmps[1], inname);
+			cnodes[2]->AddEdge("POUT", dcmps[1], inname);
+			cnodes[8]->AddEdge("POUT", dcmps[2], inname);
+			cnodes[2]->AddEdge("POUT", dcmps[2], inname);
+
+			snprintf(inname, sizeof(inname), "INP[%d]", i);
+			cnodes[2]->AddEdge("POUT", dcmps[0], inname);
+			cnodes[4]->AddEdge("POUT", dcmps[1], inname);
+			cnodes[4]->AddEdge("POUT", dcmps[2], inname);
+		}
+
+		//TODO: Inputs from ADC to DCMP
 
 		//ADC/DCMP clock mux routing
 		auto mbuf = dynamic_cast<Greenpak4MuxedClockBuffer*>(device->GetClockBuffer(5))->GetPARNode();

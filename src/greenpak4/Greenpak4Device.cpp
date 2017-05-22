@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2017 Andrew Zonenberg and contributors                                                                *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -701,39 +701,33 @@ void Greenpak4Device::CreateDevice_SLG4662x(bool dual_rail)
 
 	//inp 0 is ADC, not implemented
 	m_dcmps[0]->AddInputPMuxEntry(m_spi->GetOutput("RXD_HIGH"), 1);
-	//inp 2 is FSM0_Q, not implemented
-	//CNT14_2
+	m_dcmps[0]->AddInputPMuxEntry(m_counters14bit[2]->GetOutput("POUT"), 2);
 	m_dcmps[0]->AddInputPMuxEntry(m_dcmpmux->GetOutput("OUTA"), 3);
 
-	//inn 0 is CNT8_Q, not implemented
+	m_dcmps[0]->AddInputNMuxEntry(m_counters8bit[4]->GetOutput("POUT"), 0);
 	m_dcmps[0]->AddInputNMuxEntry(m_dcmprefs[0]->GetOutput("OUT"), 1);
 	m_dcmps[0]->AddInputNMuxEntry(m_spi->GetOutput("RXD_LOW"), 2);
-	//inn 3 is FSM1_Q, not implemented
-	//CNT8_4
+	m_dcmps[0]->AddInputNMuxEntry(m_counters8bit[0]->GetOutput("POUT"), 3);
 
 	//in0 is ADC, not implemented
 	m_dcmps[1]->AddInputPMuxEntry(m_spi->GetOutput("RXD_LOW"), 1);
-	//in2 is FSM1, not implemented
-	//CNT8_4
+	m_dcmps[1]->AddInputPMuxEntry(m_counters8bit[0]->GetOutput("POUT"), 2);
 	m_dcmps[1]->AddInputPMuxEntry(m_dcmprefs[1]->GetOutput("OUT"), 3);
 
-	//in0 is CNT9_Q, not implemented
+	m_dcmps[1]->AddInputNMuxEntry(m_counters8bit[5]->GetOutput("POUT"), 0);
 	m_dcmps[1]->AddInputNMuxEntry(m_dcmpmux->GetOutput("OUTB"), 1);
 	m_dcmps[1]->AddInputNMuxEntry(m_spi->GetOutput("RXD_LOW"), 2);
-	//in3 is FSM0_Q, not implemented
-	//CNT14_2
+	m_dcmps[1]->AddInputNMuxEntry(m_counters14bit[2]->GetOutput("POUT"), 3);
 
 	//in0 is ADC, not implemented
 	m_dcmps[2]->AddInputPMuxEntry(m_spi->GetOutput("RXD_HIGH"), 1);
-	//in2 is FSM1, not implemented
-	//CNT8_4
+	m_dcmps[2]->AddInputPMuxEntry(m_counters8bit[0]->GetOutput("POUT"), 2);
 	m_dcmps[2]->AddInputPMuxEntry(m_dcmprefs[3]->GetOutput("OUT"), 3);
 
-	//in0 is CNT8_Q, not implemented
+	m_dcmps[2]->AddInputNMuxEntry(m_counters8bit[4]->GetOutput("POUT"), 0);
 	m_dcmps[2]->AddInputNMuxEntry(m_dcmprefs[2]->GetOutput("OUT"), 1);
 	m_dcmps[2]->AddInputNMuxEntry(m_spi->GetOutput("RXD_LOW"), 2);
-	//in3 is FSM0_Q, not implemented
-	//CNT14_2
+	m_dcmps[2]->AddInputNMuxEntry(m_counters14bit[2]->GetOutput("POUT"), 3);
 
 	//PGA
 	m_pga = new Greenpak4PGA(this, 815);
@@ -828,9 +822,9 @@ void Greenpak4Device::CreateDevice_common()
 		m_dffAll.push_back(x);
 
 	//Add all counters to counter list
-	for(auto x : m_counters8bit)
-		m_counters.push_back(x);
 	for(auto x : m_counters14bit)
+		m_counters.push_back(x);
+	for(auto x : m_counters8bit)
 		m_counters.push_back(x);
 
 	//Finally, put everything in bitstuff so we can walk the whole bitstream and not care about details

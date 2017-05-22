@@ -223,7 +223,7 @@ All clock sources other than on-chip oscillators.
 \item ADC
 \item DAC: Inputs from DCMP.
 \item Wake-Sleep
-\item DCMP/PWM: PWM mode. Inputs from ADC and counters.
+\item DCMP/PWM: PWM mode. Inputs from ADC.
 \item SPI: ADC buffer mode, parallel output to fabric, clock synchronization.
 \end{itemize}
 
@@ -1864,10 +1864,11 @@ GP_DCMP #(
 
 \subsubsection{Introduction}
 
-This primitive is a 4:1 mux that can drive the inputs of a \tokenref{GP\_DCMP}{gp-dcmp} block.
+This primitive is a 4:1 mux that can drive the inputs of a \tokenref{GP\_DCMP}{gp-dcmp} block with any of four 8-bit
+constant values.
 
-The inputs must be sourced by a \tokenref{GP\_DCMPREF}{gp-dcmpref} block in the current toolchain. A future version of the
-toolchain may support inferring DCMPREF blocks driving the input of the mux.
+The inputs must be sourced by a \tokenref{GP\_DCMPREF}{gp-dcmpref} block in the current toolchain. A future version of
+the toolchain may support inferring DCMPREF blocks driving the input of the mux.
 
 \subsubsection{Port Descriptions}
 

@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2017 Andrew Zonenberg and contributors                                                                *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -28,7 +28,7 @@
 	TEST PROCEDURE:
 		FIXME
  */
-module DCMP(muxsel, greater, equal);
+module DCMP(muxsel, greater, equal, count_overflow);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -42,6 +42,9 @@ module DCMP(muxsel, greater, equal);
 	(* LOC = "P17" *)
 	output wire equal;
 
+	(* LOC = "P16" *)
+	output wire count_overflow;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// System reset stuff
 
@@ -52,30 +55,6 @@ module DCMP(muxsel, greater, equal);
 	) por (
 		.RST_DONE(por_done)
 	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Reference inputs to the DCMP
-
-	wire[7:0] ref0;
-	wire[7:0] ref1;
-	wire[7:0] ref2;
-	wire[7:0] ref3;
-
-	GP_DCMPREF #(.REF_VAL(8'h80)) rs0(.OUT(ref0));
-	GP_DCMPREF #(.REF_VAL(8'h40)) rs1(.OUT(ref1));
-	GP_DCMPREF #(.REF_VAL(8'hc0)) rs2(.OUT(ref2));
-	GP_DCMPREF #(.REF_VAL(8'hf0)) rs3(.OUT(ref3));
-
-	wire[7:0] muxouta;
-	wire[7:0] muxoutb;
-	GP_DCMPMUX mux(
-		.SEL(muxsel),
-		.OUTA(muxouta),
-		.OUTB(muxoutb),
-		.IN0(ref0),
-		.IN1(ref1),
-		.IN2(ref2),
-		.IN3(ref3));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// RC oscillator clock
@@ -103,6 +82,48 @@ module DCMP(muxsel, greater, equal);
 		.OUT(clk_2mhz_buf));
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// A counter driving the input of the DCMP/PWM
+
+	localparam COUNT_MAX = 255;
+
+	//Explicitly instantiated counter b/c we don't yet have inference support when using POUT
+	wire[7:0] count_pout;
+	GP_COUNT8 #(
+		.CLKIN_DIVIDE(1),
+		.COUNT_TO(COUNT_MAX),
+		.RESET_MODE("RISING")
+	) cnt (
+		.CLK(clk_2mhz),
+		.RST(1'b0),
+		.OUT(count_overflow),
+		.POUT(count_pout)
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Reference inputs to the DCMP
+
+	wire[7:0] ref0;
+	wire[7:0] ref1;
+	wire[7:0] ref2;
+	wire[7:0] ref3;
+
+	GP_DCMPREF #(.REF_VAL(8'h80)) rs0(.OUT(ref0));
+	GP_DCMPREF #(.REF_VAL(8'h40)) rs1(.OUT(ref1));
+	GP_DCMPREF #(.REF_VAL(8'hc0)) rs2(.OUT(ref2));
+	GP_DCMPREF #(.REF_VAL(8'hf0)) rs3(.OUT(ref3));
+
+	wire[7:0] muxouta;
+	wire[7:0] muxoutb;
+	GP_DCMPMUX mux(
+		.SEL(muxsel),
+		.OUTA(muxouta),
+		.OUTB(muxoutb),
+		.IN0(ref0),
+		.IN1(ref1),
+		.IN2(ref2),
+		.IN3(ref3));
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The DCMP itself
 
 	GP_DCMP #(
@@ -111,7 +132,7 @@ module DCMP(muxsel, greater, equal);
 		.PWRDN_SYNC(1'b1)
 	) dcmp(
 		.INP(muxouta),
-		.INN(ref0),
+		.INN(count_pout),
 		.CLK(clk_2mhz_buf),
 		.PWRDN(1'b0),
 		.GREATER(greater),
