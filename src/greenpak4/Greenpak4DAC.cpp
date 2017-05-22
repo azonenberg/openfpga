@@ -185,13 +185,13 @@ bool Greenpak4DAC::Save(bool* bitstream)
 	if(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46140)
 		LogError("Greenpak4DAC: not implemented for 46140 yet\n");
 
-	//Input selector (hard code to "register" for now)
+	//Input selector
 	//WTF, the config is flipped from DAC0 to DAC1??? (see SLG46620V table 40)
 	//This also applies to the SLG46140 (see SLG46140 table 28).
 	if(m_dacnum == 0)
-		bitstream[m_cbaseInsel] = false;
+		bitstream[m_cbaseInsel] = !dinPower;
 	else
-		bitstream[m_cbaseInsel] = true;
+		bitstream[m_cbaseInsel] = dinPower;
 
 	//Constant input voltage
 	if(dinPower)

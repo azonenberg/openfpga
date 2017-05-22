@@ -1259,7 +1259,17 @@ void MakeDeviceEdges(Greenpak4Device* device)
 			gnd->AddEdge("OUT", dac, "DIN[7]");
 		}
 
-		//TODO: Direct inputs from counters
+		//Add inputs from counters to each DAC (shared with DCMP mux)
+		for(size_t j=0; j<device->GetDACCount(); j++)
+		{
+			auto dac = device->GetDAC(j)->GetPARNode();
+			for(int i=0; i<8; i++)
+			{
+				snprintf(inname, sizeof(inname), "DIN[%d]", i);
+				cnodes[9]->AddEdge("POUT", dac, inname);
+				cnodes[2]->AddEdge("POUT", dac, inname);
+			}
+		}
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// OUTPUTS FROM DAC

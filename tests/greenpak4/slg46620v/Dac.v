@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2017 Andrew Zonenberg and contributors                                                                *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -98,6 +98,8 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 
 	localparam COUNT_MAX = 255;
 
+	//TODO: support for inference of counters with parallel output
+	/*
 	(* LOC = "COUNT8_6" *)
 	(* COUNT_EXTRACT = "FORCE" *)
 	reg[7:0] count = COUNT_MAX;
@@ -110,6 +112,20 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 
 	//Counter overflow signal to LED
 	assign wave_sync = (count == 0);
+	*/
+
+	//Explicitly instantiated counter b/c we don't yet have inference support when using POUT
+	wire[7:0] count_pout;
+	GP_COUNT8 #(
+		.CLKIN_DIVIDE(1),
+		.COUNT_TO(COUNT_MAX),
+		.RESET_MODE("RISING")
+	) cnt (
+		.CLK(clk_108hz),
+		.RST(1'b0),
+		.OUT(wave_sync),
+		.POUT(count_pout)
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// DAC driving the voltage reference
@@ -117,7 +133,7 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 	wire vdac;
 	(* LOC = "DAC_1" *)
 	GP_DAC dac(
-		.DIN(8'hff),	//count
+		.DIN(count_pout),
 		.VOUT(vdac),
 		.VREF(vref_1v0)
 	);
