@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2017 Andrew Zonenberg and contributors                                                                *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -542,10 +542,17 @@ void MakeDeviceNodes(
 	MakeSingleNode("GP_VSS",	device->GetPowerRail(false), ngraph, dgraph, lmap);
 
 	//Make device nodes for the counters
+	//Some input selectors are special (only routed to counters with 4-bit input muxes vs normal 3)
+	//* RCOSC / 12
+	//* Matrix clock / 8
+	//* CLK_FSM / 256
+	//* CLK_FSM
 	uint32_t count8_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8");
 	uint32_t count8_adv_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8_ADV");
 	uint32_t count14_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT14");
 	uint32_t count14_adv_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT14_ADV");
+	uint32_t count14_x4input_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT14_X4INPUT");
+	uint32_t count8_x4input_label = AllocateLabel(ngraph, dgraph, lmap, "GP_COUNT8_X4INPUT");
 	for(unsigned int i=0; i<device->GetCounterCount(); i++)
 	{
 		auto counter = device->GetCounter(i);
@@ -562,6 +569,8 @@ void MakeDeviceNodes(
 				//when counting up.
 				node->AddAlternateLabel(count8_label);
 				node->AddAlternateLabel(count14_label);
+				node->AddAlternateLabel(count8_x4input_label);
+				node->AddAlternateLabel(count14_x4input_label);
 			}
 			else
 			{
@@ -573,17 +582,20 @@ void MakeDeviceNodes(
 		}
 		else
 		{
+			PARGraphNode* node = NULL;
 			if(counter->HasFSM())
 			{
-				auto node = MakeNode(count8_adv_label, counter, dgraph);
+				node = MakeNode(count8_adv_label, counter, dgraph);
 
 				//It's legal to map a COUNT8 to a COUNT8_ADV site, so add that as an alternate.
 				node->AddAlternateLabel(count8_label);
 			}
 			else
-			{
-				MakeNode(count8_label, counter, dgraph);
-			}
+				node = MakeNode(count8_label, counter, dgraph);
+
+			//Add alternate label for counters that have either FSM or PWM mode (these all have 4-bit input mux)
+			if(counter->HasFSM() || counter->HasPWM())
+				node->AddAlternateLabel(count8_x4input_label);
 		}
 	}
 
