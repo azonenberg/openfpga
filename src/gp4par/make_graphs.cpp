@@ -553,7 +553,8 @@ void MakeDeviceNodes(
 		//Decide on primary label
 		if(counter->GetDepth() == 14)
 		{
-			if(counter->HasFSM()) {
+			if(counter->HasFSM())
+			{
 				auto node = MakeNode(count14_adv_label, counter, dgraph);
 
 				//It's legal to map a COUNT8 or a COUNT14 to a COUNT14_ADV site, so add that as an alternate.
@@ -561,20 +562,26 @@ void MakeDeviceNodes(
 				//when counting up.
 				node->AddAlternateLabel(count8_label);
 				node->AddAlternateLabel(count14_label);
-			} else {
+			}
+			else
+			{
 				auto node = MakeNode(count14_label, counter, dgraph);
 
 				//It's legal to map a COUNT8 to a COUNT14 site, so add that as an alternate
 				node->AddAlternateLabel(count8_label);
 			}
 		}
-		else {
-			if(counter->HasFSM()) {
+		else
+		{
+			if(counter->HasFSM())
+			{
 				auto node = MakeNode(count8_adv_label, counter, dgraph);
 
 				//It's legal to map a COUNT8 to a COUNT8_ADV site, so add that as an alternate.
 				node->AddAlternateLabel(count8_label);
-			} else {
+			}
+			else
+			{
 				MakeNode(count8_label, counter, dgraph);
 			}
 		}
