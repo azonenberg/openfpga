@@ -200,11 +200,13 @@ bool Greenpak4DAC::Save(bool* bitstream)
 			bitstream[m_cbaseReg + i] = m_din[i].GetPowerRailValue();
 	}
 
-	//TODO: need to infer DCMP/PWM for this
+	//Input is coming from DCMP.
+	//Rely on the DCMP input mux for this, nothing for us to do.
+	//Set the input voltage to zero just so the bitstream is deterministic.
 	else
 	{
-		LogError("DRC: DAC input from counters etc not implemented yet\n");
-		return false;
+		for(unsigned int i=0; i<8; i++)
+			bitstream[m_cbaseReg + i] = false;
 	}
 
 	return true;

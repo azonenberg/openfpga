@@ -161,7 +161,7 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		}
 	}
 
-	//TODO: check floating inputs etc
+	//TODO: check floating inputs etc?
 
 	//Check invalid IOB configuration
 	//TODO: driving an input-only pin etc - is this possible?
@@ -219,6 +219,11 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		//We do not yet implement the ADC
 		//so nothing to do here
 	}
+
+	//Check for DACs not sharing input with DCMP1 negative, but also not a constant
+	//TODO: check for DACs with wrong input bit ordering or not same source for all bits
+
+	//TODO: check for DCMPs with wrong input bit ordering or not same source for all bits
 
 	//Check for multiple ACMPs using different settings of ACMP0's output mux
 	typedef pair<string, Greenpak4EntityOutput> spair;

@@ -194,8 +194,31 @@ void InferExtraNodes(
 	auto vdd = top->GetNet("GP_VDD");
 	auto vddn = device->GetPowerRail(true)->GetPARNode();
 
-	//Look for IOBs driven by GP_VREF cells
+	//Look for DACs driven by counters and infer DCMP if one isn't already there
 	Greenpak4NetlistModule* module = netlist->GetTopModule();
+	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
+	{
+		//Skip anything but DACs
+		Greenpak4NetlistCell* cell = it->second;
+		if(cell->m_type != "GP_DAC")
+			continue;
+
+		//If we're driven by a power rail, skip it - input is constant
+		if(cell->m_connections.find("DIN") == cell->m_connections.end())
+			continue;
+		auto net = cell->m_connections["DIN"][0];
+		auto driver = net->m_driver;
+		if(driver.IsNull())
+			continue;
+		if(driver.m_cell->IsPowerRail() )
+			continue;
+		Greenpak4NetlistCell* netsrc = driver.m_cell;
+
+		//We found the source of the net!
+		LogVerbose("Found a DAC not driven by a power rail\n");
+	}
+
+	//Look for IOBs driven by GP_VREF cells
 	for(auto it = module->cell_begin(); it != module->cell_end(); it ++)
 	{
 		//See if we're an IOB
@@ -204,6 +227,8 @@ void InferExtraNodes(
 			continue;
 
 		//See if we're driven by a GP_VREF
+		if(cell->m_connections.find("IN") == cell->m_connections.end())
+			continue;
 		auto net = cell->m_connections["IN"][0];
 		auto driver = net->m_driver;
 		if(driver.IsNull())
@@ -298,6 +323,8 @@ void InferExtraNodes(
 		//LogDebug("vref %s\n", cell->m_name.c_str());
 
 		//See what we drive
+		if(cell->m_connections.find("VOUT") == cell->m_connections.end())
+			continue;
 		auto net = cell->m_connections["VOUT"][0];
 		bool found_target = false;
 		for(int i=net->m_nodeports.size()-1; i>=0; i--)
