@@ -307,7 +307,7 @@ void InferExtraNodes(
 	if(madeChanges)
 	{
 		LogNotice("Re-indexing graph because we inferred additional nodes..\n");
-		netlist->Reindex(true);
+		netlist->Reindex();
 		ngraph->IndexNodesByLabel();
 		madeChanges = false;
 	}
@@ -358,7 +358,7 @@ void InferExtraNodes(
 	if(madeChanges)
 	{
 		LogVerbose("Re-indexing graph because we inferred additional nodes..\n");
-		netlist->Reindex(true);
+		netlist->Reindex();
 		ngraph->IndexNodesByLabel();
 		//madeChanges = false;
 	}

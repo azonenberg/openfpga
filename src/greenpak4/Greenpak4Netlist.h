@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2017 Andrew Zonenberg and contributors                                                                *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -50,7 +50,7 @@ public:
 	Greenpak4NetlistModule* GetModule(std::string name)
 	{ return m_modules[name]; }
 
-	void Reindex(bool verbose = true);
+	void Reindex();
 
 	//Returns true if we're good, false if parsing failed for some reason
 	bool Validate()
@@ -60,7 +60,7 @@ public:
 
 protected:
 
-	void IndexNets(bool verbose);
+	void IndexNets();
 	void ClearIndexes();
 
 	//Init helpers
