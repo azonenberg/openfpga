@@ -78,7 +78,6 @@ function(add_greenpak4_bitstream name part)
 		COMMAND gp4par "--stdout-only"
 					   --usercode 41
 					   --quiet
-					   --debug
 					   --part ${part}
 					   ${pcfargs1}
 					   ${pcfargs2}

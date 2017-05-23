@@ -61,14 +61,14 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 	// Oscillators
 
 	//The 1730 Hz oscillator
-	wire clk_108hz;
+	wire clk_1730hz;
 	GP_LFOSC #(
 		.PWRDN_EN(0),
 		.AUTO_PWRDN(0),
-		.OUT_DIV(16)
+		.OUT_DIV(1)
 	) lfosc (
 		.PWRDN(1'b0),
-		.CLKOUT(clk_108hz)
+		.CLKOUT(clk_1730hz)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -103,7 +103,7 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 	(* LOC = "COUNT8_6" *)
 	(* COUNT_EXTRACT = "FORCE" *)
 	reg[7:0] count = COUNT_MAX;
-	always @(posedge clk_108hz) begin
+	always @(posedge clk_1730hz) begin
 		if(count == 0)
 			count <= COUNT_MAX;
 		else
@@ -121,7 +121,7 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 		.COUNT_TO(COUNT_MAX),
 		.RESET_MODE("RISING")
 	) cnt (
-		.CLK(clk_108hz),
+		.CLK(clk_1730hz),
 		.RST(1'b0),
 		.OUT(wave_sync),
 		.POUT(count_pout)

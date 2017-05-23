@@ -220,8 +220,7 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device)
 		//so nothing to do here
 	}
 
-	//Check for DACs not sharing input with DCMP1 negative, but also not a constant
-	//TODO: check for DACs with wrong input bit ordering or not same source for all bits
+	//TODO: Check for DACs not sharing input with DCMP1 negative, but also not a constant
 
 	//TODO: check for DCMPs with wrong input bit ordering or not same source for all bits
 

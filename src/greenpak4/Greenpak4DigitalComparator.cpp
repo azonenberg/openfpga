@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2017 Andrew Zonenberg and contributors                                                                *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -208,26 +208,33 @@ bool Greenpak4DigitalComparator::Save(bool* bitstream)
 	bitstream[m_configBase + 4] = m_dcmpMode;
 
 	//Verify that all 8 bits of each input came from the same entity
+	//TODO: verify bit ordering?
 	for(int i=1; i<8; i++)
 	{
-		if(m_inp[i].GetRealEntity() != m_inp[i].GetRealEntity())
+		if(m_inp[i].GetRealEntity() != m_inp[0].GetRealEntity())
 		{
 			LogError("All bits of GP_DCMP INP must come from the same source node\n");
 			return false;
 		}
 
-		if(m_inn[i].GetRealEntity() != m_inn[i].GetRealEntity())
+		if(m_inn[i].GetRealEntity() != m_inn[0].GetRealEntity())
 		{
 			LogError("All bits of GP_DCMP INN must come from the same source node\n");
 			return false;
 		}
 	}
 
-	//If null inputs, but not unused, complain
+	//Enable bit
+	//Set this true if our power-down input is anything but Vdd
+	bool enabled = (m_powerDown != m_device->GetPower());
+
+	//If null inputs, but not unused, complain.
+	//It's OK to be partially connected if we're powered down.
+	//This can happen if, for example, DCMP1 is being inferred to drive a DAC
 	bool noClock = (m_clock.IsPowerRail() && !m_clock.GetPowerRailValue());
 	bool noInP = (m_inp[0].IsPowerRail() && !m_inp[0].GetPowerRailValue());
 	bool noInN = (m_inn[0].IsPowerRail() && !m_inn[0].GetPowerRailValue());
-	if(noClock || noInP || noInN)
+	if( (noClock || noInP || noInN) && enabled )
 	{
 		LogError("Missing clock or input to DCMP_%d (%s clock, %s inP, %s inN)\n",
 			m_cmpNum,
@@ -237,6 +244,31 @@ bool Greenpak4DigitalComparator::Save(bool* bitstream)
 			);
 		return false;
 	}
+
+	//If the negative input is used, hook it up
+	unsigned int cbase = m_configBase + 7;
+	if(!noInN)
+	{
+		//Invalid input
+		if(m_innsels.find(m_inn[0]) == m_innsels.end())
+		{
+			LogError("Invalid DCMP input (tried to feed %s to %s INN)\n",
+				m_inn[0].GetDescription().c_str(), GetDescription().c_str());
+			return false;
+		}
+
+		//Valid input, hook it up
+		else
+		{
+			unsigned int sel = m_innsels[m_inn[0]];
+			bitstream[cbase + 3] = (sel & 1) ? true : false;
+			bitstream[cbase + 4] = (sel & 2) ? true : false;
+		}
+	}
+
+	//If disabled, skip remaining config
+	if(!enabled)
+		return true;
 
 	//configBase + 5 is input clock source (clkbuf5 = 0, clkbuf2 = 1, anything else = illegal)
 	auto entity = m_clock.GetRealEntity();
@@ -260,7 +292,6 @@ bool Greenpak4DigitalComparator::Save(bool* bitstream)
 	bitstream[m_configBase + 6] = m_clockInvert;
 
 	//insert powerdown sync bit here for DCMP0, others don't have it
-	unsigned int cbase = m_configBase + 7;
 	if(m_cmpNum == 0)
 	{
 		bitstream[m_configBase + 7] = m_pdSync;
@@ -268,8 +299,7 @@ bool Greenpak4DigitalComparator::Save(bool* bitstream)
 	}
 
 	//Enable bit
-	//Set this true if our power-down input is anything but Vdd
-	bitstream[cbase + 0] = (m_powerDown != m_device->GetPower());
+	bitstream[cbase + 0] = enabled;
 
 	//Invalid input
 	if(m_inpsels.find(m_inp[0]) == m_inpsels.end())
@@ -285,22 +315,6 @@ bool Greenpak4DigitalComparator::Save(bool* bitstream)
 		unsigned int sel = m_inpsels[m_inp[0]];
 		bitstream[cbase + 1] = (sel & 1) ? true : false;
 		bitstream[cbase + 2] = (sel & 2) ? true : false;
-	}
-
-	//Invalid input
-	if(m_innsels.find(m_inn[0]) == m_innsels.end())
-	{
-		LogError("Invalid DCMP input (tried to feed %s to %s INN)\n",
-			m_inn[0].GetDescription().c_str(), GetDescription().c_str());
-		return false;
-	}
-
-	//Valid input, hook it up
-	else
-	{
-		unsigned int sel = m_innsels[m_inn[0]];
-		bitstream[cbase + 3] = (sel & 1) ? true : false;
-		bitstream[cbase + 4] = (sel & 2) ? true : false;
 	}
 
 	return true;

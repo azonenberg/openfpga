@@ -46,7 +46,7 @@ PARGraphNode* MakeNode(
 	Greenpak4BitstreamEntity* entity,
 	PARGraph* dgraph);
 
-void InferExtraNodes(
+bool InferExtraNodes(
 	Greenpak4Netlist* netlist,
 	Greenpak4Device* device,
 	PARGraph*& ngraph,
@@ -94,7 +94,8 @@ bool BuildGraphs(
 		return false;
 
 	//Infer extra support nodes for things that use hidden functions of others
-	InferExtraNodes(netlist, device, ngraph, ilmap);
+	if(!InferExtraNodes(netlist, device, ngraph, ilmap))
+		return false;
 
 	return true;
 }
@@ -178,7 +179,7 @@ void ReplicateVREF(
 /**
 	@brief Add extra nodes to handle dependencies between nodes that share hard IP under the hood
  */
-void InferExtraNodes(
+bool InferExtraNodes(
 	Greenpak4Netlist* netlist,
 	Greenpak4Device* device,
 	PARGraph*& ngraph,
@@ -214,8 +215,102 @@ void InferExtraNodes(
 			continue;
 		Greenpak4NetlistCell* netsrc = driver.m_cell;
 
-		//We found the source of the net!
-		LogVerbose("Found a DAC not driven by a power rail\n");
+		LogDebug("DAC \"%s\" is driven by %s \"%s\"\n",
+			cell->m_name.c_str(),
+			netsrc->m_type.substr(3).c_str(),
+			netsrc->m_name.c_str());
+		LogIndenter li;
+
+		//See if there's already a DCMP driven by the same signal.
+		vector<Greenpak4NetlistCell*> dcmps;
+		for(auto jt : net->m_nodeports)
+		{
+			if(jt.IsNull())
+				continue;
+			if(jt.m_cell->m_type == "GP_DCMP")
+				dcmps.push_back(jt.m_cell);
+		}
+
+		//If not, create one
+		if(dcmps.empty())
+		{
+			LogDebug("No DCMP driven by this cell, creating a dummy\n");
+			madeChanges = true;
+
+			//Monotonically increasing counter used to ensure unique node IDs
+			static unsigned int dcmp_id = 1;
+
+			//Create the cell
+			Greenpak4NetlistCell* dcmp = new Greenpak4NetlistCell(module);
+			dcmp->m_type = "GP_DCMP";
+
+			//Tie its negative input to our input
+			char tmp[128];
+			for(int i=0; i<8; i++)
+			{
+				snprintf(tmp, sizeof(tmp), "INN[%d]", i);
+				dcmp->m_connections[tmp].push_back(net);
+			}
+
+			//Power down the comparator so it stays out of our way and doesn't waste power
+			dcmp->m_connections["PWRDN"].push_back(vdd);
+
+			//Give it a name
+			snprintf(tmp, sizeof(tmp), "$auto$make_graphs.cpp:%d:dcmp$%u",
+				__LINE__,
+				dcmp_id ++);
+			dcmp->m_name = tmp;
+
+			//Set a special attribute on the cell so that we don't give a "has no loads" warning
+			dcmp->m_attributes["__IGNORE__NOLOAD__"] = "1";
+
+			//LOC it to DCMP1 to ensure correct routing
+			dcmp->m_attributes["LOC"] = "DCMP_1";
+
+			//Add the cell to the module
+			module->AddCell(dcmp);
+
+			//Create the PAR node for it
+			PARGraphNode* nnode = new PARGraphNode(ilmap[dcmp->m_type], dcmp);
+			dcmp->m_parnode = nnode;
+			ngraph->AddNode(nnode);
+
+			//Copy the netlist edges to the PAR graph
+			//TODO: automate this somehow? Seems error-prone to do it twice
+			for(int i=0; i<8; i++)
+			{
+				snprintf(tmp, sizeof(tmp), "INN[%d]", i);
+				netsrc->m_parnode->AddEdge(driver.m_portname, nnode, tmp);
+			}
+			vddn->AddEdge("OUT", nnode, "PWRDN");
+
+			dcmps.push_back(dcmp);
+			continue;
+		}
+
+		//If exactly one, LOC it to DCMP1
+		else if(dcmps.size() == 1)
+		{
+			//TODO: is it possible for IN+ to not be routable? If so, need to make a new DCMP to handle this
+			auto dcmp = *dcmps.begin();
+			dcmp->m_attributes["LOC"] = "DCMP_1";
+		}
+
+		//TODO: If there's MORE than one DCMP driven by this signal, need to ensure one of them is placed at DCMP1
+		else
+		{
+			LogError("Can't handle multiple DCMPs and a DAC all sharing the same input yet");
+			return false;
+		}
+	}
+
+	//Re-index the graph if we changed it
+	if(madeChanges)
+	{
+		LogNotice("Re-indexing graph because we inferred additional nodes..\n");
+		netlist->Reindex();
+		ngraph->IndexNodesByLabel();
+		madeChanges = false;
 	}
 
 	//Look for IOBs driven by GP_VREF cells
@@ -362,6 +457,8 @@ void InferExtraNodes(
 		ngraph->IndexNodesByLabel();
 		//madeChanges = false;
 	}
+
+	return true;
 }
 
 /**

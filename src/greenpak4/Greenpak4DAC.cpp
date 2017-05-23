@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2017 Andrew Zonenberg and contributors                                                                *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -152,19 +152,15 @@ bool Greenpak4DAC::Save(bool* bitstream)
 		return false;
 	}
 
-	//DIN must be either ALL power rails, or NO power rails
-	int dinPower = 0;
-	for(unsigned int i=0; i<8; i++)
+	//Verify that all 8 bits of each input came from the same entity
+	//TODO: verify bit ordering?
+	for(int i=1; i<8; i++)
 	{
-		if(m_din[i].IsPowerRail())
-			dinPower ++;
-	}
-	if( (dinPower != 0) && (dinPower != 8) )
-	{
-		LogError(
-			"DRC: DAC input data must be driven by either a constant, the SPI bus, or a counter.\n"
-			"Mixing constant and variable bits is not allowed.\n");
-		return false;
+		if(m_din[i].GetRealEntity() != m_din[0].GetRealEntity())
+		{
+			LogError("All bits of GP_DAC DIN must come from the same source node\n");
+			return false;
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,6 +184,7 @@ bool Greenpak4DAC::Save(bool* bitstream)
 	//Input selector
 	//WTF, the config is flipped from DAC0 to DAC1??? (see SLG46620V table 40)
 	//This also applies to the SLG46140 (see SLG46140 table 28).
+	bool dinPower = (m_din[0].IsPowerRail());
 	if(m_dacnum == 0)
 		bitstream[m_cbaseInsel] = !dinPower;
 	else
