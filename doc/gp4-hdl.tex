@@ -806,9 +806,9 @@ primitives.
 \namestyle{Yosys} provides limited inference capability for counters which match the capabilities of the hard macro counters
 (\tokenref{GP\_COUNT8}{gp-count8} and \tokenref{GP\_COUNT14}{gp-count14}) in the device.
 
-Some hard macro capabilities (most notably input dividers and parallel output to DCMP/DAC blocks) are not yet supported
-for inference; if these capabilities are required then use explicit primitive instantiation. Future software releases
-will expand the set of counter features which may be inferred.
+Some hard macro capabilities (most notably input dividers) are not yet supported for inference; if these capabilities
+are required then use explicit primitive instantiation. Future software releases will expand the set of counter
+features which may be inferred.
 
 \subsubsection{Inference Requirements}
 
@@ -819,8 +819,6 @@ In order to be inferred, a counter must:
 \item Count down only
 \item Be initialized to the same (maximum) value by both underflow and by power-on reset
 \item Have either no reset, or a positive level triggered reset to zero
-\item Not have any logic use the internal counter register. Only the ``underflow" signal may be used by surrounding
-logic.
 \end{itemize}
 
 \subsubsection{Counter Related Constraints}

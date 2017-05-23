@@ -98,10 +98,7 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 
 	localparam COUNT_MAX = 255;
 
-	//TODO: support for inference of counters with parallel output
-	/*
-	(* LOC = "COUNT8_6" *)
-	(* COUNT_EXTRACT = "FORCE" *)
+	//Inferred counter that drives both the DAC and an overflow output
 	reg[7:0] count = COUNT_MAX;
 	always @(posedge clk_1730hz) begin
 		if(count == 0)
@@ -112,32 +109,19 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 
 	//Counter overflow signal to LED
 	assign wave_sync = (count == 0);
-	*/
-
-	//Explicitly instantiated counter b/c we don't yet have inference support when using POUT
-	wire[7:0] count_pout;
-	GP_COUNT8 #(
-		.CLKIN_DIVIDE(1),
-		.COUNT_TO(COUNT_MAX),
-		.RESET_MODE("RISING")
-	) cnt (
-		.CLK(clk_1730hz),
-		.RST(1'b0),
-		.OUT(wave_sync),
-		.POUT(count_pout)
-	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// DAC driving the voltage reference
+	// The DACs
 
-	wire vdac;
+	//This one drives a top-level output pin directly (GP_VREF and GP_ACMP are infrred)
 	(* LOC = "DAC_1" *)
 	GP_DAC dac(
-		.DIN(count_pout),
-		.VOUT(vdac),
+		.DIN(count),
+		.VOUT(vout),
 		.VREF(vref_1v0)
 	);
 
+	//This one drives a GP_VREF explicitly (GP_ACMP is inferred)
 	wire vdac2;
 	(* LOC = "DAC_0" *)
 	GP_DAC dac2(
@@ -147,20 +131,14 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Drive one pin with the DAC output directly, no vref
-
-	//assign vout = vdac;
-	assign vout2 = vdac2;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Drive the other via a buffered reference
 
 	GP_VREF #(
 		.VIN_DIV(4'd1),
 		.VREF(16'd00)
 	) vrdac (
-		.VIN(vdac),
-		.VOUT(vout)
+		.VIN(vdac2),
+		.VOUT(vout2)
 	);
 
 

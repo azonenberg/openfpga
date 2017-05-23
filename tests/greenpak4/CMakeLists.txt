@@ -24,7 +24,8 @@ function(add_greenpak4_netlist name part)
 
 	add_custom_command(
 		OUTPUT  "${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
-		COMMAND "${YOSYS_COMMAND}" -q
+		COMMAND "${YOSYS_COMMAND}"
+				-q
 				-p "read_verilog ${CMAKE_CURRENT_SOURCE_DIR}/${name}.v"
 				-p "synth_greenpak4 -top ${name} -part ${part}"
 				-p "write_json   ${CMAKE_CURRENT_BINARY_DIR}/${name}.json"
