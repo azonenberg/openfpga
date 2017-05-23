@@ -94,7 +94,7 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// A counter running off the 108 Hz clock
+	// A counter running off the low-frequency oscillator
 
 	localparam COUNT_MAX = 255;
 
