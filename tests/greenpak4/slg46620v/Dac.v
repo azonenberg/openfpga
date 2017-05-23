@@ -113,7 +113,7 @@ module Dac(bg_ok, vout, vout2, wave_sync);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The DACs
 
-	//This one drives a top-level output pin directly (GP_VREF and GP_ACMP are infrred)
+	//This one drives a top-level output pin directly (GP_VREF and GP_ACMP are inferred)
 	(* LOC = "DAC_1" *)
 	GP_DAC dac(
 		.DIN(count),
