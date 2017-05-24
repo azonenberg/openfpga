@@ -261,9 +261,11 @@ instantiated.
 \pagebreak
 \section{\namestyle{gp4par} HDL Constraints}
 
-Constraints may be entered by Verilog attributes or an external Physical Constraints File (.pcf) file. In the event of
-a conflict, the PCF takes precedence over constraints in the Verilog. If two constraints in the same PCF file conflict,
-the later constraint takes precedence.
+Constraints may be entered by Verilog attributes or an external Physical Constraints File (.pcf) file, with the exception
+of the \tokenstyle{UNUSED\_PULL} and \tokenstyle{UNUSED\_DRIVE} constraints (which can instead be entered using
+Verilog attributes or command-line arguments). In the event of a conflict, the PCF (or command line argument in the case
+of \tokenstyle{UNUSED\_PULL} or \tokenstyle{UNUSED\_DRIVE}) takes precedence over constraints in the Verilog. If two
+constraints in the same PCF file conflict, the later constraint takes precedence.
 
 \subsection{Verilog attributes}
 
@@ -778,6 +780,92 @@ FIXME
 \end{lstlisting}
 \caption{Example for \tokenstyle{SHREG\_EXTRACT} constraint}
 \label{constraint-shreg-extract}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% UNUSED_DRIVE
+
+\pagebreak
+\subsection{Unused Pin Pull Strength (\tokenstyle{UNUSED\_DRIVE})}
+\label{unused-drive}
+
+The \tokenstyle{UNUSED\_DRIVE} constraint controls the nominal value in ohms of the pull-up/down resistor on unused
+I/O pins.
+
+\subsubsection{Applicable Elements}
+The \tokenstyle{UNUSED\_DRIVE} constraint may only be used on top-level modules.
+
+\subsubsection{Constraint Values}
+\begin{itemize}
+\item \whenstyle{Top-level module}\\
+One of the following:
+\begin{itemize}
+\item \strexamplestyle{10K} Nominal value of pull-up/down on unused pins is 10 kOhm.
+\item \strexamplestyle{100K} Nominal value of pull-up/down on unused pins is 100 kOhm.
+\item \strexamplestyle{1M} Nominal value of pull-up/down on unused pins is 1 MOhm.
+\end{itemize}
+\item \whenstyle{Other} \\
+This constraint will be silently ignored if used on any other entity. In a future version, use on a module that is not
+top-level will issue a warning.
+\end{itemize}
+
+\subsubsection{Verilog Usage Example}
+
+Figure \ref{constraint-unused-drive} is an example of an empty module with unused pins (i.e. all pins) set to a
+pull-up strength of 10 kOhm.
+
+\begin{figure}[h]
+\begin{lstlisting}
+(* UNUSED_DRIVE = "10K" *)
+(* UNUSED_PULL = "UP" *)
+module test();
+endmodule
+\end{lstlisting}
+\caption{Example for \tokenstyle{UNUSED\_DRIVE} constraint}
+\label{constraint-unused-drive}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% UNUSED_PULL
+
+\pagebreak
+\subsection{Unused Pin Pull Direction (\tokenstyle{UNUSED\_PULL})}
+\label{unused-pull}
+
+The \tokenstyle{UNUSED\_PULL} constraint controls which direction to pull unused I/O pins.
+
+\subsubsection{Applicable Elements}
+The \tokenstyle{UNUSED\_PULL} constraint may only be used on top-level modules.
+
+\subsubsection{Constraint Values}
+\begin{itemize}
+\item \whenstyle{Top-level module}\\
+One of the following:
+\begin{itemize}
+\item \strexamplestyle{DOWN} Unused pins are pulled down.
+\item \strexamplestyle{UP} Unused pins are pulled up.
+\item \strexamplestyle{FLOAT} Unused pins are left floating.
+\item \strexamplestyle{NONE} Unused pins are left floating.
+\end{itemize}
+\item \whenstyle{Other} \\
+This constraint will be silently ignored if used on any other entity. In a future version, use on a module that is not
+top-level will issue a warning.
+\end{itemize}
+
+\subsubsection{Verilog Usage Example}
+
+Figure \ref{constraint-unused-pull} is an example of an empty module with unused pins (i.e. all pins) set to a
+pull-up strength of 10 kOhm.
+
+\begin{figure}[h]
+\begin{lstlisting}
+(* UNUSED_DRIVE = "10K" *)
+(* UNUSED_PULL = "UP" *)
+module test();
+endmodule
+\end{lstlisting}
+\caption{Example for \tokenstyle{UNUSED\_PULL} constraint}
+\label{constraint-unused-pull}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -4369,13 +4457,15 @@ The length of the ID code varies by device family. For the \namestyle{SLG46620V}
 
 The \texttt{--unused-drive} argument is optional. If used, it must be immediately followed by ``\tokenstyle{10k}",
 ``\tokenstyle{100k}", or ``\tokenstyle{1M}", to specify the nominal value in ohms of the pull-up/down resistor on
-unused I/O pins. The default behavior if not specified is ``\tokenstyle{1M}".
+unused I/O pins. The default behavior if not specified is to use the value given by the \tokenstyle{UNUSED\_DRIVE}
+attribute on the top-level module. If no such attribute exists, the default is ``\tokenstyle{1M}".
 
 \subsection{\texttt{--unused-pull}}
 
 The \texttt{--unused-pull} argument is optional. If used, it must be immediately followed by ``\tokenstyle{down}",
 ``\tokenstyle{up}", ``\tokenstyle{none}", or ``\tokenstyle{float}", to specify which direction to pull unused I/O pins.
-The default behavior if not specified is ``\tokenstyle{float}".
+The default behavior if not specified is to use the value given by the \tokenstyle{UNUSED\_PULL} attribute on the
+top-level module. If no such attribute exists, the default is ``\tokenstyle{float}".
 
 The behavior of ``\tokenstyle{none}" and ``\tokenstyle{float}" is identical; both names are accepted for convenience.
 
