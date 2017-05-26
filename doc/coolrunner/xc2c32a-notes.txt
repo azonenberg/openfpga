@@ -117,6 +117,7 @@ PLA OR
 56 rows, 16 bits per row
 Each column configures inputs to a 16-input OR gate. 0 selects the signal, 1 selects a constant zero.
 Each row corresponds to one product term.
+(note, leftmost bit of the row is the lowest fuse number but the MSB of the 27-bit word)
 
 Bit ordering for columns:
 	0		Macrocell 15
@@ -135,7 +136,7 @@ Bit ordering for rows
 Macrocells
 -------------------------
 432 bits starting at fuse # 5696 (FB0), 11824 (FB2)
-16 rows, 27 bits per row
+16 rows, 27 bits per row. (note, leftmost bit of the row is the lowest fuse number but the MSB of the 27-bit word)
 	26		Selects input to the "11" clock source mux
 				0 = Product Term Clock
 				1 = Control Term Clock
@@ -161,19 +162,22 @@ Macrocells
 				01 = latch
 				10 = T flipflop
 				11 = D flipflop with clock enable
-	15:14	Input mux of some sort
-				00 = IBUF driving ZIA or flipflop direct path
-				11 = unused pin
-				Other values unknown
-	13:12	"FB val" - specifies output from macrocell to the ZIA
-				00 = unknown (not observed)
-				01 = unknown (not observed)
-				10 = flipflop feeding into ZIA
-				11 = ZIA output not used
+	15		Doesn't seem to do anything. Probably related to input buffer.
+				0	Input buffer used
+				1	Input buffer not used. Seems to not disable the IBUF -> macrocell FF fast path (bit 11).
+	14		Enable input pad -> ZIA buffer
+				0	ZIA driver enabled
+				1	ZIA driver disabled (constant zero)
+	13		Specifies source of macrocell -> ZIA feedback
+				0	Macrocell XOR gate
+				1	Macrocell flipflop
+	12		Enables macrocell -> ZIA driver
+				0	Macrocell drives ZIA
+				1	ZIA driver disabled (reads as constant zero)
 	11		Selects input to the flipflop
 				0 = input buffer
 				1 = XOR gate from PLA
-	10		Schmitt trigger enable
+	10		Input buffer Schmitt trigger enable
 				0 = normal
 				1 = Schmitt trigger
 	9:8		XOR gate input mux
@@ -194,7 +198,7 @@ Macrocells
 				0110	Tri-state output (GTS3)
 				0111	Unknown, not yet seen
 				1000	Tri-state output (CTE)
-				1001	Unknown, not yet seen
+				1001	Unknown, not yet seen. Experimentally, behaves the same as 1000
 				1010	Tri-state output (GTS2)
 				1011	Unknown, not yet seen
 				1100	Tri-state output (GTS0)
@@ -223,23 +227,26 @@ Global clock mux
 
 Global set/reset mux
 -------------------------
-2 bits starting at fuse # 12259
-	1	GSR buffer input (1 = no invert, 0 = invert)
-	0	GSR buffer enable (1 = active, 0 = unused)
+Fuse #12259		Global set/reset polarity
+					1 	active high
+					0 	active low
+Fuse #12260		Global set/reset buffer enable
+					1	GSR enabled
+					0	GSR disabled
 
 Global OE mux
 -------------------------
-8 bits starting at fuse # 12261
-
 Specifies state of the GTS pins
-	7	GTS0 invert (0 = used as T, 1 = used as !T)
-	6	GTS0 buffer enable
-	5	GTS1 invert
-	4	GTS1 buffer enable
-	3	GTS2 invert
-	2	GTS2 buffer enable
-	1	GTS3 invert
-	0	GTS3 buffer enable
+Fuse #12261		GTS0 invert
+					0 = used as T
+					1 = used as !T
+Fuse #12262		GTS0 buffer enable
+Fuse #12263		GTS1 invert
+Fuse #12264		GTS1 buffer enable
+Fuse #12265		GTS2 invert
+Fuse #12266		GTS2 buffer enable
+Fuse #12267		GTS3 invert
+Fuse #12268		GTS3 buffer enable
 
 Global termination mode
 -------------------------
@@ -252,28 +259,27 @@ Legacy I/O standard config (for XC2C32A bitstream compatibility)
 2 bits starting at fuse # 12270
 	1	Output voltage
 	0	Input voltage
+
 Both are always 1 in XC2C32A bitstreams. Seems like they're probably ORed with bank I/O config?
 
-Dedicated input mode
+Dedicated input configuration
 -------------------------
-2 bits starting at fuse # 12272
-I/O configuration for the global input
-	1	Schmitt trigger enable
-	0	Termination mode
-		0	Floating
-		1	Terminate
+Fuse #12272		Schmitt trigger enable for dedicated input
+Fuse #12273		Termination mode for dedicated input
+					0	Floating
+					1	Terminate
 
 Per-bank I/O standard config
 -------------------------
-4 bits starting at fuse # 12274
-	3	Bank 0 input voltage
-	2	Bank 0 output voltage
-	1	Bank 1 input voltage
-	0	Bank 1 output voltage
-
-Meaning of each bit:
-	0	High voltage (LVTTL, LVCMOS33, or LVCMOS25)
-	1	Low voltage (LVCMOS18 or LVCMOS15)
+Fuse #12274		Bank 0 input voltage
+					0	High voltage (LVTTL, LVCMOS33, or LVCMOS25)
+					1	Low voltage (LVCMOS18 or LVCMOS15)
+Fuse #12275		Bank 0 output voltage
+					same as above
+Fuse #12276		Bank 1 input voltage
+					same as above
+Fuse #12277		Bank 1 output voltage
+					same as above
 
 It's unclear why there's separate values for input and output; so far it appears they always have the same value.
 
