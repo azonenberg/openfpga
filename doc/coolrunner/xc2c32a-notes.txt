@@ -140,7 +140,9 @@ Macrocells
 	26		Selects input to the "11" clock source mux
 				0 = Product Term Clock
 				1 = Control Term Clock
-	25		1 if FF is falling edge triggered, 0 if rising
+	25		Selects edge sensitivity of the FF
+				0 = Rising
+				1 = Falling
 	24:23	Clock source for the FF
 				00 = GCK0
 				01 = GCK1
@@ -163,31 +165,31 @@ Macrocells
 				10 = T flipflop
 				11 = D flipflop with clock enable
 	15		Doesn't seem to do anything. Probably related to input buffer.
-				0	Input buffer used
-				1	Input buffer not used. Seems to not disable the IBUF -> macrocell FF fast path (bit 11).
+				 0 = Input buffer used
+				 1 = Input buffer not used. Seems to not disable the IBUF -> macrocell FF fast path (bit 11).
 	14		Enable input pad -> ZIA buffer
-				0	ZIA driver enabled
-				1	ZIA driver disabled (constant zero)
+				 0 = ZIA driver enabled
+				 1 = ZIA driver disabled (constant zero)
 	13		Specifies source of macrocell -> ZIA feedback
-				0	Macrocell XOR gate
-				1	Macrocell flipflop
+				 0 = Macrocell XOR gate
+				 1 = Macrocell flipflop
 	12		Enables macrocell -> ZIA driver
-				0	Macrocell drives ZIA
-				1	ZIA driver disabled (reads as constant zero)
+				 0 = Macrocell drives ZIA
+				 1 = ZIA driver disabled (reads as constant zero)
 	11		Selects input to the flipflop
-				0 = input buffer
-				1 = XOR gate from PLA
+				 0 = input buffer
+				 1 = XOR gate from PLA
 	10		Input buffer Schmitt trigger enable
-				0 = normal
-				1 = Schmitt trigger
+				 0 = normal
+				 1 = Schmitt trigger
 	9:8		XOR gate input mux
 				00 = Constant zero (pass-through of OR array)
 				01 = Complement of product term C
 				10 = Product term C
 				11 = Constant one (invert output of OR array)
 	7		Output buffer input source
-				0 = Flipflop
-				1 = XOR gate output
+				 0 = Flipflop
+				 1 = XOR gate output
 	6:3		Output enable / mode
 				0000	Push-pull output
 				0001	Open-drain output
@@ -207,14 +209,14 @@ Macrocells
 				1111	Floating (used for inputs)
 				Other values unknown
 	2		Termination mode
-				0 = Float
-				1 = Pullup / bus keeper active
+				 0 = Float
+				 1 = Pullup / bus keeper active
 	1		Slew rate
-				0 = fast
-				1 = slow
+				 0 = fast
+				 1 = slow
 	0		Power-up state of flipflop (inverted)
-				0 = initialize to 1
-				1 = initialize to 0
+				 0 = initialize to 1
+				 1 = initialize to 0
 
 Global clock mux
 -------------------------
