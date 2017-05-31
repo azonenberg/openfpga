@@ -992,17 +992,50 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 		bitstream[i] = false;
 
 	//Generate the bitstream, then write to file if successful
+	bool ok = true;
 	if(GenerateBitstream(bitstream, userid, readProtect))
 	{
 		fprintf(fp, "index\t\tvalue\t\tcomment\n");
 		for(unsigned int i=0; i<m_bitlen; i++)
 			fprintf(fp, "%u\t\t%d\t\t//\n", i, (int)bitstream[i]);
 	}
+	else
+		ok = false;
 
 	//Done
 	delete[] bitstream;
 	fclose(fp);
 	return ok;
+}
+
+/**
+	@brief Writes a bitstream to an in-memory netlist
+ */
+bool Greenpak4Device::WriteToBuffer(vector<uint8_t>& bitstream, uint8_t userid, bool readProtect)
+{
+	bool* rawbits = new bool[m_bitlen];
+	for(unsigned int i=0; i<m_bitlen; i++)
+		rawbits[i] = false;
+
+	//Generate the bitstream, abort if it fails
+	if(!GenerateBitstream(rawbits, userid, readProtect))
+	{
+		delete[] rawbits;
+		return false;
+	}
+
+	for(int index=0; index<m_bitlen; index++)
+	{
+		int byteindex = index / 8;
+		if(byteindex >= (int)bitstream.size())
+			bitstream.resize(byteindex + 1, 0);
+		bool value = rawbits[index];
+		bitstream[byteindex] |= (value << (index % 8));
+	}
+
+	//Clean up
+	delete[] rawbits;
+	return true;
 }
 
 /**
@@ -1014,6 +1047,8 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
  */
 bool Greenpak4Device::GenerateBitstream(bool* bitstream, uint8_t userid, bool readProtect)
 {
+	bool ok = true;
+
 	//Get the config data from each of our blocks
 	for(auto x : m_bitstuff)
 	{

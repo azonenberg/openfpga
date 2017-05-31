@@ -47,6 +47,9 @@ public:
 	//Write to a bitfile
 	bool WriteToFile(std::string fname, uint8_t userid, bool readProtect);
 
+	//Write to an in-memory array
+	bool WriteToBuffer(std::vector<uint8_t>& bitstream, uint8_t userid, bool readProtect);
+
 	GREENPAK4_PART GetPart()
 	{ return m_part; }
 
