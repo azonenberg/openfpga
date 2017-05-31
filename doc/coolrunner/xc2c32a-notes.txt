@@ -140,9 +140,9 @@ Macrocells
 	26		Selects input to the "11" clock source mux
 				0 = Product Term Clock
 				1 = Control Term Clock
-	25		Selects edge sensitivity of the FF
-				0 = Rising
-				1 = Falling
+	25		FF clock inverter
+				0 = Rising edge (FF) or transparent when high (latch)
+				1 = Falling edg e(FF) or transparent when low (latch)
 	24:23	Clock source for the FF
 				00 = GCK0
 				01 = GCK1
