@@ -23,23 +23,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Public interface
+// ZIA
 
-mod bitstream;
-pub use bitstream::{XC2Bitstream, XC2BitstreamBits};
-
-mod fb;
-pub use fb::{XC2BistreamFB};
-
-mod mc;
-pub use mc::{XC2MCFF, XC2MCSmallIOB, XC2MCFFClkSrc, XC2MCFFRSSrc, XC2MCFFMode, XC2MCFeedbackMode, XC2MCXorMode,
-             XC2MCOBufMode, XC2ExtraIBuf};
-
-mod pla;
-pub use pla::{XC2PLAAndTerm, XC2PLAOrTerm};
-
-mod zia;
-pub use zia::{XC2ZIARowPiece};
-
-mod jed;
-pub use jed::{read_jed};
+pub struct XC2ZIARowPiece {
+    what: Option<u32>,
+}

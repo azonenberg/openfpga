@@ -23,8 +23,41 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Toplevel bitstrem enum object
+// Toplevel bitstrem stuff
 
-pub enum XC2Bitstream {
+use fb::*;
+use mc::*;
 
+pub struct XC2Bitstream {
+    speed_grade: String,
+    package: String,
+    bits: XC2BitstreamBits,
+}
+
+pub struct XC2GlobalNets {
+    gck_enable: [bool; 3],
+    gsr_enable: bool,
+    // false = active low, true = active high
+    gsr_invert: bool,
+    gts_enable: [bool; 4],
+    // false = used as T, true = used as !T
+    gts_invert: [bool; 4],
+    // false = keeper, true = pull-up
+    global_pu: bool,
+}
+
+
+
+pub enum XC2BitstreamBits {
+    XC2C32A {
+        fb: [XC2BistreamFB; 2],
+        iobs: [XC2MCSmallIOB; 32],
+        inpin: XC2ExtraIBuf,
+        global_nets: XC2GlobalNets,
+        // false = low, true = high
+        legacy_ivoltage: bool,
+        legacy_ovoltage: bool,
+        ivoltage: [bool; 2],
+        ovoltage: [bool; 2],
+    },
 }
