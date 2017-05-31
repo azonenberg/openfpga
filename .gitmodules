@@ -1,3 +1,6 @@
 [submodule "src/log"]
 	path = src/log
 	url = https://github.com/azonenberg/logtools.git
+[submodule "src/xptools"]
+	path = src/xptools
+	url = https://github.com/azonenberg/xptools.git
