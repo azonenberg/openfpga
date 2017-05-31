@@ -56,7 +56,7 @@ Mask ROM mux inputs:
 	Bit 2:
 		FB1 pad 14 (row 5, 14, 24)
 		FB1 pad 13 (row 2, 12, 28)
-		FB1 pad 12 (row 10, 16, 31, 12)
+		FB1 pad 12 (row 10, 16, 31, 39)
 		FB1 pad 11 (row 4, 19, 27, 34)
 		FB1 pad 10 (row 7, 15, 32, 35)
 		FB1 pad 9 (row 3, 20, 23, 37)
