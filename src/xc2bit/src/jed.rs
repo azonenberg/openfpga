@@ -29,6 +29,7 @@ use std::num::Wrapping;
 use std::str;
 
 use *;
+use bitstream::{read_32_bitstream_logical};
 
 #[derive(Eq, PartialEq, Copy, Clone)]
 enum Ternary {
@@ -250,11 +251,18 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
             if fuses.len() != 12278 {
                 return Err("wrong number of fuses");
             }
+            let bits = read_32_bitstream_logical(fuses);
+            if let Err(err) = bits {
+                return Err(err);
+            }
+            Ok(XC2Bitstream {
+                speed_grade: device_speed.to_owned(),
+                package: device_package.to_owned(),
+                bits: bits.unwrap(),
+            })
         },
-        _ => return Err("unsupported part"),
+        _ => Err("unsupported part"),
     }
-
-    Err("err")
 }
 
 #[cfg(test)]

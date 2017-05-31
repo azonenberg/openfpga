@@ -25,10 +25,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // ZIA
 
+#[derive(Copy, Clone, Default)]
 pub struct XC2ZIARowPiece {
-    selected: Option<XC2ZIAInput>,
+    pub selected: XC2ZIAInput,
 }
 
+#[derive(Copy, Clone)]
 pub enum XC2ZIAInput {
     Macrocell {
         fb: u32,
@@ -39,6 +41,10 @@ pub enum XC2ZIAInput {
     },
     Zero,
     One,
+}
+
+impl Default for XC2ZIAInput {
+    fn default() -> XC2ZIAInput { XC2ZIAInput::One }
 }
 
 static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; 40] = [
@@ -325,8 +331,40 @@ static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; 40] = [
 ];
 
 // Read a piece of the ZIA corresponding to one FB and one row
-pub fn read_32_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
-    -> Result<XC2ZIARowPiece, &'static str> {
+pub fn read_32_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize) -> Result<XC2ZIARowPiece, &'static str> {
+    let mut zia_row_fuses = [false; 8];
+    
+    for i in 0..8 {
+        zia_row_fuses[7 - i] = fuses[block_idx + row_idx * 8 + i];
+    }
 
-    Err("err")
+    // 7th bit is active-high unlike the rest
+    zia_row_fuses[7] = !zia_row_fuses[7];
+
+    let mut active_bit = 8;
+    for i in 0..8 {
+        // active low
+        if !zia_row_fuses[i] {
+            if active_bit != 8 {
+                return Err("multiple ZIA inputs selected!");
+            }
+
+            active_bit = i;
+        }
+    }
+
+    if active_bit == 8 {
+        // FIXME: Is this an error?
+        return Err("no ZIA inputs selected!");
+    }
+
+    Ok(XC2ZIARowPiece {
+        selected: if active_bit == 6 {
+            XC2ZIAInput::Zero
+        } else if active_bit == 7 {
+            XC2ZIAInput::One
+        } else {
+            ZIA_BIT_TO_CHOICE_32[row_idx][active_bit]
+        }
+    })
 }

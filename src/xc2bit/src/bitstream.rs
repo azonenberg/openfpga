@@ -26,26 +26,52 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Toplevel bitstrem stuff
 
 use *;
+use fb::{read_32_fb_logical};
+use mc::{read_32_iob_logical, read_32_extra_ibuf_logical};
 
 pub struct XC2Bitstream {
-    speed_grade: String,
-    package: String,
-    bits: XC2BitstreamBits,
+    pub speed_grade: String,
+    pub package: String,
+    pub bits: XC2BitstreamBits,
 }
 
 pub struct XC2GlobalNets {
-    gck_enable: [bool; 3],
-    gsr_enable: bool,
+    pub gck_enable: [bool; 3],
+    pub gsr_enable: bool,
     // false = active low, true = active high
-    gsr_invert: bool,
-    gts_enable: [bool; 4],
+    pub gsr_invert: bool,
+    pub gts_enable: [bool; 4],
     // false = used as T, true = used as !T
-    gts_invert: [bool; 4],
+    pub gts_invert: [bool; 4],
     // false = keeper, true = pull-up
-    global_pu: bool,
+    pub global_pu: bool,
 }
 
 
+fn read_32_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
+    XC2GlobalNets {
+        gck_enable: [
+            fuses[12256],
+            fuses[12257],
+            fuses[12258],
+        ],
+        gsr_enable: fuses[12260],
+        gsr_invert: fuses[12259],
+        gts_enable: [
+            fuses[12262],
+            fuses[12264],
+            fuses[12266],
+            fuses[12268],
+        ],
+        gts_invert: [
+            fuses[12261],
+            fuses[12263],
+            fuses[12265],
+            fuses[12267],
+        ],
+        global_pu: fuses[12269],
+    }
+}
 
 pub enum XC2BitstreamBits {
     XC2C32A {
@@ -59,4 +85,50 @@ pub enum XC2BitstreamBits {
         ivoltage: [bool; 2],
         ovoltage: [bool; 2],
     },
+}
+
+pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BistreamFB::default(); 2];
+    for i in 0..fb.len() {
+        let res = read_32_fb_logical(fuses, i);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        fb[i] = res.unwrap();
+    };
+
+    let mut iobs = [XC2MCSmallIOB::default(); 32];
+    for i in 0..iobs.len() {
+        let base_fuse = if i < 16 {
+            5696
+        } else {
+            11824
+        };
+        let res = read_32_iob_logical(fuses, base_fuse, i % 16);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        iobs[i] = res.unwrap();
+    }
+
+    let inpin = read_32_extra_ibuf_logical(fuses);
+
+    let global_nets = read_32_global_nets_logical(fuses);
+
+    Ok(XC2BitstreamBits::XC2C32A {
+        fb: fb,
+        iobs: iobs,
+        inpin: inpin,
+        global_nets: global_nets,
+        legacy_ovoltage: !fuses[12270],
+        legacy_ivoltage: !fuses[12271],
+        ivoltage: [
+            !fuses[12274],
+            !fuses[12276],
+        ],
+        ovoltage: [
+            !fuses[12275],
+            !fuses[12277],
+        ]
+    })
 }

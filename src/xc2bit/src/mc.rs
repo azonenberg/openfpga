@@ -25,6 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Macrocell stuff
 
+#[derive(Copy, Clone)]
 pub enum XC2MCFFClkSrc {
     GCK0,
     GCK1,
@@ -33,76 +34,256 @@ pub enum XC2MCFFClkSrc {
     CTC,
 }
 
-pub enum XC2MCFFRSSrc {
-    DISABLED,
+#[derive(Copy, Clone)]
+pub enum XC2MCFFResetSrc {
+    Disabled,
+    PTA,
+    GSR,
+    CTR,
+}
+
+#[derive(Copy, Clone)]
+pub enum XC2MCFFSetSrc {
+    Disabled,
     PTA,
     GSR,
     CTS,
 }
 
+#[derive(Copy, Clone)]
 pub enum XC2MCFFMode {
     DFF,
     LATCH,
     TFF,
-    DFF_CE,
+    DFFCE,
 }
 
+#[derive(Copy, Clone)]
 pub enum XC2MCFeedbackMode {
-    DISABLED,
+    Disabled,
     COMB,
     REG,
 }
 
+#[derive(Copy, Clone)]
 pub enum XC2MCXorMode {
     ZERO,
     ONE,
     PTC,
-    PTC_B,
+    PTCB,
 }
 
+#[derive(Copy, Clone)]
 pub enum XC2MCOBufMode {
-    DISABLED,
-    PUSH_PULL,
-    OPEN_DRAIN,
-    TRI_STATE_GTS0,
-    TRI_STATE_GTS1,
-    TRI_STATE_GTS2,
-    TRI_STATE_GTS3,
-    TRI_STATE_PTB,
-    TRI_STATE_CTE,
+    Disabled,
+    PushPull,
+    OpenDrain,
+    TriStateGTS0,
+    TriStateGTS1,
+    TriStateGTS2,
+    TriStateGTS3,
+    TriStatePTB,
+    TriStateCTE,
     CGND,
 }
 
+#[derive(Copy, Clone)]
 pub struct XC2MCFF {
-    clk_src: XC2MCFFClkSrc,
+    pub clk_src: XC2MCFFClkSrc,
     // false = rising edge triggered, true = falling edge triggered
-    falling_edge: bool,
-    is_ddr: bool,
-    r_src: XC2MCFFRSSrc,
-    s_src: XC2MCFFRSSrc,
+    pub falling_edge: bool,
+    pub is_ddr: bool,
+    pub r_src: XC2MCFFResetSrc,
+    pub s_src: XC2MCFFSetSrc,
     // false = init to 0, true = init to 1
-    init_state: bool,
-    ff_mode: XC2MCFFMode,
-    fb_mode: XC2MCFeedbackMode,
+    pub init_state: bool,
+    pub ff_mode: XC2MCFFMode,
+    pub fb_mode: XC2MCFeedbackMode,
     // false = use xor gate/PLA, true = use IOB direct path
     // true is illegal for buried FFs
-    ff_in_ibuf: bool,
-    xor_mode: XC2MCXorMode,
+    pub ff_in_ibuf: bool,
+    pub xor_mode: XC2MCXorMode,
 }
 
+impl Default for XC2MCFF {
+    fn default() -> XC2MCFF {
+        XC2MCFF {
+            clk_src: XC2MCFFClkSrc::GCK0,
+            falling_edge: false,
+            is_ddr: false,
+            r_src: XC2MCFFResetSrc::Disabled,
+            s_src: XC2MCFFSetSrc::Disabled,
+            init_state: false,
+            ff_mode: XC2MCFFMode::DFF,
+            fb_mode: XC2MCFeedbackMode::Disabled,
+            ff_in_ibuf: false,
+            xor_mode: XC2MCXorMode::ZERO,
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
 pub struct XC2MCSmallIOB {
     // FIXME: Mystery bit here
-    ibuf_to_zia: bool,
-    schmitt_trigger: bool,
+    pub ibuf_to_zia: bool,
+    pub schmitt_trigger: bool,
     // false = uses xor gate, true = uses FF output
-    obuf_uses_ff: bool,
-    obuf_mode: XC2MCOBufMode,
-    termination_enabled: bool,
-    slew_is_fast: bool,
+    pub obuf_uses_ff: bool,
+    pub obuf_mode: XC2MCOBufMode,
+    pub termination_enabled: bool,
+    pub slew_is_fast: bool,
+}
+
+impl Default for XC2MCSmallIOB {
+    fn default() -> XC2MCSmallIOB {
+        XC2MCSmallIOB {
+            ibuf_to_zia: false,
+            schmitt_trigger: true,
+            obuf_uses_ff: false,
+            obuf_mode: XC2MCOBufMode::Disabled,
+            termination_enabled: true,
+            slew_is_fast: true,
+        }
+    }
 }
 
 // Weird additional input-only pin
 pub struct XC2ExtraIBuf {
-    schmitt_trigger: bool,
-    termination_enabled: bool,
+    pub schmitt_trigger: bool,
+    pub termination_enabled: bool,
+}
+
+// Read only the FF-related bits
+pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC2MCFF {
+    let aclk = fuses[block_idx + ff_idx * 27 + 0];
+    let clk = (fuses[block_idx + ff_idx * 27 + 2],
+               fuses[block_idx + ff_idx * 27 + 3]);
+
+    let clk_src = match clk {
+        (false, false) => XC2MCFFClkSrc::GCK0,
+        (false, true)  => XC2MCFFClkSrc::GCK1,
+        (true, false)  => XC2MCFFClkSrc::GCK2,
+        (true, true)   => match aclk {
+            true => XC2MCFFClkSrc::CTC,
+            false => XC2MCFFClkSrc::PTC,
+        },
+    };
+
+    let clkop = fuses[block_idx + ff_idx * 27 + 1];
+    let clkfreq = fuses[block_idx + ff_idx * 27 + 4];
+
+    let r = (fuses[block_idx + ff_idx * 27 + 5],
+             fuses[block_idx + ff_idx * 27 + 6]);
+    let reset_mode = match r {
+        (false, false) => XC2MCFFResetSrc::PTA,
+        (false, true)  => XC2MCFFResetSrc::GSR,
+        (true, false)  => XC2MCFFResetSrc::CTR,
+        (true, true)   => XC2MCFFResetSrc::Disabled,
+    };
+
+    let p = (fuses[block_idx + ff_idx * 27 + 7],
+             fuses[block_idx + ff_idx * 27 + 8]);
+    let set_mode = match p {
+        (false, false) => XC2MCFFSetSrc::PTA,
+        (false, true)  => XC2MCFFSetSrc::GSR,
+        (true, false)  => XC2MCFFSetSrc::CTS,
+        (true, true)   => XC2MCFFSetSrc::Disabled,
+    };
+
+    let regmod = (fuses[block_idx + ff_idx * 27 + 9],
+                  fuses[block_idx + ff_idx * 27 + 10]);
+    let ff_mode = match regmod {
+        (false, false) => XC2MCFFMode::DFF,
+        (false, true)  => XC2MCFFMode::LATCH,
+        (true, false)  => XC2MCFFMode::TFF,
+        (true, true)   => XC2MCFFMode::DFFCE,
+    };
+
+    let fb = (fuses[block_idx + ff_idx * 27 + 13],
+              fuses[block_idx + ff_idx * 27 + 14]);
+    let fb_mode = match fb {
+        (false, false) => XC2MCFeedbackMode::COMB,
+        (true, false)  => XC2MCFeedbackMode::REG,
+        (_, true)      => XC2MCFeedbackMode::Disabled,
+    };
+
+    let inreg = fuses[block_idx + ff_idx * 27 + 15];
+
+    let xorin = (fuses[block_idx + ff_idx * 27 + 17],
+                 fuses[block_idx + ff_idx * 27 + 18]);
+    let xormode = match xorin {
+        (false, false) => XC2MCXorMode::ZERO,
+        (false, true)  => XC2MCXorMode::PTCB,
+        (true, false)  => XC2MCXorMode::PTC,
+        (true, true)   => XC2MCXorMode::ONE,
+    };
+
+    let pu = fuses[block_idx + ff_idx * 27 + 26];
+
+    XC2MCFF {
+        clk_src: clk_src,
+        falling_edge: clkop,
+        is_ddr: clkfreq,
+        r_src: reset_mode,
+        s_src: set_mode,
+        init_state: !pu,
+        ff_mode: ff_mode,
+        fb_mode: fb_mode,
+        ff_in_ibuf: !inreg,
+        xor_mode: xormode,
+    }
+}
+
+// Read only the IO-related bits
+pub fn read_32_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -> Result<XC2MCSmallIOB, &'static str> {
+    let inz = (fuses[block_idx + io_idx * 27 + 11],
+               fuses[block_idx + io_idx * 27 + 12]);
+    let input_to_zia = match inz {
+        (false, false) => true,
+        (true, true) => false,
+        _ => return Err("unknown INz mode used"),
+    };
+
+    let st = fuses[block_idx + io_idx * 27 + 16];
+    let regcom = fuses[block_idx + io_idx * 27 + 19];
+
+    let oe = (fuses[block_idx + io_idx * 27 + 20],
+              fuses[block_idx + io_idx * 27 + 21],
+              fuses[block_idx + io_idx * 27 + 22],
+              fuses[block_idx + io_idx * 27 + 23]);
+    let output_mode = match oe {
+        (false, false, false, false) => XC2MCOBufMode::PushPull,
+        (false, false, false, true)  => XC2MCOBufMode::OpenDrain,
+        (false, false, true, false)  => XC2MCOBufMode::TriStateGTS1,
+        (false, true, false, false)  => XC2MCOBufMode::TriStatePTB,
+        (false, true, true, false)   => XC2MCOBufMode::TriStateGTS3,
+        (true, false, false, false)  => XC2MCOBufMode::TriStateCTE,
+        (true, false, true, false)   => XC2MCOBufMode::TriStateGTS2,
+        (true, true, false, false)   => XC2MCOBufMode::TriStateGTS0,
+        (true, true, true, false)    => XC2MCOBufMode::CGND,
+        (true, true, true, true)     => XC2MCOBufMode::Disabled,
+        _ => return Err("unknown Oe mode used"),
+    };
+
+    let tm = fuses[block_idx + io_idx * 27 + 24];
+    let slw = fuses[block_idx + io_idx * 27 + 25];
+
+    Ok(XC2MCSmallIOB {
+        ibuf_to_zia: input_to_zia,
+        schmitt_trigger: st,
+        obuf_uses_ff: !regcom,
+        obuf_mode: output_mode,
+        termination_enabled: tm,
+        slew_is_fast: !slw,
+    })
+}
+
+pub fn read_32_extra_ibuf_logical(fuses: &[bool]) -> XC2ExtraIBuf {
+    let st = fuses[12272];
+    let tm = fuses[12273];
+
+    XC2ExtraIBuf {
+        schmitt_trigger: st,
+        termination_enabled: tm,
+    }
 }
