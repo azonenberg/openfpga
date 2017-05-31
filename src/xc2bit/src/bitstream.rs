@@ -25,6 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Toplevel bitstrem stuff
 
+use std::io::Write;
+
 use *;
 use fb::{read_32_fb_logical};
 use mc::{read_32_iob_logical, read_32_extra_ibuf_logical};
@@ -33,6 +35,14 @@ pub struct XC2Bitstream {
     pub speed_grade: String,
     pub package: String,
     pub bits: XC2BitstreamBits,
+}
+
+impl XC2Bitstream {
+    pub fn dump_human_readable(&self, writer: &mut Write) {
+        write!(writer, "xc2bit dump\n").unwrap();
+        write!(writer, "device speed grade: {}\n", self.speed_grade).unwrap();
+        write!(writer, "device package: {}\n", self.package).unwrap();
+    }
 }
 
 pub struct XC2GlobalNets {
