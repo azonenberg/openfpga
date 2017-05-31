@@ -25,6 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Macrocell stuff
 
+use std::io::Write;
+
 #[derive(Copy, Clone)]
 pub enum XC2MCFFClkSrc {
     GCK0,
@@ -122,6 +124,53 @@ impl Default for XC2MCFF {
     }
 }
 
+impl XC2MCFF {
+    pub fn dump_human_readable(&self, fb: u32, ff: u32, writer: &mut Write) {
+        write!(writer, "\n").unwrap();
+        write!(writer, "FF configuration for FB{}_{}\n", fb, ff + 1).unwrap();
+        write!(writer, "FF mode: {}\n", match self.ff_mode {
+            XC2MCFFMode::DFF => "D flip-flop",
+            XC2MCFFMode::LATCH => "transparent latch",
+            XC2MCFFMode::TFF => "T flip-flop",
+            XC2MCFFMode::DFFCE => "D flip-flop with clock-enable",
+        }).unwrap();
+        write!(writer, "initial state: {}\n", if self.init_state {1} else {0}).unwrap();
+        write!(writer, "{}-edge triggered\n", if self.falling_edge {"falling"} else {"rising"}).unwrap();
+        write!(writer, "DDR: {}\n", if self.is_ddr {"yes"} else {"no"}).unwrap();
+        write!(writer, "clock source: {}\n", match self.clk_src {
+            XC2MCFFClkSrc::GCK0 => "GCK0",
+            XC2MCFFClkSrc::GCK1 => "GCK1",
+            XC2MCFFClkSrc::GCK2 => "GCK2",
+            XC2MCFFClkSrc::PTC => "PTC",
+            XC2MCFFClkSrc::CTC => "CTC",
+        }).unwrap();
+        write!(writer, "set source: {}\n", match self.s_src {
+            XC2MCFFSetSrc::Disabled => "disabled",
+            XC2MCFFSetSrc::PTA => "PTA",
+            XC2MCFFSetSrc::GSR => "GSR",
+            XC2MCFFSetSrc::CTS => "CTS",
+        }).unwrap();
+        write!(writer, "reset source: {}\n", match self.r_src {
+            XC2MCFFResetSrc::Disabled => "disabled",
+            XC2MCFFResetSrc::PTA => "PTA",
+            XC2MCFFResetSrc::GSR => "GSR",
+            XC2MCFFResetSrc::CTR => "CTR",
+        }).unwrap();
+        write!(writer, "using ibuf direct path: {}\n", if self.ff_in_ibuf {"yes"} else {"no"}).unwrap();
+        write!(writer, "XOR gate input: {}\n", match self.xor_mode {
+            XC2MCXorMode::ZERO => "0",
+            XC2MCXorMode::ONE => "1",
+            XC2MCXorMode::PTC => "PTC",
+            XC2MCXorMode::PTCB => "~PTC",
+        }).unwrap();
+        write!(writer, "ZIA feedback: {}\n", match self.fb_mode {
+            XC2MCFeedbackMode::Disabled => "disabled",
+            XC2MCFeedbackMode::COMB => "combinatorial",
+            XC2MCFeedbackMode::REG => "registered",
+        }).unwrap();
+    }
+}
+
 #[derive(Copy, Clone)]
 pub struct XC2MCSmallIOB {
     // FIXME: Mystery bit here
@@ -147,10 +196,60 @@ impl Default for XC2MCSmallIOB {
     }
 }
 
+impl XC2MCSmallIOB {
+    pub fn dump_human_readable(&self, my_idx: u32, writer: &mut Write) {
+        write!(writer, "\n").unwrap();
+        let (fb, ff) = iob_num_to_fb_ff_num_32(my_idx).unwrap();
+        write!(writer, "I/O configuration for FB{}_{}\n", fb, ff + 1).unwrap();
+        write!(writer, "output mode: {}\n", match self.obuf_mode {
+            XC2MCOBufMode::Disabled => "disabled",
+            XC2MCOBufMode::PushPull => "push-pull",
+            XC2MCOBufMode::OpenDrain => "open-drain",
+            XC2MCOBufMode::TriStateGTS0 => "GTS0-controlled tri-state",
+            XC2MCOBufMode::TriStateGTS1 => "GTS1-controlled tri-state",
+            XC2MCOBufMode::TriStateGTS2 => "GTS2-controlled tri-state",
+            XC2MCOBufMode::TriStateGTS3 => "GTS3-controlled tri-state",
+            XC2MCOBufMode::TriStatePTB => "PTB-controlled tri-state",
+            XC2MCOBufMode::TriStateCTE => "CTE-controlled tri-state",
+            XC2MCOBufMode::CGND => "CGND",
+        }).unwrap();
+        write!(writer, "output comes from {}\n", if self.obuf_uses_ff {"FF"} else {"XOR gate"}).unwrap();
+        write!(writer, "slew rate: {}\n", if self.slew_is_fast {"fast"} else {"slow"}).unwrap();
+        write!(writer, "ZIA driven from ibuf: {}\n", if self.ibuf_to_zia {"yes"} else {"no"}).unwrap();
+        write!(writer, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"}).unwrap();
+        write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"}).unwrap();
+    }
+}
+
 // Weird additional input-only pin
 pub struct XC2ExtraIBuf {
     pub schmitt_trigger: bool,
     pub termination_enabled: bool,
+}
+
+impl XC2ExtraIBuf {
+    pub fn dump_human_readable(&self, writer: &mut Write) {
+        write!(writer, "\n").unwrap();
+        write!(writer, "I/O configuration for input-only pin\n").unwrap();
+        write!(writer, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"}).unwrap();
+        write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"}).unwrap();
+    }
+}
+
+pub fn iob_num_to_fb_ff_num_32(iob: u32) -> Option<(u32, u32)> {
+    if iob >= 32 {
+        None
+    } else {
+        Some((iob / 16, iob % 16))
+    }
+}
+
+pub fn fb_ff_num_to_iob_num_32(fb: u32, ff: u32) -> Option<u32> {
+    if fb >= 2 || ff >= 16 {
+        None
+    } else {
+        Some(fb * 16 + ff)
+    }
 }
 
 // Read only the FF-related bits

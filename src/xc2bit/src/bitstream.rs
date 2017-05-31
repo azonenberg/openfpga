@@ -42,6 +42,7 @@ impl XC2Bitstream {
         write!(writer, "xc2bit dump\n").unwrap();
         write!(writer, "device speed grade: {}\n", self.speed_grade).unwrap();
         write!(writer, "device package: {}\n", self.package).unwrap();
+        self.bits.dump_human_readable(writer);
     }
 }
 
@@ -57,6 +58,33 @@ pub struct XC2GlobalNets {
     pub global_pu: bool,
 }
 
+impl XC2GlobalNets {
+    pub fn dump_human_readable(&self, writer: &mut Write) {
+        write!(writer, "\n").unwrap();
+        write!(writer, "GCK0 {}\n", if self.gck_enable[0] {"enabled"} else {"disabled"}).unwrap();
+        write!(writer, "GCK1 {}\n", if self.gck_enable[1] {"enabled"} else {"disabled"}).unwrap();
+        write!(writer, "GCK2 {}\n", if self.gck_enable[2] {"enabled"} else {"disabled"}).unwrap();
+
+        write!(writer, "GSR {}, active {}\n",
+            if self.gsr_enable {"enabled"} else {"disabled"},
+            if self.gsr_invert {"high"} else {"low"}).unwrap();
+
+        write!(writer, "GTS0 {}, acts as {}\n",
+            if self.gts_enable[0] {"enabled"} else {"disabled"},
+            if self.gts_invert[0] {"!T"} else {"T"}).unwrap();
+        write!(writer, "GTS1 {}, acts as {}\n",
+            if self.gts_enable[1] {"enabled"} else {"disabled"},
+            if self.gts_invert[1] {"!T"} else {"T"}).unwrap();
+        write!(writer, "GTS2 {}, acts as {}\n",
+            if self.gts_enable[2] {"enabled"} else {"disabled"},
+            if self.gts_invert[2] {"!T"} else {"T"}).unwrap();
+        write!(writer, "GTS3 {}, acts as {}\n",
+            if self.gts_enable[3] {"enabled"} else {"disabled"},
+            if self.gts_invert[3] {"!T"} else {"T"}).unwrap();
+
+        write!(writer, "global termination is {}\n", if self.global_pu {"pull-up"} else {"bus hold"}).unwrap();
+    }
+}
 
 fn read_32_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
     XC2GlobalNets {
@@ -68,10 +96,10 @@ fn read_32_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
         gsr_enable: fuses[12260],
         gsr_invert: fuses[12259],
         gts_enable: [
-            fuses[12262],
-            fuses[12264],
-            fuses[12266],
-            fuses[12268],
+            !fuses[12262],
+            !fuses[12264],
+            !fuses[12266],
+            !fuses[12268],
         ],
         gts_invert: [
             fuses[12261],
@@ -95,6 +123,36 @@ pub enum XC2BitstreamBits {
         ivoltage: [bool; 2],
         ovoltage: [bool; 2],
     },
+}
+
+impl XC2BitstreamBits {
+    pub fn dump_human_readable(&self, writer: &mut Write) {
+        match self {
+            &XC2BitstreamBits::XC2C32A{
+                ref fb, ref iobs, ref inpin, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
+                ref ivoltage, ref ovoltage} => {
+
+                write!(writer, "device type: XC2C32A\n").unwrap();
+                write!(writer, "legacy output voltage range: {}\n", if *legacy_ovoltage {"high"} else {"low"}).unwrap();
+                write!(writer, "legacy input voltage range: {}\n", if *legacy_ivoltage {"high"} else {"low"}).unwrap();
+                write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"}).unwrap();
+                write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"}).unwrap();
+                write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"}).unwrap();
+                write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"}).unwrap();
+                global_nets.dump_human_readable(writer);
+
+                for i in 0..32 {
+                    iobs[i].dump_human_readable(i as u32, writer);
+                }
+
+                inpin.dump_human_readable(writer);
+
+                fb[0].dump_human_readable(0, writer);
+                fb[1].dump_human_readable(1, writer);
+            },
+            _ => panic!("don't know how to print this")
+        }
+    }
 }
 
 pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
