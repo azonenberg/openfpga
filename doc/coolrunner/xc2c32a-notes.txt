@@ -142,7 +142,7 @@ Macrocells
 				1 = Control Term Clock
 	25		FF clock inverter
 				0 = Rising edge (FF) or transparent when high (latch)
-				1 = Falling edg e(FF) or transparent when low (latch)
+				1 = Falling edge (FF) or transparent when low (latch)
 	24:23	Clock source for the FF
 				00 = GCK0
 				01 = GCK1
