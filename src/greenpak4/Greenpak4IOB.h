@@ -125,6 +125,12 @@ public:
 	void SetAnalogConfigBase(unsigned int base)
 	{ m_analogConfigBase = base; }
 
+	void SetDriveType(DriveType type)
+	{ m_driveType = type; }
+
+	void SetDriveStrength(DriveStrength strength)
+	{ m_driveStrength = strength; }
+
 	//Get our source (used for DRC)
 	Greenpak4EntityOutput GetOutputSignal()
 	{ return m_outputSignal; }

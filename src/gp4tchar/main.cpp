@@ -22,13 +22,16 @@
 #include <unistd.h>
 #include <log.h>
 #include <gpdevboard.h>
-#ifndef _WIN32
-#include <termios.h>
-#else
-#include <conio.h>
-#endif
+#include <Greenpak4.h>
 
 using namespace std;
+
+hdevice InitializeHardware(unsigned int nboard, SilegoPart expectedPart);
+bool DoInitializeHardware(hdevice hdev, SilegoPart expectedPart);
+bool PostProgramSetup(hdevice hdev);
+bool IOReset(hdevice hdev);
+bool IOSetup(hdevice hdev);
+bool PowerSetup(hdevice hdev);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Entry point
@@ -69,35 +72,113 @@ int main(int argc, char* argv[])
 	//Set up logging
 	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
 
-	//Print status message
-	LogNotice("GreenPAK timing characterization helper\n");
-	LogNotice("Right now, just enables pins used by pmod-gpdevboard and sets up IO\n");
+	//Hardware configuration
+	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
+	SilegoPart spart = SilegoPart::SLG46620V;
+	Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_DOWN;
+	Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
 
-	//Open the dev board
-	hdevice hdev = OpenBoard(nboard);
+	//Print status message and set up the board
+	LogNotice("GreenPAK timing characterization helper\n");
+	hdevice hdev = InitializeHardware(nboard, spart);
 	if(!hdev)
 		return 1;
 
-	//Light up the status LED
-	if(!SetStatusLED(hdev, 1))
+	//Create the device object
+	Greenpak4Device device(part, unused_pull, unused_drive);
+	device.SetIOPrecharge(false);
+	device.SetDisableChargePump(false);
+	device.SetLDOBypass(false);
+	device.SetNVMRetryCount(1);
+
+	//Configure pin 5 as an output and drive it high
+	auto iob = device.GetIOB(5);
+	auto vdd = device.GetPower();
+	iob->SetInput("IN", vdd);
+	iob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
+	iob->SetDriveStrength(Greenpak4IOB::DRIVE_1X);
+
+	//Generate a bitstream
+	vector<uint8_t> bitstream;
+	device.WriteToBuffer(bitstream, 0, false);
+	device.WriteToFile("/tmp/test.txt", 0, false);
+
+	//Emulate the device
+	LogVerbose("Loading new bitstream\n");
+	if(!DownloadBitstream(hdev, bitstream, DownloadMode::EMULATION))
+		return 1;
+	if(!PostProgramSetup(hdev))
 		return 1;
 
-	//DO NOT do anything that might make the IO voltage change, or send Vpp!
+	//Wait a bit
+	usleep(5000 * 1000);
 
-	//Reset all signal generators we may have used during setup
-	if(!ResetAllSiggens(hdev))
-		return 1;
+	//Done
+	LogNotice("Done, resetting board\n");
+	SetStatusLED(hdev, 0);
+	Reset(hdev);
+	USBCleanup(hdev);
 
-	//Reset I/O config
+	return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Board initialization
+
+hdevice InitializeHardware(unsigned int nboard, SilegoPart expectedPart)
+{
+	//Open the dev board
+	hdevice hdev = OpenBoard(nboard);
+	if(!hdev)
+		return NULL;
+
+	//Light it up so we know it's busy
+	SetStatusLED(hdev, 1);
+
+	//Set it up
+	if(!DoInitializeHardware(hdev, expectedPart))
+	{
+		SetStatusLED(hdev, 0);
+		Reset(hdev);
+		USBCleanup(hdev);
+		return NULL;
+	}
+
+	return hdev;
+}
+
+bool PostProgramSetup(hdevice hdev)
+{
+	//Clear I/Os from programming mode
+	if(!IOReset(hdev))
+		return false;
+
+	//Load the new configuration
+	if(!IOSetup(hdev))
+		return false;
+	if(!PowerSetup(hdev))
+		return false;
+
+	return true;
+}
+
+bool IOReset(hdevice hdev)
+{
 	IOConfig ioConfig;
 	for(size_t i = 2; i <= 20; i++)
 		ioConfig.driverConfigs[i] = TP_RESET;
 	if(!SetIOConfig(hdev, ioConfig))
 		return false;
 
+	return true;
+}
+
+bool IOSetup(hdevice hdev)
+{
+	//Enable the I/O pins
 	unsigned int pins[] =
 	{
-		2, 3, 4, 5, 12, 13, 14, 15
+		3, 4, 5, 12, 13, 14, 15
 	};
 
 	//Configure I/O voltage
@@ -109,36 +190,44 @@ int main(int argc, char* argv[])
 		config.expansionEnabled[npin] = true;
 	}
 	if(!SetIOConfig(hdev, config))
-		return 1;
+		return false;
 
+	return true;
+}
+
+bool PowerSetup(hdevice hdev)
+{
 	//Do not change this voltage! This is what the FPGA uses
+	//TODO: sweep from 3.15 to 3.45 to do voltage corner analysis
 	float voltage = 3.3;
-	if(!ConfigureSiggen(hdev, 1, voltage))
-		return 1;
+	return ConfigureSiggen(hdev, 1, voltage);
+}
 
-	//Hold the lock until something happens
-	bool lock = true;
-	if(lock)
+bool DoInitializeHardware(hdevice hdev, SilegoPart expectedPart)
+{
+	//Figure out what's there
+	SilegoPart detectedPart = SilegoPart::UNRECOGNIZED;
+	vector<uint8_t> programmedBitstream;
+	BitstreamKind bitstreamKind;
+	if(!DetectPart(hdev, detectedPart, programmedBitstream, bitstreamKind))
+		return false;
+
+	//Complain if we got something funny
+	if(expectedPart != detectedPart)
 	{
-		LogNotice("Holding lock on board, press any key to exit...\n");
-		SetStatusLED(hdev, 1);
-
-#ifndef _WIN32
-		struct termios oldt, newt;
-		tcgetattr ( STDIN_FILENO, &oldt );
-		newt = oldt;
-		newt.c_lflag &= ~( ICANON | ECHO );
-		tcsetattr ( STDIN_FILENO, TCSANOW, &newt );
-		getchar();
-		tcsetattr ( STDIN_FILENO, TCSANOW, &oldt );
-#else
-		_getch();
-#endif
+		LogError("Detected wrong part (not what we're trying to characterize)\n");
+		return false;
 	}
 
-	//Done
-	LogNotice("Done, resetting board\n");
-	SetStatusLED(hdev, 0);
-	Reset(hdev);
-	USBCleanup(hdev);
+	//Get the board into a known state
+	if(!ResetAllSiggens(hdev))
+		return false;
+	if(!IOReset(hdev))
+		return false;
+	if(!IOSetup(hdev))
+		return false;
+	if(!PowerSetup(hdev))
+		return false;
+
+	return true;
 }
