@@ -23,15 +23,28 @@
 #include <log.h>
 #include <gpdevboard.h>
 #include <Greenpak4.h>
+#include "../xptools/Socket.h"
+
+#ifndef _WIN32
+#include <termios.h>
+#else
+#include <conio.h>
+#endif
 
 using namespace std;
 
-hdevice InitializeHardware(unsigned int nboard, SilegoPart expectedPart);
-bool DoInitializeHardware(hdevice hdev, SilegoPart expectedPart);
+bool InitializeHardware(hdevice hdev, SilegoPart expectedPart);
 bool PostProgramSetup(hdevice hdev);
 bool IOReset(hdevice hdev);
 bool IOSetup(hdevice hdev);
 bool PowerSetup(hdevice hdev);
+bool CalibrateTraceDelays(Socket& sock, hdevice hdev);
+bool MeasureDelay(Socket& sock, int src, int dst, float& delay);
+
+void WaitForKeyPress();
+
+float	g_pinDelays[21];	//0 is unused so we can use 1-based pin numbering like the chip does
+							//For now, only pins 3-4-5 are used
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Entry point
@@ -41,6 +54,9 @@ int main(int argc, char* argv[])
 	Severity console_verbosity = Severity::NOTICE;
 	unsigned int nboard = 0;
 
+	string server;
+	int port = 0;
+
 	//Parse command-line arguments
 	for(int i=1; i<argc; i++)
 	{
@@ -49,6 +65,11 @@ int main(int argc, char* argv[])
 		//Let the logger eat its args first
 		if(ParseLoggerArguments(i, argc, argv, console_verbosity))
 			continue;
+
+		else if(s == "--port")
+				port = atoi(argv[++i]);
+		else if(s == "--server")
+			server = argv[++i];
 
 		else if(s == "--device")
 		{
@@ -72,6 +93,48 @@ int main(int argc, char* argv[])
 	//Set up logging
 	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
 
+	//Connect to the server
+	if( (server == "") || (port == 0) )
+	{
+		LogError("No server or port name specified\n");
+		return 1;
+	}
+	Socket sock(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+	if(!sock.Connect(server, port))
+	{
+		LogError("Failed to connect to GreenpakTimingTest server\n");
+		return 1;
+	}
+
+	//Open the dev board
+	hdevice hdev = OpenBoard(nboard);
+	if(!hdev)
+		return 1;
+
+	//Light it up so we know it's busy
+	SetStatusLED(hdev, 1);
+
+	//Do initial loopback characterization
+	//TODO: allow these to be specified by cmdline arg or file or something, so we don't have to redo it every time
+	if(!CalibrateTraceDelays(sock, hdev))
+	{
+		SetStatusLED(hdev, 0);
+		Reset(hdev);
+		USBCleanup(hdev);
+		return 1;
+	}
+
+	/*
+	if(!InitializeHardware(hdev, expectedPart))
+	{
+		SetStatusLED(hdev, 0);
+		Reset(hdev);
+		USBCleanup(hdev);
+		return NULL;
+	}
+	*/
+
+	/*
 	//Hardware configuration
 	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
 	SilegoPart spart = SilegoPart::SLG46620V;
@@ -112,7 +175,7 @@ int main(int argc, char* argv[])
 
 	//Wait a bit
 	usleep(5000 * 1000);
-
+	*/
 	//Done
 	LogNotice("Done, resetting board\n");
 	SetStatusLED(hdev, 0);
@@ -124,28 +187,6 @@ int main(int argc, char* argv[])
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Board initialization
-
-hdevice InitializeHardware(unsigned int nboard, SilegoPart expectedPart)
-{
-	//Open the dev board
-	hdevice hdev = OpenBoard(nboard);
-	if(!hdev)
-		return NULL;
-
-	//Light it up so we know it's busy
-	SetStatusLED(hdev, 1);
-
-	//Set it up
-	if(!DoInitializeHardware(hdev, expectedPart))
-	{
-		SetStatusLED(hdev, 0);
-		Reset(hdev);
-		USBCleanup(hdev);
-		return NULL;
-	}
-
-	return hdev;
-}
 
 bool PostProgramSetup(hdevice hdev)
 {
@@ -203,7 +244,7 @@ bool PowerSetup(hdevice hdev)
 	return ConfigureSiggen(hdev, 1, voltage);
 }
 
-bool DoInitializeHardware(hdevice hdev, SilegoPart expectedPart)
+bool InitializeHardware(hdevice hdev, SilegoPart expectedPart)
 {
 	//Figure out what's there
 	SilegoPart detectedPart = SilegoPart::UNRECOGNIZED;
@@ -228,6 +269,109 @@ bool DoInitializeHardware(hdevice hdev, SilegoPart expectedPart)
 		return false;
 	if(!PowerSetup(hdev))
 		return false;
+
+	return true;
+}
+
+void WaitForKeyPress()
+{
+	LogNotice("Press any key to continue . . .\n");
+
+#ifndef _WIN32
+	struct termios oldt, newt;
+	tcgetattr ( STDIN_FILENO, &oldt );
+	newt = oldt;
+	newt.c_lflag &= ~( ICANON | ECHO );
+	tcsetattr ( STDIN_FILENO, TCSANOW, &newt );
+	getchar();
+	tcsetattr ( STDIN_FILENO, TCSANOW, &oldt );
+#else
+	_getch();
+#endif
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Initial measurement calibration
+
+bool CalibrateTraceDelays(Socket& sock, hdevice hdev)
+{
+	LogNotice("Calibrate FPGA-to-DUT trace delays\n");
+	LogIndenter li;
+
+	if(!IOSetup(hdev))
+		return false;
+
+	float delay_34;
+	float delay_35;
+	float delay_45;
+
+	//delay_34 = A + B
+	LogNotice("Use a jumper to short pins 3 and 4 on the ZIF header\n");
+	{
+		LogIndenter li;
+
+		WaitForKeyPress();
+		if(!MeasureDelay(sock, 3, 4, delay_34))
+			return false;
+		LogNotice("Measured trace delay: %.3f ns\n", delay_34);
+	}
+
+	//delay_35 = A + C
+	LogNotice("Use a jumper to short pins 3 and 5 on the ZIF header\n");
+	{
+		LogIndenter li;
+
+		WaitForKeyPress();
+		if(!MeasureDelay(sock, 3, 5, delay_35))
+			return false;
+		LogNotice("Measured trace delay: %.3f ns\n", delay_35);
+	}
+
+	//delay_45 = B + C
+	LogNotice("Use a jumper to short pins 4 and 5 on the ZIF header\n");
+	{
+		LogIndenter li;
+
+		WaitForKeyPress();
+		if(!MeasureDelay(sock, 4, 5, delay_45))
+			return false;
+		LogNotice("Measured trace delay: %.3f ns\n", delay_45);
+	}
+
+	//Pin 3 delay = A = ( (A+B) + (A+C) - (B+C) ) / 2 = (delay_34 + delay_35 - delay_45) / 2
+	g_pinDelays[3] = (delay_34 + delay_35 - delay_45) / 2;
+	g_pinDelays[4] = delay_34 - g_pinDelays[3];
+	g_pinDelays[5] = delay_35 - g_pinDelays[3];
+	LogNotice("Calculated trace delays:\n");
+	LogIndenter li2;
+	for(int i=3; i<=5; i++)
+		LogNotice("Pin %d: %.3f\n", i, g_pinDelays[i]);
+
+	return true;
+}
+
+bool MeasureDelay(Socket& sock, int src, int dst, float& delay)
+{
+	//Send test parameters
+	uint8_t		drive = src;
+	uint8_t		sample = dst;
+	if(!sock.SendLooped(&drive, 1))
+		return false;
+	if(!sock.SendLooped(&sample, 1))
+		return false;
+
+	//Read the results back
+	uint8_t ok;
+	if(!sock.RecvLooped(&ok, 1))
+		return false;
+	if(!sock.RecvLooped((uint8_t*)&delay, sizeof(delay)))
+		return false;
+
+	if(!ok)
+	{
+		LogError("Couldn't measure delay (open circuit?)\n");
+		return false;
+	}
 
 	return true;
 }
