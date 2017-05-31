@@ -23,10 +23,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Public interface
+// Toplevel bitstrem enum object
 
-mod bitstream;
-pub use bitstream::XC2Bitstream;
+pub enum XC2Bitstream {
 
-mod jed;
-pub use jed::{read_jed};
+}
