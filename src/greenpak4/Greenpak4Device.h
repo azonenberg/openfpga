@@ -325,6 +325,8 @@ public:
 
 protected:
 
+	bool GenerateBitstream(bool* bitstream, uint8_t userid, bool readProtect);
+
 	void CreateDevice_SLG46140();
 	void CreateDevice_SLG4662x(bool dual_rail);
 	void CreateDevice_common();

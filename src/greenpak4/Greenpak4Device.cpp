@@ -991,8 +991,29 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 	for(unsigned int i=0; i<m_bitlen; i++)
 		bitstream[i] = false;
 
-	bool ok = true;
+	//Generate the bitstream, then write to file if successful
+	if(GenerateBitstream(bitstream, userid, readProtect))
+	{
+		fprintf(fp, "index\t\tvalue\t\tcomment\n");
+		for(unsigned int i=0; i<m_bitlen; i++)
+			fprintf(fp, "%u\t\t%d\t\t//\n", i, (int)bitstream[i]);
+	}
 
+	//Done
+	delete[] bitstream;
+	fclose(fp);
+	return ok;
+}
+
+/**
+	@brief Generates an in-memory bitstream image
+
+	@param bitstream	Raw bit array
+	@param userid		ID code to write to the "user ID" area of the bitstream
+	@param readProtect	True to disable readout of the design
+ */
+bool Greenpak4Device::GenerateBitstream(bool* bitstream, uint8_t userid, bool readProtect)
+{
 	//Get the config data from each of our blocks
 	for(auto x : m_bitstuff)
 	{
@@ -1009,6 +1030,7 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 		case GREENPAK4_SLG46621:
 
 			//Tie the unused on-die IOB for pin 14 to ground
+			//TODO: warn if anything tried to use pin 14?
 			for(int i=1378; i<=1389; i++)
 				bitstream[i] = false;
 
@@ -1032,10 +1054,17 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 
 			//Vref fine tune, magic value from datasheet (TODO do calibration?)
 			//Seems to have been removed from most recent datasheet
+			/*
 			bitstream[891] = true;
 			bitstream[890] = false;
 			bitstream[889] = false;
 			bitstream[888] = true;
+			bitstream[887] = false;
+			*/
+			bitstream[891] = false;
+			bitstream[890] = false;
+			bitstream[889] = false;
+			bitstream[888] = false;
 			bitstream[887] = false;
 
 			//I/O precharge
@@ -1106,10 +1135,17 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 
 			//Vref fine tune, magic value from datasheet (TODO do calibration?)
 			//Seems to have been removed from most recent datasheet, used rev 079 for this
+			/*
 			bitstream[495] = true;
 			bitstream[494] = false;
 			bitstream[493] = false;
 			bitstream[492] = true;
+			bitstream[491] = false;
+			*/
+			bitstream[495] = false;
+			bitstream[494] = false;
+			bitstream[493] = false;
+			bitstream[492] = false;
 			bitstream[491] = false;
 
 			//I/O precharge
@@ -1178,13 +1214,5 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 			ok = false;
 	}
 
-	//Write the bitfile
-	fprintf(fp, "index\t\tvalue\t\tcomment\n");
-	for(unsigned int i=0; i<m_bitlen; i++)
-		fprintf(fp, "%u\t\t%d\t\t//\n", i, (int)bitstream[i]);
-
-	//Done
-	delete[] bitstream;
-	fclose(fp);
 	return ok;
 }
