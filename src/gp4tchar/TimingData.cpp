@@ -16,68 +16,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef TimingData_h
-#define TimingData_h
+#include "gp4tchar.h"
 
-//Delay values
-class DelayPair
+using namespace std;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DevkitCalibration
+
+DevkitCalibration::DevkitCalibration()
 {
-public:
-	DelayPair(float r = 0, float f = 0)
-	: rising(r)
-	, falling(f)
-	{  }
-
-	float rising;
-	float falling;
-};
-
-//Devkit calibration
-class DevkitCalibration
-{
-public:
-	DevkitCalibration();
-
-	DelayPair	pinDelays[21];		//0 is unused so we can use 1-based pin numbering like the chip does
-									//For now, only pins 3-4-5 and 13-14-15 are used
-};
-
-//Propagation delay through a cell (only one output supported for now)
-class CellDelay
-{
-public:
-	//map from pin name to delay
-	std::map<std::string, DelayPair> delays;
-};
-
-//DUT measurements
-class DeviceProperties
-{
-public:
-
-	//Map from (src, dst) pin to delay tuple
-	typedef std::map<std::pair<int, int>, CellDelay> IODelayMap;
-
-	//Map from drive strength to delay tuples
-	std::map<Greenpak4IOB::DriveStrength, IODelayMap> ioDelays;
-};
-
-/*
-//Delays from FPGA to DUT, one way, per pin
-//TODO: DelayPair for these
-
-//Delays within the device for input/output buffers
-//Map from (src, dst) to delay
-map<pair<int, int>, CellDelay> g_pinToPinDelaysX1;
-map<pair<int, int>, CellDelay> g_pinToPinDelaysX2;
-//TODO: x4 drive strength
-
-//Delay through each cross connection
-DelayPair g_eastXconnDelays[10];
-DelayPair g_westXconnDelays[10];
-
-//Propagation delay through each LUT to the output
-map<Greenpak4LUT*, CellDelay> g_lutDelays;
-*/
-
-#endif
+	for(int i=0; i<=20; i++)
+		pinDelays[i] = DelayPair(0, -1);
+}

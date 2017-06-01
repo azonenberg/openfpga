@@ -35,4 +35,17 @@ bool IOReset(hdevice hdev);
 bool IOSetup(hdevice hdev);
 bool PowerSetup(hdevice hdev);
 
+bool ReadTraceDelays();
+bool CalibrateTraceDelays(Socket& sock, hdevice hdev);
+bool MeasureDelay(Socket& sock, int src, int dst, float& delay);
+
+bool MeasureLutDelays(Socket& sock, hdevice hdev);
+bool MeasurePinToPinDelays(Socket& sock, hdevice hdev);
+bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev);
+
+void WaitForKeyPress();
+
+extern DevkitCalibration g_devkitCal;
+extern DeviceProperties g_deviceProperties;
+
 #endif

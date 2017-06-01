@@ -1,5 +1,9 @@
 add_executable(gp4tchar
+	measurements.cpp
 	setup.cpp
+
+	TimingData.cpp
+
 	main.cpp)
 
 target_link_libraries(gp4tchar
