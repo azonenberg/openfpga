@@ -131,6 +131,9 @@ public:
 	void SetDriveStrength(DriveStrength strength)
 	{ m_driveStrength = strength; }
 
+	void SetSchmittTrigger(bool schmitt)
+	{ m_schmittTrigger = schmitt; }
+
 	//Get our source (used for DRC)
 	Greenpak4EntityOutput GetOutputSignal()
 	{ return m_outputSignal; }
