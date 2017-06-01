@@ -31,8 +31,10 @@ bool KnapsackProblem::Solve()
 	int numVars = 0;
 	for(auto e : m_equations)
 	{
-		for(auto v : e->m_variables)
+		for(auto it : e->m_variables)
 		{
+			auto v = it.first;
+
 			//already have it
 			if(colmap.find(v) != colmap.end())
 				continue;
@@ -66,8 +68,8 @@ bool KnapsackProblem::Solve()
 			row[i] = 0;
 
 		//Add variables (coefficient of 1 to start)
-		for(auto v : e->m_variables)
-			row[colmap[v]] = 1;
+		for(auto it : e->m_variables)
+			row[colmap[it.first]] = it.second;
 
 		//Patch in the sum
 		row[numVars] = e->m_sum;

@@ -24,6 +24,8 @@
 
 	More formally, given a series of sums of the form a + b + c = 1234, where a/b/c are unknown variables that appear at
 	most once in any given sum (and always with a coefficient of 1), solve for the individual variables.
+
+	Probably should be renamed at some point, it's turning into a general linear equation solver...
  */
 
 /**
@@ -53,10 +55,10 @@ public:
 	: m_sum(sum)
 	{}
 
-	void AddVariable(KnapsackVariable& v)
-	{ m_variables.emplace(&v); }
+	void AddVariable(KnapsackVariable& v, float coeff = 1)
+	{ m_variables[&v] = coeff; }
 
-	std::set<KnapsackVariable*> m_variables;
+	std::map<KnapsackVariable*, float> m_variables;
 	float m_sum;
 };
 
