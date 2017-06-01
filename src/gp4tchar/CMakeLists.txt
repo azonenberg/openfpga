@@ -1,4 +1,5 @@
 add_executable(gp4tchar
+	setup.cpp
 	main.cpp)
 
 target_link_libraries(gp4tchar

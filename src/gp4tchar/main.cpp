@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -16,14 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#include <cstdlib>
-#include <cstring>
-#include <cmath>
-#include <unistd.h>
-#include <log.h>
-#include <gpdevboard.h>
-#include <Greenpak4.h>
-#include "../xptools/Socket.h"
+#include "gp4tchar.h"
 
 #ifndef _WIN32
 #include <termios.h>
@@ -33,18 +26,41 @@
 
 using namespace std;
 
-bool InitializeHardware(hdevice hdev, SilegoPart expectedPart);
-bool PostProgramSetup(hdevice hdev);
-bool IOReset(hdevice hdev);
-bool IOSetup(hdevice hdev);
-bool PowerSetup(hdevice hdev);
+bool ReadTraceDelays();
 bool CalibrateTraceDelays(Socket& sock, hdevice hdev);
 bool MeasureDelay(Socket& sock, int src, int dst, float& delay);
+bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& delay);
+bool MeasureLutDelays(Socket& sock, hdevice hdev);
+
+bool MeasurePinToPinDelays(Socket& sock, hdevice hdev);
+bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev);
+bool MeasureCrossConnectionDelay(Socket& sock, hdevice hdev, unsigned int matrix, unsigned int index, float& delay);
+bool ProgramAndMeasureDelay(Socket& sock, hdevice hdev, vector<uint8_t>& bitstream, int src, int dst, float& delay);
 
 void WaitForKeyPress();
 
-float	g_pinDelays[21];	//0 is unused so we can use 1-based pin numbering like the chip does
-							//For now, only pins 3-4-5 are used
+//Delays from FPGA to DUT, one way, per pin
+//TODO: DelayPair for these
+float	g_pinDelays[21] = {0};	//0 is unused so we can use 1-based pin numbering like the chip does
+								//For now, only pins 3-4-5 and 13-14-15 are used
+
+//Delays within the device for input/output buffers
+//Map from (src, dst) to delay
+map<pair<int, int>, CellDelay> g_pinToPinDelaysX1;
+map<pair<int, int>, CellDelay> g_pinToPinDelaysX2;
+//TODO: x4 drive strength
+
+//Delay through each cross connection
+DelayPair g_eastXconnDelays[10];
+DelayPair g_westXconnDelays[10];
+
+//Propagation delay through each LUT to the output
+map<Greenpak4LUT*, CellDelay> g_lutDelays;
+
+//Device configuration
+Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
+Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_DOWN;
+Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Entry point
@@ -106,6 +122,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	LogNotice("GreenPAK timing characterization helper v0.1 by Andrew Zonenberg\n");
+
 	//Open the dev board
 	hdevice hdev = OpenBoard(nboard);
 	if(!hdev)
@@ -114,68 +132,36 @@ int main(int argc, char* argv[])
 	//Light it up so we know it's busy
 	SetStatusLED(hdev, 1);
 
-	//Do initial loopback characterization
-	//TODO: allow these to be specified by cmdline arg or file or something, so we don't have to redo it every time
-	if(!CalibrateTraceDelays(sock, hdev))
+	//Do initial loopback characterization on the devkit and adapters before installing the chip
+	if(!ReadTraceDelays())
 	{
-		SetStatusLED(hdev, 0);
-		Reset(hdev);
-		USBCleanup(hdev);
-		return 1;
+		if(!CalibrateTraceDelays(sock, hdev))
+		{
+			SetStatusLED(hdev, 0);
+			Reset(hdev);
+			USBCleanup(hdev);
+			return 1;
+		}
 	}
 
-	/*
-	if(!InitializeHardware(hdev, expectedPart))
-	{
-		SetStatusLED(hdev, 0);
-		Reset(hdev);
-		USBCleanup(hdev);
-		return NULL;
-	}
-	*/
-
-	/*
-	//Hardware configuration
-	Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
+	//Make sure we have the right chip plugged in
 	SilegoPart spart = SilegoPart::SLG46620V;
-	Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_DOWN;
-	Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
-
-	//Print status message and set up the board
-	LogNotice("GreenPAK timing characterization helper\n");
-	hdevice hdev = InitializeHardware(nboard, spart);
-	if(!hdev)
+	if(!InitializeHardware(hdev, spart))
+	{
+		SetStatusLED(hdev, 0);
+		Reset(hdev);
+		USBCleanup(hdev);
 		return 1;
+	}
 
-	//Create the device object
-	Greenpak4Device device(part, unused_pull, unused_drive);
-	device.SetIOPrecharge(false);
-	device.SetDisableChargePump(false);
-	device.SetLDOBypass(false);
-	device.SetNVMRetryCount(1);
-
-	//Configure pin 5 as an output and drive it high
-	auto iob = device.GetIOB(5);
-	auto vdd = device.GetPower();
-	iob->SetInput("IN", vdd);
-	iob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
-	iob->SetDriveStrength(Greenpak4IOB::DRIVE_1X);
-
-	//Generate a bitstream
-	vector<uint8_t> bitstream;
-	device.WriteToBuffer(bitstream, 0, false);
-	device.WriteToFile("/tmp/test.txt", 0, false);
-
-	//Emulate the device
-	LogVerbose("Loading new bitstream\n");
-	if(!DownloadBitstream(hdev, bitstream, DownloadMode::EMULATION))
+	//Measure delay through each element
+	/*
+	if(!MeasureCrossConnectionDelays(sock, hdev))
 		return 1;
-	if(!PostProgramSetup(hdev))
+	if(!MeasureLutDelays(sock, hdev))
 		return 1;
-
-	//Wait a bit
-	usleep(5000 * 1000);
 	*/
+
 	//Done
 	LogNotice("Done, resetting board\n");
 	SetStatusLED(hdev, 0);
@@ -183,94 +169,6 @@ int main(int argc, char* argv[])
 	USBCleanup(hdev);
 
 	return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Board initialization
-
-bool PostProgramSetup(hdevice hdev)
-{
-	//Clear I/Os from programming mode
-	if(!IOReset(hdev))
-		return false;
-
-	//Load the new configuration
-	if(!IOSetup(hdev))
-		return false;
-	if(!PowerSetup(hdev))
-		return false;
-
-	return true;
-}
-
-bool IOReset(hdevice hdev)
-{
-	IOConfig ioConfig;
-	for(size_t i = 2; i <= 20; i++)
-		ioConfig.driverConfigs[i] = TP_RESET;
-	if(!SetIOConfig(hdev, ioConfig))
-		return false;
-
-	return true;
-}
-
-bool IOSetup(hdevice hdev)
-{
-	//Enable the I/O pins
-	unsigned int pins[] =
-	{
-		3, 4, 5, 12, 13, 14, 15
-	};
-
-	//Configure I/O voltage
-	IOConfig config;
-	for(auto npin : pins)
-	{
-		config.driverConfigs[npin] = TP_FLOAT;
-		config.ledEnabled[npin] = true;
-		config.expansionEnabled[npin] = true;
-	}
-	if(!SetIOConfig(hdev, config))
-		return false;
-
-	return true;
-}
-
-bool PowerSetup(hdevice hdev)
-{
-	//Do not change this voltage! This is what the FPGA uses
-	//TODO: sweep from 3.15 to 3.45 to do voltage corner analysis
-	float voltage = 3.3;
-	return ConfigureSiggen(hdev, 1, voltage);
-}
-
-bool InitializeHardware(hdevice hdev, SilegoPart expectedPart)
-{
-	//Figure out what's there
-	SilegoPart detectedPart = SilegoPart::UNRECOGNIZED;
-	vector<uint8_t> programmedBitstream;
-	BitstreamKind bitstreamKind;
-	if(!DetectPart(hdev, detectedPart, programmedBitstream, bitstreamKind))
-		return false;
-
-	//Complain if we got something funny
-	if(expectedPart != detectedPart)
-	{
-		LogError("Detected wrong part (not what we're trying to characterize)\n");
-		return false;
-	}
-
-	//Get the board into a known state
-	if(!ResetAllSiggens(hdev))
-		return false;
-	if(!IOReset(hdev))
-		return false;
-	if(!IOSetup(hdev))
-		return false;
-	if(!PowerSetup(hdev))
-		return false;
-
-	return true;
 }
 
 void WaitForKeyPress()
@@ -305,48 +203,95 @@ bool CalibrateTraceDelays(Socket& sock, hdevice hdev)
 	float delay_35;
 	float delay_45;
 
-	//delay_34 = A + B
-	LogNotice("Use a jumper to short pins 3 and 4 on the ZIF header\n");
-	{
-		LogIndenter li;
+	float delay_1314;
+	float delay_1315;
+	float delay_1415;
 
-		WaitForKeyPress();
-		if(!MeasureDelay(sock, 3, 4, delay_34))
-			return false;
-		LogNotice("Measured trace delay: %.3f ns\n", delay_34);
-	}
+	//Measure A+B, A+C, B+C delays for one side of chip
+	if(!PromptAndMeasureDelay(sock, 3, 4, delay_34))
+		return false;
+	if(!PromptAndMeasureDelay(sock, 3, 5, delay_35))
+		return false;
+	if(!PromptAndMeasureDelay(sock, 4, 5, delay_45))
+		return false;
 
-	//delay_35 = A + C
-	LogNotice("Use a jumper to short pins 3 and 5 on the ZIF header\n");
-	{
-		LogIndenter li;
-
-		WaitForKeyPress();
-		if(!MeasureDelay(sock, 3, 5, delay_35))
-			return false;
-		LogNotice("Measured trace delay: %.3f ns\n", delay_35);
-	}
-
-	//delay_45 = B + C
-	LogNotice("Use a jumper to short pins 4 and 5 on the ZIF header\n");
-	{
-		LogIndenter li;
-
-		WaitForKeyPress();
-		if(!MeasureDelay(sock, 4, 5, delay_45))
-			return false;
-		LogNotice("Measured trace delay: %.3f ns\n", delay_45);
-	}
+	//and for the other side
+	if(!PromptAndMeasureDelay(sock, 13, 14, delay_1314))
+		return false;
+	if(!PromptAndMeasureDelay(sock, 13, 15, delay_1315))
+		return false;
+	if(!PromptAndMeasureDelay(sock, 14, 15, delay_1415))
+		return false;
 
 	//Pin 3 delay = A = ( (A+B) + (A+C) - (B+C) ) / 2 = (delay_34 + delay_35 - delay_45) / 2
 	g_pinDelays[3] = (delay_34 + delay_35 - delay_45) / 2;
 	g_pinDelays[4] = delay_34 - g_pinDelays[3];
 	g_pinDelays[5] = delay_35 - g_pinDelays[3];
-	LogNotice("Calculated trace delays:\n");
-	LogIndenter li2;
-	for(int i=3; i<=5; i++)
-		LogNotice("Pin %d: %.3f\n", i, g_pinDelays[i]);
 
+	//Repeat for other side
+	g_pinDelays[13] = (delay_1314 + delay_1315 - delay_1415) / 2;
+	g_pinDelays[14] = delay_1314 - g_pinDelays[13];
+	g_pinDelays[15] = delay_1315 - g_pinDelays[13];
+
+	//Print results
+	{
+		LogNotice("Calculated trace delays:\n");
+		LogIndenter li2;
+		for(int i=3; i<=5; i++)
+			LogNotice("Pin %2d to DUT: %.3f ns\n", i, g_pinDelays[i]);
+		for(int i=13; i<=15; i++)
+			LogNotice("Pin %2d to DUT: %.3f ns\n", i, g_pinDelays[i]);
+	}
+
+	//Write to file
+	LogNotice("Writing calibration to file pincal.csv\n");
+	FILE* fp = fopen("pincal.csv", "w");
+	for(int i=3; i<=5; i++)
+		fprintf(fp, "%d,%.3f\n", i, g_pinDelays[i]);
+	for(int i=13; i<=15; i++)
+		fprintf(fp, "%d,%.3f\n", i, g_pinDelays[i]);
+	fclose(fp);
+
+	//Prompt to put the actual DUT in
+	LogNotice("Insert a SLG46620 into the socket\n");
+	WaitForKeyPress();
+
+	return true;
+}
+
+bool ReadTraceDelays()
+{
+	FILE* fp = fopen("pincal.csv", "r");
+	if(!fp)
+		return false;
+
+	int i;
+	float f;
+	LogNotice("Reading pin calibration from pincal.csv (delete this file to force re-calibration)...\n");
+	LogIndenter li;
+	while(2 == fscanf(fp, "%d, %f", &i, &f))
+	{
+		if( (i > 20) || (i < 1) )
+			continue;
+
+		g_pinDelays[i] = f;
+
+		LogNotice("Pin %2d to DUT: %.3f ns\n", i, f);
+	}
+
+	return true;
+}
+
+bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& delay)
+{
+	LogNotice("Use a jumper to short pins %d and %d on the ZIF header\n", src, dst);
+
+	LogIndenter li;
+
+	WaitForKeyPress();
+	if(!MeasureDelay(sock, src, dst, delay))
+		return false;
+	LogNotice("Measured pin-to-pin delay: %.3f ns\n", delay);
 	return true;
 }
 
@@ -373,5 +318,98 @@ bool MeasureDelay(Socket& sock, int src, int dst, float& delay)
 		return false;
 	}
 
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Load the bitstream onto the device and measure a pin-to-pin delay
+
+bool ProgramAndMeasureDelay(Socket& sock, hdevice hdev, vector<uint8_t>& bitstream, int src, int dst, float& delay)
+{
+	//Emulate the device
+	LogVerbose("Loading new bitstream\n");
+	if(!DownloadBitstream(hdev, bitstream, DownloadMode::EMULATION))
+		return false;
+	if(!PostProgramSetup(hdev))
+		return false;
+
+	//Measure delay betweens pin 3 and 5
+
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Characterize I/O buffers
+
+bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
+{
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Characterize cross-connections
+
+bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev)
+{
+	LogNotice("Measuring cross-connection delays...\n");
+	LogIndenter li;
+
+	float d;
+	for(int i=0; i<10; i++)
+	{
+		//east
+		MeasureCrossConnectionDelay(sock, hdev, 0, i, d);
+		g_eastXconnDelays[i] = DelayPair(d, -1);
+
+		//west
+		MeasureCrossConnectionDelay(sock, hdev, 1, i, d);
+		g_westXconnDelays[i] = DelayPair(d, -1);
+	}
+}
+
+bool MeasureCrossConnectionDelay(Socket& sock, hdevice hdev, unsigned int matrix, unsigned int index, float& delay)
+{
+	delay = -1;
+
+	//Create the device
+
+	//Done
+	string dir = (matrix == 0) ? "east" : "west";
+	LogNotice("%s %d: %.3f ns\n", dir.c_str(), index, delay);
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Characterize LUTs
+
+bool MeasureLutDelays(Socket& sock, hdevice hdev)
+{
+	//LogNotice("Measuring LUT delays...\n");
+	//LogIndenter li;
+
+	/*
+	//Hardware configuration
+
+
+	//Create the device object
+	Greenpak4Device device(part, unused_pull, unused_drive);
+	device.SetIOPrecharge(false);
+	device.SetDisableChargePump(false);
+	device.SetLDOBypass(false);
+	device.SetNVMRetryCount(1);
+
+	//Configure pin 5 as an output and drive it high
+	auto iob = device.GetIOB(5);
+	auto vdd = device.GetPower();
+	iob->SetInput("IN", vdd);
+	iob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
+	iob->SetDriveStrength(Greenpak4IOB::DRIVE_1X);
+
+	//Generate a bitstream
+	vector<uint8_t> bitstream;
+	device.WriteToBuffer(bitstream, 0, false);
+
+
+	*/
 	return true;
 }
