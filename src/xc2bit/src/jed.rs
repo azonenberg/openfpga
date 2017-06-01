@@ -147,7 +147,7 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
                     return Err("missing QF field");
                 }
 
-                let mut fuse_field_splitter = l.split(|c| c == ' ' || c == '\r' || c == '\n');
+                let mut fuse_field_splitter = l.splitn(2, |c| c == ' ' || c == '\r' || c == '\n');
                 let fuse_idx_str = fuse_field_splitter.next();
                 let (_, fuse_idx_str) = fuse_idx_str.unwrap().split_at(1);
                 let fuse_idx_maybe = u32::from_str_radix(fuse_idx_str, 10);
@@ -375,5 +375,12 @@ mod tests {
         let ret = read_jed(b"\x02F0*QF1*L0 1*C0002*\x030000");
 
         assert_eq!(ret, Err("invalid fuse checksum"));
+    }
+
+    #[test]
+    fn read_two_fuses_space() {
+        let ret = read_jed(b"\x02F0*QF2*L0 0 1*\x030000");
+
+        assert_eq!(ret, Ok((vec![false, true], None)));
     }
 }
