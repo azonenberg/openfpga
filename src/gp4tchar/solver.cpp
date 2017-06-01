@@ -27,6 +27,7 @@ bool KnapsackProblem::Solve()
 {
 	//Create mapping of variables to column IDs
 	map<KnapsackVariable*, int> colmap;
+	map<int, string> nmap;
 	int numVars = 0;
 	for(auto e : m_equations)
 	{
@@ -37,7 +38,9 @@ bool KnapsackProblem::Solve()
 				continue;
 
 			//nope, allocate new ID
-			colmap[v] = numVars++;
+			nmap[numVars] = v->m_name;
+			colmap[v] = numVars;
+			numVars ++;
 
 			//LogNotice("Variable %d = %s\n", colmap[v], v->m_name.c_str());
 		}
@@ -99,7 +102,7 @@ bool KnapsackProblem::Solve()
 
 			if(!found)
 			{
-				LogError("Unable to find a row with nonzero variable %d\n", nvar);
+				LogError("Cannot solve for variable %d (%s)\n", nvar, nmap[nvar].c_str());
 				return false;
 			}
 		}
