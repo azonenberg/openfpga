@@ -23,10 +23,10 @@ using namespace std;
 
 void PrintMatrix(float** rows, int numVars, int numEq);
 
-bool KnapsackProblem::Solve()
+bool EquationSystem::Solve()
 {
 	//Create mapping of variables to column IDs
-	map<KnapsackVariable*, int> colmap;
+	map<EquationVariable*, int> colmap;
 	map<int, string> nmap;
 	int numVars = 0;
 	for(auto e : m_equations)

@@ -19,22 +19,13 @@
 #ifndef solver_h
 #define solver_h
 
-/*
-	This file contains a solver for the "multiple knapsack problem".
-
-	More formally, given a series of sums of the form a + b + c = 1234, where a/b/c are unknown variables that appear at
-	most once in any given sum (and always with a coefficient of 1), solve for the individual variables.
-
-	Probably should be renamed at some point, it's turning into a general linear equation solver...
- */
-
 /**
 	@brief A single named variable
  */
-class KnapsackVariable
+class EquationVariable
 {
 public:
-	KnapsackVariable(std::string n)
+	EquationVariable(std::string n)
 	: m_name(n)
 	, m_value(0)
 	{ }
@@ -48,32 +39,32 @@ public:
 /*
 	@brief A single equation in the system of equations
  */
-class KnapsackEquation
+class Equation
 {
 public:
-	KnapsackEquation(float sum = 0)
+	Equation(float sum = 0)
 	: m_sum(sum)
 	{}
 
-	void AddVariable(KnapsackVariable& v, float coeff = 1)
+	void AddVariable(EquationVariable& v, float coeff = 1)
 	{ m_variables[&v] = coeff; }
 
-	std::map<KnapsackVariable*, float> m_variables;
+	std::map<EquationVariable*, float> m_variables;
 	float m_sum;
 };
 
 /**
-	@brief A problem for the solver
+	@brief A system of linear equations
  */
-class KnapsackProblem
+class EquationSystem
 {
 public:
-	void AddEquation(KnapsackEquation& e)
+	void AddEquation(Equation& e)
 	{ m_equations.emplace(&e); }
 
 	bool Solve();
 
-	std::set<KnapsackEquation*> m_equations;
+	std::set<Equation*> m_equations;
 };
 
 #endif

@@ -27,7 +27,14 @@ Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_DOWN;
 Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
 
 bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& value);
-bool MeasureCrossConnectionDelay(Socket& sock, hdevice hdev, unsigned int matrix, unsigned int index, float& delay);
+bool MeasureCrossConnectionDelay(
+	Socket& sock,
+	hdevice hdev,
+	unsigned int matrix,
+	unsigned int index,
+	unsigned int src,
+	unsigned int dst,
+	float& delay);
 
 bool MeasurePinToPinDelay(
 	Socket& sock,
@@ -35,6 +42,7 @@ bool MeasurePinToPinDelay(
 	int src,
 	int dst,
 	Greenpak4IOB::DriveStrength drive,
+	bool schmitt,
 	float& delay);
 
 bool ProgramAndMeasureDelay(
@@ -57,53 +65,53 @@ bool CalibrateTraceDelays(Socket& sock, hdevice hdev)
 		return false;
 
 	//Set up the variables
-	KnapsackVariable p3("FPGA pin 3 to DUT rising");
-	KnapsackVariable p4("FPGA pin 4 to DUT rising");
-	KnapsackVariable p5("FPGA pin 5 to DUT rising");
-	KnapsackVariable p13("FPGA pin 13 to DUT rising");
-	KnapsackVariable p14("FPGA pin 14 to DUT rising");
-	KnapsackVariable p15("FPGA pin 15 to DUT rising");
+	EquationVariable p3("FPGA pin 3 to DUT rising");
+	EquationVariable p4("FPGA pin 4 to DUT rising");
+	EquationVariable p5("FPGA pin 5 to DUT rising");
+	EquationVariable p13("FPGA pin 13 to DUT rising");
+	EquationVariable p14("FPGA pin 14 to DUT rising");
+	EquationVariable p15("FPGA pin 15 to DUT rising");
 
 	//Measure each pair of pins individually
 	float delay;
 	if(!PromptAndMeasureDelay(sock, 3, 4, delay))
 		return false;
-	KnapsackEquation e1(delay);
+	Equation e1(delay);
 	e1.AddVariable(p3);
 	e1.AddVariable(p4);
 
 	if(!PromptAndMeasureDelay(sock, 3, 5, delay))
 		return false;
-	KnapsackEquation e2(delay);
+	Equation e2(delay);
 	e2.AddVariable(p3);
 	e2.AddVariable(p5);
 
 	if(!PromptAndMeasureDelay(sock, 4, 5, delay))
 		return false;
-	KnapsackEquation e3(delay);
+	Equation e3(delay);
 	e3.AddVariable(p4);
 	e3.AddVariable(p5);
 
 	if(!PromptAndMeasureDelay(sock, 13, 14, delay))
 		return false;
-	KnapsackEquation e4(delay);
+	Equation e4(delay);
 	e4.AddVariable(p13);
 	e4.AddVariable(p14);
 
 	if(!PromptAndMeasureDelay(sock, 13, 15, delay))
 		return false;
-	KnapsackEquation e5(delay);
+	Equation e5(delay);
 	e5.AddVariable(p13);
 	e5.AddVariable(p15);
 
 	if(!PromptAndMeasureDelay(sock, 14, 15, delay))
 		return false;
-	KnapsackEquation e6(delay);
+	Equation e6(delay);
 	e6.AddVariable(p14);
 	e6.AddVariable(p15);
 
 	//Solve the system
-	KnapsackProblem p;
+	EquationSystem p;
 	p.AddEquation(e1);
 	p.AddEquation(e2);
 	p.AddEquation(e3);
@@ -235,6 +243,22 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 	LogNotice("Measuring pin-to-pin delays (through same crossbar)...\n");
 	LogIndenter li;
 
+	/*
+		ASSUMPTIONS
+			x2 I/O buffer is exactly twice the speed of x1
+			Schmitt trigger vs input buffer is same speed ratio as CoolRunner-II (also 180nm but UMC vs TSMC)
+
+		XC2C32A data for reference (-4 speed)
+			Input buffer delay: 1.3 ns, plus 0.5 ns for LVCMOS33 = 1.8 ns
+			Schmitt trigger: 3 ns, plus input buffer = 4.8 ns
+			Output buffer delay: 1.8 ns, plus 1 ns for LVCMOS33 = 2.8 ns
+			Slow-slew output: 4 ns
+
+			Extrapolation: input buffer delay = 0.6 * Schmitt trigger delay
+	 */
+	//float delay1 =
+
+	/*
 	int pins[] = {3, 4, 5, 13, 14, 15};
 	Greenpak4IOB::DriveStrength drives[] = {Greenpak4IOB::DRIVE_1X, Greenpak4IOB::DRIVE_2X};
 
@@ -282,6 +306,11 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 	}
 	LogNotice("+------+------+--------+--------+--------+--------+----------+----------+\n");
 
+	//OBSERVED TREND:
+	//Left half of device, delays increase as you go HIGHER in the matrix
+	//Right half of device, delays increase as you go LOWER in the matrix
+	*/
+
 	return true;
 }
 
@@ -293,6 +322,7 @@ bool MeasurePinToPinDelay(
 	hdevice hdev,
 	int src,
 	int dst,
+	bool schmitt,
 	Greenpak4IOB::DriveStrength drive,
 	float& delay)
 {
@@ -309,6 +339,7 @@ bool MeasurePinToPinDelay(
 	auto vss = device.GetGround();
 	auto srciob = device.GetIOB(src);
 	srciob->SetInput("OE", vss);
+	srciob->SetSchmittTrigger(schmitt);
 	auto din = srciob->GetOutput("OUT");
 
 	//Configure the output pin
@@ -322,7 +353,7 @@ bool MeasurePinToPinDelay(
 	//Generate a bitstream
 	vector<uint8_t> bitstream;
 	device.WriteToBuffer(bitstream, 0, false);
-	device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
+	//device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
 
 	//Get the delay
 	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, delay))
@@ -343,28 +374,89 @@ bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev)
 	LogNotice("Measuring cross-connection delays...\n");
 	LogIndenter li;
 
+	float delays[20];
+
 	float d;
 	for(int i=0; i<10; i++)
 	{
 		//east
-		MeasureCrossConnectionDelay(sock, hdev, 0, i, d);
+		MeasureCrossConnectionDelay(sock, hdev, 0, i, 3, 13, d);
+		LogNotice("East cross-connection %d from pins 3 to 13: %.3f\n", i, d);
 		//g_eastXconnDelays[i] = DelayPair(d, -1);
-
-		//west
-		MeasureCrossConnectionDelay(sock, hdev, 1, i, d);
-		//g_westXconnDelays[i] = DelayPair(d, -1);
+		delays[i] = d;
 	}
+
+	for(int i=0; i<10; i++)
+	{
+		//west
+		MeasureCrossConnectionDelay(sock, hdev, 1, i, 13, 3, d);
+		LogNotice("West cross-connection %d from pins 13 to 3: %.3f\n", i, d);
+		//g_westXconnDelays[i] = DelayPair(d, -1);
+		delays[i+10] = d;
+	}
+
+	//Write the CSV
+	/*
+	FILE* fp = fopen("/tmp/xconn-temp.csv", "w");
+	for(int i=0; i<20; i++)
+		fprintf(fp, "0,x,%d,%.3f\n", i, delays[i]);
+	fclose(fp);
+	*/
 
 	return true;
 }
 
 bool MeasureCrossConnectionDelay(
-	Socket& /*sock*/,
-	hdevice /*hdev*/,
+	Socket& sock,
+	hdevice hdev,
 	unsigned int matrix,
 	unsigned int index,
+	unsigned int src,
+	unsigned int dst,
 	float& delay)
 {
+	delay = -1;
+
+	//Create the device object
+	Greenpak4Device device(part, unused_pull, unused_drive);
+	device.SetIOPrecharge(false);
+	device.SetDisableChargePump(false);
+	device.SetLDOBypass(false);
+	device.SetNVMRetryCount(1);
+
+	//Configure the input pin
+	auto vss = device.GetGround();
+	auto srciob = device.GetIOB(src);
+	srciob->SetInput("OE", vss);
+	auto din = srciob->GetOutput("OUT");
+
+	//Configure the cross-connection
+	auto xc = device.GetCrossConnection(matrix, index);
+	xc->SetInput("I", din);
+
+	//Configure the output pin
+	auto vdd = device.GetPower();
+	auto dstiob = device.GetIOB(dst);
+	dstiob->SetInput("IN", xc->GetOutput("O"));
+	dstiob->SetInput("OE", vdd);
+	dstiob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
+	dstiob->SetDriveStrength(Greenpak4IOB::DRIVE_2X);
+
+	//Generate a bitstream
+	vector<uint8_t> bitstream;
+	device.WriteToBuffer(bitstream, 0, false);
+	//device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
+
+	//Get the delay
+	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, delay))
+		return false;
+
+	//Subtract the PCB trace delay at each end of the line
+	delay -= g_devkitCal.pinDelays[src].rising;
+	delay -= g_devkitCal.pinDelays[dst].rising;
+	return true;
+
+	/*
 	delay = -1;
 
 	//Create the device
@@ -373,6 +465,7 @@ bool MeasureCrossConnectionDelay(
 	string dir = (matrix == 0) ? "east" : "west";
 	LogNotice("%s %d: %.3f ns\n", dir.c_str(), index, delay);
 	return true;
+	*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
