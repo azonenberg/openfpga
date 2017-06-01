@@ -17,6 +17,7 @@
  **********************************************************************************************************************/
 
 #include "gp4tchar.h"
+#include "solver.h"
 
 using namespace std;
 
@@ -25,7 +26,7 @@ Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
 Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_DOWN;
 Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
 
-bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& delay);
+bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& value);
 bool MeasureCrossConnectionDelay(Socket& sock, hdevice hdev, unsigned int matrix, unsigned int index, float& delay);
 
 bool MeasurePinToPinDelay(
@@ -55,41 +56,70 @@ bool CalibrateTraceDelays(Socket& sock, hdevice hdev)
 	if(!IOSetup(hdev))
 		return false;
 
-	float delay_34;
-	float delay_35;
-	float delay_45;
+	//Set up the variables
+	KnapsackVariable p3("FPGA pin 3 to DUT rising");
+	KnapsackVariable p4("FPGA pin 4 to DUT rising");
+	KnapsackVariable p5("FPGA pin 5 to DUT rising");
+	KnapsackVariable p13("FPGA pin 13 to DUT rising");
+	KnapsackVariable p14("FPGA pin 14 to DUT rising");
+	KnapsackVariable p15("FPGA pin 15 to DUT rising");
 
-	float delay_1314;
-	float delay_1315;
-	float delay_1415;
+	//Measure each pair of pins individually
+	float delay;
+	if(!PromptAndMeasureDelay(sock, 3, 4, delay))
+		return false;
+	KnapsackEquation e1(delay);
+	e1.AddVariable(p3);
+	e1.AddVariable(p4);
 
-	//Measure A+B, A+C, B+C delays for one side of chip
-	if(!PromptAndMeasureDelay(sock, 3, 4, delay_34))
+	if(!PromptAndMeasureDelay(sock, 3, 5, delay))
 		return false;
-	if(!PromptAndMeasureDelay(sock, 3, 5, delay_35))
+	KnapsackEquation e2(delay);
+	e2.AddVariable(p3);
+	e2.AddVariable(p5);
+
+	if(!PromptAndMeasureDelay(sock, 4, 5, delay))
 		return false;
-	if(!PromptAndMeasureDelay(sock, 4, 5, delay_45))
+	KnapsackEquation e3(delay);
+	e3.AddVariable(p4);
+	e3.AddVariable(p5);
+
+	if(!PromptAndMeasureDelay(sock, 13, 14, delay))
+		return false;
+	KnapsackEquation e4(delay);
+	e4.AddVariable(p13);
+	e4.AddVariable(p14);
+
+	if(!PromptAndMeasureDelay(sock, 13, 15, delay))
+		return false;
+	KnapsackEquation e5(delay);
+	e5.AddVariable(p13);
+	e5.AddVariable(p15);
+
+	if(!PromptAndMeasureDelay(sock, 14, 15, delay))
+		return false;
+	KnapsackEquation e6(delay);
+	e6.AddVariable(p14);
+	e6.AddVariable(p15);
+
+	//Solve the system
+	KnapsackProblem p;
+	p.AddEquation(e1);
+	p.AddEquation(e2);
+	p.AddEquation(e3);
+	p.AddEquation(e4);
+	p.AddEquation(e5);
+	p.AddEquation(e6);
+	if(!p.Solve())
 		return false;
 
-	//and for the other side
-	if(!PromptAndMeasureDelay(sock, 13, 14, delay_1314))
-		return false;
-	if(!PromptAndMeasureDelay(sock, 13, 15, delay_1315))
-		return false;
-	if(!PromptAndMeasureDelay(sock, 14, 15, delay_1415))
-		return false;
-
-	//Pin 3 delay = A = ( (A+B) + (A+C) - (B+C) ) / 2 = (delay_34 + delay_35 - delay_45) / 2
-	g_devkitCal.pinDelays[3] = DelayPair((delay_34 + delay_35 - delay_45) / 2, -1);
-	g_devkitCal.pinDelays[4] = DelayPair(delay_34 - g_devkitCal.pinDelays[3].rising, -1);
-	g_devkitCal.pinDelays[5] = DelayPair(delay_35 - g_devkitCal.pinDelays[3].rising, -1);
-
-	//Repeat for other side
-	g_devkitCal.pinDelays[13] = DelayPair((delay_1314 + delay_1315 - delay_1415) / 2, -1);
-	g_devkitCal.pinDelays[14] = DelayPair(delay_1314 - g_devkitCal.pinDelays[13].rising, -1);
-	g_devkitCal.pinDelays[15] = DelayPair(delay_1315 - g_devkitCal.pinDelays[13].rising, -1);
-
-	//TODO: Falling edges
+	//Extract the values
+	g_devkitCal.pinDelays[3] = p3.m_value;
+	g_devkitCal.pinDelays[4] = p4.m_value;
+	g_devkitCal.pinDelays[5] = p5.m_value;
+	g_devkitCal.pinDelays[13] = p13.m_value;
+	g_devkitCal.pinDelays[14] = p14.m_value;
+	g_devkitCal.pinDelays[15] = p15.m_value;
 
 	//Print results
 	{
@@ -140,16 +170,16 @@ bool ReadTraceDelays()
 	return true;
 }
 
-bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& delay)
+bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& value)
 {
 	LogNotice("Use a jumper to short pins %d and %d on the ZIF header\n", src, dst);
 
 	LogIndenter li;
 
 	WaitForKeyPress();
-	if(!MeasureDelay(sock, src, dst, delay))
+	if(!MeasureDelay(sock, src, dst, value))
 		return false;
-	LogNotice("Measured pin-to-pin delay: %.3f ns\n", delay);
+	LogNotice("Measured pin-to-pin: %.3f ns\n", value);
 	return true;
 }
 
@@ -297,6 +327,11 @@ bool MeasurePinToPinDelay(
 	//Get the delay
 	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, delay))
 		return false;
+
+	//Subtract the PCB trace delay at each end of the line
+	delay -= g_devkitCal.pinDelays[src].rising;
+	delay -= g_devkitCal.pinDelays[dst].rising;
+
 	return true;
 }
 

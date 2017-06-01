@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 	}
 
 	//Set up logging
-	g_log_sinks.emplace(g_log_sinks.begin(), new STDLogSink(console_verbosity));
+	g_log_sinks.emplace(g_log_sinks.begin(), new ColoredSTDLogSink(console_verbosity));
 
 	//Connect to the server
 	if( (server == "") || (port == 0) )
@@ -124,6 +124,7 @@ int main(int argc, char* argv[])
 	//Measure delay through each element
 	if(!MeasurePinToPinDelays(sock, hdev))
 		return 1;
+
 	/*
 	if(!MeasureCrossConnectionDelays(sock, hdev))
 		return 1;

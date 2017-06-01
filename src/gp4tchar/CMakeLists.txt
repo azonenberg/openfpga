@@ -1,6 +1,7 @@
 add_executable(gp4tchar
 	measurements.cpp
 	setup.cpp
+	solver.cpp
 
 	TimingData.cpp
 
