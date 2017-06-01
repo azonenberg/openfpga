@@ -28,6 +28,14 @@ Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
 bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& delay);
 bool MeasureCrossConnectionDelay(Socket& sock, hdevice hdev, unsigned int matrix, unsigned int index, float& delay);
 
+bool MeasurePinToPinDelay(
+	Socket& sock,
+	hdevice hdev,
+	int src,
+	int dst,
+	Greenpak4IOB::DriveStrength drive,
+	float& delay);
+
 bool ProgramAndMeasureDelay(
 	Socket& sock,
 	hdevice hdev,
@@ -88,9 +96,9 @@ bool CalibrateTraceDelays(Socket& sock, hdevice hdev)
 		LogNotice("Calculated trace delays:\n");
 		LogIndenter li2;
 		for(int i=3; i<=5; i++)
-			LogNotice("Pin %2d to DUT rising: %.3f ns\n", i, g_devkitCal.pinDelays[i].rising);
+			LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, g_devkitCal.pinDelays[i].rising);
 		for(int i=13; i<=15; i++)
-			LogNotice("Pin %2d to DUT rising: %.3f ns\n", i, g_devkitCal.pinDelays[i].rising);
+			LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, g_devkitCal.pinDelays[i].rising);
 	}
 
 	//Write to file
@@ -117,7 +125,7 @@ bool ReadTraceDelays()
 
 	int i;
 	float f;
-	LogNotice("Reading pin calibration from pincal.csv (delete this file to force re-calibration)...\n");
+	LogNotice("Reading devkit calibration from pincal.csv (delete this file to force re-calibration)...\n");
 	LogIndenter li;
 	while(2 == fscanf(fp, "%d, %f", &i, &f))
 	{
@@ -126,7 +134,7 @@ bool ReadTraceDelays()
 
 		g_devkitCal.pinDelays[i] = DelayPair(f, -1);
 
-		LogNotice("Pin %2d to DUT rising: %.3f ns\n", i, f);
+		LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, f);
 	}
 
 	return true;
@@ -183,9 +191,10 @@ bool ProgramAndMeasureDelay(Socket& sock, hdevice hdev, vector<uint8_t>& bitstre
 	if(!PostProgramSetup(hdev))
 		return false;
 
-	//Measure delay betweens pin 3 and 5
+	usleep (1000 * 10);
 
-	return true;
+	//Measure delay between the affected pins
+	return MeasureDelay(sock, src, dst, delay);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +202,102 @@ bool ProgramAndMeasureDelay(Socket& sock, hdevice hdev, vector<uint8_t>& bitstre
 
 bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 {
+	LogNotice("Measuring pin-to-pin delays (through same crossbar)...\n");
+	LogIndenter li;
 
+	int pins[] = {3, 4, 5, 13, 14, 15};
+	Greenpak4IOB::DriveStrength drives[] = {Greenpak4IOB::DRIVE_1X, Greenpak4IOB::DRIVE_2X};
+
+	float delay;
+	LogNotice("+------+------+--------+--------+--------+--------+----------+----------+\n");
+	LogNotice("| From |  To  |  x1 ↑  |  x1 ↓  |  x2 ↑  |  x2 ↓  | Delta ↑  | Delta ↓  |\n");
+	LogNotice("+------+------+--------+--------+--------+--------+----------+----------+\n");
+	for(auto src : pins)
+	{
+		for(auto dst : pins)
+		{
+			//Can't do loopback
+			if(src == dst)
+				continue;
+
+			//If the pins are on opposite sides of the device, skip it
+			//(no cross connections, we only want matrix + buffer delay)
+			if(src < 10 && dst > 10)
+				continue;
+			if(src > 10 && dst < 10)
+				continue;
+
+			auto sdpair = PinPair(src, dst);
+			for(auto drive : drives)
+			{
+				//Do the measurement
+				if(!MeasurePinToPinDelay(sock, hdev, src, dst, drive, delay))
+					return false;
+				g_deviceProperties.ioDelays[drive][sdpair] = DelayPair(delay, -1);
+			}
+
+			auto x1 = g_deviceProperties.ioDelays[drives[0]][sdpair];
+			auto x2 = g_deviceProperties.ioDelays[drives[1]][sdpair];
+			LogNotice("| %4d |  %2d  | %6.3f | %6.3f | %6.3f | %6.3f | %8.3f | %8.3f |\n",
+				src,
+				dst,
+				x1.rising,
+				x1.falling,
+				x2.rising,
+				x2.falling,
+				x1.rising - x2.rising,
+				x1.falling - x2.falling
+				);
+		}
+	}
+	LogNotice("+------+------+--------+--------+--------+--------+----------+----------+\n");
+
+	return true;
+}
+
+/**
+	@brief Measure the delay for a single (src, dst) pin tuple
+ */
+bool MeasurePinToPinDelay(
+	Socket& sock,
+	hdevice hdev,
+	int src,
+	int dst,
+	Greenpak4IOB::DriveStrength drive,
+	float& delay)
+{
+	delay = -1;
+
+	//Create the device object
+	Greenpak4Device device(part, unused_pull, unused_drive);
+	device.SetIOPrecharge(false);
+	device.SetDisableChargePump(false);
+	device.SetLDOBypass(false);
+	device.SetNVMRetryCount(1);
+
+	//Configure the input pin
+	auto vss = device.GetGround();
+	auto srciob = device.GetIOB(src);
+	srciob->SetInput("OE", vss);
+	auto din = srciob->GetOutput("OUT");
+
+	//Configure the output pin
+	auto vdd = device.GetPower();
+	auto dstiob = device.GetIOB(dst);
+	dstiob->SetInput("IN", din);
+	dstiob->SetInput("OE", vdd);
+	dstiob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
+	dstiob->SetDriveStrength(drive);
+
+	//Generate a bitstream
+	vector<uint8_t> bitstream;
+	device.WriteToBuffer(bitstream, 0, false);
+	device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
+
+	//Get the delay
+	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, delay))
+		return false;
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -215,9 +319,16 @@ bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev)
 		MeasureCrossConnectionDelay(sock, hdev, 1, i, d);
 		//g_westXconnDelays[i] = DelayPair(d, -1);
 	}
+
+	return true;
 }
 
-bool MeasureCrossConnectionDelay(Socket& sock, hdevice hdev, unsigned int matrix, unsigned int index, float& delay)
+bool MeasureCrossConnectionDelay(
+	Socket& /*sock*/,
+	hdevice /*hdev*/,
+	unsigned int matrix,
+	unsigned int index,
+	float& delay)
 {
 	delay = -1;
 
@@ -232,35 +343,10 @@ bool MeasureCrossConnectionDelay(Socket& sock, hdevice hdev, unsigned int matrix
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Characterize LUTs
 
-bool MeasureLutDelays(Socket& sock, hdevice hdev)
+bool MeasureLutDelays(Socket& /*sock*/, hdevice /*hdev*/)
 {
 	//LogNotice("Measuring LUT delays...\n");
 	//LogIndenter li;
-
-	/*
-	//Hardware configuration
-
-
-	//Create the device object
-	Greenpak4Device device(part, unused_pull, unused_drive);
-	device.SetIOPrecharge(false);
-	device.SetDisableChargePump(false);
-	device.SetLDOBypass(false);
-	device.SetNVMRetryCount(1);
-
-	//Configure pin 5 as an output and drive it high
-	auto iob = device.GetIOB(5);
-	auto vdd = device.GetPower();
-	iob->SetInput("IN", vdd);
-	iob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
-	iob->SetDriveStrength(Greenpak4IOB::DRIVE_1X);
-
-	//Generate a bitstream
-	vector<uint8_t> bitstream;
-	device.WriteToBuffer(bitstream, 0, false);
-
-
-	*/
 	return true;
 }
 

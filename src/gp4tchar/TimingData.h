@@ -51,12 +51,13 @@ public:
 };
 
 //DUT measurements
+typedef std::pair<int, int> PinPair;
 class DeviceProperties
 {
 public:
 
 	//Map from (src, dst) pin to delay tuple
-	typedef std::map<std::pair<int, int>, CellDelay> IODelayMap;
+	typedef std::map<PinPair, DelayPair> IODelayMap;
 
 	//Map from drive strength to delay tuples
 	std::map<Greenpak4IOB::DriveStrength, IODelayMap> ioDelays;

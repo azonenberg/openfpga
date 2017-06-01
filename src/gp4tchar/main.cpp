@@ -122,6 +122,8 @@ int main(int argc, char* argv[])
 	}
 
 	//Measure delay through each element
+	if(!MeasurePinToPinDelays(sock, hdev))
+		return 1;
 	/*
 	if(!MeasureCrossConnectionDelays(sock, hdev))
 		return 1;
