@@ -68,6 +68,13 @@ pub enum XC2MCFeedbackMode {
 }
 
 #[derive(Copy, Clone)]
+pub enum XC2IOBZIAMode {
+    Disabled,
+    PAD,
+    REG,
+}
+
+#[derive(Copy, Clone)]
 pub enum XC2MCXorMode {
     ZERO,
     ONE,
@@ -173,8 +180,7 @@ impl XC2MCFF {
 
 #[derive(Copy, Clone)]
 pub struct XC2MCSmallIOB {
-    // FIXME: Mystery bit here
-    pub ibuf_to_zia: bool,
+    pub zia_mode: XC2IOBZIAMode,
     pub schmitt_trigger: bool,
     // false = uses xor gate, true = uses FF output
     pub obuf_uses_ff: bool,
@@ -186,7 +192,7 @@ pub struct XC2MCSmallIOB {
 impl Default for XC2MCSmallIOB {
     fn default() -> XC2MCSmallIOB {
         XC2MCSmallIOB {
-            ibuf_to_zia: false,
+            zia_mode: XC2IOBZIAMode::Disabled,
             schmitt_trigger: true,
             obuf_uses_ff: false,
             obuf_mode: XC2MCOBufMode::Disabled,
@@ -215,7 +221,11 @@ impl XC2MCSmallIOB {
         }).unwrap();
         write!(writer, "output comes from {}\n", if self.obuf_uses_ff {"FF"} else {"XOR gate"}).unwrap();
         write!(writer, "slew rate: {}\n", if self.slew_is_fast {"fast"} else {"slow"}).unwrap();
-        write!(writer, "ZIA driven from ibuf: {}\n", if self.ibuf_to_zia {"yes"} else {"no"}).unwrap();
+        write!(writer, "ZIA driven from: {}\n", match self.zia_mode {
+            XC2IOBZIAMode::Disabled => "disabled",
+            XC2IOBZIAMode::PAD => "input pad",
+            XC2IOBZIAMode::REG => "register",
+        }).unwrap();
         write!(writer, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"}).unwrap();
         write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"}).unwrap();
     }
@@ -347,9 +357,9 @@ pub fn read_32_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -> R
     let inz = (fuses[block_idx + io_idx * 27 + 11],
                fuses[block_idx + io_idx * 27 + 12]);
     let input_to_zia = match inz {
-        (false, false) => true,
-        (true, true) => false,
-        _ => return Err("unknown INz mode used"),
+        (false, false) => XC2IOBZIAMode::PAD,
+        (true, false) => XC2IOBZIAMode::REG,
+        (_, true) => XC2IOBZIAMode::Disabled,
     };
 
     let st = fuses[block_idx + io_idx * 27 + 16];
@@ -377,7 +387,7 @@ pub fn read_32_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -> R
     let slw = fuses[block_idx + io_idx * 27 + 25];
 
     Ok(XC2MCSmallIOB {
-        ibuf_to_zia: input_to_zia,
+        zia_mode: input_to_zia,
         schmitt_trigger: st,
         obuf_uses_ff: !regcom,
         obuf_mode: output_mode,

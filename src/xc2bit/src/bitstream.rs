@@ -368,7 +368,11 @@ impl XC2BitstreamBits {
                         }).unwrap();
 
                         // inz
-                        write!(writer, "{}", if iobs[iob].ibuf_to_zia {"00"} else {"11"}).unwrap();
+                        write!(writer, "{}", match iobs[iob].zia_mode {
+                            XC2IOBZIAMode::PAD => "00",
+                            XC2IOBZIAMode::REG => "10",
+                            XC2IOBZIAMode::Disabled => "11",
+                        }).unwrap();
 
                         // fb
                         write!(writer, "{}", match fb[fb_i].ffs[i].fb_mode {

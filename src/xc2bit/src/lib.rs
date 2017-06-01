@@ -33,7 +33,7 @@ pub use fb::{XC2BistreamFB, get_ctc, get_ctr, get_cts, get_cte, get_pta, get_ptb
 
 mod mc;
 pub use mc::{XC2MCFF, XC2MCSmallIOB, XC2MCFFClkSrc, XC2MCFFResetSrc, XC2MCFFSetSrc, XC2MCFFMode, XC2MCFeedbackMode,
-             XC2MCXorMode, XC2MCOBufMode, XC2ExtraIBuf};
+             XC2IOBZIAMode, XC2MCXorMode, XC2MCOBufMode, XC2ExtraIBuf};
 
 mod pla;
 pub use pla::{XC2PLAAndTerm, XC2PLAOrTerm};
