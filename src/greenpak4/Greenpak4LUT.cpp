@@ -171,6 +171,19 @@ void Greenpak4LUT::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+void Greenpak4LUT::MakeXOR()
+{
+	for(int i=0; i<16; i++)
+	{
+		bool a = i & 1 ? true : false;
+		bool b = i & 2 ? true : false;
+		bool c = i & 4 ? true : false;
+		bool d = i & 8 ? true : false;
+
+		m_truthtable[i] = a ^ b ^ c ^ d;
+	}
+}
+
 vector<string> Greenpak4LUT::GetOutputPorts() const
 {
 	vector<string> r;

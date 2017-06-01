@@ -57,6 +57,8 @@ public:
 
 	virtual bool CommitChanges();
 
+	void MakeXOR();
+
 protected:
 
 	///Index of our LUT
