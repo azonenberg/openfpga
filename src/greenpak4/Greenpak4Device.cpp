@@ -1024,7 +1024,7 @@ bool Greenpak4Device::WriteToBuffer(vector<uint8_t>& bitstream, uint8_t userid, 
 		return false;
 	}
 
-	for(int index=0; index<m_bitlen; index++)
+	for(size_t index=0; index<m_bitlen; index++)
 	{
 		int byteindex = index / 8;
 		if(byteindex >= (int)bitstream.size())
