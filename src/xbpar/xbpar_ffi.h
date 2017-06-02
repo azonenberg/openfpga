@@ -104,6 +104,27 @@ char* xbpar_PAREngine_GetNodeTypes(const PAREngine* engine, const PARGraphNode* 
 void xbpar_PAREngine_SaveNewBestPlacement(PAREngine* engine);
 void xbpar_PAREngine_RestorePreviousBestPlacement(PAREngine* engine);
 uint32_t xbpar_PAREngine_RandomNumber(PAREngine* engine);
+//Other protected methods
+bool xbpar_PAREngine_base_CanMoveNode(const PAREngine* engine, const PARGraphNode* node,
+	const PARGraphNode* old_mate, const PARGraphNode* new_mate);
+//DOES give ownership; need to free
+uint32_t xbpar_PAREngine_base_ComputeAndPrintScore(const PAREngine* engine,
+	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len, uint32_t iteration);
+//Borrows unroutes, does not take ownership
+void xbpar_PAREngine_base_PrintUnroutes(const PAREngine* engine,
+	const PARGraphEdge*const* unroutes_ptr, size_t unroutes_len);
+uint32_t xbpar_PAREngine_base_ComputeCongestionCost(const PAREngine* engine);
+uint32_t xbpar_PAREngine_base_ComputeTimingCost(const PAREngine* engine);
+//DOES give ownership; need to free
+uint32_t xbpar_PAREngine_base_ComputeUnroutableCost(const PAREngine* engine,
+	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len);
+bool xbpar_PAREngine_base_SanityCheck(const PAREngine* engine);
+bool xbpar_PAREngine_base_InitialPlacement(PAREngine* engine);
+//Borrows badnodes, does not take ownership
+bool xbpar_PAREngine_base_OptimizePlacement(PAREngine* engine,
+	PARGraphNode*const* badnodes_ptr, size_t badnodes_len);
+uint32_t xbpar_PAREngine_base_ComputeNodeUnroutableCost(const PAREngine* engine,
+	const PARGraphNode* pivot, const PARGraphNode* candidate);
 
 
 #ifdef __cplusplus

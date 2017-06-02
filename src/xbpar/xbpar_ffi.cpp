@@ -25,6 +25,11 @@
 #define PTR_LEN_INTO_VECTOR(x) \
 	for (size_t i = 0; i < x##_len; i++) \
 		x.push_back(x##_ptr[i]);
+#define VECTOR_TO_PTR_LEN(x) \
+	*x##_len = x.size(); \
+	auto x##ptr_ = (decltype(x.data()))malloc(x.size() * sizeof(x[0])); \
+	memcpy(x##ptr_, x.data(), x.size() * sizeof(x[0])); \
+	*x##_ptr = x##ptr_;
 
 void xbpar_ffi_free_object(void *obj)
 {
@@ -266,6 +271,60 @@ public:
 		return RandomNumber();
 	}
 
+	//Exposing base
+	bool base_CanMoveNode(
+		const PARGraphNode* node,
+		const PARGraphNode* old_mate,
+		const PARGraphNode* new_mate) const
+	{
+		return PAREngine::CanMoveNode(node, old_mate, new_mate);
+	}
+
+	uint32_t base_ComputeAndPrintScore(std::vector<const PARGraphEdge*>& unroutes, uint32_t iteration) const
+	{
+		return PAREngine::ComputeAndPrintScore(unroutes, iteration);
+	}
+
+	void base_PrintUnroutes(const std::vector<const PARGraphEdge*>& unroutes) const
+	{
+		PAREngine::PrintUnroutes(unroutes);
+	}
+
+	uint32_t base_ComputeCongestionCost() const
+	{
+		return PAREngine::ComputeCongestionCost();
+	}
+
+	uint32_t base_ComputeTimingCost() const
+	{
+		return PAREngine::ComputeTimingCost();
+	}
+
+	uint32_t base_ComputeUnroutableCost(std::vector<const PARGraphEdge*>& unroutes) const
+	{
+		return PAREngine::ComputeUnroutableCost(unroutes);
+	}
+
+	bool base_SanityCheck() const
+	{
+		return PAREngine::SanityCheck();
+	}
+
+	bool base_InitialPlacement()
+	{
+		return PAREngine::InitialPlacement();
+	}
+
+	bool base_OptimizePlacement(const std::vector<PARGraphNode*>& badnodes)
+	{
+		return PAREngine::OptimizePlacement(badnodes);
+	}
+
+	uint32_t base_ComputeNodeUnroutableCost(const PARGraphNode* pivot, const PARGraphNode* candidate) const
+	{
+		return PAREngine::ComputeNodeUnroutableCost(pivot, candidate);
+	}
+
 private:
 	void *ffiengine;
 	t_GetNewPlacementForNode f_GetNewPlacementForNode;
@@ -326,4 +385,70 @@ void xbpar_PAREngine_RestorePreviousBestPlacement(PAREngine* engine)
 uint32_t xbpar_PAREngine_RandomNumber(PAREngine* engine)
 {
 	return ((FFIPAREngine*)engine)->base_RandomNumber();
+}
+
+bool xbpar_PAREngine_base_CanMoveNode(const PAREngine* engine, const PARGraphNode* node,
+	const PARGraphNode* old_mate, const PARGraphNode* new_mate)
+{
+	return ((FFIPAREngine*)engine)->base_CanMoveNode(node, old_mate, new_mate);
+}
+
+uint32_t xbpar_PAREngine_base_ComputeAndPrintScore(const PAREngine* engine,
+	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len, uint32_t iteration)
+{
+	auto unroutes = std::vector<const PARGraphEdge*>();
+	auto ret = ((FFIPAREngine*)engine)->base_ComputeAndPrintScore(unroutes, iteration);
+	VECTOR_TO_PTR_LEN(unroutes);
+	return ret;
+}
+
+void xbpar_PAREngine_base_PrintUnroutes(const PAREngine* engine,
+	const PARGraphEdge*const* unroutes_ptr, size_t unroutes_len)
+{
+	auto unroutes = std::vector<const PARGraphEdge*>();
+	PTR_LEN_INTO_VECTOR(unroutes);
+	return ((FFIPAREngine*)engine)->base_PrintUnroutes(unroutes);
+}
+
+uint32_t xbpar_PAREngine_base_ComputeCongestionCost(const PAREngine* engine)
+{
+	return ((FFIPAREngine*)engine)->base_ComputeCongestionCost();
+}
+
+uint32_t xbpar_PAREngine_base_ComputeTimingCost(const PAREngine* engine)
+{
+	return ((FFIPAREngine*)engine)->base_ComputeTimingCost();
+}
+
+uint32_t xbpar_PAREngine_base_ComputeUnroutableCost(const PAREngine* engine,
+	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len)
+{
+	auto unroutes = std::vector<const PARGraphEdge*>();
+	auto ret = ((FFIPAREngine*)engine)->base_ComputeUnroutableCost(unroutes);
+	VECTOR_TO_PTR_LEN(unroutes);
+	return ret;
+}
+
+bool xbpar_PAREngine_base_SanityCheck(const PAREngine* engine)
+{
+	return ((FFIPAREngine*)engine)->base_SanityCheck();
+}
+
+bool xbpar_PAREngine_base_InitialPlacement(PAREngine* engine)
+{
+	return ((FFIPAREngine*)engine)->base_InitialPlacement();
+}
+
+bool xbpar_PAREngine_base_OptimizePlacement(PAREngine* engine,
+	PARGraphNode*const* badnodes_ptr, size_t badnodes_len)
+{
+	auto badnodes = std::vector<PARGraphNode*>();
+	PTR_LEN_INTO_VECTOR(badnodes);
+	return ((FFIPAREngine*)engine)->base_OptimizePlacement(badnodes);
+}
+
+uint32_t xbpar_PAREngine_base_ComputeNodeUnroutableCost(const PAREngine* engine,
+	const PARGraphNode* pivot, const PARGraphNode* candidate)
+{
+	return ((FFIPAREngine*)engine)->base_ComputeNodeUnroutableCost(pivot, candidate);
 }
