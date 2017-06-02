@@ -40,6 +40,8 @@ protected:
 	virtual bool CanMoveNode(const PARGraphNode* node,
 		const PARGraphNode* old_mate, const PARGraphNode* new_mate) const override;
 
+	virtual const char* GetLabelName(uint32_t label) const override;
+
 	bool CantMoveSrc(Greenpak4BitstreamEntity* src);
 	bool CantMoveDst(Greenpak4BitstreamEntity* dst);
 

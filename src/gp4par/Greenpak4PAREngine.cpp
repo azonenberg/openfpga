@@ -483,3 +483,11 @@ PARGraphNode* Greenpak4PAREngine::GetNewPlacementForNode(const PARGraphNode* piv
 		static_cast<Greenpak4BitstreamEntity*>(c->GetData())->GetDescription().c_str());
 	return c;
 }
+
+const char* Greenpak4PAREngine::GetLabelName(uint32_t label) const {
+	// Need to use find() rather than [] because [] can mutate.
+	auto found_label = m_lmap.find(label);
+	if (found_label == m_lmap.end())
+		return "";
+	return found_label->second.c_str();
+}
