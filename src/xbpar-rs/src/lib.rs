@@ -257,3 +257,55 @@ impl<'a> PARGraph<'a> {
         }
     }
 }
+
+pub struct PAREngine<'a> {
+    ffi_engine: *mut c_void,
+    _marker: PhantomData<&'a ()>,
+}
+
+impl<'a> Drop for PAREngine<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::xbpar_PAREngine_Destroy(self.ffi_engine);
+        }
+    }
+}
+
+impl<'a> PAREngine<'a> {
+    pub fn new(netlist: &'a mut PARGraph<'a>, device: &'a mut PARGraph<'a>) -> PAREngine<'a> {
+        unsafe {
+            PAREngine {
+                ffi_engine: ffi::xbpar_PAREngine_Create(std::ptr::null_mut(), netlist.ffi_graph, device.ffi_graph,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None),
+                _marker: PhantomData,
+            }
+        }
+    }
+
+    pub fn place_and_route(&mut self, seed: u32) -> bool {
+        unsafe {
+            ffi::xbpar_PAREngine_PlaceAndRoute(self.ffi_engine, seed) != 0
+        }
+    }
+
+    pub fn compute_cost(&self) -> u32 {
+        unsafe {
+            ffi::xbpar_PAREngine_ComputeCost(self.ffi_engine)
+        }
+    }
+}
