@@ -209,7 +209,7 @@ uint32_t PAREngine::ComputeAndPrintScore(vector<const PARGraphEdge*>& unroutes, 
 	return cost;
 }
 
-void PAREngine::PrintUnroutes(vector<const PARGraphEdge*>& /*unroutes*/) const
+void PAREngine::PrintUnroutes(const vector<const PARGraphEdge*>& /*unroutes*/) const
 {
 }
 
@@ -342,7 +342,7 @@ void PAREngine::RestorePreviousBestPlacement()
 	@return True if we made changes to the netlist, false if nothing was done
  */
 bool PAREngine::OptimizePlacement(
-	vector<PARGraphNode*>& badnodes,
+	const vector<PARGraphNode*>& badnodes,
 	map<uint32_t, string>& label_names)
 {
 	//Pick one of the nodes at random as our pivot node
@@ -397,7 +397,10 @@ bool PAREngine::OptimizePlacement(
 /**
 	@brief Checks if we can move a node from one location to another
  */
-bool PAREngine::CanMoveNode(PARGraphNode* /*node*/, PARGraphNode* old_mate, PARGraphNode* new_mate) const
+bool PAREngine::CanMoveNode(
+	const PARGraphNode* /*node*/,
+	const PARGraphNode* old_mate,
+	const PARGraphNode* new_mate) const
 {
 	//Labels don't match? No go
 	PARGraphNode* displaced_node = new_mate->GetMate();
@@ -464,7 +467,7 @@ void PAREngine::MoveNode(
 /**
 	@brief Serializes all of the types of a given node for debugging
  */
-std::string PAREngine::GetNodeTypes(PARGraphNode* node, std::map<uint32_t, std::string>& label_names) const
+std::string PAREngine::GetNodeTypes(const PARGraphNode* node, std::map<uint32_t, std::string>& label_names) const
 {
 	std::string ret;
 	ret += "    * " + label_names[node->GetLabel()] + "\n";
@@ -536,7 +539,7 @@ uint32_t PAREngine::ComputeUnroutableCost(vector<const PARGraphEdge*>& unroutes)
 /**
 	@brief Compute the unroutability cost for a single node and a candidate placement for it
  */
-uint32_t PAREngine::ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode* candidate) const
+uint32_t PAREngine::ComputeNodeUnroutableCost(const PARGraphNode* pivot, const PARGraphNode* candidate) const
 {
 	uint32_t cost = 0;
 
@@ -555,8 +558,8 @@ uint32_t PAREngine::ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode*
 				continue;
 
 			//Find the hypothetical source/dest pair
-			PARGraphNode* devsrc = netsrc->GetMate();
-			PARGraphNode* devdst = netdst->GetMate();
+			const PARGraphNode* devsrc = netsrc->GetMate();
+			const PARGraphNode* devdst = netdst->GetMate();
 			if(netsrc == pivot)
 				devsrc = candidate;
 			else

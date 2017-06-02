@@ -37,16 +37,19 @@ public:
 
 protected:
 
-	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate) const;
+	virtual bool CanMoveNode(
+		const PARGraphNode* node,
+		const PARGraphNode* old_mate,
+		const PARGraphNode* new_mate) const;
 
 	void MoveNode(PARGraphNode* node, PARGraphNode* newpos, std::map<uint32_t, std::string>& label_names);
 
-	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot) =0;
+	virtual PARGraphNode* GetNewPlacementForNode(const PARGraphNode* pivot) =0;
 	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes) =0;
 
 	virtual uint32_t ComputeAndPrintScore(std::vector<const PARGraphEdge*>& unroutes, uint32_t iteration) const;
 
-	virtual void PrintUnroutes(std::vector<const PARGraphEdge*>& unroutes) const;
+	virtual void PrintUnroutes(const std::vector<const PARGraphEdge*>& unroutes) const;
 
 	virtual uint32_t ComputeCongestionCost() const;
 	virtual uint32_t ComputeTimingCost() const;
@@ -56,15 +59,15 @@ protected:
 	virtual bool InitialPlacement(std::map<uint32_t, std::string>& label_names);
 	virtual bool InitialPlacement_core() =0;
 	virtual bool OptimizePlacement(
-		std::vector<PARGraphNode*>& badnodes,
+		const std::vector<PARGraphNode*>& badnodes,
 		std::map<uint32_t, std::string>& label_names);
 
-	virtual uint32_t ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode* candidate) const;
+	virtual uint32_t ComputeNodeUnroutableCost(const PARGraphNode* pivot, const PARGraphNode* candidate) const;
 
-	std::string GetNodeTypes(PARGraphNode* node, std::map<uint32_t, std::string>& label_names) const;
+	std::string GetNodeTypes(const PARGraphNode* node, std::map<uint32_t, std::string>& label_names) const;
 
-	PARGraph* m_netlist;
-	PARGraph* m_device;
+	PARGraph*const m_netlist;
+	PARGraph*const m_device;
 
 	//Best solution found so far
 	std::map<PARGraphNode*, PARGraphNode*> m_bestPlacementFound;
