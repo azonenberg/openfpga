@@ -258,3 +258,32 @@ void Greenpak4BitstreamEntity::AddCombinatorialDelay(
 {
 	m_pinToPinDelays[corner][PinPair(srcport, dstport)] = delay;
 }
+
+void Greenpak4BitstreamEntity::PrintTimingData() const
+{
+	//Early-out if we have no timing data
+	if(m_pinToPinDelays.empty())
+		return;
+
+	//LogNotice("%s\n", GetDescription().c_str());
+
+	//Combinatorial delays
+	LogIndenter li;
+	for(auto& it : m_pinToPinDelays)
+	{
+		LogNotice("%s\n", it.first.toString().c_str());
+		LogIndenter li2;
+		for(auto& jt : it.second)
+		{
+			auto& pair = jt.first;
+			auto& time = jt.second;
+			LogNotice("%6s to %6s: %.3f ns rising, %.3f ns falling\n",
+				pair.first.c_str(),
+				pair.second.c_str(),
+				time.m_rising,
+				time.m_falling);
+		}
+	}
+
+	//TODO: Setup/hold margins
+}

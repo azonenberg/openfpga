@@ -19,6 +19,8 @@
 #ifndef PTVCorner_h
 #define PTVCorner_h
 
+#include <string>
+
 /**
 	@brief A single point in the (process, temperature, voltage) space
  */
@@ -47,17 +49,10 @@ public:
 	int GetVoltage() const
 	{ return m_voltage; }
 
+	std::string toString() const;
+
 	//Comparison operator for STL collections
-	bool operator<(const PTVCorner& rhs) const
-	{
-		if(m_speed < rhs.m_speed)
-			return true;
-		if(m_dieTemp < rhs.m_dieTemp)
-			return true;
-		if(m_voltage < rhs.m_voltage)
-			return true;
-		return false;
-	}
+	bool operator<(const PTVCorner& rhs) const;
 
 protected:
 

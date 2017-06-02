@@ -152,6 +152,8 @@ public:
 
 	//TODO: interface for serializing/deserializing combinatorial delays
 
+	virtual void PrintTimingData() const;
+
 protected:
 
 	///Return our assigned netlist entity, if we have one (or NULL if not)
