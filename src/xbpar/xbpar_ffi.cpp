@@ -18,9 +18,13 @@
 
 #include "xbpar_ffi.h"
 
+#include <cstring>
+
 #define PTR_LEN_TO_STRING(x) \
 	std::string x = std::string(x##_ptr, x##_len);
-
+#define PTR_LEN_INTO_VECTOR(x) \
+	for (size_t i = 0; i < x##_len; i++) \
+		x.push_back(x##_ptr[i]);
 
 void xbpar_ffi_free_object(void *obj)
 {
@@ -191,4 +195,135 @@ uint32_t xbpar_PARGraph_GetNumEdges(const PARGraph* graph)
 void xbpar_PARGraph_AddNode(PARGraph* graph, PARGraphNode* node)
 {
 	graph->AddNode(node);
+}
+
+//PAREngine
+class FFIPAREngine : public PAREngine {
+public:
+	FFIPAREngine(void* ffiengine, PARGraph* netlist, PARGraph* device,
+		t_GetNewPlacementForNode f_GetNewPlacementForNode,
+		t_FindSubOptimalPlacements f_FindSubOptimalPlacements,
+		t_InitialPlacement_core f_InitialPlacement_core,
+		t_GetLabelName f_GetLabelName)
+		: PAREngine(netlist, device)
+	{
+		this->ffiengine = ffiengine;
+		this->f_GetNewPlacementForNode = f_GetNewPlacementForNode;
+		this->f_FindSubOptimalPlacements = f_FindSubOptimalPlacements;
+		this->f_InitialPlacement_core = f_InitialPlacement_core;
+		this->f_GetLabelName = f_GetLabelName;
+	}
+
+	~FFIPAREngine() {}
+
+	//Pure virtual
+	PARGraphNode* GetNewPlacementForNode(const PARGraphNode* pivot)
+	{
+		return this->f_GetNewPlacementForNode(ffiengine, pivot);
+	}
+
+	void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes)
+	{
+		PARGraphNode*const* bad_nodes_ptr;
+		size_t bad_nodes_len;
+		this->f_FindSubOptimalPlacements(ffiengine, &bad_nodes_ptr, &bad_nodes_len);
+		PTR_LEN_INTO_VECTOR(bad_nodes);
+	}
+
+	bool InitialPlacement_core()
+	{
+		return this->f_InitialPlacement_core(ffiengine);
+	}
+
+	const char* GetLabelName(uint32_t label) const
+	{
+		return this->f_GetLabelName(ffiengine, label);
+	}
+
+	//Exposing protected
+	void base_MoveNode(PARGraphNode* node, PARGraphNode* newpos)
+	{
+		MoveNode(node, newpos);
+	}
+
+	std::string base_GetNodeTypes(const PARGraphNode* node) const
+	{
+		return GetNodeTypes(node);
+	}
+
+	void base_SaveNewBestPlacement()
+	{
+		SaveNewBestPlacement();
+	}
+
+	void base_RestorePreviousBestPlacement()
+	{
+		RestorePreviousBestPlacement();
+	}
+
+	uint32_t base_RandomNumber()
+	{
+		return RandomNumber();
+	}
+
+private:
+	void *ffiengine;
+	t_GetNewPlacementForNode f_GetNewPlacementForNode;
+	t_FindSubOptimalPlacements f_FindSubOptimalPlacements;
+	t_InitialPlacement_core f_InitialPlacement_core;
+	t_GetLabelName f_GetLabelName;
+};
+
+PAREngine* xbpar_PAREngine_Create(void* ffiengine, PARGraph* netlist, PARGraph* device,
+	t_GetNewPlacementForNode f_GetNewPlacementForNode,
+	t_FindSubOptimalPlacements f_FindSubOptimalPlacements,
+	t_InitialPlacement_core f_InitialPlacement_core,
+	t_GetLabelName f_GetLabelName)
+{
+	return new FFIPAREngine(ffiengine, netlist, device, f_GetNewPlacementForNode, f_FindSubOptimalPlacements,
+		f_InitialPlacement_core, f_GetLabelName);
+}
+
+void xbpar_PAREngine_Destroy(PAREngine* engine)
+{
+	delete engine;
+}
+
+bool xbpar_PAREngine_PlaceAndRoute(PAREngine* engine, uint32_t seed)
+{
+	return ((FFIPAREngine*)engine)->PlaceAndRoute(seed);
+}
+
+uint32_t xbpar_PAREngine_ComputeCost(const PAREngine* engine)
+{
+	return ((FFIPAREngine*)engine)->ComputeCost();
+}
+
+void xbpar_PAREngine_MoveNode(PAREngine* engine, PARGraphNode* node, PARGraphNode* newpos)
+{
+	((FFIPAREngine*)engine)->base_MoveNode(node, newpos);
+}
+
+char* xbpar_PAREngine_GetNodeTypes(const PAREngine* engine, const PARGraphNode* node, size_t* len)
+{
+	auto ret_str = ((FFIPAREngine*)engine)->base_GetNodeTypes(node);
+	*len = ret_str.length();
+	auto ret_ptr = (char*)malloc(ret_str.length());
+	memcpy(ret_ptr, ret_str.c_str(), ret_str.length());
+	return ret_ptr;
+}
+
+void xbpar_PAREngine_SaveNewBestPlacement(PAREngine* engine)
+{
+	((FFIPAREngine*)engine)->base_SaveNewBestPlacement();
+}
+
+void xbpar_PAREngine_RestorePreviousBestPlacement(PAREngine* engine)
+{
+	((FFIPAREngine*)engine)->base_RestorePreviousBestPlacement();
+}
+
+uint32_t xbpar_PAREngine_RandomNumber(PAREngine* engine)
+{
+	return ((FFIPAREngine*)engine)->base_RandomNumber();
 }

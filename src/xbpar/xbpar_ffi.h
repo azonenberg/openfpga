@@ -81,6 +81,31 @@ uint32_t xbpar_PARGraph_GetNumEdges(const PARGraph* graph);
 //Takes ownership
 void xbpar_PARGraph_AddNode(PARGraph* graph, PARGraphNode* node);
 
+//PAREngine
+typedef PARGraphNode* (*t_GetNewPlacementForNode)(void* ffiengine, const PARGraphNode* pivot);
+typedef void (*t_FindSubOptimalPlacements)(void* ffiengine, PARGraphNode*const** bad_nodes_ptr, size_t* bad_nodes_len);
+typedef bool (*t_InitialPlacement_core)(void* ffiengine);
+//Return value is borrowed and must live for some amount of time until the next operation
+typedef const char* (*t_GetLabelName)(void* ffiengine, uint32_t label);
+
+PAREngine* xbpar_PAREngine_Create(void* ffiengine, PARGraph* netlist, PARGraph* device,
+	t_GetNewPlacementForNode f_GetNewPlacementForNode,
+	t_FindSubOptimalPlacements f_FindSubOptimalPlacements,
+	t_InitialPlacement_core f_InitialPlacement_core,
+	t_GetLabelName f_GetLabelName);
+void xbpar_PAREngine_Destroy(PAREngine* engine);
+//Public methods
+bool xbpar_PAREngine_PlaceAndRoute(PAREngine* engine, uint32_t seed = 0);
+uint32_t xbpar_PAREngine_ComputeCost(const PAREngine* engine);
+//Non-overridable protected methods
+void xbpar_PAREngine_MoveNode(PAREngine* engine, PARGraphNode* node, PARGraphNode* newpos);
+//DOES give ownership; need to free
+char* xbpar_PAREngine_GetNodeTypes(const PAREngine* engine, const PARGraphNode* node, size_t* len);
+void xbpar_PAREngine_SaveNewBestPlacement(PAREngine* engine);
+void xbpar_PAREngine_RestorePreviousBestPlacement(PAREngine* engine);
+uint32_t xbpar_PAREngine_RandomNumber(PAREngine* engine);
+
+
 #ifdef __cplusplus
 }
 #endif
