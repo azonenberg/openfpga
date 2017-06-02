@@ -1,0 +1,14 @@
+[package]
+name = "openfpga-xbpar-rs"
+version = "0.0.1"
+build = "build.rs"
+
+[profile.release]
+lto = true
+
+[lib]
+name = "xbpar_rs"
+crate-type = ["rlib"]
+
+[build-dependencies]
+bindgen = "0.23"
