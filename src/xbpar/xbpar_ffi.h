@@ -41,7 +41,7 @@ PARGraphNode* xbpar_PARGraphEdge_get_sourcenode(const PARGraphEdge* edge);
 PARGraphNode* xbpar_PARGraphEdge_get_destnode(const PARGraphEdge* edge);
 //Does NOT give out ownership! Borrowed string output is valid until the user does "anything else" with the object.
 const char* xbpar_PARGraphEdge_get_sourceport(const PARGraphEdge* edge, size_t* len);
-const char* xbpar_PARGraphEdge_get_destoport(const PARGraphEdge* edge, size_t* len);
+const char* xbpar_PARGraphEdge_get_destport(const PARGraphEdge* edge, size_t* len);
 
 //PARGraphNode
 PARGraphNode* xbpar_PARGraphNode_Create(uint32_t label, void* pData);
@@ -55,7 +55,7 @@ void xbpar_PARGraphNode_AddAlternateLabel(PARGraphNode* node, uint32_t alt);
 uint32_t xbpar_PARGraphNode_GetAlternateLabelCount(const PARGraphNode* node);
 uint32_t xbpar_PARGraphNode_GetAlternateLabel(const PARGraphNode* node, uint32_t i);
 int xbpar_PARGraphNode_MatchesLabel(const PARGraphNode* node, uint32_t target);
-uint32_t xbpar_PARGraphNode_GetEdgeCount(PARGraphNode* node);
+uint32_t xbpar_PARGraphNode_GetEdgeCount(const PARGraphNode* node);
 //Return values only lives as long as node
 const PARGraphEdge* xbpar_PARGraphNode_GetEdgeByIndex(const PARGraphNode* node, uint32_t index);
 //Borrows the given string and makes a copy; does not require ownership

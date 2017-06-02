@@ -60,7 +60,7 @@ const char* xbpar_PARGraphEdge_get_sourceport(const PARGraphEdge* edge, size_t* 
 	return edge->m_sourceport.c_str();
 }
 
-const char* xbpar_PARGraphEdge_get_destoport(const PARGraphEdge* edge, size_t* len)
+const char* xbpar_PARGraphEdge_get_destport(const PARGraphEdge* edge, size_t* len)
 {
 	*len = edge->m_destport.length();
 	return edge->m_destport.c_str();
@@ -123,7 +123,7 @@ int xbpar_PARGraphNode_MatchesLabel(const PARGraphNode* node, uint32_t target)
 	return node->MatchesLabel(target);
 }
 
-uint32_t xbpar_PARGraphNode_GetEdgeCount(PARGraphNode* node)
+uint32_t xbpar_PARGraphNode_GetEdgeCount(const PARGraphNode* node)
 {
 	return node->GetEdgeCount();
 }
