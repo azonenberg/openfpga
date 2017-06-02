@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -130,6 +130,28 @@ public:
 
 	bool HasLoadsOnPort(std::string port);
 
+	/**
+		@brief Gets the combinatorial delay through the cell between a given set of ports
+
+		@return false if no timing data available, true if data was recovered
+	 */
+	virtual bool GetCombinatorialDelay(
+		std::string srcport,
+		std::string dstport,
+		PTVCorner corner,
+		CombinatorialDelay& delay);
+
+	/**
+		@brief Adds a combinatorial delay value to the cell (mostly used by gp4tchar)
+	 */
+	virtual void AddCombinatorialDelay(
+		std::string srcport,
+		std::string dstport,
+		PTVCorner corner,
+		CombinatorialDelay delay);
+
+	//TODO: interface for serializing/deserializing combinatorial delays
+
 protected:
 
 	///Return our assigned netlist entity, if we have one (or NULL if not)
@@ -176,6 +198,17 @@ protected:
 
 	///True if we're the master of a dual pair, or not a dual
 	bool m_dualMaster;
+
+	//A (srcport, dstport) tuple
+	typedef std::pair<std::string, std::string> PinPair;
+
+	//Delays at a specific process corner
+	typedef std::map<PinPair, CombinatorialDelay> DelayMap;
+
+	//Combinatorial delays (only valid in the master of a dual)
+	//Derived classes are free to extend this to add support for more complex features
+	//(for example, Schmitt trigger or output drive strength in an IOB)
+	std::map<PTVCorner, DelayMap> m_pinToPinDelays;
 };
 
 #endif

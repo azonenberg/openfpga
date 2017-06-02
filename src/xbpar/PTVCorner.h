@@ -16,22 +16,67 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef CombinatorialDelay_h
-#define CombinatorialDelay_h
+#ifndef PTVCorner_h
+#define PTVCorner_h
 
 /**
-	@brief Delay down a combinatorial path (at externally specified conditions)
+	@brief A single point in the (process, temperature, voltage) space
  */
-class CombinatorialDelay
+class PTVCorner
 {
 public:
-	CombinatorialDelay(float r = 0, float f = 0)
-	: m_rising(r)
-	, m_falling(f)
-	{  }
+	enum ProcessSpeed
+	{
+		SPEED_SLOW,
+		SPEED_TYPICAL,	//TODO: average across all tested dies to find this? or just skip and specify slow/fast?
+		SPEED_FAST
+	};
 
-	float m_rising;
-	float m_falling;
+	PTVCorner(ProcessSpeed s, int t, int v)
+	: m_speed(s)
+	, m_dieTemp(t)
+	, m_voltage(v)
+	{}
+
+	ProcessSpeed GetSpeed() const
+	{ return m_speed; }
+
+	int GetTemp() const
+	{ return m_dieTemp; }
+
+	int GetVoltage() const
+	{ return m_voltage; }
+
+	//Comparison operator for STL collections
+	bool operator<(const PTVCorner& rhs) const
+	{
+		if(m_speed < rhs.m_speed)
+			return true;
+		if(m_dieTemp < rhs.m_dieTemp)
+			return true;
+		if(m_voltage < rhs.m_voltage)
+			return true;
+		return false;
+	}
+
+protected:
+
+	/**
+		@brief Where does this die fall in the process spectrum? Can be at either extreme or somewhere in the middle
+	 */
+	ProcessSpeed m_speed;
+
+	/**
+		@brief Die temperature, in degC
+	 */
+	int	m_dieTemp;
+
+	/**
+		@brief Supply voltage, in mV
+
+		Note, this is *cell* supply voltage which may not be the Vcore rail (e.g. if we're querying an I/O cell)
+	 */
+	int m_voltage;
 };
 
 #endif

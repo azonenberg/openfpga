@@ -225,3 +225,36 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 
 	return true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Timing analysis
+
+bool Greenpak4BitstreamEntity::GetCombinatorialDelay(
+	string srcport,
+	string dstport,
+	PTVCorner corner,
+	CombinatorialDelay& delay)
+{
+	//If this isn't a corner we know about, give up
+	if(m_pinToPinDelays.find(corner) == m_pinToPinDelays.end())
+		return false;
+
+	//If we don't have data for this pin pair, give up
+	PinPair pair(srcport, dstport);
+	auto& dmap = m_pinToPinDelays[corner];
+	if(dmap.find(pair) == dmap.end())
+		return false;
+
+	//Got it
+	delay = dmap[pair];
+	return true;
+}
+
+void Greenpak4BitstreamEntity::AddCombinatorialDelay(
+	string srcport,
+	string dstport,
+	PTVCorner corner,
+	CombinatorialDelay delay)
+{
+	m_pinToPinDelays[corner][PinPair(srcport, dstport)] = delay;
+}

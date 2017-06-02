@@ -20,6 +20,7 @@
 #define xbpar_h
 
 #include "CombinatorialDelay.h"
+#include "PTVCorner.h"
 
 #include "PARGraph.h"
 #include "PARGraphNode.h"
