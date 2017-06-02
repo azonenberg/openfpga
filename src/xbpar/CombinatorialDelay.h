@@ -16,14 +16,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
-#ifndef xbpar_h
-#define xbpar_h
+#ifndef CombinatorialDelay_h
+#define CombinatorialDelay_h
 
-#include "CombinatorialDelay.h"
+//Combinatorial delay values
+class CombinatorialDelay
+{
+public:
+	CombinatorialDelay(float r = 0, float f = 0)
+	: m_rising(r)
+	, m_falling(f)
+	{  }
 
-#include "PARGraph.h"
-#include "PARGraphNode.h"
-
-#include "PAREngine.h"
+	float m_rising;
+	float m_falling;
+};
 
 #endif

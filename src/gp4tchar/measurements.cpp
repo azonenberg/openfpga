@@ -134,18 +134,18 @@ bool CalibrateTraceDelays(Socket& sock, hdevice hdev)
 		LogNotice("Calculated trace delays:\n");
 		LogIndenter li2;
 		for(int i=3; i<=5; i++)
-			LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, g_devkitCal.pinDelays[i].rising);
+			LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, g_devkitCal.pinDelays[i].m_rising);
 		for(int i=13; i<=15; i++)
-			LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, g_devkitCal.pinDelays[i].rising);
+			LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, g_devkitCal.pinDelays[i].m_rising);
 	}
 
 	//Write to file
 	LogNotice("Writing calibration to file pincal.csv\n");
 	FILE* fp = fopen("pincal.csv", "w");
 	for(int i=3; i<=5; i++)
-		fprintf(fp, "%d,%.3f\n", i, g_devkitCal.pinDelays[i].rising);
+		fprintf(fp, "%d,%.3f\n", i, g_devkitCal.pinDelays[i].m_rising);
 	for(int i=13; i<=15; i++)
-		fprintf(fp, "%d,%.3f\n", i, g_devkitCal.pinDelays[i].rising);
+		fprintf(fp, "%d,%.3f\n", i, g_devkitCal.pinDelays[i].m_rising);
 	fclose(fp);
 
 	//Prompt to put the actual DUT in
@@ -170,7 +170,7 @@ bool ReadTraceDelays()
 		if( (i > 20) || (i < 1) )
 			continue;
 
-		g_devkitCal.pinDelays[i] = DelayPair(f, -1);
+		g_devkitCal.pinDelays[i] = CombinatorialDelay(f, -1);
 
 		LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, f);
 	}
@@ -256,16 +256,15 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 
 			Extrapolation: input buffer delay = 0.6 * Schmitt trigger delay
 	 */
-	//float delay1 =
 
-	/*
 	int pins[] = {3, 4, 5, 13, 14, 15};
-	Greenpak4IOB::DriveStrength drives[] = {Greenpak4IOB::DRIVE_1X, Greenpak4IOB::DRIVE_2X};
+	//Greenpak4IOB::DriveStrength drives[] = {Greenpak4IOB::DRIVE_1X, Greenpak4IOB::DRIVE_2X};
 
+	//TODO: ↓
 	float delay;
-	LogNotice("+------+------+--------+--------+--------+--------+----------+----------+\n");
-	LogNotice("| From |  To  |  x1 ↑  |  x1 ↓  |  x2 ↑  |  x2 ↓  | Delta ↑  | Delta ↓  |\n");
-	LogNotice("+------+------+--------+--------+--------+--------+----------+----------+\n");
+	LogNotice("+------+------+--------+----------+----------+-----------+------------+\n");
+	LogNotice("| From |  To  | IBUF ↑ | OBUFx1 ↑ | OBUFx2 ↑ | Schmitt ↑ | Crossbar ↑ |\n");
+	LogNotice("+------+------+--------+----------+----------+-----------+------------+\n");
 	for(auto src : pins)
 	{
 		for(auto dst : pins)
@@ -281,35 +280,71 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 			if(src > 10 && dst < 10)
 				continue;
 
-			auto sdpair = PinPair(src, dst);
-			for(auto drive : drives)
-			{
-				//Do the measurement
-				if(!MeasurePinToPinDelay(sock, hdev, src, dst, drive, delay))
-					return false;
-				g_deviceProperties.ioDelays[drive][sdpair] = DelayPair(delay, -1);
-			}
+			//Create some variables
+			EquationVariable ibuf("Input buffer delay");
+			EquationVariable obuf("Output buffer delay");
+			EquationVariable schmitt("Schmitt trigger delay");
+			EquationVariable route("Crossbar delay");
 
-			auto x1 = g_deviceProperties.ioDelays[drives[0]][sdpair];
-			auto x2 = g_deviceProperties.ioDelays[drives[1]][sdpair];
-			LogNotice("| %4d |  %2d  | %6.3f | %6.3f | %6.3f | %6.3f | %8.3f | %8.3f |\n",
+			//Set up relationships between the various signals (see assumptions above)
+			//TODO: FIB probing to get more accurate parameters here
+			Equation e1(0);
+			e1.AddVariable(ibuf, 1);
+			e1.AddVariable(schmitt, -0.6);
+
+			//Gather data from the DUT
+			if(!MeasurePinToPinDelay(sock, hdev, src, dst, Greenpak4IOB::DRIVE_1X, false, delay))
+				return false;
+			Equation e2(delay);
+			e2.AddVariable(ibuf);
+			e2.AddVariable(route);
+			e2.AddVariable(obuf);
+
+			if(!MeasurePinToPinDelay(sock, hdev, src, dst, Greenpak4IOB::DRIVE_2X, false, delay))
+				return false;
+			Equation e3(delay);
+			e3.AddVariable(ibuf);
+			e3.AddVariable(route);
+			e3.AddVariable(obuf, 0.5);
+
+			if(!MeasurePinToPinDelay(sock, hdev, src, dst, Greenpak4IOB::DRIVE_2X, true, delay))
+				return false;
+			Equation e4(delay);
+			e4.AddVariable(ibuf);
+			e4.AddVariable(schmitt);
+			e4.AddVariable(route);
+			e4.AddVariable(obuf, 0.5);
+
+			//Create and solve the equation system
+			EquationSystem sys;
+			sys.AddEquation(e1);
+			sys.AddEquation(e2);
+			sys.AddEquation(e3);
+			sys.AddEquation(e4);
+			if(!sys.Solve())
+				return false;
+
+			//auto sdpair = PinPair(src, dst);
+			//g_deviceProperties.ioDelays[drive][sdpair] = CombinatorialDelay(delay, -1);
+			//auto x1 = g_deviceProperties.ioDelays[drives[0]][sdpair];
+			//auto x2 = g_deviceProperties.ioDelays[drives[1]][sdpair];
+
+			LogNotice("| %4d |  %2d  | %6.3f | %8.3f | %8.3f | %9.3f | %8.3f |\n",
 				src,
 				dst,
-				x1.rising,
-				x1.falling,
-				x2.rising,
-				x2.falling,
-				x1.rising - x2.rising,
-				x1.falling - x2.falling
+				ibuf.m_value,
+				obuf.m_value,
+				obuf.m_value/2,
+				schmitt.m_value,
+				route.m_value
 				);
 		}
 	}
-	LogNotice("+------+------+--------+--------+--------+--------+----------+----------+\n");
+	LogNotice("+------+------+--------+----------+----------+-----------+------------+\n");
 
 	//OBSERVED TREND:
 	//Left half of device, delays increase as you go HIGHER in the matrix
 	//Right half of device, delays increase as you go LOWER in the matrix
-	*/
 
 	return true;
 }
@@ -322,8 +357,8 @@ bool MeasurePinToPinDelay(
 	hdevice hdev,
 	int src,
 	int dst,
-	bool schmitt,
 	Greenpak4IOB::DriveStrength drive,
+	bool schmitt,
 	float& delay)
 {
 	delay = -1;
@@ -360,8 +395,8 @@ bool MeasurePinToPinDelay(
 		return false;
 
 	//Subtract the PCB trace delay at each end of the line
-	delay -= g_devkitCal.pinDelays[src].rising;
-	delay -= g_devkitCal.pinDelays[dst].rising;
+	delay -= g_devkitCal.pinDelays[src].m_rising;
+	delay -= g_devkitCal.pinDelays[dst].m_rising;
 
 	return true;
 }
@@ -382,7 +417,7 @@ bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev)
 		//east
 		MeasureCrossConnectionDelay(sock, hdev, 0, i, 3, 13, d);
 		LogNotice("East cross-connection %d from pins 3 to 13: %.3f\n", i, d);
-		//g_eastXconnDelays[i] = DelayPair(d, -1);
+		//g_eastXconnDelays[i] = CombinatorialDelay(d, -1);
 		delays[i] = d;
 	}
 
@@ -391,7 +426,7 @@ bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev)
 		//west
 		MeasureCrossConnectionDelay(sock, hdev, 1, i, 13, 3, d);
 		LogNotice("West cross-connection %d from pins 13 to 3: %.3f\n", i, d);
-		//g_westXconnDelays[i] = DelayPair(d, -1);
+		//g_westXconnDelays[i] = CombinatorialDelay(d, -1);
 		delays[i+10] = d;
 	}
 
@@ -452,8 +487,8 @@ bool MeasureCrossConnectionDelay(
 		return false;
 
 	//Subtract the PCB trace delay at each end of the line
-	delay -= g_devkitCal.pinDelays[src].rising;
-	delay -= g_devkitCal.pinDelays[dst].rising;
+	delay -= g_devkitCal.pinDelays[src].m_rising;
+	delay -= g_devkitCal.pinDelays[dst].m_rising;
 	return true;
 
 	/*

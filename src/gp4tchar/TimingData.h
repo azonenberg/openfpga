@@ -19,18 +19,7 @@
 #ifndef TimingData_h
 #define TimingData_h
 
-//Delay values
-class DelayPair
-{
-public:
-	DelayPair(float r = 0, float f = 0)
-	: rising(r)
-	, falling(f)
-	{  }
-
-	float rising;
-	float falling;
-};
+#include "../xbpar/CombinatorialDelay.h"
 
 //Devkit calibration
 class DevkitCalibration
@@ -38,16 +27,9 @@ class DevkitCalibration
 public:
 	DevkitCalibration();
 
-	DelayPair	pinDelays[21];		//0 is unused so we can use 1-based pin numbering like the chip does
-									//For now, only pins 3-4-5 and 13-14-15 are used
-};
-
-//Propagation delay through a cell (only one output supported for now)
-class CellDelay
-{
-public:
-	//map from pin name to delay
-	std::map<std::string, DelayPair> delays;
+	//Delays from FPGA to DUT pins
+	CombinatorialDelay	pinDelays[21];		//0 is unused so we can use 1-based pin numbering like the chip does
+											//For now, only pins 3-4-5 and 13-14-15 are used
 };
 
 //DUT measurements
@@ -56,11 +38,13 @@ class DeviceProperties
 {
 public:
 
+	/*
 	//Map from (src, dst) pin to delay tuple
 	typedef std::map<PinPair, DelayPair> IODelayMap;
 
 	//Map from drive strength to delay tuples
 	std::map<Greenpak4IOB::DriveStrength, IODelayMap> ioDelays;
+	*/
 };
 
 /*

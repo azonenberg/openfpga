@@ -26,5 +26,5 @@ using namespace std;
 DevkitCalibration::DevkitCalibration()
 {
 	for(int i=0; i<=20; i++)
-		pinDelays[i] = DelayPair(0, -1);
+		pinDelays[i] = CombinatorialDelay(0, -1);
 }
