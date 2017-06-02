@@ -53,6 +53,7 @@ public:
 
 	//Comparison operator for STL collections
 	bool operator<(const PTVCorner& rhs) const;
+	bool operator!=(const PTVCorner& rhs) const;
 
 protected:
 

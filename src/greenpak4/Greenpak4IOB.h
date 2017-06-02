@@ -141,6 +141,25 @@ public:
 	bool IsAnalogIbuf()
 	{ return (m_inputThreshold == THRESHOLD_ANALOG); }
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Timing stuff
+
+	virtual void PrintExtraTimingData(PTVCorner corner) const;
+
+	void SetSchmittTriggerDelay(PTVCorner c, CombinatorialDelay d)
+	{ m_schmittTriggerDelays[c] = d; }
+
+	typedef std::pair<DriveStrength, PTVCorner> DriveCondition;
+
+	void SetOutputDelay(DriveStrength s, PTVCorner c, CombinatorialDelay d)
+	{ m_outputDelays[DriveCondition(s, c)] = d; }
+
+	virtual bool GetCombinatorialDelay(
+		std::string srcport,
+		std::string dstport,
+		PTVCorner corner,
+		CombinatorialDelay& delay) const;
+
 protected:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -178,6 +197,15 @@ protected:
 
 	///Second configuration base for analog output
 	unsigned int m_analogConfigBase;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Timing data
+
+	//Schmitt trigger delays
+	std::map<PTVCorner, CombinatorialDelay> m_schmittTriggerDelays;
+
+	//Output propagation delay depends on drive strength
+	std::map< DriveCondition, CombinatorialDelay > m_outputDelays;
 };
 
 #endif

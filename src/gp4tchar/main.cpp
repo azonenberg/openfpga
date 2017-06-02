@@ -126,8 +126,6 @@ int main(int argc, char* argv[])
 	/*
 	if(!MeasureCrossConnectionDelays(sock, hdev))
 		return 1;
-	*/
-	/*
 	if(!MeasureLutDelays(sock, hdev))
 		return 1;
 	*/

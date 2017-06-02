@@ -139,7 +139,7 @@ public:
 		std::string srcport,
 		std::string dstport,
 		PTVCorner corner,
-		CombinatorialDelay& delay);
+		CombinatorialDelay& delay) const;
 
 	/**
 		@brief Adds a combinatorial delay value to the cell (mostly used by gp4tchar)
@@ -153,6 +153,7 @@ public:
 	//TODO: interface for serializing/deserializing combinatorial delays
 
 	virtual void PrintTimingData() const;
+	virtual void PrintExtraTimingData(PTVCorner corner) const;
 
 protected:
 

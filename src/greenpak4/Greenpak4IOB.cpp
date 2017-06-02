@@ -241,3 +241,69 @@ vector<string> Greenpak4IOB::GetOutputPorts() const
 	r.push_back("OUT");
 	return r;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Timing analysis
+
+void Greenpak4IOB::PrintExtraTimingData(PTVCorner corner) const
+{
+	//Schmitt trigger delay
+	auto sd = m_schmittTriggerDelays.find(corner);
+	if(sd != m_schmittTriggerDelays.end())
+	{
+		auto time = sd->second;
+
+		//Look up normal buffer delay and add
+		CombinatorialDelay bd;
+		if(GetCombinatorialDelay("IO", "OUT", corner, bd))
+		{
+			LogNotice("%10s to %10s: %.3f ns rising, %.3f ns falling\n",
+				"IO",
+				"OUT (Sch)",
+				time.m_rising + bd.m_rising,
+				time.m_falling + bd.m_falling);
+		}
+	}
+
+	//Output buffer delays
+	for(auto it : m_outputDelays)
+	{
+		//Skip results for other process corners
+		if(it.first.second != corner)
+			continue;
+
+		string drive;
+		switch(it.first.first)
+		{
+			case DRIVE_4X:
+				drive = "4x";
+				break;
+
+			case DRIVE_2X:
+				drive = "2x";
+				break;
+
+			case DRIVE_1X:
+			default:
+				drive = "1x";
+				break;
+		}
+		string ioname = string("IO (") + drive + ")";
+
+		LogNotice("%10s to %10s: %.3f ns rising, %.3f ns falling\n",
+			"IN",
+			ioname.c_str(),
+			it.second.m_rising,
+			it.second.m_falling);
+	}
+}
+
+bool Greenpak4IOB::GetCombinatorialDelay(
+		string srcport,
+		string dstport,
+		PTVCorner corner,
+		CombinatorialDelay& delay) const
+{
+	//Default: return base class info
+	return Greenpak4BitstreamEntity::GetCombinatorialDelay(srcport, dstport, corner, delay);
+}

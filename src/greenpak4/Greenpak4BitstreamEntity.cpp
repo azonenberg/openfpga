@@ -233,20 +233,22 @@ bool Greenpak4BitstreamEntity::GetCombinatorialDelay(
 	string srcport,
 	string dstport,
 	PTVCorner corner,
-	CombinatorialDelay& delay)
+	CombinatorialDelay& delay) const
 {
 	//If this isn't a corner we know about, give up
-	if(m_pinToPinDelays.find(corner) == m_pinToPinDelays.end())
+	auto pit = m_pinToPinDelays.find(corner);
+	if(pit == m_pinToPinDelays.end())
 		return false;
 
 	//If we don't have data for this pin pair, give up
 	PinPair pair(srcport, dstport);
-	auto& dmap = m_pinToPinDelays[corner];
-	if(dmap.find(pair) == dmap.end())
+	auto& dmap = pit->second;
+	auto dit = dmap.find(pair);
+	if(dit == dmap.end())
 		return false;
 
 	//Got it
-	delay = dmap[pair];
+	delay = dit->second;
 	return true;
 }
 
@@ -265,7 +267,7 @@ void Greenpak4BitstreamEntity::PrintTimingData() const
 	if(m_pinToPinDelays.empty())
 		return;
 
-	//LogNotice("%s\n", GetDescription().c_str());
+	LogNotice("%s\n", GetDescription().c_str());
 
 	//Combinatorial delays
 	LogIndenter li;
@@ -277,13 +279,21 @@ void Greenpak4BitstreamEntity::PrintTimingData() const
 		{
 			auto& pair = jt.first;
 			auto& time = jt.second;
-			LogNotice("%6s to %6s: %.3f ns rising, %.3f ns falling\n",
+			LogNotice("%10s to %10s: %.3f ns rising, %.3f ns falling\n",
 				pair.first.c_str(),
 				pair.second.c_str(),
 				time.m_rising,
 				time.m_falling);
 		}
+
+		PrintExtraTimingData(it.first);
 	}
 
 	//TODO: Setup/hold margins
+}
+
+void Greenpak4BitstreamEntity::PrintExtraTimingData(PTVCorner /*corner*/) const
+{
+	//Empty in base class but need to provide an empty default implementation
+	//so children don't HAVE to override
 }

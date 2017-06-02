@@ -266,13 +266,13 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 	 */
 
 	int pins[] = {3, 4, 5, 13, 14, 15};
-	//Greenpak4IOB::DriveStrength drives[] = {Greenpak4IOB::DRIVE_1X, Greenpak4IOB::DRIVE_2X};
 
-	//TODO: ↓
+	//Test conditions (TODO: pass this in from somewhere?)
+	PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, 3300);
+
+	//TODO: ↓ edges
+	//TODO: x4 drive (if supported on this pin)
 	float delay;
-	LogNotice("+------+------+--------+----------+----------+-----------+------------+\n");
-	LogNotice("| From |  To  | IBUF ↑ | OBUFx1 ↑ | OBUFx2 ↑ | Schmitt ↑ | Crossbar ↑ |\n");
-	LogNotice("+------+------+--------+----------+----------+-----------+------------+\n");
 	for(auto src : pins)
 	{
 		for(auto dst : pins)
@@ -332,11 +332,7 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 			if(!sys.Solve())
 				return false;
 
-			//auto sdpair = PinPair(src, dst);
-			//g_deviceProperties.ioDelays[drive][sdpair] = CombinatorialDelay(delay, -1);
-			//auto x1 = g_deviceProperties.ioDelays[drives[0]][sdpair];
-			//auto x2 = g_deviceProperties.ioDelays[drives[1]][sdpair];
-
+			/*
 			LogNotice("| %4d |  %2d  | %6.3f | %8.3f | %8.3f | %9.3f | %8.3f |\n",
 				src,
 				dst,
@@ -346,13 +342,19 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 				schmitt.m_value,
 				route.m_value
 				);
+				*/
+
+			//Save combinatorial delays for these pins
+			auto iob = g_calDevice.GetIOB(src);
+			iob->AddCombinatorialDelay("IO", "OUT", corner, CombinatorialDelay(ibuf.m_value, -1));
+			//iob->AddCombinatorialDelay("IN", "IO", corner, CombinatorialDelay(obuf.m_value, -1));
+			iob->SetSchmittTriggerDelay(corner, CombinatorialDelay(schmitt.m_value, -1));
+			iob->SetOutputDelay(Greenpak4IOB::DRIVE_1X, corner, CombinatorialDelay(obuf.m_value, -1));
+			iob->SetOutputDelay(Greenpak4IOB::DRIVE_2X, corner, CombinatorialDelay(obuf.m_value/2, -1));
+
+			//TODO: route.m_value goes somewhere
 		}
 	}
-	LogNotice("+------+------+--------+----------+----------+-----------+------------+\n");
-
-	//OBSERVED TREND:
-	//Left half of device, delays increase as you go HIGHER in the matrix
-	//Right half of device, delays increase as you go LOWER in the matrix
 
 	return true;
 }
@@ -417,16 +419,14 @@ bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev)
 	LogNotice("Measuring cross-connection delays...\n");
 	LogIndenter li;
 
-	float delays[20];
-
 	float d;
 	for(int i=0; i<10; i++)
 	{
 		//east
 		MeasureCrossConnectionDelay(sock, hdev, 0, i, 3, 13, d);
 		LogNotice("East cross-connection %d from pins 3 to 13: %.3f\n", i, d);
-		//g_eastXconnDelays[i] = CombinatorialDelay(d, -1);
-		delays[i] = d;
+
+		//g_calDevice.GetCrossConnection(0, i,
 	}
 
 	for(int i=0; i<10; i++)
@@ -434,17 +434,7 @@ bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev)
 		//west
 		MeasureCrossConnectionDelay(sock, hdev, 1, i, 13, 3, d);
 		LogNotice("West cross-connection %d from pins 13 to 3: %.3f\n", i, d);
-		//g_westXconnDelays[i] = CombinatorialDelay(d, -1);
-		delays[i+10] = d;
 	}
-
-	//Write the CSV
-	/*
-	FILE* fp = fopen("/tmp/xconn-temp.csv", "w");
-	for(int i=0; i<20; i++)
-		fprintf(fp, "0,x,%d,%.3f\n", i, delays[i]);
-	fclose(fp);
-	*/
 
 	return true;
 }
