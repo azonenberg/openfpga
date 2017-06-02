@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 
+#define NOT_BINDGEN
 #include "xbpar_ffi.h"
 
 #include <cstring>
@@ -117,7 +118,7 @@ uint32_t xbpar_PARGraphNode_GetAlternateLabel(const PARGraphNode* node, uint32_t
 	return node->GetAlternateLabel(i);
 }
 
-bool xbpar_PARGraphNode_MatchesLabel(const PARGraphNode* node, uint32_t target)
+int xbpar_PARGraphNode_MatchesLabel(const PARGraphNode* node, uint32_t target)
 {
 	return node->MatchesLabel(target);
 }
@@ -486,7 +487,7 @@ void xbpar_PAREngine_Destroy(PAREngine* engine)
 	delete engine;
 }
 
-bool xbpar_PAREngine_PlaceAndRoute(PAREngine* engine, uint32_t seed)
+int xbpar_PAREngine_PlaceAndRoute(PAREngine* engine, uint32_t seed)
 {
 	return ((FFIPAREngine*)engine)->PlaceAndRoute(seed);
 }
@@ -525,7 +526,7 @@ uint32_t xbpar_PAREngine_RandomNumber(PAREngine* engine)
 	return ((FFIPAREngine*)engine)->base_RandomNumber();
 }
 
-bool xbpar_PAREngine_base_CanMoveNode(const PAREngine* engine, const PARGraphNode* node,
+int xbpar_PAREngine_base_CanMoveNode(const PAREngine* engine, const PARGraphNode* node,
 	const PARGraphNode* old_mate, const PARGraphNode* new_mate)
 {
 	return ((FFIPAREngine*)engine)->base_CanMoveNode(node, old_mate, new_mate);
@@ -567,17 +568,17 @@ uint32_t xbpar_PAREngine_base_ComputeUnroutableCost(const PAREngine* engine,
 	return ret;
 }
 
-bool xbpar_PAREngine_base_SanityCheck(const PAREngine* engine)
+int xbpar_PAREngine_base_SanityCheck(const PAREngine* engine)
 {
 	return ((FFIPAREngine*)engine)->base_SanityCheck();
 }
 
-bool xbpar_PAREngine_base_InitialPlacement(PAREngine* engine)
+int xbpar_PAREngine_base_InitialPlacement(PAREngine* engine)
 {
 	return ((FFIPAREngine*)engine)->base_InitialPlacement();
 }
 
-bool xbpar_PAREngine_base_OptimizePlacement(PAREngine* engine,
+int xbpar_PAREngine_base_OptimizePlacement(PAREngine* engine,
 	PARGraphNode*const* badnodes_ptr, size_t badnodes_len)
 {
 	auto badnodes = std::vector<PARGraphNode*>();
