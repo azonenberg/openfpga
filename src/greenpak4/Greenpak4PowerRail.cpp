@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -88,7 +88,7 @@ unsigned int Greenpak4PowerRail::GetOutputNetNumber(std::string port)
 		return -1;
 }
 
-string Greenpak4PowerRail::GetDescription()
+string Greenpak4PowerRail::GetDescription() const
 {
 	if(GetDigitalValue())
 		return "VDD0";

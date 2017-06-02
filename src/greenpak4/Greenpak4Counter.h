@@ -45,7 +45,7 @@ public:
 	virtual bool Load(bool* bitstream);
 	virtual bool Save(bool* bitstream);
 
-	virtual std::string GetDescription();
+	virtual std::string GetDescription() const;
 
 	unsigned int GetDepth()
 	{ return m_depth; }

@@ -199,7 +199,7 @@ unsigned int Greenpak4LUT::GetOutputNetNumber(string port)
 		return -1;
 }
 
-string Greenpak4LUT::GetDescription()
+string Greenpak4LUT::GetDescription() const
 {
 	char buf[128];
 	snprintf(buf, sizeof(buf), "LUT%u_%u", m_order, m_lutnum);

@@ -60,7 +60,7 @@ bool Greenpak4DAC::IsUsed()
 	return HasLoadsOnPort("VOUT");
 }
 
-string Greenpak4DAC::GetDescription()
+string Greenpak4DAC::GetDescription() const
 {
 	char buf[128];
 	snprintf(buf, sizeof(buf), "DAC_%u", m_dacnum);

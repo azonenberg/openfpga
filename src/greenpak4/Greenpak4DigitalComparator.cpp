@@ -56,7 +56,7 @@ Greenpak4DigitalComparator::~Greenpak4DigitalComparator()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-string Greenpak4DigitalComparator::GetDescription()
+string Greenpak4DigitalComparator::GetDescription() const
 {
 	char buf[128];
 	snprintf(buf, sizeof(buf), "DCMP_%u", m_cmpNum);

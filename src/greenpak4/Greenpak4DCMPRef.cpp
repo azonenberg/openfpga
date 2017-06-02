@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -42,7 +42,7 @@ Greenpak4DCMPRef::~Greenpak4DCMPRef()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-string Greenpak4DCMPRef::GetDescription()
+string Greenpak4DCMPRef::GetDescription() const
 {
 	char buf[128];
 	snprintf(buf, sizeof(buf), "DCMPREF_%u", m_blocknum);

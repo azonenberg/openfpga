@@ -106,7 +106,7 @@ public:
 	/**
 		@brief Returns a human-readable description of this node (like LUT3_1)
 	 */
-	virtual std::string GetDescription() =0;
+	virtual std::string GetDescription() const =0;
 
 	/**
 		@brief Returns the real entity if we are a dual, or us if we're not

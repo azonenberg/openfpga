@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -45,7 +45,7 @@ Greenpak4IOBTypeA::~Greenpak4IOBTypeA()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-string Greenpak4IOBTypeA::GetDescription()
+string Greenpak4IOBTypeA::GetDescription() const
 {
 	char buf[128];
 	snprintf(buf, sizeof(buf), "P%u", m_pinNumber);

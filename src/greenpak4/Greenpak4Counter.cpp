@@ -63,7 +63,7 @@ Greenpak4Counter::~Greenpak4Counter()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
-string Greenpak4Counter::GetDescription()
+string Greenpak4Counter::GetDescription() const
 {
 	char buf[128];
 	if(m_hasFSM)

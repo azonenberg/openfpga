@@ -47,7 +47,7 @@ public:
 	unsigned int GetLutIndex()
 	{ return m_lutnum; }
 
-	virtual std::string GetDescription();
+	virtual std::string GetDescription() const;
 
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
 	virtual unsigned int GetOutputNetNumber(std::string port);
