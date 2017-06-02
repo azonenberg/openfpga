@@ -93,8 +93,6 @@ pub struct PARGraphNode (
 );
 
 impl PARGraphNode {
-    // We need two &mut for this. Because of how PARGraph will be implemented, we can only give out one single
-    // &mut per graph at a time, so this makes sure the mate is in a different graph.
     pub fn mate_with<'a>(&'a mut self, mate: &'a mut PARGraphNode) {
         unsafe {
             ffi::xbpar_PARGraphNode_MateWith(self as *mut PARGraphNode as *mut c_void,
@@ -275,19 +273,37 @@ impl PARGraph {
         }
     }
 
+    // This is a bit of a hack to allow us to actually create edges in the graph. Otherwise we won't be able to both
+    // borrow one node mutably and a different node immutably.
+    pub fn get_node_by_index_mut_pair<'a>(&'a mut self, index1: u32, index2: u32)
+        -> (&'a mut PARGraphNode, &'a mut PARGraphNode) {
+
+        // Because self is &mut, we only need to check whether the indices are the same and not if we have ever
+        // loaned out a copy of the node
+        if index1 == index2 {
+            panic!("attempted to borrow the same node mutably twice");
+        }
+        unsafe {
+            (&mut*(ffi::xbpar_PARGraph_GetNodeByIndex(self.ffi_graph, index1) as *mut PARGraphNode),
+                &mut*(ffi::xbpar_PARGraph_GetNodeByIndex(self.ffi_graph, index2) as *mut PARGraphNode))
+        }
+    }
+
     pub fn get_num_edges(&self) -> u32 {
         unsafe {
             ffi::xbpar_PARGraph_GetNumEdges(self.ffi_graph)
         }
     }
 
-    pub fn add_new_node(&mut self, label: u32, p_data: *mut c_void) -> &mut PARGraphNode {
+    // Returns the index of the new node because that's basically the only way we can sanely do it here in rust
+    pub fn add_new_node(&mut self, label: u32, p_data: *mut c_void) -> u32 {
         unsafe {
             let ffi_node = ffi::xbpar_PARGraphNode_Create(label, p_data);
+            let ret_idx = ffi::xbpar_PARGraph_GetNumNodes(self.ffi_graph);
             // This transfers ownership to the graph
             ffi::xbpar_PARGraph_AddNode(self.ffi_graph, ffi_node);
 
-            &mut*(ffi_node as *mut PARGraphNode)
+            ret_idx
         }
     }
 }
