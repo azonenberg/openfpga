@@ -64,33 +64,33 @@ public:
 	void Relabel(uint32_t label)
 	{ m_label = label; }
 
-	uint32_t GetLabel()
+	uint32_t GetLabel() const
 	{ return m_label; }
 
-	PARGraphNode* GetMate()
+	PARGraphNode* GetMate() const
 	{ return m_mate; }
 
-	uint32_t GetEdgeCount();
-	PARGraphEdge* GetEdgeByIndex(uint32_t index);
+	uint32_t GetEdgeCount() const;
+	const PARGraphEdge* GetEdgeByIndex(uint32_t index);
 
 	void AddEdge(std::string srcport, PARGraphNode* sink, std::string dstport = "")
 	{ m_edges.push_back(new PARGraphEdge(this, srcport, sink, dstport)); }
 
 	void RemoveEdge(std::string srcport, PARGraphNode* sink, std::string dstport);
 
-	void* GetData()
+	void* GetData() const
 	{ return m_pData; }
 
 	void AddAlternateLabel(uint32_t alt)
 	{ m_alternateLabels.push_back(alt); }
 
-	uint32_t GetAlternateLabelCount()
+	uint32_t GetAlternateLabelCount() const
 	{ return m_alternateLabels.size(); }
 
-	uint32_t GetAlternateLabel(uint32_t i)
+	uint32_t GetAlternateLabel(uint32_t i) const
 	{ return m_alternateLabels[i]; }
 
-	bool MatchesLabel(uint32_t target);
+	bool MatchesLabel(uint32_t target) const;
 
 protected:
 
@@ -126,7 +126,7 @@ protected:
 	/**
 		@brief List of all outbound edges from this node
 	 */
-	std::vector<PARGraphEdge*> m_edges;
+	std::vector<const PARGraphEdge*> m_edges;
 };
 
 #endif

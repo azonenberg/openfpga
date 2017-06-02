@@ -63,17 +63,17 @@ void PARGraphNode::MateWith(PARGraphNode* mate)
 	m_mate = mate;
 }
 
-uint32_t PARGraphNode::GetEdgeCount()
+uint32_t PARGraphNode::GetEdgeCount() const
 {
 	return m_edges.size();
 }
 
-PARGraphEdge* PARGraphNode::GetEdgeByIndex(uint32_t index)
+const PARGraphEdge* PARGraphNode::GetEdgeByIndex(uint32_t index)
 {
 	return m_edges[index];
 }
 
-bool PARGraphNode::MatchesLabel(uint32_t target)
+bool PARGraphNode::MatchesLabel(uint32_t target) const
 {
 	if(m_label == target)
 		return true;

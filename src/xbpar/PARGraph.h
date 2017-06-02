@@ -35,19 +35,19 @@ public:
 
 	//Label stuff
 	uint32_t AllocateLabel();
-	uint32_t GetMaxLabel();
+	uint32_t GetMaxLabel() const;
 
 	//Label indexing helpers
-	uint32_t GetNumNodesWithLabel(uint32_t label);
+	uint32_t GetNumNodesWithLabel(uint32_t label) const;
 	void IndexNodesByLabel();
-	PARGraphNode* GetNodeByLabelAndIndex(uint32_t label, uint32_t index);
+	PARGraphNode* GetNodeByLabelAndIndex(uint32_t label, uint32_t index) const;
 
 	//Node iteration
-	uint32_t GetNumNodes();
-	PARGraphNode* GetNodeByIndex(uint32_t index);
+	uint32_t GetNumNodes() const;
+	PARGraphNode* GetNodeByIndex(uint32_t index) const;
 
 	//Net iteration
-	uint32_t GetNumEdges();
+	uint32_t GetNumEdges() const;
 
 	//Insertion
 	void AddNode(PARGraphNode* node);
