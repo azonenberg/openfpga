@@ -83,16 +83,52 @@ void xbpar_PARGraph_AddNode(PARGraph* graph, PARGraphNode* node);
 
 //PAREngine
 typedef PARGraphNode* (*t_GetNewPlacementForNode)(void* ffiengine, const PARGraphNode* pivot);
+//Gives out ownership; will be freed
 typedef void (*t_FindSubOptimalPlacements)(void* ffiengine, PARGraphNode*const** bad_nodes_ptr, size_t* bad_nodes_len);
 typedef bool (*t_InitialPlacement_core)(void* ffiengine);
 //Return value is borrowed and must live for some amount of time until the next operation
 typedef const char* (*t_GetLabelName)(void* ffiengine, uint32_t label);
+typedef bool (*t_CanMoveNode)(void* ffiengine, const PARGraphNode* node,
+	const PARGraphNode* old_mate, const PARGraphNode* new_mate);
+//Gives out ownership; will be freed
+typedef uint32_t (*t_ComputeAndPrintScore)(void* ffiengine,
+	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len, uint32_t iteration);
+//Borrows unroutes, does not take ownership
+typedef void (*t_PrintUnroutes)(void* ffiengine,
+	const PARGraphEdge*const* unroutes_ptr, size_t unroutes_len);
+typedef uint32_t (*t_ComputeCongestionCost)(void* ffiengine);
+typedef uint32_t (*t_ComputeTimingCost)(void* ffiengine);
+//Gives out ownership; will be freed
+typedef uint32_t (*t_ComputeUnroutableCost)(void* ffiengine,
+	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len);
+typedef bool (*t_SanityCheck)(void* ffiengine);
+typedef bool (*t_InitialPlacement)(void* ffiengine);
+//Borrows badnodes, does not take ownership
+typedef bool (*t_OptimizePlacement)(void* ffiengine,
+	PARGraphNode*const* badnodes_ptr, size_t badnodes_len);
+typedef uint32_t (*t_ComputeNodeUnroutableCost)(void* ffiengine,
+	const PARGraphNode* pivot, const PARGraphNode* candidate);
+typedef void (*t_free_edgevec)(const PARGraphEdge*const* v);
+typedef void (*t_free_nodevec)(const PARGraphNode*const* n);
+
 
 PAREngine* xbpar_PAREngine_Create(void* ffiengine, PARGraph* netlist, PARGraph* device,
 	t_GetNewPlacementForNode f_GetNewPlacementForNode,
 	t_FindSubOptimalPlacements f_FindSubOptimalPlacements,
 	t_InitialPlacement_core f_InitialPlacement_core,
-	t_GetLabelName f_GetLabelName);
+	t_GetLabelName f_GetLabelName,
+	t_CanMoveNode f_CanMoveNode,
+	t_ComputeAndPrintScore f_ComputeAndPrintScore,
+	t_PrintUnroutes f_PrintUnroutes,
+	t_ComputeCongestionCost f_ComputeCongestionCost,
+	t_ComputeTimingCost f_ComputeTimingCost,
+	t_ComputeUnroutableCost f_ComputeUnroutableCost,
+	t_SanityCheck f_SanityCheck,
+	t_InitialPlacement f_InitialPlacement,
+	t_OptimizePlacement f_OptimizePlacement,
+	t_ComputeNodeUnroutableCost f_ComputeNodeUnroutableCost,
+	t_free_edgevec f_free_edgevec,
+	t_free_nodevec f_free_nodevec);
 void xbpar_PAREngine_Destroy(PAREngine* engine);
 //Public methods
 bool xbpar_PAREngine_PlaceAndRoute(PAREngine* engine, uint32_t seed = 0);
