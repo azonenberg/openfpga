@@ -33,35 +33,35 @@ public:
 
 	virtual bool PlaceAndRoute(std::map<uint32_t, std::string> label_names, uint32_t seed = 0);
 
-	virtual uint32_t ComputeCost();
+	virtual uint32_t ComputeCost() const;
 
 protected:
 
-	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate);
+	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate) const;
 
 	void MoveNode(PARGraphNode* node, PARGraphNode* newpos, std::map<uint32_t, std::string>& label_names);
 
 	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot) =0;
 	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes) =0;
 
-	virtual uint32_t ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration);
+	virtual uint32_t ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration) const;
 
-	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
+	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes) const;
 
-	virtual uint32_t ComputeCongestionCost();
-	virtual uint32_t ComputeTimingCost();
-	virtual uint32_t ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes);
+	virtual uint32_t ComputeCongestionCost() const;
+	virtual uint32_t ComputeTimingCost() const;
+	virtual uint32_t ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes) const;
 
-	virtual bool SanityCheck(std::map<uint32_t, std::string> label_names);
+	virtual bool SanityCheck(std::map<uint32_t, std::string> label_names) const;
 	virtual bool InitialPlacement(std::map<uint32_t, std::string>& label_names);
 	virtual bool InitialPlacement_core() =0;
 	virtual bool OptimizePlacement(
 		std::vector<PARGraphNode*>& badnodes,
 		std::map<uint32_t, std::string>& label_names);
 
-	virtual uint32_t ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode* candidate);
+	virtual uint32_t ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode* candidate) const;
 
-	std::string GetNodeTypes(PARGraphNode* node, std::map<uint32_t, std::string>& label_names);
+	std::string GetNodeTypes(PARGraphNode* node, std::map<uint32_t, std::string>& label_names) const;
 
 	PARGraph* m_netlist;
 	PARGraph* m_device;

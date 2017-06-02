@@ -48,22 +48,22 @@ uint32_t PARGraph::AllocateLabel()
 /**
 	@brief Get the maximum allocated label value
  */
-uint32_t PARGraph::GetMaxLabel()
+uint32_t PARGraph::GetMaxLabel() const
 {
 	return m_nextLabel - 1;
 }
 
-uint32_t PARGraph::GetNumNodes()
+uint32_t PARGraph::GetNumNodes() const
 {
 	return m_nodes.size();
 }
 
-PARGraphNode* PARGraph::GetNodeByIndex(uint32_t index)
+PARGraphNode* PARGraph::GetNodeByIndex(uint32_t index) const
 {
 	return m_nodes[index];
 }
 
-uint32_t PARGraph::GetNumEdges()
+uint32_t PARGraph::GetNumEdges() const
 {
 	uint32_t netcount = 0;
 
@@ -89,7 +89,7 @@ void PARGraph::AddNode(PARGraphNode* node)
 
 	Value is cached by IndexNodesByLabel();
  */
-uint32_t PARGraph::GetNumNodesWithLabel(uint32_t label)
+uint32_t PARGraph::GetNumNodesWithLabel(uint32_t label) const
 {
 	return m_labeledNodes[label].size();
 }
@@ -119,7 +119,7 @@ void PARGraph::IndexNodesByLabel()
 /**
 	@brief Get the Nth node with a given index
  */
-PARGraphNode* PARGraph::GetNodeByLabelAndIndex(uint32_t label, uint32_t index)
+PARGraphNode* PARGraph::GetNodeByLabelAndIndex(uint32_t label, uint32_t index) const
 {
 	return m_labeledNodes[label][index];
 }
