@@ -132,6 +132,9 @@ int main(int argc, char* argv[])
 		return 1;
 	*/
 
+	//Print output
+	g_calDevice.PrintTimingData();
+
 	//Done
 	LogNotice("Done, resetting board\n");
 	SetStatusLED(hdev, 0);

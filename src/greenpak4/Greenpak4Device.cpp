@@ -1257,5 +1257,5 @@ bool Greenpak4Device::GenerateBitstream(bool* bitstream, uint8_t userid, bool re
 
 void Greenpak4Device::PrintTimingData()
 {
-	//TODO
+	LogNotice("Dumping timing data...\n");
 }
