@@ -86,12 +86,12 @@ bool EquationSystem::Solve()
 	for(int nvar = 0; nvar < numVars; nvar ++)
 	{
 		//If we have a 0 at our diagonal location, look down until we find a row that has a nonzero value
-		if(rows[nvar][nvar] < epsilon)
+		if(fabs(rows[nvar][nvar]) < epsilon)
 		{
 			bool found = false;
 			for(int row=nvar+1; row<numEq; row ++)
 			{
-				if(rows[row][nvar] > epsilon)
+				if(fabs(rows[row][nvar]) > epsilon)
 				{
 					//LogNotice("Swapping rows %d and %d\n", row, nvar);
 					float* tmp = rows[nvar];

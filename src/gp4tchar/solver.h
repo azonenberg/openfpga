@@ -54,7 +54,7 @@ public:
 };
 
 /**
-	@brief A system of linear equations
+	@brief A system of linear equations of the form a*v1 + b*v2 + c*v3 = n
  */
 class EquationSystem
 {
