@@ -44,13 +44,13 @@ protected:
 	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot) =0;
 	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes) =0;
 
-	virtual uint32_t ComputeAndPrintScore(std::vector<PARGraphEdge*>& unroutes, uint32_t iteration) const;
+	virtual uint32_t ComputeAndPrintScore(std::vector<const PARGraphEdge*>& unroutes, uint32_t iteration) const;
 
-	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes) const;
+	virtual void PrintUnroutes(std::vector<const PARGraphEdge*>& unroutes) const;
 
 	virtual uint32_t ComputeCongestionCost() const;
 	virtual uint32_t ComputeTimingCost() const;
-	virtual uint32_t ComputeUnroutableCost(std::vector<PARGraphEdge*>& unroutes) const;
+	virtual uint32_t ComputeUnroutableCost(std::vector<const PARGraphEdge*>& unroutes) const;
 
 	virtual bool SanityCheck(std::map<uint32_t, std::string> label_names) const;
 	virtual bool InitialPlacement(std::map<uint32_t, std::string>& label_names);

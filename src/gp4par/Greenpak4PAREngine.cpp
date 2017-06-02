@@ -312,7 +312,7 @@ void Greenpak4PAREngine::FindSubOptimalPlacements(std::vector<PARGraphNode*>& ba
 
 	//Find all nodes that are on one end of an unroutable edge
 	m_unroutableNodes.clear();
-	std::vector<PARGraphEdge*> unroutes;
+	std::vector<const PARGraphEdge*> unroutes;
 	ComputeUnroutableCost(unroutes);
 	for(auto edge : unroutes)
 	{

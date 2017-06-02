@@ -71,7 +71,7 @@ public:
 	{ return m_mate; }
 
 	uint32_t GetEdgeCount() const;
-	PARGraphEdge* GetEdgeByIndex(uint32_t index);
+	const PARGraphEdge* GetEdgeByIndex(uint32_t index);
 
 	void AddEdge(std::string srcport, PARGraphNode* sink, std::string dstport = "")
 	{ m_edges.push_back(new PARGraphEdge(this, srcport, sink, dstport)); }
@@ -126,7 +126,7 @@ protected:
 	/**
 		@brief List of all outbound edges from this node
 	 */
-	std::vector<PARGraphEdge*> m_edges;
+	std::vector<const PARGraphEdge*> m_edges;
 };
 
 #endif

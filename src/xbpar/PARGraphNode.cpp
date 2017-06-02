@@ -68,7 +68,7 @@ uint32_t PARGraphNode::GetEdgeCount() const
 	return m_edges.size();
 }
 
-PARGraphEdge* PARGraphNode::GetEdgeByIndex(uint32_t index)
+const PARGraphEdge* PARGraphNode::GetEdgeByIndex(uint32_t index)
 {
 	return m_edges[index];
 }

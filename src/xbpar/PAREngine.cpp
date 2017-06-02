@@ -84,7 +84,7 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 	LogNotice("\nOptimizing placement...\n");
 
 	uint32_t iteration = 0;
-	vector<PARGraphEdge*> unroutes;
+	vector<const PARGraphEdge*> unroutes;
 	uint32_t best_cost = 0xffffffff;
 	uint32_t time_since_best_cost = 0;
 	bool made_change = true;
@@ -185,7 +185,7 @@ bool PAREngine::PlaceAndRoute(map<uint32_t, string> label_names, uint32_t seed)
 /**
 	@brief Update the scores for the current netlist and then print the result
  */
-uint32_t PAREngine::ComputeAndPrintScore(vector<PARGraphEdge*>& unroutes, uint32_t iteration) const
+uint32_t PAREngine::ComputeAndPrintScore(vector<const PARGraphEdge*>& unroutes, uint32_t iteration) const
 {
 	uint32_t ucost = ComputeUnroutableCost(unroutes);
 	uint32_t ccost = ComputeCongestionCost();
@@ -205,7 +205,7 @@ uint32_t PAREngine::ComputeAndPrintScore(vector<PARGraphEdge*>& unroutes, uint32
 	return cost;
 }
 
-void PAREngine::PrintUnroutes(vector<PARGraphEdge*>& /*unroutes*/) const
+void PAREngine::PrintUnroutes(vector<const PARGraphEdge*>& /*unroutes*/) const
 {
 }
 
@@ -474,7 +474,7 @@ std::string PAREngine::GetNodeTypes(PARGraphNode* node, std::map<uint32_t, std::
  */
 uint32_t PAREngine::ComputeCost() const
 {
-	vector<PARGraphEdge*> unroutes;
+	vector<const PARGraphEdge*> unroutes;
 	return
 		ComputeUnroutableCost(unroutes)*10 +	//weight unroutability above everything else
 		ComputeTimingCost() +
@@ -484,7 +484,7 @@ uint32_t PAREngine::ComputeCost() const
 /**
 	@brief Compute the unroutability cost (measure of how many requested routes do not exist)
  */
-uint32_t PAREngine::ComputeUnroutableCost(vector<PARGraphEdge*>& unroutes) const
+uint32_t PAREngine::ComputeUnroutableCost(vector<const PARGraphEdge*>& unroutes) const
 {
 	uint32_t cost = 0;
 
@@ -495,7 +495,7 @@ uint32_t PAREngine::ComputeUnroutableCost(vector<PARGraphEdge*>& unroutes) const
 		PARGraphNode* netsrc = m_netlist->GetNodeByIndex(i);
 		for(uint32_t j=0; j<netsrc->GetEdgeCount(); j++)
 		{
-			PARGraphEdge* nedge = netsrc->GetEdgeByIndex(j);
+			auto nedge = netsrc->GetEdgeByIndex(j);
 			PARGraphNode* netdst = nedge->m_destnode;
 
 			//For now, just bruteforce to find a matching edge (if there is one)
@@ -504,7 +504,7 @@ uint32_t PAREngine::ComputeUnroutableCost(vector<PARGraphEdge*>& unroutes) const
 			PARGraphNode* devdst = netdst->GetMate();
 			for(uint32_t k=0; k<devsrc->GetEdgeCount(); k++)
 			{
-				PARGraphEdge* dedge = devsrc->GetEdgeByIndex(k);
+				auto dedge = devsrc->GetEdgeByIndex(k);
 				if(
 					(dedge->m_destnode == devdst) &&
 					(dedge->m_sourceport == nedge->m_sourceport) &&
@@ -543,7 +543,7 @@ uint32_t PAREngine::ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode*
 		PARGraphNode* netsrc = m_netlist->GetNodeByIndex(i);
 		for(uint32_t j=0; j<netsrc->GetEdgeCount(); j++)
 		{
-			PARGraphEdge* nedge = netsrc->GetEdgeByIndex(j);
+			auto nedge = netsrc->GetEdgeByIndex(j);
 			PARGraphNode* netdst = nedge->m_destnode;
 
 			//If either the source or destination is not our pivot node, ignore it
@@ -562,7 +562,7 @@ uint32_t PAREngine::ComputeNodeUnroutableCost(PARGraphNode* pivot, PARGraphNode*
 			bool found = false;
 			for(uint32_t k=0; k<devsrc->GetEdgeCount(); k++)
 			{
-				PARGraphEdge* dedge = devsrc->GetEdgeByIndex(k);
+				auto dedge = devsrc->GetEdgeByIndex(k);
 				if(
 					(dedge->m_destnode == devdst) &&
 					(dedge->m_sourceport == nedge->m_sourceport) &&
