@@ -326,6 +326,11 @@ public:
 
 	void SetNVMRetryCount(int count);
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// TIMING
+
+	void PrintTimingData();
+
 protected:
 
 	bool GenerateBitstream(bool* bitstream, uint8_t userid, bool readProtect);

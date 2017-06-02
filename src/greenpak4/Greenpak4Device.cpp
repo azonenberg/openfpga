@@ -1251,3 +1251,11 @@ bool Greenpak4Device::GenerateBitstream(bool* bitstream, uint8_t userid, bool re
 
 	return ok;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Timing analysis
+
+void Greenpak4Device::PrintTimingData()
+{
+	//TODO
+}

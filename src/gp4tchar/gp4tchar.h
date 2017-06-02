@@ -46,6 +46,6 @@ bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev);
 void WaitForKeyPress();
 
 extern DevkitCalibration g_devkitCal;
-extern DeviceProperties g_deviceProperties;
+extern Greenpak4Device g_calDevice;
 
 #endif

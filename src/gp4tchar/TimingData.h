@@ -32,37 +32,4 @@ public:
 											//For now, only pins 3-4-5 and 13-14-15 are used
 };
 
-//DUT measurements
-typedef std::pair<int, int> PinPair;
-class DeviceProperties
-{
-public:
-
-	/*
-	//Map from (src, dst) pin to delay tuple
-	typedef std::map<PinPair, DelayPair> IODelayMap;
-
-	//Map from drive strength to delay tuples
-	std::map<Greenpak4IOB::DriveStrength, IODelayMap> ioDelays;
-	*/
-};
-
-/*
-//Delays from FPGA to DUT, one way, per pin
-//TODO: DelayPair for these
-
-//Delays within the device for input/output buffers
-//Map from (src, dst) to delay
-map<pair<int, int>, CellDelay> g_pinToPinDelaysX1;
-map<pair<int, int>, CellDelay> g_pinToPinDelaysX2;
-//TODO: x4 drive strength
-
-//Delay through each cross connection
-DelayPair g_eastXconnDelays[10];
-DelayPair g_westXconnDelays[10];
-
-//Propagation delay through each LUT to the output
-map<Greenpak4LUT*, CellDelay> g_lutDelays;
-*/
-
 #endif

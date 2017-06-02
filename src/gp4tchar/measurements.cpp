@@ -26,6 +26,14 @@ Greenpak4Device::GREENPAK4_PART part = Greenpak4Device::GREENPAK4_SLG46620;
 Greenpak4IOB::PullDirection unused_pull = Greenpak4IOB::PULL_DOWN;
 Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
 
+/**
+	@brief The "calibration device"
+
+	We never actually modify the netlist or create a bitstream from this. It's just a convenient repository to put
+	timing data in before we serialize to disk.
+ */
+Greenpak4Device g_calDevice(part, unused_pull, unused_drive);
+
 bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& value);
 bool MeasureCrossConnectionDelay(
 	Socket& sock,
