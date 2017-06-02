@@ -308,12 +308,36 @@ impl PARGraph {
     }
 }
 
-pub struct PAREngine<'a> {
-    ffi_engine: *mut c_void,
-    _marker: PhantomData<&'a ()>,
+pub trait PAREngineImpl<'a> {
+    fn set_base_engine<'b: 'a>(&'a mut self, base_engine: &'b mut BasePAREngine);
+
+    // Overloads
+    fn sanity_check(&self) -> bool;
 }
 
-impl<'a> Drop for PAREngine<'a> {
+pub struct BasePAREngine (
+    UnsafeCell<()>
+);
+
+impl<'a> PAREngineImpl<'a> for BasePAREngine {
+    fn set_base_engine<'b: 'a>(&'a mut self, _: &'b mut BasePAREngine) {}
+
+    fn sanity_check(&self) -> bool {
+        unsafe {
+            ffi::xbpar_PAREngine_base_SanityCheck(self as *const BasePAREngine as *const c_void) != 0
+        }
+    }
+}
+
+pub struct PAREngine<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> {
+    ffi_engine: *mut c_void,
+    inner_impl: *mut T,
+    _marker1: PhantomData<&'a ()>,
+    _marker2: PhantomData<&'b ()>,
+    _marker3: PhantomData<&'c mut T>,
+}
+
+impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> Drop for PAREngine<'a, 'b, 'c, T> {
     fn drop(&mut self) {
         unsafe {
             ffi::xbpar_PAREngine_Destroy(self.ffi_engine);
@@ -321,28 +345,39 @@ impl<'a> Drop for PAREngine<'a> {
     }
 }
 
-impl<'a> PAREngine<'a> {
-    pub fn new(netlist: &'a mut PARGraph, device: &'a mut PARGraph) -> PAREngine<'a> {
+impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
+    pub fn new(inner_impl: T, netlist: &'a mut PARGraph, device: &'b mut PARGraph) -> Self {
         unsafe {
+            let boxed_impl = Box::into_raw(Box::new(inner_impl));
+
+            let ffi_engine = ffi::xbpar_PAREngine_Create(
+                boxed_impl as *mut c_void,
+                netlist.ffi_graph, device.ffi_graph,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                Some(PAREngine::<T>::sanity_check),
+                None,
+                None,
+                None,
+                None,
+                None);
+
+            (*boxed_impl).set_base_engine(&mut*(ffi_engine as *mut BasePAREngine));
+
             PAREngine {
-                ffi_engine: ffi::xbpar_PAREngine_Create(std::ptr::null_mut(), netlist.ffi_graph, device.ffi_graph,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None),
-                _marker: PhantomData,
+                ffi_engine: ffi_engine,
+                inner_impl: boxed_impl,
+                _marker1: PhantomData,
+                _marker2: PhantomData,
+                _marker3: PhantomData,
             }
         }
     }
@@ -357,5 +392,10 @@ impl<'a> PAREngine<'a> {
         unsafe {
             ffi::xbpar_PAREngine_ComputeCost(self.ffi_engine)
         }
+    }
+
+    // Overloads
+    unsafe extern "C" fn sanity_check(ffiengine: *mut c_void) -> i32 {
+        (*(ffiengine as *mut T)).sanity_check() as i32
     }
 }

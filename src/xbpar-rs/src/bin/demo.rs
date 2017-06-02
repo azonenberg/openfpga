@@ -22,6 +22,21 @@ use xbpar_rs::*;
 use std::collections::HashMap;
 use std::ptr;
 
+struct TrivialPAREngine<'a> {
+    base_engine: Option<&'a mut BasePAREngine>,
+}
+
+impl<'a> PAREngineImpl<'a> for TrivialPAREngine<'a> {
+    fn set_base_engine<'b: 'a>(&'a mut self, base_engine: &'b mut BasePAREngine) {
+        self.base_engine = Some(base_engine);
+    }
+
+    fn sanity_check(&self) -> bool {
+        println!("sanity_check");
+        self.base_engine.as_ref().unwrap().sanity_check()
+    }
+}
+
 fn main() {
     // Create a device graph with four nodes, two of type A and two of type B
     // Create a netlist graph with two nodes, one of type A and one of type B
@@ -74,7 +89,10 @@ fn main() {
     }
 
     // Do the thing!
-    let mut engine_obj = PAREngine::new(&mut ngraph, &mut dgraph);
+    let engine_impl = TrivialPAREngine {
+        base_engine: None,
+    };
+    let mut engine_obj = PAREngine::new(engine_impl, &mut ngraph, &mut dgraph);
     if !engine_obj.place_and_route(0) {
         panic!("PAR failed!");
     }
