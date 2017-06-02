@@ -23,21 +23,23 @@ mod ffi {
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
+use std::cell::UnsafeCell;
 use std::marker::PhantomData;
 use std::os::raw::*;
 use std::slice;
 use std::str;
 
-pub struct PARGraphEdge<'a> {
-    ffi_edge: *const c_void,
-    _marker: PhantomData<&'a ()>,
-}
+pub struct PARGraphEdge(
+    // <eddyb> it prevents the compiler from assuming there can only be truly immutable data inside
+    UnsafeCell<()>
+);
 
-impl<'a> PARGraphEdge<'a> {
+impl PARGraphEdge {
     pub fn sourceport(&self) -> String {
         unsafe {
             let mut str_len: usize = 0;
-            let str_ptr = ffi::xbpar_PARGraphEdge_get_sourceport(self.ffi_edge, &mut str_len);
+            let str_ptr = ffi::xbpar_PARGraphEdge_get_sourceport(
+                self as *const PARGraphEdge as *const c_void, &mut str_len);
             let str_slice = slice::from_raw_parts(str_ptr as *const u8, str_len);
             let str_str = str::from_utf8(str_slice).unwrap();
             str_str.to_owned()
@@ -47,132 +49,162 @@ impl<'a> PARGraphEdge<'a> {
     pub fn destport(&self) -> String {
         unsafe {
             let mut str_len: usize = 0;
-            let str_ptr = ffi::xbpar_PARGraphEdge_get_destport(self.ffi_edge, &mut str_len);
+            let str_ptr = ffi::xbpar_PARGraphEdge_get_destport(
+                self as *const PARGraphEdge as *const c_void, &mut str_len);
             let str_slice = slice::from_raw_parts(str_ptr as *const u8, str_len);
             let str_str = str::from_utf8(str_slice).unwrap();
             str_str.to_owned()
         }
     }
 
-    pub fn sourcenode(&'a self) -> PARGraphNode<'a> {
+    pub fn sourcenode(&self) -> &PARGraphNode {
         unsafe {
-            PARGraphNode {
-                ffi_node: ffi::xbpar_PARGraphEdge_get_sourcenode(self.ffi_edge),
-                _marker: PhantomData,
-            }
+            &*(ffi::xbpar_PARGraphEdge_get_sourcenode(self as *const PARGraphEdge as *const c_void)
+                as *const PARGraphNode)
         }
     }
 
-    pub fn destnode(&'a self) -> PARGraphNode<'a> {
+    pub fn destnode(&self) -> &PARGraphNode {
         unsafe {
-            PARGraphNode {
-                ffi_node: ffi::xbpar_PARGraphEdge_get_destnode(self.ffi_edge),
-                _marker: PhantomData,
-            }
+            &*(ffi::xbpar_PARGraphEdge_get_destnode(self as *const PARGraphEdge as *const c_void)
+                as *const PARGraphNode)
+        }
+    }
+
+    // We need to take in a &mut in order to hand out a &mut
+    pub fn sourcenode_mut(&mut self) -> &mut PARGraphNode {
+        unsafe {
+            &mut*(ffi::xbpar_PARGraphEdge_get_sourcenode(self as *const PARGraphEdge as *const c_void)
+                as *mut PARGraphNode)
+        }
+    }
+
+    pub fn destnode_mut(&mut self) -> &mut PARGraphNode {
+        unsafe {
+            &mut*(ffi::xbpar_PARGraphEdge_get_destnode(self as *const PARGraphEdge as *const c_void)
+                as *mut PARGraphNode)
         }
     }
 }
 
 // We are never actually allowed to own the C++ PARGraphNode object, so we never have to drop it here on the Rust side
-pub struct PARGraphNode<'a> {
-    ffi_node: *mut c_void,
-    _marker: PhantomData<&'a ()>,
-}
+pub struct PARGraphNode (
+    UnsafeCell<()>
+);
 
-impl<'a> PARGraphNode<'a> {
-    pub fn mate_with(&'a mut self, mate: &'a PARGraphNode) {
+impl PARGraphNode {
+    // We need two &mut for this. Because of how PARGraph will be implemented, we can only give out one single
+    // &mut per graph at a time, so this makes sure the mate is in a different graph.
+    pub fn mate_with<'a>(&'a mut self, mate: &'a mut PARGraphNode) {
         unsafe {
-            ffi::xbpar_PARGraphNode_MateWith(self.ffi_node, mate.ffi_node);
+            ffi::xbpar_PARGraphNode_MateWith(self as *mut PARGraphNode as *mut c_void,
+                mate as *mut PARGraphNode as *mut c_void);
         }
     }
 
-    pub fn get_mate(&'a self) -> PARGraphNode<'a> {
+    pub fn get_mate(&self) -> &PARGraphNode {
         unsafe {
-            PARGraphNode {
-                ffi_node: ffi::xbpar_PARGraphNode_GetMate(self.ffi_node),
-                _marker: PhantomData,
-            }
+            &*(ffi::xbpar_PARGraphNode_GetMate(self as *const PARGraphNode as *const c_void) as *const PARGraphNode)
+        }
+    }
+
+    pub fn get_mate_mut(&mut self) -> &mut PARGraphNode {
+        unsafe {
+            &mut*(ffi::xbpar_PARGraphNode_GetMate(self as *const PARGraphNode as *const c_void) as *mut PARGraphNode)
         }
     }
 
     pub fn relabel(&mut self, label: u32) {
         unsafe {
-            ffi::xbpar_PARGraphNode_Relabel(self.ffi_node, label);
+            ffi::xbpar_PARGraphNode_Relabel(self as *mut PARGraphNode as *mut c_void, label);
         }
     }
 
     pub fn get_label(&self) -> u32 {
         unsafe {
-            ffi::xbpar_PARGraphNode_GetLabel(self.ffi_node)
+            ffi::xbpar_PARGraphNode_GetLabel(self as *const PARGraphNode as *const c_void)
         }
     }
 
     pub fn get_data_pointer_raw(&self) -> *mut c_void {
         unsafe {
-            ffi::xbpar_PARGraphNode_GetData(self.ffi_node)
+            ffi::xbpar_PARGraphNode_GetData(self as *const PARGraphNode as *const c_void)
         }
     }
 
     pub fn add_alternate_label(&mut self, alt: u32) {
         unsafe {
-            ffi::xbpar_PARGraphNode_AddAlternateLabel(self.ffi_node, alt);
+            ffi::xbpar_PARGraphNode_AddAlternateLabel(self as *mut PARGraphNode as *mut c_void, alt);
         }
     }
 
     pub fn get_alternate_label_count(&self) -> u32 {
         unsafe {
-            ffi::xbpar_PARGraphNode_GetAlternateLabelCount(self.ffi_node)
+            ffi::xbpar_PARGraphNode_GetAlternateLabelCount(self as *const PARGraphNode as *const c_void)
         }
     }
 
     pub fn get_alternate_label(&self, i: u32) -> u32 {
         unsafe {
-            ffi::xbpar_PARGraphNode_GetAlternateLabel(self.ffi_node, i)
+            ffi::xbpar_PARGraphNode_GetAlternateLabel(self as *const PARGraphNode as *const c_void, i)
         }
     }
 
     pub fn matches_label(&self, target: u32) -> bool {
         unsafe {
-            ffi::xbpar_PARGraphNode_MatchesLabel(self.ffi_node, target) != 0
+            ffi::xbpar_PARGraphNode_MatchesLabel(self as *const PARGraphNode as *const c_void, target) != 0
         }
     }
 
     pub fn get_edge_count(&self) -> u32 {
         unsafe {
-            ffi::xbpar_PARGraphNode_GetEdgeCount(self.ffi_node)
+            ffi::xbpar_PARGraphNode_GetEdgeCount(self as *const PARGraphNode as *const c_void)
         }
     }
 
-    pub fn get_edge_by_index(&'a self, index: u32) -> PARGraphEdge<'a> {
+    pub fn get_edge_by_index(&self, index: u32) -> &PARGraphEdge {
         unsafe {
-            PARGraphEdge {
-                ffi_edge: ffi::xbpar_PARGraphNode_GetEdgeByIndex(self.ffi_node, index),
-                _marker: PhantomData,
-            }
+            &*(ffi::xbpar_PARGraphNode_GetEdgeByIndex(
+                self as *const PARGraphNode as *const c_void, index) as *const PARGraphEdge)
         }
     }
 
-    pub fn add_edge(&'a mut self, srcport: &str, sink: PARGraphNode<'a>, dstport: &str) {
+    // Careful careful: We are handing out a &mut edge so that we can get &mut nodes back out of that
+    // but the object we have from C is actually const. This is "safe" because there aren't actually any methods we
+    // can call to mutate edges
+    pub fn get_edge_by_index_mut(&mut self, index: u32) -> &mut PARGraphEdge {
         unsafe {
-            ffi::xbpar_PARGraphNode_AddEdge(self.ffi_node, srcport.as_ptr() as *const i8, srcport.len(),
-                sink.ffi_node, dstport.as_ptr() as *const i8, dstport.len());
+            &mut*(ffi::xbpar_PARGraphNode_GetEdgeByIndex(
+                self as *const PARGraphNode as *const c_void, index) as *mut PARGraphEdge)
         }
     }
 
-    pub fn remove_edge(&'a mut self, srcport: &str, sink: PARGraphNode<'a>, dstport: &str) {
+    // Careful careful: sink isn't a &mut, but it turns into a mutable pointer. This should be safe because we know
+    // the object was "originally" mutable.
+    pub fn add_edge<'a, 'b, 'c>(&'a mut self, srcport: &'b str, sink: &'a PARGraphNode, dstport: &'c str) {
         unsafe {
-            ffi::xbpar_PARGraphNode_RemoveEdge(self.ffi_node, srcport.as_ptr() as *const i8, srcport.len(),
-                sink.ffi_node, dstport.as_ptr() as *const i8, dstport.len());
+            ffi::xbpar_PARGraphNode_AddEdge(self as *mut PARGraphNode as *mut c_void,
+                srcport.as_ptr() as *const i8, srcport.len(),
+                sink as *const PARGraphNode as *mut c_void,
+                dstport.as_ptr() as *const i8, dstport.len());
+        }
+    }
+
+    pub fn remove_edge<'a, 'b, 'c>(&'a mut self, srcport: &'b str, sink: &'a PARGraphNode, dstport: &'c str) {
+        unsafe {
+            ffi::xbpar_PARGraphNode_RemoveEdge(self as *mut PARGraphNode as *mut c_void,
+                srcport.as_ptr() as *const i8, srcport.len(),
+                sink as *const PARGraphNode as *mut c_void,
+                dstport.as_ptr() as *const i8, dstport.len());
         }
     }
 }
 
-pub struct PARGraph<'a> {
+pub struct PARGraph {
     ffi_graph: *mut c_void,
-    _marker: PhantomData<&'a ()>,
 }
 
-impl<'a> Drop for PARGraph<'a> {
+impl Drop for PARGraph {
     fn drop(&mut self) {
         unsafe {
             ffi::xbpar_PARGraph_Destroy(self.ffi_graph);
@@ -180,12 +212,11 @@ impl<'a> Drop for PARGraph<'a> {
     }
 }
 
-impl<'a> PARGraph<'a> {
+impl PARGraph {
     pub fn new() -> Self {
         unsafe {
             PARGraph {
                 ffi_graph: ffi::xbpar_PARGraph_Create(),
-                _marker: PhantomData,
             }
         }
     }
@@ -214,12 +245,15 @@ impl<'a> PARGraph<'a> {
         }
     }
 
-    pub fn get_node_by_label_and_index(&'a self, label: u32, index: u32) -> PARGraphNode<'a> {
+    pub fn get_node_by_label_and_index(&self, label: u32, index: u32) -> &PARGraphNode {
         unsafe {
-            PARGraphNode {
-                ffi_node: ffi::xbpar_PARGraph_GetNodeByLabelAndIndex(self.ffi_graph, label, index),
-                _marker: PhantomData,
-            }
+            &*(ffi::xbpar_PARGraph_GetNodeByLabelAndIndex(self.ffi_graph, label, index) as *const PARGraphNode)
+        }
+    }
+
+    pub fn get_node_by_label_and_index_mut(&mut self, label: u32, index: u32) -> &mut PARGraphNode {
+        unsafe {
+            &mut*(ffi::xbpar_PARGraph_GetNodeByLabelAndIndex(self.ffi_graph, label, index) as *mut PARGraphNode)
         }
     }
 
@@ -229,12 +263,15 @@ impl<'a> PARGraph<'a> {
         }
     }
 
-    pub fn get_node_by_index(&'a self, index: u32) -> PARGraphNode<'a> {
+    pub fn get_node_by_index(&self, index: u32) -> &PARGraphNode {
         unsafe {
-            PARGraphNode {
-                ffi_node: ffi::xbpar_PARGraph_GetNodeByIndex(self.ffi_graph, index),
-                _marker: PhantomData,
-            }
+            &*(ffi::xbpar_PARGraph_GetNodeByIndex(self.ffi_graph, index) as *const PARGraphNode)
+        }
+    }
+
+    pub fn get_node_by_index_mut(&mut self, index: u32) -> &mut PARGraphNode {
+        unsafe {
+            &mut*(ffi::xbpar_PARGraph_GetNodeByIndex(self.ffi_graph, index) as *mut PARGraphNode)
         }
     }
 
@@ -244,16 +281,13 @@ impl<'a> PARGraph<'a> {
         }
     }
 
-    pub fn add_new_node(&'a mut self, label: u32, p_data: *mut c_void) -> PARGraphNode<'a> {
+    pub fn add_new_node(&mut self, label: u32, p_data: *mut c_void) -> &mut PARGraphNode {
         unsafe {
             let ffi_node = ffi::xbpar_PARGraphNode_Create(label, p_data);
             // This transfers ownership to the graph
             ffi::xbpar_PARGraph_AddNode(self.ffi_graph, ffi_node);
 
-            PARGraphNode {
-                ffi_node: ffi_node,
-                _marker: PhantomData,
-            }
+            &mut*(ffi_node as *mut PARGraphNode)
         }
     }
 }
@@ -272,7 +306,7 @@ impl<'a> Drop for PAREngine<'a> {
 }
 
 impl<'a> PAREngine<'a> {
-    pub fn new(netlist: &'a mut PARGraph<'a>, device: &'a mut PARGraph<'a>) -> PAREngine<'a> {
+    pub fn new(netlist: &'a mut PARGraph, device: &'a mut PARGraph) -> PAREngine<'a> {
         unsafe {
             PAREngine {
                 ffi_engine: ffi::xbpar_PAREngine_Create(std::ptr::null_mut(), netlist.ffi_graph, device.ffi_graph,
