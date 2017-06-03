@@ -307,7 +307,7 @@ void Greenpak4BitstreamEntity::PrintExtraTimingData(PTVCorner /*corner*/) const
 }
 
 /**
-	@brief Writes our parent data
+	@brief Writes the metadata around our actual timing numbers
  */
 void Greenpak4BitstreamEntity::SaveTimingData(FILE* fp, bool last)
 {
@@ -326,9 +326,9 @@ void Greenpak4BitstreamEntity::SaveTimingData(FILE* fp, bool last)
 			fprintf(fp, "            \"temp\" : \"%d\",\n", corner.GetTemp());
 			fprintf(fp, "            \"voltage_mv\" : \"%d\",\n", corner.GetVoltage());
 
-			fprintf(fp, "            \"delays\" :\n            {\n");
+			fprintf(fp, "            \"delays\" :\n            [\n");
 			SaveTimingData(fp, corner);
-			fprintf(fp, "            }\n");
+			fprintf(fp, "            ]\n");
 
 			//key is last element, we're done
 			if(it.first == end->first)
@@ -344,6 +344,31 @@ void Greenpak4BitstreamEntity::SaveTimingData(FILE* fp, bool last)
 		fprintf(fp, "    ],\n");
 }
 
+/**
+	@brief Write the timing numbers
+ */
 void Greenpak4BitstreamEntity::SaveTimingData(FILE* fp, PTVCorner corner)
 {
+	auto& map = m_pinToPinDelays[corner];
+	if(map.empty())
+		return;
+
+	auto end = map.end();
+	end--;
+	for(auto it : map)
+	{
+		auto pins = it.first;
+		auto delay = it.second;
+		fprintf(fp, "                {\n");
+		fprintf(fp, "                    \"type\" : \"propagation\",\n");
+		fprintf(fp, "                    \"from\" : \"%s\",\n", pins.first.c_str());
+		fprintf(fp, "                    \"to\" : \"%s\",\n", pins.second.c_str());
+		fprintf(fp, "                    \"rising\" : \"%f\",\n", delay.m_rising);
+		fprintf(fp, "                    \"falling\" : \"%f\"\n", delay.m_falling);
+
+		if(it.first == end->first)
+			fprintf(fp, "                }\n");
+		else
+			fprintf(fp, "                },\n");
+	}
 }

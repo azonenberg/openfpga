@@ -207,6 +207,8 @@ protected:
 
 	//Output propagation delay depends on drive strength
 	std::map< DriveCondition, CombinatorialDelay > m_outputDelays;
+
+	virtual void SaveTimingData(FILE* fp, PTVCorner corner);
 };
 
 #endif

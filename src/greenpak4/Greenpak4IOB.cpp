@@ -345,3 +345,54 @@ bool Greenpak4IOB::GetCombinatorialDelay(
 	//Default: return base class info
 	return Greenpak4BitstreamEntity::GetCombinatorialDelay(srcport, dstport, corner, delay);
 }
+
+void Greenpak4IOB::SaveTimingData(FILE* fp, PTVCorner corner)
+{
+	if(m_schmittTriggerDelays.find(corner) != m_schmittTriggerDelays.end())
+	{
+		//Schmitt trigger delays
+		fprintf(fp, "                {\n");
+		fprintf(fp, "                    \"type\" : \"schmitt\",\n");
+		auto sd = m_schmittTriggerDelays[corner];
+		fprintf(fp, "                    \"rising\" : \"%f\",\n", sd.m_rising);
+		fprintf(fp, "                    \"falling\" : \"%f\"\n", sd.m_falling);
+		fprintf(fp, "                },\n");
+	}
+
+	//Output buffer delays
+	for(auto it : m_outputDelays)
+	{
+		auto cond = it.first;
+		auto delay = it.second;
+		if(cond.second != corner)
+			continue;
+
+		auto drive = cond.first;
+		int d;
+		switch(drive)
+		{
+			case DRIVE_4X:
+				d = 4;
+				break;
+
+			case DRIVE_2X:
+				d = 2;
+				break;
+
+			case DRIVE_1X:
+			default:
+				d = 1;
+				break;
+		}
+
+		fprintf(fp, "                {\n");
+		fprintf(fp, "                    \"type\" : \"obuf\",\n");
+		fprintf(fp, "                    \"drive\" : \"%d\",\n", d);
+		fprintf(fp, "                    \"rising\" : \"%f\",\n", delay.m_rising);
+		fprintf(fp, "                    \"falling\" : \"%f\"\n", delay.m_falling);
+		fprintf(fp, "                },\n");
+	}
+
+	//do base class at end
+	Greenpak4BitstreamEntity::SaveTimingData(fp, corner);
+}
