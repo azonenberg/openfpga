@@ -504,7 +504,7 @@ int xbpar_PAREngine_PlaceAndRoute(PAREngine* engine, uint32_t seed)
 
 uint32_t xbpar_PAREngine_ComputeCost(const PAREngine* engine)
 {
-	return ((FFIPAREngine*)engine)->ComputeCost();
+	return ((const FFIPAREngine*)engine)->ComputeCost();
 }
 
 void xbpar_PAREngine_MoveNode(PAREngine* engine, PARGraphNode* node, PARGraphNode* newpos)
@@ -514,7 +514,7 @@ void xbpar_PAREngine_MoveNode(PAREngine* engine, PARGraphNode* node, PARGraphNod
 
 char* xbpar_PAREngine_GetNodeTypes(const PAREngine* engine, const PARGraphNode* node, size_t* len)
 {
-	auto ret_str = ((FFIPAREngine*)engine)->base_GetNodeTypes(node);
+	auto ret_str = ((const FFIPAREngine*)engine)->base_GetNodeTypes(node);
 	*len = ret_str.length();
 	auto ret_ptr = (char*)malloc(ret_str.length());
 	memcpy(ret_ptr, ret_str.c_str(), ret_str.length());
@@ -539,14 +539,14 @@ uint32_t xbpar_PAREngine_RandomNumber(PAREngine* engine)
 int xbpar_PAREngine_base_CanMoveNode(const PAREngine* engine, const PARGraphNode* node,
 	const PARGraphNode* old_mate, const PARGraphNode* new_mate)
 {
-	return ((FFIPAREngine*)engine)->base_CanMoveNode(node, old_mate, new_mate);
+	return ((const FFIPAREngine*)engine)->base_CanMoveNode(node, old_mate, new_mate);
 }
 
 uint32_t xbpar_PAREngine_base_ComputeAndPrintScore(const PAREngine* engine,
 	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len, uint32_t iteration)
 {
 	auto unroutes = std::vector<const PARGraphEdge*>();
-	auto ret = ((FFIPAREngine*)engine)->base_ComputeAndPrintScore(unroutes, iteration);
+	auto ret = ((const FFIPAREngine*)engine)->base_ComputeAndPrintScore(unroutes, iteration);
 	VECTOR_INTO_PTR_LEN(unroutes);
 	return ret;
 }
@@ -556,31 +556,31 @@ void xbpar_PAREngine_base_PrintUnroutes(const PAREngine* engine,
 {
 	auto unroutes = std::vector<const PARGraphEdge*>();
 	PTR_LEN_INTO_VECTOR(unroutes);
-	return ((FFIPAREngine*)engine)->base_PrintUnroutes(unroutes);
+	return ((const FFIPAREngine*)engine)->base_PrintUnroutes(unroutes);
 }
 
 uint32_t xbpar_PAREngine_base_ComputeCongestionCost(const PAREngine* engine)
 {
-	return ((FFIPAREngine*)engine)->base_ComputeCongestionCost();
+	return ((const FFIPAREngine*)engine)->base_ComputeCongestionCost();
 }
 
 uint32_t xbpar_PAREngine_base_ComputeTimingCost(const PAREngine* engine)
 {
-	return ((FFIPAREngine*)engine)->base_ComputeTimingCost();
+	return ((const FFIPAREngine*)engine)->base_ComputeTimingCost();
 }
 
 uint32_t xbpar_PAREngine_base_ComputeUnroutableCost(const PAREngine* engine,
 	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len)
 {
 	auto unroutes = std::vector<const PARGraphEdge*>();
-	auto ret = ((FFIPAREngine*)engine)->base_ComputeUnroutableCost(unroutes);
+	auto ret = ((const FFIPAREngine*)engine)->base_ComputeUnroutableCost(unroutes);
 	VECTOR_INTO_PTR_LEN(unroutes);
 	return ret;
 }
 
 int xbpar_PAREngine_base_SanityCheck(const PAREngine* engine)
 {
-	return ((FFIPAREngine*)engine)->base_SanityCheck();
+	return ((const FFIPAREngine*)engine)->base_SanityCheck();
 }
 
 int xbpar_PAREngine_base_InitialPlacement(PAREngine* engine)
@@ -599,15 +599,15 @@ int xbpar_PAREngine_base_OptimizePlacement(PAREngine* engine,
 uint32_t xbpar_PAREngine_base_ComputeNodeUnroutableCost(const PAREngine* engine,
 	const PARGraphNode* pivot, const PARGraphNode* candidate)
 {
-	return ((FFIPAREngine*)engine)->base_ComputeNodeUnroutableCost(pivot, candidate);
+	return ((const FFIPAREngine*)engine)->base_ComputeNodeUnroutableCost(pivot, candidate);
 }
 
 PARGraph* xbpar_PAREngine_base_get_m_netlist(const PAREngine* engine)
 {
-	return ((FFIPAREngine*)engine)->get_m_netlist();
+	return ((const FFIPAREngine*)engine)->get_m_netlist();
 }
 
 PARGraph* xbpar_PAREngine_base_get_m_device(const PAREngine* engine)
 {
-	return ((FFIPAREngine*)engine)->get_m_device();
+	return ((const FFIPAREngine*)engine)->get_m_device();
 }
