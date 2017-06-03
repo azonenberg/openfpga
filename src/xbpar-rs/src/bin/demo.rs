@@ -43,7 +43,7 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g> for TrivialPAREngine<'e> {
     fn get_new_placement_for_node(&'e mut self, pivot: &'g PARGraphNode) -> Option<&'g PARGraphNode> {
         println!("get_new_placement_for_node");
         let base_engine = self.base_engine.as_mut().unwrap();
-        let m_device = base_engine.get_m_device();
+        let m_device = base_engine.get_graphs().0;
 
         let label = pivot.get_label();
 
@@ -196,45 +196,44 @@ fn main() {
     // Create a netlist graph with two nodes, one of type A and one of type B
 
     // The graphs
-    let mut dgraph = PARGraph::new();
-    let mut ngraph = PARGraph::new();
+    let mut graphs = PARGraphPair::new_pair();
 
     // Labels
-    let typea_label_d = dgraph.allocate_label();
-    let typea_label_n = ngraph.allocate_label();
+    let typea_label_d = graphs.borrow_mut_0().allocate_label();
+    let typea_label_n = graphs.borrow_mut_1().allocate_label();
     assert_eq!(typea_label_d, typea_label_n);
-    let typeb_label_d = dgraph.allocate_label();
-    let typeb_label_n = ngraph.allocate_label();
+    let typeb_label_d = graphs.borrow_mut_0().allocate_label();
+    let typeb_label_n = graphs.borrow_mut_1().allocate_label();
     assert_eq!(typeb_label_d, typeb_label_n);
     let mut label_map = HashMap::new();
     label_map.insert(typea_label_d, "Type A node");
     label_map.insert(typeb_label_d, "Type B node");
 
     // Device graph
-    let d_type_a_1 = dgraph.add_new_node(typea_label_d, ptr::null_mut());
-    let d_type_a_2 = dgraph.add_new_node(typea_label_d, ptr::null_mut());
-    let d_type_b_1 = dgraph.add_new_node(typeb_label_d, ptr::null_mut());
-    let d_type_b_2 = dgraph.add_new_node(typeb_label_d, ptr::null_mut());
+    let d_type_a_1 = graphs.borrow_mut_0().add_new_node(typea_label_d, ptr::null_mut());
+    let d_type_a_2 = graphs.borrow_mut_0().add_new_node(typea_label_d, ptr::null_mut());
+    let d_type_b_1 = graphs.borrow_mut_0().add_new_node(typeb_label_d, ptr::null_mut());
+    let d_type_b_2 = graphs.borrow_mut_0().add_new_node(typeb_label_d, ptr::null_mut());
 
     println!("Device A1 is: {:?}",
-        dgraph.get_node_by_index(d_type_a_1) as *const PARGraphNode);
+        graphs.borrow().0.get_node_by_index(d_type_a_1) as *const PARGraphNode);
     println!("Device A2 is: {:?}",
-        dgraph.get_node_by_index(d_type_a_2) as *const PARGraphNode);
+        graphs.borrow().0.get_node_by_index(d_type_a_2) as *const PARGraphNode);
     println!("Device B1 is: {:?}",
-        dgraph.get_node_by_index(d_type_b_1) as *const PARGraphNode);
+        graphs.borrow().0.get_node_by_index(d_type_b_1) as *const PARGraphNode);
     println!("Device B2 is: {:?}",
-        dgraph.get_node_by_index(d_type_b_2) as *const PARGraphNode);
+        graphs.borrow().0.get_node_by_index(d_type_b_2) as *const PARGraphNode);
 
-    dgraph.add_edge(d_type_a_1, "A to B", d_type_b_1, "B to A");
-    dgraph.add_edge(d_type_a_1, "A to B", d_type_b_2, "B to A");
-    dgraph.add_edge(d_type_a_2, "A to B", d_type_b_1, "B to A");
-    dgraph.add_edge(d_type_a_2, "A to B", d_type_b_2, "B to A");
+    graphs.borrow_mut_0().add_edge(d_type_a_1, "A to B", d_type_b_1, "B to A");
+    graphs.borrow_mut_0().add_edge(d_type_a_1, "A to B", d_type_b_2, "B to A");
+    graphs.borrow_mut_0().add_edge(d_type_a_2, "A to B", d_type_b_1, "B to A");
+    graphs.borrow_mut_0().add_edge(d_type_a_2, "A to B", d_type_b_2, "B to A");
 
     // Netlist graph
-    let n_type_a_1 = ngraph.add_new_node(typea_label_d, ptr::null_mut());
-    let n_type_b_1 = ngraph.add_new_node(typeb_label_d, ptr::null_mut());
+    let n_type_a_1 = graphs.borrow_mut_1().add_new_node(typea_label_d, ptr::null_mut());
+    let n_type_b_1 = graphs.borrow_mut_1().add_new_node(typeb_label_d, ptr::null_mut());
 
-    ngraph.add_edge(n_type_a_1, "A to B", n_type_b_1, "B to A");
+    graphs.borrow_mut_1().add_edge(n_type_a_1, "A to B", n_type_b_1, "B to A");
 
     // Do the thing!
     {
@@ -242,7 +241,7 @@ fn main() {
             base_engine: None,
             label_map: label_map,
         };
-        let mut engine_obj = PAREngine::new(engine_impl, &mut ngraph, &mut dgraph);
+        let mut engine_obj = PAREngine::new(engine_impl, &mut graphs);
         if !engine_obj.place_and_route(0) {
             panic!("PAR failed!");
         }
@@ -250,7 +249,7 @@ fn main() {
 
     // Print out
     println!("Netlist A mate is: {:?}",
-        ngraph.get_node_by_index(n_type_a_1).get_mate().unwrap() as *const PARGraphNode);
+        graphs.borrow().1.get_node_by_index(n_type_a_1).get_mate().unwrap() as *const PARGraphNode);
     println!("Netlist B mate is: {:?}",
-        ngraph.get_node_by_index(n_type_b_1).get_mate().unwrap() as *const PARGraphNode);
+        graphs.borrow().1.get_node_by_index(n_type_b_1).get_mate().unwrap() as *const PARGraphNode);
 }

@@ -212,16 +212,6 @@ pub struct PARGraph {
     ffi_graph: *mut c_void,
 }
 
-impl PARGraph {
-    pub fn new() -> PARGraph {
-        unsafe {
-            PARGraph {
-                ffi_graph: ffi::xbpar_PARGraph_Create(),
-            }
-        }
-    }
-}
-
 impl Deref for PARGraph {
     type Target = PARGraph_;
 
@@ -248,10 +238,40 @@ impl Drop for PARGraph {
     }
 }
 
-// XXX this is weird
 pub struct PARGraph_ (
     UnsafeCell<()>
 );
+
+// Having this helps prevent crossing nodes between arbitrary and definitely wrong graphs
+pub struct PARGraphPair(PARGraph, PARGraph);
+type PARGraphRefPair<'a> = (&'a PARGraph_, &'a PARGraph_);
+
+impl PARGraphPair {
+    pub fn new_pair() -> PARGraphPair {
+        unsafe {
+            PARGraphPair(
+                PARGraph {
+                    ffi_graph: ffi::xbpar_PARGraph_Create(),
+                },
+                PARGraph {
+                    ffi_graph: ffi::xbpar_PARGraph_Create(),
+                }
+            )
+        }
+    }
+
+    pub fn borrow(&self) -> PARGraphRefPair {
+        (&self.0, &self.1)
+    }
+
+    pub fn borrow_mut_0(&mut self) -> &mut PARGraph_ {
+        &mut self.0
+    }
+
+    pub fn borrow_mut_1(&mut self) -> &mut PARGraph_ {
+        &mut self.1
+    }
+}
 
 impl PARGraph_ {
     pub fn allocate_label(&mut self) -> u32 {
@@ -489,17 +509,14 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g> for BasePAREngine {
 }
 
 impl<'e, 'g: 'e> BasePAREngine {
-    pub fn get_m_netlist(&'e self) -> &'g PARGraph_ {
+    pub fn get_graphs(&'e self) -> (&'g PARGraph_, &'g PARGraph_) {
         unsafe {
-            &*(ffi::xbpar_PAREngine_base_get_m_netlist(self as *const BasePAREngine as *const c_void)
-                as *const PARGraph_)
-        }
-    }
-
-    pub fn get_m_device(&'e self) -> &'g PARGraph_ {
-        unsafe {
-            &*(ffi::xbpar_PAREngine_base_get_m_device(self as *const BasePAREngine as *const c_void)
-                as *const PARGraph_)
+            (
+                &*(ffi::xbpar_PAREngine_base_get_m_device(self as *const BasePAREngine as *const c_void)
+                    as *const PARGraph_),
+                &*(ffi::xbpar_PAREngine_base_get_m_netlist(self as *const BasePAREngine as *const c_void)
+                    as *const PARGraph_)
+            )
         }
     }
 
@@ -551,13 +568,13 @@ impl<'e, 'g: 'e, T: 'e + PAREngineImpl<'e, 'g>> Drop for PAREngine<'e, 'g, T> {
 }
 
 impl<'e, 'g: 'e, T: 'e + PAREngineImpl<'e, 'g>> PAREngine<'e, 'g, T> {
-    pub fn new(inner_impl: T, netlist: &'g mut PARGraph, device: &'g mut PARGraph) -> Self {
+    pub fn new(inner_impl: T, graphs: &'g mut PARGraphPair) -> Self {
         unsafe {
             let boxed_impl = Box::into_raw(Box::new(inner_impl));
 
             let ffi_engine = ffi::xbpar_PAREngine_Create(
                 boxed_impl as *mut c_void,
-                netlist.ffi_graph, device.ffi_graph,
+                graphs.1.ffi_graph, graphs.0.ffi_graph,
                 Some(PAREngine::<T>::get_new_placement_for_node),
                 Some(PAREngine::<T>::find_suboptimal_placements),
                 Some(PAREngine::<T>::initial_placement_core),
