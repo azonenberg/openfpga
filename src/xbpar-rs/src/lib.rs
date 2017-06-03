@@ -369,38 +369,42 @@ impl PARGraph_ {
     }
 }
 
-pub trait PAREngineImpl<'a> {
-    fn set_base_engine<'b: 'a>(&'a mut self, base_engine: &'b mut BasePAREngine);
+// The graph objects that the engine needs to work on must always live at least as long as the engine. This needs to be
+// enforced on the trait itself because ??? (if you try to have it on each function separately, it will appear that
+// some functions need to return a lifetime longer than the lifetime of the engine impl and that is weird). All graph
+// lifetimes are the same because otherwise (more??) weird things can happen with mixing up different graphs???
+// self is always &mut here because it represents the Rust side state that we can always mutate rather than
+// representing the C++ state.
+pub trait PAREngineImpl<'e, 'g: 'e> {
+    fn set_base_engine(&'e mut self, base_engine: &'g mut BasePAREngine);
 
     // Overloads
-    // FIXME: I think these lifetimes are wrong
-    fn can_move_node(&'a mut self, node: &'a PARGraphNode,
-        old_mate: &'a PARGraphNode, new_mate: &'a PARGraphNode) -> bool;
-    fn get_new_placement_for_node(&'a mut self, pivot: &'a PARGraphNode) -> Option<&'a PARGraphNode>;
-    fn find_suboptimal_placements(&mut self) -> Vec<&PARGraphNode>;
-    fn compute_and_print_score(&mut self, iteration: u32) -> (u32, Vec<&PARGraphEdge>);
-    fn print_unroutes(&mut self, unroutes: &[&PARGraphEdge]);
+    fn can_move_node(&'e mut self, node: &'g PARGraphNode,
+        old_mate: &'g PARGraphNode, new_mate: &'g PARGraphNode) -> bool;
+    fn get_new_placement_for_node(&'e mut self, pivot: &'g PARGraphNode) -> Option<&'g PARGraphNode>;
+    fn find_suboptimal_placements(&'e mut self) -> Vec<&'g PARGraphNode>;
+    fn compute_and_print_score(&'e mut self, iteration: u32) -> (u32, Vec<&'g PARGraphEdge>);
+    fn print_unroutes(&'e mut self, unroutes: &[&'g PARGraphEdge]);
     fn compute_congestion_cost(&mut self) -> u32;
     fn compute_timing_cost(&mut self) -> u32;
-    fn compute_unroutable_cost(&mut self) -> (u32, Vec<&PARGraphEdge>);
+    fn compute_unroutable_cost(&'e mut self) -> (u32, Vec<&'g PARGraphEdge>);
     fn sanity_check(&mut self) -> bool;
     fn initial_placement(&mut self) -> bool;
     fn initial_placement_core(&mut self) -> bool;
-    fn optimize_placement(&mut self, badnodes: &[&PARGraphNode]) -> bool;
-    fn compute_node_unroutable_cost(&'a mut self, pivot: &'a PARGraphNode, candidate: &'a PARGraphNode) -> u32;
+    fn optimize_placement(&'e mut self, badnodes: &[&'g PARGraphNode]) -> bool;
+    fn compute_node_unroutable_cost(&'e mut self, pivot: &'g PARGraphNode, candidate: &'g PARGraphNode) -> u32;
     fn get_label_name(&mut self, label: u32) -> &str;
 }
 
-// FIXME: Does _this_ need a lifetime?
 pub struct BasePAREngine (
     UnsafeCell<()>
 );
 
-impl<'a> PAREngineImpl<'a> for BasePAREngine {
-    fn set_base_engine<'b: 'a>(&'a mut self, _: &'b mut BasePAREngine) {}
+impl<'e, 'g: 'e> PAREngineImpl<'e, 'g> for BasePAREngine {
+    fn set_base_engine(&'e mut self, _: &'g mut BasePAREngine) {}
 
-    fn can_move_node(&'a mut self, node: &'a PARGraphNode,
-        old_mate: &'a PARGraphNode, new_mate: &'a PARGraphNode) -> bool {
+    fn can_move_node(&'e mut self, node: &'g PARGraphNode,
+        old_mate: &'g PARGraphNode, new_mate: &'g PARGraphNode) -> bool {
 
         unsafe {
             ffi::xbpar_PAREngine_base_CanMoveNode(self as *const BasePAREngine as *const c_void,
@@ -410,15 +414,15 @@ impl<'a> PAREngineImpl<'a> for BasePAREngine {
         }
     }
 
-    fn get_new_placement_for_node(&'a mut self, _: &'a PARGraphNode) -> Option<&'a PARGraphNode> {
+    fn get_new_placement_for_node(&'e mut self, _: &'g PARGraphNode) -> Option<&'g PARGraphNode> {
         panic!("pure virtual function call ;)");
     }
 
-    fn find_suboptimal_placements(&mut self) -> Vec<&PARGraphNode> {
+    fn find_suboptimal_placements(&'e mut self) -> Vec<&'g PARGraphNode> {
         panic!("pure virtual function call ;)");
     }
 
-    fn compute_and_print_score(&mut self, iteration: u32) -> (u32, Vec<&PARGraphEdge>) {
+    fn compute_and_print_score(&'e mut self, iteration: u32) -> (u32, Vec<&'g PARGraphEdge>) {
         unsafe {
             let mut unroutes_len: usize = 0;
             let mut unroutes_ptr: *const*const c_void = ptr::null_mut();
@@ -432,7 +436,7 @@ impl<'a> PAREngineImpl<'a> for BasePAREngine {
         }
     }
 
-    fn print_unroutes(&mut self, unroutes: &[&PARGraphEdge]) {
+    fn print_unroutes(&'e mut self, unroutes: &[&'g PARGraphEdge]) {
         unsafe {
             ffi::xbpar_PAREngine_base_PrintUnroutes(self as *mut BasePAREngine as *mut c_void,
                 unroutes.as_ptr() as *const*const c_void, unroutes.len());
@@ -451,7 +455,7 @@ impl<'a> PAREngineImpl<'a> for BasePAREngine {
         }
     }
 
-    fn compute_unroutable_cost(&mut self) -> (u32, Vec<&PARGraphEdge>) {
+    fn compute_unroutable_cost(&'e mut self) -> (u32, Vec<&'g PARGraphEdge>) {
         unsafe {
             let mut unroutes_len: usize = 0;
             let mut unroutes_ptr: *const*const c_void = ptr::null_mut();
@@ -481,14 +485,14 @@ impl<'a> PAREngineImpl<'a> for BasePAREngine {
         panic!("pure virtual function call ;)");
     }
 
-    fn optimize_placement(&mut self, badnodes: &[&PARGraphNode]) -> bool {
+    fn optimize_placement(&'e mut self, badnodes: &[&'g PARGraphNode]) -> bool {
         unsafe {
             ffi::xbpar_PAREngine_base_OptimizePlacement(self as *mut BasePAREngine as *mut c_void,
                 badnodes.as_ptr() as *const*const c_void, badnodes.len()) != 0
         }
     }
 
-    fn compute_node_unroutable_cost(&'a mut self, pivot: &'a PARGraphNode, candidate: &'a PARGraphNode) -> u32 {
+    fn compute_node_unroutable_cost(&'e mut self, pivot: &'g PARGraphNode, candidate: &'g PARGraphNode) -> u32 {
         unsafe {
             ffi::xbpar_PAREngine_base_ComputeNodeUnroutableCost(self as *mut BasePAREngine as *mut c_void,
                 pivot as *const PARGraphNode as *const c_void,
@@ -501,36 +505,36 @@ impl<'a> PAREngineImpl<'a> for BasePAREngine {
     }
 }
 
-impl BasePAREngine {
-    pub fn get_m_netlist(&self) -> &PARGraph_ {
+impl<'e, 'g: 'e> BasePAREngine {
+    pub fn get_m_netlist(&'e self) -> &'g PARGraph_ {
         unsafe {
             &*(ffi::xbpar_PAREngine_base_get_m_netlist(self as *const BasePAREngine as *const c_void)
                 as *const PARGraph_)
         }
     }
 
-    pub fn get_m_device(&self) -> &PARGraph_ {
+    pub fn get_m_device(&'e self) -> &'g PARGraph_ {
         unsafe {
             &*(ffi::xbpar_PAREngine_base_get_m_device(self as *const BasePAREngine as *const c_void)
                 as *const PARGraph_)
         }
     }
 
-    pub fn get_m_netlist_mut(&mut self) -> &mut PARGraph_ {
+    pub fn get_m_netlist_mut(&'e mut self) -> &'g mut PARGraph_ {
         unsafe {
             &mut*(ffi::xbpar_PAREngine_base_get_m_netlist(self as *const BasePAREngine as *const c_void)
                 as *mut PARGraph_)
         }
     }
 
-    pub fn get_m_device_mut(&mut self) -> &mut PARGraph_ {
+    pub fn get_m_device_mut(&'e mut self) -> &'g mut PARGraph_ {
         unsafe {
             &mut*(ffi::xbpar_PAREngine_base_get_m_device(self as *const BasePAREngine as *const c_void)
                 as *mut PARGraph_)
         }
     }
 
-    pub fn get_both_netlists_mut<'a>(&'a mut self) -> (&'a mut PARGraph_, &'a mut PARGraph_) {
+    pub fn get_both_netlists_mut(&'e mut self) -> (&'g mut PARGraph_, &'g mut PARGraph_) {
         unsafe {
             (&mut*(ffi::xbpar_PAREngine_base_get_m_netlist(self as *const BasePAREngine as *const c_void)
                 as *mut PARGraph_),
@@ -547,15 +551,14 @@ impl BasePAREngine {
     }
 }
 
-pub struct PAREngine<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> {
+pub struct PAREngine<'e, 'g: 'e, T: 'e + PAREngineImpl<'e, 'g>> {
     ffi_engine: *mut c_void,
     inner_impl: *mut T,
-    _marker1: PhantomData<&'a ()>,
-    _marker2: PhantomData<&'b ()>,
-    _marker3: PhantomData<&'c mut T>,
+    _marker1: PhantomData<&'g ()>,
+    _marker3: PhantomData<&'e mut T>,
 }
 
-impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> Drop for PAREngine<'a, 'b, 'c, T> {
+impl<'e, 'g: 'e, T: 'e + PAREngineImpl<'e, 'g>> Drop for PAREngine<'e, 'g, T> {
     fn drop(&mut self) {
         unsafe {
             Box::from_raw(self.inner_impl);
@@ -564,8 +567,8 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> Drop for PAREngine<'a, 'b, 'c, T> {
     }
 }
 
-impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
-    pub fn new(inner_impl: T, netlist: &'a mut PARGraph, device: &'b mut PARGraph) -> Self {
+impl<'e, 'g: 'e, T: 'e + PAREngineImpl<'e, 'g>> PAREngine<'e, 'g, T> {
+    pub fn new(inner_impl: T, netlist: &'g mut PARGraph, device: &'g mut PARGraph) -> Self {
         unsafe {
             let boxed_impl = Box::into_raw(Box::new(inner_impl));
 
@@ -595,7 +598,6 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
                 ffi_engine: ffi_engine,
                 inner_impl: boxed_impl,
                 _marker1: PhantomData,
-                _marker2: PhantomData,
                 _marker3: PhantomData,
             }
         }
