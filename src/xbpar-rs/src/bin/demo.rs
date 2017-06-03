@@ -26,7 +26,6 @@ struct DeviceData {
 }
 
 struct NetlistData {
-    i: u32,
 }
 
 struct TrivialPAREngine<'e> {
@@ -227,23 +226,14 @@ fn main() {
     let d_type_b_1 = graphs.borrow_mut_d().add_new_node(typeb_label_d, DeviceData{i: 2});
     let d_type_b_2 = graphs.borrow_mut_d().add_new_node(typeb_label_d, DeviceData{i: 3});
 
-    println!("Device A1 is: {:?}",
-        graphs.borrow().d.get_node_by_index(d_type_a_1) as *const PARGraphNode<_, _>);
-    println!("Device A2 is: {:?}",
-        graphs.borrow().d.get_node_by_index(d_type_a_2) as *const PARGraphNode<_, _>);
-    println!("Device B1 is: {:?}",
-        graphs.borrow().d.get_node_by_index(d_type_b_1) as *const PARGraphNode<_, _>);
-    println!("Device B2 is: {:?}",
-        graphs.borrow().d.get_node_by_index(d_type_b_2) as *const PARGraphNode<_, _>);
-
     graphs.borrow_mut_d().add_edge(d_type_a_1, "A to B", d_type_b_1, "B to A");
     graphs.borrow_mut_d().add_edge(d_type_a_1, "A to B", d_type_b_2, "B to A");
     graphs.borrow_mut_d().add_edge(d_type_a_2, "A to B", d_type_b_1, "B to A");
     graphs.borrow_mut_d().add_edge(d_type_a_2, "A to B", d_type_b_2, "B to A");
 
     // Netlist graph
-    let n_type_a_1 = graphs.borrow_mut_n().add_new_node(typea_label_d, NetlistData{i: 0});
-    let n_type_b_1 = graphs.borrow_mut_n().add_new_node(typeb_label_d, NetlistData{i: 1});
+    let n_type_a_1 = graphs.borrow_mut_n().add_new_node(typea_label_d, NetlistData{});
+    let n_type_b_1 = graphs.borrow_mut_n().add_new_node(typeb_label_d, NetlistData{});
 
     graphs.borrow_mut_n().add_edge(n_type_a_1, "A to B", n_type_b_1, "B to A");
 
@@ -260,8 +250,8 @@ fn main() {
     }
 
     // Print out
-    println!("Netlist A mate is: {:?}",
-        graphs.borrow().n.get_node_by_index(n_type_a_1).get_mate().unwrap() as *const PARGraphNode<_, _>);
-    println!("Netlist B mate is: {:?}",
-        graphs.borrow().n.get_node_by_index(n_type_b_1).get_mate().unwrap() as *const PARGraphNode<_, _>);
+    println!("Netlist A mate is: {}",
+        graphs.borrow().n.get_node_by_index(n_type_a_1).get_mate().unwrap().get_associated_data().i);
+    println!("Netlist B mate is: {}",
+        graphs.borrow().n.get_node_by_index(n_type_b_1).get_mate().unwrap().get_associated_data().i);
 }
