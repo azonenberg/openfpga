@@ -24,6 +24,7 @@ use std::ptr;
 
 struct TrivialPAREngine<'a> {
     base_engine: Option<&'a mut BasePAREngine>,
+    label_map: HashMap<u32, &'static str>,
 }
 
 impl<'a> PAREngineImpl<'a> for TrivialPAREngine<'a> {
@@ -82,6 +83,12 @@ impl<'a> PAREngineImpl<'a> for TrivialPAREngine<'a> {
         println!("compute_and_print_score");
         let base_engine = self.base_engine.as_mut().unwrap();
         base_engine.compute_and_print_score(iteration)
+    }
+
+    fn print_unroutes(&mut self, unroutes: &[&PARGraphEdge]) {
+        println!("print_unroutes");
+        let base_engine = self.base_engine.as_mut().unwrap();
+        base_engine.print_unroutes(unroutes)
     }
 
     fn compute_congestion_cost(&mut self) -> u32 {
@@ -172,6 +179,16 @@ impl<'a> PAREngineImpl<'a> for TrivialPAREngine<'a> {
         let base_engine = self.base_engine.as_mut().unwrap();
         base_engine.optimize_placement(badnodes)
     }
+
+    fn get_label_name(&mut self, label: u32) -> &str {
+        self.label_map[&label]
+    }
+
+    fn compute_node_unroutable_cost(&'a mut self, pivot: &'a PARGraphNode, candidate: &'a PARGraphNode) -> u32 {
+        println!("compute_node_unroutable_cost");
+        let base_engine = self.base_engine.as_mut().unwrap();
+        base_engine.compute_node_unroutable_cost(pivot, candidate)
+    }
 }
 
 fn main() {
@@ -199,10 +216,10 @@ fn main() {
     let d_type_b_1 = dgraph.add_new_node(typeb_label_d, ptr::null_mut());
     let d_type_b_2 = dgraph.add_new_node(typeb_label_d, ptr::null_mut());
 
-    // {
-    //     let (mut a1, b1) = dgraph.get_node_by_index_mut_pair(d_type_a_1, d_type_b_1);
-    //     a1.add_edge("A to B", b1, "B to A");
-    // }
+    {
+        let (mut a1, b1) = dgraph.get_node_by_index_mut_pair(d_type_a_1, d_type_b_1);
+        a1.add_edge("A to B", b1, "B to A");
+    }
     {
         let (mut a1, b2) = dgraph.get_node_by_index_mut_pair(d_type_a_1, d_type_b_2);
         a1.add_edge("A to B", b2, "B to A");
@@ -211,10 +228,10 @@ fn main() {
         let (mut a2, b1) = dgraph.get_node_by_index_mut_pair(d_type_a_2, d_type_b_1);
         a2.add_edge("A to B", b1, "B to A");
     }
-    // {
-    //     let (mut a2, b2) = dgraph.get_node_by_index_mut_pair(d_type_a_2, d_type_b_2);
-    //     a2.add_edge("A to B", b2, "B to A");
-    // }
+    {
+        let (mut a2, b2) = dgraph.get_node_by_index_mut_pair(d_type_a_2, d_type_b_2);
+        a2.add_edge("A to B", b2, "B to A");
+    }
 
     // Netlist graph
     let n_type_a_1 = ngraph.add_new_node(typea_label_d, ptr::null_mut());
@@ -228,6 +245,7 @@ fn main() {
     // Do the thing!
     let engine_impl = TrivialPAREngine {
         base_engine: None,
+        label_map: label_map,
     };
     let mut engine_obj = PAREngine::new(engine_impl, &mut ngraph, &mut dgraph);
     if !engine_obj.place_and_route(0) {

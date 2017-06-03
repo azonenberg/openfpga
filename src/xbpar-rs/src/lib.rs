@@ -379,6 +379,7 @@ pub trait PAREngineImpl<'a> {
     fn get_new_placement_for_node(&'a mut self, pivot: &'a PARGraphNode) -> Option<&'a PARGraphNode>;
     fn find_suboptimal_placements(&mut self) -> Vec<&PARGraphNode>;
     fn compute_and_print_score(&mut self, iteration: u32) -> (u32, Vec<&PARGraphEdge>);
+    fn print_unroutes(&mut self, unroutes: &[&PARGraphEdge]);
     fn compute_congestion_cost(&mut self) -> u32;
     fn compute_timing_cost(&mut self) -> u32;
     fn compute_unroutable_cost(&mut self) -> (u32, Vec<&PARGraphEdge>);
@@ -386,6 +387,8 @@ pub trait PAREngineImpl<'a> {
     fn initial_placement(&mut self) -> bool;
     fn initial_placement_core(&mut self) -> bool;
     fn optimize_placement(&mut self, badnodes: &[&PARGraphNode]) -> bool;
+    fn compute_node_unroutable_cost(&'a mut self, pivot: &'a PARGraphNode, candidate: &'a PARGraphNode) -> u32;
+    fn get_label_name(&mut self, label: u32) -> &str;
 }
 
 // FIXME: Does _this_ need a lifetime?
@@ -426,6 +429,13 @@ impl<'a> PAREngineImpl<'a> for BasePAREngine {
             ffi::xbpar_ffi_free_object(unroutes_ptr as *mut c_void);
 
             (ret, unroutes)
+        }
+    }
+
+    fn print_unroutes(&mut self, unroutes: &[&PARGraphEdge]) {
+        unsafe {
+            ffi::xbpar_PAREngine_base_PrintUnroutes(self as *mut BasePAREngine as *mut c_void,
+                unroutes.as_ptr() as *const*const c_void, unroutes.len());
         }
     }
 
@@ -476,6 +486,18 @@ impl<'a> PAREngineImpl<'a> for BasePAREngine {
             ffi::xbpar_PAREngine_base_OptimizePlacement(self as *mut BasePAREngine as *mut c_void,
                 badnodes.as_ptr() as *const*const c_void, badnodes.len()) != 0
         }
+    }
+
+    fn compute_node_unroutable_cost(&'a mut self, pivot: &'a PARGraphNode, candidate: &'a PARGraphNode) -> u32 {
+        unsafe {
+            ffi::xbpar_PAREngine_base_ComputeNodeUnroutableCost(self as *mut BasePAREngine as *mut c_void,
+                pivot as *const PARGraphNode as *const c_void,
+                candidate as *const PARGraphNode as *const c_void)
+        }
+    }
+
+    fn get_label_name(&mut self, label: u32) -> &str {
+        panic!("pure virtual function call ;)");
     }
 }
 
@@ -553,17 +575,17 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
                 Some(PAREngine::<T>::get_new_placement_for_node),
                 Some(PAREngine::<T>::find_suboptimal_placements),
                 Some(PAREngine::<T>::initial_placement_core),
-                None,
+                Some(PAREngine::<T>::get_label_name),
                 Some(PAREngine::<T>::can_move_node),
                 Some(PAREngine::<T>::compute_and_print_score),
-                None,
+                Some(PAREngine::<T>::print_unroutes),
                 Some(PAREngine::<T>::compute_congestion_cost),
                 Some(PAREngine::<T>::compute_timing_cost),
                 Some(PAREngine::<T>::compute_unroutable_cost),
                 Some(PAREngine::<T>::sanity_check),
                 Some(PAREngine::<T>::initial_placement),
                 Some(PAREngine::<T>::optimize_placement),
-                None,
+                Some(PAREngine::<T>::compute_node_unroutable_cost),
                 Some(PAREngine::<T>::_free_edgevec),
                 Some(PAREngine::<T>::_free_nodevec));
 
@@ -634,6 +656,13 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
         ret
     }
 
+    unsafe extern "C" fn print_unroutes(ffiengine: *mut c_void,
+        unroutes_ptr: *const*const c_void, unroutes_len: usize) {
+
+        let unroutes = slice::from_raw_parts(unroutes_ptr as *const&PARGraphEdge, unroutes_len);
+        (*(ffiengine as *mut T)).print_unroutes(unroutes);
+    }
+
     unsafe extern "C" fn compute_congestion_cost(ffiengine: *mut c_void) -> u32 {
         (*(ffiengine as *mut T)).compute_congestion_cost()
     }
@@ -672,6 +701,16 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
 
         let badnodes = slice::from_raw_parts(badnodes_ptr as *const&PARGraphNode, badnodes_len);
         (*(ffiengine as *mut T)).optimize_placement(badnodes) as i32
+    }
+
+    unsafe extern "C" fn get_label_name(ffiengine: *mut c_void, label: u32) -> *const i8 {
+        (*(ffiengine as *mut T)).get_label_name(label).as_ptr() as *const i8
+    }
+
+    unsafe extern "C" fn compute_node_unroutable_cost(ffiengine: *mut c_void,
+        pivot: *const c_void, candidate: *const c_void) -> u32 {
+        (*(ffiengine as *mut T)).compute_node_unroutable_cost(
+            &*(pivot as *const PARGraphNode), &*(candidate as *const PARGraphNode))
     }
 
     unsafe extern "C" fn _free_edgevec(v: *const*const c_void, len: usize, capacity: usize) {
