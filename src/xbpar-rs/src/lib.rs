@@ -244,7 +244,10 @@ pub struct PARGraph_ (
 
 // Having this helps prevent crossing nodes between arbitrary and definitely wrong graphs
 pub struct PARGraphPair(PARGraph, PARGraph);
-type PARGraphRefPair<'a> = (&'a PARGraph_, &'a PARGraph_);
+pub struct PARGraphRefPair<'a> {
+    pub d: &'a PARGraph_,
+    pub n: &'a PARGraph_
+}
 
 impl PARGraphPair {
     pub fn new_pair() -> PARGraphPair {
@@ -261,14 +264,14 @@ impl PARGraphPair {
     }
 
     pub fn borrow(&self) -> PARGraphRefPair {
-        (&self.0, &self.1)
+        PARGraphRefPair{d: &self.0, n: &self.1}
     }
 
-    pub fn borrow_mut_0(&mut self) -> &mut PARGraph_ {
+    pub fn borrow_mut_d(&mut self) -> &mut PARGraph_ {
         &mut self.0
     }
 
-    pub fn borrow_mut_1(&mut self) -> &mut PARGraph_ {
+    pub fn borrow_mut_n(&mut self) -> &mut PARGraph_ {
         &mut self.1
     }
 }

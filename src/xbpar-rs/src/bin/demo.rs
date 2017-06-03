@@ -199,41 +199,41 @@ fn main() {
     let mut graphs = PARGraphPair::new_pair();
 
     // Labels
-    let typea_label_d = graphs.borrow_mut_0().allocate_label();
-    let typea_label_n = graphs.borrow_mut_1().allocate_label();
+    let typea_label_d = graphs.borrow_mut_d().allocate_label();
+    let typea_label_n = graphs.borrow_mut_n().allocate_label();
     assert_eq!(typea_label_d, typea_label_n);
-    let typeb_label_d = graphs.borrow_mut_0().allocate_label();
-    let typeb_label_n = graphs.borrow_mut_1().allocate_label();
+    let typeb_label_d = graphs.borrow_mut_d().allocate_label();
+    let typeb_label_n = graphs.borrow_mut_n().allocate_label();
     assert_eq!(typeb_label_d, typeb_label_n);
     let mut label_map = HashMap::new();
     label_map.insert(typea_label_d, "Type A node");
     label_map.insert(typeb_label_d, "Type B node");
 
     // Device graph
-    let d_type_a_1 = graphs.borrow_mut_0().add_new_node(typea_label_d, ptr::null_mut());
-    let d_type_a_2 = graphs.borrow_mut_0().add_new_node(typea_label_d, ptr::null_mut());
-    let d_type_b_1 = graphs.borrow_mut_0().add_new_node(typeb_label_d, ptr::null_mut());
-    let d_type_b_2 = graphs.borrow_mut_0().add_new_node(typeb_label_d, ptr::null_mut());
+    let d_type_a_1 = graphs.borrow_mut_d().add_new_node(typea_label_d, ptr::null_mut());
+    let d_type_a_2 = graphs.borrow_mut_d().add_new_node(typea_label_d, ptr::null_mut());
+    let d_type_b_1 = graphs.borrow_mut_d().add_new_node(typeb_label_d, ptr::null_mut());
+    let d_type_b_2 = graphs.borrow_mut_d().add_new_node(typeb_label_d, ptr::null_mut());
 
     println!("Device A1 is: {:?}",
-        graphs.borrow().0.get_node_by_index(d_type_a_1) as *const PARGraphNode);
+        graphs.borrow().d.get_node_by_index(d_type_a_1) as *const PARGraphNode);
     println!("Device A2 is: {:?}",
-        graphs.borrow().0.get_node_by_index(d_type_a_2) as *const PARGraphNode);
+        graphs.borrow().d.get_node_by_index(d_type_a_2) as *const PARGraphNode);
     println!("Device B1 is: {:?}",
-        graphs.borrow().0.get_node_by_index(d_type_b_1) as *const PARGraphNode);
+        graphs.borrow().d.get_node_by_index(d_type_b_1) as *const PARGraphNode);
     println!("Device B2 is: {:?}",
-        graphs.borrow().0.get_node_by_index(d_type_b_2) as *const PARGraphNode);
+        graphs.borrow().d.get_node_by_index(d_type_b_2) as *const PARGraphNode);
 
-    graphs.borrow_mut_0().add_edge(d_type_a_1, "A to B", d_type_b_1, "B to A");
-    graphs.borrow_mut_0().add_edge(d_type_a_1, "A to B", d_type_b_2, "B to A");
-    graphs.borrow_mut_0().add_edge(d_type_a_2, "A to B", d_type_b_1, "B to A");
-    graphs.borrow_mut_0().add_edge(d_type_a_2, "A to B", d_type_b_2, "B to A");
+    graphs.borrow_mut_d().add_edge(d_type_a_1, "A to B", d_type_b_1, "B to A");
+    graphs.borrow_mut_d().add_edge(d_type_a_1, "A to B", d_type_b_2, "B to A");
+    graphs.borrow_mut_d().add_edge(d_type_a_2, "A to B", d_type_b_1, "B to A");
+    graphs.borrow_mut_d().add_edge(d_type_a_2, "A to B", d_type_b_2, "B to A");
 
     // Netlist graph
-    let n_type_a_1 = graphs.borrow_mut_1().add_new_node(typea_label_d, ptr::null_mut());
-    let n_type_b_1 = graphs.borrow_mut_1().add_new_node(typeb_label_d, ptr::null_mut());
+    let n_type_a_1 = graphs.borrow_mut_n().add_new_node(typea_label_d, ptr::null_mut());
+    let n_type_b_1 = graphs.borrow_mut_n().add_new_node(typeb_label_d, ptr::null_mut());
 
-    graphs.borrow_mut_1().add_edge(n_type_a_1, "A to B", n_type_b_1, "B to A");
+    graphs.borrow_mut_n().add_edge(n_type_a_1, "A to B", n_type_b_1, "B to A");
 
     // Do the thing!
     {
@@ -249,7 +249,7 @@ fn main() {
 
     // Print out
     println!("Netlist A mate is: {:?}",
-        graphs.borrow().1.get_node_by_index(n_type_a_1).get_mate().unwrap() as *const PARGraphNode);
+        graphs.borrow().n.get_node_by_index(n_type_a_1).get_mate().unwrap() as *const PARGraphNode);
     println!("Netlist B mate is: {:?}",
-        graphs.borrow().1.get_node_by_index(n_type_b_1).get_mate().unwrap() as *const PARGraphNode);
+        graphs.borrow().n.get_node_by_index(n_type_b_1).get_mate().unwrap() as *const PARGraphNode);
 }
