@@ -425,6 +425,16 @@ public:
 		return this->f_ComputeNodeUnroutableCost(ffiengine, pivot, candidate);
 	}
 
+	PARGraph* get_m_netlist() const
+	{
+		return m_netlist;
+	}
+
+	PARGraph* get_m_device() const
+	{
+		return m_device;
+	}
+
 private:
 	void *ffiengine;
 	t_GetNewPlacementForNode f_GetNewPlacementForNode;
@@ -590,4 +600,14 @@ uint32_t xbpar_PAREngine_base_ComputeNodeUnroutableCost(const PAREngine* engine,
 	const PARGraphNode* pivot, const PARGraphNode* candidate)
 {
 	return ((FFIPAREngine*)engine)->base_ComputeNodeUnroutableCost(pivot, candidate);
+}
+
+PARGraph* xbpar_PAREngine_base_get_m_netlist(const PAREngine* engine)
+{
+	return ((FFIPAREngine*)engine)->get_m_netlist();
+}
+
+PARGraph* xbpar_PAREngine_base_get_m_device(const PAREngine* engine)
+{
+	return ((FFIPAREngine*)engine)->get_m_device();
 }

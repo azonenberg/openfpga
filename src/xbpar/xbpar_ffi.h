@@ -162,6 +162,9 @@ int xbpar_PAREngine_base_OptimizePlacement(PAREngine* engine,
 	PARGraphNode*const* badnodes_ptr, size_t badnodes_len);
 uint32_t xbpar_PAREngine_base_ComputeNodeUnroutableCost(const PAREngine* engine,
 	const PARGraphNode* pivot, const PARGraphNode* candidate);
+// Hack to get the graphs back from a PAREngine
+PARGraph* xbpar_PAREngine_base_get_m_netlist(const PAREngine* engine);
+PARGraph* xbpar_PAREngine_base_get_m_device(const PAREngine* engine);
 
 
 #ifdef __cplusplus

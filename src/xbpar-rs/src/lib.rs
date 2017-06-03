@@ -309,29 +309,43 @@ impl PARGraph {
 }
 
 pub trait PAREngineImpl<'a> {
-    fn set_base_engine<'b: 'a>(&'a mut self, base_engine: &'b mut BasePAREngine);
+    fn set_engines<'b: 'a>(&'a mut self, base_engine: &'b mut BasePAREngine, extra: &'b PAREngineExtra);
 
     // Overloads
-    fn sanity_check(&self) -> bool;
+    fn sanity_check(&mut self) -> bool;
+    fn initial_placement(&mut self) -> bool;
+    fn initial_placement_core(&mut self) -> bool;
 }
 
+// FIXME: Does _this_ need a lifetime?
 pub struct BasePAREngine (
     UnsafeCell<()>
 );
 
 impl<'a> PAREngineImpl<'a> for BasePAREngine {
-    fn set_base_engine<'b: 'a>(&'a mut self, _: &'b mut BasePAREngine) {}
+    fn set_engines<'b: 'a>(&'a mut self, _: &'b mut BasePAREngine, _: &'b PAREngineExtra) {}
 
-    fn sanity_check(&self) -> bool {
+    fn sanity_check(&mut self) -> bool {
         unsafe {
             ffi::xbpar_PAREngine_base_SanityCheck(self as *const BasePAREngine as *const c_void) != 0
         }
+    }
+
+    fn initial_placement(&mut self) -> bool {
+        unsafe {
+            ffi::xbpar_PAREngine_base_InitialPlacement(self as *mut BasePAREngine as *mut c_void) != 0
+        }
+    }
+
+    fn initial_placement_core(&mut self) -> bool {
+        panic!("pure virtual function call ;)");
     }
 }
 
 pub struct PAREngine<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> {
     ffi_engine: *mut c_void,
     inner_impl: *mut T,
+    extra: PAREngineExtra,
     _marker1: PhantomData<&'a ()>,
     _marker2: PhantomData<&'b ()>,
     _marker3: PhantomData<&'c mut T>,
@@ -355,7 +369,7 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
                 netlist.ffi_graph, device.ffi_graph,
                 None,
                 None,
-                None,
+                Some(PAREngine::<T>::initial_placement_core),
                 None,
                 None,
                 None,
@@ -364,21 +378,26 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
                 None,
                 None,
                 Some(PAREngine::<T>::sanity_check),
-                None,
+                Some(PAREngine::<T>::initial_placement),
                 None,
                 None,
                 None,
                 None);
 
-            (*boxed_impl).set_base_engine(&mut*(ffi_engine as *mut BasePAREngine));
-
-            PAREngine {
+            let ret = PAREngine {
                 ffi_engine: ffi_engine,
                 inner_impl: boxed_impl,
+                extra: PAREngineExtra {
+
+                },
                 _marker1: PhantomData,
                 _marker2: PhantomData,
                 _marker3: PhantomData,
-            }
+            };
+
+            (*boxed_impl).set_engines(&mut*(ffi_engine as *mut BasePAREngine), &ret.extra);
+
+            ret
         }
     }
 
@@ -397,5 +416,13 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
     // Overloads
     unsafe extern "C" fn sanity_check(ffiengine: *mut c_void) -> i32 {
         (*(ffiengine as *mut T)).sanity_check() as i32
+    }
+
+    unsafe extern "C" fn initial_placement(ffiengine: *mut c_void) -> i32 {
+        (*(ffiengine as *mut T)).initial_placement() as i32
+    }
+
+    unsafe extern "C" fn initial_placement_core(ffiengine: *mut c_void) -> i32 {
+        (*(ffiengine as *mut T)).initial_placement_core() as i32
     }
 }
