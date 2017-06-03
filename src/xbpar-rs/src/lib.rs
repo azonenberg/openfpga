@@ -24,6 +24,7 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
 use std::cell::UnsafeCell;
+use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::mem;
 use std::os::raw::*;
@@ -94,6 +95,20 @@ impl PARGraphEdge {
 pub struct PARGraphNode (
     UnsafeCell<()>
 );
+
+impl PartialEq for PARGraphNode {
+    fn eq(&self, other: &PARGraphNode) -> bool {
+        self as *const PARGraphNode == other as *const PARGraphNode
+    }
+}
+
+impl Eq for PARGraphNode {}
+
+impl Hash for PARGraphNode {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        (self as *const PARGraphNode).hash(state);
+    }
+}
 
 impl PARGraphNode {
     pub fn mate_with<'a>(&'a mut self, mate: &'a mut PARGraphNode) {
@@ -358,6 +373,11 @@ pub trait PAREngineImpl<'a> {
     fn set_base_engine<'b: 'a>(&'a mut self, base_engine: &'b mut BasePAREngine);
 
     // Overloads
+    // FIXME: I think these lifetimes are wrong
+    fn can_move_node(&'a mut self, node: &'a PARGraphNode,
+        old_mate: &'a PARGraphNode, new_mate: &'a PARGraphNode) -> bool;
+    fn get_new_placement_for_node(&'a mut self, pivot: &'a PARGraphNode) -> Option<&'a PARGraphNode>;
+    fn find_suboptimal_placements(&mut self) -> Vec<&PARGraphNode>;
     fn compute_and_print_score(&mut self, iteration: u32) -> (u32, Vec<&PARGraphEdge>);
     fn compute_congestion_cost(&mut self) -> u32;
     fn compute_timing_cost(&mut self) -> u32;
@@ -365,6 +385,7 @@ pub trait PAREngineImpl<'a> {
     fn sanity_check(&mut self) -> bool;
     fn initial_placement(&mut self) -> bool;
     fn initial_placement_core(&mut self) -> bool;
+    fn optimize_placement(&mut self, badnodes: &[&PARGraphNode]) -> bool;
 }
 
 // FIXME: Does _this_ need a lifetime?
@@ -374,6 +395,25 @@ pub struct BasePAREngine (
 
 impl<'a> PAREngineImpl<'a> for BasePAREngine {
     fn set_base_engine<'b: 'a>(&'a mut self, _: &'b mut BasePAREngine) {}
+
+    fn can_move_node(&'a mut self, node: &'a PARGraphNode,
+        old_mate: &'a PARGraphNode, new_mate: &'a PARGraphNode) -> bool {
+
+        unsafe {
+            ffi::xbpar_PAREngine_base_CanMoveNode(self as *const BasePAREngine as *const c_void,
+                node as *const PARGraphNode as *const c_void,
+                old_mate as *const PARGraphNode as *const c_void,
+                new_mate as *const PARGraphNode as *const c_void) != 0
+        }
+    }
+
+    fn get_new_placement_for_node(&'a mut self, _: &'a PARGraphNode) -> Option<&'a PARGraphNode> {
+        panic!("pure virtual function call ;)");
+    }
+
+    fn find_suboptimal_placements(&mut self) -> Vec<&PARGraphNode> {
+        panic!("pure virtual function call ;)");
+    }
 
     fn compute_and_print_score(&mut self, iteration: u32) -> (u32, Vec<&PARGraphEdge>) {
         unsafe {
@@ -430,6 +470,13 @@ impl<'a> PAREngineImpl<'a> for BasePAREngine {
     fn initial_placement_core(&mut self) -> bool {
         panic!("pure virtual function call ;)");
     }
+
+    fn optimize_placement(&mut self, badnodes: &[&PARGraphNode]) -> bool {
+        unsafe {
+            ffi::xbpar_PAREngine_base_OptimizePlacement(self as *mut BasePAREngine as *mut c_void,
+                badnodes.as_ptr() as *const*const c_void, badnodes.len()) != 0
+        }
+    }
 }
 
 impl BasePAREngine {
@@ -469,6 +516,13 @@ impl BasePAREngine {
                     as *mut PARGraph_))
         }
     }
+
+    // FIXME: Is this interior mutability correct?
+    pub fn random_number(&self) -> u32 {
+        unsafe {
+            ffi::xbpar_PAREngine_RandomNumber(self as *const BasePAREngine as *mut c_void)
+        }
+    }
 }
 
 pub struct PAREngine<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> {
@@ -496,11 +550,11 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
             let ffi_engine = ffi::xbpar_PAREngine_Create(
                 boxed_impl as *mut c_void,
                 netlist.ffi_graph, device.ffi_graph,
-                None,
-                None,
+                Some(PAREngine::<T>::get_new_placement_for_node),
+                Some(PAREngine::<T>::find_suboptimal_placements),
                 Some(PAREngine::<T>::initial_placement_core),
                 None,
-                None,
+                Some(PAREngine::<T>::can_move_node),
                 Some(PAREngine::<T>::compute_and_print_score),
                 None,
                 Some(PAREngine::<T>::compute_congestion_cost),
@@ -508,10 +562,10 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
                 Some(PAREngine::<T>::compute_unroutable_cost),
                 Some(PAREngine::<T>::sanity_check),
                 Some(PAREngine::<T>::initial_placement),
-                None,
+                Some(PAREngine::<T>::optimize_placement),
                 None,
                 Some(PAREngine::<T>::_free_edgevec),
-                None);
+                Some(PAREngine::<T>::_free_nodevec));
 
             (*boxed_impl).set_base_engine(&mut*(ffi_engine as *mut BasePAREngine));
 
@@ -538,6 +592,34 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
     }
 
     // Overloads
+    unsafe extern "C" fn can_move_node(ffiengine: *mut c_void, node: *const c_void,
+        old_mate: *const c_void, new_mate: *const c_void) -> i32 {
+
+        (*(ffiengine as *mut T)).can_move_node(&*(node as *const PARGraphNode),
+            &*(old_mate as *const PARGraphNode), &*(new_mate as *const PARGraphNode)) as i32
+    }
+
+    unsafe extern "C" fn get_new_placement_for_node(ffiengine: *mut c_void, pivot: *const c_void) -> *mut c_void {
+        let ret = (*(ffiengine as *mut T)).get_new_placement_for_node(&*(pivot as *const PARGraphNode));
+
+        if let Some(ret) = ret {
+            ret as *const PARGraphNode as *mut c_void
+        } else {
+            ptr::null_mut()
+        }
+    }
+
+    unsafe extern "C" fn find_suboptimal_placements(ffiengine: *mut c_void,
+        bad_nodes_ptr: *mut*const*const c_void, bad_nodes_len: *mut usize, bad_nodes_capacity: *mut usize) {
+
+        let bad_nodes = (*(ffiengine as *mut T)).find_suboptimal_placements();
+
+        *bad_nodes_ptr = bad_nodes.as_ptr() as *const*const PARGraphNode as *const*const c_void;
+        *bad_nodes_len = bad_nodes.len();
+        *bad_nodes_capacity = bad_nodes.capacity();
+        mem::forget(bad_nodes);
+    }
+
     unsafe extern "C" fn compute_and_print_score(ffiengine: *mut c_void,
         unroutes_ptr: *mut*const*const c_void, unroutes_len: *mut usize, unroutes_capacity: *mut usize,
         iteration: u32) -> u32 {
@@ -585,7 +667,18 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
         (*(ffiengine as *mut T)).initial_placement_core() as i32
     }
 
+    unsafe extern "C" fn optimize_placement(ffiengine: *mut c_void,
+        badnodes_ptr: *const*const c_void, badnodes_len: usize) -> i32 {
+
+        let badnodes = slice::from_raw_parts(badnodes_ptr as *const&PARGraphNode, badnodes_len);
+        (*(ffiengine as *mut T)).optimize_placement(badnodes) as i32
+    }
+
     unsafe extern "C" fn _free_edgevec(v: *const*const c_void, len: usize, capacity: usize) {
         Vec::from_raw_parts(v as *mut&PARGraphEdge, len, capacity);
+    }
+
+    unsafe extern "C" fn _free_nodevec(v: *const*const c_void, len: usize, capacity: usize) {
+        Vec::from_raw_parts(v as *mut&PARGraphNode, len, capacity);
     }
 }

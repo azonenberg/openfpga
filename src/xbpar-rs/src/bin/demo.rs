@@ -19,7 +19,7 @@
 extern crate xbpar_rs;
 use xbpar_rs::*;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ptr;
 
 struct TrivialPAREngine<'a> {
@@ -29,6 +29,53 @@ struct TrivialPAREngine<'a> {
 impl<'a> PAREngineImpl<'a> for TrivialPAREngine<'a> {
     fn set_base_engine<'b: 'a>(&'a mut self, base_engine: &'b mut BasePAREngine) {
         self.base_engine = Some(base_engine);
+    }
+
+    fn can_move_node(&'a mut self, node: &'a PARGraphNode,
+        old_mate: &'a PARGraphNode, new_mate: &'a PARGraphNode) -> bool {
+
+        println!("can_move_node");
+        let base_engine = self.base_engine.as_mut().unwrap();
+        base_engine.can_move_node(node, old_mate, new_mate)
+    }
+
+    fn get_new_placement_for_node(&'a mut self, pivot: &'a PARGraphNode) -> Option<&'a PARGraphNode> {
+        println!("get_new_placement_for_node");
+        let base_engine = self.base_engine.as_mut().unwrap();
+        let m_device = base_engine.get_m_device();
+
+        let label = pivot.get_label();
+
+        let mut candidates = Vec::new();
+        for i in 0..m_device.get_num_nodes_with_label(label) {
+            candidates.push(m_device.get_node_by_label_and_index(label, i));
+        }
+
+        let ncandidates = candidates.len() as u32;
+        if ncandidates == 0 {
+            return None;
+        }
+
+        //Pick one at random
+        Some(candidates[(base_engine.random_number() % ncandidates) as usize])
+    }
+
+    fn find_suboptimal_placements(&mut self) -> Vec<&PARGraphNode> {
+        println!("find_suboptimal_placements");
+        let base_engine = self.base_engine.as_mut().unwrap();
+
+        let mut nodes = HashSet::new();
+
+        // //Find all nodes that are on one end of an unroutable edge
+        let (_, unroutes) = base_engine.compute_unroutable_cost();
+        for edge in unroutes
+        {
+            nodes.insert(edge.sourcenode());
+            nodes.insert(edge.destnode());
+        }
+
+        nodes.into_iter().collect()
+
     }
 
     fn compute_and_print_score(&mut self, iteration: u32) -> (u32, Vec<&PARGraphEdge>) {
@@ -118,6 +165,12 @@ impl<'a> PAREngineImpl<'a> for TrivialPAREngine<'a> {
         }
 
         true
+    }
+
+    fn optimize_placement(&mut self, badnodes: &[&PARGraphNode]) -> bool {
+        println!("optimize_placement");
+        let base_engine = self.base_engine.as_mut().unwrap();
+        base_engine.optimize_placement(badnodes)
     }
 }
 
