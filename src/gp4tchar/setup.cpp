@@ -23,7 +23,7 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Board initialization
 
-bool PostProgramSetup(hdevice hdev)
+bool PostProgramSetup(hdevice hdev, int voltage_mv)
 {
 	//Clear I/Os from programming mode
 	if(!IOReset(hdev))
@@ -32,7 +32,7 @@ bool PostProgramSetup(hdevice hdev)
 	//Load the new configuration
 	if(!IOSetup(hdev))
 		return false;
-	if(!PowerSetup(hdev))
+	if(!PowerSetup(hdev, voltage_mv))
 		return false;
 
 	return true;
@@ -71,11 +71,15 @@ bool IOSetup(hdevice hdev)
 	return true;
 }
 
-bool PowerSetup(hdevice hdev)
+bool PowerSetup(hdevice hdev, int voltage_mv)
 {
-	//Do not change this voltage! This is what the FPGA uses
-	//TODO: sweep from 3.15 to 3.45 to do voltage corner analysis
-	float voltage = 3.3;
+	float voltage = voltage_mv * 0.001f;
+	if(voltage > 3.455)
+	{
+		LogError("Tried to set voltage to %.3f mV, disallowing for FPGA safety\n", voltage);
+		return false;
+	}
+
 	return ConfigureSiggen(hdev, 1, voltage);
 }
 

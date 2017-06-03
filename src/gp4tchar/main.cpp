@@ -123,15 +123,17 @@ int main(int argc, char* argv[])
 	//Measure delay through each element
 	if(!MeasurePinToPinDelays(sock, hdev))
 		return 1;
-	if(!MeasureCrossConnectionDelays(sock, hdev))
-		return 1;
-	/*
-	if(!MeasureLutDelays(sock, hdev))
-		return 1;
-	*/
+	//if(!MeasureCrossConnectionDelays(sock, hdev))
+	//	return 1;
+	//if(!MeasureLutDelays(sock, hdev))
+	//	return 1;
 
 	//Print output
-	g_calDevice.PrintTimingData();
+	LogDebug("Dumping timing data...\n");
+	{
+		LogIndenter li;
+		g_calDevice.PrintTimingData();
+	}
 
 	//Done
 	LogNotice("Done, resetting board\n");

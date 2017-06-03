@@ -30,10 +30,10 @@
 #include "TimingData.h"
 
 bool InitializeHardware(hdevice hdev, SilegoPart expectedPart);
-bool PostProgramSetup(hdevice hdev);
+bool PostProgramSetup(hdevice hdev, int voltage_mv = 3300);
 bool IOReset(hdevice hdev);
 bool IOSetup(hdevice hdev);
-bool PowerSetup(hdevice hdev);
+bool PowerSetup(hdevice hdev, int voltage_mv = 3300);
 
 bool ReadTraceDelays();
 bool CalibrateTraceDelays(Socket& sock, hdevice hdev);
