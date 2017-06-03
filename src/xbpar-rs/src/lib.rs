@@ -245,18 +245,18 @@ impl DerefMut for PARGraph {
     }
 }
 
+impl Drop for PARGraph {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::xbpar_PARGraph_Destroy(self.ffi_graph);
+        }
+    }
+}
+
 // XXX this is weird
 pub struct PARGraph_ (
     UnsafeCell<()>
 );
-
-impl Drop for PARGraph_ {
-    fn drop(&mut self) {
-        unsafe {
-            ffi::xbpar_PARGraph_Destroy(self as *mut PARGraph_ as *mut c_void);
-        }
-    }
-}
 
 impl PARGraph_ {
     pub fn allocate_label(&mut self) -> u32 {
@@ -359,6 +359,9 @@ pub trait PAREngineImpl<'a> {
 
     // Overloads
     fn compute_and_print_score(&mut self, iteration: u32) -> (u32, Vec<&PARGraphEdge>);
+    fn compute_congestion_cost(&mut self) -> u32;
+    fn compute_timing_cost(&mut self) -> u32;
+    fn compute_unroutable_cost(&mut self) -> (u32, Vec<&PARGraphEdge>);
     fn sanity_check(&mut self) -> bool;
     fn initial_placement(&mut self) -> bool;
     fn initial_placement_core(&mut self) -> bool;
@@ -378,6 +381,32 @@ impl<'a> PAREngineImpl<'a> for BasePAREngine {
             let mut unroutes_ptr: *const*const c_void = ptr::null_mut();
             let ret = ffi::xbpar_PAREngine_base_ComputeAndPrintScore(self as *const BasePAREngine as *const c_void,
                 &mut unroutes_ptr, &mut unroutes_len, iteration);
+            let unroutes_slice = slice::from_raw_parts(unroutes_ptr, unroutes_len);
+            let unroutes = unroutes_slice.iter().map(|&x| &*(x as *const PARGraphEdge)).collect();
+            ffi::xbpar_ffi_free_object(unroutes_ptr as *mut c_void);
+
+            (ret, unroutes)
+        }
+    }
+
+    fn compute_congestion_cost(&mut self) -> u32 {
+        unsafe {
+            ffi::xbpar_PAREngine_base_ComputeCongestionCost(self as *const BasePAREngine as *const c_void)
+        }
+    }
+
+    fn compute_timing_cost(&mut self) -> u32 {
+        unsafe {
+            ffi::xbpar_PAREngine_base_ComputeTimingCost(self as *const BasePAREngine as *const c_void)
+        }
+    }
+
+    fn compute_unroutable_cost(&mut self) -> (u32, Vec<&PARGraphEdge>) {
+        unsafe {
+            let mut unroutes_len: usize = 0;
+            let mut unroutes_ptr: *const*const c_void = ptr::null_mut();
+            let ret = ffi::xbpar_PAREngine_base_ComputeUnroutableCost(self as *const BasePAREngine as *const c_void,
+                &mut unroutes_ptr, &mut unroutes_len);
             let unroutes_slice = slice::from_raw_parts(unroutes_ptr, unroutes_len);
             let unroutes = unroutes_slice.iter().map(|&x| &*(x as *const PARGraphEdge)).collect();
             ffi::xbpar_ffi_free_object(unroutes_ptr as *mut c_void);
@@ -453,6 +482,7 @@ pub struct PAREngine<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> {
 impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> Drop for PAREngine<'a, 'b, 'c, T> {
     fn drop(&mut self) {
         unsafe {
+            Box::from_raw(self.inner_impl);
             ffi::xbpar_PAREngine_Destroy(self.ffi_engine);
         }
     }
@@ -473,9 +503,9 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
                 None,
                 Some(PAREngine::<T>::compute_and_print_score),
                 None,
-                None,
-                None,
-                None,
+                Some(PAREngine::<T>::compute_congestion_cost),
+                Some(PAREngine::<T>::compute_timing_cost),
+                Some(PAREngine::<T>::compute_unroutable_cost),
                 Some(PAREngine::<T>::sanity_check),
                 Some(PAREngine::<T>::initial_placement),
                 None,
@@ -513,6 +543,27 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
         iteration: u32) -> u32 {
 
         let (ret, unroutes) = (*(ffiengine as *mut T)).compute_and_print_score(iteration);
+
+        *unroutes_ptr = unroutes.as_ptr() as *const*const PARGraphEdge as *const*const c_void;
+        *unroutes_len = unroutes.len();
+        *unroutes_capacity = unroutes.capacity();
+        mem::forget(unroutes);
+
+        ret
+    }
+
+    unsafe extern "C" fn compute_congestion_cost(ffiengine: *mut c_void) -> u32 {
+        (*(ffiengine as *mut T)).compute_congestion_cost()
+    }
+
+    unsafe extern "C" fn compute_timing_cost(ffiengine: *mut c_void) -> u32 {
+        (*(ffiengine as *mut T)).compute_timing_cost()
+    }
+
+    unsafe extern "C" fn compute_unroutable_cost(ffiengine: *mut c_void,
+        unroutes_ptr: *mut*const*const c_void, unroutes_len: *mut usize, unroutes_capacity: *mut usize) -> u32 {
+
+        let (ret, unroutes) = (*(ffiengine as *mut T)).compute_unroutable_cost();
 
         *unroutes_ptr = unroutes.as_ptr() as *const*const PARGraphEdge as *const*const c_void;
         *unroutes_len = unroutes.len();

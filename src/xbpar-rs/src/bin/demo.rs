@@ -37,6 +37,24 @@ impl<'a> PAREngineImpl<'a> for TrivialPAREngine<'a> {
         base_engine.compute_and_print_score(iteration)
     }
 
+    fn compute_congestion_cost(&mut self) -> u32 {
+        println!("compute_congestion_cost");
+        let base_engine = self.base_engine.as_mut().unwrap();
+        base_engine.compute_congestion_cost()
+    }
+
+    fn compute_timing_cost(&mut self) -> u32 {
+        println!("compute_timing_cost");
+        let base_engine = self.base_engine.as_mut().unwrap();
+        base_engine.compute_timing_cost()
+    }
+
+    fn compute_unroutable_cost(&mut self) -> (u32, Vec<&PARGraphEdge>) {
+        println!("compute_unroutable_cost");
+        let base_engine = self.base_engine.as_mut().unwrap();
+        base_engine.compute_unroutable_cost()
+    }
+
     fn sanity_check(&mut self) -> bool {
         println!("sanity_check");
         let base_engine = self.base_engine.as_mut().unwrap();
@@ -128,10 +146,10 @@ fn main() {
     let d_type_b_1 = dgraph.add_new_node(typeb_label_d, ptr::null_mut());
     let d_type_b_2 = dgraph.add_new_node(typeb_label_d, ptr::null_mut());
 
-    {
-        let (mut a1, b1) = dgraph.get_node_by_index_mut_pair(d_type_a_1, d_type_b_1);
-        a1.add_edge("A to B", b1, "B to A");
-    }
+    // {
+    //     let (mut a1, b1) = dgraph.get_node_by_index_mut_pair(d_type_a_1, d_type_b_1);
+    //     a1.add_edge("A to B", b1, "B to A");
+    // }
     {
         let (mut a1, b2) = dgraph.get_node_by_index_mut_pair(d_type_a_1, d_type_b_2);
         a1.add_edge("A to B", b2, "B to A");
@@ -140,10 +158,10 @@ fn main() {
         let (mut a2, b1) = dgraph.get_node_by_index_mut_pair(d_type_a_2, d_type_b_1);
         a2.add_edge("A to B", b1, "B to A");
     }
-    {
-        let (mut a2, b2) = dgraph.get_node_by_index_mut_pair(d_type_a_2, d_type_b_2);
-        a2.add_edge("A to B", b2, "B to A");
-    }
+    // {
+    //     let (mut a2, b2) = dgraph.get_node_by_index_mut_pair(d_type_a_2, d_type_b_2);
+    //     a2.add_edge("A to B", b2, "B to A");
+    // }
 
     // Netlist graph
     let n_type_a_1 = ngraph.add_new_node(typea_label_d, ptr::null_mut());
