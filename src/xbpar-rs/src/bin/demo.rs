@@ -225,31 +225,16 @@ fn main() {
     println!("Device B2 is: {:?}",
         dgraph.get_node_by_index(d_type_b_2) as *const PARGraphNode);
 
-    {
-        let (mut a1, b1) = dgraph.get_node_by_index_mut_pair(d_type_a_1, d_type_b_1);
-        a1.add_edge("A to B", b1, "B to A");
-    }
-    {
-        let (mut a1, b2) = dgraph.get_node_by_index_mut_pair(d_type_a_1, d_type_b_2);
-        a1.add_edge("A to B", b2, "B to A");
-    }
-    {
-        let (mut a2, b1) = dgraph.get_node_by_index_mut_pair(d_type_a_2, d_type_b_1);
-        a2.add_edge("A to B", b1, "B to A");
-    }
-    {
-        let (mut a2, b2) = dgraph.get_node_by_index_mut_pair(d_type_a_2, d_type_b_2);
-        a2.add_edge("A to B", b2, "B to A");
-    }
+    dgraph.add_edge(d_type_a_1, "A to B", d_type_b_1, "B to A");
+    dgraph.add_edge(d_type_a_1, "A to B", d_type_b_2, "B to A");
+    dgraph.add_edge(d_type_a_2, "A to B", d_type_b_1, "B to A");
+    dgraph.add_edge(d_type_a_2, "A to B", d_type_b_2, "B to A");
 
     // Netlist graph
     let n_type_a_1 = ngraph.add_new_node(typea_label_d, ptr::null_mut());
     let n_type_b_1 = ngraph.add_new_node(typeb_label_d, ptr::null_mut());
 
-    {
-        let (mut a1, b1) = ngraph.get_node_by_index_mut_pair(n_type_a_1, n_type_b_1);
-        a1.add_edge("A to B", b1, "B to A");
-    }
+    ngraph.add_edge(n_type_a_1, "A to B", n_type_b_1, "B to A");
 
     // Do the thing!
     {

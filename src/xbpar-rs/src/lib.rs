@@ -206,26 +206,6 @@ impl PARGraphNode {
                 self as *const PARGraphNode as *const c_void, index) as *mut PARGraphEdge)
         }
     }
-
-    // Careful careful: sink isn't a &mut, but it turns into a mutable pointer. This should be safe because we know
-    // the object was "originally" mutable.
-    pub fn add_edge<'a, 'b, 'c>(&'a mut self, srcport: &'b str, sink: &'a PARGraphNode, dstport: &'c str) {
-        unsafe {
-            ffi::xbpar_PARGraphNode_AddEdge(self as *mut PARGraphNode as *mut c_void,
-                srcport.as_ptr() as *const i8, srcport.len(),
-                sink as *const PARGraphNode as *mut c_void,
-                dstport.as_ptr() as *const i8, dstport.len());
-        }
-    }
-
-    pub fn remove_edge<'a, 'b, 'c>(&'a mut self, srcport: &'b str, sink: &'a PARGraphNode, dstport: &'c str) {
-        unsafe {
-            ffi::xbpar_PARGraphNode_RemoveEdge(self as *mut PARGraphNode as *mut c_void,
-                srcport.as_ptr() as *const i8, srcport.len(),
-                sink as *const PARGraphNode as *mut c_void,
-                dstport.as_ptr() as *const i8, dstport.len());
-        }
-    }
 }
 
 pub struct PARGraph {
@@ -332,21 +312,24 @@ impl PARGraph_ {
         }
     }
 
-    // This is a bit of a hack to allow us to actually create edges in the graph. Otherwise we won't be able to both
-    // borrow one node mutably and a different node immutably.
-    pub fn get_node_by_index_mut_pair<'a>(&'a mut self, index1: u32, index2: u32)
-        -> (&'a mut PARGraphNode, &'a mut PARGraphNode) {
-
-        // Because self is &mut, we only need to check whether the indices are the same and not if we have ever
-        // loaned out a copy of the node
-        if index1 == index2 {
-            panic!("attempted to borrow the same node mutably twice");
-        }
+    // We can only safely add edges by indices because we can't give out a &mut and a & in the same graph because
+    // it is possible to take one of them and traverse existing edges to get to another one and thereby violate
+    // aliasing rules.
+    pub fn add_edge(&mut self, source_idx: u32, srcport: &str, sink_idx: u32, dstport: &str) {
         unsafe {
-            (&mut*(ffi::xbpar_PARGraph_GetNodeByIndex(self as *const PARGraph_ as *const c_void, index1)
-                as *mut PARGraphNode),
-                &mut*(ffi::xbpar_PARGraph_GetNodeByIndex(self as *const PARGraph_ as *const c_void, index2)
-                    as *mut PARGraphNode))
+            let source = ffi::xbpar_PARGraph_GetNodeByIndex(self as *const PARGraph_ as *const c_void, source_idx);
+            let sink = ffi::xbpar_PARGraph_GetNodeByIndex(self as *const PARGraph_ as *const c_void, sink_idx);
+            ffi::xbpar_PARGraphNode_AddEdge(source, srcport.as_ptr() as *const i8, srcport.len(),
+                sink, dstport.as_ptr() as *const i8, dstport.len());
+        }
+    }
+
+    pub fn remove_edge(&mut self, source_idx: u32, srcport: &str, sink_idx: u32, dstport: &str) {
+        unsafe {
+            let source = ffi::xbpar_PARGraph_GetNodeByIndex(self as *const PARGraph_ as *const c_void, source_idx);
+            let sink = ffi::xbpar_PARGraph_GetNodeByIndex(self as *const PARGraph_ as *const c_void, sink_idx);
+            ffi::xbpar_PARGraphNode_RemoveEdge(source, srcport.as_ptr() as *const i8, srcport.len(),
+                sink, dstport.as_ptr() as *const i8, dstport.len());
         }
     }
 
