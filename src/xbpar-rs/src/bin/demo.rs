@@ -33,64 +33,65 @@ impl<'a> PAREngineImpl<'a> for TrivialPAREngine<'a> {
 
     fn sanity_check(&mut self) -> bool {
         println!("sanity_check");
-        self.base_engine.as_mut().unwrap().sanity_check()
+        let base_engine = self.base_engine.as_mut().unwrap();
+        base_engine.sanity_check()
     }
 
     fn initial_placement(&mut self) -> bool {
         println!("initial_placement");
-        self.base_engine.as_mut().unwrap().initial_placement()
+        let base_engine = self.base_engine.as_mut().unwrap();
+        base_engine.initial_placement()
     }
 
     fn initial_placement_core(&mut self) -> bool {
+        println!("initial_placement_core");
+        let base_engine = self.base_engine.as_mut().unwrap();
         //For each label, mate each node in the netlist with the first legal mate in the device.
         //Simple and deterministic.
-        // let nmax_net = PAREngineBase::new(self.node_pool, self.base_engine.unwrap()).get_ngraph().get_max_label();
-        // for label in 0..(nmax_net + 1)
-        // {
-        //     let nnet = PAREngineBase::new(self.node_pool, self.base_engine.unwrap()).get_ngraph()
-        //         .get_num_nodes_with_label(label);
-        //     let nsites = PAREngineBase::new(self.node_pool, self.base_engine.unwrap()).get_dgraph()
-        //         .get_num_nodes_with_label(label);
+        let (mut m_netlist, mut m_device) = base_engine.get_both_netlists_mut();
+        let nmax_net = m_netlist.get_max_label();
+        for label in 0..(nmax_net + 1)
+        {
+            let nnet = m_netlist.get_num_nodes_with_label(label);
+            let nsites = m_device.get_num_nodes_with_label(label);
 
-        //     let mut nsite = 0;
-        //     for net in 0..nnet
-        //     {
-        //         let netnode = PAREngineBase::new(self.node_pool, self.base_engine.unwrap()).get_ngraph()
-        //             .get_node_by_label_and_index(label, net);
+            let mut nsite = 0;
+            for net in 0..nnet
+            {
+                let netnode = m_netlist.get_node_by_label_and_index_mut(label, net);
 
-        //         //If the netlist node is already constrained, don't auto-place it
-        //         if self.node_pool.get_node(netnode).get_mate().is_some() {
-        //             continue;
-        //         }
+                //If the netlist node is already constrained, don't auto-place it
+                if netnode.get_mate().is_some() {
+                    continue;
+                }
 
-        //         //Try to find a legal site
-        //         let mut found = false;
-        //         while nsite < nsites
-        //         {
-        //             let devnode = PAREngineBase::new(self.node_pool, self.base_engine.unwrap()).get_dgraph().
-        //                 get_node_by_label_and_index(label, nsite);
-        //             nsite += 1;
+                //Try to find a legal site
+                let mut found = false;
+                while nsite < nsites
+                {
+                    let devnode = m_device.get_node_by_label_and_index_mut(label, nsite);
+                    nsite += 1;
 
-        //             //If the site is used, we don't want to disturb what's already there
-        //             //because it was probably LOC'd
-        //             if self.node_pool.get_node(devnode).get_mate().is_some() {
-        //                 continue;
-        //             }
+                    //If the site is used, we don't want to disturb what's already there
+                    //because it was probably LOC'd
+                    if devnode.get_mate().is_some() {
+                        continue;
+                    }
 
-        //             //Site is unused, mate with it
-        //             PARGraphNode::mate_nodes(self.node_pool, netnode, devnode);
-        //             found = true;
-        //             break;
-        //         }
+                    //Site is unused, mate with it
+                    netnode.mate_with(devnode);
+                    found = true;
+                    break;
+                }
 
-        //         //This can happen in rare cases
-        //         //(for example, we constrained all of the 8-bit counters to COUNT14 sites and now have a COUNT14).
-        //         if !found
-        //         {
-        //             return false;
-        //         }
-        //     }
-        // }
+                //This can happen in rare cases
+                //(for example, we constrained all of the 8-bit counters to COUNT14 sites and now have a COUNT14).
+                if !found
+                {
+                    return false;
+                }
+            }
+        }
 
         true
     }
