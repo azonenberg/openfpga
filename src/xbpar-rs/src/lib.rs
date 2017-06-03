@@ -496,7 +496,7 @@ impl<'a> PAREngineImpl<'a> for BasePAREngine {
         }
     }
 
-    fn get_label_name(&mut self, label: u32) -> &str {
+    fn get_label_name(&mut self, _: u32) -> &str {
         panic!("pure virtual function call ;)");
     }
 }

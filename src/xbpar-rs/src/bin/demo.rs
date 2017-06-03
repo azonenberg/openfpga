@@ -216,6 +216,15 @@ fn main() {
     let d_type_b_1 = dgraph.add_new_node(typeb_label_d, ptr::null_mut());
     let d_type_b_2 = dgraph.add_new_node(typeb_label_d, ptr::null_mut());
 
+    println!("Device A1 is: {:?}",
+        dgraph.get_node_by_index(d_type_a_1) as *const PARGraphNode);
+    println!("Device A2 is: {:?}",
+        dgraph.get_node_by_index(d_type_a_2) as *const PARGraphNode);
+    println!("Device B1 is: {:?}",
+        dgraph.get_node_by_index(d_type_b_1) as *const PARGraphNode);
+    println!("Device B2 is: {:?}",
+        dgraph.get_node_by_index(d_type_b_2) as *const PARGraphNode);
+
     {
         let (mut a1, b1) = dgraph.get_node_by_index_mut_pair(d_type_a_1, d_type_b_1);
         a1.add_edge("A to B", b1, "B to A");
@@ -243,12 +252,20 @@ fn main() {
     }
 
     // Do the thing!
-    let engine_impl = TrivialPAREngine {
-        base_engine: None,
-        label_map: label_map,
-    };
-    let mut engine_obj = PAREngine::new(engine_impl, &mut ngraph, &mut dgraph);
-    if !engine_obj.place_and_route(0) {
-        panic!("PAR failed!");
+    {
+        let engine_impl = TrivialPAREngine {
+            base_engine: None,
+            label_map: label_map,
+        };
+        let mut engine_obj = PAREngine::new(engine_impl, &mut ngraph, &mut dgraph);
+        if !engine_obj.place_and_route(0) {
+            panic!("PAR failed!");
+        }
     }
+
+    // Print out
+    println!("Netlist A mate is: {:?}",
+        ngraph.get_node_by_index(n_type_a_1).get_mate().unwrap() as *const PARGraphNode);
+    println!("Netlist B mate is: {:?}",
+        ngraph.get_node_by_index(n_type_b_1).get_mate().unwrap() as *const PARGraphNode);
 }
