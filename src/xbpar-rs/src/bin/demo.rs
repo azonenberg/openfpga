@@ -20,7 +20,6 @@ extern crate xbpar_rs;
 use xbpar_rs::*;
 
 use std::collections::{HashMap, HashSet};
-use std::ptr;
 
 struct DeviceData {
     i: usize,
@@ -54,7 +53,7 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for TrivialPAREn
 
         println!("get_new_placement_for_node");
         let base_engine = self.base_engine.as_mut().unwrap();
-        let m_device = base_engine.get_graphs().0;
+        let m_device = base_engine.get_graphs().d;
 
         let label = pivot.get_label();
 
@@ -137,20 +136,19 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for TrivialPAREn
         let base_engine = self.base_engine.as_mut().unwrap();
         //For each label, mate each node in the netlist with the first legal mate in the device.
         //Simple and deterministic.
-        let (mut m_netlist, mut m_device) = base_engine.get_both_netlists_mut();
-        let nmax_net = m_netlist.get_max_label();
+        let nmax_net = base_engine.get_graphs().n.get_max_label();
         for label in 0..(nmax_net + 1)
         {
-            let nnet = m_netlist.get_num_nodes_with_label(label);
-            let nsites = m_device.get_num_nodes_with_label(label);
+            let nnet = base_engine.get_graphs().n.get_num_nodes_with_label(label);
+            let nsites = base_engine.get_graphs().d.get_num_nodes_with_label(label);
 
             let mut nsite = 0;
             for net in 0..nnet
             {
-                let netnode = m_netlist.get_node_by_label_and_index_mut(label, net);
+                let netnode = base_engine.get_graphs().n.get_node_by_label_and_index(label, net).get_index();
 
                 //If the netlist node is already constrained, don't auto-place it
-                if netnode.get_mate().is_some() {
+                if base_engine.get_graphs().n.get_node_by_label_and_index(label, net).get_mate().is_some() {
                     continue;
                 }
 
@@ -158,17 +156,17 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for TrivialPAREn
                 let mut found = false;
                 while nsite < nsites
                 {
-                    let devnode = m_device.get_node_by_label_and_index_mut(label, nsite);
+                    let devnode = base_engine.get_graphs().d.get_node_by_label_and_index(label, nsite).get_index();
                     nsite += 1;
 
                     //If the site is used, we don't want to disturb what's already there
                     //because it was probably LOC'd
-                    if devnode.get_mate().is_some() {
+                    if base_engine.get_graphs().d.get_node_by_label_and_index(label, nsite).get_mate().is_some() {
                         continue;
                     }
 
                     //Site is unused, mate with it
-                    netnode.mate_with(devnode);
+                    base_engine.mate_nodes(netnode, devnode);
                     found = true;
                     break;
                 }
@@ -224,10 +222,10 @@ fn main() {
     label_map.insert(typeb_label_d, "Type B node");
 
     // Device graph
-    let d_type_a_1 = graphs.borrow_mut_d().add_new_node(typea_label_d, ptr::null_mut());
-    let d_type_a_2 = graphs.borrow_mut_d().add_new_node(typea_label_d, ptr::null_mut());
-    let d_type_b_1 = graphs.borrow_mut_d().add_new_node(typeb_label_d, ptr::null_mut());
-    let d_type_b_2 = graphs.borrow_mut_d().add_new_node(typeb_label_d, ptr::null_mut());
+    let d_type_a_1 = graphs.borrow_mut_d().add_new_node(typea_label_d, DeviceData{i: 0});
+    let d_type_a_2 = graphs.borrow_mut_d().add_new_node(typea_label_d, DeviceData{i: 1});
+    let d_type_b_1 = graphs.borrow_mut_d().add_new_node(typeb_label_d, DeviceData{i: 2});
+    let d_type_b_2 = graphs.borrow_mut_d().add_new_node(typeb_label_d, DeviceData{i: 3});
 
     println!("Device A1 is: {:?}",
         graphs.borrow().d.get_node_by_index(d_type_a_1) as *const PARGraphNode<_, _>);
@@ -244,8 +242,8 @@ fn main() {
     graphs.borrow_mut_d().add_edge(d_type_a_2, "A to B", d_type_b_2, "B to A");
 
     // Netlist graph
-    let n_type_a_1 = graphs.borrow_mut_n().add_new_node(typea_label_d, ptr::null_mut());
-    let n_type_b_1 = graphs.borrow_mut_n().add_new_node(typeb_label_d, ptr::null_mut());
+    let n_type_a_1 = graphs.borrow_mut_n().add_new_node(typea_label_d, NetlistData{i: 0});
+    let n_type_b_1 = graphs.borrow_mut_n().add_new_node(typeb_label_d, NetlistData{i: 1});
 
     graphs.borrow_mut_n().add_edge(n_type_a_1, "A to B", n_type_b_1, "B to A");
 

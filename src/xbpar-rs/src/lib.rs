@@ -102,7 +102,7 @@ pub struct PARGraphNode<D, Dother> (
 );
 
 pub struct PARGraphNodeData<D> {
-    pub d: D,
+    d: D,
     cpp_idx: u32,
 }
 
@@ -121,13 +121,6 @@ impl<D, Dother> Hash for PARGraphNode<D, Dother> {
 }
 
 impl<D, Dother> PARGraphNode<D, Dother> {
-    pub fn mate_with<'a>(&'a mut self, mate: &'a mut PARGraphNode<Dother, D>) {
-        unsafe {
-            ffi::xbpar_PARGraphNode_MateWith(self as *mut PARGraphNode<D, Dother> as *mut c_void,
-                mate as *mut PARGraphNode<Dother, D> as *mut c_void);
-        }
-    }
-
     pub fn get_mate(&self) -> Option<&PARGraphNode<Dother, D>> {
         unsafe {
             let ret_ptr = ffi::xbpar_PARGraphNode_GetMate(
@@ -164,9 +157,28 @@ impl<D, Dother> PARGraphNode<D, Dother> {
         }
     }
 
-    pub fn get_data_pointer_raw(&self) -> *mut c_void {
+    fn get_data_pointer_raw(&self) -> *mut PARGraphNodeData<D> {
         unsafe {
             ffi::xbpar_PARGraphNode_GetData(self as *const PARGraphNode<D, Dother> as *const c_void)
+                as *mut PARGraphNodeData<D>
+        }
+    }
+
+    pub fn get_associated_data(&self) -> &D {
+        unsafe {
+            &(*self.get_data_pointer_raw()).d
+        }
+    }
+
+    pub fn get_associated_data_mut(&mut self) -> &mut D {
+        unsafe {
+            &mut(*self.get_data_pointer_raw()).d
+        }
+    }
+
+    pub fn get_index(&self) -> u32 {
+        unsafe {
+            (*self.get_data_pointer_raw()).cpp_idx
         }
     }
 
@@ -245,6 +257,10 @@ impl<D, Dother> DerefMut for PARGraph<D, Dother> {
 impl<D, Dother> Drop for PARGraph<D, Dother> {
     fn drop(&mut self) {
         unsafe {
+            // Here we have to drop all of the associated data
+            for i in 0..self.get_num_nodes() {
+                Box::from_raw(self.get_node_by_index(i).get_data_pointer_raw());
+            }
             ffi::xbpar_PARGraph_Destroy(self.ffi_graph);
         }
     }
@@ -385,10 +401,15 @@ impl<D, Dother> PARGraph_<D, Dother> {
     }
 
     // Returns the index of the new node because that's basically the only way we can sanely do it here in rust
-    pub fn add_new_node(&mut self, label: u32, p_data: *mut c_void) -> u32 {
+    pub fn add_new_node(&mut self, label: u32, p_data: D) -> u32 {
         unsafe {
-            let ffi_node = ffi::xbpar_PARGraphNode_Create(label, p_data);
+            let associated_data = Box::into_raw(Box::new(PARGraphNodeData {
+                d: p_data,
+                cpp_idx: 0,
+            }));
+            let ffi_node = ffi::xbpar_PARGraphNode_Create(label, associated_data as *mut c_void);
             let ret_idx = ffi::xbpar_PARGraph_GetNumNodes(self as *const PARGraph_<D, Dother> as *const c_void);
+            (*associated_data).cpp_idx = ret_idx;
             // This transfers ownership to the graph
             ffi::xbpar_PARGraph_AddNode(self as *mut PARGraph_<D, Dother> as *mut c_void, ffi_node);
 
@@ -541,14 +562,14 @@ impl<'e, 'g: 'e, Dd, Dn> PAREngineImpl<'e, 'g, Dd, Dn> for BasePAREngine<Dd, Dn>
 }
 
 impl<'e, 'g: 'e, Dd, Dn> BasePAREngine<Dd, Dn> {
-    pub fn get_graphs(&'e self) -> (&'g PARGraph_<Dd, Dn>, &'g PARGraph_<Dn, Dd>) {
+    pub fn get_graphs(&'e self) -> PARGraphRefPair<'g, Dd, Dn> {// (&'g PARGraph_<Dd, Dn>, &'g PARGraph_<Dn, Dd>) {
         unsafe {
-            (
-                &*(ffi::xbpar_PAREngine_base_get_m_device(self as *const BasePAREngine<Dd, Dn> as *const c_void)
+            PARGraphRefPair {
+                d: &*(ffi::xbpar_PAREngine_base_get_m_device(self as *const BasePAREngine<Dd, Dn> as *const c_void)
                     as *const PARGraph_<Dd, Dn>),
-                &*(ffi::xbpar_PAREngine_base_get_m_netlist(self as *const BasePAREngine<Dd, Dn> as *const c_void)
+                n: &*(ffi::xbpar_PAREngine_base_get_m_netlist(self as *const BasePAREngine<Dd, Dn> as *const c_void)
                     as *const PARGraph_<Dn, Dd>)
-            )
+            }
         }
     }
 
@@ -566,12 +587,17 @@ impl<'e, 'g: 'e, Dd, Dn> BasePAREngine<Dd, Dn> {
         }
     }
 
-    pub fn get_both_netlists_mut(&'e mut self) -> (&'g mut PARGraph_<Dn, Dd>, &'g mut PARGraph_<Dd, Dn>) {
+    // FIXME: This is semantically bullshit. Why is it attached to this type?
+    pub fn mate_nodes(&mut self, n_idx: u32, d_idx: u32) {
         unsafe {
-            (&mut*(ffi::xbpar_PAREngine_base_get_m_netlist(self as *const BasePAREngine<Dd, Dn> as *const c_void)
-                as *mut PARGraph_<Dn, Dd>),
-                &mut*(ffi::xbpar_PAREngine_base_get_m_device(self as *const BasePAREngine<Dd, Dn> as *const c_void)
-                    as *mut PARGraph_<Dd, Dn>))
+            let m_netlist = &mut*(ffi::xbpar_PAREngine_base_get_m_netlist(
+                self as *const BasePAREngine<Dd, Dn> as *const c_void) as *mut PARGraph_<Dn, Dd>);
+            let m_device = &mut*(ffi::xbpar_PAREngine_base_get_m_device(
+                self as *const BasePAREngine<Dd, Dn> as *const c_void) as *mut PARGraph_<Dd, Dn>);
+            let node = m_netlist.get_node_by_index_mut(n_idx);
+            let mate = m_device.get_node_by_index_mut(d_idx);
+            ffi::xbpar_PARGraphNode_MateWith(node as *mut PARGraphNode<Dn, Dd> as *mut c_void,
+                mate as *mut PARGraphNode<Dd, Dn> as *mut c_void);
         }
     }
 
