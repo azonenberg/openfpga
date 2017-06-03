@@ -28,13 +28,13 @@ struct DeviceData {
 struct NetlistData {
 }
 
-struct TrivialPAREngine<'e> {
-    base_engine: Option<&'e mut BasePAREngine<DeviceData, NetlistData>>,
+struct TrivialPAREngine<'e, 'g: 'e> {
+    base_engine: Option<&'e mut BasePAREngine<'e, 'g, DeviceData, NetlistData>>,
     label_map: HashMap<u32, &'static str>,
 }
 
-impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for TrivialPAREngine<'e> {
-    fn set_base_engine(&'e mut self, base_engine: &'g mut BasePAREngine<DeviceData, NetlistData>) {
+impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for TrivialPAREngine<'e, 'g> {
+    fn set_base_engine(&'e mut self, base_engine: &'e mut BasePAREngine<'e, 'g, DeviceData, NetlistData>) {
         self.base_engine = Some(base_engine);
     }
 

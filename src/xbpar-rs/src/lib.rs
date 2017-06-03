@@ -101,7 +101,7 @@ pub struct PARGraphNode<D, Dother> (
     PhantomData<Dother>
 );
 
-pub struct PARGraphNodeData<D> {
+struct PARGraphNodeData<D> {
     d: D,
     cpp_idx: u32,
 }
@@ -273,7 +273,10 @@ pub struct PARGraph_<D, Dother> (
 );
 
 // Having this helps prevent crossing nodes between arbitrary and definitely wrong graphs
-pub struct PARGraphPair<Dd, Dn>(PARGraph<Dd, Dn>, PARGraph<Dn, Dd>);
+pub struct PARGraphPair<Dd, Dn> {
+    d: PARGraph<Dd, Dn>,
+    n: PARGraph<Dn, Dd>
+}
 pub struct PARGraphRefPair<'a, Dd: 'a, Dn: 'a> {
     pub d: &'a PARGraph_<Dd, Dn>,
     pub n: &'a PARGraph_<Dn, Dd>
@@ -282,31 +285,31 @@ pub struct PARGraphRefPair<'a, Dd: 'a, Dn: 'a> {
 impl<Dd, Dn> PARGraphPair<Dd, Dn> {
     pub fn new_pair() -> Self {
         unsafe {
-            PARGraphPair(
-                PARGraph {
+            PARGraphPair {
+                d: PARGraph {
                     ffi_graph: ffi::xbpar_PARGraph_Create(),
                     _marker1: PhantomData,
                     _marker2: PhantomData
                 },
-                PARGraph {
+                n: PARGraph {
                     ffi_graph: ffi::xbpar_PARGraph_Create(),
                     _marker1: PhantomData,
                     _marker2: PhantomData
                 }
-            )
+            }
         }
     }
 
     pub fn borrow(&self) -> PARGraphRefPair<Dd, Dn> {
-        PARGraphRefPair{d: &self.0, n: &self.1}
+        PARGraphRefPair{d: &self.d, n: &self.n}
     }
 
     pub fn borrow_mut_d(&mut self) -> &mut PARGraph_<Dd, Dn> {
-        &mut self.0
+        &mut self.d
     }
 
     pub fn borrow_mut_n(&mut self) -> &mut PARGraph_<Dn, Dd> {
-        &mut self.1
+        &mut self.n
     }
 }
 
@@ -425,7 +428,7 @@ impl<D, Dother> PARGraph_<D, Dother> {
 // self is always &mut here because it represents the Rust side state that we can always mutate rather than
 // representing the C++ state.
 pub trait PAREngineImpl<'e, 'g: 'e, Dd, Dn> {
-    fn set_base_engine(&'e mut self, base_engine: &'g mut BasePAREngine<Dd, Dn>);
+    fn set_base_engine(&'e mut self, base_engine: &'e mut BasePAREngine<'e, 'g, Dd, Dn>);
 
     // Overloads
     fn can_move_node(&'e mut self, node: &'g PARGraphNode<Dn, Dd>,
@@ -446,14 +449,14 @@ pub trait PAREngineImpl<'e, 'g: 'e, Dd, Dn> {
     fn get_label_name(&mut self, label: u32) -> &str;
 }
 
-pub struct BasePAREngine<Dd, Dn> (
+pub struct BasePAREngine<'e, 'g: 'e, Dd: 'g, Dn: 'g> (
     UnsafeCell<()>,
-    PhantomData<Dd>,
-    PhantomData<Dn>
+    PhantomData<&'e ()>,
+    PhantomData<&'g (Dd, Dn)>
 );
 
-impl<'e, 'g: 'e, Dd, Dn> PAREngineImpl<'e, 'g, Dd, Dn> for BasePAREngine<Dd, Dn> {
-    fn set_base_engine(&'e mut self, _: &'g mut BasePAREngine<Dd, Dn>) {}
+impl<'e, 'g: 'e, Dd, Dn> PAREngineImpl<'e, 'g, Dd, Dn> for BasePAREngine<'e, 'g, Dd, Dn> {
+    fn set_base_engine(&'e mut self, _: &'e mut BasePAREngine<'e, 'g, Dd, Dn>) {}
 
     fn can_move_node(&'e mut self, node: &'g PARGraphNode<Dn, Dd>,
         old_mate: &'g PARGraphNode<Dd, Dn>, new_mate: &'g PARGraphNode<Dd, Dn>) -> bool {
@@ -561,8 +564,8 @@ impl<'e, 'g: 'e, Dd, Dn> PAREngineImpl<'e, 'g, Dd, Dn> for BasePAREngine<Dd, Dn>
     }
 }
 
-impl<'e, 'g: 'e, Dd, Dn> BasePAREngine<Dd, Dn> {
-    pub fn get_graphs(&'e self) -> PARGraphRefPair<'g, Dd, Dn> {// (&'g PARGraph_<Dd, Dn>, &'g PARGraph_<Dn, Dd>) {
+impl<'e, 'g: 'e, Dd, Dn> BasePAREngine<'e, 'g, Dd, Dn> {
+    pub fn get_graphs(&'e self) -> PARGraphRefPair<'g, Dd, Dn> {
         unsafe {
             PARGraphRefPair {
                 d: &*(ffi::xbpar_PAREngine_base_get_m_device(self as *const BasePAREngine<Dd, Dn> as *const c_void)
@@ -635,7 +638,7 @@ impl<'e, 'g: 'e, Dd: 'g, Dn: 'g, T: 'e + PAREngineImpl<'e, 'g, Dd, Dn>> PAREngin
 
             let ffi_engine = ffi::xbpar_PAREngine_Create(
                 boxed_impl as *mut c_void,
-                graphs.1.ffi_graph, graphs.0.ffi_graph,
+                graphs.n.ffi_graph, graphs.d.ffi_graph,
                 Some(PAREngine::<Dd, Dn, T>::get_new_placement_for_node),
                 Some(PAREngine::<Dd, Dn, T>::find_suboptimal_placements),
                 Some(PAREngine::<Dd, Dn, T>::initial_placement_core),
@@ -653,7 +656,7 @@ impl<'e, 'g: 'e, Dd: 'g, Dn: 'g, T: 'e + PAREngineImpl<'e, 'g, Dd, Dn>> PAREngin
                 Some(PAREngine::<Dd, Dn, T>::_free_edgevec),
                 Some(PAREngine::<Dd, Dn, T>::_free_nodevec));
 
-            (*boxed_impl).set_base_engine(&mut*(ffi_engine as *mut BasePAREngine<Dd, Dn>));
+            (*boxed_impl).set_base_engine(&mut*(ffi_engine as *mut BasePAREngine<'e, 'g, Dd, Dn>));
 
             PAREngine {
                 ffi_engine: ffi_engine,
