@@ -32,6 +32,24 @@ public:
 
 	float m_rising;
 	float m_falling;
+
+	//Delay adding
+	CombinatorialDelay operator+(const CombinatorialDelay& rhs) const
+	{ return CombinatorialDelay(m_rising + rhs.m_rising, m_falling + rhs.m_falling); }
+
+	CombinatorialDelay& operator=(const CombinatorialDelay& rhs)
+	{
+		m_rising = rhs.m_rising;
+		m_falling = rhs.m_falling;
+		return *this;
+	}
+
+	CombinatorialDelay& operator+=(const CombinatorialDelay& rhs)
+	{
+		m_rising += rhs.m_rising;
+		m_falling += rhs.m_falling;
+		return *this;
+	}
 };
 
 #endif

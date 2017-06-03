@@ -42,6 +42,7 @@ bool MeasureCrossConnectionDelay(
 	unsigned int index,
 	unsigned int src,
 	unsigned int dst,
+	PTVCorner corner,
 	float& delay);
 
 bool MeasurePinToPinDelay(
@@ -262,7 +263,7 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 			Output buffer delay: 1.8 ns, plus 1 ns for LVCMOS33 = 2.8 ns
 			Slow-slew output: 4 ns
 
-			Extrapolation: input buffer delay = 0.6 * Schmitt trigger delay
+			Extrapolation: input buffer delay = 1.55x output buffer delay
 	 */
 
 	int pins[] = {3, 4, 5, 13, 14, 15};
@@ -272,6 +273,7 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 
 	//TODO: ↓ edges
 	//TODO: x4 drive (if supported on this pin)
+	//TODO: Tri-states and open-drain/open-source outputs
 	float delay;
 	for(auto src : pins)
 	{
@@ -290,38 +292,35 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 
 			//Create some variables
 			EquationVariable ibuf("Input buffer delay");
-			EquationVariable obuf("Output buffer delay");
+			EquationVariable obuf_x1("x1 Output buffer delay");
+			EquationVariable obuf_x2("x2 Output buffer delay");
 			EquationVariable schmitt("Schmitt trigger delay");
-			EquationVariable route("Crossbar delay");
 
 			//Set up relationships between the various signals (see assumptions above)
 			//TODO: FIB probing to get more accurate parameters here
 			Equation e1(0);
 			e1.AddVariable(ibuf, 1);
-			e1.AddVariable(schmitt, -0.6);
+			e1.AddVariable(obuf_x2, -1.55);
 
 			//Gather data from the DUT
 			if(!MeasurePinToPinDelay(sock, hdev, src, dst, Greenpak4IOB::DRIVE_1X, false, delay))
 				return false;
 			Equation e2(delay);
 			e2.AddVariable(ibuf);
-			e2.AddVariable(route);
-			e2.AddVariable(obuf);
+			e2.AddVariable(obuf_x1);
 
 			if(!MeasurePinToPinDelay(sock, hdev, src, dst, Greenpak4IOB::DRIVE_2X, false, delay))
 				return false;
 			Equation e3(delay);
 			e3.AddVariable(ibuf);
-			e3.AddVariable(route);
-			e3.AddVariable(obuf, 0.5);
+			e3.AddVariable(obuf_x2);
 
 			if(!MeasurePinToPinDelay(sock, hdev, src, dst, Greenpak4IOB::DRIVE_2X, true, delay))
 				return false;
 			Equation e4(delay);
 			e4.AddVariable(ibuf);
 			e4.AddVariable(schmitt);
-			e4.AddVariable(route);
-			e4.AddVariable(obuf, 0.5);
+			e4.AddVariable(obuf_x2);
 
 			//Create and solve the equation system
 			EquationSystem sys;
@@ -332,27 +331,12 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 			if(!sys.Solve())
 				return false;
 
-			/*
-			LogNotice("| %4d |  %2d  | %6.3f | %8.3f | %8.3f | %9.3f | %8.3f |\n",
-				src,
-				dst,
-				ibuf.m_value,
-				obuf.m_value,
-				obuf.m_value/2,
-				schmitt.m_value,
-				route.m_value
-				);
-				*/
-
 			//Save combinatorial delays for these pins
 			auto iob = g_calDevice.GetIOB(src);
 			iob->AddCombinatorialDelay("IO", "OUT", corner, CombinatorialDelay(ibuf.m_value, -1));
-			//iob->AddCombinatorialDelay("IN", "IO", corner, CombinatorialDelay(obuf.m_value, -1));
 			iob->SetSchmittTriggerDelay(corner, CombinatorialDelay(schmitt.m_value, -1));
-			iob->SetOutputDelay(Greenpak4IOB::DRIVE_1X, corner, CombinatorialDelay(obuf.m_value, -1));
-			iob->SetOutputDelay(Greenpak4IOB::DRIVE_2X, corner, CombinatorialDelay(obuf.m_value/2, -1));
-
-			//TODO: route.m_value goes somewhere
+			iob->SetOutputDelay(Greenpak4IOB::DRIVE_1X, corner, CombinatorialDelay(obuf_x1.m_value, -1));
+			iob->SetOutputDelay(Greenpak4IOB::DRIVE_2X, corner, CombinatorialDelay(obuf_x2.m_value, -1));
 		}
 	}
 
@@ -419,21 +403,23 @@ bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev)
 	LogNotice("Measuring cross-connection delays...\n");
 	LogIndenter li;
 
+	//Test conditions (TODO: pass this in from somewhere?)
+	PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, 3300);
+
+	//East
 	float d;
 	for(int i=0; i<10; i++)
 	{
-		//east
-		MeasureCrossConnectionDelay(sock, hdev, 0, i, 3, 13, d);
-		LogNotice("East cross-connection %d from pins 3 to 13: %.3f\n", i, d);
-
-		//g_calDevice.GetCrossConnection(0, i,
+		if(!MeasureCrossConnectionDelay(sock, hdev, 0, i, 3, 13, corner, d))
+			return false;
+		g_calDevice.GetCrossConnection(0, i)->AddCombinatorialDelay("I", "O", corner, CombinatorialDelay(d, -1));
 	}
 
 	for(int i=0; i<10; i++)
 	{
-		//west
-		MeasureCrossConnectionDelay(sock, hdev, 1, i, 13, 3, d);
-		LogNotice("West cross-connection %d from pins 13 to 3: %.3f\n", i, d);
+		if(!MeasureCrossConnectionDelay(sock, hdev, 1, i, 13, 3, corner, d))
+			return false;
+		g_calDevice.GetCrossConnection(1, i)->AddCombinatorialDelay("I", "O", corner, CombinatorialDelay(d, -1));
 	}
 
 	return true;
@@ -446,6 +432,7 @@ bool MeasureCrossConnectionDelay(
 	unsigned int index,
 	unsigned int src,
 	unsigned int dst,
+	PTVCorner corner,
 	float& delay)
 {
 	delay = -1;
@@ -487,18 +474,24 @@ bool MeasureCrossConnectionDelay(
 	//Subtract the PCB trace delay at each end of the line
 	delay -= g_devkitCal.pinDelays[src].m_rising;
 	delay -= g_devkitCal.pinDelays[dst].m_rising;
+
+	//Subtract the I/O buffer delay at each end of the line
+	//TODO: import calibration from the Greenpak4Device and/or reset it?
+	CombinatorialDelay d;
+	srciob = g_calDevice.GetIOB(src);
+	srciob->SetSchmittTrigger(false);
+	if(!srciob->GetCombinatorialDelay("IO", "OUT", corner, d))
+		return false;
+	delay -= d.m_rising;
+
+	dstiob = g_calDevice.GetIOB(dst);
+	dstiob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
+	dstiob->SetDriveStrength(Greenpak4IOB::DRIVE_2X);
+	if(!dstiob->GetCombinatorialDelay("IN", "IO", corner, d))
+		return false;
+	delay -= d.m_rising;
+
 	return true;
-
-	/*
-	delay = -1;
-
-	//Create the device
-
-	//Done
-	string dir = (matrix == 0) ? "east" : "west";
-	LogNotice("%s %d: %.3f ns\n", dir.c_str(), index, delay);
-	return true;
-	*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

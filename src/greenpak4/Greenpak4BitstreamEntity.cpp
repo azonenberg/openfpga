@@ -238,14 +238,22 @@ bool Greenpak4BitstreamEntity::GetCombinatorialDelay(
 	//If this isn't a corner we know about, give up
 	auto pit = m_pinToPinDelays.find(corner);
 	if(pit == m_pinToPinDelays.end())
+	{
+		LogWarning("Greenpak4BitstreamEntity::GetCombinatorialDelay: no delay for process corner %s\n",
+			corner.toString().c_str());
 		return false;
+	}
 
 	//If we don't have data for this pin pair, give up
 	PinPair pair(srcport, dstport);
 	auto& dmap = pit->second;
 	auto dit = dmap.find(pair);
 	if(dit == dmap.end())
+	{
+		LogWarning("Greenpak4BitstreamEntity::GetCombinatorialDelay: no delay for path %s to %s\n",
+			srcport.c_str(), dstport.c_str());
 		return false;
+	}
 
 	//Got it
 	delay = dit->second;

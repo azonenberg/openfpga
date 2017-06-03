@@ -258,8 +258,8 @@ void Greenpak4IOB::PrintExtraTimingData(PTVCorner corner) const
 		if(GetCombinatorialDelay("IO", "OUT", corner, bd))
 		{
 			LogNotice("%10s to %10s: %.3f ns rising, %.3f ns falling\n",
-				"IO",
-				"OUT (Sch)",
+				"IO (Sch)",
+				"OUT",
 				time.m_rising + bd.m_rising,
 				time.m_falling + bd.m_falling);
 		}
@@ -304,6 +304,44 @@ bool Greenpak4IOB::GetCombinatorialDelay(
 		PTVCorner corner,
 		CombinatorialDelay& delay) const
 {
+	//INPUT path: enable Schmitt trigger if needed
+	if( (srcport == "IO") && (dstport == "OUT") )
+	{
+		//Get the baseline IO to OUT delay from the base class
+		if(!Greenpak4BitstreamEntity::GetCombinatorialDelay(srcport, dstport, corner, delay))
+		{
+			LogWarning("Greenpak4IOB::GetCombinatorialDelay: no delay for process corner %s\n",
+				corner.toString().c_str());
+			return false;
+		}
+
+		//Add Schmitt trigger delay if needed
+		if(m_schmittTrigger)
+		{
+			auto it = m_schmittTriggerDelays.find(corner);
+			if(it == m_schmittTriggerDelays.end())
+				return false;
+			delay += it->second;
+		}
+		return true;
+	}
+
+	//OUTPUT path: look up drive strength
+	else if( (srcport == "IN") && (dstport == "IO") )
+	{
+		auto it = m_outputDelays.find(DriveCondition(m_driveStrength, corner));
+		if(it == m_outputDelays.end())
+		{
+			LogWarning("Greenpak4IOB::GetCombinatorialDelay: no delay for drive condition (strength=%d, corner=%s)\n",
+				m_driveStrength,
+				corner.toString().c_str());
+			return false;
+		}
+
+		delay = it->second;
+		return true;
+	}
+
 	//Default: return base class info
 	return Greenpak4BitstreamEntity::GetCombinatorialDelay(srcport, dstport, corner, delay);
 }

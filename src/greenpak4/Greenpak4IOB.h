@@ -149,6 +149,7 @@ public:
 	void SetSchmittTriggerDelay(PTVCorner c, CombinatorialDelay d)
 	{ m_schmittTriggerDelays[c] = d; }
 
+	//TODO: drive type should go in here too?
 	typedef std::pair<DriveStrength, PTVCorner> DriveCondition;
 
 	void SetOutputDelay(DriveStrength s, PTVCorner c, CombinatorialDelay d)
