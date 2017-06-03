@@ -22,25 +22,36 @@ use xbpar_rs::*;
 use std::collections::{HashMap, HashSet};
 use std::ptr;
 
+struct DeviceData {
+    i: usize,
+}
+
+struct NetlistData {
+    i: u32,
+}
+
 struct TrivialPAREngine<'e> {
-    base_engine: Option<&'e mut BasePAREngine>,
+    base_engine: Option<&'e mut BasePAREngine<DeviceData, NetlistData>>,
     label_map: HashMap<u32, &'static str>,
 }
 
-impl<'e, 'g: 'e> PAREngineImpl<'e, 'g> for TrivialPAREngine<'e> {
-    fn set_base_engine(&'e mut self, base_engine: &'g mut BasePAREngine) {
+impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for TrivialPAREngine<'e> {
+    fn set_base_engine(&'e mut self, base_engine: &'g mut BasePAREngine<DeviceData, NetlistData>) {
         self.base_engine = Some(base_engine);
     }
 
-    fn can_move_node(&'e mut self, node: &'g PARGraphNode,
-        old_mate: &'g PARGraphNode, new_mate: &'g PARGraphNode) -> bool {
+    fn can_move_node(&'e mut self, node: &'g PARGraphNode<NetlistData, DeviceData>,
+        old_mate: &'g PARGraphNode<DeviceData, NetlistData>,
+        new_mate: &'g PARGraphNode<DeviceData, NetlistData>) -> bool {
 
         println!("can_move_node");
         let base_engine = self.base_engine.as_mut().unwrap();
         base_engine.can_move_node(node, old_mate, new_mate)
     }
 
-    fn get_new_placement_for_node(&'e mut self, pivot: &'g PARGraphNode) -> Option<&'g PARGraphNode> {
+    fn get_new_placement_for_node(&'e mut self, pivot: &'g PARGraphNode<NetlistData, DeviceData>)
+        -> Option<&'g PARGraphNode<DeviceData, NetlistData>> {
+
         println!("get_new_placement_for_node");
         let base_engine = self.base_engine.as_mut().unwrap();
         let m_device = base_engine.get_graphs().0;
@@ -61,7 +72,7 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g> for TrivialPAREngine<'e> {
         Some(candidates[(base_engine.random_number() % ncandidates) as usize])
     }
 
-    fn find_suboptimal_placements(&'e mut self) -> Vec<&'g PARGraphNode> {
+    fn find_suboptimal_placements(&'e mut self) -> Vec<&'g PARGraphNode<NetlistData, DeviceData>> {
         println!("find_suboptimal_placements");
         let base_engine = self.base_engine.as_mut().unwrap();
 
@@ -79,13 +90,13 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g> for TrivialPAREngine<'e> {
 
     }
 
-    fn compute_and_print_score(&'e mut self, iteration: u32) -> (u32, Vec<&'g PARGraphEdge>) {
+    fn compute_and_print_score(&'e mut self, iteration: u32) -> (u32, Vec<&'g PARGraphEdge<NetlistData, DeviceData>>) {
         println!("compute_and_print_score");
         let base_engine = self.base_engine.as_mut().unwrap();
         base_engine.compute_and_print_score(iteration)
     }
 
-    fn print_unroutes(&'e mut self, unroutes: &[&'g PARGraphEdge]) {
+    fn print_unroutes(&'e mut self, unroutes: &[&'g PARGraphEdge<NetlistData, DeviceData>]) {
         println!("print_unroutes");
         let base_engine = self.base_engine.as_mut().unwrap();
         base_engine.print_unroutes(unroutes)
@@ -103,7 +114,7 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g> for TrivialPAREngine<'e> {
         base_engine.compute_timing_cost()
     }
 
-    fn compute_unroutable_cost(&'e mut self) -> (u32, Vec<&'g PARGraphEdge>) {
+    fn compute_unroutable_cost(&'e mut self) -> (u32, Vec<&'g PARGraphEdge<NetlistData, DeviceData>>) {
         println!("compute_unroutable_cost");
         let base_engine = self.base_engine.as_mut().unwrap();
         base_engine.compute_unroutable_cost()
@@ -174,7 +185,7 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g> for TrivialPAREngine<'e> {
         true
     }
 
-    fn optimize_placement(&'e mut self, badnodes: &[&'g PARGraphNode]) -> bool {
+    fn optimize_placement(&'e mut self, badnodes: &[&'g PARGraphNode<NetlistData, DeviceData>]) -> bool {
         println!("optimize_placement");
         let base_engine = self.base_engine.as_mut().unwrap();
         base_engine.optimize_placement(badnodes)
@@ -184,7 +195,10 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g> for TrivialPAREngine<'e> {
         self.label_map[&label]
     }
 
-    fn compute_node_unroutable_cost(&'e mut self, pivot: &'g PARGraphNode, candidate: &'g PARGraphNode) -> u32 {
+    fn compute_node_unroutable_cost(&'e mut self,
+        pivot: &'g PARGraphNode<NetlistData, DeviceData>,
+        candidate: &'g PARGraphNode<DeviceData, NetlistData>) -> u32 {
+
         println!("compute_node_unroutable_cost");
         let base_engine = self.base_engine.as_mut().unwrap();
         base_engine.compute_node_unroutable_cost(pivot, candidate)
@@ -216,13 +230,13 @@ fn main() {
     let d_type_b_2 = graphs.borrow_mut_d().add_new_node(typeb_label_d, ptr::null_mut());
 
     println!("Device A1 is: {:?}",
-        graphs.borrow().d.get_node_by_index(d_type_a_1) as *const PARGraphNode);
+        graphs.borrow().d.get_node_by_index(d_type_a_1) as *const PARGraphNode<_, _>);
     println!("Device A2 is: {:?}",
-        graphs.borrow().d.get_node_by_index(d_type_a_2) as *const PARGraphNode);
+        graphs.borrow().d.get_node_by_index(d_type_a_2) as *const PARGraphNode<_, _>);
     println!("Device B1 is: {:?}",
-        graphs.borrow().d.get_node_by_index(d_type_b_1) as *const PARGraphNode);
+        graphs.borrow().d.get_node_by_index(d_type_b_1) as *const PARGraphNode<_, _>);
     println!("Device B2 is: {:?}",
-        graphs.borrow().d.get_node_by_index(d_type_b_2) as *const PARGraphNode);
+        graphs.borrow().d.get_node_by_index(d_type_b_2) as *const PARGraphNode<_, _>);
 
     graphs.borrow_mut_d().add_edge(d_type_a_1, "A to B", d_type_b_1, "B to A");
     graphs.borrow_mut_d().add_edge(d_type_a_1, "A to B", d_type_b_2, "B to A");
@@ -249,7 +263,7 @@ fn main() {
 
     // Print out
     println!("Netlist A mate is: {:?}",
-        graphs.borrow().n.get_node_by_index(n_type_a_1).get_mate().unwrap() as *const PARGraphNode);
+        graphs.borrow().n.get_node_by_index(n_type_a_1).get_mate().unwrap() as *const PARGraphNode<_, _>);
     println!("Netlist B mate is: {:?}",
-        graphs.borrow().n.get_node_by_index(n_type_b_1).get_mate().unwrap() as *const PARGraphNode);
+        graphs.borrow().n.get_node_by_index(n_type_b_1).get_mate().unwrap() as *const PARGraphNode<_, _>);
 }
