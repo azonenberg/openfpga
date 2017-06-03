@@ -85,7 +85,8 @@ void xbpar_PARGraph_AddNode(PARGraph* graph, PARGraphNode* node);
 //PAREngine
 typedef PARGraphNode* (*t_GetNewPlacementForNode)(void* ffiengine, const PARGraphNode* pivot);
 //Gives out ownership; will be freed
-typedef void (*t_FindSubOptimalPlacements)(void* ffiengine, PARGraphNode*const** bad_nodes_ptr, size_t* bad_nodes_len);
+typedef void (*t_FindSubOptimalPlacements)(void* ffiengine,
+	PARGraphNode*const** bad_nodes_ptr, size_t* bad_nodes_len, size_t* bad_nodes_extra);
 typedef int (*t_InitialPlacement_core)(void* ffiengine);
 //Return value is borrowed and must live for some amount of time until the next operation
 typedef const char* (*t_GetLabelName)(void* ffiengine, uint32_t label);
@@ -93,7 +94,7 @@ typedef int (*t_CanMoveNode)(void* ffiengine, const PARGraphNode* node,
 	const PARGraphNode* old_mate, const PARGraphNode* new_mate);
 //Gives out ownership; will be freed
 typedef uint32_t (*t_ComputeAndPrintScore)(void* ffiengine,
-	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len, uint32_t iteration);
+	const PARGraphEdge*const** unroutes_ptr, size_t* unroutes_len, size_t* unroutes_extra, uint32_t iteration);
 //Borrows unroutes, does not take ownership
 typedef void (*t_PrintUnroutes)(void* ffiengine,
 	const PARGraphEdge*const* unroutes_ptr, size_t unroutes_len);
@@ -101,7 +102,7 @@ typedef uint32_t (*t_ComputeCongestionCost)(void* ffiengine);
 typedef uint32_t (*t_ComputeTimingCost)(void* ffiengine);
 //Gives out ownership; will be freed
 typedef uint32_t (*t_ComputeUnroutableCost)(void* ffiengine,
-	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len);
+	const PARGraphEdge*const** unroutes_ptr, size_t* unroutes_len, size_t* unroutes_extra);
 typedef int (*t_SanityCheck)(void* ffiengine);
 typedef int (*t_InitialPlacement)(void* ffiengine);
 //Borrows badnodes, does not take ownership
@@ -109,8 +110,8 @@ typedef int (*t_OptimizePlacement)(void* ffiengine,
 	PARGraphNode*const* badnodes_ptr, size_t badnodes_len);
 typedef uint32_t (*t_ComputeNodeUnroutableCost)(void* ffiengine,
 	const PARGraphNode* pivot, const PARGraphNode* candidate);
-typedef void (*t_free_edgevec)(const PARGraphEdge*const* v);
-typedef void (*t_free_nodevec)(const PARGraphNode*const* n);
+typedef void (*t_free_edgevec)(const PARGraphEdge*const* v, size_t len, size_t extra);
+typedef void (*t_free_nodevec)(const PARGraphNode*const* v, size_t len, size_t extra);
 
 
 PAREngine* xbpar_PAREngine_Create(void* ffiengine, PARGraph* netlist, PARGraph* device,
@@ -146,7 +147,7 @@ int xbpar_PAREngine_base_CanMoveNode(const PAREngine* engine, const PARGraphNode
 	const PARGraphNode* old_mate, const PARGraphNode* new_mate);
 //DOES give ownership; need to free
 uint32_t xbpar_PAREngine_base_ComputeAndPrintScore(const PAREngine* engine,
-	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len, uint32_t iteration);
+	const PARGraphEdge*const** unroutes_ptr, size_t* unroutes_len, uint32_t iteration);
 //Borrows unroutes, does not take ownership
 void xbpar_PAREngine_base_PrintUnroutes(const PAREngine* engine,
 	const PARGraphEdge*const* unroutes_ptr, size_t unroutes_len);
@@ -154,7 +155,7 @@ uint32_t xbpar_PAREngine_base_ComputeCongestionCost(const PAREngine* engine);
 uint32_t xbpar_PAREngine_base_ComputeTimingCost(const PAREngine* engine);
 //DOES give ownership; need to free
 uint32_t xbpar_PAREngine_base_ComputeUnroutableCost(const PAREngine* engine,
-	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len);
+	const PARGraphEdge*const** unroutes_ptr, size_t* unroutes_len);
 int xbpar_PAREngine_base_SanityCheck(const PAREngine* engine);
 int xbpar_PAREngine_base_InitialPlacement(PAREngine* engine);
 //Borrows badnodes, does not take ownership

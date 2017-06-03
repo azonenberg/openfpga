@@ -25,8 +25,10 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 use std::cell::UnsafeCell;
 use std::marker::PhantomData;
+use std::mem;
 use std::os::raw::*;
 use std::ops::{Deref, DerefMut};
+use std::ptr;
 use std::slice;
 use std::str;
 
@@ -356,6 +358,7 @@ pub trait PAREngineImpl<'a> {
     fn set_base_engine<'b: 'a>(&'a mut self, base_engine: &'b mut BasePAREngine);
 
     // Overloads
+    fn compute_and_print_score(&mut self, iteration: u32) -> (u32, Vec<&PARGraphEdge>);
     fn sanity_check(&mut self) -> bool;
     fn initial_placement(&mut self) -> bool;
     fn initial_placement_core(&mut self) -> bool;
@@ -368,6 +371,20 @@ pub struct BasePAREngine (
 
 impl<'a> PAREngineImpl<'a> for BasePAREngine {
     fn set_base_engine<'b: 'a>(&'a mut self, _: &'b mut BasePAREngine) {}
+
+    fn compute_and_print_score(&mut self, iteration: u32) -> (u32, Vec<&PARGraphEdge>) {
+        unsafe {
+            let mut unroutes_len: usize = 0;
+            let mut unroutes_ptr: *const*const c_void = ptr::null_mut();
+            let ret = ffi::xbpar_PAREngine_base_ComputeAndPrintScore(self as *const BasePAREngine as *const c_void,
+                &mut unroutes_ptr, &mut unroutes_len, iteration);
+            let unroutes_slice = slice::from_raw_parts(unroutes_ptr, unroutes_len);
+            let unroutes = unroutes_slice.iter().map(|&x| &*(x as *const PARGraphEdge)).collect();
+            ffi::xbpar_ffi_free_object(unroutes_ptr as *mut c_void);
+
+            (ret, unroutes)
+        }
+    }
 
     fn sanity_check(&mut self) -> bool {
         unsafe {
@@ -454,7 +471,7 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
                 Some(PAREngine::<T>::initial_placement_core),
                 None,
                 None,
-                None,
+                Some(PAREngine::<T>::compute_and_print_score),
                 None,
                 None,
                 None,
@@ -463,7 +480,7 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
                 Some(PAREngine::<T>::initial_placement),
                 None,
                 None,
-                None,
+                Some(PAREngine::<T>::_free_edgevec),
                 None);
 
             (*boxed_impl).set_base_engine(&mut*(ffi_engine as *mut BasePAREngine));
@@ -491,6 +508,20 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
     }
 
     // Overloads
+    unsafe extern "C" fn compute_and_print_score(ffiengine: *mut c_void,
+        unroutes_ptr: *mut*const*const c_void, unroutes_len: *mut usize, unroutes_capacity: *mut usize,
+        iteration: u32) -> u32 {
+
+        let (ret, unroutes) = (*(ffiengine as *mut T)).compute_and_print_score(iteration);
+
+        *unroutes_ptr = unroutes.as_ptr() as *const*const PARGraphEdge as *const*const c_void;
+        *unroutes_len = unroutes.len();
+        *unroutes_capacity = unroutes.capacity();
+        mem::forget(unroutes);
+
+        ret
+    }
+
     unsafe extern "C" fn sanity_check(ffiengine: *mut c_void) -> i32 {
         (*(ffiengine as *mut T)).sanity_check() as i32
     }
@@ -501,5 +532,9 @@ impl<'a, 'b, 'c, T: 'c + PAREngineImpl<'c>> PAREngine<'a, 'b, 'c, T> {
 
     unsafe extern "C" fn initial_placement_core(ffiengine: *mut c_void) -> i32 {
         (*(ffiengine as *mut T)).initial_placement_core() as i32
+    }
+
+    unsafe extern "C" fn _free_edgevec(v: *const*const c_void, len: usize, capacity: usize) {
+        Vec::from_raw_parts(v as *mut&PARGraphEdge, len, capacity);
     }
 }

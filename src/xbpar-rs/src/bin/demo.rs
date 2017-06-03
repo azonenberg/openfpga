@@ -31,6 +31,12 @@ impl<'a> PAREngineImpl<'a> for TrivialPAREngine<'a> {
         self.base_engine = Some(base_engine);
     }
 
+    fn compute_and_print_score(&mut self, iteration: u32) -> (u32, Vec<&PARGraphEdge>) {
+        println!("compute_and_print_score");
+        let base_engine = self.base_engine.as_mut().unwrap();
+        base_engine.compute_and_print_score(iteration)
+    }
+
     fn sanity_check(&mut self) -> bool {
         println!("sanity_check");
         let base_engine = self.base_engine.as_mut().unwrap();

@@ -260,10 +260,10 @@ public:
 	void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes)
 	{
 		PARGraphNode*const* bad_nodes_ptr;
-		size_t bad_nodes_len;
-		this->f_FindSubOptimalPlacements(ffiengine, &bad_nodes_ptr, &bad_nodes_len);
+		size_t bad_nodes_len, bad_nodes_extra;
+		this->f_FindSubOptimalPlacements(ffiengine, &bad_nodes_ptr, &bad_nodes_len, &bad_nodes_extra);
 		PTR_LEN_INTO_VECTOR(bad_nodes);
-		this->f_free_nodevec(bad_nodes_ptr);
+		this->f_free_nodevec(bad_nodes_ptr, bad_nodes_len, bad_nodes_extra);
 	}
 
 	bool InitialPlacement_core()
@@ -368,10 +368,10 @@ public:
 	uint32_t ComputeAndPrintScore(std::vector<const PARGraphEdge*>& unroutes, uint32_t iteration) const
 	{
 		const PARGraphEdge*const* unroutes_ptr;
-		size_t unroutes_len;
-		auto ret = this->f_ComputeAndPrintScore(ffiengine, &unroutes_ptr, &unroutes_len, iteration);
+		size_t unroutes_len, unroutes_extra;
+		auto ret = this->f_ComputeAndPrintScore(ffiengine, &unroutes_ptr, &unroutes_len, &unroutes_extra, iteration);
 		PTR_LEN_INTO_VECTOR(unroutes);
-		this->f_free_edgevec(unroutes_ptr);
+		this->f_free_edgevec(unroutes_ptr, unroutes_len, unroutes_extra);
 		return ret;
 	}
 
@@ -395,10 +395,10 @@ public:
 	uint32_t ComputeUnroutableCost(std::vector<const PARGraphEdge*>& unroutes) const
 	{
 		const PARGraphEdge*const* unroutes_ptr;
-		size_t unroutes_len;
-		auto ret = this->f_ComputeUnroutableCost(ffiengine, &unroutes_ptr, &unroutes_len);
+		size_t unroutes_len, unroutes_extra;
+		auto ret = this->f_ComputeUnroutableCost(ffiengine, &unroutes_ptr, &unroutes_len, &unroutes_extra);
 		PTR_LEN_INTO_VECTOR(unroutes);
-		this->f_free_edgevec(unroutes_ptr);
+		this->f_free_edgevec(unroutes_ptr, unroutes_len, unroutes_extra);
 		return ret;
 	}
 
@@ -543,7 +543,7 @@ int xbpar_PAREngine_base_CanMoveNode(const PAREngine* engine, const PARGraphNode
 }
 
 uint32_t xbpar_PAREngine_base_ComputeAndPrintScore(const PAREngine* engine,
-	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len, uint32_t iteration)
+	const PARGraphEdge*const** unroutes_ptr, size_t* unroutes_len, uint32_t iteration)
 {
 	auto unroutes = std::vector<const PARGraphEdge*>();
 	auto ret = ((const FFIPAREngine*)engine)->base_ComputeAndPrintScore(unroutes, iteration);
@@ -570,7 +570,7 @@ uint32_t xbpar_PAREngine_base_ComputeTimingCost(const PAREngine* engine)
 }
 
 uint32_t xbpar_PAREngine_base_ComputeUnroutableCost(const PAREngine* engine,
-	const PARGraphEdge*const** unroutes_ptr, size_t *unroutes_len)
+	const PARGraphEdge*const** unroutes_ptr, size_t* unroutes_len)
 {
 	auto unroutes = std::vector<const PARGraphEdge*>();
 	auto ret = ((const FFIPAREngine*)engine)->base_ComputeUnroutableCost(unroutes);
