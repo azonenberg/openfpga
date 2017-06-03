@@ -21,9 +21,20 @@
 using namespace std;
 
 /**
-	@brief Gets a human-readable description of this process corner
+	@brief Gets a human-readable description of this PTV corner
  */
 string PTVCorner::toString() const
+{
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%d °C, %.3f V, %s process corner",
+		m_dieTemp,
+		m_voltage * 0.001f,
+		GetSpeedAsString().c_str());
+
+	return string(tmp);
+}
+
+string PTVCorner::GetSpeedAsString() const
 {
 	const char* speed;
 	switch(m_speed)
@@ -40,13 +51,7 @@ string PTVCorner::toString() const
 			break;
 	}
 
-	char tmp[128];
-	snprintf(tmp, sizeof(tmp), "%d °C, %.3f V, %s process corner",
-		m_dieTemp,
-		m_voltage * 0.001f,
-		speed);
-
-	return string(tmp);
+	return string(speed);
 }
 
 //Comparison operator for STL collections
@@ -70,4 +75,15 @@ bool PTVCorner::operator!=(const PTVCorner& rhs) const
 	if(m_voltage != rhs.m_voltage)
 		return true;
 	return false;
+}
+
+bool PTVCorner::operator==(const PTVCorner& rhs) const
+{
+	if(m_speed != rhs.m_speed)
+		return false;
+	if(m_dieTemp != rhs.m_dieTemp)
+		return false;
+	if(m_voltage != rhs.m_voltage)
+		return false;
+	return true;
 }

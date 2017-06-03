@@ -305,3 +305,45 @@ void Greenpak4BitstreamEntity::PrintExtraTimingData(PTVCorner /*corner*/) const
 	//Empty in base class but need to provide an empty default implementation
 	//so children don't HAVE to override
 }
+
+/**
+	@brief Writes our parent data
+ */
+void Greenpak4BitstreamEntity::SaveTimingData(FILE* fp, bool last)
+{
+	fprintf(fp, "    \"%s\":\n    [\n", GetDescription().c_str());
+
+	if(!m_pinToPinDelays.empty())
+	{
+		//Loop over each process corner and export the data
+		auto end = m_pinToPinDelays.end();
+		end--;
+		for(auto it : m_pinToPinDelays)
+		{
+			fprintf(fp, "        {\n");
+			auto corner = it.first;
+			fprintf(fp, "            \"process\" : \"%s\",\n", corner.GetSpeedAsString().c_str());
+			fprintf(fp, "            \"temp\" : \"%d\",\n", corner.GetTemp());
+			fprintf(fp, "            \"voltage_mv\" : \"%d\",\n", corner.GetVoltage());
+
+			fprintf(fp, "            \"delays\" :\n            {\n");
+			SaveTimingData(fp, corner);
+			fprintf(fp, "            }\n");
+
+			//key is last element, we're done
+			if(it.first == end->first)
+				fprintf(fp, "        }\n");
+			else
+				fprintf(fp, "        },\n");
+		}
+	}
+
+	if(last)
+		fprintf(fp, "    ]\n");
+	else
+		fprintf(fp, "    ],\n");
+}
+
+void Greenpak4BitstreamEntity::SaveTimingData(FILE* fp, PTVCorner corner)
+{
+}

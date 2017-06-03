@@ -155,6 +155,8 @@ public:
 	virtual void PrintTimingData() const;
 	virtual void PrintExtraTimingData(PTVCorner corner) const;
 
+	void SaveTimingData(FILE* fp, bool last);
+
 protected:
 
 	///Return our assigned netlist entity, if we have one (or NULL if not)
@@ -212,6 +214,8 @@ protected:
 	//Derived classes are free to extend this to add support for more complex features
 	//(for example, Schmitt trigger or output drive strength in an IOB)
 	std::map<PTVCorner, DelayMap> m_pinToPinDelays;
+
+	virtual void SaveTimingData(FILE* fp, PTVCorner corner);
 };
 
 #endif

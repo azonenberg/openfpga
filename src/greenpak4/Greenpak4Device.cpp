@@ -1260,3 +1260,41 @@ void Greenpak4Device::PrintTimingData() const
 	for(auto b : m_bitstuff)
 		b->PrintTimingData();
 }
+
+void Greenpak4Device::SaveTimingData(string fname)
+{
+	FILE* fp = fopen(fname.c_str(), "w");
+	if(!fp)
+	{
+		LogError("Couldn't open timing data file %s\n", fname.c_str());
+		return;
+	}
+
+	string part;
+	switch(m_part)
+	{
+		case GREENPAK4_SLG46140:
+			part = "SLG46140";
+			break;
+
+		case GREENPAK4_SLG46620:
+			part = "SLG46620";
+			break;
+
+		case GREENPAK4_SLG46621:
+			part = "SLG46621";
+			break;
+	}
+
+	//Header
+	fprintf(fp, "{\n");
+	fprintf(fp, "    \"part\" : \"%s\",\n", part.c_str());
+
+	//Timing data for each IP block
+	for(size_t i=0; i<m_bitstuff.size(); i++)
+		m_bitstuff[i]->SaveTimingData(fp, (i+1) == m_bitstuff.size());
+
+	//Footer
+	fprintf(fp, "}\n");
+	fclose(fp);
+}

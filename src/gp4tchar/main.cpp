@@ -128,8 +128,13 @@ int main(int argc, char* argv[])
 	//if(!MeasureLutDelays(sock, hdev))
 	//	return 1;
 
+	//Save to disk
+	string fout = "timing.json";
+	LogNotice("Saving timing data to file %s\n", fout.c_str());
+	g_calDevice.SaveTimingData(fout.c_str());
+
 	//Print output
-	LogDebug("Dumping timing data...\n");
+	LogNotice("Dumping timing data...\n");
 	{
 		LogIndenter li;
 		g_calDevice.PrintTimingData();

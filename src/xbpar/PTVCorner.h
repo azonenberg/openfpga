@@ -43,6 +43,8 @@ public:
 	ProcessSpeed GetSpeed() const
 	{ return m_speed; }
 
+	std::string GetSpeedAsString() const;
+
 	int GetTemp() const
 	{ return m_dieTemp; }
 
@@ -54,6 +56,7 @@ public:
 	//Comparison operator for STL collections
 	bool operator<(const PTVCorner& rhs) const;
 	bool operator!=(const PTVCorner& rhs) const;
+	bool operator==(const PTVCorner& rhs) const;
 
 protected:
 

@@ -330,6 +330,7 @@ public:
 	// TIMING
 
 	void PrintTimingData() const;
+	void SaveTimingData(std::string fname);
 
 protected:
 
