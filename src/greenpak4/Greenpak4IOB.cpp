@@ -399,24 +399,7 @@ void Greenpak4IOB::SaveTimingData(FILE* fp, PTVCorner corner)
 
 bool Greenpak4IOB::LoadExtraTimingData(PTVCorner corner, string delaytype, json_object* object)
 {
-	/*
-	//Pull out all of the json stuff
-	json_object* from;
-	if(!json_object_object_get_ex(object, "from", &from))
-	{
-		LogError("No source for this delay\n");
-		return false;
-	}
-	string sfrom = json_object_get_string(from);
-
-	json_object* to;
-	if(!json_object_object_get_ex(object, "to", &to))
-	{
-		LogError("No dest for this delay\n");
-		return false;
-	}
-	string sto = json_object_get_string(to);
-
+	//always need rising/falling data no matter what it is
 	json_object* rising;
 	if(!json_object_object_get_ex(object, "rising", &rising))
 	{
@@ -432,11 +415,46 @@ bool Greenpak4IOB::LoadExtraTimingData(PTVCorner corner, string delaytype, json_
 		return false;
 	}
 	float nfalling = json_object_get_double(falling);
+	auto delay = CombinatorialDelay(nrising, nfalling);
 
-	//Finally, we can actually save the delay!
-	m_pinToPinDelays[corner][PinPair(sfrom, sto)] = CombinatorialDelay(nrising, nfalling);
-	*/
+	//Schmitt trigger has no further parameters
+	if(delaytype == "schmitt")
+		m_schmittTriggerDelays[corner] = delay;
 
+	//Output buffers need drive strength
+	else if(delaytype == "obuf")
+	{
+		json_object* drive;
+		if(!json_object_object_get_ex(object, "drive", &drive))
+		{
+			LogError("No drive info for this corner\n");
+			return false;
+		}
+		int ndrive = json_object_get_int(drive);
+
+		DriveStrength st;
+		switch(ndrive)
+		{
+			case 4:
+				st = DRIVE_4X;
+				break;
+
+			case 2:
+				st = DRIVE_2X;
+				break;
+
+			case 1:
+			default:
+				st = DRIVE_1X;
+				break;
+		}
+
+		m_outputDelays[DriveCondition(st, corner)] = delay;
+	}
+
+	//Call base class and make it warn if we don't know what the signal does
+	else
+		return Greenpak4IOB::LoadExtraTimingData(corner, delaytype, object);
 	//no need to call base class, it's an empty stub
 	return true;
 }

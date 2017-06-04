@@ -137,10 +137,10 @@ int main(int argc, char* argv[])
 	//	return 1;
 
 	//Save to disk
-	/*
+
 	LogNotice("Saving timing data to file %s\n", tfname.c_str());
 	g_calDevice.SaveTimingData(tfname.c_str());
-	*/
+
 	//Print output
 	LogNotice("Dumping timing data...\n");
 	{
