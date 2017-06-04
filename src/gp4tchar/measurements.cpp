@@ -586,10 +586,6 @@ bool MeasureLUTDelays(Socket& sock, hdevice hdev)
 	LogNotice("Measuring LUT delays...\n");
 	LogIndenter li;
 
-	//Test conditions (TODO: pass this in from somewhere?)
-	int voltage = 3300;
-	PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, voltage);
-
 	//Characterize each LUT
 	//Don't forget to only measure pins it actually has!
 	float delay;
@@ -597,16 +593,24 @@ bool MeasureLUTDelays(Socket& sock, hdevice hdev)
 	{
 		auto baselut = g_calDevice.GetLUT(nlut);
 		auto lut = GetRealLUT(baselut);
-		for(unsigned int npin = 0; npin < lut->GetOrder(); npin ++)
-		{
-			if(!MeasureLUTDelay(sock, hdev, nlut, npin, corner, delay))
-				return false;
 
-			//For now, the parent (in case of a muxed lut etc) stores all timing data
-			//TODO: does this make the most sense?
-			char portname[] = "IN0";
-			portname[2] += npin;
-			baselut->AddCombinatorialDelay(portname, "OUT", corner, CombinatorialDelay(delay, -1));
+		//Try various voltages
+		for(auto voltage : g_testVoltages)
+		{
+			//Test conditions (TODO: pass this in from somewhere?)
+			PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, voltage);
+		
+			for(unsigned int npin = 0; npin < lut->GetOrder(); npin ++)
+			{
+				if(!MeasureLUTDelay(sock, hdev, nlut, npin, corner, delay))
+					return false;
+
+				//For now, the parent (in case of a muxed lut etc) stores all timing data
+				//TODO: does this make the most sense?
+				char portname[] = "IN0";
+				portname[2] += npin;
+				baselut->AddCombinatorialDelay(portname, "OUT", corner, CombinatorialDelay(delay, -1));
+			}
 		}
 	}
 
