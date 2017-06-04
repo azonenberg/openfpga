@@ -964,6 +964,22 @@ void Greenpak4Device::SetNVMRetryCount(int count)
 	m_nvmLoadRetryCount = count;
 }
 
+string Greenpak4Device::GetPartAsString()
+{
+	switch(m_part)
+	{
+		case GREENPAK4_SLG46140:
+			return "SLG46140";
+
+		case GREENPAK4_SLG46620:
+			return "SLG46620";
+
+		case GREENPAK4_SLG46621:
+			return "SLG46621";
+	}
+	return "(unknown)\n";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File I/O
 
@@ -1270,25 +1286,9 @@ void Greenpak4Device::SaveTimingData(string fname)
 		return;
 	}
 
-	string part;
-	switch(m_part)
-	{
-		case GREENPAK4_SLG46140:
-			part = "SLG46140";
-			break;
-
-		case GREENPAK4_SLG46620:
-			part = "SLG46620";
-			break;
-
-		case GREENPAK4_SLG46621:
-			part = "SLG46621";
-			break;
-	}
-
 	//Header
 	fprintf(fp, "{\n");
-	fprintf(fp, "    \"part\" : \"%s\",\n", part.c_str());
+	fprintf(fp, "    \"part\" : \"%s\",\n", GetPartAsString().c_str());
 
 	//Timing data for each IP block
 	for(size_t i=0; i<m_bitstuff.size(); i++)
@@ -1297,4 +1297,64 @@ void Greenpak4Device::SaveTimingData(string fname)
 	//Footer
 	fprintf(fp, "}\n");
 	fclose(fp);
+}
+
+bool Greenpak4Device::LoadTimingData(json_object* object)
+{
+	//Make a map of description -> entity
+	map<string, Greenpak4BitstreamEntity*> bmap;
+	for(auto p : m_bitstuff)
+		bmap[p->GetDescription()] = p;
+
+	json_object_iterator end = json_object_iter_end(object);
+	for(json_object_iterator it = json_object_iter_begin(object);
+		!json_object_iter_equal(&it, &end);
+		json_object_iter_next(&it))
+	{
+		//See what we got
+		string name = json_object_iter_peek_name(&it);
+		json_object* child = json_object_iter_peek_value(&it);
+
+		//Part should be first key. If it doesn't match our part, complain
+		if(name == "part")
+		{
+			if(!json_object_is_type(child, json_type_string))
+			{
+				LogError("timing data part should be of type string but isn't\n");
+				return false;
+			}
+			string expected_part = json_object_get_string(child);
+
+			if(GetPartAsString() != expected_part)
+			{
+				LogError("Timing data is for part %s but we're a %s\n",
+					expected_part.c_str(),
+					GetPartAsString().c_str());
+				return false;
+			}
+			continue;
+		}
+
+		//Anything else should be an IP block
+		//If it doesn't exist, complain
+		if(bmap.find(name) == bmap.end())
+		{
+			LogError("Site \"%s\" is in timing data file, but not this device\n",
+				name.c_str());
+			return false;
+		}
+
+		//Child should be an array of process corner, info tuples
+		if(!json_object_is_type(child, json_type_array))
+		{
+			LogError("ip block should be of type array but isn't\n");
+			return false;
+		}
+
+		//It exists, load it
+		if(!bmap[name]->LoadTimingData(child))
+			return false;
+	}
+
+	return true;
 }

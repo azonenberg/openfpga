@@ -396,3 +396,47 @@ void Greenpak4IOB::SaveTimingData(FILE* fp, PTVCorner corner)
 	//do base class at end
 	Greenpak4BitstreamEntity::SaveTimingData(fp, corner);
 }
+
+bool Greenpak4IOB::LoadExtraTimingData(PTVCorner corner, string delaytype, json_object* object)
+{
+	/*
+	//Pull out all of the json stuff
+	json_object* from;
+	if(!json_object_object_get_ex(object, "from", &from))
+	{
+		LogError("No source for this delay\n");
+		return false;
+	}
+	string sfrom = json_object_get_string(from);
+
+	json_object* to;
+	if(!json_object_object_get_ex(object, "to", &to))
+	{
+		LogError("No dest for this delay\n");
+		return false;
+	}
+	string sto = json_object_get_string(to);
+
+	json_object* rising;
+	if(!json_object_object_get_ex(object, "rising", &rising))
+	{
+		LogError("No rising info for this corner\n");
+		return false;
+	}
+	float nrising = json_object_get_double(rising);
+
+	json_object* falling;
+	if(!json_object_object_get_ex(object, "falling", &falling))
+	{
+		LogError("No falling info for this corner\n");
+		return false;
+	}
+	float nfalling = json_object_get_double(falling);
+
+	//Finally, we can actually save the delay!
+	m_pinToPinDelays[corner][PinPair(sfrom, sto)] = CombinatorialDelay(nrising, nfalling);
+	*/
+
+	//no need to call base class, it's an empty stub
+	return true;
+}

@@ -364,9 +364,6 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 				iob->SetOutputDelay(Greenpak4IOB::DRIVE_1X, corner, CombinatorialDelay(obuf_x1.m_value, -1));
 				iob->SetOutputDelay(Greenpak4IOB::DRIVE_2X, corner, CombinatorialDelay(obuf_x2.m_value, -1));
 			}
-
-			//DEBUG
-			return true;
 		}
 	}
 

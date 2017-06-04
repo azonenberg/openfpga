@@ -53,6 +53,8 @@ public:
 	GREENPAK4_PART GetPart()
 	{ return m_part; }
 
+	std::string GetPartAsString();
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// POWER RAILS
 
@@ -331,6 +333,7 @@ public:
 
 	void PrintTimingData() const;
 	void SaveTimingData(std::string fname);
+	bool LoadTimingData(json_object* object);
 
 protected:
 

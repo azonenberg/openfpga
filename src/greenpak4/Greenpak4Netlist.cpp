@@ -60,7 +60,7 @@ Greenpak4Netlist::Greenpak4Netlist(string fname, string constraint_file)
 	json_string[len] = '\0';
 	if(len != fread(json_string, 1, len, fp))
 	{
-		LogError("Failed read contents of netlist file %s\n", fname.c_str());
+		LogError("Failed to read contents of netlist file %s\n", fname.c_str());
 		m_parseOK = false;
 		delete[] json_string;
 		fclose(fp);

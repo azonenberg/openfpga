@@ -372,3 +372,155 @@ void Greenpak4BitstreamEntity::SaveTimingData(FILE* fp, PTVCorner corner)
 			fprintf(fp, "                },\n");
 	}
 }
+
+/**
+	@brief Load our delay info
+ */
+bool Greenpak4BitstreamEntity::LoadTimingData(json_object* object)
+{
+	for(int i=0; i<json_object_array_length(object); i++)
+	{
+		auto child = json_object_array_get_idx(object, i);
+		if(!LoadTimingDataForCorner(child))
+			return false;
+	}
+
+	return true;
+}
+
+/**
+	@brief Loads delay info for a single process-corner object in the JSON file
+ */
+bool Greenpak4BitstreamEntity::LoadTimingDataForCorner(json_object* object)
+{
+	//Look up the corner info
+	json_object* process;
+	if(!json_object_object_get_ex(object, "process", &process))
+	{
+		LogError("No process info for this corner\n");
+		return false;
+	}
+	string sprocess = json_object_get_string(process);
+
+	json_object* temp;
+	if(!json_object_object_get_ex(object, "temp", &temp))
+	{
+		LogError("No temp info for this corner\n");
+		return false;
+	}
+	int ntemp = json_object_get_int(temp);
+
+	json_object* voltage;
+	if(!json_object_object_get_ex(object, "voltage_mv", &voltage))
+	{
+		LogError("No voltage info for this corner\n");
+		return false;
+	}
+	int nvoltage = json_object_get_int(voltage);
+
+	//TODO: move this into PTVCorner class?
+	PTVCorner::ProcessSpeed speed;
+	if(sprocess == "fast")
+		speed = PTVCorner::SPEED_FAST;
+	else if(sprocess == "slow")
+		speed = PTVCorner::SPEED_SLOW;
+	else if(sprocess == "typical")
+		speed = PTVCorner::SPEED_TYPICAL;
+
+	//This is the process corner we're loading
+	PTVCorner corner(speed, ntemp, nvoltage);
+
+	//This is the actual timing data!
+	json_object* delays;
+	if(!json_object_object_get_ex(object, "delays", &delays))
+	{
+		LogError("No delay info for this corner\n");
+		return false;
+	}
+
+	//Now that we know where to put it, we can load the actual timing data
+	for(int i=0; i<json_object_array_length(delays); i++)
+	{
+		auto child = json_object_array_get_idx(delays, i);
+
+		//We need to know the type of delay. "propagation" is handled by us
+		//Anything else is a derived class
+		json_object* type;
+		if(!json_object_object_get_ex(child, "type", &type))
+		{
+			LogError("No type info for this delay value\n");
+			return false;
+		}
+		string stype = json_object_get_string(type);
+
+		//Load rising/falling delays and save them
+		if(stype == "propagation")
+		{
+			if(!LoadPropagationDelay(corner, child))
+				return false;
+			continue;
+		}
+
+		//Nope, something special
+		if(!LoadExtraTimingData(corner, stype, child))
+			return false;
+	}
+
+	return true;
+}
+
+/**
+	@brief Loads propagation delay for a single endpoint and process corner
+ */
+bool Greenpak4BitstreamEntity::LoadPropagationDelay(PTVCorner corner, json_object* object)
+{
+	//Pull out all of the json stuff
+	json_object* from;
+	if(!json_object_object_get_ex(object, "from", &from))
+	{
+		LogError("No source for this delay\n");
+		return false;
+	}
+	string sfrom = json_object_get_string(from);
+
+	json_object* to;
+	if(!json_object_object_get_ex(object, "to", &to))
+	{
+		LogError("No dest for this delay\n");
+		return false;
+	}
+	string sto = json_object_get_string(to);
+
+	json_object* rising;
+	if(!json_object_object_get_ex(object, "rising", &rising))
+	{
+		LogError("No rising info for this corner\n");
+		return false;
+	}
+	float nrising = json_object_get_double(rising);
+
+	json_object* falling;
+	if(!json_object_object_get_ex(object, "falling", &falling))
+	{
+		LogError("No falling info for this corner\n");
+		return false;
+	}
+	float nfalling = json_object_get_double(falling);
+
+	//Finally, we can actually save the delay!
+	m_pinToPinDelays[corner][PinPair(sfrom, sto)] = CombinatorialDelay(nrising, nfalling);
+
+	return true;
+}
+
+/**
+	@brief Loads timing data other than normal propagation info
+
+	Base class implementation should never be called (base class should override) if there's any extra data,
+	but we need a default implementation to avoid every derived class having an empty stub
+ */
+bool Greenpak4BitstreamEntity::LoadExtraTimingData(PTVCorner /*corner*/, string /*delaytype*/, json_object* /*object*/)
+{
+	LogWarning("Greenpak4BitstreamEntity: Don't know what to do with delay type %s\n", delaytype.c_str());
+	return true;
+}

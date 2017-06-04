@@ -209,6 +209,7 @@ protected:
 	std::map< DriveCondition, CombinatorialDelay > m_outputDelays;
 
 	virtual void SaveTimingData(FILE* fp, PTVCorner corner);
+	virtual bool LoadExtraTimingData(PTVCorner corner, std::string delaytype, json_object* object);
 };
 
 #endif

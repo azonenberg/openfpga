@@ -28,6 +28,8 @@ class Greenpak4NetlistEntity;
 #include <vector>
 #include <xbpar.h>
 
+#include <json-c/json.h>
+
 class Greenpak4EntityOutput;
 
 /**
@@ -156,6 +158,7 @@ public:
 	virtual void PrintExtraTimingData(PTVCorner corner) const;
 
 	void SaveTimingData(FILE* fp, bool last);
+	bool LoadTimingData(json_object* object);
 
 protected:
 
@@ -216,6 +219,9 @@ protected:
 	std::map<PTVCorner, DelayMap> m_pinToPinDelays;
 
 	virtual void SaveTimingData(FILE* fp, PTVCorner corner);
+	virtual bool LoadTimingDataForCorner(json_object* object);
+	virtual bool LoadExtraTimingData(PTVCorner corner, std::string delaytype, json_object* object);
+	bool LoadPropagationDelay(PTVCorner corner, json_object* object);
 };
 
 #endif
