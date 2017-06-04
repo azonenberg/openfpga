@@ -519,7 +519,7 @@ bool Greenpak4BitstreamEntity::LoadPropagationDelay(PTVCorner corner, json_objec
 	Base class implementation should never be called (base class should override) if there's any extra data,
 	but we need a default implementation to avoid every derived class having an empty stub
  */
-bool Greenpak4BitstreamEntity::LoadExtraTimingData(PTVCorner /*corner*/, string /*delaytype*/, json_object* /*object*/)
+bool Greenpak4BitstreamEntity::LoadExtraTimingData(PTVCorner /*corner*/, string delaytype, json_object* /*object*/)
 {
 	LogWarning("Greenpak4BitstreamEntity: Don't know what to do with delay type %s\n", delaytype.c_str());
 	return true;
