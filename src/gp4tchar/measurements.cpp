@@ -56,6 +56,14 @@ bool MeasurePinToPinDelay(
 	int voltage_mv,
 	float& delay);
 
+bool MeasureLUTDelay(
+	Socket& sock,
+	hdevice hdev,
+	int nlut,
+	int ninput,
+	PTVCorner corner,
+	float& delay);
+
 bool ProgramAndMeasureDelay(
 	Socket& sock,
 	hdevice hdev,
@@ -64,6 +72,13 @@ bool ProgramAndMeasureDelay(
 	int dst,
 	int voltage_mv,
 	float& delay);
+
+float GetRoundTripDelayWith2x(
+	int src,
+	int dst,
+	PTVCorner corner);
+
+Greenpak4LUT* GetRealLUT(Greenpak4BitstreamEntity* lut);
 
 //Voltages to test at
 //For now, 3.3 +/- 150 mV
@@ -503,36 +518,165 @@ bool MeasureCrossConnectionDelay(
 	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, corner.GetVoltage(), delay))
 		return false;
 
-	//Subtract the PCB trace delay at each end of the line
-	delay -= g_devkitCal.pinDelays[src].m_rising;
-	delay -= g_devkitCal.pinDelays[dst].m_rising;
-
-	//Subtract the I/O buffer delay at each end of the line
-	//TODO: import calibration from the Greenpak4Device and/or reset it?
-	CombinatorialDelay d;
-	srciob = g_calDevice.GetIOB(src);
-	srciob->SetSchmittTrigger(false);
-	if(!srciob->GetCombinatorialDelay("IO", "OUT", corner, d))
-		return false;
-	delay -= d.m_rising;
-
-	dstiob = g_calDevice.GetIOB(dst);
-	dstiob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
-	dstiob->SetDriveStrength(Greenpak4IOB::DRIVE_2X);
-	if(!dstiob->GetCombinatorialDelay("IN", "IO", corner, d))
-		return false;
-	delay -= d.m_rising;
+	//Subtract PCB and I/O buffer delays
+	delay -= GetRoundTripDelayWith2x(src, dst, corner);
 
 	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper for subtracting I/O pad and test fixture delays from a measurement
+
+float GetRoundTripDelayWith2x(
+	int src,
+	int dst,
+	PTVCorner corner)
+{
+	//Subtract the PCB trace delay at each end of the line
+	float delay = g_devkitCal.pinDelays[src].m_rising;
+	delay += g_devkitCal.pinDelays[dst].m_rising;
+
+	//Subtract the I/O buffer delay at each end of the line
+	//TODO: import calibration from the Greenpak4Device and/or reset it?
+	CombinatorialDelay d;
+	auto srciob = g_calDevice.GetIOB(src);
+	srciob->SetSchmittTrigger(false);
+	if(!srciob->GetCombinatorialDelay("IO", "OUT", corner, d))
+		return false;
+	delay += d.m_rising;
+
+	auto dstiob = g_calDevice.GetIOB(dst);
+	dstiob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
+	dstiob->SetDriveStrength(Greenpak4IOB::DRIVE_2X);
+	if(!dstiob->GetCombinatorialDelay("IN", "IO", corner, d))
+		return false;
+	delay += d.m_rising;
+
+	return delay;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Characterize LUTs
 
-bool MeasureLutDelays(Socket& /*sock*/, hdevice /*hdev*/)
+/**
+	@brief Gets the actual LUT object out of an entity that either is, or contains, a LUT
+ */
+Greenpak4LUT* GetRealLUT(Greenpak4BitstreamEntity* lut)
+{
+	//First, just try casting.
+	auto reallut = dynamic_cast<Greenpak4LUT*>(lut);
+	if(reallut)
+		return reallut;
+
+	//It would be too easy if that just worked, though... what if it's a muxed cell?
+	auto pair = dynamic_cast<Greenpak4PairedEntity*>(lut);
+	if(pair)
+	{
+		reallut = dynamic_cast<Greenpak4LUT*>(pair->GetEntity("GP_2LUT"));
+		if(reallut)
+			return reallut;
+	}
+
+	//Something is wrong
+	return NULL;
+}
+
+bool MeasureLUTDelays(Socket& sock, hdevice hdev)
 {
 	LogNotice("Measuring LUT delays...\n");
 	LogIndenter li;
+
+	//Test conditions (TODO: pass this in from somewhere?)
+	int voltage = 3300;
+	PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, voltage);
+
+	//Characterize each LUT
+	//Don't forget to only measure pins it actually has!
+	float delay;
+	for(unsigned int nlut = 0; nlut < g_calDevice.GetLUTCount(); nlut++)
+	{
+		auto baselut = g_calDevice.GetLUT(nlut);
+		auto lut = GetRealLUT(baselut);
+		for(unsigned int npin = 0; npin < lut->GetOrder(); npin ++)
+		{
+			if(!MeasureLUTDelay(sock, hdev, nlut, npin, corner, delay))
+				return false;
+
+			//For now, the parent (in case of a muxed lut etc) stores all timing data
+			//TODO: does this make the most sense?
+			char portname[] = "IN0";
+			portname[2] += npin;
+			baselut->AddCombinatorialDelay(portname, "OUT", corner, CombinatorialDelay(delay, -1));
+		}
+	}
+
 	return true;
 }
 
+bool MeasureLUTDelay(
+	Socket& sock,
+	hdevice hdev,
+	int nlut,
+	int ninput,
+	PTVCorner corner,
+	float& delay)
+{
+	delay = -1;
+
+	//Create the device object
+	Greenpak4Device device(part, unused_pull, unused_drive);
+	device.SetIOPrecharge(false);
+	device.SetDisableChargePump(false);
+	device.SetLDOBypass(false);
+	device.SetNVMRetryCount(1);
+
+	//Look up the LUT
+	auto lut = GetRealLUT(device.GetLUT(nlut));
+
+	//See which half of the device it's in. Use pins 3/4 or 13/14 as appropriate
+	int src = 3;
+	int dst = 4;
+	if(lut->GetMatrix() == 1)
+	{
+		src = 13;
+		dst = 14;
+	}
+
+	//Configure the input pin
+	auto vss = device.GetGround();
+	auto srciob = device.GetIOB(src);
+	srciob->SetInput("OE", vss);
+	auto din = srciob->GetOutput("OUT");
+
+	//Configure the LUT
+	lut->MakeXOR();
+	lut->SetInput("IN0", vss);
+	lut->SetInput("IN1", vss);
+	lut->SetInput("IN2", vss);
+	lut->SetInput("IN3", vss);
+	char portname[] = "IN0";
+	portname[2] += ninput;
+	lut->SetInput(portname, din);
+
+	//Configure the output pin
+	auto vdd = device.GetPower();
+	auto dstiob = device.GetIOB(dst);
+	dstiob->SetInput("IN", lut->GetOutput("OUT"));
+	dstiob->SetInput("OE", vdd);
+	dstiob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
+	dstiob->SetDriveStrength(Greenpak4IOB::DRIVE_2X);
+
+	//Generate a bitstream
+	vector<uint8_t> bitstream;
+	device.WriteToBuffer(bitstream, 0, false);
+	//device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
+
+	//Get the delay
+	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, corner.GetVoltage(), delay))
+		return false;
+
+	//Subtract PCB trace and IO buffer delays
+	delay -= GetRoundTripDelayWith2x(src, dst, corner);
+
+	return true;
+}

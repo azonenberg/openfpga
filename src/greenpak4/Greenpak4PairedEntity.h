@@ -20,7 +20,7 @@
 #define Greenpak4PairedEntity_h
 
 /**
-	@brief The bandgap voltage reference
+	@brief A pair of entities muxed into one site
  */
 class Greenpak4PairedEntity : public Greenpak4BitstreamEntity
 {

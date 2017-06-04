@@ -39,7 +39,7 @@ bool ReadTraceDelays();
 bool CalibrateTraceDelays(Socket& sock, hdevice hdev);
 bool MeasureDelay(Socket& sock, int src, int dst, float& delay);
 
-bool MeasureLutDelays(Socket& sock, hdevice hdev);
+bool MeasureLUTDelays(Socket& sock, hdevice hdev);
 bool MeasurePinToPinDelays(Socket& sock, hdevice hdev);
 bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev);
 
