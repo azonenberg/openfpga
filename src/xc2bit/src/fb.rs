@@ -72,13 +72,10 @@ impl XC2BistreamFB {
                 XC2ZIAInput::Macrocell{fb, ff} =>
                     write!(writer, "FB{}_{} FF\n", fb + 1, ff + 1).unwrap(),
                 XC2ZIAInput::IBuf{ibuf} => {
-                    match iob_num_to_fb_ff_num_32(ibuf) {
-                        Some((fb, ff)) =>  write!(writer, "FB{}_{} pad\n", fb + 1, ff + 1).unwrap(),
-                        // FIXME: This is ugly
-                        None => write!(writer, "dedicated input\n").unwrap(),
-                    }
-                }
-
+                    let (fb, ff) = iob_num_to_fb_ff_num_32(ibuf).unwrap();
+                    write!(writer, "FB{}_{} pad\n", fb + 1, ff + 1).unwrap();
+                },
+                XC2ZIAInput::DedicatedInput => write!(writer, "dedicated input\n").unwrap(),
             }
         }
 

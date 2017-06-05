@@ -39,6 +39,7 @@ pub enum XC2ZIAInput {
     IBuf {
         ibuf: u32,
     },
+    DedicatedInput,
     Zero,
     One,
 }
@@ -92,7 +93,7 @@ static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; 40] = [
      XC2ZIAInput::Macrocell{fb: 1, ff: 7}],
 
     [XC2ZIAInput::IBuf{ibuf: 6},
-     XC2ZIAInput::IBuf{ibuf: 32},
+     XC2ZIAInput::DedicatedInput,
      XC2ZIAInput::IBuf{ibuf: 20},
      XC2ZIAInput::Macrocell{fb: 0, ff: 0},
      XC2ZIAInput::Macrocell{fb: 1, ff: 3},
@@ -176,7 +177,7 @@ static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; 40] = [
      XC2ZIAInput::Macrocell{fb: 1, ff: 8}],
 
     [XC2ZIAInput::IBuf{ibuf: 7},
-     XC2ZIAInput::IBuf{ibuf: 32},
+     XC2ZIAInput::DedicatedInput,
      XC2ZIAInput::IBuf{ibuf: 20},
      XC2ZIAInput::Macrocell{fb: 0, ff: 1},
      XC2ZIAInput::Macrocell{fb: 1, ff: 4},
@@ -232,7 +233,7 @@ static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; 40] = [
      XC2ZIAInput::Macrocell{fb: 1, ff: 14}],
 
     [XC2ZIAInput::IBuf{ibuf: 4},
-     XC2ZIAInput::IBuf{ibuf: 32},
+     XC2ZIAInput::DedicatedInput,
      XC2ZIAInput::IBuf{ibuf: 21},
      XC2ZIAInput::Macrocell{fb: 0, ff: 4},
      XC2ZIAInput::Macrocell{fb: 0, ff: 12},
