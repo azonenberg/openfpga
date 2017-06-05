@@ -51,6 +51,10 @@ public:
 	int GetVoltage() const
 	{ return m_voltage; }
 
+	//TODO: verify within legal limits
+	void SetVoltage(int v)
+	{ m_voltage = v; }
+
 	std::string toString() const;
 
 	//Comparison operator for STL collections

@@ -25,6 +25,8 @@ using namespace std;
 
 bool PostProgramSetup(hdevice hdev, int voltage_mv)
 {
+	SetStatusLED(hdev, 1);
+
 	//Clear I/Os from programming mode
 	if(!IOReset(hdev))
 		return false;

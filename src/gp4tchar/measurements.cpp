@@ -62,7 +62,7 @@ bool MeasureLUTDelay(
 	int nlut,
 	int ninput,
 	PTVCorner corner,
-	float& delay);
+	map<PTVCorner, CombinatorialDelay>& delays);
 
 bool ProgramAndMeasureDelay(
 	Socket& sock,
@@ -72,6 +72,16 @@ bool ProgramAndMeasureDelay(
 	int dst,
 	int voltage_mv,
 	float& delay);
+
+bool ProgramAndMeasureDelayAcrossVoltageCorners(
+	Socket& sock,
+	hdevice hdev,
+	vector<uint8_t>& bitstream,
+	int src,
+	int dst,
+	PTVCorner corner,
+	bool subtractPadDelay,
+	map<PTVCorner, CombinatorialDelay>& delays);
 
 float GetRoundTripDelayWith2x(
 	int src,
@@ -271,6 +281,47 @@ bool ProgramAndMeasureDelay(
 
 	//Measure delay between the affected pins
 	return MeasureDelay(sock, src, dst, delay);
+}
+
+bool ProgramAndMeasureDelayAcrossVoltageCorners(
+	Socket& sock,
+	hdevice hdev,
+	vector<uint8_t>& bitstream,
+	int src,
+	int dst,
+	PTVCorner corner,
+	bool subtractPadDelay,
+	map<PTVCorner, CombinatorialDelay>& delays)
+{
+	//Emulate the device
+	LogVerbose("Loading new bitstream\n");
+	if(!DownloadBitstream(hdev, bitstream, DownloadMode::EMULATION))
+		return false;
+
+	for(auto v : g_testVoltages)
+	{
+		corner.SetVoltage(v);
+		if(!PostProgramSetup(hdev, v))
+			return false;
+
+		//wait a bit to let voltages stabilize
+		usleep (1000 * 50);
+
+		float delay;
+		if(!MeasureDelay(sock, src, dst, delay))
+			return false;
+
+		//Remove off-die delays if requested
+		if(subtractPadDelay)
+		{
+			//Subtract PCB trace and IO buffer delays
+			delay -= GetRoundTripDelayWith2x(src, dst, corner);
+		}
+
+		delays[corner] = CombinatorialDelay(delay, -1);
+	}
+
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -588,28 +639,26 @@ bool MeasureLUTDelays(Socket& sock, hdevice hdev)
 
 	//Characterize each LUT
 	//Don't forget to only measure pins it actually has!
-	float delay;
 	for(unsigned int nlut = 0; nlut < g_calDevice.GetLUTCount(); nlut++)
 	{
 		auto baselut = g_calDevice.GetLUT(nlut);
 		auto lut = GetRealLUT(baselut);
-
-		//Try various voltages
-		for(auto voltage : g_testVoltages)
+		for(unsigned int npin = 0; npin < lut->GetOrder(); npin ++)
 		{
 			//Test conditions (TODO: pass this in from somewhere?)
-			PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, voltage);
-		
-			for(unsigned int npin = 0; npin < lut->GetOrder(); npin ++)
-			{
-				if(!MeasureLUTDelay(sock, hdev, nlut, npin, corner, delay))
-					return false;
+			PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, 3300);
 
-				//For now, the parent (in case of a muxed lut etc) stores all timing data
-				//TODO: does this make the most sense?
+			map<PTVCorner, CombinatorialDelay> delays;
+			if(!MeasureLUTDelay(sock, hdev, nlut, npin, corner, delays))
+				return false;
+
+			//For now, the parent (in case of a muxed lut etc) stores all timing data
+			//TODO: does this make the most sense?
+			for(auto it : delays)
+			{
 				char portname[] = "IN0";
 				portname[2] += npin;
-				baselut->AddCombinatorialDelay(portname, "OUT", corner, CombinatorialDelay(delay, -1));
+				baselut->AddCombinatorialDelay(portname, "OUT", it.first, it.second);
 			}
 		}
 	}
@@ -623,10 +672,8 @@ bool MeasureLUTDelay(
 	int nlut,
 	int ninput,
 	PTVCorner corner,
-	float& delay)
+	map<PTVCorner, CombinatorialDelay>& delays)
 {
-	delay = -1;
-
 	//Create the device object
 	Greenpak4Device device(part, unused_pull, unused_drive);
 	device.SetIOPrecharge(false);
@@ -675,12 +722,9 @@ bool MeasureLUTDelay(
 	device.WriteToBuffer(bitstream, 0, false);
 	//device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
 
-	//Get the delay
-	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, corner.GetVoltage(), delay))
+	//Get the delays
+	if(!ProgramAndMeasureDelayAcrossVoltageCorners(sock, hdev, bitstream, src, dst, corner, true, delays))
 		return false;
-
-	//Subtract PCB trace and IO buffer delays
-	delay -= GetRoundTripDelayWith2x(src, dst, corner);
 
 	return true;
 }
