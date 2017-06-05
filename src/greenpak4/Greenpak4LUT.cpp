@@ -184,6 +184,16 @@ void Greenpak4LUT::MakeXOR()
 	}
 }
 
+void Greenpak4LUT::MakeNOT()
+{
+	m_truthtable[0] = true;
+	m_truthtable[1] = false;
+	m_truthtable[2] = true;
+
+	for(int i=3; i<16; i++)
+		m_truthtable[i] = false;
+}
+
 vector<string> Greenpak4LUT::GetOutputPorts() const
 {
 	vector<string> r;

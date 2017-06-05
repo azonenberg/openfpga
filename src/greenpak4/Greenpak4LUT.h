@@ -58,6 +58,7 @@ public:
 	virtual bool CommitChanges();
 
 	void MakeXOR();
+	void MakeNOT();
 
 protected:
 

@@ -42,6 +42,7 @@ bool MeasureDelay(Socket& sock, int src, int dst, float& delay);
 bool MeasureLUTDelays(Socket& sock, hdevice hdev);
 bool MeasurePinToPinDelays(Socket& sock, hdevice hdev);
 bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev);
+bool MeasureInverterDelays(Socket& sock, hdevice hdev);
 
 void WaitForKeyPress();
 

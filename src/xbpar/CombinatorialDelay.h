@@ -50,6 +50,13 @@ public:
 		m_falling += rhs.m_falling;
 		return *this;
 	}
+
+	CombinatorialDelay& operator-=(const CombinatorialDelay& rhs)
+	{
+		m_rising -= rhs.m_rising;
+		m_falling -= rhs.m_falling;
+		return *this;
+	}
 };
 
 #endif

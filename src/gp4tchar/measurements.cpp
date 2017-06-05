@@ -44,7 +44,7 @@ bool MeasureCrossConnectionDelay(
 	unsigned int src,
 	unsigned int dst,
 	PTVCorner corner,
-	float& delay);
+	map<PTVCorner, CombinatorialDelay>& delays);
 
 bool MeasurePinToPinDelay(
 	Socket& sock,
@@ -54,13 +54,20 @@ bool MeasurePinToPinDelay(
 	Greenpak4IOB::DriveStrength drive,
 	bool schmitt,
 	int voltage_mv,
-	float& delay);
+	CombinatorialDelay& delay);
 
 bool MeasureLUTDelay(
 	Socket& sock,
 	hdevice hdev,
 	int nlut,
 	int ninput,
+	PTVCorner corner,
+	map<PTVCorner, CombinatorialDelay>& delays);
+
+bool MeasureInverterDelay(
+	Socket& sock,
+	hdevice hdev,
+	int ninv,
 	PTVCorner corner,
 	map<PTVCorner, CombinatorialDelay>& delays);
 
@@ -351,7 +358,7 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 	//TODO: ↓ edges
 	//TODO: x4 drive (if supported on this pin)
 	//TODO: Tri-states and open-drain/open-source outputs
-	float delay;
+	CombinatorialDelay delay;
 	for(auto src : pins)
 	{
 		for(auto dst : pins)
@@ -391,7 +398,7 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 				{
 					return false;
 				}
-				Equation e2(delay);
+				Equation e2(delay.m_rising);
 				e2.AddVariable(ibuf);
 				e2.AddVariable(obuf_x1);
 
@@ -400,7 +407,7 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 				{
 					return false;
 				}
-				Equation e3(delay);
+				Equation e3(delay.m_rising);
 				e3.AddVariable(ibuf);
 				e3.AddVariable(obuf_x2);
 
@@ -409,7 +416,7 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 				{
 					return false;
 				}
-				Equation e4(delay);
+				Equation e4(delay.m_rising);
 				e4.AddVariable(ibuf);
 				e4.AddVariable(schmitt);
 				e4.AddVariable(obuf_x2);
@@ -447,7 +454,7 @@ bool MeasurePinToPinDelay(
 	Greenpak4IOB::DriveStrength drive,
 	bool schmitt,
 	int voltage_mv,
-	float& delay)
+	CombinatorialDelay& delay)
 {
 	delay = -1;
 
@@ -479,12 +486,14 @@ bool MeasurePinToPinDelay(
 	//device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
 
 	//Get the delay
-	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, voltage_mv, delay))
+	float f;
+	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, voltage_mv, f))
 		return false;
+	delay = CombinatorialDelay(f, -1);
 
 	//Subtract the PCB trace delay at each end of the line
-	delay -= g_devkitCal.pinDelays[src].m_rising;
-	delay -= g_devkitCal.pinDelays[dst].m_rising;
+	delay -= g_devkitCal.pinDelays[src];
+	delay -= g_devkitCal.pinDelays[dst];
 
 	return true;
 }
@@ -497,29 +506,27 @@ bool MeasureCrossConnectionDelays(Socket& sock, hdevice hdev)
 	LogNotice("Measuring cross-connection delays...\n");
 	LogIndenter li;
 
-	//Try various voltages
-	for(auto voltage : g_testVoltages)
+	//Test conditions (TODO: pass this in from somewhere?)
+	PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, 3300);
+
+	//East
+	for(int i=0; i<10; i++)
 	{
-		//Test conditions (TODO: pass this in from somewhere?)
-		PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, voltage);
-
-		//East
-		float d;
-		for(int i=0; i<10; i++)
-		{
-			if(!MeasureCrossConnectionDelay(sock, hdev, 0, i, 3, 13, corner, d))
-				return false;
-			g_calDevice.GetCrossConnection(0, i)->AddCombinatorialDelay("I", "O", corner, CombinatorialDelay(d, -1));
-		}
-
-		for(int i=0; i<10; i++)
-		{
-			if(!MeasureCrossConnectionDelay(sock, hdev, 1, i, 13, 3, corner, d))
-				return false;
-			g_calDevice.GetCrossConnection(1, i)->AddCombinatorialDelay("I", "O", corner, CombinatorialDelay(d, -1));
-		}
+		map<PTVCorner, CombinatorialDelay> delays;
+		if(!MeasureCrossConnectionDelay(sock, hdev, 0, i, 3, 13, corner, delays))
+			return false;
+		for(auto it : delays)
+			g_calDevice.GetCrossConnection(0, i)->AddCombinatorialDelay("I", "O", it.first, it.second);
 	}
 
+	for(int i=0; i<10; i++)
+	{
+		map<PTVCorner, CombinatorialDelay> delays;
+		if(!MeasureCrossConnectionDelay(sock, hdev, 1, i, 13, 3, corner, delays))
+			return false;
+		for(auto it : delays)
+			g_calDevice.GetCrossConnection(1, i)->AddCombinatorialDelay("I", "O", it.first, it.second);
+	}
 	return true;
 }
 
@@ -531,10 +538,8 @@ bool MeasureCrossConnectionDelay(
 	unsigned int src,
 	unsigned int dst,
 	PTVCorner corner,
-	float& delay)
+	map<PTVCorner, CombinatorialDelay>& delays)
 {
-	delay = -1;
-
 	//Create the device object
 	Greenpak4Device device(part, unused_pull, unused_drive);
 	device.SetIOPrecharge(false);
@@ -565,12 +570,9 @@ bool MeasureCrossConnectionDelay(
 	device.WriteToBuffer(bitstream, 0, false);
 	//device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
 
-	//Get the delay
-	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, corner.GetVoltage(), delay))
+	//Get the delays
+	if(!ProgramAndMeasureDelayAcrossVoltageCorners(sock, hdev, bitstream, src, dst, corner, true, delays))
 		return false;
-
-	//Subtract PCB and I/O buffer delays
-	delay -= GetRoundTripDelayWith2x(src, dst, corner);
 
 	return true;
 }
@@ -725,6 +727,106 @@ bool MeasureLUTDelay(
 	//Get the delays
 	if(!ProgramAndMeasureDelayAcrossVoltageCorners(sock, hdev, bitstream, src, dst, corner, true, delays))
 		return false;
+
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Characterize inverters
+
+bool MeasureInverterDelays(Socket& sock, hdevice hdev)
+{
+	LogNotice("Measuring inverter delays...\n");
+	LogIndenter li;
+
+	//Test conditions (TODO: pass this in from somewhere?)
+	PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, 3300);
+
+	for(unsigned int ninv = 0; ninv < g_calDevice.GetInverterCount(); ninv++)
+	{
+		map<PTVCorner, CombinatorialDelay> delays;
+		if(!MeasureInverterDelay(sock, hdev, ninv, corner, delays))
+			return false;
+
+		for(auto it : delays)
+			g_calDevice.GetInverter(ninv)->AddCombinatorialDelay("IN", "OUT", it.first, it.second);
+	}
+
+	return true;
+}
+
+bool MeasureInverterDelay(
+	Socket& sock,
+	hdevice hdev,
+	int ninv,
+	PTVCorner corner,
+	map<PTVCorner, CombinatorialDelay>& delays)
+{
+	//Create the device object
+	Greenpak4Device device(part, unused_pull, unused_drive);
+	device.SetIOPrecharge(false);
+	device.SetDisableChargePump(false);
+	device.SetLDOBypass(false);
+	device.SetNVMRetryCount(1);
+
+	//Look up the DUT
+	auto inv = device.GetInverter(ninv);
+
+	//See which half of the device it's in. Use pins 3/4 or 13/14 and LUT2_0 or LUT2_4 as appropriate
+	int src = 3;
+	int dst = 4;
+	int nlut = 0;
+	if(inv->GetMatrix() == 1)
+	{
+		src = 13;
+		dst = 14;
+		nlut = 4;
+	}
+
+	//Configure the input pin
+	auto vss = device.GetGround();
+	auto vdd = device.GetPower();
+	auto srciob = device.GetIOB(src);
+	srciob->SetInput("OE", vss);
+	auto din = srciob->GetOutput("OUT");
+
+	//Configure the inverter
+	inv->SetInput("IN", din);
+
+	//Configure the LUT (we need to invert the output twice to keep the edge rising)
+	auto lut = GetRealLUT(device.GetLUT2(nlut));
+	lut->MakeXOR();
+	lut->SetInput("IN0", inv->GetOutput("OUT"));
+	lut->SetInput("IN1", vdd);
+
+	//Configure the output pin
+	auto dstiob = device.GetIOB(dst);
+	dstiob->SetInput("IN", lut->GetOutput("OUT"));
+	dstiob->SetInput("OE", vdd);
+	dstiob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
+	dstiob->SetDriveStrength(Greenpak4IOB::DRIVE_2X);
+
+	//Generate a bitstream
+	vector<uint8_t> bitstream;
+	device.WriteToBuffer(bitstream, 0, false);
+	device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
+
+	//Get the delays
+	if(!ProgramAndMeasureDelayAcrossVoltageCorners(sock, hdev, bitstream, src, dst, corner, true, delays))
+		return false;
+
+	//Subtract the LUT delay from each one
+	auto clut = g_calDevice.GetLUT2(nlut);
+	set<PTVCorner> corners;
+	for(auto it : delays)
+		corners.emplace(it.first);
+	for(auto c : corners)
+	{
+		CombinatorialDelay ltime;
+		if(!clut->GetCombinatorialDelay("IN0", "OUT", c, ltime))
+			return false;
+		delays[c] -= ltime;
+	}
 
 	return true;
 }
