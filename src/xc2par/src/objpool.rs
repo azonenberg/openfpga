@@ -47,6 +47,7 @@ impl<T> PartialEq for ObjPoolIndex<T> {
 
 impl<T> Eq for ObjPoolIndex<T> { }
 
+#[derive(Debug)]
 pub struct ObjPool<T> {
     storage: Vec<T>
 }

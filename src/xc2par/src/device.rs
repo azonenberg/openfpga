@@ -35,6 +35,7 @@ use std::collections::HashMap;
 use *;
 use objpool::*;
 
+#[derive(Debug)]
 pub enum DeviceGraphNode {
     AndTerm {
         fb: u32,
@@ -65,6 +66,7 @@ pub enum DeviceGraphNode {
     InBuf,
 }
 
+#[derive(Debug)]
 pub struct DeviceGraph {
     nodes: ObjPool<DeviceGraphNode>,
 }
