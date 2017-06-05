@@ -101,8 +101,8 @@ impl DeviceGraph {
         let andterm_l = alloc_label(par_graphs, &mut lmap, "ANDTERM");
         let bufg_l = alloc_label(par_graphs, &mut lmap, "BUFG");
 
-        let (num_fbs, num_iobs, has_inpad, iob_to_fb_ff) = if device_name.eq_ignore_ascii_case("XC2C32A") {
-            (2, 32, true, iob_num_to_fb_ff_num_32)
+        let (num_fbs, num_iobs, has_inpad, iob_to_fb_ff, zia_table) = if device_name.eq_ignore_ascii_case("XC2C32A") {
+            (2, 32, true, iob_num_to_fb_ff_num_32, ZIA_BIT_TO_CHOICE_32)
         } else {
             panic!("Unsupported device name!");
         };
