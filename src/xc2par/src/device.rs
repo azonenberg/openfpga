@@ -163,11 +163,11 @@ impl DeviceGraph {
             // Create edges that exist within the FB
 
             // AND term to OR term
-            for orterm_i in 0..16 {
+            for orterm_i in 0..orterm_par_idxs.len() {
                 // one edge from each AND term
-                for andterm_i in 0..56 {
+                for andterm_i in 0..andterm_par_idxs.len() {
                     par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[andterm_i], "OUT",
-                        orterm_par_idxs[orterm_i], &format!("SUM_IN_{}", andterm_i));
+                        orterm_par_idxs[orterm_i], &format!("OR_IN_{}", andterm_i));
                 }
             }
 
@@ -246,10 +246,10 @@ impl DeviceGraph {
                 iob_par_idx, "OE");
 
             // output data
-            par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].1[ff as usize],
-                "OUT", iob_par_idx, "IN");
-            par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].2[ff as usize],
-                "OUT", iob_par_idx, "IN");
+            par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].1[ff as usize], "OUT",
+                iob_par_idx, "IN");
+            par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].2[ff as usize], "Q",
+                iob_par_idx, "IN");
 
             // direct input
             par_graphs.borrow_mut_d().add_edge(iob_par_idx, "OUT",
@@ -266,6 +266,50 @@ impl DeviceGraph {
         } else {
             None
         };
+
+        // Now create all of the wonderful ZIA interconnects
+        for zia_row_i in 0..zia_table.len() {
+            let zia_row = &zia_table[zia_row_i];
+
+            // Into each FB from ZIA
+            for fb in 0..num_fbs {
+                // Into every AND term
+                for andterm_i in 0..fb_related_par_idxs[fb as usize].0.len() {
+                    for zia_choice in zia_row {
+                        match zia_choice {
+                            &XC2ZIAInput::Macrocell{fb, ff} => {
+                                // From the XOR gate
+                                par_graphs.borrow_mut_d().add_edge(
+                                    fb_related_par_idxs[fb as usize].1[ff as usize], "OUT",
+                                    fb_related_par_idxs[fb as usize].0[andterm_i], &format!("AND_IN_{}", zia_row_i));
+                                // From the register
+                                par_graphs.borrow_mut_d().add_edge(
+                                    fb_related_par_idxs[fb as usize].2[ff as usize], "Q",
+                                    fb_related_par_idxs[fb as usize].0[andterm_i], &format!("AND_IN_{}", zia_row_i));
+                            },
+                            &XC2ZIAInput::IBuf{ibuf} => {
+                                let (fb, ff) = iob_to_fb_ff(ibuf).unwrap();
+                                // From the pad
+                                par_graphs.borrow_mut_d().add_edge(
+                                    iob_par_idxs[ibuf as usize], "OUT",
+                                    fb_related_par_idxs[fb as usize].0[andterm_i], &format!("AND_IN_{}", zia_row_i));
+                                // From the register
+                                par_graphs.borrow_mut_d().add_edge(
+                                    fb_related_par_idxs[fb as usize].2[ff as usize], "Q",
+                                    fb_related_par_idxs[fb as usize].0[andterm_i], &format!("AND_IN_{}", zia_row_i));
+                            },
+                            &XC2ZIAInput::DedicatedInput => {
+                                par_graphs.borrow_mut_d().add_edge(
+                                    inpad_par_idx.unwrap(), "OUT",
+                                    fb_related_par_idxs[fb as usize].0[andterm_i], &format!("AND_IN_{}", zia_row_i));
+                            },
+                            // These cannot be in the choices table; they are special cases
+                            _ => unreachable!(),
+                        }
+                    }
+                }
+            }
+        }
 
         (graph, lmap)
     }
