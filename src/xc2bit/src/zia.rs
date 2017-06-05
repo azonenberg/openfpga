@@ -48,7 +48,7 @@ impl Default for XC2ZIAInput {
     fn default() -> XC2ZIAInput { XC2ZIAInput::One }
 }
 
-static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; 40] = [
+pub static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; 40] = [
     // Row 0
     [XC2ZIAInput::IBuf{ibuf: 0},
      XC2ZIAInput::IBuf{ibuf: 10},

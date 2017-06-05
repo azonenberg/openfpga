@@ -40,7 +40,7 @@ mod pla;
 pub use pla::{XC2PLAAndTerm, XC2PLAOrTerm};
 
 mod zia;
-pub use zia::{XC2ZIARowPiece, XC2ZIAInput};
+pub use zia::{XC2ZIARowPiece, XC2ZIAInput, ZIA_BIT_TO_CHOICE_32};
 
 mod jed;
 pub use jed::{read_jed, process_jed};
