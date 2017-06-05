@@ -89,6 +89,7 @@ int main(int argc, char* argv[])
 		LogError("Failed to connect to GreenpakTimingTest server\n");
 		return 1;
 	}
+	sock.DisableNagle();
 
 	LogNotice("GreenPAK timing characterization helper v0.1 by Andrew Zonenberg\n");
 
@@ -129,19 +130,18 @@ int main(int argc, char* argv[])
 		return 1;
 
 	//Measure delay through each element
+	/*
 	if(!MeasurePinToPinDelays(sock, hdev))
 		return 1;
-	/*
 	if(!MeasureCrossConnectionDelays(sock, hdev))
 		return 1;
 	if(!MeasureLUTDelays(sock, hdev))
 		return 1;
-	*/
-
-	/*
 	if(!MeasureInverterDelays(sock, hdev))
 		return 1;
 	*/
+	if(!MeasureDelayLineDelays(sock, hdev))
+		return 1;
 
 	//Save to disk
 	LogNotice("Saving timing data to file %s\n", tfname.c_str());

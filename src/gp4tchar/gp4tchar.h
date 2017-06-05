@@ -37,7 +37,6 @@ bool PowerSetup(hdevice hdev, int voltage_mv = 3300);
 
 bool ReadTraceDelays();
 bool CalibrateTraceDelays(Socket& sock, hdevice hdev);
-bool MeasureDelay(Socket& sock, int src, int dst, float& delay);
 
 bool MeasureLUTDelays(Socket& sock, hdevice hdev);
 bool MeasurePinToPinDelays(Socket& sock, hdevice hdev);

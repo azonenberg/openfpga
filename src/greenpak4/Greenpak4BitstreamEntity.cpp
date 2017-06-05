@@ -287,7 +287,7 @@ void Greenpak4BitstreamEntity::PrintTimingData() const
 		{
 			auto& pair = jt.first;
 			auto& time = jt.second;
-			LogNotice("%10s to %10s: %.3f ns rising, %.3f ns falling\n",
+			LogNotice("%10s to %10s: %6.3f ns rising, %6.3f ns falling\n",
 				pair.first.c_str(),
 				pair.second.c_str(),
 				time.m_rising,

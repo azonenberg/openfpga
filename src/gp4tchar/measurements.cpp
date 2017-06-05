@@ -34,7 +34,9 @@ Greenpak4IOB::PullStrength  unused_drive = Greenpak4IOB::PULL_1M;
  */
 Greenpak4Device g_calDevice(part, unused_pull, unused_drive);
 
-bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& value);
+bool MeasureDelay(Socket& sock, int src, int dst, CombinatorialDelay& delay, bool invertOutput = false);
+
+bool PromptAndMeasureDelay(Socket& sock, int src, int dst, CombinatorialDelay& value);
 
 bool MeasureCrossConnectionDelay(
 	Socket& sock,
@@ -78,7 +80,7 @@ bool ProgramAndMeasureDelay(
 	int src,
 	int dst,
 	int voltage_mv,
-	float& delay);
+	CombinatorialDelay& delay);
 
 bool ProgramAndMeasureDelayAcrossVoltageCorners(
 	Socket& sock,
@@ -88,12 +90,14 @@ bool ProgramAndMeasureDelayAcrossVoltageCorners(
 	int dst,
 	PTVCorner corner,
 	bool subtractPadDelay,
-	map<PTVCorner, CombinatorialDelay>& delays);
+	map<PTVCorner, CombinatorialDelay>& delays,
+	bool invertOutput = false);
 
-float GetRoundTripDelayWith2x(
+CombinatorialDelay GetRoundTripDelayWith2x(
 	int src,
 	int dst,
-	PTVCorner corner);
+	PTVCorner corner,
+	bool invertOutput);
 
 Greenpak4LUT* GetRealLUT(Greenpak4BitstreamEntity* lut);
 
@@ -109,54 +113,86 @@ bool CalibrateTraceDelays(Socket& sock, hdevice hdev)
 	LogNotice("Calibrate FPGA-to-DUT trace delays\n");
 	LogIndenter li;
 
+	//Forcibly reset the whole board to make sure nothing else is using our expansion pins
+	if(!ResetAllSiggens(hdev))
+		return false;
+	if(!IOReset(hdev))
+		return false;
 	if(!IOSetup(hdev))
+		return false;
+	if(!PowerSetup(hdev, 3300))
 		return false;
 
 	//Set up the variables
-	EquationVariable p3("FPGA pin 3 to DUT rising");
-	EquationVariable p4("FPGA pin 4 to DUT rising");
-	EquationVariable p5("FPGA pin 5 to DUT rising");
-	EquationVariable p13("FPGA pin 13 to DUT rising");
-	EquationVariable p14("FPGA pin 14 to DUT rising");
-	EquationVariable p15("FPGA pin 15 to DUT rising");
+	EquationVariable r3("FPGA pin 3 to DUT rising");
+	EquationVariable r4("FPGA pin 4 to DUT rising");
+	EquationVariable r5("FPGA pin 5 to DUT rising");
+	EquationVariable r13("FPGA pin 13 to DUT rising");
+	EquationVariable r14("FPGA pin 14 to DUT rising");
+	EquationVariable r15("FPGA pin 15 to DUT rising");
+
+	EquationVariable f3("FPGA pin 3 to DUT falling");
+	EquationVariable f4("FPGA pin 4 to DUT falling");
+	EquationVariable f5("FPGA pin 5 to DUT falling");
+	EquationVariable f13("FPGA pin 13 to DUT falling");
+	EquationVariable f14("FPGA pin 14 to DUT falling");
+	EquationVariable f15("FPGA pin 15 to DUT falling");
 
 	//Measure each pair of pins individually
-	float delay;
+	CombinatorialDelay delay;
 	if(!PromptAndMeasureDelay(sock, 3, 4, delay))
 		return false;
-	Equation e1(delay);
-	e1.AddVariable(p3);
-	e1.AddVariable(p4);
+	Equation e1(delay.m_rising);
+	e1.AddVariable(r3);
+	e1.AddVariable(r4);
+	Equation e2(delay.m_falling);
+	e2.AddVariable(f3);
+	e2.AddVariable(f4);
 
 	if(!PromptAndMeasureDelay(sock, 3, 5, delay))
 		return false;
-	Equation e2(delay);
-	e2.AddVariable(p3);
-	e2.AddVariable(p5);
+	Equation e3(delay.m_rising);
+	e3.AddVariable(r3);
+	e3.AddVariable(r5);
+	Equation e4(delay.m_falling);
+	e4.AddVariable(f3);
+	e4.AddVariable(f5);
 
 	if(!PromptAndMeasureDelay(sock, 4, 5, delay))
 		return false;
-	Equation e3(delay);
-	e3.AddVariable(p4);
-	e3.AddVariable(p5);
+	Equation e5(delay.m_rising);
+	e5.AddVariable(r4);
+	e5.AddVariable(r5);
+	Equation e6(delay.m_falling);
+	e6.AddVariable(f4);
+	e6.AddVariable(f5);
 
 	if(!PromptAndMeasureDelay(sock, 13, 14, delay))
 		return false;
-	Equation e4(delay);
-	e4.AddVariable(p13);
-	e4.AddVariable(p14);
+	Equation e7(delay.m_rising);
+	e7.AddVariable(r13);
+	e7.AddVariable(r14);
+	Equation e8(delay.m_falling);
+	e8.AddVariable(f13);
+	e8.AddVariable(f14);
 
 	if(!PromptAndMeasureDelay(sock, 13, 15, delay))
 		return false;
-	Equation e5(delay);
-	e5.AddVariable(p13);
-	e5.AddVariable(p15);
+	Equation e9(delay.m_rising);
+	e9.AddVariable(r13);
+	e9.AddVariable(r15);
+	Equation e10(delay.m_falling);
+	e10.AddVariable(f13);
+	e10.AddVariable(f15);
 
 	if(!PromptAndMeasureDelay(sock, 14, 15, delay))
 		return false;
-	Equation e6(delay);
-	e6.AddVariable(p14);
-	e6.AddVariable(p15);
+	Equation e11(delay.m_rising);
+	e11.AddVariable(r14);
+	e11.AddVariable(r15);
+	Equation e12(delay.m_falling);
+	e12.AddVariable(f14);
+	e12.AddVariable(f15);
 
 	//Solve the system
 	EquationSystem p;
@@ -166,34 +202,50 @@ bool CalibrateTraceDelays(Socket& sock, hdevice hdev)
 	p.AddEquation(e4);
 	p.AddEquation(e5);
 	p.AddEquation(e6);
+	p.AddEquation(e7);
+	p.AddEquation(e8);
+	p.AddEquation(e9);
+	p.AddEquation(e10);
+	p.AddEquation(e11);
+	p.AddEquation(e12);
 	if(!p.Solve())
 		return false;
 
 	//Extract the values
-	g_devkitCal.pinDelays[3] = p3.m_value;
-	g_devkitCal.pinDelays[4] = p4.m_value;
-	g_devkitCal.pinDelays[5] = p5.m_value;
-	g_devkitCal.pinDelays[13] = p13.m_value;
-	g_devkitCal.pinDelays[14] = p14.m_value;
-	g_devkitCal.pinDelays[15] = p15.m_value;
+	g_devkitCal.pinDelays[3] = CombinatorialDelay(r3.m_value, f3.m_value);
+	g_devkitCal.pinDelays[4] = CombinatorialDelay(r4.m_value, f4.m_value);
+	g_devkitCal.pinDelays[5] = CombinatorialDelay(r5.m_value, f5.m_value);
+	g_devkitCal.pinDelays[13] = CombinatorialDelay(r13.m_value, f13.m_value);
+	g_devkitCal.pinDelays[14] = CombinatorialDelay(r14.m_value, f14.m_value);
+	g_devkitCal.pinDelays[15] = CombinatorialDelay(r15.m_value, f15.m_value);
 
 	//Print results
 	{
 		LogNotice("Calculated trace delays:\n");
 		LogIndenter li2;
 		for(int i=3; i<=5; i++)
-			LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, g_devkitCal.pinDelays[i].m_rising);
+		{
+			LogNotice("FPGA pin %2d to DUT: %.3f ns rising, %.3f ns falling\n",
+				i,
+				g_devkitCal.pinDelays[i].m_rising,
+				g_devkitCal.pinDelays[i].m_falling);
+		}
 		for(int i=13; i<=15; i++)
-			LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, g_devkitCal.pinDelays[i].m_rising);
+		{
+			LogNotice("FPGA pin %2d to DUT: %.3f ns rising, %.3f ns falling\n",
+				i,
+				g_devkitCal.pinDelays[i].m_rising,
+				g_devkitCal.pinDelays[i].m_falling);
+		}
 	}
 
 	//Write to file
 	LogNotice("Writing calibration to file pincal.csv\n");
 	FILE* fp = fopen("pincal.csv", "w");
 	for(int i=3; i<=5; i++)
-		fprintf(fp, "%d,%.3f\n", i, g_devkitCal.pinDelays[i].m_rising);
+		fprintf(fp, "%d,%.3f,%.3f\n", i, g_devkitCal.pinDelays[i].m_rising, g_devkitCal.pinDelays[i].m_falling);
 	for(int i=13; i<=15; i++)
-		fprintf(fp, "%d,%.3f\n", i, g_devkitCal.pinDelays[i].m_rising);
+		fprintf(fp, "%d,%.3f,%.3f\n", i, g_devkitCal.pinDelays[i].m_rising, g_devkitCal.pinDelays[i].m_falling);
 	fclose(fp);
 
 	//Prompt to put the actual DUT in
@@ -210,23 +262,24 @@ bool ReadTraceDelays()
 		return false;
 
 	int i;
+	float r;
 	float f;
 	LogNotice("Reading devkit calibration from pincal.csv (delete this file to force re-calibration)...\n");
 	LogIndenter li;
-	while(2 == fscanf(fp, "%d, %f", &i, &f))
+	while(3 == fscanf(fp, "%d, %f, %f", &i, &r, &f))
 	{
 		if( (i > 20) || (i < 1) )
 			continue;
 
-		g_devkitCal.pinDelays[i] = CombinatorialDelay(f, -1);
+		g_devkitCal.pinDelays[i] = CombinatorialDelay(r, f);
 
-		LogNotice("FPGA pin %2d to DUT rising: %.3f ns\n", i, f);
+		LogNotice("FPGA pin %2d to DUT: %.3f ns rising, %.3f ns falling\n", i, r, f);
 	}
 
 	return true;
 }
 
-bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& value)
+bool PromptAndMeasureDelay(Socket& sock, int src, int dst, CombinatorialDelay& value)
 {
 	LogNotice("Use a jumper to short pins %d and %d on the ZIF header\n", src, dst);
 
@@ -235,30 +288,55 @@ bool PromptAndMeasureDelay(Socket& sock, int src, int dst, float& value)
 	WaitForKeyPress();
 	if(!MeasureDelay(sock, src, dst, value))
 		return false;
-	LogNotice("Measured pin-to-pin: %.3f ns\n", value);
+	LogNotice("Measured pin-to-pin: %.3f ns rising, %.3f ns falling\n", value.m_rising, value.m_falling);
 	return true;
 }
 
-bool MeasureDelay(Socket& sock, int src, int dst, float& delay)
+bool MeasureDelay(Socket& sock, int src, int dst, CombinatorialDelay& delay, bool invertOutput)
 {
 	//Send test parameters
-	uint8_t		drive = src;
-	uint8_t		sample = dst;
-	if(!sock.SendLooped(&drive, 1))
-		return false;
-	if(!sock.SendLooped(&sample, 1))
+	uint8_t sendbuf[3] =
+	{
+		(uint8_t)src,
+		(uint8_t)dst,
+		(uint8_t)3
+	};
+	uint8_t ok;
+
+	if(invertOutput)
+		sendbuf[2] = 2;
+	if(!sock.SendLooped(sendbuf, sizeof(sendbuf)))
 		return false;
 
 	//Read the results back
-	uint8_t ok;
 	if(!sock.RecvLooped(&ok, 1))
 		return false;
-	if(!sock.RecvLooped((uint8_t*)&delay, sizeof(delay)))
+	if(!sock.RecvLooped((uint8_t*)&delay.m_rising, sizeof(float)))
 		return false;
 
 	if(!ok)
 	{
-		LogError("Couldn't measure delay (open circuit?)\n");
+		LogError("Couldn't measure rising delay (open circuit?)\n");
+		return false;
+	}
+
+	//Repeat for falling edge
+	if(invertOutput)
+		sendbuf[2] = 1;
+	else
+		sendbuf[2] = 0;
+	if(!sock.SendLooped(sendbuf, sizeof(sendbuf)))
+		return false;
+
+	//Read the results back
+	if(!sock.RecvLooped(&ok, 1))
+		return false;
+	if(!sock.RecvLooped((uint8_t*)&delay.m_falling, sizeof(float)))
+		return false;
+
+	if(!ok)
+	{
+		LogError("Couldn't measure falling delay (open circuit?)\n");
 		return false;
 	}
 
@@ -275,7 +353,7 @@ bool ProgramAndMeasureDelay(
 	int src,
 	int dst,
 	int voltage_mv,
-	float& delay)
+	CombinatorialDelay& delay)
 {
 	//Emulate the device
 	LogVerbose("Loading new bitstream\n");
@@ -298,7 +376,8 @@ bool ProgramAndMeasureDelayAcrossVoltageCorners(
 	int dst,
 	PTVCorner corner,
 	bool subtractPadDelay,
-	map<PTVCorner, CombinatorialDelay>& delays)
+	map<PTVCorner, CombinatorialDelay>& delays,
+	bool invertOutput)
 {
 	//Emulate the device
 	LogVerbose("Loading new bitstream\n");
@@ -314,18 +393,19 @@ bool ProgramAndMeasureDelayAcrossVoltageCorners(
 		//wait a bit to let voltages stabilize
 		usleep (1000 * 50);
 
-		float delay;
-		if(!MeasureDelay(sock, src, dst, delay))
+		//TODO: falling edge delays here!
+		CombinatorialDelay delay;
+		if(!MeasureDelay(sock, src, dst, delay, invertOutput))
 			return false;
 
 		//Remove off-die delays if requested
 		if(subtractPadDelay)
 		{
 			//Subtract PCB trace and IO buffer delays
-			delay -= GetRoundTripDelayWith2x(src, dst, corner);
+			delay -= GetRoundTripDelayWith2x(src, dst, corner, invertOutput);
 		}
 
-		delays[corner] = CombinatorialDelay(delay, -1);
+		delays[corner] = delay;
 	}
 
 	return true;
@@ -381,16 +461,25 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 				PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, voltage);
 
 				//Create some variables
-				EquationVariable ibuf("Input buffer delay");
-				EquationVariable obuf_x1("x1 output buffer delay");
-				EquationVariable obuf_x2("x2 output buffer delay");
-				EquationVariable schmitt("Schmitt trigger delay");
+				EquationVariable ribuf("Input buffer delay rising");
+				EquationVariable robuf_x1("x1 output buffer delay rising");
+				EquationVariable robuf_x2("x2 output buffer delay rising");
+				EquationVariable rschmitt("Schmitt trigger delay rising");
+				EquationVariable fibuf("Input buffer delay falling");
+				EquationVariable fobuf_x1("x1 output buffer delay falling");
+				EquationVariable fobuf_x2("x2 output buffer delay falling");
+				EquationVariable fschmitt("Schmitt trigger delay falling");
 
 				//Set up relationships between the various signals (see assumptions above)
-				//TODO: FIB probing to get more accurate parameters here
+				//TODO: FIB probing to get more accurate ratio
+				float ibuf_to_obuf_ratio = -1.55;
 				Equation e1(0);
-				e1.AddVariable(ibuf, 1);
-				e1.AddVariable(obuf_x2, -1.55);
+				e1.AddVariable(ribuf, 1);
+				e1.AddVariable(robuf_x2, ibuf_to_obuf_ratio);
+
+				Equation e2(0);
+				e2.AddVariable(fibuf, 1);
+				e2.AddVariable(fobuf_x2, ibuf_to_obuf_ratio);
 
 				//Gather data from the DUT
 				if(!MeasurePinToPinDelay(sock, hdev, src, dst,
@@ -398,28 +487,38 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 				{
 					return false;
 				}
-				Equation e2(delay.m_rising);
-				e2.AddVariable(ibuf);
-				e2.AddVariable(obuf_x1);
+				Equation e3(delay.m_rising);
+				e3.AddVariable(ribuf);
+				e3.AddVariable(robuf_x1);
+				Equation e4(delay.m_falling);
+				e4.AddVariable(fibuf);
+				e4.AddVariable(fobuf_x1);
 
 				if(!MeasurePinToPinDelay(sock, hdev, src, dst,
 					Greenpak4IOB::DRIVE_2X, false, corner.GetVoltage(), delay))
 				{
 					return false;
 				}
-				Equation e3(delay.m_rising);
-				e3.AddVariable(ibuf);
-				e3.AddVariable(obuf_x2);
+				Equation e5(delay.m_rising);
+				e5.AddVariable(ribuf);
+				e5.AddVariable(robuf_x2);
+				Equation e6(delay.m_falling);
+				e6.AddVariable(fibuf);
+				e6.AddVariable(fobuf_x2);
 
 				if(!MeasurePinToPinDelay(sock, hdev, src, dst,
 					Greenpak4IOB::DRIVE_2X, true, corner.GetVoltage(), delay))
 				{
 					return false;
 				}
-				Equation e4(delay.m_rising);
-				e4.AddVariable(ibuf);
-				e4.AddVariable(schmitt);
-				e4.AddVariable(obuf_x2);
+				Equation e7(delay.m_rising);
+				e7.AddVariable(ribuf);
+				e7.AddVariable(rschmitt);
+				e7.AddVariable(robuf_x2);
+				Equation e8(delay.m_falling);
+				e8.AddVariable(fibuf);
+				e8.AddVariable(fschmitt);
+				e8.AddVariable(fobuf_x2);
 
 				//Create and solve the equation system
 				EquationSystem sys;
@@ -427,15 +526,31 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 				sys.AddEquation(e2);
 				sys.AddEquation(e3);
 				sys.AddEquation(e4);
+				sys.AddEquation(e5);
+				sys.AddEquation(e6);
+				sys.AddEquation(e7);
+				sys.AddEquation(e8);
 				if(!sys.Solve())
 					return false;
 
 				//Save combinatorial delays for these pins
 				auto iob = g_calDevice.GetIOB(src);
-				iob->AddCombinatorialDelay("IO", "OUT", corner, CombinatorialDelay(ibuf.m_value, -1));
-				iob->SetSchmittTriggerDelay(corner, CombinatorialDelay(schmitt.m_value, -1));
-				iob->SetOutputDelay(Greenpak4IOB::DRIVE_1X, corner, CombinatorialDelay(obuf_x1.m_value, -1));
-				iob->SetOutputDelay(Greenpak4IOB::DRIVE_2X, corner, CombinatorialDelay(obuf_x2.m_value, -1));
+				iob->AddCombinatorialDelay(
+					"IO",
+					"OUT",
+					corner,
+					CombinatorialDelay(ribuf.m_value, fibuf.m_value));
+				iob->SetSchmittTriggerDelay(
+					corner,
+					CombinatorialDelay(rschmitt.m_value, fschmitt.m_value));
+				iob->SetOutputDelay(
+					Greenpak4IOB::DRIVE_1X,
+					corner,
+					CombinatorialDelay(robuf_x1.m_value, fobuf_x1.m_value));
+				iob->SetOutputDelay(
+					Greenpak4IOB::DRIVE_2X,
+					corner,
+					CombinatorialDelay(robuf_x2.m_value, fobuf_x2.m_value));
 			}
 		}
 	}
@@ -486,10 +601,8 @@ bool MeasurePinToPinDelay(
 	//device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
 
 	//Get the delay
-	float f;
-	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, voltage_mv, f))
+	if(!ProgramAndMeasureDelay(sock, hdev, bitstream, src, dst, voltage_mv, delay))
 		return false;
-	delay = CombinatorialDelay(f, -1);
 
 	//Subtract the PCB trace delay at each end of the line
 	delay -= g_devkitCal.pinDelays[src];
@@ -580,30 +693,37 @@ bool MeasureCrossConnectionDelay(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Helper for subtracting I/O pad and test fixture delays from a measurement
 
-float GetRoundTripDelayWith2x(
+CombinatorialDelay GetRoundTripDelayWith2x(
 	int src,
 	int dst,
-	PTVCorner corner)
+	PTVCorner corner,
+	bool invertOutput)
 {
-	//Subtract the PCB trace delay at each end of the line
-	float delay = g_devkitCal.pinDelays[src].m_rising;
-	delay += g_devkitCal.pinDelays[dst].m_rising;
+	//PCB trace delay at each end of the line
+	CombinatorialDelay delay = g_devkitCal.pinDelays[dst];
+	if(invertOutput)
+		delay = CombinatorialDelay(delay.m_falling, delay.m_rising);
+	delay += g_devkitCal.pinDelays[src];
 
-	//Subtract the I/O buffer delay at each end of the line
+	//I/O buffer delay at each end of the line
 	//TODO: import calibration from the Greenpak4Device and/or reset it?
 	CombinatorialDelay d;
 	auto srciob = g_calDevice.GetIOB(src);
 	srciob->SetSchmittTrigger(false);
 	if(!srciob->GetCombinatorialDelay("IO", "OUT", corner, d))
 		return false;
-	delay += d.m_rising;
+	delay += d;
 
 	auto dstiob = g_calDevice.GetIOB(dst);
 	dstiob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
 	dstiob->SetDriveStrength(Greenpak4IOB::DRIVE_2X);
 	if(!dstiob->GetCombinatorialDelay("IN", "IO", corner, d))
 		return false;
-	delay += d.m_rising;
+
+	if(invertOutput)
+		delay += CombinatorialDelay(d.m_falling, d.m_rising);
+	else
+		delay += d;
 
 	return delay;
 }
@@ -772,15 +892,13 @@ bool MeasureInverterDelay(
 	//Look up the DUT
 	auto inv = device.GetInverter(ninv);
 
-	//See which half of the device it's in. Use pins 3/4 or 13/14 and LUT2_0 or LUT2_4 as appropriate
+	//See which half of the device it's in. Use pins 3/4 or 13/14 as appropriate
 	int src = 3;
 	int dst = 4;
-	int nlut = 0;
 	if(inv->GetMatrix() == 1)
 	{
 		src = 13;
 		dst = 14;
-		nlut = 4;
 	}
 
 	//Configure the input pin
@@ -793,15 +911,9 @@ bool MeasureInverterDelay(
 	//Configure the inverter
 	inv->SetInput("IN", din);
 
-	//Configure the LUT (we need to invert the output twice to keep the edge rising)
-	auto lut = GetRealLUT(device.GetLUT2(nlut));
-	lut->MakeXOR();
-	lut->SetInput("IN0", inv->GetOutput("OUT"));
-	lut->SetInput("IN1", vdd);
-
 	//Configure the output pin
 	auto dstiob = device.GetIOB(dst);
-	dstiob->SetInput("IN", lut->GetOutput("OUT"));
+	dstiob->SetInput("IN", inv->GetOutput("OUT"));
 	dstiob->SetInput("OE", vdd);
 	dstiob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
 	dstiob->SetDriveStrength(Greenpak4IOB::DRIVE_2X);
@@ -812,21 +924,8 @@ bool MeasureInverterDelay(
 	device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
 
 	//Get the delays
-	if(!ProgramAndMeasureDelayAcrossVoltageCorners(sock, hdev, bitstream, src, dst, corner, true, delays))
+	if(!ProgramAndMeasureDelayAcrossVoltageCorners(sock, hdev, bitstream, src, dst, corner, true, delays, true))
 		return false;
-
-	//Subtract the LUT delay from each one
-	auto clut = g_calDevice.GetLUT2(nlut);
-	set<PTVCorner> corners;
-	for(auto it : delays)
-		corners.emplace(it.first);
-	for(auto c : corners)
-	{
-		CombinatorialDelay ltime;
-		if(!clut->GetCombinatorialDelay("IN0", "OUT", c, ltime))
-			return false;
-		delays[c] -= ltime;
-	}
 
 	return true;
 }

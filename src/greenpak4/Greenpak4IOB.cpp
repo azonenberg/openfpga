@@ -257,7 +257,7 @@ void Greenpak4IOB::PrintExtraTimingData(PTVCorner corner) const
 		CombinatorialDelay bd;
 		if(GetCombinatorialDelay("IO", "OUT", corner, bd))
 		{
-			LogNotice("%10s to %10s: %.3f ns rising, %.3f ns falling\n",
+			LogNotice("%10s to %10s: %6.3f ns rising, %6.3f ns falling\n",
 				"IO (Sch)",
 				"OUT",
 				time.m_rising + bd.m_rising,
@@ -290,7 +290,7 @@ void Greenpak4IOB::PrintExtraTimingData(PTVCorner corner) const
 		}
 		string ioname = string("IO (") + drive + ")";
 
-		LogNotice("%10s to %10s: %.3f ns rising, %.3f ns falling\n",
+		LogNotice("%10s to %10s: %6.3f ns rising, %6.3f ns falling\n",
 			"IN",
 			ioname.c_str(),
 			it.second.m_rising,
