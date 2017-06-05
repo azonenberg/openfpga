@@ -1,0 +1,10 @@
+[package]
+name = "xc2par"
+version = "0.0.1"
+
+[profile.release]
+lto = true
+
+[lib]
+name = "xc2par"
+crate-type = ["rlib", "staticlib"]
