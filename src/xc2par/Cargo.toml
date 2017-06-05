@@ -8,3 +8,7 @@ lto = true
 [lib]
 name = "xc2par"
 crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+yosys-netlist-json = { path = "../yosys-netlist-json" }
+xc2bit = { path = "../xc2bit" }
