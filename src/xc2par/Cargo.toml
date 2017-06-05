@@ -11,3 +11,4 @@ crate-type = ["rlib", "staticlib"]
 
 [dependencies]
 openfpga-xbpar-rs = { path = "../xbpar-rs" }
+xc2bit = { path = "../xc2bit" }

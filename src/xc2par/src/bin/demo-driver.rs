@@ -31,7 +31,7 @@ use xc2par::*;
 
 fn main() {
     // The graphs for the PAR engine
-    let mut par_graphs = PARGraphPair::<(), ()>::new_pair();
+    let mut par_graphs = PARGraphPair::<_, ()>::new_pair();
 
-    let (dgraph_rs, lmap) = DeviceGraph::new();
+    let (dgraph_rs, lmap) = DeviceGraph::new("xc2c32a", &mut par_graphs);
 }

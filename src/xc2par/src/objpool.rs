@@ -51,16 +51,15 @@ pub struct ObjPool<T> {
     storage: Vec<T>
 }
 
-impl<T: Default> ObjPool<T> {
+impl<T> ObjPool<T> {
     pub fn new() -> ObjPool<T> {
         ObjPool {storage: Vec::new()}
     }
 
-    pub fn alloc(&mut self) -> ObjPoolIndex<T> {
+    pub fn insert(&mut self, item: T) -> ObjPoolIndex<T> {
         let i = self.storage.len();
-        let o = T::default();
 
-        self.storage.push(o);
+        self.storage.push(item);
 
         ObjPoolIndex::<T> {i: i, type_marker: PhantomData}
     }
@@ -71,6 +70,17 @@ impl<T: Default> ObjPool<T> {
 
     pub fn get_mut(&mut self, i: ObjPoolIndex<T>) -> &mut T {
         &mut self.storage[i.i]
+    }
+}
+
+impl<T: Default> ObjPool<T> {
+    pub fn alloc(&mut self) -> ObjPoolIndex<T> {
+        let i = self.storage.len();
+        let o = T::default();
+
+        self.storage.push(o);
+
+        ObjPoolIndex::<T> {i: i, type_marker: PhantomData}
     }
 }
 
