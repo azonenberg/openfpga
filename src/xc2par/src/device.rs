@@ -23,7 +23,27 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-mod device;
-pub use device::{DeviceGraphNode, DeviceGraph};
+extern crate xbpar_rs;
+use self::xbpar_rs::*;
 
-mod objpool;
+use std::collections::HashMap;
+
+pub enum DeviceGraphNode {
+
+}
+
+pub struct DeviceGraph {
+    nodes: Vec<DeviceGraphNode>,
+}
+
+impl DeviceGraph {
+    pub fn new() -> (DeviceGraph, HashMap<u32, &'static str>) {
+        let mut graph = DeviceGraph {
+            nodes: Vec::new(),
+        };
+
+        let mut lmap = HashMap::new();
+
+        (graph, lmap)
+    }
+}

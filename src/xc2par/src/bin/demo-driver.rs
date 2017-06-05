@@ -23,7 +23,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-mod device;
-pub use device::{DeviceGraphNode, DeviceGraph};
+extern crate xbpar_rs;
+use xbpar_rs::*;
 
-mod objpool;
+extern crate xc2par;
+use xc2par::*;
+
+fn main() {
+    // The graphs for the PAR engine
+    let mut par_graphs = PARGraphPair::<(), ()>::new_pair();
+
+    let (dgraph_rs, lmap) = DeviceGraph::new();
+}

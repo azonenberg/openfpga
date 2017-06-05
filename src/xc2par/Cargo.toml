@@ -8,3 +8,6 @@ lto = true
 [lib]
 name = "xc2par"
 crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+openfpga-xbpar-rs = { path = "../xbpar-rs" }
