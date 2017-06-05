@@ -255,6 +255,7 @@ impl XC2ExtraIBuf {
     }
 }
 
+// FIXME: Move these to fb?
 pub fn iob_num_to_fb_ff_num_32(iob: u32) -> Option<(u32, u32)> {
     if iob >= 32 {
         None
