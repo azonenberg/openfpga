@@ -23,13 +23,49 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#[macro_use]
-extern crate serde_derive;
+use std::collections::HashMap;
 
-mod device;
-pub use device::{DeviceGraphNode, DeviceGraph};
 
-mod objpool;
+extern crate serde_json;
 
-mod yosysnet;
-pub use yosysnet::{read_yosys_netlist};
+#[derive(Serialize, Deserialize, Debug)]
+pub struct YosysNetlist {
+    creator: String,
+    modules: HashMap<String, YosysNetlistModule>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct YosysNetlistModule {
+    attributes: HashMap<String, serde_json::Value>,
+    ports: HashMap<String, YosysNetlistPort>,
+    cells: HashMap<String, YosysNetlistCell>,
+    netnames: HashMap<String, YosysNetlistNetname>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct YosysNetlistPort {
+    direction: String,
+    bits: Vec<usize>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct YosysNetlistCell {
+    hide_name: usize,
+    #[serde(rename="type")]
+    cell_type: String,
+    parameters: HashMap<String, serde_json::Value>,
+    attributes: HashMap<String, serde_json::Value>,
+    port_directions: HashMap<String, String>,
+    connections: HashMap<String, Vec<serde_json::Value>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct YosysNetlistNetname {
+    hide_name: usize,
+    bits: Vec<usize>,
+    attributes: HashMap<String, serde_json::Value>,
+}
+
+pub fn read_yosys_netlist(input: &[u8]) -> Result<YosysNetlist, serde_json::Error> {
+    serde_json::from_slice(input)
+}

@@ -23,6 +23,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+use std::fs::File;
+use std::io::Read;
+
 extern crate xbpar_rs;
 use xbpar_rs::*;
 
@@ -30,6 +33,22 @@ extern crate xc2par;
 use xc2par::*;
 
 fn main() {
+    let args = ::std::env::args().collect::<Vec<_>>();
+
+    if args.len() != 2 {
+        println!("Usage: {} file.json", args[0]);
+        ::std::process::exit(1);
+    }
+
+    // Read the entire input file
+    let mut f = File::open(&args[1]).expect("failed to open file");
+    let mut data = Vec::new();
+    f.read_to_end(&mut data).expect("failed to read data");
+
+    // de-serialize the yosys netlist
+    let yosys_netlist = read_yosys_netlist(&data).unwrap();
+    println!("{:?}", yosys_netlist);
+
     // The graphs for the PAR engine
     let mut par_graphs = PARGraphPair::<_, ()>::new_pair();
 
