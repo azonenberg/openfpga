@@ -32,6 +32,7 @@ use self::xc2bit::*;
 use std::ascii::AsciiExt;
 use std::collections::HashMap;
 
+use *;
 use objpool::*;
 
 #[derive(Debug)]
@@ -70,7 +71,7 @@ pub struct DeviceGraph {
     nodes: ObjPool<DeviceGraphNode>,
 }
 
-fn alloc_label(par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ()>,
+fn alloc_label(par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ObjPoolIndex<NetlistGraphNode>>,
     lmap: &mut HashMap<u32, &'static str>, label: &'static str) -> u32 {
 
     let lbl_d = par_graphs.borrow_mut_d().allocate_label();
@@ -84,7 +85,8 @@ fn alloc_label(par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ()>,
 impl DeviceGraph {
     // Somewhat strange API - mutates an already created PAR engine graph but returns a new native graph as well as
     // the label map.
-    pub fn new(device_name: &str, par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ()>)
+    pub fn new(device_name: &str,
+        par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ObjPoolIndex<NetlistGraphNode>>)
         -> (DeviceGraph, HashMap<u32, &'static str>) {
 
         let mut graph = DeviceGraph {
@@ -168,7 +170,7 @@ impl DeviceGraph {
                 // one edge from each AND term
                 for andterm_i in 0..andterm_par_idxs.len() {
                     par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[andterm_i], "OUT",
-                        orterm_par_idxs[orterm_i], &format!("OR_IN_{}", andterm_i));
+                        orterm_par_idxs[orterm_i], "IN");
                 }
             }
 
@@ -282,27 +284,27 @@ impl DeviceGraph {
                                 // From the XOR gate
                                 par_graphs.borrow_mut_d().add_edge(
                                     fb_related_par_idxs[fb as usize].1[ff as usize], "OUT",
-                                    fb_related_par_idxs[fb as usize].0[andterm_i], &format!("AND_IN_{}", zia_row_i));
+                                    fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
                                 // From the register
                                 par_graphs.borrow_mut_d().add_edge(
                                     fb_related_par_idxs[fb as usize].2[ff as usize], "Q",
-                                    fb_related_par_idxs[fb as usize].0[andterm_i], &format!("AND_IN_{}", zia_row_i));
+                                    fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
                             },
                             &XC2ZIAInput::IBuf{ibuf} => {
                                 let (fb, ff) = iob_to_fb_ff(ibuf).unwrap();
                                 // From the pad
                                 par_graphs.borrow_mut_d().add_edge(
                                     iob_par_idxs[ibuf as usize], "OUT",
-                                    fb_related_par_idxs[fb as usize].0[andterm_i], &format!("AND_IN_{}", zia_row_i));
+                                    fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
                                 // From the register
                                 par_graphs.borrow_mut_d().add_edge(
                                     fb_related_par_idxs[fb as usize].2[ff as usize], "Q",
-                                    fb_related_par_idxs[fb as usize].0[andterm_i], &format!("AND_IN_{}", zia_row_i));
+                                    fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
                             },
                             &XC2ZIAInput::DedicatedInput => {
                                 par_graphs.borrow_mut_d().add_edge(
                                     inpad_par_idx.unwrap(), "OUT",
-                                    fb_related_par_idxs[fb as usize].0[andterm_i], &format!("AND_IN_{}", zia_row_i));
+                                    fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
                             },
                             // These cannot be in the choices table; they are special cases
                             _ => unreachable!(),

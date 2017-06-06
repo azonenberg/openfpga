@@ -23,10 +23,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
-use std::slice;
 
-#[derive(Hash, Debug)]
+#[derive(Debug)]
 pub struct ObjPoolIndex<T> {
     i: usize,
     type_marker: PhantomData<T>
@@ -47,6 +47,12 @@ impl<T> PartialEq for ObjPoolIndex<T> {
 }
 
 impl<T> Eq for ObjPoolIndex<T> { }
+
+impl<T> Hash for ObjPoolIndex<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.i.hash(state);
+    }
+}
 
 #[derive(Debug)]
 pub struct ObjPool<T> {

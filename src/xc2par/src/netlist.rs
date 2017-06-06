@@ -26,6 +26,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::collections::HashMap;
 
+extern crate xbpar_rs;
+use self::xbpar_rs::*;
+
 extern crate xc2bit;
 use self::xc2bit::*;
 
@@ -93,14 +96,16 @@ pub struct NetlistGraphNode {
 #[derive(Debug)]
 pub struct NetlistGraphNet {
     name: Option<String>,
-    sources: Vec<ObjPoolIndex<NetlistGraphNode>>,
-    sinks: Vec<ObjPoolIndex<NetlistGraphNode>>,
+    source: Option<(ObjPoolIndex<NetlistGraphNode>, &'static str)>,
+    sinks: Vec<(ObjPoolIndex<NetlistGraphNode>, &'static str)>,
 }
 
 #[derive(Debug)]
 pub struct NetlistGraph {
     nodes: ObjPool<NetlistGraphNode>,
     nets: ObjPool<NetlistGraphNet>,
+    vdd_net: ObjPoolIndex<NetlistGraphNet>,
+    vss_net: ObjPoolIndex<NetlistGraphNet>,
 }
 
 impl NetlistGraph {
@@ -133,12 +138,12 @@ impl NetlistGraph {
         // These "magic" nets correspond to a constant 1/0 signal
         let vdd_net = nets.insert(NetlistGraphNet {
             name: Some(String::from("<internal virtual Vdd net>")),
-            sources: Vec::new(),
+            source: None,
             sinks: Vec::new(),
         });
         let vss_net = nets.insert(NetlistGraphNet {
             name: Some(String::from("<internal virtual Vss net>")),
-            sources: Vec::new(),
+            source: None,
             sinks: Vec::new(),
         });
 
@@ -152,7 +157,7 @@ impl NetlistGraph {
                     // Need to add a new one
                     let our_edge_idx = nets.insert(NetlistGraphNet {
                         name: None,
-                        sources: Vec::new(),
+                        source: None,
                         sinks: Vec::new(),
                     });
                     net_map.insert(yosys_edge_idx, our_edge_idx);
@@ -175,7 +180,7 @@ impl NetlistGraph {
                                 // Need to add a new one
                                 let our_edge_idx = nets.insert(NetlistGraphNet {
                                     name: None,
-                                    sources: Vec::new(),
+                                    source: None,
                                     sinks: Vec::new(),
                                 });
                                 net_map.insert(yosys_edge_idx, our_edge_idx);
@@ -199,7 +204,7 @@ impl NetlistGraph {
                     // Need to add a new one
                     let our_edge_idx = nets.insert(NetlistGraphNet {
                         name: Some(netname_name.to_owned()),
-                        sources: Vec::new(),
+                        source: None,
                         sinks: Vec::new(),
                     });
                     net_map.insert(yosys_edge_idx, our_edge_idx);
@@ -240,6 +245,8 @@ impl NetlistGraph {
                         output: Some(connected_net_idx),
                     }
                 });
+
+                cell_map.insert(port_name.to_owned(), node_idx);
             } else if port_obj.direction == "output" {
                 if port_obj.bits.len() != 1 {
                     return Err("too many bits entries for port");
@@ -255,6 +262,8 @@ impl NetlistGraph {
                         output: None,
                     }
                 });
+
+                cell_map.insert(port_name.to_owned(), node_idx);
             } else {
                 return Err("invalid port direction");
             }
@@ -315,7 +324,7 @@ impl NetlistGraph {
                 let and_to_or_nets = (0..num_and_terms).map(|_| {
                     nets.insert(NetlistGraphNet {
                         name: None,
-                        sources: Vec::new(),
+                        source: None,
                         sinks: Vec::new(),
                     })
                 }).collect::<Vec<_>>();
@@ -323,7 +332,7 @@ impl NetlistGraph {
                 // Net to connect OR to XOR
                 let or_to_xor_net = nets.insert(NetlistGraphNet {
                     name: None,
-                    sources: Vec::new(),
+                    source: None,
                     sinks: Vec::new(),
                 });
 
@@ -365,23 +374,27 @@ impl NetlistGraph {
                         }
                     }
 
-                    nodes.insert(NetlistGraphNode {
+                    let node_idx_and = nodes.insert(NetlistGraphNode {
                         name: format!("{}__and_{}", cell_name, and_i),
                         variant: NetlistGraphNodeVariant::AndTerm {
                             inputs: inputs,
                             output: and_to_or_nets[and_i as usize],
                         }
                     });
+                    // FIXME: Copypasta
+                    cell_map.insert(format!("{}__and_{}", cell_name, and_i), node_idx_and);
                 }
 
                 // Create OR cell
-                nodes.insert(NetlistGraphNode {
+                let node_idx_or = nodes.insert(NetlistGraphNode {
                     name: format!("{}__or", cell_name),
                     variant: NetlistGraphNodeVariant::OrTerm {
                         inputs: and_to_or_nets,
                         output: or_to_xor_net,
                     }
                 });
+                // FIXME: Copypasta
+                cell_map.insert(format!("{}__or", cell_name), node_idx_or);
 
                 // Create XOR cell
                 let output_y_obj = cell_obj.connections.get("Y");
@@ -396,14 +409,14 @@ impl NetlistGraph {
 
                 let output_y_net_idx = if let &Value::Number(ref n) = output_y_obj {
                     *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
-                } else if let &Value::String(ref s) = output_y_obj {
+                } else if let &Value::String(..) = output_y_obj {
                     return Err("invalid connection in cell");
                 } else {
                     // We already checked for this earlier
                     unreachable!();
                 };
 
-                nodes.insert(NetlistGraphNode {
+                let node_idx_xor = nodes.insert(NetlistGraphNode {
                     name: format!("{}__xor", cell_name),
                     variant: NetlistGraphNodeVariant::Xor {
                         andterm_input: None,
@@ -412,6 +425,8 @@ impl NetlistGraph {
                         output: output_y_net_idx,
                     }
                 });
+                // FIXME: Copypasta
+                cell_map.insert(format!("{}__xor", cell_name), node_idx_xor);
             } else {
                 return Err("unsupported cell type");
             }
@@ -423,65 +438,170 @@ impl NetlistGraph {
             match node.variant {
                 NetlistGraphNodeVariant::AndTerm{ref inputs, output} => {
                     for &input in inputs {
-                        nets.get_mut(input.0).sinks.push(node_idx);
+                        nets.get_mut(input.0).sinks.push((node_idx, "IN"));
                     }
-                    nets.get_mut(output).sources.push(node_idx);
+                    let output_net = nets.get_mut(output);
+                    if output_net.source.is_some() {
+                        return Err("multiple drivers for net");
+                    }
+                    output_net.source = Some((node_idx, "OUT"));
                 },
                 NetlistGraphNodeVariant::OrTerm{ref inputs, output} => {
                     for &input in inputs {
-                        nets.get_mut(input).sinks.push(node_idx);
+                        nets.get_mut(input).sinks.push((node_idx, "IN"));
                     }
-                    nets.get_mut(output).sources.push(node_idx);
+                    let output_net = nets.get_mut(output);
+                    if output_net.source.is_some() {
+                        return Err("multiple drivers for net");
+                    }
+                    output_net.source = Some((node_idx, "OUT"));
                 },
                 NetlistGraphNodeVariant::Xor{orterm_input, andterm_input, output, ..} => {
                     if orterm_input.is_some() {
-                        nets.get_mut(orterm_input.unwrap()).sinks.push(node_idx);
+                        nets.get_mut(orterm_input.unwrap()).sinks.push((node_idx, "IN_ORTERM"));
                     }
                     if andterm_input.is_some() {
-                        nets.get_mut(andterm_input.unwrap()).sinks.push(node_idx);
+                        nets.get_mut(andterm_input.unwrap()).sinks.push((node_idx, "IN_PTC"));
                     }
-                    nets.get_mut(output).sources.push(node_idx);
+                    let output_net = nets.get_mut(output);
+                    if output_net.source.is_some() {
+                        return Err("multiple drivers for net");
+                    }
+                    output_net.source = Some((node_idx, "OUT"));
                 },
                 NetlistGraphNodeVariant::Reg{set_input, reset_input, ce_input, dt_input, clk_input, output, ..} => {
                     if set_input.is_some() {
-                        nets.get_mut(set_input.unwrap()).sinks.push(node_idx);
+                        nets.get_mut(set_input.unwrap()).sinks.push((node_idx, "S"));
                     }
                     if reset_input.is_some() {
-                        nets.get_mut(reset_input.unwrap()).sinks.push(node_idx);
+                        nets.get_mut(reset_input.unwrap()).sinks.push((node_idx, "R"));
                     }
                     if ce_input.is_some() {
-                        nets.get_mut(ce_input.unwrap()).sinks.push(node_idx);
+                        nets.get_mut(ce_input.unwrap()).sinks.push((node_idx, "CE"));
                     }
-                    nets.get_mut(dt_input).sinks.push(node_idx);
-                    nets.get_mut(clk_input).sinks.push(node_idx);
-                    nets.get_mut(output).sources.push(node_idx);
+                    nets.get_mut(dt_input).sinks.push((node_idx, "D/T"));
+                    nets.get_mut(clk_input).sinks.push((node_idx, "CLK"));
+                    let output_net = nets.get_mut(output);
+                    if output_net.source.is_some() {
+                        return Err("multiple drivers for net");
+                    }
+                    output_net.source = Some((node_idx, "Q"));
                 },
                 NetlistGraphNodeVariant::BufgClk{input, output, ..} |
                 NetlistGraphNodeVariant::BufgGTS{input, output, ..} |
                 NetlistGraphNodeVariant::BufgGSR{input, output, ..} => {
-                    nets.get_mut(input).sinks.push(node_idx);
-                    nets.get_mut(output).sources.push(node_idx);
+                    nets.get_mut(input).sinks.push((node_idx, "IN"));
+                    let output_net = nets.get_mut(output);
+                    if output_net.source.is_some() {
+                        return Err("multiple drivers for net");
+                    }
+                    output_net.source = Some((node_idx, "OUT"));
                 },
                 NetlistGraphNodeVariant::IOBuf{input, oe, output} => {
                     if input.is_some() {
-                        nets.get_mut(input.unwrap()).sinks.push(node_idx);
+                        nets.get_mut(input.unwrap()).sinks.push((node_idx, "IN"));
                     }
                     if oe.is_some() {
-                        nets.get_mut(oe.unwrap()).sinks.push(node_idx);
+                        nets.get_mut(oe.unwrap()).sinks.push((node_idx, "OE"));
                     }
                     if output.is_some() {
-                        nets.get_mut(output.unwrap()).sources.push(node_idx);
+                        let output_net = nets.get_mut(output.unwrap());
+                        if output_net.source.is_some() {
+                            return Err("multiple drivers for net");
+                        }
+                        output_net.source = Some((node_idx, "OUT"));
                     }
                 },
                 NetlistGraphNodeVariant::InBuf{output} => {
-                    nets.get_mut(output).sources.push(node_idx);
+                    let output_net = nets.get_mut(output);
+                    if output_net.source.is_some() {
+                        return Err("multiple drivers for net");
+                    }
+                    output_net.source = Some((node_idx, "OUT"));
                 },
+            }
+        }
+
+        // Check for undriven nets
+        for net_idx in nets.iter() {
+            if net_idx == vdd_net || net_idx == vss_net {
+                continue;
+            }
+
+            let net = nets.get(net_idx);
+            if net.source.is_none() {
+                return Err("net without driver");
             }
         }
 
         Ok(NetlistGraph {
             nodes: nodes,
             nets: nets,
+            vdd_net: vdd_net,
+            vss_net: vss_net,
         })
+    }
+
+    pub fn insert_into_par_graph(&self,
+        par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ObjPoolIndex<NetlistGraphNode>>,
+        lmap: &HashMap<u32, &'static str>) {
+
+        // We first need an inverse label map
+        let mut ilmap = HashMap::new();
+        for (l, &name) in lmap {
+            ilmap.insert(name, *l);
+        }
+
+        // Now fetch the appropriate labels
+        let iopad_l = *ilmap.get("IOPAD").unwrap();
+        let inpad_l = *ilmap.get("INPAD").unwrap();
+        let reg_l = *ilmap.get("REG").unwrap();
+        let xor_l = *ilmap.get("XOR").unwrap();
+        let orterm_l = *ilmap.get("ORTERM").unwrap();
+        let andterm_l = *ilmap.get("ANDTERM").unwrap();
+        let bufg_l = *ilmap.get("BUFG").unwrap();
+
+        // Create corresponding nodes
+        let mut node_par_idx_map = HashMap::new();
+        for node_idx_ours in self.nodes.iter() {
+            let node = self.nodes.get(node_idx_ours);
+
+            let lbl = match node.variant {
+                NetlistGraphNodeVariant::AndTerm{..} => andterm_l,
+                NetlistGraphNodeVariant::OrTerm{..} => orterm_l,
+                NetlistGraphNodeVariant::Xor{..} => xor_l,
+                NetlistGraphNodeVariant::Reg{..} => reg_l,
+                NetlistGraphNodeVariant::BufgClk{..} => bufg_l,
+                NetlistGraphNodeVariant::BufgGTS{..} => bufg_l,
+                NetlistGraphNodeVariant::BufgGSR{..} => bufg_l,
+                NetlistGraphNodeVariant::IOBuf{..} => iopad_l,
+                NetlistGraphNodeVariant::InBuf{..} => inpad_l,
+            };
+
+            let node_idx_par = par_graphs.borrow_mut_n().add_new_node(lbl, node_idx_ours);
+
+            node_par_idx_map.insert(node_idx_ours, node_idx_par);
+        }
+
+        // Add all the edges
+        for net_idx in self.nets.iter() {
+            if net_idx == self.vdd_net || net_idx == self.vss_net {
+                continue;
+            }
+
+            let net = self.nets.get(net_idx);
+
+            let source_node_our_tup = net.source.unwrap();
+            let source_node_par_idx = *node_par_idx_map.get(&source_node_our_tup.0).unwrap();
+            let source_node_out_port = source_node_our_tup.1;
+            
+            for sink_node_our_tup in &net.sinks {
+                let sink_node_par_idx = *node_par_idx_map.get(&sink_node_our_tup.0).unwrap();
+                let sink_node_in_port = sink_node_our_tup.1;
+
+                par_graphs.borrow_mut_n().add_edge(source_node_par_idx, source_node_out_port,
+                    sink_node_par_idx, sink_node_in_port);
+            }
+        }
     }
 }

@@ -50,7 +50,7 @@ fn main() {
     println!("{:?}", yosys_netlist);
 
     // The graphs for the PAR engine
-    let mut par_graphs = PARGraphPair::<_, ()>::new_pair();
+    let mut par_graphs = PARGraphPair::<_, _>::new_pair();
 
     // Device graph
     let (dgraph_rs, lmap) = DeviceGraph::new("xc2c32a", &mut par_graphs);
@@ -58,6 +58,7 @@ fn main() {
     println!("{:?}", dgraph_rs);
 
     // Netlist graph (native part)
-    let ngraph_rs = NetlistGraph::from_yosys_netlist(&yosys_netlist);
+    let ngraph_rs = NetlistGraph::from_yosys_netlist(&yosys_netlist).unwrap();
     println!("{:?}", ngraph_rs);
+    ngraph_rs.insert_into_par_graph(&mut par_graphs, &lmap);
 }
