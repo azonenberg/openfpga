@@ -198,13 +198,14 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
         }
     }
 
-    if default_fuse == Ternary::Undef {
-        return Err("missing F field")
-    }
-
     // Fill in the default values
     for x in &mut fuses_ternary {
         if *x == Ternary::Undef {
+            // There cannot be undefined fuses if there isn't an F field
+            if default_fuse == Ternary::Undef {
+                return Err("missing F field")
+            }
+
             *x = default_fuse;
         }
     }
@@ -307,8 +308,8 @@ mod tests {
     }
 
     #[test]
-    fn read_no_qf_no_f() {
-        let ret = read_jed(b"\x02\x030000");
+    fn read_no_f() {
+        let ret = read_jed(b"\x02QF1*\x030000");
 
         assert_eq!(ret, Err("missing F field"));
     }
