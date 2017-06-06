@@ -334,6 +334,7 @@ public:
 	void PrintTimingData() const;
 	void SaveTimingData(std::string fname);
 	bool LoadTimingData(json_object* object);
+	bool LoadTimingData(std::string fname);
 
 protected:
 

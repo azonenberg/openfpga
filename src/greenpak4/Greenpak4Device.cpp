@@ -1299,6 +1299,63 @@ void Greenpak4Device::SaveTimingData(string fname)
 	fclose(fp);
 }
 
+bool Greenpak4Device::LoadTimingData(string fname)
+{
+	//Read it
+	FILE* fp = fopen(fname.c_str(), "rb");
+	if(fp == NULL)
+		return false;
+	if(0 != fseek(fp, 0, SEEK_END))
+	{
+		LogError("Failed to seek to end of timing data file %s\n", fname.c_str());
+		fclose(fp);
+		return false;
+	}
+	size_t len = ftell(fp);
+	if(0 != fseek(fp, 0, SEEK_SET))
+	{
+		LogError("Failed to seek to start of timing data file %s\n", fname.c_str());
+		return false;
+	}
+	char* json_string = new char[len + 1];
+	json_string[len] = '\0';
+	if(len != fread(json_string, 1, len, fp))
+	{
+		LogError("Failed to read contents of timing data file %s\n", fname.c_str());
+		delete[] json_string;
+		fclose(fp);
+		return false;
+	}
+	fclose(fp);
+
+	//Parse the JSON
+	json_tokener* tok = json_tokener_new();
+	if(!tok)
+	{
+		LogError("Failed to create JSON tokenizer object\n");
+		delete[] json_string;
+		return false;
+	}
+	json_tokener_error err;
+	json_object* object = json_tokener_parse_verbose(json_string, &err);
+	if(NULL == object)
+	{
+		const char* desc = json_tokener_error_desc(err);
+		LogError("JSON parsing failed (err = %s)\n", desc);
+		delete[] json_string;
+		return false;
+	}
+
+	//Load stuff
+	if(!LoadTimingData(object))
+		return false;
+
+	//Done
+	json_object_put(object);
+	json_tokener_free(tok);
+	return true;
+}
+
 bool Greenpak4Device::LoadTimingData(json_object* object)
 {
 	//Make a map of description -> entity
