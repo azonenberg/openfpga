@@ -28,6 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::num::Wrapping;
 use std::str;
 
+use *;
+
 #[derive(Eq, PartialEq, Copy, Clone)]
 enum Ternary {
     Zero,
@@ -228,6 +230,31 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
     }
 
     Ok((fuses, device))
+}
+
+// Processes a fuse array into a bitstream object
+pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
+    let device_split = device.split('-').collect::<Vec<_>>();
+
+    if device_split.len() != 3 {
+        return Err("malformed device name");
+    }
+
+    // TODO: Validate these
+    let device_speed = device_split[1];
+    let device_package = device_split[2];
+
+    // Part name
+    match device_split[0] {
+        "XC2C32A" => {
+            if fuses.len() != 12278 {
+                return Err("wrong number of fuses");
+            }
+        },
+        _ => return Err("unsupported part"),
+    }
+
+    Err("err")
 }
 
 #[cfg(test)]

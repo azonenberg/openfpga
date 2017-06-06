@@ -25,9 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Function block
 
-use pla::*;
-use mc::*;
-use zia::*;
+use *;
 
 pub struct XC2BistreamFB {
     and_terms: [XC2PLAAndTerm; 56],

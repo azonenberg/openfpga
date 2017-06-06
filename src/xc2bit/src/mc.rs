@@ -49,8 +49,8 @@ pub enum XC2MCFFMode {
 
 pub enum XC2MCFeedbackMode {
     DISABLED,
-    COMBFB,
-    REGFB,
+    COMB,
+    REG,
 }
 
 pub enum XC2MCXorMode {

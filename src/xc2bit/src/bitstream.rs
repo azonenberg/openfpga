@@ -25,8 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Toplevel bitstrem stuff
 
-use fb::*;
-use mc::*;
+use *;
 
 pub struct XC2Bitstream {
     speed_grade: String,
