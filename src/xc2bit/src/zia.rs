@@ -30,7 +30,7 @@ pub struct XC2ZIARowPiece {
     pub selected: XC2ZIAInput,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum XC2ZIAInput {
     Macrocell {
         fb: u32,
@@ -367,4 +367,33 @@ pub fn read_32_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usi
             ZIA_BIT_TO_CHOICE_32[row_idx][active_bit]
         }
     })
+}
+
+pub fn encode_32_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 8]> {
+    if choice == XC2ZIAInput::One {
+        Some([true, true, true, true, true, true, true, true])
+    } else if choice == XC2ZIAInput::Zero {
+        Some([true, true, true, true, true, true, false, false])
+    } else {
+        let mut ret = [true; 8];
+        // This bit is active-high unlike the rest
+        ret[7] = false;
+
+        let mut found_bit = 8;
+        for i in 0..ZIA_BIT_TO_CHOICE_32[row as usize].len() {
+            if choice == ZIA_BIT_TO_CHOICE_32[row as usize][i] {
+                found_bit = i;
+                break;
+            }
+        }
+
+        if found_bit == 8 {
+            // Didn't find it
+            return None;
+        }
+
+        ret[found_bit] = false;
+
+        Some(ret)
+    }
 }

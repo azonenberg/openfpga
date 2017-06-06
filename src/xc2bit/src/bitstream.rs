@@ -29,7 +29,8 @@ use std::io::Write;
 
 use *;
 use fb::{read_32_fb_logical};
-use mc::{read_32_iob_logical, read_32_extra_ibuf_logical};
+use mc::{read_32_iob_logical, read_32_extra_ibuf_logical, fb_ff_num_to_iob_num_32};
+use zia::{encode_32_zia_choice};
 
 pub struct XC2Bitstream {
     pub speed_grade: String,
@@ -44,6 +45,47 @@ impl XC2Bitstream {
         write!(writer, "device package: {}\n", self.package).unwrap();
         self.bits.dump_human_readable(writer);
     }
+
+    pub fn write_jed(&self, writer: &mut Write) {
+        write!(writer, ".JED fuse map written by xc2bit\n").unwrap();
+        write!(writer, "https://github.com/azonenberg/openfpga\n\n").unwrap();
+        write!(writer, "\x02").unwrap();
+
+        match self.bits {
+            XC2BitstreamBits::XC2C32A{..} => {
+                write!(writer, "QF12278*\n").unwrap();
+                write!(writer, "N DEVICE XC2C32A-{}-{}*\n\n", self.speed_grade, self.package).unwrap();
+            },
+        }
+
+        self.bits.write_jed(writer);
+
+        write!(writer, "\x030000\n").unwrap();
+    }
+
+    pub fn blank_bitstream(device: &str, speed_grade: &str, package: &str) -> Result<XC2Bitstream, &'static str> {
+        // TODO: Validate speed_grade and package
+
+        match device {
+            "XC2C32A" => {
+                Ok(XC2Bitstream {
+                    speed_grade: speed_grade.to_owned(),
+                    package: package.to_owned(),
+                    bits: XC2BitstreamBits::XC2C32A {
+                        fb: [XC2BistreamFB::default(); 2],
+                        iobs: [XC2MCSmallIOB::default(); 32],
+                        inpin: XC2ExtraIBuf::default(),
+                        global_nets: XC2GlobalNets::default(),
+                        legacy_ivoltage: false,
+                        legacy_ovoltage: false,
+                        ivoltage: [false, false],
+                        ovoltage: [false, false],
+                    }
+                })
+            },
+            _ => Err("invalid device")
+        }
+    }
 }
 
 pub struct XC2GlobalNets {
@@ -56,6 +98,19 @@ pub struct XC2GlobalNets {
     pub gts_invert: [bool; 4],
     // false = keeper, true = pull-up
     pub global_pu: bool,
+}
+
+impl Default for XC2GlobalNets {
+    fn default() -> XC2GlobalNets {
+        XC2GlobalNets {
+            gck_enable: [false; 3],
+            gsr_enable: false,
+            gsr_invert: false,
+            gts_enable: [false; 4],
+            gts_invert: [true; 4],
+            global_pu: true,
+        }
+    }
 }
 
 impl XC2GlobalNets {
@@ -150,7 +205,210 @@ impl XC2BitstreamBits {
                 fb[0].dump_human_readable(0, writer);
                 fb[1].dump_human_readable(1, writer);
             },
-            _ => panic!("don't know how to print this")
+        }
+    }
+
+    pub fn write_jed(&self, writer: &mut Write) {
+        match self {
+            &XC2BitstreamBits::XC2C32A{
+                ref fb, ref iobs, ref inpin, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
+                ref ivoltage, ref ovoltage} => {
+
+                // Each FB
+                for fb_i in 0..2 {
+                    let fuse_base = if fb_i == 0 {0} else {6128};
+
+                    // ZIA
+                    for i in 0..40 {
+                        write!(writer, "L{:06} ", fuse_base + i * 8).unwrap();
+                        let zia_choice_bits =
+                            encode_32_zia_choice(i as u32, fb[fb_i].zia_bits[i].selected)
+                            .expect("invalid ZIA input");
+                        write!(writer, "{}{}{}{}{}{}{}{}",
+                            if zia_choice_bits[7] {"1"} else {"0"},
+                            if zia_choice_bits[6] {"1"} else {"0"},
+                            if zia_choice_bits[5] {"1"} else {"0"},
+                            if zia_choice_bits[4] {"1"} else {"0"},
+                            if zia_choice_bits[3] {"1"} else {"0"},
+                            if zia_choice_bits[2] {"1"} else {"0"},
+                            if zia_choice_bits[1] {"1"} else {"0"},
+                            if zia_choice_bits[0] {"1"} else {"0"}).unwrap();
+                        write!(writer, "*\n").unwrap();
+                    }
+                    write!(writer, "\n").unwrap();
+
+                    // AND terms
+                    for i in 0..56 {
+                        write!(writer, "L{:06} ", fuse_base + 8 * 40 + i * 80).unwrap();
+                        for j in 0..40 {
+                            if fb[fb_i].and_terms[i].input[j] {
+                                write!(writer, "0").unwrap();
+                            } else {
+                                write!(writer, "1").unwrap();
+                            }
+                            if fb[fb_i].and_terms[i].input_b[j] {
+                                write!(writer, "0").unwrap();
+                            } else {
+                                write!(writer, "1").unwrap();
+                            }
+                        }
+                        write!(writer, "*\n").unwrap();
+                    }
+                    write!(writer, "\n").unwrap();
+
+                    // OR terms
+                    for i in 0..56 {
+                        write!(writer, "L{:06} ", fuse_base + 8 * 40 + 56 * 80 + i * 16).unwrap();
+                        for j in 0..16 {
+                            if fb[fb_i].or_terms[j].input[i] {
+                                write!(writer, "0").unwrap();
+                            } else {
+                                write!(writer, "1").unwrap();
+                            }
+                        }
+                        write!(writer, "*\n").unwrap();
+                    }
+                    write!(writer, "\n").unwrap();
+
+                    // Macrocells
+                    for i in 0..16 {
+                        write!(writer, "L{:06} ", fuse_base + 8 * 40 + 56 * 80 + 56 * 16 + i * 27).unwrap();
+
+                        let iob = fb_ff_num_to_iob_num_32(fb_i as u32, i as u32).unwrap() as usize;
+
+                        // aclk
+                        write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
+                            XC2MCFFClkSrc::CTC => "1",
+                            _ => "0",
+                        }).unwrap();
+
+                        // clkop
+                        write!(writer, "{}", if fb[fb_i].ffs[i].falling_edge {"1"} else {"0"}).unwrap();
+
+                        // clk
+                        write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
+                            XC2MCFFClkSrc::GCK0 => "00",
+                            XC2MCFFClkSrc::GCK1 => "01",
+                            XC2MCFFClkSrc::GCK2 => "10",
+                            XC2MCFFClkSrc::PTC | XC2MCFFClkSrc::CTC => "11",
+                        }).unwrap();
+
+                        // clkfreq
+                        write!(writer, "{}", if fb[fb_i].ffs[i].is_ddr {"1"} else {"0"}).unwrap();
+
+                        // r
+                        write!(writer, "{}", match fb[fb_i].ffs[i].r_src {
+                            XC2MCFFResetSrc::PTA => "00",
+                            XC2MCFFResetSrc::GSR => "01",
+                            XC2MCFFResetSrc::CTR => "10",
+                            XC2MCFFResetSrc::Disabled => "11",
+                        }).unwrap();
+
+                        // p
+                        write!(writer, "{}", match fb[fb_i].ffs[i].s_src {
+                            XC2MCFFSetSrc::PTA => "00",
+                            XC2MCFFSetSrc::GSR => "01",
+                            XC2MCFFSetSrc::CTS => "10",
+                            XC2MCFFSetSrc::Disabled => "11",
+                        }).unwrap();
+
+                        // regmod
+                        write!(writer, "{}", match fb[fb_i].ffs[i].ff_mode {
+                            XC2MCFFMode::DFF => "00",
+                            XC2MCFFMode::LATCH => "01",
+                            XC2MCFFMode::TFF => "10",
+                            XC2MCFFMode::DFFCE => "11",
+                        }).unwrap();
+
+                        // inz
+                        write!(writer, "{}", if iobs[iob].ibuf_to_zia {"00"} else {"11"}).unwrap();
+
+                        // fb
+                        write!(writer, "{}", match fb[fb_i].ffs[i].fb_mode {
+                            XC2MCFeedbackMode::COMB => "00",
+                            XC2MCFeedbackMode::REG => "10",
+                            XC2MCFeedbackMode::Disabled => "11",
+                        }).unwrap();
+
+                        // inreg
+                        write!(writer, "{}", if fb[fb_i].ffs[i].ff_in_ibuf {"0"} else {"1"}).unwrap();
+
+                        // st
+                        write!(writer, "{}", if iobs[iob].schmitt_trigger {"1"} else {"0"}).unwrap();
+
+                        // xorin
+                        write!(writer, "{}", match fb[fb_i].ffs[i].xor_mode {
+                            XC2MCXorMode::ZERO => "00",
+                            XC2MCXorMode::PTCB => "01",
+                            XC2MCXorMode::PTC => "10",
+                            XC2MCXorMode::ONE => "11",
+                        }).unwrap();
+
+                        // regcom
+                        write!(writer, "{}", if iobs[iob].obuf_uses_ff {"0"} else {"1"}).unwrap();
+
+                        // oe
+                        write!(writer, "{}", match iobs[iob].obuf_mode {
+                            XC2MCOBufMode::PushPull => "0000",
+                            XC2MCOBufMode::OpenDrain => "0001",
+                            XC2MCOBufMode::TriStateGTS1 => "0010",
+                            XC2MCOBufMode::TriStatePTB => "0100",
+                            XC2MCOBufMode::TriStateGTS3 => "0110",
+                            XC2MCOBufMode::TriStateCTE => "1000",
+                            XC2MCOBufMode::TriStateGTS2 => "1010",
+                            XC2MCOBufMode::TriStateGTS0 => "1100",
+                            XC2MCOBufMode::CGND => "1110",
+                            XC2MCOBufMode::Disabled => "1111",
+                        }).unwrap();
+
+                        // tm
+                        write!(writer, "{}", if iobs[iob].termination_enabled {"1"} else {"0"}).unwrap();
+
+                        // slw
+                        write!(writer, "{}", if iobs[iob].slew_is_fast {"0"} else {"1"}).unwrap();
+
+                        // pu
+                        write!(writer, "{}", if fb[fb_i].ffs[i].init_state {"0"} else {"1"}).unwrap();
+
+                        write!(writer, "*\n").unwrap();
+                    }
+                    write!(writer, "\n").unwrap();
+                }
+
+                // "other stuff"
+                write!(writer, "L012256 {}{}{}*\n",
+                    if global_nets.gck_enable[0] {"1"} else {"0"},
+                    if global_nets.gck_enable[1] {"1"} else {"0"},
+                    if global_nets.gck_enable[2] {"1"} else {"0"}).unwrap();
+
+                write!(writer, "L012259 {}{}*\n",
+                    if global_nets.gsr_invert {"1"} else {"0"},
+                    if global_nets.gsr_enable {"1"} else {"0"}).unwrap();
+
+                write!(writer, "L012261 {}{}{}{}{}{}{}{}*\n",
+                    if global_nets.gts_invert[0] {"1"} else {"0"},
+                    if global_nets.gts_enable[0] {"0"} else {"1"},
+                    if global_nets.gts_invert[1] {"1"} else {"0"},
+                    if global_nets.gts_enable[1] {"0"} else {"1"},
+                    if global_nets.gts_invert[2] {"1"} else {"0"},
+                    if global_nets.gts_enable[2] {"0"} else {"1"},
+                    if global_nets.gts_invert[3] {"1"} else {"0"},
+                    if global_nets.gts_enable[3] {"0"} else {"1"}).unwrap();
+
+                write!(writer, "L012269 {}*\n", if global_nets.global_pu {"1"} else {"0"}).unwrap();
+
+                write!(writer, "L012270 {}*\n", if *legacy_ovoltage {"0"} else {"1"}).unwrap();
+                write!(writer, "L012271 {}*\n", if *legacy_ivoltage {"0"} else {"1"}).unwrap();
+
+                write!(writer, "L012272 {}{}*\n",
+                    if inpin.schmitt_trigger {"1"} else {"0"},
+                    if inpin.termination_enabled {"1"} else {"0"}).unwrap();
+
+                write!(writer, "L012274 {}*\n", if ivoltage[0] {"0"} else {"1"}).unwrap();
+                write!(writer, "L012275 {}*\n", if ovoltage[0] {"0"} else {"1"}).unwrap();
+                write!(writer, "L012276 {}*\n", if ivoltage[1] {"0"} else {"1"}).unwrap();
+                write!(writer, "L012277 {}*\n", if ovoltage[1] {"0"} else {"1"}).unwrap();
+            }
         }
     }
 }

@@ -65,7 +65,7 @@ impl XC2BistreamFB {
         write!(writer, "\n").unwrap();
         write!(writer, "ZIA inputs for FB{}\n", fb).unwrap();
         for i in 0..40 {
-            write!(writer, "{:2}: ", i);
+            write!(writer, "{:2}: ", i).unwrap();
             match self.zia_bits[i].selected {
                 XC2ZIAInput::Zero => write!(writer, "0\n").unwrap(),
                 XC2ZIAInput::One => write!(writer, "1\n").unwrap(),

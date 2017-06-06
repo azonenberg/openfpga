@@ -115,7 +115,7 @@ impl Default for XC2MCFF {
             is_ddr: false,
             r_src: XC2MCFFResetSrc::Disabled,
             s_src: XC2MCFFSetSrc::Disabled,
-            init_state: false,
+            init_state: true,
             ff_mode: XC2MCFFMode::DFF,
             fb_mode: XC2MCFeedbackMode::Disabled,
             ff_in_ibuf: false,
@@ -225,6 +225,15 @@ impl XC2MCSmallIOB {
 pub struct XC2ExtraIBuf {
     pub schmitt_trigger: bool,
     pub termination_enabled: bool,
+}
+
+impl Default for XC2ExtraIBuf {
+    fn default() -> XC2ExtraIBuf {
+        XC2ExtraIBuf {
+            schmitt_trigger: true,
+            termination_enabled: true,
+        }
+    }
 }
 
 impl XC2ExtraIBuf {
