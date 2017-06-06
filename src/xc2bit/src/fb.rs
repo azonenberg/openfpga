@@ -182,3 +182,32 @@ pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2Bistrea
         ffs: ff_bits,
     })
 }
+
+// TODO: This is the same across all sizes, right?
+pub fn get_ctc() -> u32 {
+    4
+}
+
+pub fn get_ctr() -> u32 {
+    5
+}
+
+pub fn get_cts() -> u32 {
+    6
+}
+
+pub fn get_cte() -> u32 {
+    7
+}
+
+pub fn get_pta(mc: u32) -> u32 {
+    3 * mc + 8
+}
+
+pub fn get_ptb(mc: u32) -> u32 {
+    3 * mc + 9
+}
+
+pub fn get_ptc(mc: u32) -> u32 {
+    3 * mc + 10
+}

@@ -29,7 +29,7 @@ mod bitstream;
 pub use bitstream::{XC2Bitstream, XC2BitstreamBits};
 
 mod fb;
-pub use fb::{XC2BistreamFB};
+pub use fb::{XC2BistreamFB, get_ctc, get_ctr, get_cts, get_cte, get_pta, get_ptb, get_ptc};
 
 mod mc;
 pub use mc::{XC2MCFF, XC2MCSmallIOB, XC2MCFFClkSrc, XC2MCFFResetSrc, XC2MCFFSetSrc, XC2MCFFMode, XC2MCFeedbackMode,
