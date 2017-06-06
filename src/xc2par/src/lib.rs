@@ -33,7 +33,7 @@ mod engine;
 pub use engine::{XC2PAREngine};
 
 mod netlist;
-pub use netlist::{NetlistGraphNode, NetlistGraph};
+pub use netlist::{NetlistGraphNode, NetlistGraphNodeVariant, NetlistGraph};
 
 mod objpool;
 

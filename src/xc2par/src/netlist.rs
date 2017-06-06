@@ -50,7 +50,7 @@ pub enum NetlistGraphNodeVariant {
         output: ObjPoolIndex<NetlistGraphNet>,
     },
     Xor {
-        orterm_input: Option<ObjPoolIndex<NetlistGraphNet>>,
+        orterm_input: ObjPoolIndex<NetlistGraphNet>,
         andterm_input: Option<ObjPoolIndex<NetlistGraphNet>>,
         invert_out: bool,
         output: ObjPoolIndex<NetlistGraphNet>,
@@ -91,6 +91,7 @@ pub enum NetlistGraphNodeVariant {
 pub struct NetlistGraphNode {
     pub variant: NetlistGraphNodeVariant,
     pub name: String,
+    pub par_idx: Option<u32>,
 }
 
 #[derive(Debug)]
@@ -243,7 +244,8 @@ impl NetlistGraph {
                         input: None,
                         oe: None,
                         output: Some(connected_net_idx),
-                    }
+                    },
+                    par_idx: None,
                 });
 
                 cell_map.insert(port_name.to_owned(), node_idx);
@@ -260,7 +262,8 @@ impl NetlistGraph {
                         input: Some(connected_net_idx),
                         oe: None,
                         output: None,
-                    }
+                    },
+                    par_idx: None,
                 });
 
                 cell_map.insert(port_name.to_owned(), node_idx);
@@ -379,7 +382,8 @@ impl NetlistGraph {
                         variant: NetlistGraphNodeVariant::AndTerm {
                             inputs: inputs,
                             output: and_to_or_nets[and_i as usize],
-                        }
+                        },
+                        par_idx: None,
                     });
                     // FIXME: Copypasta
                     cell_map.insert(format!("{}__and_{}", cell_name, and_i), node_idx_and);
@@ -391,7 +395,8 @@ impl NetlistGraph {
                     variant: NetlistGraphNodeVariant::OrTerm {
                         inputs: and_to_or_nets,
                         output: or_to_xor_net,
-                    }
+                    },
+                    par_idx: None,
                 });
                 // FIXME: Copypasta
                 cell_map.insert(format!("{}__or", cell_name), node_idx_or);
@@ -420,10 +425,11 @@ impl NetlistGraph {
                     name: format!("{}__xor", cell_name),
                     variant: NetlistGraphNodeVariant::Xor {
                         andterm_input: None,
-                        orterm_input: Some(or_to_xor_net),
+                        orterm_input: or_to_xor_net,
                         invert_out: false,
                         output: output_y_net_idx,
-                    }
+                    },
+                    par_idx: None,
                 });
                 // FIXME: Copypasta
                 cell_map.insert(format!("{}__xor", cell_name), node_idx_xor);
@@ -457,9 +463,7 @@ impl NetlistGraph {
                     output_net.source = Some((node_idx, "OUT"));
                 },
                 NetlistGraphNodeVariant::Xor{orterm_input, andterm_input, output, ..} => {
-                    if orterm_input.is_some() {
-                        nets.get_mut(orterm_input.unwrap()).sinks.push((node_idx, "IN_ORTERM"));
-                    }
+                    nets.get_mut(orterm_input).sinks.push((node_idx, "IN_ORTERM"));
                     if andterm_input.is_some() {
                         nets.get_mut(andterm_input.unwrap()).sinks.push((node_idx, "IN_PTC"));
                     }
@@ -542,7 +546,7 @@ impl NetlistGraph {
         })
     }
 
-    pub fn insert_into_par_graph(&self,
+    pub fn insert_into_par_graph(&mut self,
         par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ObjPoolIndex<NetlistGraphNode>>,
         lmap: &HashMap<u32, &'static str>) {
 
@@ -581,6 +585,12 @@ impl NetlistGraph {
             let node_idx_par = par_graphs.borrow_mut_n().add_new_node(lbl, node_idx_ours);
 
             node_par_idx_map.insert(node_idx_ours, node_idx_par);
+        }
+
+        for (&node_idx_ours, &node_idx_par) in &node_par_idx_map {
+            // Stash the PAR index
+            let node_mut = self.nodes.get_mut(node_idx_ours);
+            node_mut.par_idx = Some(node_idx_par);
         }
 
         // Add all the edges
