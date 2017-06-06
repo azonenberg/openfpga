@@ -61,4 +61,13 @@ fn main() {
     let ngraph_rs = NetlistGraph::from_yosys_netlist(&yosys_netlist).unwrap();
     println!("{:?}", ngraph_rs);
     ngraph_rs.insert_into_par_graph(&mut par_graphs, &lmap);
+
+    // Do the PAR!
+    {
+        let engine_impl = XC2PAREngine::new(lmap);
+        let mut engine_obj = PAREngine::new(engine_impl, &mut par_graphs);
+        if !engine_obj.place_and_route(0) {
+            panic!("PAR failed!");
+        }
+    }
 }

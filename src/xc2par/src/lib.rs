@@ -29,6 +29,9 @@ extern crate serde_derive;
 mod device;
 pub use device::{DeviceGraphNode, DeviceGraph};
 
+mod engine;
+pub use engine::{XC2PAREngine};
+
 mod netlist;
 pub use netlist::{NetlistGraphNode, NetlistGraph};
 
