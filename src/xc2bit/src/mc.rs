@@ -52,7 +52,7 @@ pub enum XC2MCFFSetSrc {
     CTS,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum XC2MCFFMode {
     DFF,
     LATCH,
@@ -127,7 +127,7 @@ impl Default for XC2MCFF {
 impl XC2MCFF {
     pub fn dump_human_readable(&self, fb: u32, ff: u32, writer: &mut Write) {
         write!(writer, "\n").unwrap();
-        write!(writer, "FF configuration for FB{}_{}\n", fb, ff + 1).unwrap();
+        write!(writer, "FF configuration for FB{}_{}\n", fb + 1, ff + 1).unwrap();
         write!(writer, "FF mode: {}\n", match self.ff_mode {
             XC2MCFFMode::DFF => "D flip-flop",
             XC2MCFFMode::LATCH => "transparent latch",
@@ -200,7 +200,7 @@ impl XC2MCSmallIOB {
     pub fn dump_human_readable(&self, my_idx: u32, writer: &mut Write) {
         write!(writer, "\n").unwrap();
         let (fb, ff) = iob_num_to_fb_ff_num_32(my_idx).unwrap();
-        write!(writer, "I/O configuration for FB{}_{}\n", fb, ff + 1).unwrap();
+        write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, ff + 1).unwrap();
         write!(writer, "output mode: {}\n", match self.obuf_mode {
             XC2MCOBufMode::Disabled => "disabled",
             XC2MCOBufMode::PushPull => "push-pull",
