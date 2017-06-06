@@ -27,7 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::io::Write;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCFFClkSrc {
     GCK0,
     GCK1,
@@ -36,7 +36,7 @@ pub enum XC2MCFFClkSrc {
     CTC,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCFFResetSrc {
     Disabled,
     PTA,
@@ -44,7 +44,7 @@ pub enum XC2MCFFResetSrc {
     CTR,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCFFSetSrc {
     Disabled,
     PTA,
@@ -52,7 +52,7 @@ pub enum XC2MCFFSetSrc {
     CTS,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCFFMode {
     DFF,
     LATCH,
@@ -60,21 +60,21 @@ pub enum XC2MCFFMode {
     DFFCE,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCFeedbackMode {
     Disabled,
     COMB,
     REG,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2IOBZIAMode {
     Disabled,
     PAD,
     REG,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCXorMode {
     ZERO,
     ONE,
@@ -82,7 +82,7 @@ pub enum XC2MCXorMode {
     PTCB,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCOBufMode {
     Disabled,
     PushPull,
