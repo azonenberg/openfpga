@@ -24,6 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::marker::PhantomData;
+use std::slice;
 
 #[derive(Hash, Debug)]
 pub struct ObjPoolIndex<T> {
@@ -72,6 +73,13 @@ impl<T> ObjPool<T> {
     pub fn get_mut(&mut self, i: ObjPoolIndex<T>) -> &mut T {
         &mut self.storage[i.i]
     }
+
+    pub fn iter(&self) -> ObjPoolIterator<T> {
+        ObjPoolIterator {
+            pool: self,
+            current_idx: 0,
+        }
+    }
 }
 
 impl<T: Default> ObjPool<T> {
@@ -82,6 +90,25 @@ impl<T: Default> ObjPool<T> {
         self.storage.push(o);
 
         ObjPoolIndex::<T> {i: i, type_marker: PhantomData}
+    }
+}
+
+pub struct ObjPoolIterator<'a, T: 'a> {
+    pool: &'a ObjPool<T>,
+    current_idx: usize,
+}
+
+impl<'a, T: 'a> Iterator for ObjPoolIterator<'a, T> {
+    type Item = ObjPoolIndex<T>;
+
+    fn next(&mut self) -> Option<ObjPoolIndex<T>> {
+        if self.current_idx == self.pool.storage.len() {
+            None
+        } else {
+            let ret = ObjPoolIndex::<T> {i: self.current_idx, type_marker: PhantomData};
+            self.current_idx += 1;
+            Some(ret)
+        }
     }
 }
 
