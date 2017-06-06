@@ -29,7 +29,10 @@ extern crate serde_derive;
 mod device;
 pub use device::{DeviceGraphNode, DeviceGraph};
 
+mod netlist;
+pub use netlist::{NetlistGraphNode, NetlistGraph};
+
 mod objpool;
 
 mod yosysnet;
-pub use yosysnet::{read_yosys_netlist};
+pub use yosysnet::{YosysNetlist, read_yosys_netlist};

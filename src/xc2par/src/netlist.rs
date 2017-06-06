@@ -23,41 +23,45 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-use std::fs::File;
-use std::io::Read;
 
-extern crate xbpar_rs;
-use xbpar_rs::*;
+use std::collections::HashMap;
 
-extern crate xc2par;
-use xc2par::*;
+use *;
+use objpool::*;
 
-fn main() {
-    let args = ::std::env::args().collect::<Vec<_>>();
+#[derive(Debug)]
+pub enum NetlistGraphNode {
+    AndTerm {
+    },
+    OrTerm {
+    },
+    Xor {
+    },
+    Reg {
+    },
+    BufgClk {
+    },
+    BufgGTS {
+    },
+    BufgGSR,
+    IOBuf {
+    },
+    InBuf,
+}
 
-    if args.len() != 2 {
-        println!("Usage: {} file.json", args[0]);
-        ::std::process::exit(1);
+#[derive(Debug)]
+pub struct NetlistGraphNet {
+
+}
+
+#[derive(Debug)]
+pub struct NetlistGraph {
+    nodes: ObjPool<NetlistGraphNode>,
+    nets: ObjPool<NetlistGraphNet>,
+}
+
+impl NetlistGraph {
+    pub fn from_yosys_netlist(yosys_net: &YosysNetlist) -> NetlistGraph {
+        unreachable!();
     }
-
-    // Read the entire input file
-    let mut f = File::open(&args[1]).expect("failed to open file");
-    let mut data = Vec::new();
-    f.read_to_end(&mut data).expect("failed to read data");
-
-    // de-serialize the yosys netlist
-    let yosys_netlist = read_yosys_netlist(&data).unwrap();
-    println!("{:?}", yosys_netlist);
-
-    // The graphs for the PAR engine
-    let mut par_graphs = PARGraphPair::<_, ()>::new_pair();
-
-    // Device graph
-    let (dgraph_rs, lmap) = DeviceGraph::new("xc2c32a", &mut par_graphs);
-    println!("{:?}", lmap);
-    println!("{:?}", dgraph_rs);
-
-    // Netlist graph (native part)
-    let ngraph_rs = NetlistGraph::from_yosys_netlist(&yosys_netlist);
-    println!("{:?}", ngraph_rs);
 }

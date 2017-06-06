@@ -32,7 +32,6 @@ use self::xc2bit::*;
 use std::ascii::AsciiExt;
 use std::collections::HashMap;
 
-use *;
 use objpool::*;
 
 #[derive(Debug)]
