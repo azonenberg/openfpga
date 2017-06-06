@@ -26,7 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Public interface
 
 mod bitstream;
-pub use bitstream::{XC2Bitstream, XC2BitstreamBits};
+pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets};
 
 mod fb;
 pub use fb::{XC2BistreamFB, get_ctc, get_ctr, get_cts, get_cte, get_pta, get_ptb, get_ptc};
