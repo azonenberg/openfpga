@@ -8,3 +8,6 @@
 /debian/gp4par-dbg/
 /debian/gp4par-doc/
 /obj-*/
+
+# Because these are library crates, do not check in their Cargo.lock files
+/src/xc2bit/Cargo.lock

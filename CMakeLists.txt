@@ -9,6 +9,7 @@ include(GNUInstallDirs)
 # Project configuration
 set(YOSYS_COMMAND    "yosys"    CACHE STRING "Command used to run yosys")
 set(IVERILOG_COMMAND "iverilog" CACHE STRING "Command used to run Icarus Verilog")
+set(CARGO_COMMAND    "cargo"    CACHE STRING "Command used to run cargo")
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
@@ -87,6 +88,23 @@ endif()
 
 # FORCE is required for the "asked for but missing tool" case
 set(BUILD_TESTS ${BUILD_TESTS} CACHE BOOL "Build and run tests" FORCE)
+
+find_program(CARGO ${CARGO_COMMAND})
+if(DEFINED BUILD_RUST AND NOT BUILD_RUST)
+  message(STATUS "BUILD_RUST turned off, Rust code will not be built nor run")
+elseif(DEFINED BUILD_RUST AND BUILD_RUST AND NOT CARGO)
+  message(WARNING "BUILD_RUST turned on but no cargo found, Rust code will not be built nor run")
+  set(BUILD_RUST OFF)
+elseif(NOT DEFINED BUILD_RUST AND NOT CARGO)
+  message(WARNING "cargo not found, Rust code will not be built nor run")
+  set(BUILD_RUST OFF)
+else()
+  message(STATUS "Rust enabled")
+  set(BUILD_RUST ON)
+endif()
+
+# FORCE is required for the "asked for but missing tool" case
+set(BUILD_RUST ${BUILD_RUST} CACHE BOOL "Build and run Rust code" FORCE)
 
 # Subdirectories
 add_subdirectory(src)
