@@ -25,45 +25,44 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::collections::HashMap;
 
-
 extern crate serde_json;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YosysNetlist {
-    creator: String,
-    modules: HashMap<String, YosysNetlistModule>,
+    pub creator: String,
+    pub modules: HashMap<String, YosysNetlistModule>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YosysNetlistModule {
-    attributes: HashMap<String, serde_json::Value>,
-    ports: HashMap<String, YosysNetlistPort>,
-    cells: HashMap<String, YosysNetlistCell>,
-    netnames: HashMap<String, YosysNetlistNetname>,
+    pub attributes: HashMap<String, serde_json::Value>,
+    pub ports: HashMap<String, YosysNetlistPort>,
+    pub cells: HashMap<String, YosysNetlistCell>,
+    pub netnames: HashMap<String, YosysNetlistNetname>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YosysNetlistPort {
-    direction: String,
-    bits: Vec<usize>,
+    pub direction: String,
+    pub bits: Vec<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YosysNetlistCell {
-    hide_name: usize,
+    pub hide_name: usize,
     #[serde(rename="type")]
-    cell_type: String,
-    parameters: HashMap<String, serde_json::Value>,
-    attributes: HashMap<String, serde_json::Value>,
-    port_directions: HashMap<String, String>,
-    connections: HashMap<String, Vec<serde_json::Value>>,
+    pub cell_type: String,
+    pub parameters: HashMap<String, serde_json::Value>,
+    pub attributes: HashMap<String, serde_json::Value>,
+    pub port_directions: HashMap<String, String>,
+    pub connections: HashMap<String, Vec<serde_json::Value>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YosysNetlistNetname {
-    hide_name: usize,
-    bits: Vec<usize>,
-    attributes: HashMap<String, serde_json::Value>,
+    pub hide_name: usize,
+    pub bits: Vec<usize>,
+    pub attributes: HashMap<String, serde_json::Value>,
 }
 
 pub fn read_yosys_netlist(input: &[u8]) -> Result<YosysNetlist, serde_json::Error> {
