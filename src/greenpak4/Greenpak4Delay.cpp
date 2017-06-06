@@ -187,3 +187,206 @@ bool Greenpak4Delay::Save(bool* bitstream)
 
 	return true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Timing analysis
+
+void Greenpak4Delay::PrintTimingData() const
+{
+	LogNotice("%s\n", GetDescription().c_str());
+
+	//Combinatorial delays
+	LogIndenter li;
+	for(auto& it : m_unfilteredDelays)
+	{
+		auto corner = it.first.second;
+		LogNotice("%s\n", corner.toString().c_str());
+
+		LogIndenter li2;
+		PrintExtraTimingData(corner);
+	}
+
+	//TODO: Setup/hold margins
+}
+
+void Greenpak4Delay::PrintExtraTimingData(PTVCorner corner) const
+{
+	for(auto it : m_unfilteredDelays)
+	{
+		//Skip results for other process corners
+		if(it.first.second != corner)
+			continue;
+
+		char ntap[] = "0";
+		ntap[0] += it.first.first;
+		string ioname = string("OUT (T") + ntap + "/n)";
+
+		LogNotice("%10s to %10s: %6.3f ns rising, %6.3f ns falling\n",
+			"IN",
+			ioname.c_str(),
+			it.second.m_rising,
+			it.second.m_falling);
+	}
+
+	for(auto it : m_filteredDelays)
+	{
+		//Skip results for other process corners
+		if(it.first.second != corner)
+			continue;
+
+		char ntap[] = "0";
+		ntap[0] += it.first.first;
+		string ioname = string("OUT (T") + ntap + "/f)";
+
+		LogNotice("%10s to %10s: %6.3f ns rising, %6.3f ns falling\n",
+			"IN",
+			ioname.c_str(),
+			it.second.m_rising,
+			it.second.m_falling);
+	}
+}
+
+bool Greenpak4Delay::GetCombinatorialDelay(
+		string srcport,
+		string dstport,
+		PTVCorner corner,
+		CombinatorialDelay& delay) const
+{
+	if( (srcport != "IN") || (dstport != "OUT") )
+		return false;
+
+	if(m_glitchFilter)
+	{
+		auto it = m_filteredDelays.find(TimingCondition(m_delayTap, corner));
+		if(it == m_filteredDelays.end())
+			return false;
+		delay = it->second;
+		return true;
+	}
+
+	else
+	{
+		auto it = m_unfilteredDelays.find(TimingCondition(m_delayTap, corner));
+		if(it == m_unfilteredDelays.end())
+			return false;
+		delay = it->second;
+		return true;
+	}
+
+	//Don't call base class, we handle everything here
+}
+
+void Greenpak4Delay::SaveTimingData(FILE* fp, bool last)
+{
+	if(m_unfilteredDelays.empty())
+		return;
+
+	fprintf(fp, "    \"%s\":\n    [\n", GetDescription().c_str());
+
+	auto end = m_unfilteredDelays.end();
+	end--;
+	for(auto& it : m_unfilteredDelays)
+	{
+		auto corner = it.first.second;
+
+		//Loop over each process corner and export the data
+
+		fprintf(fp, "        {\n");
+		fprintf(fp, "            \"process\" : \"%s\",\n", corner.GetSpeedAsString().c_str());
+		fprintf(fp, "            \"temp\" : \"%d\",\n", corner.GetTemp());
+		fprintf(fp, "            \"voltage_mv\" : \"%d\",\n", corner.GetVoltage());
+
+		fprintf(fp, "            \"delays\" :\n            [\n");
+		SaveTimingData(fp, corner);
+		fprintf(fp, "            ]\n");
+
+		//key is last element, we're done
+		if(it.first == end->first)
+			fprintf(fp, "        }\n");
+		else
+			fprintf(fp, "        },\n");
+	}
+
+	if(last)
+		fprintf(fp, "    ]\n");
+	else
+		fprintf(fp, "    ],\n");
+}
+
+void Greenpak4Delay::SaveTimingData(FILE* fp, PTVCorner corner)
+{
+	for(auto it : m_filteredDelays)
+	{
+		auto cond = it.first;
+		auto delay = it.second;
+		if(cond.second != corner)
+			continue;
+
+		fprintf(fp, "                {\n");
+		fprintf(fp, "                    \"type\" : \"filtered\",\n");
+		fprintf(fp, "                    \"tap\" : \"%d\",\n", cond.first);
+		fprintf(fp, "                    \"rising\" : \"%f\",\n", delay.m_rising);
+		fprintf(fp, "                    \"falling\" : \"%f\"\n", delay.m_falling);
+		fprintf(fp, "                },\n");
+	}
+
+	for(auto it : m_unfilteredDelays)
+	{
+		auto cond = it.first;
+		auto delay = it.second;
+		if(cond.second != corner)
+			continue;
+
+		fprintf(fp, "                {\n");
+		fprintf(fp, "                    \"type\" : \"unfiltered\",\n");
+		fprintf(fp, "                    \"tap\" : \"%d\",\n", cond.first);
+		fprintf(fp, "                    \"rising\" : \"%f\",\n", delay.m_rising);
+		fprintf(fp, "                    \"falling\" : \"%f\"\n", delay.m_falling);
+		fprintf(fp, "                },\n");
+	}
+
+	//don't call base class, nothing for it to do
+}
+
+bool Greenpak4Delay::LoadExtraTimingData(PTVCorner corner, string delaytype, json_object* object)
+{
+	//always need rising/falling data no matter what it is
+	json_object* rising;
+	if(!json_object_object_get_ex(object, "rising", &rising))
+	{
+		LogError("No rising info for this corner\n");
+		return false;
+	}
+	float nrising = json_object_get_double(rising);
+
+	json_object* falling;
+	if(!json_object_object_get_ex(object, "falling", &falling))
+	{
+		LogError("No falling info for this corner\n");
+		return false;
+	}
+	float nfalling = json_object_get_double(falling);
+	auto delay = CombinatorialDelay(nrising, nfalling);
+
+	//always have a tap delay
+	json_object* tap;
+	if(!json_object_object_get_ex(object, "tap", &tap))
+	{
+		LogError("No tap info for this corner\n");
+		return false;
+	}
+	int ntap = json_object_get_int(tap);
+
+	if(delaytype == "filtered")
+		SetFilteredDelay(ntap, corner, delay);
+	else if(delaytype == "unfiltered")
+		SetUnfilteredDelay(ntap, corner, delay);
+	else
+	{
+		LogError("Don't know how to parse \"%s\"\n", delaytype.c_str());
+		return false;
+	}
+
+	//no need to call base class, it's an empty stub
+	return true;
+}

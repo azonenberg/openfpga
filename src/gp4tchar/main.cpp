@@ -139,9 +139,9 @@ int main(int argc, char* argv[])
 		return 1;
 	if(!MeasureInverterDelays(sock, hdev))
 		return 1;
-	*/
 	if(!MeasureDelayLineDelays(sock, hdev))
 		return 1;
+	*/
 
 	//Save to disk
 	LogNotice("Saving timing data to file %s\n", tfname.c_str());

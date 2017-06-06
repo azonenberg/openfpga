@@ -157,8 +157,8 @@ public:
 	virtual void PrintTimingData() const;
 	virtual void PrintExtraTimingData(PTVCorner corner) const;
 
-	void SaveTimingData(FILE* fp, bool last);
-	bool LoadTimingData(json_object* object);
+	virtual void SaveTimingData(FILE* fp, bool last);
+	virtual bool LoadTimingData(json_object* object);
 
 protected:
 

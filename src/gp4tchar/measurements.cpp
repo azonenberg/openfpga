@@ -73,6 +73,15 @@ bool MeasureInverterDelay(
 	PTVCorner corner,
 	map<PTVCorner, CombinatorialDelay>& delays);
 
+bool MeasureDelayLineDelay(
+	Socket& sock,
+	hdevice hdev,
+	int ndel,
+	int ntap,
+	bool glitchFilter,
+	PTVCorner corner,
+	map<PTVCorner, CombinatorialDelay>& delays);
+
 bool ProgramAndMeasureDelay(
 	Socket& sock,
 	hdevice hdev,
@@ -925,6 +934,101 @@ bool MeasureInverterDelay(
 
 	//Get the delays
 	if(!ProgramAndMeasureDelayAcrossVoltageCorners(sock, hdev, bitstream, src, dst, corner, true, delays, true))
+		return false;
+
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Characterize delay lines
+
+bool MeasureDelayLineDelays(Socket& sock, hdevice hdev)
+{
+	LogNotice("Measuring delay line delays...\n");
+	LogIndenter li;
+
+	//Test conditions (TODO: pass this in from somewhere?)
+	PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, 3300);
+
+	for(unsigned int ndel = 0; ndel < g_calDevice.GetDelayCount(); ndel++)
+	{
+		auto line = g_calDevice.GetDelay(ndel);
+
+		for(unsigned int ntap=1; ntap<=4; ntap ++)
+		{
+			//First round: no glitch filter
+			map<PTVCorner, CombinatorialDelay> delays;
+			if(!MeasureDelayLineDelay(sock, hdev, ndel, ntap, false, corner, delays))
+				return false;
+			for(auto it : delays)
+				line->SetUnfilteredDelay(ntap, it.first, it.second);
+
+			//Do it again with the glitch filter on
+			delays.clear();
+			if(!MeasureDelayLineDelay(sock, hdev, ndel, ntap, true, corner, delays))
+				return false;
+			for(auto it : delays)
+				line->SetFilteredDelay(ntap, it.first, it.second);
+		}
+	}
+
+	return true;
+}
+
+bool MeasureDelayLineDelay(
+	Socket& sock,
+	hdevice hdev,
+	int ndel,
+	int ntap,
+	bool glitchFilter,
+	PTVCorner corner,
+	map<PTVCorner, CombinatorialDelay>& delays)
+{
+	//Create the device object
+	Greenpak4Device device(part, unused_pull, unused_drive);
+	device.SetIOPrecharge(false);
+	device.SetDisableChargePump(false);
+	device.SetLDOBypass(false);
+	device.SetNVMRetryCount(1);
+
+	//Look up the DUT
+	auto delay = device.GetDelay(ndel);
+
+	//See which half of the device it's in. Use pins 3/4 or 13/14 as appropriate
+	int src = 3;
+	int dst = 4;
+	if(delay->GetMatrix() == 1)
+	{
+		src = 13;
+		dst = 14;
+	}
+
+	//Configure the input pin
+	auto vss = device.GetGround();
+	auto srciob = device.GetIOB(src);
+	srciob->SetInput("OE", vss);
+	auto din = srciob->GetOutput("OUT");
+
+	//Configure the delay line
+	delay->SetInput("IN", din);
+	delay->SetTap(ntap);
+	delay->SetGlitchFilter(glitchFilter);
+
+	//Configure the output pin
+	auto vdd = device.GetPower();
+	auto dstiob = device.GetIOB(dst);
+	dstiob->SetInput("IN", delay->GetOutput("OUT"));
+	dstiob->SetInput("OE", vdd);
+	dstiob->SetDriveType(Greenpak4IOB::DRIVE_PUSHPULL);
+	dstiob->SetDriveStrength(Greenpak4IOB::DRIVE_2X);
+
+	//Generate a bitstream
+	vector<uint8_t> bitstream;
+	device.WriteToBuffer(bitstream, 0, false);
+	//device.WriteToFile("/tmp/test.txt", 0, false);			//for debug in case of failure
+
+	//Get the delays
+	if(!ProgramAndMeasureDelayAcrossVoltageCorners(sock, hdev, bitstream, src, dst, corner, true, delays))
 		return false;
 
 	return true;

@@ -49,6 +49,34 @@ public:
 
 	virtual bool CommitChanges();
 
+	void SetTap(int tap)
+	{ m_delayTap = tap; }
+
+	void SetGlitchFilter(bool enable)
+	{ m_glitchFilter = enable; }
+
+	typedef std::pair<int, PTVCorner> TimingCondition;
+
+	void SetUnfilteredDelay(int ntap, PTVCorner c, CombinatorialDelay d)
+	{ m_unfilteredDelays[TimingCondition(ntap, c)] = d; }
+
+	void SetFilteredDelay(int ntap, PTVCorner c, CombinatorialDelay d)
+	{ m_filteredDelays[TimingCondition(ntap, c)] = d; }
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Timing stuff
+
+	virtual void PrintTimingData() const;
+	virtual void PrintExtraTimingData(PTVCorner corner) const;
+
+	virtual void SaveTimingData(FILE* fp, bool last);
+
+	virtual bool GetCombinatorialDelay(
+		std::string srcport,
+		std::string dstport,
+		PTVCorner corner,
+		CombinatorialDelay& delay) const;
+
 protected:
 	Greenpak4EntityOutput m_input;
 
@@ -63,6 +91,13 @@ protected:
 	} m_mode;
 
 	bool m_glitchFilter;
+
+	//Timing data
+	std::map<TimingCondition, CombinatorialDelay > m_unfilteredDelays;	//no glitch filter
+	std::map<TimingCondition, CombinatorialDelay > m_filteredDelays;	//with glitch filter
+
+	virtual void SaveTimingData(FILE* fp, PTVCorner corner);
+	virtual bool LoadExtraTimingData(PTVCorner corner, std::string delaytype, json_object* object);
 };
 
 #endif	//Greenpak4Delay_h
