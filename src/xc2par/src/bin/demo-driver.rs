@@ -70,4 +70,9 @@ fn main() {
             panic!("PAR failed!");
         }
     }
+
+    // Get a bitstream result
+    let bitstream = produce_bitstream(&par_graphs, &dgraph_rs, &ngraph_rs);
+    println!("********************************************************************************");
+    bitstream.write_jed(&mut ::std::io::stdout());
 }

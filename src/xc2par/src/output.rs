@@ -23,22 +23,45 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#[macro_use]
-extern crate serde_derive;
+extern crate xbpar_rs;
+use self::xbpar_rs::*;
 
-mod device;
-pub use device::{DeviceGraphNode, DeviceGraph};
+extern crate xc2bit;
+use self::xc2bit::*;
 
-mod engine;
-pub use engine::{XC2PAREngine};
+use *;
+use objpool::*;
 
-mod netlist;
-pub use netlist::{NetlistGraphNode, NetlistGraph};
+pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ObjPoolIndex<NetlistGraphNode>>,
+    dgraph_rs: &DeviceGraph, ngraph_rs: &NetlistGraph) -> XC2Bitstream {
 
-mod objpool;
+    // FIXME: Don't hardcode
+    let mut bitstream = XC2Bitstream::blank_bitstream("XC2C32A", "6", "VQ44").unwrap();
 
-mod output;
-pub use output::{produce_bitstream};
+    let graphs = par_graphs.borrow();
+    let dgraph = graphs.d;
+    let ngraph = graphs.n;
 
-mod yosysnet;
-pub use yosysnet::{YosysNetlist, read_yosys_netlist};
+    // Walk all device graph nodes
+    for i in 0..dgraph.get_num_nodes() {
+        let dgraph_node = dgraph.get_node_by_index(i);
+        if dgraph_node.get_mate().is_none() {
+            // Not being used by the netlist; skip this
+            continue;
+        }
+
+        let dgraph_node_rs = dgraph_rs.nodes.get(*dgraph_node.get_associated_data());
+        println!("{:?}", dgraph_node_rs);
+        let ngraph_node_rs = ngraph_rs.nodes.get(*dgraph_node.get_mate().unwrap().get_associated_data());
+        println!("{:?}", ngraph_node_rs);
+
+        match dgraph_node_rs {
+            &DeviceGraphNode::AndTerm{fb, i} => {
+
+            },
+            _ => unreachable!(),
+        }
+    }
+
+    bitstream
+}

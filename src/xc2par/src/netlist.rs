@@ -89,23 +89,23 @@ pub enum NetlistGraphNodeVariant {
 
 #[derive(Debug)]
 pub struct NetlistGraphNode {
-    variant: NetlistGraphNodeVariant,
-    name: String,
+    pub variant: NetlistGraphNodeVariant,
+    pub name: String,
 }
 
 #[derive(Debug)]
 pub struct NetlistGraphNet {
-    name: Option<String>,
-    source: Option<(ObjPoolIndex<NetlistGraphNode>, &'static str)>,
-    sinks: Vec<(ObjPoolIndex<NetlistGraphNode>, &'static str)>,
+    pub name: Option<String>,
+    pub source: Option<(ObjPoolIndex<NetlistGraphNode>, &'static str)>,
+    pub sinks: Vec<(ObjPoolIndex<NetlistGraphNode>, &'static str)>,
 }
 
 #[derive(Debug)]
 pub struct NetlistGraph {
-    nodes: ObjPool<NetlistGraphNode>,
-    nets: ObjPool<NetlistGraphNet>,
-    vdd_net: ObjPoolIndex<NetlistGraphNet>,
-    vss_net: ObjPoolIndex<NetlistGraphNet>,
+    pub nodes: ObjPool<NetlistGraphNode>,
+    pub nets: ObjPool<NetlistGraphNet>,
+    pub vdd_net: ObjPoolIndex<NetlistGraphNet>,
+    pub vss_net: ObjPoolIndex<NetlistGraphNet>,
 }
 
 impl NetlistGraph {

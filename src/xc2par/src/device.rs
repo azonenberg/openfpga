@@ -68,7 +68,7 @@ pub enum DeviceGraphNode {
 
 #[derive(Debug)]
 pub struct DeviceGraph {
-    nodes: ObjPool<DeviceGraphNode>,
+    pub nodes: ObjPool<DeviceGraphNode>,
 }
 
 fn alloc_label(par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ObjPoolIndex<NetlistGraphNode>>,
