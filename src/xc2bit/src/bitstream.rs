@@ -52,6 +52,10 @@ impl XC2Bitstream {
         write!(writer, "\x02").unwrap();
 
         match self.bits {
+            XC2BitstreamBits::XC2C32{..} => {
+                write!(writer, "QF12274*\n").unwrap();
+                write!(writer, "N DEVICE XC2C32-{}-{}*\n\n", self.speed_grade, self.package).unwrap();
+            },
             XC2BitstreamBits::XC2C32A{..} => {
                 write!(writer, "QF12278*\n").unwrap();
                 write!(writer, "N DEVICE XC2C32A-{}-{}*\n\n", self.speed_grade, self.package).unwrap();
@@ -67,6 +71,20 @@ impl XC2Bitstream {
         // TODO: Validate speed_grade and package
 
         match device {
+            "XC2C32" => {
+                Ok(XC2Bitstream {
+                    speed_grade: speed_grade.to_owned(),
+                    package: package.to_owned(),
+                    bits: XC2BitstreamBits::XC2C32 {
+                        fb: [XC2BistreamFB::default(); 2],
+                        iobs: [XC2MCSmallIOB::default(); 32],
+                        inpin: XC2ExtraIBuf::default(),
+                        global_nets: XC2GlobalNets::default(),
+                        ivoltage: false,
+                        ovoltage: false,
+                    }
+                })
+            },
             "XC2C32A" => {
                 Ok(XC2Bitstream {
                     speed_grade: speed_grade.to_owned(),
@@ -167,6 +185,15 @@ fn read_32_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
 }
 
 pub enum XC2BitstreamBits {
+    XC2C32 {
+        fb: [XC2BistreamFB; 2],
+        iobs: [XC2MCSmallIOB; 32],
+        inpin: XC2ExtraIBuf,
+        global_nets: XC2GlobalNets,
+        // false = low, true = high
+        ivoltage: bool,
+        ovoltage: bool,
+    },
     XC2C32A {
         fb: [XC2BistreamFB; 2],
         iobs: [XC2MCSmallIOB; 32],
@@ -183,7 +210,24 @@ pub enum XC2BitstreamBits {
 impl XC2BitstreamBits {
     pub fn dump_human_readable(&self, writer: &mut Write) {
         match self {
-            &XC2BitstreamBits::XC2C32A{
+            &XC2BitstreamBits::XC2C32 {
+                ref fb, ref iobs, ref inpin, ref global_nets, ref ivoltage, ref ovoltage} => {
+
+                write!(writer, "device type: XC2C32\n").unwrap();
+                write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"}).unwrap();
+                write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"}).unwrap();
+                global_nets.dump_human_readable(writer);
+
+                for i in 0..32 {
+                    iobs[i].dump_human_readable(i as u32, writer);
+                }
+
+                inpin.dump_human_readable(writer);
+
+                fb[0].dump_human_readable(0, writer);
+                fb[1].dump_human_readable(1, writer);
+            },
+            &XC2BitstreamBits::XC2C32A {
                 ref fb, ref iobs, ref inpin, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
                 ref ivoltage, ref ovoltage} => {
 
@@ -210,9 +254,12 @@ impl XC2BitstreamBits {
 
     pub fn write_jed(&self, writer: &mut Write) {
         match self {
-            &XC2BitstreamBits::XC2C32A{
-                ref fb, ref iobs, ref inpin, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
-                ref ivoltage, ref ovoltage} => {
+            &XC2BitstreamBits::XC2C32 {
+                ref fb, ref iobs, ref inpin, ref global_nets, ref ivoltage, ref ovoltage, ..
+            } | &XC2BitstreamBits::XC2C32A {
+                ref fb, ref iobs, ref inpin, ref global_nets, legacy_ivoltage: ref ivoltage,
+                legacy_ovoltage: ref ovoltage, ..
+            } => {
 
                 // Each FB
                 for fb_i in 0..2 {
@@ -375,7 +422,7 @@ impl XC2BitstreamBits {
                     write!(writer, "\n").unwrap();
                 }
 
-                // "other stuff"
+                // "other stuff" except bank voltages
                 write!(writer, "L012256 {}{}{}*\n",
                     if global_nets.gck_enable[0] {"1"} else {"0"},
                     if global_nets.gck_enable[1] {"1"} else {"0"},
@@ -397,23 +444,68 @@ impl XC2BitstreamBits {
 
                 write!(writer, "L012269 {}*\n", if global_nets.global_pu {"1"} else {"0"}).unwrap();
 
-                write!(writer, "L012270 {}*\n", if *legacy_ovoltage {"0"} else {"1"}).unwrap();
-                write!(writer, "L012271 {}*\n", if *legacy_ivoltage {"0"} else {"1"}).unwrap();
+                write!(writer, "L012270 {}*\n", if *ovoltage {"0"} else {"1"}).unwrap();
+                write!(writer, "L012271 {}*\n", if *ivoltage {"0"} else {"1"}).unwrap();
 
                 write!(writer, "L012272 {}{}*\n",
                     if inpin.schmitt_trigger {"1"} else {"0"},
                     if inpin.termination_enabled {"1"} else {"0"}).unwrap();
+            }
+        }
 
+        // A-variant bank voltages
+        match self {
+            &XC2BitstreamBits::XC2C32A {ref ivoltage, ref ovoltage, ..} => {
                 write!(writer, "L012274 {}*\n", if ivoltage[0] {"0"} else {"1"}).unwrap();
                 write!(writer, "L012275 {}*\n", if ovoltage[0] {"0"} else {"1"}).unwrap();
                 write!(writer, "L012276 {}*\n", if ivoltage[1] {"0"} else {"1"}).unwrap();
                 write!(writer, "L012277 {}*\n", if ovoltage[1] {"0"} else {"1"}).unwrap();
-            }
+            },
+            _ => {}
         }
     }
 }
 
 pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BistreamFB::default(); 2];
+    for i in 0..fb.len() {
+        let res = read_32_fb_logical(fuses, i);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        fb[i] = res.unwrap();
+    };
+
+    let mut iobs = [XC2MCSmallIOB::default(); 32];
+    for i in 0..iobs.len() {
+        let base_fuse = if i < 16 {
+            5696
+        } else {
+            11824
+        };
+        let res = read_32_iob_logical(fuses, base_fuse, i % 16);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        iobs[i] = res.unwrap();
+    }
+
+    let inpin = read_32_extra_ibuf_logical(fuses);
+
+    let global_nets = read_32_global_nets_logical(fuses);
+
+    Ok(XC2BitstreamBits::XC2C32 {
+        fb: fb,
+        iobs: iobs,
+        inpin: inpin,
+        global_nets: global_nets,
+        ovoltage: !fuses[12270],
+        ivoltage: !fuses[12271],
+    })
+}
+
+
+pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BistreamFB::default(); 2];
     for i in 0..fb.len() {
         let res = read_32_fb_logical(fuses, i);
