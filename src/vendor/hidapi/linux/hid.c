@@ -142,6 +142,34 @@ int HID_API_EXPORT hid_exit(void)
 	return 0;
 }
 
+// Result needs to be free()d
+static char *uevent_find_line(char *haystack, const char *needle) {
+	char *saveptr = NULL;
+	char *line;
+	char *key;
+	char *value;
+
+	line = strtok_r(haystack, "\n", &saveptr);
+	while (line != NULL) {
+		/* line: "KEY=value" */
+		key = line;
+		value = strchr(line, '=');
+		if (!value) {
+			goto next_line;
+		}
+		*value = '\0';
+		value++;
+
+		if (strcmp(key, needle) == 0) {
+			return strdup(value);
+		}
+
+next_line:
+		line = strtok_r(NULL, "\n", &saveptr);
+	}
+
+	return NULL;
+}
 
 struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, unsigned short product_id)
 {
@@ -176,7 +204,7 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 		unsigned short dev_vid;
 		unsigned short dev_pid;
 		int bus_type;
-		int result;
+		int result = 0;
 
 		/* Get the filename of the /sys entry for the device
 		   and create a udev_device object (dev) representing it */
@@ -196,41 +224,20 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 
 		{
 			char *tmp = strdup(udev_device_get_sysattr_value(hid_dev, "uevent"));
-			char *saveptr = NULL;
-			char *line;
-			char *key;
-			char *value;
-
-			int found_id = 0;
-
-			line = strtok_r(tmp, "\n", &saveptr);
-			while (line != NULL) {
-				/* line: "KEY=value" */
-				key = line;
-				value = strchr(line, '=');
-				if (!value) {
-					goto next_line;
-				}
-				*value = '\0';
-				value++;
-
-				if (strcmp(key, "HID_ID") == 0) {
-					/**
-					 *        type vendor   product
-					 * HID_ID=0003:000005AC:00008242
-					 **/
-					int ret = sscanf(value, "%x:%hx:%hx", &bus_type, &dev_vid, &dev_pid);
-					if (ret == 3) {
-						found_id = 1;
-					}
-				}
-
-		next_line:
-				line = strtok_r(NULL, "\n", &saveptr);
-			}
-
+			char *hid_id = uevent_find_line(tmp, "HID_ID");
 			free(tmp);
-			result = found_id;
+
+			if (hid_id) {
+				/**
+				 *        type vendor   product
+				 * HID_ID=0003:000005AC:00008242
+				 **/
+				int ret = sscanf(hid_id, "%x:%hx:%hx", &bus_type, &dev_vid, &dev_pid);
+				free(hid_id);
+				if (ret == 3) {
+					result = 1;
+				}
+			}
 		}
 
 		if (!result) {
