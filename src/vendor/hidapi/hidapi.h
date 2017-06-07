@@ -49,10 +49,6 @@ extern "C" {
 		struct hid_device_info {
 			/** Platform-specific device path */
 			char *path;
-			/** Device Vendor ID */
-			unsigned short vendor_id;
-			/** Device Product ID */
-			unsigned short product_id;
 
 			/** Pointer to the next device */
 			struct hid_device_info *next;

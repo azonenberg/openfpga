@@ -408,10 +408,6 @@ struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned shor
 			}
 			else
 				cur_dev->path = NULL;
-
-			/* VID/PID */
-			cur_dev->vendor_id = attrib.VendorID;
-			cur_dev->product_id = attrib.ProductID;
 		}
 
 cont_close:

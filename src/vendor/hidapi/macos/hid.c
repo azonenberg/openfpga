@@ -447,10 +447,6 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 				cur_dev->path = strdup(path);
 			else
 				cur_dev->path = strdup("");
-
-			/* VID/PID */
-			cur_dev->vendor_id = dev_vid;
-			cur_dev->product_id = dev_pid;
 		}
 	}
 

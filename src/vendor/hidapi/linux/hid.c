@@ -214,10 +214,6 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 				// FIXME: Why is this considered fallible?
 				cur_dev->path = NULL;
 			}
-
-			/* VID/PID */
-			cur_dev->vendor_id = dev_vid;
-			cur_dev->product_id = dev_pid;
 		}
 
 	next:
