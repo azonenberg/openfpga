@@ -104,7 +104,6 @@ struct input_report {
 
 struct hid_device_ {
 	IOHIDDeviceRef device_handle;
-	int blocking;
 	int uses_numbered_reports;
 	int disconnected;
 	CFStringRef run_loop_mode;
@@ -126,7 +125,7 @@ static hid_device *new_hid_device(void)
 {
 	hid_device *dev = calloc(1, sizeof(hid_device));
 	dev->device_handle = NULL;
-	dev->blocking = 1;
+	
 	dev->uses_numbered_reports = 0;
 	dev->disconnected = 0;
 	dev->run_loop_mode = NULL;
@@ -252,11 +251,6 @@ static int get_string_property(IOHIDDeviceRef device, CFStringRef prop, wchar_t 
 
 }
 
-static int get_serial_number(IOHIDDeviceRef device, wchar_t *buf, size_t len)
-{
-	return get_string_property(device, CFSTR(kIOHIDSerialNumberKey), buf, len);
-}
-
 static int get_manufacturer_string(IOHIDDeviceRef device, wchar_t *buf, size_t len)
 {
 	return get_string_property(device, CFSTR(kIOHIDManufacturerKey), buf, len);
@@ -265,17 +259,6 @@ static int get_manufacturer_string(IOHIDDeviceRef device, wchar_t *buf, size_t l
 static int get_product_string(IOHIDDeviceRef device, wchar_t *buf, size_t len)
 {
 	return get_string_property(device, CFSTR(kIOHIDProductKey), buf, len);
-}
-
-
-/* Implementation of wcsdup() for Mac. */
-static wchar_t *dup_wcs(const wchar_t *s)
-{
-	size_t len = wcslen(s);
-	wchar_t *ret = malloc((len+1)*sizeof(wchar_t));
-	wcscpy(ret, s);
-
-	return ret;
 }
 
 /* hidapi_IOHIDDeviceGetService()
@@ -408,8 +391,6 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 	for (i = 0; i < num_devices; i++) {
 		unsigned short dev_vid;
 		unsigned short dev_pid;
-		#define BUF_LEN 256
-		wchar_t buf[BUF_LEN];
 
 		IOHIDDeviceRef dev = device_array[i];
 
