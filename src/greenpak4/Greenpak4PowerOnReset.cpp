@@ -61,6 +61,12 @@ void Greenpak4PowerOnReset::SetInput(string /*port*/, Greenpak4EntityOutput /*sr
 	//no inputs
 }
 
+Greenpak4EntityOutput Greenpak4PowerOnReset::GetInput(string /*port*/) const
+{
+	//no inputs
+	return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4PowerOnReset::GetOutputPorts() const
 {
 	vector<string> r;

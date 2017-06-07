@@ -128,6 +128,16 @@ void Greenpak4PatternGenerator::SetInput(string port, Greenpak4EntityOutput src)
 		m_reset = src;
 }
 
+Greenpak4EntityOutput Greenpak4PatternGenerator::GetInput(string port) const
+{
+	if(port == "CLK")
+		return m_clk;
+	else if(port == "nRST")
+		return m_reset;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

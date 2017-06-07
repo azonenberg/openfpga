@@ -68,6 +68,14 @@ void Greenpak4VoltageReference::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4VoltageReference::GetInput(string port) const
+{
+	if(port == "VIN")
+		return m_vin;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4VoltageReference::GetOutputPorts() const
 {
 	vector<string> r;

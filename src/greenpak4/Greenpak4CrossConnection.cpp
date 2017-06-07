@@ -72,6 +72,14 @@ void Greenpak4CrossConnection::SetInput(std::string /*port*/, Greenpak4EntityOut
 	m_input = input;
 }
 
+Greenpak4EntityOutput Greenpak4CrossConnection::GetInput(string port) const
+{
+	if(port == "I")
+		return m_input;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 bool Greenpak4CrossConnection::CommitChanges()
 {
 	//nothing to do here, we have no configuration to modify

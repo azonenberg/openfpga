@@ -111,6 +111,7 @@ public:
 	virtual std::vector<std::string> GetOutputPorts() const;
 
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src);
+	virtual Greenpak4EntityOutput GetInput(std::string port) const;
 	virtual unsigned int GetOutputNetNumber(std::string port);
 
 	virtual bool CommitChanges();

@@ -67,6 +67,7 @@ bool DoPAR(Greenpak4Netlist* netlist, Greenpak4Device* device)
 	//Print reports
 	PrintUtilizationReport(ngraph, device, num_routes_used);
 	PrintPlacementReport(ngraph, device);
+	PrintTimingReport(netlist, device);
 
 	//Final cleanup
 	delete ngraph;

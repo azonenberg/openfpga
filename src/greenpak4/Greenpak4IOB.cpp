@@ -219,6 +219,16 @@ void Greenpak4IOB::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4IOB::GetInput(string port) const
+{
+	if(port == "IN")
+		return m_outputSignal;
+	else if(port == "OE")
+		return m_outputEnable;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 unsigned int Greenpak4IOB::GetOutputNetNumber(string port)
 {
 	if(port == "OUT")
@@ -310,8 +320,8 @@ bool Greenpak4IOB::GetCombinatorialDelay(
 		//Get the baseline IO to OUT delay from the base class
 		if(!Greenpak4BitstreamEntity::GetCombinatorialDelay(srcport, dstport, corner, delay))
 		{
-			LogWarning("Greenpak4IOB::GetCombinatorialDelay: no delay for process corner %s\n",
-				corner.toString().c_str());
+			//LogWarning("Greenpak4IOB::GetCombinatorialDelay: no delay for process corner %s\n",
+			//	corner.toString().c_str());
 			return false;
 		}
 
@@ -332,9 +342,9 @@ bool Greenpak4IOB::GetCombinatorialDelay(
 		auto it = m_outputDelays.find(DriveCondition(m_driveStrength, corner));
 		if(it == m_outputDelays.end())
 		{
-			LogWarning("Greenpak4IOB::GetCombinatorialDelay: no delay for drive condition (strength=%d, corner=%s)\n",
-				m_driveStrength,
-				corner.toString().c_str());
+			//LogWarning("Greenpak4IOB::GetCombinatorialDelay: no delay for drive condition (strength=%d, corner=%s)\n",
+			//	m_driveStrength,
+			//	corner.toString().c_str());
 			return false;
 		}
 

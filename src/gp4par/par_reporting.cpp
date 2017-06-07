@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -19,6 +19,19 @@
 #include "gp4par.h"
 
 using namespace std;
+
+typedef vector<const PARGraphEdge*> CombinatorialPath;
+
+void FindCombinatorialPaths(
+	const set<Greenpak4NetlistCell*>& sources,
+	const set<Greenpak4NetlistCell*>& sinks,
+	set<CombinatorialPath>& paths);
+
+void FindCombinatorialPaths(
+	const set<Greenpak4NetlistCell*>& sinks,
+	CombinatorialPath basepath,
+	const PARGraphEdge* tip,
+	set<CombinatorialPath>& paths);
 
 static void PrintRow(string kind, int used, int total)
 {
@@ -225,4 +238,266 @@ void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* /*device*/)
 	}
 
 	LogVerbose("+----------------------------------------------------+-----------------+\n");
+}
+
+/**
+	@brief Prints the post-PAR static timing analysis
+
+	TODO: Refactor this into Greenpak4PAREngine?
+ */
+void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
+{
+	LogNotice("\nTiming report:\n");
+	LogIndenter li;
+
+	//Find all nodes in the design that can begin a combinatorial path
+	//This is only input buffers for now, but eventually will include DFFs and other stateful blocks
+	set<Greenpak4NetlistCell*> sources;
+	auto module = netlist->GetTopModule();
+	for(auto it = module->cell_begin(); it != module->cell_end(); it++)
+	{
+		auto cell = it->second;
+
+		//TODO: check stateful internal blocks too
+		if(!cell->IsIbuf())
+			continue;
+		sources.emplace(cell);
+	}
+
+	//Find all nodes in the design that can end a combinatorial path
+	//This is only output buffers for now, but eventually will include DFFs and other stateful blocks
+	set<Greenpak4NetlistCell*> sinks;
+	for(auto it = module->cell_begin(); it != module->cell_end(); it++)
+	{
+		auto cell = it->second;
+
+		//TODO: check stateful internal blocks too
+		if(!cell->IsObuf())
+			continue;
+		sinks.emplace(cell);
+	}
+
+	//Find all combinatorial paths in the design.
+	set<CombinatorialPath> paths;
+	FindCombinatorialPaths(sources, sinks, paths);
+
+	//The corner we're testing at (TODO multi-corner)
+	PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, 3300);
+	LogVerbose("Running static timing for %s\n", corner.toString().c_str());
+
+	//DEBUG: print all paths
+	int i=0;
+	for(auto path : paths)
+	{
+		LogVerbose("Path %d\n", i++);
+		LogIndenter li;
+		LogVerbose(
+			"+--------------------------------------------------------------+------------+-----------"
+			"+------------+------------+------------+\n");
+		LogVerbose("| %60s | %10s | %10s| %10s | %10s | %10s |\n",
+			"Instance",
+			"Site",
+			"SrcPort",
+			"DstPort",
+			"Delay",
+			"Cumulative"
+			);
+		LogVerbose(
+			"+--------------------------------------------------------------+------------+-----------"
+			"+------------+------------+------------+\n");
+
+		float cdelay = 0;
+
+		//TODO: figure this out for DFFs etc
+		string previous_port = "IO";
+
+		for(auto edge : path)
+		{
+			auto src = static_cast<Greenpak4NetlistEntity*>(edge->m_sourcenode->GetData());
+			auto srccell = static_cast<Greenpak4BitstreamEntity*>(edge->m_sourcenode->GetMate()->GetData());
+			auto dst = static_cast<Greenpak4NetlistEntity*>(edge->m_destnode->GetData());
+			auto dstcell = static_cast<Greenpak4BitstreamEntity*>(edge->m_destnode->GetMate()->GetData());
+
+			//If the source is an input buffer, add a delay for that
+			auto sncell = dynamic_cast<Greenpak4NetlistCell*>(src);
+			if(sncell->IsIbuf())
+			{
+				//Look up the delay
+				CombinatorialDelay delay;
+				if(!srccell->GetCombinatorialDelay(previous_port, edge->m_sourceport, corner, delay))
+				{
+					//DEBUG: use data from other pins if we haven't characterized this one yet!!!
+					auto rscell = device->GetIOB(3);
+					if(!rscell->GetCombinatorialDelay(previous_port, edge->m_sourceport, corner, delay))
+					{
+						LogWarning("Couldn't get timing data even from fallback pin\n");
+						delay = CombinatorialDelay(0, 0);
+					}
+				}
+
+				float worst = delay.GetWorst();
+				cdelay += worst;
+
+				LogVerbose("| %60s | %10s | %10s| %10s | %10.3f | %10.3f |\n",
+					src->m_name.c_str(),
+					srccell->GetDescription().c_str(),
+					previous_port.c_str(),
+					edge->m_sourceport.c_str(),
+					worst,
+					cdelay
+					);
+
+				//Done, save the old source
+				previous_port = edge->m_destport;
+				continue;
+			}
+
+			//Cell delay
+			CombinatorialDelay delay;
+			if(!srccell->GetCombinatorialDelay(previous_port, edge->m_sourceport, corner, delay))
+			{
+				LogWarning("Couldn't get timing data\n");
+				delay = CombinatorialDelay(0, 0);
+			}
+			float worst = delay.GetWorst();
+			cdelay += worst;
+
+			LogVerbose("| %60s | %10s | %10s| %10s | %10.3f | %10.3f |\n",
+				src->m_name.c_str(),
+				srccell->GetDescription().c_str(),
+				previous_port.c_str(),
+				edge->m_sourceport.c_str(),
+				worst,
+				cdelay
+				);
+
+			//Done, save the old source
+			previous_port = edge->m_destport;
+
+			//See if we used a cross-connection on the next hop
+			auto dsrc = dstcell->GetInput(edge->m_destport);
+			auto xc = dynamic_cast<Greenpak4CrossConnection*>(dsrc.GetRealEntity());
+			if(xc)
+			{
+				if(!xc->GetCombinatorialDelay("I", "O", corner, delay))
+				{
+					LogWarning("Couldn't get timing data\n");
+					delay = CombinatorialDelay(0, 0);
+				}
+				float worst = delay.GetWorst();
+				cdelay += worst;
+
+				LogVerbose("| %60s | %10s | %10s| %10s | %10.3f | %10.3f |\n",
+					"__routing__",
+					xc->GetDescription().c_str(),
+					"I",
+					"O",
+					worst,
+					cdelay
+					);
+			}
+
+			//If the destination is an output buffer, add that path
+			auto dncell = dynamic_cast<Greenpak4NetlistCell*>(dst);
+			if(dncell->IsObuf())
+			{
+				//Look up the delay
+				CombinatorialDelay delay;
+
+				if(!dstcell->GetCombinatorialDelay(edge->m_destport, "IO", corner, delay))
+				{
+					//DEBUG: use data from other pins if we haven't characterized this one yet!!!
+					auto rscell = device->GetIOB(3);
+					if(!rscell->GetCombinatorialDelay(edge->m_destport, "IO", corner, delay))
+					{
+						LogWarning("Couldn't get timing data even from fallback pin\n");
+						delay = CombinatorialDelay(0, 0);
+					}
+				}
+
+				float worst = delay.GetWorst();
+				cdelay += worst;
+
+				LogVerbose("| %60s | %10s | %10s| %10s | %10.3f | %10.3f |\n",
+					dst->m_name.c_str(),
+					dstcell->GetDescription().c_str(),
+					edge->m_destport.c_str(),
+					"IO",
+					worst,
+					cdelay
+					);
+			}
+		}
+		LogVerbose(
+			"+--------------------------------------------------------------+------------+-----------"
+			"+------------+------------+------------+\n");
+	}
+}
+
+/**
+	@brief Go over all cells in the netlist and DFS until we find all paths from source to sink nodes
+
+	Source: input buffer or stateful element
+	Sink: output buffer or stateful element
+
+	We don't care about the timing of these paths yet, these are just all of the paths to consider
+ */
+void FindCombinatorialPaths(
+	const set<Greenpak4NetlistCell*>& sources,
+	const set<Greenpak4NetlistCell*>& sinks,
+	set<CombinatorialPath>& paths)
+{
+	//Find all edges leaving all source nodes
+	for(auto cell : sources)
+	{
+		auto srcnode = cell->m_parnode;
+		for(uint32_t i=0; i<srcnode->GetEdgeCount(); i++)
+		{
+			auto edge = srcnode->GetEdgeByIndex(i);
+			//LogDebug("Edge: %s - %s\n", edge->m_sourceport.c_str(), edge->m_destport.c_str());
+
+			//Find all paths that begin with this edge
+			CombinatorialPath path;
+			path.push_back(edge);
+			FindCombinatorialPaths(sinks, path, edge, paths);
+		}
+	}
+}
+
+/**
+	@brief Recursively search out from a given path
+ */
+void FindCombinatorialPaths(
+	const set<Greenpak4NetlistCell*>& sinks,
+	CombinatorialPath basepath,
+	const PARGraphEdge* tip,
+	set<CombinatorialPath>& paths)
+{
+	//Jump through some hoops to see where this edge ends
+	auto destnode = tip->m_destnode;
+	auto destent = static_cast<Greenpak4NetlistEntity*>(destnode->GetData());
+	auto destcell = dynamic_cast<Greenpak4NetlistCell*>(destent);
+	if(!destcell)
+	{
+		LogWarning("Dest node is not cell\n");
+		return;
+	}
+
+	//If it ends at a sink node, that's the end of this path
+	if(sinks.find(destcell) != sinks.end())
+	{
+		paths.emplace(basepath);
+		return;
+	}
+
+	//Nope, this node is not the end. Search all outbound edges from it
+	for(uint32_t i=0; i<destnode->GetEdgeCount(); i++)
+	{
+		auto edge = destnode->GetEdgeByIndex(i);
+
+		//Find all paths that begin with the new, longer path
+		CombinatorialPath npath = basepath;
+		npath.push_back(edge);
+		FindCombinatorialPaths(sinks, npath, edge, paths);
+	}
 }

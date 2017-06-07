@@ -63,6 +63,11 @@ void Greenpak4DualEntity::SetInput(string port, Greenpak4EntityOutput src)
 	m_dual->SetInput(port, src);
 }
 
+Greenpak4EntityOutput Greenpak4DualEntity::GetInput(string port) const
+{
+	return m_dual->GetInput(port);
+}
+
 Greenpak4EntityOutput Greenpak4DualEntity::GetOutput(std::string port)
 {
 	return Greenpak4EntityOutput(m_dual, port, m_matrix);

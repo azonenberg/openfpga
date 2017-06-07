@@ -76,6 +76,18 @@ void Greenpak4ShiftRegister::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4ShiftRegister::GetInput(string port) const
+{
+	if(port == "IN")
+		return m_input;
+	else if(port == "nRST")
+		return m_reset;
+	else if(port == "CLK")
+		return m_clock;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4ShiftRegister::GetOutputPorts() const
 {
 	vector<string> r;

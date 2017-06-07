@@ -99,6 +99,29 @@ void Greenpak4DAC::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4DAC::GetInput(string port) const
+{
+	if(port == "VREF")
+		return m_vref;
+	else if(port.find("DIN") == 0)
+	{
+		int b = 0;
+		if(1 != sscanf(port.c_str(), "DIN[%d]", &b))
+		{
+			LogError("Greenpak4DAC: Malformed input name\n");
+			return Greenpak4EntityOutput(NULL);
+		}
+		if( (b < 0) || (b >= 8) )
+		{
+			LogError("Greenpak4DAC: Out of range input index\n");
+			return Greenpak4EntityOutput(NULL);
+		}
+		return m_din[b];
+	}
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4DAC::GetOutputPorts() const
 {
 	vector<string> r;

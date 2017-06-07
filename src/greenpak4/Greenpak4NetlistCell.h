@@ -54,6 +54,14 @@ public:
 	bool IsIOB()
 	{ return (m_type == "GP_IBUF") || (m_type == "GP_IOBUF") || (m_type == "GP_OBUF") || (m_type == "GP_OBUFT"); }
 
+	//Indicates whether the cell is an input buffer
+	bool IsIbuf()
+	{ return (m_type == "GP_IBUF") || (m_type == "GP_IOBUF"); }
+
+	//Indicates whether the cell is an output buffer
+	bool IsObuf()
+	{ return (m_type == "GP_OBUF") || (m_type == "GP_IOBUF"); }
+
 	//Indicates whether the cell is a power rail
 	bool IsPowerRail()
 	{ return (m_type == "GP_VDD") || (m_type == "GP_VSS"); }

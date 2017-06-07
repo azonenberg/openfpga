@@ -57,6 +57,12 @@ void Greenpak4PowerDetector::SetInput(string /*port*/, Greenpak4EntityOutput /*s
 	//no inputs
 }
 
+Greenpak4EntityOutput Greenpak4PowerDetector::GetInput(string /*port*/) const
+{
+	//no inputs
+	return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4PowerDetector::GetOutputPorts() const
 {
 	vector<string> r;

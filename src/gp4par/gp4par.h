@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -58,7 +58,10 @@ bool PostPARDRC(PARGraph* netlist, Greenpak4Device* device);
 //Committing
 bool CommitChanges(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
 bool CommitRouting(PARGraph* device, Greenpak4Device* pdev, unsigned int* num_routes_used);
+
+//Reporting
 void PrintUtilizationReport(PARGraph* netlist, Greenpak4Device* device, unsigned int* num_routes_used);
 void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* device);
+void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device);
 
 #endif

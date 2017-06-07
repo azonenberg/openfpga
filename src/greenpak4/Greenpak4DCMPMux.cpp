@@ -65,6 +65,16 @@ void Greenpak4DCMPMux::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4DCMPMux::GetInput(string port) const
+{
+	if(port == "SEL[0]")
+		return m_sel0;
+	else if(port == "SEL[1]")
+		return m_sel1;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4DCMPMux::GetOutputPorts() const
 {
 	vector<string> r;

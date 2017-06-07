@@ -68,6 +68,14 @@ void Greenpak4Delay::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4Delay::GetInput(string port) const
+{
+	if(port == "IN")
+		return m_input;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4Delay::GetOutputPorts() const
 {
 	vector<string> r;

@@ -67,6 +67,11 @@ public:
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src) =0;
 
 	/**
+		@brief Gets the input with the given name.
+	 */
+	virtual Greenpak4EntityOutput GetInput(std::string port) const =0;
+
+	/**
 		@brief Gets the net number for the given output
 	 */
 	virtual unsigned int GetOutputNetNumber(std::string port) =0;

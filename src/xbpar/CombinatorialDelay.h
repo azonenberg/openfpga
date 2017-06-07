@@ -33,6 +33,15 @@ public:
 	float m_rising;
 	float m_falling;
 
+	//Gets the worst-case delay for this path, not caring about the edge direction
+	float GetWorst()
+	{
+		if(m_rising > m_falling)
+			return m_rising;
+		else
+			return m_falling;
+	}
+
 	//Delay adding
 	CombinatorialDelay operator+(const CombinatorialDelay& rhs) const
 	{ return CombinatorialDelay(m_rising + rhs.m_rising, m_falling + rhs.m_falling); }

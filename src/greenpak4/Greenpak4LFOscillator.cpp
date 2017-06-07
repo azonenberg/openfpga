@@ -69,6 +69,14 @@ void Greenpak4LFOscillator::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4LFOscillator::GetInput(string port) const
+{
+	if(port == "PWRDN")
+		return m_powerDown;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4LFOscillator::GetOutputPorts() const
 {
 	vector<string> r;

@@ -99,6 +99,34 @@ void Greenpak4DigitalComparator::SetInput(string port, Greenpak4EntityOutput src
 		LogWarning("GP_DCMP does not have an input named %s\n", port.c_str());
 }
 
+Greenpak4EntityOutput Greenpak4DigitalComparator::GetInput(string port) const
+{
+	if(port.find("INP") != string::npos)
+	{
+		int i;
+		if(1 != sscanf(port.c_str(), "INP[%d]", &i))
+			LogWarning("GP_DCMP does not have an input named %s\n", port.c_str());
+		else
+			return m_inp[i];
+	}
+
+	else if(port.find("INN") != string::npos)
+	{
+		int i;
+		if(1 != sscanf(port.c_str(), "INN[%d]", &i))
+			LogWarning("GP_DCMP does not have an input named %s\n", port.c_str());
+		else
+			return m_inn[i];
+	}
+
+	else if(port == "PWRDN")
+		return m_powerDown;
+	else if(port == "CLK")
+		return m_clock;
+
+	return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4DigitalComparator::GetOutputPorts() const
 {
 	vector<string> r;

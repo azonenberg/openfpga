@@ -79,6 +79,14 @@ void Greenpak4SystemReset::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4SystemReset::GetInput(string port) const
+{
+	if(port == "RST")
+		return m_reset;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

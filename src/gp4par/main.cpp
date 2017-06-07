@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -385,8 +385,15 @@ int main(int argc, char* argv[])
 	device.SetLDOBypass(ldoBypass);
 	device.SetNVMRetryCount(bootRetry);
 
+	//Attempt to load the timing data file, if present
+	//FIXME: get this from a sane location and make it chip specific
+	string tfname = "../../../timing.json";
+	LogNotice("\nLoading timing data file \"%s\"\n", tfname.c_str());
+	if(!device.LoadTimingData(tfname))
+		LogWarning("Timing data file not found, unable to do timing-driven placement or evaluate post-PAR timing\n");
+
 	//Do the actual P&R
-	LogNotice("\nSynthesizing top-level module \"%s\".\n", netlist.GetTopModule()->GetName().c_str());
+	LogNotice("\nImplementing top-level module \"%s\".\n", netlist.GetTopModule()->GetName().c_str());
 	if(!DoPAR(&netlist, &device))
 		return 1;
 
@@ -398,9 +405,6 @@ int main(int argc, char* argv[])
 		if(!device.WriteToFile(ofname, userid, readProtect))
 			return 1;
 	}
-
-	//TODO: Static timing analysis
-	LogNotice("\nStatic timing analysis: not yet implemented\n");
 
 	return 0;
 }

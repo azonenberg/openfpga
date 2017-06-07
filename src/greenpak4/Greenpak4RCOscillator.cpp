@@ -69,6 +69,14 @@ void Greenpak4RCOscillator::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4RCOscillator::GetInput(string port) const
+{
+	if(port == "PWRDN")
+		return m_powerDown;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4RCOscillator::GetOutputPorts() const
 {
 	vector<string> r;

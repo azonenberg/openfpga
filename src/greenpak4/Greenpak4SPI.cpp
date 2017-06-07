@@ -74,6 +74,14 @@ void Greenpak4SPI::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4SPI::GetInput(string port) const
+{
+	if(port == "CSN")
+		return m_csn;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4SPI::GetOutputPorts() const
 {
 	vector<string> r;

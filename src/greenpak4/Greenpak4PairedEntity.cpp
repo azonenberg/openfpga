@@ -76,6 +76,11 @@ void Greenpak4PairedEntity::SetInput(string port, Greenpak4EntityOutput src)
 	GetActiveEntity()->SetInput(port, src);
 }
 
+Greenpak4EntityOutput Greenpak4PairedEntity::GetInput(string port) const
+{
+	return GetActiveEntity()->GetInput(port);
+}
+
 vector<string> Greenpak4PairedEntity::GetOutputPorts() const
 {
 	auto pa = m_entities[0]->GetOutputPorts();

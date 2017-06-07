@@ -69,6 +69,18 @@ void Greenpak4PGA::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4PGA::GetInput(string port) const
+{
+	if(port == "VIN_P")
+		return m_vinp;
+	else if(port == "VIN_N")
+		return m_vinn;
+	else if(port == "VIN_SEL")
+		return m_vinsel;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4PGA::GetOutputPorts() const
 {
 	vector<string> r;

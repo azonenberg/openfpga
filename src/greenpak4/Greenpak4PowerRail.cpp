@@ -73,6 +73,12 @@ void Greenpak4PowerRail::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/
 	//no inputs
 }
 
+Greenpak4EntityOutput Greenpak4PowerRail::GetInput(string /*port*/) const
+{
+	//no inputs
+	return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4PowerRail::GetOutputPorts() const
 {
 	vector<string> r;

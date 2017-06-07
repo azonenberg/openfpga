@@ -89,6 +89,18 @@ void Greenpak4Comparator::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4Comparator::GetInput(string port) const
+{
+	if(port == "PWREN")
+		return m_pwren;
+	else if(port == "VIN")
+		return m_vin;
+	else if(port == "VREF")
+		return m_vref;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4Comparator::GetOutputPorts() const
 {
 	vector<string> r;

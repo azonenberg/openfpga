@@ -61,6 +61,12 @@ void Greenpak4DCMPRef::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
 	//no inputs
 }
 
+Greenpak4EntityOutput Greenpak4DCMPRef::GetInput(string /*port*/) const
+{
+	//no inputs
+	return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4DCMPRef::GetOutputPorts() const
 {
 	vector<string> r;

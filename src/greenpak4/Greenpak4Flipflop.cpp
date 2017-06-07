@@ -88,6 +88,18 @@ void Greenpak4Flipflop::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4Flipflop::GetInput(string port) const
+{
+	if( (port == "CLK") || (port == "nCLK") )
+		return m_clock;
+	else if(port == "D")
+		return m_input;
+	if( (port == "nSR") || (port == "nSET") || (port == "nRST") )
+		return m_nsr;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4Flipflop::GetOutputPorts() const
 {
 	vector<string> r;

@@ -157,6 +157,20 @@ void Greenpak4Counter::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4Counter::GetInput(string port) const
+{
+	if(port == "RST")
+		return m_reset;
+	else if(port == "CLK")
+		return m_clock;
+	else if(port == "UP")
+		return m_up;
+	else if(port == "KEEP")
+		return m_keep;
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4Counter::GetOutputPorts() const
 {
 	vector<string> r;

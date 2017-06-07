@@ -171,6 +171,20 @@ void Greenpak4LUT::SetInput(string port, Greenpak4EntityOutput src)
 	//ignore anything else silently (should not be possible since synthesis would error out)
 }
 
+Greenpak4EntityOutput Greenpak4LUT::GetInput(string port) const
+{
+	if( (port == "IN0") || (port == "IN") )
+		return m_inputs[0];
+	else if(port == "IN1")
+		return m_inputs[1];
+	else if(port == "IN2")
+		return m_inputs[2];
+	else if(port == "IN3")
+		return m_inputs[3];
+	else
+		return Greenpak4EntityOutput(NULL);
+}
+
 void Greenpak4LUT::MakeXOR()
 {
 	for(int i=0; i<16; i++)

@@ -67,6 +67,12 @@ void Greenpak4Bandgap::SetInput(string /*port*/, Greenpak4EntityOutput /*src*/)
 	//no inputs
 }
 
+Greenpak4EntityOutput Greenpak4Bandgap::GetInput(string /*port*/) const
+{
+	//no inputs
+	return Greenpak4EntityOutput(NULL);
+}
+
 vector<string> Greenpak4Bandgap::GetOutputPorts() const
 {
 	vector<string> r;

@@ -239,8 +239,8 @@ bool Greenpak4BitstreamEntity::GetCombinatorialDelay(
 	auto pit = m_pinToPinDelays.find(corner);
 	if(pit == m_pinToPinDelays.end())
 	{
-		LogWarning("Greenpak4BitstreamEntity::GetCombinatorialDelay: no delay for process corner %s\n",
-			corner.toString().c_str());
+		//LogWarning("Greenpak4BitstreamEntity::GetCombinatorialDelay: no delay for process corner %s\n",
+		//	corner.toString().c_str());
 		return false;
 	}
 
@@ -250,8 +250,8 @@ bool Greenpak4BitstreamEntity::GetCombinatorialDelay(
 	auto dit = dmap.find(pair);
 	if(dit == dmap.end())
 	{
-		LogWarning("Greenpak4BitstreamEntity::GetCombinatorialDelay: no delay for path %s to %s\n",
-			srcport.c_str(), dstport.c_str());
+		//LogWarning("Greenpak4BitstreamEntity::GetCombinatorialDelay: no delay for path %s to %s\n",
+		//	srcport.c_str(), dstport.c_str());
 		return false;
 	}
 
