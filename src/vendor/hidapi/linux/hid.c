@@ -151,6 +151,8 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 		int hid_uevent_fd = -1;
 		char *hidraw_uevent_buf = NULL;
 		char *hid_uevent_buf = NULL;
+		char *hid_id = NULL;
+		char *dev_name = NULL;
 
 		if (asprintf(&hidraw_uevent_filename, "/sys/class/hidraw/%s/uevent", hidraw_entry_dirent->d_name) == -1)
 			goto next;
@@ -170,23 +172,18 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 		unsigned short dev_vid;
 		unsigned short dev_pid;
 		int bus_type;
-		int result = 0;
 
-		char *hid_id = uevent_find_line(hid_uevent_buf, "HID_ID");
+		if (!(hid_id = uevent_find_line(hid_uevent_buf, "HID_ID")))
+			goto next;
+		if (!(dev_name = uevent_find_line(hidraw_uevent_buf, "DEVNAME")))
+			goto next;
 
-		if (hid_id) {
-			/**
-			 *        type vendor   product
-			 * HID_ID=0003:000005AC:00008242
-			 **/
-			int ret = sscanf(hid_id, "%x:%hx:%hx", &bus_type, &dev_vid, &dev_pid);
-			free(hid_id);
-			if (ret == 3) {
-				result = 1;
-			}
-		}
-
-		if (!result) {
+		/**
+		 *        type vendor   product
+		 * HID_ID=0003:000005AC:00008242
+		 **/
+		int ret = sscanf(hid_id, "%x:%hx:%hx", &bus_type, &dev_vid, &dev_pid);
+		if (ret != 3) {
 			/* parse_uevent_info() failed for at least one field. */
 			goto next;
 		}
@@ -213,12 +210,10 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 
 			/* Fill out the record */
 			cur_dev->next = NULL;
-			char *dev_name = uevent_find_line(hidraw_uevent_buf, "DEVNAME");
 			if (asprintf(&(cur_dev->path), "/dev/%s", dev_name) == -1) {
 				// FIXME: Why is this considered fallible?
 				cur_dev->path = NULL;
 			}
-			free(dev_name);
 
 			/* VID/PID */
 			cur_dev->vendor_id = dev_vid;
@@ -226,6 +221,8 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 		}
 
 	next:
+		free(hid_id);
+		free(dev_name);
 		free(hidraw_uevent_buf);
 		free(hid_uevent_buf);
 		if (hidraw_uevent_fd != -1)
