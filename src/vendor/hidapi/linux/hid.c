@@ -28,7 +28,6 @@
 #undef _GNU_SOURCE
 #include <string.h>
 #include <stdlib.h>
-#include <locale.h>
 #include <errno.h>
 
 /* Unix */
@@ -37,7 +36,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/utsname.h>
 #include <fcntl.h>
 #include <poll.h>
 
@@ -117,13 +115,6 @@ next_line:
 
 int HID_API_EXPORT hid_init(void)
 {
-	const char *locale;
-
-	/* Set the locale if it's not set. */
-	locale = setlocale(LC_CTYPE, NULL);
-	if (!locale)
-		setlocale(LC_CTYPE, "");
-
 	return 0;
 }
 
