@@ -45,110 +45,19 @@
 
 #include "hidapi.h"
 
-/* USB HID device property names */
-const char *device_string_names[] = {
-	"manufacturer",
-	"product",
-	"serial",
-};
-
-/* Symbolic names for the properties above */
-enum device_string_id {
-	DEVICE_STRING_MANUFACTURER,
-	DEVICE_STRING_PRODUCT,
-	DEVICE_STRING_SERIAL,
-
-	DEVICE_STRING_COUNT,
-};
-
 struct hid_device_ {
 	int device_handle;
-	int blocking;
 };
 
 static hid_device *new_hid_device(void)
 {
 	hid_device *dev = calloc(1, sizeof(hid_device));
 	dev->device_handle = -1;
-	dev->blocking = 1;
 
 	return dev;
 }
 
-
-/* The caller must free the returned string with free(). */
-static wchar_t *utf8_to_wchar_t(const char *utf8)
-{
-	wchar_t *ret = NULL;
-
-	if (utf8) {
-		size_t wlen = mbstowcs(NULL, utf8, 0);
-		if ((size_t) -1 == wlen) {
-			return wcsdup(L"");
-		}
-		ret = calloc(wlen+1, sizeof(wchar_t));
-		mbstowcs(ret, utf8, wlen+1);
-		ret[wlen] = 0x0000;
-	}
-
-	return ret;
-}
-
-/* Get an attribute value from a udev_device and return it as a whar_t
-   string. The returned string must be freed with free() when done.*/
-static wchar_t *copy_udev_string(struct udev_device *dev, const char *udev_name)
-{
-	return utf8_to_wchar_t(udev_device_get_sysattr_value(dev, udev_name));
-}
-
-/*
- * The caller is responsible for free()ing the (newly-allocated) character
- * strings pointed to by serial_number_utf8 and product_name_utf8 after use.
- */
-static int
-parse_uevent_info(const char *uevent, int *bus_type,
-	unsigned short *vendor_id, unsigned short *product_id)
-{
-	char *tmp = strdup(uevent);
-	char *saveptr = NULL;
-	char *line;
-	char *key;
-	char *value;
-
-	int found_id = 0;
-
-	line = strtok_r(tmp, "\n", &saveptr);
-	while (line != NULL) {
-		/* line: "KEY=value" */
-		key = line;
-		value = strchr(line, '=');
-		if (!value) {
-			goto next_line;
-		}
-		*value = '\0';
-		value++;
-
-		if (strcmp(key, "HID_ID") == 0) {
-			/**
-			 *        type vendor   product
-			 * HID_ID=0003:000005AC:00008242
-			 **/
-			int ret = sscanf(value, "%x:%hx:%hx", bus_type, vendor_id, product_id);
-			if (ret == 3) {
-				found_id = 1;
-			}
-		}
-
-next_line:
-		line = strtok_r(NULL, "\n", &saveptr);
-	}
-
-	free(tmp);
-	return (found_id);
-}
-
-
-static int get_device_string(hid_device *dev, enum device_string_id key, wchar_t *string, size_t maxlen)
+static int get_device_string(hid_device *dev, const char *key_str, wchar_t *string, size_t maxlen)
 {
 	struct udev *udev;
 	struct udev_device *udev_dev, *parent, *hid_dev;
@@ -183,14 +92,6 @@ static int get_device_string(hid_device *dev, enum device_string_id key, wchar_t
 				   "usb_device");
 			if (parent) {
 				const char *str;
-				const char *key_str = NULL;
-
-				if (key >= 0 && key < DEVICE_STRING_COUNT) {
-					key_str = device_string_names[key];
-				} else {
-					ret = -1;
-					goto end;
-				}
 
 				str = udev_device_get_sysattr_value(parent, key_str);
 				if (str) {
@@ -285,11 +186,44 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 			goto next;
 		}
 
-		result = parse_uevent_info(
-			udev_device_get_sysattr_value(hid_dev, "uevent"),
-			&bus_type,
-			&dev_vid,
-			&dev_pid);
+		{
+			char *tmp = strdup(udev_device_get_sysattr_value(hid_dev, "uevent"));
+			char *saveptr = NULL;
+			char *line;
+			char *key;
+			char *value;
+
+			int found_id = 0;
+
+			line = strtok_r(tmp, "\n", &saveptr);
+			while (line != NULL) {
+				/* line: "KEY=value" */
+				key = line;
+				value = strchr(line, '=');
+				if (!value) {
+					goto next_line;
+				}
+				*value = '\0';
+				value++;
+
+				if (strcmp(key, "HID_ID") == 0) {
+					/**
+					 *        type vendor   product
+					 * HID_ID=0003:000005AC:00008242
+					 **/
+					int ret = sscanf(value, "%x:%hx:%hx", &bus_type, &dev_vid, &dev_pid);
+					if (ret == 3) {
+						found_id = 1;
+					}
+				}
+
+		next_line:
+				line = strtok_r(NULL, "\n", &saveptr);
+			}
+
+			free(tmp);
+			result = found_id;
+		}
 
 		if (!result) {
 			/* parse_uevent_info() failed for at least one field. */
@@ -431,12 +365,12 @@ void HID_API_EXPORT hid_close(hid_device *dev)
 
 int HID_API_EXPORT_CALL hid_get_manufacturer_string(hid_device *dev, wchar_t *string, size_t maxlen)
 {
-	return get_device_string(dev, DEVICE_STRING_MANUFACTURER, string, maxlen);
+	return get_device_string(dev, "manufacturer", string, maxlen);
 }
 
 int HID_API_EXPORT_CALL hid_get_product_string(hid_device *dev, wchar_t *string, size_t maxlen)
 {
-	return get_device_string(dev, DEVICE_STRING_PRODUCT, string, maxlen);
+	return get_device_string(dev, "product", string, maxlen);
 }
 
 HID_API_EXPORT const wchar_t * HID_API_CALL  hid_error(hid_device *dev)
