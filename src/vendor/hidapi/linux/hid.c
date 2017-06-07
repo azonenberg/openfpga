@@ -22,7 +22,10 @@
 ********************************************************/
 
 /* C */
+/* For asnprintf */
+#define _GNU_SOURCE
 #include <stdio.h>
+#undef _GNU_SOURCE
 #include <string.h>
 #include <stdlib.h>
 #include <locale.h>
@@ -59,56 +62,64 @@ static hid_device *new_hid_device(void)
 
 static int get_device_string(hid_device *dev, const char *key_str, wchar_t *string, size_t maxlen)
 {
-	struct udev *udev;
-	struct udev_device *udev_dev, *parent, *hid_dev;
+	char *usb_device_sysfs_filename;
+	int usb_device_sysfs_fd = 0;
+	char *usb_device_sysfs_buf;
 	struct stat s;
 	int ret = -1;
-
-	/* Create the udev object */
-	udev = udev_new();
-	if (!udev) {
-		printf("Can't create udev\n");
-		return -1;
-	}
 
 	/* Get the dev_t (major/minor numbers) from the file handle. */
 	ret = fstat(dev->device_handle, &s);
 	if (-1 == ret)
 		return ret;
-	/* Open a udev device from the dev_t. 'c' means character device. */
-	udev_dev = udev_device_new_from_devnum(udev, 'c', s.st_rdev);
-	if (udev_dev) {
-		hid_dev = udev_device_get_parent_with_subsystem_devtype(
-			udev_dev,
-			"hid",
-			NULL);
-		if (hid_dev) {
-			size_t retm;
 
-			/* This is a USB device. Find its parent USB Device node. */
-			parent = udev_device_get_parent_with_subsystem_devtype(
-				   udev_dev,
-				   "usb",
-				   "usb_device");
-			if (parent) {
-				const char *str;
-
-				str = udev_device_get_sysattr_value(parent, key_str);
-				if (str) {
-					/* Convert the string from UTF-8 to wchar_t */
-					retm = mbstowcs(string, str, maxlen);
-					ret = (retm == (size_t)-1)? -1: 0;
-					goto end;
-				}
-			}
-		}
+	/* Assume that we get the hidraw node, the device/ link is the hid bus node, its parent is the USB interface,
+	   and its parent is the USB device. This isn't the most resilient against future sysfs ABI changes, but
+	   *) based on poking around the kernel source, changes here are unlikely
+	   *) this is much simpler than traversing up and trying to find which node (if any) is the USB device */
+	ret = asprintf(&usb_device_sysfs_filename, "/sys/dev/char/%d:%d/device/../../%s",
+		major(s.st_rdev), minor(s.st_rdev), key_str);
+	if (-1 == ret) {
+		goto end;
+	}
+	usb_device_sysfs_fd = open(usb_device_sysfs_filename, O_RDONLY);
+	if (usb_device_sysfs_fd == -1) {
+		ret = -1;
+		goto end;
 	}
 
+	// Read the contents
+	ret = fstat(usb_device_sysfs_fd, &s);
+	if (-1 == ret)
+		goto end;
+	usb_device_sysfs_buf = malloc(s.st_size + 1);
+	if (!usb_device_sysfs_buf) {
+		ret = -1;
+		goto end;
+	}
+	size_t sysfs_size = read(usb_device_sysfs_fd, usb_device_sysfs_buf, s.st_size);
+	if ((size_t)-1 == sysfs_size) {
+		ret = -1;
+		goto end;
+	}
+	// Need to add a NULL termination
+	usb_device_sysfs_buf[sysfs_size] = 0;
+
+	// Deliberately remove a potential \n at the end
+	if (usb_device_sysfs_buf[sysfs_size - 1] == '\n')
+		usb_device_sysfs_buf[sysfs_size - 1] = 0;
+
+	/* Convert the string from UTF-8 to wchar_t */
+	size_t retm;
+	retm = mbstowcs(string, usb_device_sysfs_buf, maxlen);
+	ret = (retm == (size_t)-1)? -1: 0;
+
 end:
-	udev_device_unref(udev_dev);
-	/* parent and hid_dev don't need to be (and can't be) unref'd.
-	   I'm not sure why, but they'll throw double-free() errors. */
-	udev_unref(udev);
+	free(usb_device_sysfs_buf);
+	free(usb_device_sysfs_filename);
+	if (usb_device_sysfs_fd != -1) {
+		close(usb_device_sysfs_fd);
+	}
 
 	return ret;
 }
@@ -140,7 +151,6 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 
 	struct hid_device_info *root = NULL; /* return object */
 	struct hid_device_info *cur_dev = NULL;
-	struct hid_device_info *prev_dev = NULL; /* previous device */
 
 	hid_init();
 
@@ -161,10 +171,8 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 	udev_list_entry_foreach(dev_list_entry, devices) {
 		const char *sysfs_path;
 		const char *dev_path;
-		const char *str;
 		struct udev_device *raw_dev; /* The device's hidraw udev node. */
 		struct udev_device *hid_dev; /* The device's HID udev node. */
-		struct udev_device *usb_dev; /* The device's USB udev node. */
 		unsigned short dev_vid;
 		unsigned short dev_pid;
 		int bus_type;
@@ -248,7 +256,6 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 			else {
 				root = tmp;
 			}
-			prev_dev = cur_dev;
 			cur_dev = tmp;
 
 			/* Fill out the record */
