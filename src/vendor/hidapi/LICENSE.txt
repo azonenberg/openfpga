@@ -1,0 +1,2 @@
+This project has elected to use hidapi code under the terms of the BSD license.
+See LICENSE-bsd.txt for details.

@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include <cmath>
 #include <cstring>
-#include <libusb-1.0/libusb.h>
 
 #include <log.h>
 #include "gpdevboard.h"
@@ -62,7 +61,7 @@ bool CheckStatus(hdevice hdev)
  */
 bool ResetDevicesInBootloader()
 {
-	//Set up libusb
+	//Set up hidapi
 	if(!USBSetup())
 		return false;
 	
@@ -82,7 +81,7 @@ bool ResetDevicesInBootloader()
 	for(auto h : handles)
 	{
 		SwitchMode(h);
-		libusb_close(h);
+		hid_close(h);
 	}
 
 	g_devicesResetFromBootloader = true;

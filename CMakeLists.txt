@@ -2,7 +2,7 @@
 # Root build script
 
 cmake_minimum_required(VERSION 2.8)
-project(openfpga CXX)
+project(openfpga C CXX)
 enable_testing()
 include(GNUInstallDirs)
 
