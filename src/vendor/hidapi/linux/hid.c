@@ -25,14 +25,15 @@
 /* For asnprintf */
 #define _GNU_SOURCE
 #include <stdio.h>
-#undef _GNU_SOURCE
 #include <string.h>
+#undef _GNU_SOURCE
 #include <stdlib.h>
 #include <errno.h>
 
 /* Unix */
 #include <dirent.h>
 #include <unistd.h>
+#include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -326,7 +327,7 @@ static int get_device_string(hid_device *dev, const char *key_str, wchar_t *stri
 {
 	char *usb_device_sysfs_filename;
 	int usb_device_sysfs_fd = 0;
-	char *usb_device_sysfs_buf;
+	char *usb_device_sysfs_buf = NULL;
 	struct stat s;
 	int ret = -1;
 
