@@ -76,30 +76,6 @@ struct hid_device_ {
 	int blocking;
 };
 
-
-static __u32 kernel_version = 0;
-
-static __u32 detect_kernel_version(void)
-{
-	struct utsname name;
-	int major, minor, release;
-	int ret;
-
-	uname(&name);
-	ret = sscanf(name.release, "%d.%d.%d", &major, &minor, &release);
-	if (ret == 3) {
-		return KERNEL_VERSION(major, minor, release);
-	}
-
-	ret = sscanf(name.release, "%d.%d", &major, &minor);
-	if (ret == 2) {
-		return KERNEL_VERSION(major, minor, 0);
-	}
-
-	printf("Couldn't determine kernel version from version string \"%s\"\n", name.release);
-	return 0;
-}
-
 static hid_device *new_hid_device(void)
 {
 	hid_device *dev = calloc(1, sizeof(hid_device));
@@ -303,8 +279,6 @@ int HID_API_EXPORT hid_init(void)
 	locale = setlocale(LC_CTYPE, NULL);
 	if (!locale)
 		setlocale(LC_CTYPE, "");
-
-	kernel_version = detect_kernel_version();
 
 	return 0;
 }
