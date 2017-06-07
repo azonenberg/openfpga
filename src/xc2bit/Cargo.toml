@@ -1,0 +1,10 @@
+[package]
+name = "xc2bit"
+version = "0.0.1"
+
+[profile.release]
+lto = true
+
+[lib]
+name = "xc2bit"
+crate-type = ["rlib"]
