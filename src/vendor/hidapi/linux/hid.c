@@ -32,6 +32,7 @@
 #include <errno.h>
 
 /* Unix */
+#include <dirent.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -44,7 +45,6 @@
 #include <linux/hidraw.h>
 #include <linux/version.h>
 #include <linux/input.h>
-#include <libudev.h>
 
 #include "hidapi.h"
 
@@ -60,86 +60,30 @@ static hid_device *new_hid_device(void)
 	return dev;
 }
 
-static int get_device_string(hid_device *dev, const char *key_str, wchar_t *string, size_t maxlen)
-{
-	char *usb_device_sysfs_filename;
-	int usb_device_sysfs_fd = 0;
-	char *usb_device_sysfs_buf;
+// Result needs to be free()d
+static char *read_entire_sysfs_file(int fd) {
 	struct stat s;
-	int ret = -1;
+	char *buf;
 
-	/* Get the dev_t (major/minor numbers) from the file handle. */
-	ret = fstat(dev->device_handle, &s);
-	if (-1 == ret)
-		return ret;
-
-	/* Assume that we get the hidraw node, the device/ link is the hid bus node, its parent is the USB interface,
-	   and its parent is the USB device. This isn't the most resilient against future sysfs ABI changes, but
-	   *) based on poking around the kernel source, changes here are unlikely
-	   *) this is much simpler than traversing up and trying to find which node (if any) is the USB device */
-	ret = asprintf(&usb_device_sysfs_filename, "/sys/dev/char/%d:%d/device/../../%s",
-		major(s.st_rdev), minor(s.st_rdev), key_str);
-	if (-1 == ret) {
-		goto end;
-	}
-	usb_device_sysfs_fd = open(usb_device_sysfs_filename, O_RDONLY);
-	if (usb_device_sysfs_fd == -1) {
-		ret = -1;
-		goto end;
-	}
-
-	// Read the contents
-	ret = fstat(usb_device_sysfs_fd, &s);
-	if (-1 == ret)
-		goto end;
-	usb_device_sysfs_buf = malloc(s.st_size + 1);
-	if (!usb_device_sysfs_buf) {
-		ret = -1;
-		goto end;
-	}
-	size_t sysfs_size = read(usb_device_sysfs_fd, usb_device_sysfs_buf, s.st_size);
+	if (fstat(fd, &s) == -1)
+		return NULL;
+	buf = malloc(s.st_size + 1);
+	if (!buf)
+		return NULL;
+	size_t sysfs_size = read(fd, buf, s.st_size);
 	if ((size_t)-1 == sysfs_size) {
-		ret = -1;
-		goto end;
+		free(buf);
+		return NULL;
 	}
+
 	// Need to add a NULL termination
-	usb_device_sysfs_buf[sysfs_size] = 0;
+	buf[sysfs_size] = 0;
 
 	// Deliberately remove a potential \n at the end
-	if (usb_device_sysfs_buf[sysfs_size - 1] == '\n')
-		usb_device_sysfs_buf[sysfs_size - 1] = 0;
+	if (buf[sysfs_size - 1] == '\n')
+		buf[sysfs_size - 1] = 0;
 
-	/* Convert the string from UTF-8 to wchar_t */
-	size_t retm;
-	retm = mbstowcs(string, usb_device_sysfs_buf, maxlen);
-	ret = (retm == (size_t)-1)? -1: 0;
-
-end:
-	free(usb_device_sysfs_buf);
-	free(usb_device_sysfs_filename);
-	if (usb_device_sysfs_fd != -1) {
-		close(usb_device_sysfs_fd);
-	}
-
-	return ret;
-}
-
-int HID_API_EXPORT hid_init(void)
-{
-	const char *locale;
-
-	/* Set the locale if it's not set. */
-	locale = setlocale(LC_CTYPE, NULL);
-	if (!locale)
-		setlocale(LC_CTYPE, "");
-
-	return 0;
-}
-
-int HID_API_EXPORT hid_exit(void)
-{
-	/* Nothing to do for this in the Linux/hidraw implementation. */
-	return 0;
+	return buf;
 }
 
 // Result needs to be free()d
@@ -171,72 +115,83 @@ next_line:
 	return NULL;
 }
 
+int HID_API_EXPORT hid_init(void)
+{
+	const char *locale;
+
+	/* Set the locale if it's not set. */
+	locale = setlocale(LC_CTYPE, NULL);
+	if (!locale)
+		setlocale(LC_CTYPE, "");
+
+	return 0;
+}
+
+int HID_API_EXPORT hid_exit(void)
+{
+	/* Nothing to do for this in the Linux/hidraw implementation. */
+	return 0;
+}
+
 struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, unsigned short product_id)
 {
-	struct udev *udev;
-	struct udev_enumerate *enumerate;
-	struct udev_list_entry *devices, *dev_list_entry;
-
 	struct hid_device_info *root = NULL; /* return object */
 	struct hid_device_info *cur_dev = NULL;
 
 	hid_init();
 
-	/* Create the udev object */
-	udev = udev_new();
-	if (!udev) {
-		printf("Can't create udev\n");
+	DIR *hidraw_class_dir = opendir("/sys/class/hidraw");
+	if (!hidraw_class_dir) {
 		return NULL;
 	}
 
-	/* Create a list of the devices in the 'hidraw' subsystem. */
-	enumerate = udev_enumerate_new(udev);
-	udev_enumerate_add_match_subsystem(enumerate, "hidraw");
-	udev_enumerate_scan_devices(enumerate);
-	devices = udev_enumerate_get_list_entry(enumerate);
-	/* For each item, see if it matches the vid/pid, and if so
-	   create a udev_device record for it */
-	udev_list_entry_foreach(dev_list_entry, devices) {
-		const char *sysfs_path;
-		const char *dev_path;
-		struct udev_device *raw_dev; /* The device's hidraw udev node. */
-		struct udev_device *hid_dev; /* The device's HID udev node. */
+	struct dirent *hidraw_entry_dirent;
+
+	/* For each item, see if it matches the vid/pid */
+	while ((hidraw_entry_dirent = readdir(hidraw_class_dir))) {
+		if (strcmp(hidraw_entry_dirent->d_name, ".") == 0)
+			continue;
+		if (strcmp(hidraw_entry_dirent->d_name, "..") == 0)
+			continue;
+
+		char *hidraw_uevent_filename = NULL;
+		char *hid_uevent_filename = NULL;
+		int hidraw_uevent_fd = -1;
+		int hid_uevent_fd = -1;
+		char *hidraw_uevent_buf = NULL;
+		char *hid_uevent_buf = NULL;
+
+		if (asprintf(&hidraw_uevent_filename, "/sys/class/hidraw/%s/uevent", hidraw_entry_dirent->d_name) == -1)
+			goto next;
+		if (asprintf(&hid_uevent_filename, "/sys/class/hidraw/%s/device/uevent", hidraw_entry_dirent->d_name) == -1)
+			goto next;
+
+		if ((hidraw_uevent_fd = open(hidraw_uevent_filename, O_RDONLY)) == -1)
+			goto next;
+		if ((hid_uevent_fd = open(hid_uevent_filename, O_RDONLY)) == -1)
+			goto next;
+
+		if (!(hidraw_uevent_buf = read_entire_sysfs_file(hidraw_uevent_fd)))
+			goto next;
+		if (!(hid_uevent_buf = read_entire_sysfs_file(hid_uevent_fd)))
+			goto next;
+
 		unsigned short dev_vid;
 		unsigned short dev_pid;
 		int bus_type;
 		int result = 0;
 
-		/* Get the filename of the /sys entry for the device
-		   and create a udev_device object (dev) representing it */
-		sysfs_path = udev_list_entry_get_name(dev_list_entry);
-		raw_dev = udev_device_new_from_syspath(udev, sysfs_path);
-		dev_path = udev_device_get_devnode(raw_dev);
+		char *hid_id = uevent_find_line(hid_uevent_buf, "HID_ID");
 
-		hid_dev = udev_device_get_parent_with_subsystem_devtype(
-			raw_dev,
-			"hid",
-			NULL);
-
-		if (!hid_dev) {
-			/* Unable to find parent hid device. */
-			goto next;
-		}
-
-		{
-			char *tmp = strdup(udev_device_get_sysattr_value(hid_dev, "uevent"));
-			char *hid_id = uevent_find_line(tmp, "HID_ID");
-			free(tmp);
-
-			if (hid_id) {
-				/**
-				 *        type vendor   product
-				 * HID_ID=0003:000005AC:00008242
-				 **/
-				int ret = sscanf(hid_id, "%x:%hx:%hx", &bus_type, &dev_vid, &dev_pid);
-				free(hid_id);
-				if (ret == 3) {
-					result = 1;
-				}
+		if (hid_id) {
+			/**
+			 *        type vendor   product
+			 * HID_ID=0003:000005AC:00008242
+			 **/
+			int ret = sscanf(hid_id, "%x:%hx:%hx", &bus_type, &dev_vid, &dev_pid);
+			free(hid_id);
+			if (ret == 3) {
+				result = 1;
 			}
 		}
 
@@ -267,7 +222,12 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 
 			/* Fill out the record */
 			cur_dev->next = NULL;
-			cur_dev->path = dev_path? strdup(dev_path): NULL;
+			char *dev_name = uevent_find_line(hidraw_uevent_buf, "DEVNAME");
+			if (asprintf(&(cur_dev->path), "/dev/%s", dev_name) == -1) {
+				// FIXME: Why is this considered fallible?
+				cur_dev->path = NULL;
+			}
+			free(dev_name);
 
 			/* VID/PID */
 			cur_dev->vendor_id = dev_vid;
@@ -275,14 +235,16 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 		}
 
 	next:
-		udev_device_unref(raw_dev);
-		/* hid_dev, usb_dev and intf_dev don't need to be (and can't be)
-		   unref()d.  It will cause a double-free() error.  I'm not
-		   sure why.  */
+		free(hidraw_uevent_buf);
+		free(hid_uevent_buf);
+		if (hidraw_uevent_fd != -1)
+			close(hidraw_uevent_fd);
+		if (hid_uevent_fd != -1)
+			close(hid_uevent_fd);
+		free(hidraw_uevent_filename);
+		free(hid_uevent_filename);
 	}
-	/* Free the enumerator and udev objects. */
-	udev_enumerate_unref(enumerate);
-	udev_unref(udev);
+	closedir(hidraw_class_dir);
 
 	return root;
 }
@@ -376,6 +338,54 @@ void HID_API_EXPORT hid_close(hid_device *dev)
 	free(dev);
 }
 
+static int get_device_string(hid_device *dev, const char *key_str, wchar_t *string, size_t maxlen)
+{
+	char *usb_device_sysfs_filename;
+	int usb_device_sysfs_fd = 0;
+	char *usb_device_sysfs_buf;
+	struct stat s;
+	int ret = -1;
+
+	/* Get the dev_t (major/minor numbers) from the file handle. */
+	ret = fstat(dev->device_handle, &s);
+	if (-1 == ret)
+		return ret;
+
+	/* Assume that we get the hidraw node, the device/ link is the hid bus node, its parent is the USB interface,
+	   and its parent is the USB device. This isn't the most resilient against future sysfs ABI changes, but
+	   *) based on poking around the kernel source, changes here are unlikely
+	   *) this is much simpler than traversing up and trying to find which node (if any) is the USB device */
+	ret = asprintf(&usb_device_sysfs_filename, "/sys/dev/char/%d:%d/device/../../%s",
+		major(s.st_rdev), minor(s.st_rdev), key_str);
+	if (-1 == ret) {
+		goto end;
+	}
+	usb_device_sysfs_fd = open(usb_device_sysfs_filename, O_RDONLY);
+	if (usb_device_sysfs_fd == -1) {
+		ret = -1;
+		goto end;
+	}
+
+	// Read the contents
+	usb_device_sysfs_buf = read_entire_sysfs_file(usb_device_sysfs_fd);
+	if (!usb_device_sysfs_buf) {
+		ret = -1;
+		goto end;
+	}
+
+	/* Convert the string from UTF-8 to wchar_t */
+	size_t retm;
+	retm = mbstowcs(string, usb_device_sysfs_buf, maxlen);
+	ret = (retm == (size_t)-1)? -1: 0;
+
+end:
+	free(usb_device_sysfs_buf);
+	free(usb_device_sysfs_filename);
+	if (usb_device_sysfs_fd != -1)
+		close(usb_device_sysfs_fd);
+
+	return ret;
+}
 
 int HID_API_EXPORT_CALL hid_get_manufacturer_string(hid_device *dev, wchar_t *string, size_t maxlen)
 {
