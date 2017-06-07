@@ -126,7 +126,6 @@ static BOOLEAN initialized = FALSE;
 
 struct hid_device_ {
 		HANDLE device_handle;
-		BOOL blocking;
 		USHORT output_report_length;
 		size_t input_report_length;
 		void *last_error_str;
@@ -140,7 +139,6 @@ static hid_device *new_hid_device()
 {
 	hid_device *dev = (hid_device*) calloc(1, sizeof(hid_device));
 	dev->device_handle = INVALID_HANDLE_VALUE;
-	dev->blocking = TRUE;
 	dev->output_report_length = 0;
 	dev->input_report_length = 0;
 	dev->last_error_str = NULL;
@@ -354,8 +352,6 @@ struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned shor
 			}
 		}
 
-		//wprintf(L"HandleName: %s\n", device_interface_detail_data->DevicePath);
-
 		/* Open a handle to the device */
 		write_handle = open_device(device_interface_detail_data->DevicePath, TRUE);
 
@@ -370,7 +366,6 @@ struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned shor
 		/* Get the Vendor ID and Product ID for this device. */
 		attrib.Size = sizeof(HIDD_ATTRIBUTES);
 		HidD_GetAttributes(write_handle, &attrib);
-		//wprintf(L"Product/Vendor: %x %x\n", attrib.ProductID, attrib.VendorID);
 
 		/* Check the VID/PID to see if we should add this
 		   device to the enumeration list. */
@@ -380,11 +375,6 @@ struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned shor
 			#define WSTR_LEN 512
 			const char *str;
 			struct hid_device_info *tmp;
-			PHIDP_PREPARSED_DATA pp_data = NULL;
-			HIDP_CAPS caps;
-			BOOLEAN res;
-			NTSTATUS nt_res;
-			wchar_t wstr[WSTR_LEN]; /* TODO: Determine Size */
 			size_t len;
 
 			/* VID/PID match. Create the record. */
