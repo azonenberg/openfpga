@@ -324,22 +324,6 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 			/* VID/PID */
 			cur_dev->vendor_id = dev_vid;
 			cur_dev->product_id = dev_pid;
-
-			/* Serial Number */
-			cur_dev->serial_number = NULL;
-
-			/* Release Number */
-			cur_dev->release_number = 0x0;
-
-			/* Interface Number */
-			cur_dev->interface_number = -1;
-
-			/* Manufacturer and Product strings */
-			cur_dev->manufacturer_string = NULL;
-			cur_dev->product_string = NULL;
-
-			/* Release Number */
-			cur_dev->release_number = 0;
 		}
 
 	next:
@@ -361,9 +345,6 @@ void  HID_API_EXPORT hid_free_enumeration(struct hid_device_info *devs)
 	while (d) {
 		struct hid_device_info *next = d->next;
 		free(d->path);
-		free(d->serial_number);
-		free(d->manufacturer_string);
-		free(d->product_string);
 		free(d);
 		d = next;
 	}

@@ -437,10 +437,6 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 			}
 			cur_dev = tmp;
 
-			/* Get the Usage Page and Usage for this device. */
-			cur_dev->usage_page = get_int_property(dev, CFSTR(kIOHIDPrimaryUsagePageKey));
-			cur_dev->usage = get_int_property(dev, CFSTR(kIOHIDPrimaryUsageKey));
-
 			/* Fill out the record */
 			cur_dev->next = NULL;
 
@@ -452,25 +448,9 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 			else
 				cur_dev->path = strdup("");
 
-			/* Serial Number */
-			get_serial_number(dev, buf, BUF_LEN);
-			cur_dev->serial_number = dup_wcs(buf);
-
-			/* Manufacturer and Product strings */
-			get_manufacturer_string(dev, buf, BUF_LEN);
-			cur_dev->manufacturer_string = dup_wcs(buf);
-			get_product_string(dev, buf, BUF_LEN);
-			cur_dev->product_string = dup_wcs(buf);
-
 			/* VID/PID */
 			cur_dev->vendor_id = dev_vid;
 			cur_dev->product_id = dev_pid;
-
-			/* Release Number */
-			cur_dev->release_number = get_int_property(dev, CFSTR(kIOHIDVersionNumberKey));
-
-			/* Interface Number (Unsupported on Mac)*/
-			cur_dev->interface_number = -1;
 		}
 	}
 
@@ -487,9 +467,6 @@ void  HID_API_EXPORT hid_free_enumeration(struct hid_device_info *devs)
 	while (d) {
 		struct hid_device_info *next = d->next;
 		free(d->path);
-		free(d->serial_number);
-		free(d->manufacturer_string);
-		free(d->product_string);
 		free(d);
 		d = next;
 	}
