@@ -74,7 +74,6 @@ enum device_string_id {
 struct hid_device_ {
 	int device_handle;
 	int blocking;
-	int uses_numbered_reports;
 };
 
 
@@ -106,7 +105,6 @@ static hid_device *new_hid_device(void)
 	hid_device *dev = calloc(1, sizeof(hid_device));
 	dev->device_handle = -1;
 	dev->blocking = 1;
-	dev->uses_numbered_reports = 0;
 
 	return dev;
 }
@@ -135,68 +133,6 @@ static wchar_t *utf8_to_wchar_t(const char *utf8)
 static wchar_t *copy_udev_string(struct udev_device *dev, const char *udev_name)
 {
 	return utf8_to_wchar_t(udev_device_get_sysattr_value(dev, udev_name));
-}
-
-/* uses_numbered_reports() returns 1 if report_descriptor describes a device
-   which contains numbered reports. */
-static int uses_numbered_reports(__u8 *report_descriptor, __u32 size) {
-	unsigned int i = 0;
-	int size_code;
-	int data_len, key_size;
-
-	while (i < size) {
-		int key = report_descriptor[i];
-
-		/* Check for the Report ID key */
-		if (key == 0x85/*Report ID*/) {
-			/* This device has a Report ID, which means it uses
-			   numbered reports. */
-			return 1;
-		}
-
-		//printf("key: %02hhx\n", key);
-
-		if ((key & 0xf0) == 0xf0) {
-			/* This is a Long Item. The next byte contains the
-			   length of the data section (value) for this key.
-			   See the HID specification, version 1.11, section
-			   6.2.2.3, titled "Long Items." */
-			if (i+1 < size)
-				data_len = report_descriptor[i+1];
-			else
-				data_len = 0; /* malformed report */
-			key_size = 3;
-		}
-		else {
-			/* This is a Short Item. The bottom two bits of the
-			   key contain the size code for the data section
-			   (value) for this key.  Refer to the HID
-			   specification, version 1.11, section 6.2.2.2,
-			   titled "Short Items." */
-			size_code = key & 0x3;
-			switch (size_code) {
-			case 0:
-			case 1:
-			case 2:
-				data_len = size_code;
-				break;
-			case 3:
-				data_len = 4;
-				break;
-			default:
-				/* Can't ever happen since size_code is & 0x3 */
-				data_len = 0;
-				break;
-			};
-			key_size = 1;
-		}
-
-		/* Skip over this key and it's associated data */
-		i += data_len + key_size;
-	}
-
-	/* Didn't find a Report ID key. Device doesn't use numbered reports. */
-	return 0;
 }
 
 /*
@@ -613,11 +549,6 @@ hid_device * HID_API_EXPORT hid_open_path(const char *path)
 		res = ioctl(dev->device_handle, HIDIOCGRDESC, &rpt_desc);
 		if (res < 0) {
 			perror("HIDIOCGRDESC");
-		} else {
-			/* Determine if this device uses numbered reports. */
-			dev->uses_numbered_reports =
-				uses_numbered_reports(rpt_desc.value,
-				                      rpt_desc.size);
 		}
 
 		return dev;
@@ -673,15 +604,6 @@ int HID_API_EXPORT hid_read_timeout(hid_device *dev, unsigned char *data, size_t
 	bytes_read = read(dev->device_handle, data, length);
 	if (bytes_read < 0 && (errno == EAGAIN || errno == EINPROGRESS))
 		bytes_read = 0;
-
-	if (bytes_read >= 0 &&
-	    kernel_version != 0 &&
-	    kernel_version < KERNEL_VERSION(2,6,34) &&
-	    dev->uses_numbered_reports) {
-		/* Work around a kernel bug. Chop off the first byte. */
-		memmove(data, data+1, bytes_read);
-		bytes_read--;
-	}
 
 	return bytes_read;
 }
