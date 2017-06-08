@@ -128,6 +128,8 @@ pub struct XC2Macrocell {
 }
 
 impl Default for XC2Macrocell {
+    /// Returns a "default" macrocell configuration.
+    // XXX what should the default state be???
     fn default() -> XC2Macrocell {
         XC2Macrocell {
             clk_src: XC2MCRegClkSrc::GCK0,
@@ -145,6 +147,8 @@ impl Default for XC2Macrocell {
 }
 
 impl XC2Macrocell {
+    /// Dump a human-readable explanation of the settings for this macrocell to the given `writer` object.
+    /// `fb` and `ff` must be the function block number and macrocell number of this macrocell.
     pub fn dump_human_readable(&self, fb: u32, ff: u32, writer: &mut Write) {
         write!(writer, "\n").unwrap();
         write!(writer, "FF configuration for FB{}_{}\n", fb + 1, ff + 1).unwrap();
@@ -192,7 +196,7 @@ impl XC2Macrocell {
 }
 
 
-// Read only the FF-related bits
+///  Internal function that reads only the macrocell-related bits from the macrcocell configuration
 pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC2Macrocell {
     let aclk = fuses[block_idx + ff_idx * 27 + 0];
     let clk = (fuses[block_idx + ff_idx * 27 + 2],
