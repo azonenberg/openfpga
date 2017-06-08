@@ -29,7 +29,8 @@ use std::io::Write;
 
 use *;
 use pla::{read_and_term_logical, read_or_term_logical};
-use mc::{read_32_ff_logical, iob_num_to_fb_ff_num_32};
+use mc::{read_32_ff_logical};
+use iob::{iob_num_to_fb_ff_num_32};
 use zia::{read_32_zia_fb_row_logical};
 
 #[derive(Copy)]
@@ -178,33 +179,4 @@ pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2Bistrea
         zia_bits: zia_bits,
         ffs: ff_bits,
     })
-}
-
-// TODO: This is the same across all sizes, right?
-pub fn get_ctc() -> u32 {
-    4
-}
-
-pub fn get_ctr() -> u32 {
-    5
-}
-
-pub fn get_cts() -> u32 {
-    6
-}
-
-pub fn get_cte() -> u32 {
-    7
-}
-
-pub fn get_pta(mc: u32) -> u32 {
-    3 * mc + 8
-}
-
-pub fn get_ptb(mc: u32) -> u32 {
-    3 * mc + 9
-}
-
-pub fn get_ptc(mc: u32) -> u32 {
-    3 * mc + 10
 }

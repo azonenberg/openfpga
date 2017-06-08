@@ -29,7 +29,7 @@ use std::io::Write;
 
 use *;
 use fb::{read_32_fb_logical};
-use mc::{read_32_iob_logical, read_32_extra_ibuf_logical, fb_ff_num_to_iob_num_32};
+use iob::{read_32_iob_logical, read_32_extra_ibuf_logical, fb_ff_num_to_iob_num_32};
 use zia::{encode_32_zia_choice};
 
 pub struct XC2Bitstream {

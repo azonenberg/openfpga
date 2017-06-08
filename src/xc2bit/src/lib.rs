@@ -33,12 +33,15 @@ mod bitstream;
 pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets};
 
 mod fb;
-pub use fb::{XC2BistreamFB, get_ctc, get_ctr, get_cts, get_cte, get_pta, get_ptb, get_ptc};
+pub use fb::{XC2BistreamFB};
+
+mod iob;
+pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2MCOBufMode, XC2ExtraIBuf, iob_num_to_fb_ff_num_32,
+             fb_ff_num_to_iob_num_32};
 
 mod mc;
-pub use mc::{XC2MCFF, XC2MCSmallIOB, XC2MCFFClkSrc, XC2MCFFResetSrc, XC2MCFFSetSrc, XC2MCFFMode, XC2MCFeedbackMode,
-             XC2IOBZIAMode, XC2MCXorMode, XC2MCOBufMode, XC2ExtraIBuf, iob_num_to_fb_ff_num_32,
-             fb_ff_num_to_iob_num_32};
+pub use mc::{XC2MCFF, XC2MCFFClkSrc, XC2MCFFResetSrc, XC2MCFFSetSrc, XC2MCFFMode, XC2MCFeedbackMode,
+             XC2MCXorMode, get_ctc, get_ctr, get_cts, get_cte, get_pta, get_ptb, get_ptc};
 
 mod pla;
 pub use pla::{XC2PLAAndTerm, XC2PLAOrTerm};
