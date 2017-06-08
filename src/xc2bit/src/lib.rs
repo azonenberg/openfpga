@@ -63,7 +63,7 @@ pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, iob_nu
              fb_ff_num_to_iob_num_32};
 
 mod mc;
-pub use mc::{XC2MCFF, XC2MCFFClkSrc, XC2MCFFResetSrc, XC2MCFFSetSrc, XC2MCFFMode, XC2MCFeedbackMode,
+pub use mc::{XC2MCReg, XC2MCFFClkSrc, XC2MCFFResetSrc, XC2MCFFSetSrc, XC2MCFFMode, XC2MCFeedbackMode,
              XC2MCXorMode};
 
 mod pla;

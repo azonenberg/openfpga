@@ -23,10 +23,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Macrocell stuff
+//! Contains functions pertaining to macrocells
 
 use std::io::Write;
 
+/// Clock source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCFFClkSrc {
     GCK0,
@@ -36,6 +37,7 @@ pub enum XC2MCFFClkSrc {
     CTC,
 }
 
+/// Reset source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCFFResetSrc {
     Disabled,
@@ -44,6 +46,7 @@ pub enum XC2MCFFResetSrc {
     CTR,
 }
 
+/// Set source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCFFSetSrc {
     Disabled,
@@ -52,14 +55,21 @@ pub enum XC2MCFFSetSrc {
     CTS,
 }
 
+/// Mode of the register in a macrocell.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCFFMode {
+    /// D-type flip-flop
     DFF,
+    /// Transparent latch
     LATCH,
+    /// Toggle flip-flop
     TFF,
+    /// D-type flip-flop with clock-enable pin
     DFFCE,
 }
 
+/// Mux selection for the ZIA input from this macrocell. The ZIA input can be chosen to come from either the XOR gate
+/// or from the output of the register.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCFeedbackMode {
     Disabled,
@@ -67,16 +77,22 @@ pub enum XC2MCFeedbackMode {
     REG,
 }
 
+/// Mux selection for the "not from OR gate" input to the XOR gate. The XOR gate in a macrocell contains two inputs,
+/// the output of the corresponding OR term from the PLA and a specific dedicated AND term from the PLA.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCXorMode {
+    /// A constant zero which results in this XOR outputting the value of the OR term
     ZERO,
+    /// A constant one which results in this XOR outputting the complement of the OR term
     ONE,
+    /// XOR the OR term with the special product term C
     PTC,
+    /// XNOR the OR term with the special product term C
     PTCB,
 }
 
 #[derive(Copy, Clone)]
-pub struct XC2MCFF {
+pub struct XC2MCReg {
     pub clk_src: XC2MCFFClkSrc,
     // false = rising edge triggered, true = falling edge triggered
     pub falling_edge: bool,
@@ -93,9 +109,9 @@ pub struct XC2MCFF {
     pub xor_mode: XC2MCXorMode,
 }
 
-impl Default for XC2MCFF {
-    fn default() -> XC2MCFF {
-        XC2MCFF {
+impl Default for XC2MCReg {
+    fn default() -> XC2MCReg {
+        XC2MCReg {
             clk_src: XC2MCFFClkSrc::GCK0,
             falling_edge: false,
             is_ddr: false,
@@ -110,7 +126,7 @@ impl Default for XC2MCFF {
     }
 }
 
-impl XC2MCFF {
+impl XC2MCReg {
     pub fn dump_human_readable(&self, fb: u32, ff: u32, writer: &mut Write) {
         write!(writer, "\n").unwrap();
         write!(writer, "FF configuration for FB{}_{}\n", fb + 1, ff + 1).unwrap();
@@ -159,7 +175,7 @@ impl XC2MCFF {
 
 
 // Read only the FF-related bits
-pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC2MCFF {
+pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC2MCReg {
     let aclk = fuses[block_idx + ff_idx * 27 + 0];
     let clk = (fuses[block_idx + ff_idx * 27 + 2],
                fuses[block_idx + ff_idx * 27 + 3]);
@@ -225,7 +241,7 @@ pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC
 
     let pu = fuses[block_idx + ff_idx * 27 + 26];
 
-    XC2MCFF {
+    XC2MCReg {
         clk_src: clk_src,
         falling_edge: clkop,
         is_ddr: clkfreq,

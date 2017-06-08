@@ -38,7 +38,7 @@ pub struct XC2BistreamFB {
     pub and_terms: [XC2PLAAndTerm; ANDTERMS_PER_FB],
     pub or_terms: [XC2PLAOrTerm; MCS_PER_FB],
     pub zia_bits: [XC2ZIARowPiece; INPUTS_PER_ANDTERM],
-    pub ffs: [XC2MCFF; MCS_PER_FB],
+    pub ffs: [XC2MCReg; MCS_PER_FB],
 }
 
 impl Clone for XC2BistreamFB {
@@ -51,7 +51,7 @@ impl Default for XC2BistreamFB {
             and_terms: [XC2PLAAndTerm::default(); ANDTERMS_PER_FB],
             or_terms: [XC2PLAOrTerm::default(); MCS_PER_FB],
             zia_bits: [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM],
-            ffs: [XC2MCFF::default(); MCS_PER_FB],
+            ffs: [XC2MCReg::default(); MCS_PER_FB],
         }
     }
 }
@@ -162,7 +162,7 @@ pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2Bistrea
         zia_bits[i] = result.unwrap();
     }
 
-    let mut ff_bits = [XC2MCFF::default(); MCS_PER_FB];
+    let mut ff_bits = [XC2MCReg::default(); MCS_PER_FB];
     let ff_block_idx = match block_idx {
         0 => 5696,
         1 => 11824,
