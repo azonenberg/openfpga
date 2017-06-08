@@ -91,34 +91,52 @@ pub enum XC2MCXorMode {
     PTCB,
 }
 
+/// Represents a macrocell.
 #[derive(Copy, Clone)]
-pub struct XC2MCReg {
+pub struct XC2Macrocell {
+    /// Clock source for the register
     pub clk_src: XC2MCRegClkSrc,
-    // false = rising edge triggered, true = falling edge triggered
-    pub falling_edge: bool,
+    /// Specifies the clock polarity for the register
+    ///
+    /// `false` = rising edge triggered flip-flop, transparent-when-high latch
+    ///
+    /// `true` = falling edge triggered flip-flop, transparent-when-low latch
+    pub clk_invert_pol: bool,
+    /// Specifies whether flip-flop are triggered on both clock edges
+    ///
+    /// It is currently unknown what happens when this is used on a transparent latch
     pub is_ddr: bool,
+    /// Reset source for the register
     pub r_src: XC2MCRegResetSrc,
+    /// Set source for the register
     pub s_src: XC2MCRegSetSrc,
-    // false = init to 0, true = init to 1
+    /// Power-up state of the register
+    ///
+    /// `false` = init to 0, `true` = init to 1
     pub init_state: bool,
-    pub ff_mode: XC2MCRegMode,
+    /// Register mode
+    pub reg_mode: XC2MCRegMode,
+    /// ZIA input mode for feedback from this macrocell
     pub fb_mode: XC2MCFeedbackMode,
-    // false = use xor gate/PLA, true = use IOB direct path
-    // true is illegal for buried FFs
+    /// Controls the input for the register
+    ///
+    /// `false` = use the output of the XOR gate (combinatorial path), `true` = use IOB direct path
+    /// (`true` is illegal for buried macrocells in the larger devices)
     pub ff_in_ibuf: bool,
+    /// Controls the "other" (not from the OR term) input to the XOR gate
     pub xor_mode: XC2MCXorMode,
 }
 
-impl Default for XC2MCReg {
-    fn default() -> XC2MCReg {
-        XC2MCReg {
+impl Default for XC2Macrocell {
+    fn default() -> XC2Macrocell {
+        XC2Macrocell {
             clk_src: XC2MCRegClkSrc::GCK0,
-            falling_edge: false,
+            clk_invert_pol: false,
             is_ddr: false,
             r_src: XC2MCRegResetSrc::Disabled,
             s_src: XC2MCRegSetSrc::Disabled,
             init_state: true,
-            ff_mode: XC2MCRegMode::DFF,
+            reg_mode: XC2MCRegMode::DFF,
             fb_mode: XC2MCFeedbackMode::Disabled,
             ff_in_ibuf: false,
             xor_mode: XC2MCXorMode::ZERO,
@@ -126,18 +144,18 @@ impl Default for XC2MCReg {
     }
 }
 
-impl XC2MCReg {
+impl XC2Macrocell {
     pub fn dump_human_readable(&self, fb: u32, ff: u32, writer: &mut Write) {
         write!(writer, "\n").unwrap();
         write!(writer, "FF configuration for FB{}_{}\n", fb + 1, ff + 1).unwrap();
-        write!(writer, "FF mode: {}\n", match self.ff_mode {
+        write!(writer, "FF mode: {}\n", match self.reg_mode {
             XC2MCRegMode::DFF => "D flip-flop",
             XC2MCRegMode::LATCH => "transparent latch",
             XC2MCRegMode::TFF => "T flip-flop",
             XC2MCRegMode::DFFCE => "D flip-flop with clock-enable",
         }).unwrap();
         write!(writer, "initial state: {}\n", if self.init_state {1} else {0}).unwrap();
-        write!(writer, "{}-edge triggered\n", if self.falling_edge {"falling"} else {"rising"}).unwrap();
+        write!(writer, "{}-edge triggered\n", if self.clk_invert_pol {"falling"} else {"rising"}).unwrap();
         write!(writer, "DDR: {}\n", if self.is_ddr {"yes"} else {"no"}).unwrap();
         write!(writer, "clock source: {}\n", match self.clk_src {
             XC2MCRegClkSrc::GCK0 => "GCK0",
@@ -175,7 +193,7 @@ impl XC2MCReg {
 
 
 // Read only the FF-related bits
-pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC2MCReg {
+pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC2Macrocell {
     let aclk = fuses[block_idx + ff_idx * 27 + 0];
     let clk = (fuses[block_idx + ff_idx * 27 + 2],
                fuses[block_idx + ff_idx * 27 + 3]);
@@ -213,7 +231,7 @@ pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC
 
     let regmod = (fuses[block_idx + ff_idx * 27 + 9],
                   fuses[block_idx + ff_idx * 27 + 10]);
-    let ff_mode = match regmod {
+    let reg_mode = match regmod {
         (false, false) => XC2MCRegMode::DFF,
         (false, true)  => XC2MCRegMode::LATCH,
         (true, false)  => XC2MCRegMode::TFF,
@@ -241,14 +259,14 @@ pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC
 
     let pu = fuses[block_idx + ff_idx * 27 + 26];
 
-    XC2MCReg {
+    XC2Macrocell {
         clk_src: clk_src,
-        falling_edge: clkop,
+        clk_invert_pol: clkop,
         is_ddr: clkfreq,
         r_src: reset_mode,
         s_src: set_mode,
         init_state: !pu,
-        ff_mode: ff_mode,
+        reg_mode: reg_mode,
         fb_mode: fb_mode,
         ff_in_ibuf: !inreg,
         xor_mode: xormode,

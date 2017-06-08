@@ -335,7 +335,7 @@ impl XC2BitstreamBits {
                         }).unwrap();
 
                         // clkop
-                        write!(writer, "{}", if fb[fb_i].ffs[i].falling_edge {"1"} else {"0"}).unwrap();
+                        write!(writer, "{}", if fb[fb_i].ffs[i].clk_invert_pol {"1"} else {"0"}).unwrap();
 
                         // clk
                         write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
@@ -365,7 +365,7 @@ impl XC2BitstreamBits {
                         }).unwrap();
 
                         // regmod
-                        write!(writer, "{}", match fb[fb_i].ffs[i].ff_mode {
+                        write!(writer, "{}", match fb[fb_i].ffs[i].reg_mode {
                             XC2MCRegMode::DFF => "00",
                             XC2MCRegMode::LATCH => "01",
                             XC2MCRegMode::TFF => "10",
