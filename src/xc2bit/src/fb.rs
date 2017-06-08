@@ -23,31 +23,31 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Function block
+//! Contains functions pertaining to function blocks
 
 use std::io::Write;
 
 use *;
 use pla::{read_and_term_logical, read_or_term_logical};
 use mc::{read_32_ff_logical};
-use iob::{iob_num_to_fb_ff_num_32};
 use zia::{read_32_zia_fb_row_logical};
 
+/// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
-pub struct XC2BistreamFB {
+pub struct XC2BitstreamFB {
     pub and_terms: [XC2PLAAndTerm; ANDTERMS_PER_FB],
     pub or_terms: [XC2PLAOrTerm; MCS_PER_FB],
     pub zia_bits: [XC2ZIARowPiece; INPUTS_PER_ANDTERM],
     pub ffs: [XC2Macrocell; MCS_PER_FB],
 }
 
-impl Clone for XC2BistreamFB {
-    fn clone(&self) -> XC2BistreamFB {*self}
+impl Clone for XC2BitstreamFB {
+    fn clone(&self) -> XC2BitstreamFB {*self}
 }
 
-impl Default for XC2BistreamFB {
-    fn default() -> XC2BistreamFB {
-        XC2BistreamFB {
+impl Default for XC2BitstreamFB {
+    fn default() -> XC2BitstreamFB {
+        XC2BitstreamFB {
             and_terms: [XC2PLAAndTerm::default(); ANDTERMS_PER_FB],
             or_terms: [XC2PLAOrTerm::default(); MCS_PER_FB],
             zia_bits: [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM],
@@ -56,7 +56,7 @@ impl Default for XC2BistreamFB {
     }
 }
 
-impl XC2BistreamFB {
+impl XC2BitstreamFB {
     pub fn dump_human_readable(&self, fb: u32, writer: &mut Write) {
         for i in 0..MCS_PER_FB {
             self.ffs[i].dump_human_readable(fb, i as u32, writer);
@@ -127,7 +127,7 @@ impl XC2BistreamFB {
 }
 
 
-pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2BistreamFB, &'static str> {
+pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2BitstreamFB, &'static str> {
     let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
     let and_block_idx = match block_idx {
         0 => 320,
@@ -173,7 +173,7 @@ pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2Bistrea
     }
 
 
-    Ok(XC2BistreamFB {
+    Ok(XC2BitstreamFB {
         and_terms: and_terms,
         or_terms: or_terms,
         zia_bits: zia_bits,

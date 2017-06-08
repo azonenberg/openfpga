@@ -76,7 +76,7 @@ impl XC2Bitstream {
                     speed_grade: speed_grade.to_owned(),
                     package: package.to_owned(),
                     bits: XC2BitstreamBits::XC2C32 {
-                        fb: [XC2BistreamFB::default(); 2],
+                        fb: [XC2BitstreamFB::default(); 2],
                         iobs: [XC2MCSmallIOB::default(); 32],
                         inpin: XC2ExtraIBuf::default(),
                         global_nets: XC2GlobalNets::default(),
@@ -90,7 +90,7 @@ impl XC2Bitstream {
                     speed_grade: speed_grade.to_owned(),
                     package: package.to_owned(),
                     bits: XC2BitstreamBits::XC2C32A {
-                        fb: [XC2BistreamFB::default(); 2],
+                        fb: [XC2BitstreamFB::default(); 2],
                         iobs: [XC2MCSmallIOB::default(); 32],
                         inpin: XC2ExtraIBuf::default(),
                         global_nets: XC2GlobalNets::default(),
@@ -186,7 +186,7 @@ fn read_32_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
 
 pub enum XC2BitstreamBits {
     XC2C32 {
-        fb: [XC2BistreamFB; 2],
+        fb: [XC2BitstreamFB; 2],
         iobs: [XC2MCSmallIOB; 32],
         inpin: XC2ExtraIBuf,
         global_nets: XC2GlobalNets,
@@ -195,7 +195,7 @@ pub enum XC2BitstreamBits {
         ovoltage: bool,
     },
     XC2C32A {
-        fb: [XC2BistreamFB; 2],
+        fb: [XC2BitstreamFB; 2],
         iobs: [XC2MCSmallIOB; 32],
         inpin: XC2ExtraIBuf,
         global_nets: XC2GlobalNets,
@@ -476,7 +476,7 @@ impl XC2BitstreamBits {
 }
 
 pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
-    let mut fb = [XC2BistreamFB::default(); 2];
+    let mut fb = [XC2BitstreamFB::default(); 2];
     for i in 0..fb.len() {
         let res = read_32_fb_logical(fuses, i);
         if let Err(err) = res {
@@ -515,7 +515,7 @@ pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 
 
 pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
-    let mut fb = [XC2BistreamFB::default(); 2];
+    let mut fb = [XC2BitstreamFB::default(); 2];
     for i in 0..fb.len() {
         let res = read_32_fb_logical(fuses, i);
         if let Err(err) = res {
