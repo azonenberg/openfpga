@@ -29,9 +29,10 @@ use std::io::Write;
 
 use *;
 use fb::{read_32_fb_logical};
-use iob::{read_32_iob_logical, read_32_extra_ibuf_logical, fb_ff_num_to_iob_num_32};
+use iob::{read_32_iob_logical, read_32_extra_ibuf_logical};
 use zia::{encode_32_zia_choice};
 
+/// Toplevel struct representing an entire Coolrunner-II bitstream
 pub struct XC2Bitstream {
     pub speed_grade: String,
     pub package: String,
@@ -39,6 +40,7 @@ pub struct XC2Bitstream {
 }
 
 impl XC2Bitstream {
+    /// Dump a human-readable explanation of the bitstream to the given `writer` object.
     pub fn dump_human_readable(&self, writer: &mut Write) {
         write!(writer, "xc2bit dump\n").unwrap();
         write!(writer, "device speed grade: {}\n", self.speed_grade).unwrap();
@@ -46,6 +48,7 @@ impl XC2Bitstream {
         self.bits.dump_human_readable(writer);
     }
 
+    /// Write a .jed representation of the bitstream to the given `writer` object.
     pub fn write_jed(&self, writer: &mut Write) {
         write!(writer, ".JED fuse map written by xc2bit\n").unwrap();
         write!(writer, "https://github.com/azonenberg/openfpga\n\n").unwrap();
@@ -67,6 +70,7 @@ impl XC2Bitstream {
         write!(writer, "\x030000\n").unwrap();
     }
 
+    /// Construct a new blank bitstream of the given part
     pub fn blank_bitstream(device: &str, speed_grade: &str, package: &str) -> Result<XC2Bitstream, &'static str> {
         // TODO: Validate speed_grade and package
 
@@ -106,19 +110,31 @@ impl XC2Bitstream {
     }
 }
 
+/// Represents the configuration of the global nets. Coolrunner-II parts have various global control signals that have
+/// dedicated low-skew paths.
 pub struct XC2GlobalNets {
+    /// Controls whether the three global clock nets are enabled or not
     pub gck_enable: [bool; 3],
+    /// Controls whether the global set/reset net is enabled or not
     pub gsr_enable: bool,
-    // false = active low, true = active high
+    /// Controls the polarity of the global set/reset signal
+    ///
+    /// `false` = active low, `true` = active high
     pub gsr_invert: bool,
+    /// Controls whether the four global tristate nets are enabled or not
     pub gts_enable: [bool; 4],
-    // false = used as T, true = used as !T
+    /// Controls the polarity of the global tristate signal
+    ///
+    /// `false` = used as T, `true` = used as !T
     pub gts_invert: [bool; 4],
-    // false = keeper, true = pull-up
+    /// Controls the mode of the global termination
+    ///
+    /// `false` = keeper, `true` = pull-up
     pub global_pu: bool,
 }
 
 impl Default for XC2GlobalNets {
+    /// Returns a "default" global net configuration which has everything disabled.
     fn default() -> XC2GlobalNets {
         XC2GlobalNets {
             gck_enable: [false; 3],
@@ -132,6 +148,7 @@ impl Default for XC2GlobalNets {
 }
 
 impl XC2GlobalNets {
+    /// Dump a human-readable explanation of the global net configuration to the given `writer` object.
     pub fn dump_human_readable(&self, writer: &mut Write) {
         write!(writer, "\n").unwrap();
         write!(writer, "GCK0 {}\n", if self.gck_enable[0] {"enabled"} else {"disabled"}).unwrap();
@@ -159,6 +176,7 @@ impl XC2GlobalNets {
     }
 }
 
+/// Internal function to read the global nets from a 32-macrocell part
 fn read_32_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
     XC2GlobalNets {
         gck_enable: [
