@@ -56,7 +56,7 @@ mod bitstream;
 pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets};
 
 mod fb;
-pub use fb::{XC2BistreamFB};
+pub use fb::{XC2BistreamFB, get_ctc, get_ctr, get_cts, get_cte, get_pta, get_ptb, get_ptc};
 
 mod iob;
 pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, iob_num_to_fb_ff_num_32,
@@ -64,7 +64,7 @@ pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, iob_nu
 
 mod mc;
 pub use mc::{XC2MCFF, XC2MCFFClkSrc, XC2MCFFResetSrc, XC2MCFFSetSrc, XC2MCFFMode, XC2MCFeedbackMode,
-             XC2MCXorMode, get_ctc, get_ctr, get_cts, get_cte, get_pta, get_ptb, get_ptc};
+             XC2MCXorMode};
 
 mod pla;
 pub use pla::{XC2PLAAndTerm, XC2PLAOrTerm};
