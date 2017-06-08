@@ -33,11 +33,11 @@ use *;
 pub struct XC2PLAAndTerm {
     /// Indicates whether a particular ZIA row output is a part of this AND term.
     ///
-    /// true = part of and, false = not part of and
+    /// `true` = part of and, `false` = not part of and
     pub input: [bool; INPUTS_PER_ANDTERM],
     /// Indicates whether the complement of a particular ZIA row output is a part of this AND term.
     ///
-    /// true = part of and, false = not part of and
+    /// `true` = part of and, `false` = not part of and
     pub input_b: [bool; INPUTS_PER_ANDTERM],
 }
 
@@ -61,7 +61,7 @@ impl Default for XC2PLAAndTerm {
 pub struct XC2PLAOrTerm {
     /// Indicates whether a particular PLA AND term is a part of this OR term.
     ///
-    /// true = part of or, false = not part of or
+    /// `true` = part of or, `false` = not part of or
     pub input: [bool; ANDTERMS_PER_FB],
 }
 

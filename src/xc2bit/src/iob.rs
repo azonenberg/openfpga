@@ -23,12 +23,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// I/Os
+//! Contains functions pertaining to the I/O pins
 
 use std::io::Write;
 
 use *;
 
+/// Mux selection for the ZIA input from this I/O pin's input. The ZIA input can be chosen to come from either the
+/// input pin directly or from the output of the register in the macrocell corresponding to this I/O pin. The latter
+/// is used to allow for buried combinatorial feedback in a macrocell without "wasting" the register.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2IOBZIAMode {
     Disabled,
@@ -36,6 +39,7 @@ pub enum XC2IOBZIAMode {
     REG,
 }
 
+/// Mode selection for the I/O pin's output buffer. See the Xilinx Coolrunner-II documentation for more information.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCOBufMode {
     Disabled,
@@ -50,18 +54,30 @@ pub enum XC2MCOBufMode {
     CGND,
 }
 
+/// Represents an I/O pin on "small" (32 and 64 macrocell) devices.
 #[derive(Copy, Clone)]
 pub struct XC2MCSmallIOB {
+    /// Mux selection for the ZIA input for this pin
     pub zia_mode: XC2IOBZIAMode,
+    /// Whether the Schmitt trigger is being used on this pin's input
     pub schmitt_trigger: bool,
-    // false = uses xor gate, true = uses FF output
+    /// Selects the source used to drive this pin's output (if the output is enabled).
+    /// `false` selects the XOR gate in the macrocell (combinatorial output), and `true` selects the register output
+    /// (registered output).
     pub obuf_uses_ff: bool,
+    /// Selects the output mode for this pin
     pub obuf_mode: XC2MCOBufMode,
+    /// Selects if the global termination (bus hold or pull-up) is enabled on this pin
     pub termination_enabled: bool,
+    /// Selects if fast slew rate is used on this pin
     pub slew_is_fast: bool,
 }
 
 impl Default for XC2MCSmallIOB {
+    /// Returns a "default" I/O pin configuration. The default state is for the output and the input into the ZIA
+    /// to be disabled.
+
+    // FIXME: Do the other defaults come from the particular way I invoked the Xilinx tools??
     fn default() -> XC2MCSmallIOB {
         XC2MCSmallIOB {
             zia_mode: XC2IOBZIAMode::Disabled,
@@ -75,6 +91,8 @@ impl Default for XC2MCSmallIOB {
 }
 
 impl XC2MCSmallIOB {
+    /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
+    /// `my_idx` must be the index of this I/O pin in the internal numbering scheme.
     pub fn dump_human_readable(&self, my_idx: u32, writer: &mut Write) {
         write!(writer, "\n").unwrap();
         let (fb, ff) = iob_num_to_fb_ff_num_32(my_idx).unwrap();
@@ -103,13 +121,16 @@ impl XC2MCSmallIOB {
     }
 }
 
-// Weird additional input-only pin
+/// Represents the one additional special input-only pin on 32-macrocell devices.
 pub struct XC2ExtraIBuf {
     pub schmitt_trigger: bool,
     pub termination_enabled: bool,
 }
 
 impl Default for XC2ExtraIBuf {
+    /// Returns a "default" pin configuration.
+
+    // FIXME: Do the other defaults come from the particular way I invoked the Xilinx tools??
     fn default() -> XC2ExtraIBuf {
         XC2ExtraIBuf {
             schmitt_trigger: true,
@@ -119,6 +140,7 @@ impl Default for XC2ExtraIBuf {
 }
 
 impl XC2ExtraIBuf {
+    /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
     pub fn dump_human_readable(&self, writer: &mut Write) {
         write!(writer, "\n").unwrap();
         write!(writer, "I/O configuration for input-only pin\n").unwrap();
@@ -127,6 +149,8 @@ impl XC2ExtraIBuf {
     }
 }
 
+/// Function to map from the internal numbering scheme for I/O pins to a function block and macrocell number.
+/// This function is for the 32-macrocell devices.
 pub fn iob_num_to_fb_ff_num_32(iob: u32) -> Option<(u32, u32)> {
     if iob >= 32 {
         None
@@ -135,6 +159,8 @@ pub fn iob_num_to_fb_ff_num_32(iob: u32) -> Option<(u32, u32)> {
     }
 }
 
+/// Function to map from a function block and macrocell number to the internal numbering scheme for I/O pins.
+/// This function is for the 32-macrocell devices.
 pub fn fb_ff_num_to_iob_num_32(fb: u32, ff: u32) -> Option<u32> {
     if fb >= 2 || ff >= MCS_PER_FB as u32 {
         None
@@ -143,7 +169,7 @@ pub fn fb_ff_num_to_iob_num_32(fb: u32, ff: u32) -> Option<u32> {
     }
 }
 
-// Read only the IO-related bits
+/// Internal function that reads only the IO-related bits from the macrocell configuration
 pub fn read_32_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -> Result<XC2MCSmallIOB, &'static str> {
     let inz = (fuses[block_idx + io_idx * 27 + 11],
                fuses[block_idx + io_idx * 27 + 12]);
@@ -187,6 +213,7 @@ pub fn read_32_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -> R
     })
 }
 
+/// Internal function that reads only the input-only pin configuration
 pub fn read_32_extra_ibuf_logical(fuses: &[bool]) -> XC2ExtraIBuf {
     let st = fuses[12272];
     let tm = fuses[12273];
