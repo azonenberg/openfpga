@@ -23,14 +23,21 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// PLA stuff
+//! Contains functions pertaining to the PLA
 
 use *;
 
+/// Represents one single AND term in the PLA. Each AND term can perform an AND function on any subset of its inputs
+/// and the complement of those inputs. The index for each input is the corresponding ZIA row.
 #[derive(Copy)]
 pub struct XC2PLAAndTerm {
-    // true = part of and, false = not part of and
+    /// Indicates whether a particular ZIA row output is a part of this AND term.
+    ///
+    /// true = part of and, false = not part of and
     pub input: [bool; INPUTS_PER_ANDTERM],
+    /// Indicates whether the complement of a particular ZIA row output is a part of this AND term.
+    ///
+    /// true = part of and, false = not part of and
     pub input_b: [bool; INPUTS_PER_ANDTERM],
 }
 
@@ -39,6 +46,7 @@ impl Clone for XC2PLAAndTerm {
 }
 
 impl Default for XC2PLAAndTerm {
+    /// Returns a "default" AND term. The default state is for none of the inputs to be selected.
     fn default() -> XC2PLAAndTerm {
         XC2PLAAndTerm {
             input: [false; INPUTS_PER_ANDTERM],
@@ -47,9 +55,13 @@ impl Default for XC2PLAAndTerm {
     }
 }
 
+/// Represents one single OR term in the PLA. Each OR term can perform an OR function on any subset of its inputs.
+/// The index for each input is the index of the corresponding AND term in the same PLA.
 #[derive(Copy)]
 pub struct XC2PLAOrTerm {
-    // true = part of or, false = not part of or
+    /// Indicates whether a particular PLA AND term is a part of this OR term.
+    ///
+    /// true = part of or, false = not part of or
     pub input: [bool; ANDTERMS_PER_FB],
 }
 
@@ -58,6 +70,7 @@ impl Clone for XC2PLAOrTerm {
 }
 
 impl Default for XC2PLAOrTerm {
+    /// Returns a "default" OR term. The default state is for none of the inputs to be selected.
     fn default() -> XC2PLAOrTerm {
         XC2PLAOrTerm {
             input: [false; ANDTERMS_PER_FB],
@@ -65,6 +78,7 @@ impl Default for XC2PLAOrTerm {
     }
 }
 
+/// Internal function that reads one single AND term from a block of fuses using logical fuse indexing
 pub fn read_and_term_logical(fuses: &[bool], block_idx: usize, term_idx: usize) -> XC2PLAAndTerm {
     let mut input = [false; INPUTS_PER_ANDTERM];
     let mut input_b = [false; INPUTS_PER_ANDTERM];
@@ -80,6 +94,7 @@ pub fn read_and_term_logical(fuses: &[bool], block_idx: usize, term_idx: usize) 
     }
 }
 
+/// Internal function that reads one single OR term from a block of fuses using logical fuse indexing
 pub fn read_or_term_logical(fuses: &[bool], block_idx: usize, term_idx: usize) -> XC2PLAOrTerm {
     let mut input = [false; ANDTERMS_PER_FB];
 
