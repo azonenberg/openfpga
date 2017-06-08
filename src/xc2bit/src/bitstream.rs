@@ -405,16 +405,16 @@ impl XC2BitstreamBits {
 
                         // oe
                         write!(writer, "{}", match iobs[iob].obuf_mode {
-                            XC2MCOBufMode::PushPull => "0000",
-                            XC2MCOBufMode::OpenDrain => "0001",
-                            XC2MCOBufMode::TriStateGTS1 => "0010",
-                            XC2MCOBufMode::TriStatePTB => "0100",
-                            XC2MCOBufMode::TriStateGTS3 => "0110",
-                            XC2MCOBufMode::TriStateCTE => "1000",
-                            XC2MCOBufMode::TriStateGTS2 => "1010",
-                            XC2MCOBufMode::TriStateGTS0 => "1100",
-                            XC2MCOBufMode::CGND => "1110",
-                            XC2MCOBufMode::Disabled => "1111",
+                            XC2IOBOBufMode::PushPull => "0000",
+                            XC2IOBOBufMode::OpenDrain => "0001",
+                            XC2IOBOBufMode::TriStateGTS1 => "0010",
+                            XC2IOBOBufMode::TriStatePTB => "0100",
+                            XC2IOBOBufMode::TriStateGTS3 => "0110",
+                            XC2IOBOBufMode::TriStateCTE => "1000",
+                            XC2IOBOBufMode::TriStateGTS2 => "1010",
+                            XC2IOBOBufMode::TriStateGTS0 => "1100",
+                            XC2IOBOBufMode::CGND => "1110",
+                            XC2IOBOBufMode::Disabled => "1111",
                         }).unwrap();
 
                         // tm

@@ -41,7 +41,7 @@ pub enum XC2IOBZIAMode {
 
 /// Mode selection for the I/O pin's output buffer. See the Xilinx Coolrunner-II documentation for more information.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum XC2MCOBufMode {
+pub enum XC2IOBOBufMode {
     Disabled,
     PushPull,
     OpenDrain,
@@ -66,7 +66,7 @@ pub struct XC2MCSmallIOB {
     /// (registered output).
     pub obuf_uses_ff: bool,
     /// Selects the output mode for this pin
-    pub obuf_mode: XC2MCOBufMode,
+    pub obuf_mode: XC2IOBOBufMode,
     /// Selects if the global termination (bus hold or pull-up) is enabled on this pin
     pub termination_enabled: bool,
     /// Selects if fast slew rate is used on this pin
@@ -83,7 +83,7 @@ impl Default for XC2MCSmallIOB {
             zia_mode: XC2IOBZIAMode::Disabled,
             schmitt_trigger: true,
             obuf_uses_ff: false,
-            obuf_mode: XC2MCOBufMode::Disabled,
+            obuf_mode: XC2IOBOBufMode::Disabled,
             termination_enabled: true,
             slew_is_fast: true,
         }
@@ -98,16 +98,16 @@ impl XC2MCSmallIOB {
         let (fb, ff) = iob_num_to_fb_ff_num_32(my_idx).unwrap();
         write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, ff + 1).unwrap();
         write!(writer, "output mode: {}\n", match self.obuf_mode {
-            XC2MCOBufMode::Disabled => "disabled",
-            XC2MCOBufMode::PushPull => "push-pull",
-            XC2MCOBufMode::OpenDrain => "open-drain",
-            XC2MCOBufMode::TriStateGTS0 => "GTS0-controlled tri-state",
-            XC2MCOBufMode::TriStateGTS1 => "GTS1-controlled tri-state",
-            XC2MCOBufMode::TriStateGTS2 => "GTS2-controlled tri-state",
-            XC2MCOBufMode::TriStateGTS3 => "GTS3-controlled tri-state",
-            XC2MCOBufMode::TriStatePTB => "PTB-controlled tri-state",
-            XC2MCOBufMode::TriStateCTE => "CTE-controlled tri-state",
-            XC2MCOBufMode::CGND => "CGND",
+            XC2IOBOBufMode::Disabled => "disabled",
+            XC2IOBOBufMode::PushPull => "push-pull",
+            XC2IOBOBufMode::OpenDrain => "open-drain",
+            XC2IOBOBufMode::TriStateGTS0 => "GTS0-controlled tri-state",
+            XC2IOBOBufMode::TriStateGTS1 => "GTS1-controlled tri-state",
+            XC2IOBOBufMode::TriStateGTS2 => "GTS2-controlled tri-state",
+            XC2IOBOBufMode::TriStateGTS3 => "GTS3-controlled tri-state",
+            XC2IOBOBufMode::TriStatePTB => "PTB-controlled tri-state",
+            XC2IOBOBufMode::TriStateCTE => "CTE-controlled tri-state",
+            XC2IOBOBufMode::CGND => "CGND",
         }).unwrap();
         write!(writer, "output comes from {}\n", if self.obuf_uses_ff {"FF"} else {"XOR gate"}).unwrap();
         write!(writer, "slew rate: {}\n", if self.slew_is_fast {"fast"} else {"slow"}).unwrap();
@@ -187,16 +187,16 @@ pub fn read_32_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -> R
               fuses[block_idx + io_idx * 27 + 22],
               fuses[block_idx + io_idx * 27 + 23]);
     let output_mode = match oe {
-        (false, false, false, false) => XC2MCOBufMode::PushPull,
-        (false, false, false, true)  => XC2MCOBufMode::OpenDrain,
-        (false, false, true, false)  => XC2MCOBufMode::TriStateGTS1,
-        (false, true, false, false)  => XC2MCOBufMode::TriStatePTB,
-        (false, true, true, false)   => XC2MCOBufMode::TriStateGTS3,
-        (true, false, false, false)  => XC2MCOBufMode::TriStateCTE,
-        (true, false, true, false)   => XC2MCOBufMode::TriStateGTS2,
-        (true, true, false, false)   => XC2MCOBufMode::TriStateGTS0,
-        (true, true, true, false)    => XC2MCOBufMode::CGND,
-        (true, true, true, true)     => XC2MCOBufMode::Disabled,
+        (false, false, false, false) => XC2IOBOBufMode::PushPull,
+        (false, false, false, true)  => XC2IOBOBufMode::OpenDrain,
+        (false, false, true, false)  => XC2IOBOBufMode::TriStateGTS1,
+        (false, true, false, false)  => XC2IOBOBufMode::TriStatePTB,
+        (false, true, true, false)   => XC2IOBOBufMode::TriStateGTS3,
+        (true, false, false, false)  => XC2IOBOBufMode::TriStateCTE,
+        (true, false, true, false)   => XC2IOBOBufMode::TriStateGTS2,
+        (true, true, false, false)   => XC2IOBOBufMode::TriStateGTS0,
+        (true, true, true, false)    => XC2IOBOBufMode::CGND,
+        (true, true, true, true)     => XC2IOBOBufMode::Disabled,
         _ => return Err("unknown Oe mode used"),
     };
 
