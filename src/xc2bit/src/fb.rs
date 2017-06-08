@@ -35,9 +35,13 @@ use zia::{read_32_zia_fb_row_logical};
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
 pub struct XC2BitstreamFB {
+    /// The AND terms of the PLA part of the function block
     pub and_terms: [XC2PLAAndTerm; ANDTERMS_PER_FB],
+    /// The OR terms of the PLA part of the function block
     pub or_terms: [XC2PLAOrTerm; MCS_PER_FB],
+    /// The inputs to the function block from the ZIA
     pub zia_bits: [XC2ZIARowPiece; INPUTS_PER_ANDTERM],
+    /// The macrocells of the function block
     pub ffs: [XC2Macrocell; MCS_PER_FB],
 }
 
@@ -57,6 +61,8 @@ impl Default for XC2BitstreamFB {
 }
 
 impl XC2BitstreamFB {
+    /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
+    /// `fb` must be the index of this function block.
     pub fn dump_human_readable(&self, fb: u32, writer: &mut Write) {
         for i in 0..MCS_PER_FB {
             self.ffs[i].dump_human_readable(fb, i as u32, writer);
@@ -126,7 +132,7 @@ impl XC2BitstreamFB {
     }
 }
 
-
+/// Internal function that reads a function block for 32-macrocell devices
 pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2BitstreamFB, &'static str> {
     let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
     let and_block_idx = match block_idx {
@@ -182,30 +188,30 @@ pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2Bitstre
 }
 
 // TODO: This is the same across all sizes, right?
-pub fn get_ctc() -> u32 {
-    4
-}
 
-pub fn get_ctr() -> u32 {
-    5
-}
+/// The index of the special CTC product term
+pub const CTC: u32 = 4;
 
-pub fn get_cts() -> u32 {
-    6
-}
+/// The index of the special CTR product term
+pub const CTR: u32 = 5;
 
-pub fn get_cte() -> u32 {
-    7
-}
+/// The index of the special CTS product term
+pub const CTS: u32 = 6;
 
+/// The index of the special CTE product term
+pub const CTE: u32 = 7;
+
+/// Returns the special PTA product term given a macrocell index
 pub fn get_pta(mc: u32) -> u32 {
     3 * mc + 8
 }
 
+/// Returns the special PTB product term given a macrocell index
 pub fn get_ptb(mc: u32) -> u32 {
     3 * mc + 9
 }
 
+/// Returns the special PTC product term given a macrocell index
 pub fn get_ptc(mc: u32) -> u32 {
     3 * mc + 10
 }
