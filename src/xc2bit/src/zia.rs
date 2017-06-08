@@ -23,15 +23,19 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// ZIA
+//! Contains functions pertaining to the ZIA
 
 use *;
 
+/// Represents one output of the ZIA. The ZIA is divided into rows, and each row can independently select a choice
+/// to connect to each function block. This represents one such output (as opposed to all outputs in a given row)
 #[derive(Copy, Clone, Default)]
 pub struct XC2ZIARowPiece {
     pub selected: XC2ZIAInput,
 }
 
+/// Represents one input to the ZIA. The ZIA has inputs from every part of the chip and can additionally output a
+/// constant zero or one.
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum XC2ZIAInput {
     Macrocell {
@@ -47,10 +51,12 @@ pub enum XC2ZIAInput {
 }
 
 impl Default for XC2ZIAInput {
+    /// Returns a "default" ZIA selection, which is a constant one.
     fn default() -> XC2ZIAInput { XC2ZIAInput::One }
 }
 
-pub static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; INPUTS_PER_ANDTERM] = [
+/// A map of the connections that exist within the ZIA for 32-macrocell parts
+pub static ZIA_MAP_32: [[XC2ZIAInput; 6]; INPUTS_PER_ANDTERM] = [
     // Row 0
     [XC2ZIAInput::IBuf{ibuf: 0},
      XC2ZIAInput::IBuf{ibuf: 10},
@@ -333,8 +339,10 @@ pub static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; INPUTS_PER_ANDTERM] = [
      XC2ZIAInput::Macrocell{fb: 1, ff: 9}],
 ];
 
-// Read a piece of the ZIA corresponding to one FB and one row
-pub fn read_32_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize) -> Result<XC2ZIARowPiece, &'static str> {
+/// Internal function that reads a piece of the ZIA corresponding to one FB and one row
+pub fn read_32_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
+    -> Result<XC2ZIARowPiece, &'static str> {
+
     let mut zia_row_fuses = [false; 8];
     
     for i in 0..8 {
@@ -367,11 +375,12 @@ pub fn read_32_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usi
         } else if active_bit == 7 {
             XC2ZIAInput::One
         } else {
-            ZIA_BIT_TO_CHOICE_32[row_idx][active_bit]
+            ZIA_MAP_32[row_idx][active_bit]
         }
     })
 }
 
+/// Internal function that takes a ZIA row and choice and returns the bit encoding for it
 pub fn encode_32_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 8]> {
     if choice == XC2ZIAInput::One {
         Some([true, true, true, true, true, true, true, true])
@@ -383,8 +392,8 @@ pub fn encode_32_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 8]> 
         ret[7] = false;
 
         let mut found_bit = 8;
-        for i in 0..ZIA_BIT_TO_CHOICE_32[row as usize].len() {
-            if choice == ZIA_BIT_TO_CHOICE_32[row as usize][i] {
+        for i in 0..ZIA_MAP_32[row as usize].len() {
+            if choice == ZIA_MAP_32[row as usize][i] {
                 found_bit = i;
                 break;
             }
