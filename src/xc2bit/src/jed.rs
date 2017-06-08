@@ -23,7 +23,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Xilinx JED file I/O
+//! Xilinx JED file I/O
 
 use std::num::Wrapping;
 use std::str;
@@ -41,7 +41,7 @@ enum Ternary {
 const STX: u8 = 0x02;
 const ETX: u8 = 0x03;
 
-// Reads .jed file and outputs the fuses as an array of booleans and optional device name
+/// Reads .jed file and outputs the fuses as an array of booleans and optional device name
 pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static str> {
     let mut fuse_csum = Wrapping(0u16);
     let mut fuse_expected_csum = None;
@@ -234,7 +234,7 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
     Ok((fuses, device))
 }
 
-// Processes a fuse array into a bitstream object
+/// Processes a fuse array into a bitstream object
 pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
     let device_split = device.split('-').collect::<Vec<_>>();
 

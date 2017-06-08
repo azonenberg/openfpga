@@ -202,14 +202,20 @@ fn read_32_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
     }
 }
 
+/// The actual bitstream bits for each possible Coolrunner-II part
 pub enum XC2BitstreamBits {
     XC2C32 {
         fb: [XC2BitstreamFB; 2],
         iobs: [XC2MCSmallIOB; 32],
         inpin: XC2ExtraIBuf,
         global_nets: XC2GlobalNets,
-        // false = low, true = high
+        /// Voltage level control
+        ///
+        /// `false` = low, `true` = high
         ivoltage: bool,
+        /// Voltage level control
+        ///
+        /// `false` = low, `true` = high
         ovoltage: bool,
     },
     XC2C32A {
@@ -217,15 +223,27 @@ pub enum XC2BitstreamBits {
         iobs: [XC2MCSmallIOB; 32],
         inpin: XC2ExtraIBuf,
         global_nets: XC2GlobalNets,
-        // false = low, true = high
+        /// Legacy voltage level control, should almost always be set to `false`
+        ///
+        /// `false` = low, `true` = high
         legacy_ivoltage: bool,
+        /// Legacy voltage level control, should almost always be set to `false`
+        ///
+        /// `false` = low, `true` = high
         legacy_ovoltage: bool,
+        /// Voltage level control for each I/O bank
+        ///
+        /// `false` = low, `true` = high
         ivoltage: [bool; 2],
+        /// Voltage level control for each I/O bank
+        ///
+        /// `false` = low, `true` = high
         ovoltage: [bool; 2],
     },
 }
 
 impl XC2BitstreamBits {
+    /// Dump a human-readable explanation of the bitstream to the given `writer` object.
     pub fn dump_human_readable(&self, writer: &mut Write) {
         match self {
             &XC2BitstreamBits::XC2C32 {
@@ -270,6 +288,7 @@ impl XC2BitstreamBits {
         }
     }
 
+    /// Write a .jed representation of the bitstream to the given `writer` object.
     pub fn write_jed(&self, writer: &mut Write) {
         match self {
             &XC2BitstreamBits::XC2C32 {
@@ -493,6 +512,7 @@ impl XC2BitstreamBits {
     }
 }
 
+/// Internal function for parsing an XC2C32 bitstream
 pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     for i in 0..fb.len() {
@@ -531,7 +551,7 @@ pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
     })
 }
 
-
+/// Internal function for parsing an XC2C32A bitstream
 pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     for i in 0..fb.len() {
