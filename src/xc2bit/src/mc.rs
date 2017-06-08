@@ -29,7 +29,7 @@ use std::io::Write;
 
 /// Clock source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum XC2MCFFClkSrc {
+pub enum XC2MCRegClkSrc {
     GCK0,
     GCK1,
     GCK2,
@@ -39,7 +39,7 @@ pub enum XC2MCFFClkSrc {
 
 /// Reset source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum XC2MCFFResetSrc {
+pub enum XC2MCRegResetSrc {
     Disabled,
     PTA,
     GSR,
@@ -48,7 +48,7 @@ pub enum XC2MCFFResetSrc {
 
 /// Set source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum XC2MCFFSetSrc {
+pub enum XC2MCRegSetSrc {
     Disabled,
     PTA,
     GSR,
@@ -57,7 +57,7 @@ pub enum XC2MCFFSetSrc {
 
 /// Mode of the register in a macrocell.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum XC2MCFFMode {
+pub enum XC2MCRegMode {
     /// D-type flip-flop
     DFF,
     /// Transparent latch
@@ -93,15 +93,15 @@ pub enum XC2MCXorMode {
 
 #[derive(Copy, Clone)]
 pub struct XC2MCReg {
-    pub clk_src: XC2MCFFClkSrc,
+    pub clk_src: XC2MCRegClkSrc,
     // false = rising edge triggered, true = falling edge triggered
     pub falling_edge: bool,
     pub is_ddr: bool,
-    pub r_src: XC2MCFFResetSrc,
-    pub s_src: XC2MCFFSetSrc,
+    pub r_src: XC2MCRegResetSrc,
+    pub s_src: XC2MCRegSetSrc,
     // false = init to 0, true = init to 1
     pub init_state: bool,
-    pub ff_mode: XC2MCFFMode,
+    pub ff_mode: XC2MCRegMode,
     pub fb_mode: XC2MCFeedbackMode,
     // false = use xor gate/PLA, true = use IOB direct path
     // true is illegal for buried FFs
@@ -112,13 +112,13 @@ pub struct XC2MCReg {
 impl Default for XC2MCReg {
     fn default() -> XC2MCReg {
         XC2MCReg {
-            clk_src: XC2MCFFClkSrc::GCK0,
+            clk_src: XC2MCRegClkSrc::GCK0,
             falling_edge: false,
             is_ddr: false,
-            r_src: XC2MCFFResetSrc::Disabled,
-            s_src: XC2MCFFSetSrc::Disabled,
+            r_src: XC2MCRegResetSrc::Disabled,
+            s_src: XC2MCRegSetSrc::Disabled,
             init_state: true,
-            ff_mode: XC2MCFFMode::DFF,
+            ff_mode: XC2MCRegMode::DFF,
             fb_mode: XC2MCFeedbackMode::Disabled,
             ff_in_ibuf: false,
             xor_mode: XC2MCXorMode::ZERO,
@@ -131,32 +131,32 @@ impl XC2MCReg {
         write!(writer, "\n").unwrap();
         write!(writer, "FF configuration for FB{}_{}\n", fb + 1, ff + 1).unwrap();
         write!(writer, "FF mode: {}\n", match self.ff_mode {
-            XC2MCFFMode::DFF => "D flip-flop",
-            XC2MCFFMode::LATCH => "transparent latch",
-            XC2MCFFMode::TFF => "T flip-flop",
-            XC2MCFFMode::DFFCE => "D flip-flop with clock-enable",
+            XC2MCRegMode::DFF => "D flip-flop",
+            XC2MCRegMode::LATCH => "transparent latch",
+            XC2MCRegMode::TFF => "T flip-flop",
+            XC2MCRegMode::DFFCE => "D flip-flop with clock-enable",
         }).unwrap();
         write!(writer, "initial state: {}\n", if self.init_state {1} else {0}).unwrap();
         write!(writer, "{}-edge triggered\n", if self.falling_edge {"falling"} else {"rising"}).unwrap();
         write!(writer, "DDR: {}\n", if self.is_ddr {"yes"} else {"no"}).unwrap();
         write!(writer, "clock source: {}\n", match self.clk_src {
-            XC2MCFFClkSrc::GCK0 => "GCK0",
-            XC2MCFFClkSrc::GCK1 => "GCK1",
-            XC2MCFFClkSrc::GCK2 => "GCK2",
-            XC2MCFFClkSrc::PTC => "PTC",
-            XC2MCFFClkSrc::CTC => "CTC",
+            XC2MCRegClkSrc::GCK0 => "GCK0",
+            XC2MCRegClkSrc::GCK1 => "GCK1",
+            XC2MCRegClkSrc::GCK2 => "GCK2",
+            XC2MCRegClkSrc::PTC => "PTC",
+            XC2MCRegClkSrc::CTC => "CTC",
         }).unwrap();
         write!(writer, "set source: {}\n", match self.s_src {
-            XC2MCFFSetSrc::Disabled => "disabled",
-            XC2MCFFSetSrc::PTA => "PTA",
-            XC2MCFFSetSrc::GSR => "GSR",
-            XC2MCFFSetSrc::CTS => "CTS",
+            XC2MCRegSetSrc::Disabled => "disabled",
+            XC2MCRegSetSrc::PTA => "PTA",
+            XC2MCRegSetSrc::GSR => "GSR",
+            XC2MCRegSetSrc::CTS => "CTS",
         }).unwrap();
         write!(writer, "reset source: {}\n", match self.r_src {
-            XC2MCFFResetSrc::Disabled => "disabled",
-            XC2MCFFResetSrc::PTA => "PTA",
-            XC2MCFFResetSrc::GSR => "GSR",
-            XC2MCFFResetSrc::CTR => "CTR",
+            XC2MCRegResetSrc::Disabled => "disabled",
+            XC2MCRegResetSrc::PTA => "PTA",
+            XC2MCRegResetSrc::GSR => "GSR",
+            XC2MCRegResetSrc::CTR => "CTR",
         }).unwrap();
         write!(writer, "using ibuf direct path: {}\n", if self.ff_in_ibuf {"yes"} else {"no"}).unwrap();
         write!(writer, "XOR gate input: {}\n", match self.xor_mode {
@@ -181,12 +181,12 @@ pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC
                fuses[block_idx + ff_idx * 27 + 3]);
 
     let clk_src = match clk {
-        (false, false) => XC2MCFFClkSrc::GCK0,
-        (false, true)  => XC2MCFFClkSrc::GCK1,
-        (true, false)  => XC2MCFFClkSrc::GCK2,
+        (false, false) => XC2MCRegClkSrc::GCK0,
+        (false, true)  => XC2MCRegClkSrc::GCK1,
+        (true, false)  => XC2MCRegClkSrc::GCK2,
         (true, true)   => match aclk {
-            true => XC2MCFFClkSrc::CTC,
-            false => XC2MCFFClkSrc::PTC,
+            true => XC2MCRegClkSrc::CTC,
+            false => XC2MCRegClkSrc::PTC,
         },
     };
 
@@ -196,28 +196,28 @@ pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC
     let r = (fuses[block_idx + ff_idx * 27 + 5],
              fuses[block_idx + ff_idx * 27 + 6]);
     let reset_mode = match r {
-        (false, false) => XC2MCFFResetSrc::PTA,
-        (false, true)  => XC2MCFFResetSrc::GSR,
-        (true, false)  => XC2MCFFResetSrc::CTR,
-        (true, true)   => XC2MCFFResetSrc::Disabled,
+        (false, false) => XC2MCRegResetSrc::PTA,
+        (false, true)  => XC2MCRegResetSrc::GSR,
+        (true, false)  => XC2MCRegResetSrc::CTR,
+        (true, true)   => XC2MCRegResetSrc::Disabled,
     };
 
     let p = (fuses[block_idx + ff_idx * 27 + 7],
              fuses[block_idx + ff_idx * 27 + 8]);
     let set_mode = match p {
-        (false, false) => XC2MCFFSetSrc::PTA,
-        (false, true)  => XC2MCFFSetSrc::GSR,
-        (true, false)  => XC2MCFFSetSrc::CTS,
-        (true, true)   => XC2MCFFSetSrc::Disabled,
+        (false, false) => XC2MCRegSetSrc::PTA,
+        (false, true)  => XC2MCRegSetSrc::GSR,
+        (true, false)  => XC2MCRegSetSrc::CTS,
+        (true, true)   => XC2MCRegSetSrc::Disabled,
     };
 
     let regmod = (fuses[block_idx + ff_idx * 27 + 9],
                   fuses[block_idx + ff_idx * 27 + 10]);
     let ff_mode = match regmod {
-        (false, false) => XC2MCFFMode::DFF,
-        (false, true)  => XC2MCFFMode::LATCH,
-        (true, false)  => XC2MCFFMode::TFF,
-        (true, true)   => XC2MCFFMode::DFFCE,
+        (false, false) => XC2MCRegMode::DFF,
+        (false, true)  => XC2MCRegMode::LATCH,
+        (true, false)  => XC2MCRegMode::TFF,
+        (true, true)   => XC2MCRegMode::DFFCE,
     };
 
     let fb = (fuses[block_idx + ff_idx * 27 + 13],

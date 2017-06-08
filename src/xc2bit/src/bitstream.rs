@@ -330,7 +330,7 @@ impl XC2BitstreamBits {
 
                         // aclk
                         write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
-                            XC2MCFFClkSrc::CTC => "1",
+                            XC2MCRegClkSrc::CTC => "1",
                             _ => "0",
                         }).unwrap();
 
@@ -339,10 +339,10 @@ impl XC2BitstreamBits {
 
                         // clk
                         write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
-                            XC2MCFFClkSrc::GCK0 => "00",
-                            XC2MCFFClkSrc::GCK1 => "01",
-                            XC2MCFFClkSrc::GCK2 => "10",
-                            XC2MCFFClkSrc::PTC | XC2MCFFClkSrc::CTC => "11",
+                            XC2MCRegClkSrc::GCK0 => "00",
+                            XC2MCRegClkSrc::GCK1 => "01",
+                            XC2MCRegClkSrc::GCK2 => "10",
+                            XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => "11",
                         }).unwrap();
 
                         // clkfreq
@@ -350,26 +350,26 @@ impl XC2BitstreamBits {
 
                         // r
                         write!(writer, "{}", match fb[fb_i].ffs[i].r_src {
-                            XC2MCFFResetSrc::PTA => "00",
-                            XC2MCFFResetSrc::GSR => "01",
-                            XC2MCFFResetSrc::CTR => "10",
-                            XC2MCFFResetSrc::Disabled => "11",
+                            XC2MCRegResetSrc::PTA => "00",
+                            XC2MCRegResetSrc::GSR => "01",
+                            XC2MCRegResetSrc::CTR => "10",
+                            XC2MCRegResetSrc::Disabled => "11",
                         }).unwrap();
 
                         // p
                         write!(writer, "{}", match fb[fb_i].ffs[i].s_src {
-                            XC2MCFFSetSrc::PTA => "00",
-                            XC2MCFFSetSrc::GSR => "01",
-                            XC2MCFFSetSrc::CTS => "10",
-                            XC2MCFFSetSrc::Disabled => "11",
+                            XC2MCRegSetSrc::PTA => "00",
+                            XC2MCRegSetSrc::GSR => "01",
+                            XC2MCRegSetSrc::CTS => "10",
+                            XC2MCRegSetSrc::Disabled => "11",
                         }).unwrap();
 
                         // regmod
                         write!(writer, "{}", match fb[fb_i].ffs[i].ff_mode {
-                            XC2MCFFMode::DFF => "00",
-                            XC2MCFFMode::LATCH => "01",
-                            XC2MCFFMode::TFF => "10",
-                            XC2MCFFMode::DFFCE => "11",
+                            XC2MCRegMode::DFF => "00",
+                            XC2MCRegMode::LATCH => "01",
+                            XC2MCRegMode::TFF => "10",
+                            XC2MCRegMode::DFFCE => "11",
                         }).unwrap();
 
                         // inz
