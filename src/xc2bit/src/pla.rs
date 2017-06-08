@@ -25,11 +25,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // PLA stuff
 
+use *;
+
 #[derive(Copy)]
 pub struct XC2PLAAndTerm {
     // true = part of and, false = not part of and
-    pub input: [bool; 40],
-    pub input_b: [bool; 40],
+    pub input: [bool; INPUTS_PER_ANDTERM],
+    pub input_b: [bool; INPUTS_PER_ANDTERM],
 }
 
 impl Clone for XC2PLAAndTerm {
@@ -39,8 +41,8 @@ impl Clone for XC2PLAAndTerm {
 impl Default for XC2PLAAndTerm {
     fn default() -> XC2PLAAndTerm {
         XC2PLAAndTerm {
-            input: [false; 40],
-            input_b: [false; 40],
+            input: [false; INPUTS_PER_ANDTERM],
+            input_b: [false; INPUTS_PER_ANDTERM],
         }
     }
 }
@@ -48,7 +50,7 @@ impl Default for XC2PLAAndTerm {
 #[derive(Copy)]
 pub struct XC2PLAOrTerm {
     // true = part of or, false = not part of or
-    pub input: [bool; 56],
+    pub input: [bool; ANDTERMS_PER_FB],
 }
 
 impl Clone for XC2PLAOrTerm {
@@ -58,18 +60,18 @@ impl Clone for XC2PLAOrTerm {
 impl Default for XC2PLAOrTerm {
     fn default() -> XC2PLAOrTerm {
         XC2PLAOrTerm {
-            input: [false; 56],
+            input: [false; ANDTERMS_PER_FB],
         }
     }
 }
 
 pub fn read_and_term_logical(fuses: &[bool], block_idx: usize, term_idx: usize) -> XC2PLAAndTerm {
-    let mut input = [false; 40];
-    let mut input_b = [false; 40];
+    let mut input = [false; INPUTS_PER_ANDTERM];
+    let mut input_b = [false; INPUTS_PER_ANDTERM];
 
-    for i in 0..40 {
-        input[i]   = !fuses[block_idx + term_idx * 80 + i * 2 + 0];
-        input_b[i] = !fuses[block_idx + term_idx * 80 + i * 2 + 1];
+    for i in 0..INPUTS_PER_ANDTERM {
+        input[i]   = !fuses[block_idx + term_idx * INPUTS_PER_ANDTERM * 2 + i * 2 + 0];
+        input_b[i] = !fuses[block_idx + term_idx * INPUTS_PER_ANDTERM * 2 + i * 2 + 1];
     }
 
     XC2PLAAndTerm {
@@ -79,10 +81,10 @@ pub fn read_and_term_logical(fuses: &[bool], block_idx: usize, term_idx: usize) 
 }
 
 pub fn read_or_term_logical(fuses: &[bool], block_idx: usize, term_idx: usize) -> XC2PLAOrTerm {
-    let mut input = [false; 56];
+    let mut input = [false; ANDTERMS_PER_FB];
 
-    for i in 0..56 {
-        input[i] = !fuses[block_idx + term_idx +i * 16];
+    for i in 0..ANDTERMS_PER_FB {
+        input[i] = !fuses[block_idx + term_idx +i * MCS_PER_FB];
     }
 
     XC2PLAOrTerm {

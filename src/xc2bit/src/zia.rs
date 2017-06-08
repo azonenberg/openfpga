@@ -25,6 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // ZIA
 
+use *;
+
 #[derive(Copy, Clone, Default)]
 pub struct XC2ZIARowPiece {
     pub selected: XC2ZIAInput,
@@ -48,7 +50,7 @@ impl Default for XC2ZIAInput {
     fn default() -> XC2ZIAInput { XC2ZIAInput::One }
 }
 
-pub static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; 40] = [
+pub static ZIA_BIT_TO_CHOICE_32: [[XC2ZIAInput; 6]; INPUTS_PER_ANDTERM] = [
     // Row 0
     [XC2ZIAInput::IBuf{ibuf: 0},
      XC2ZIAInput::IBuf{ibuf: 10},

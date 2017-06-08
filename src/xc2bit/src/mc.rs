@@ -25,6 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Macrocell stuff
 
+use *;
+
 use std::io::Write;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -260,15 +262,15 @@ pub fn iob_num_to_fb_ff_num_32(iob: u32) -> Option<(u32, u32)> {
     if iob >= 32 {
         None
     } else {
-        Some((iob / 16, iob % 16))
+        Some((iob / MCS_PER_FB as u32, iob % MCS_PER_FB as u32))
     }
 }
 
 pub fn fb_ff_num_to_iob_num_32(fb: u32, ff: u32) -> Option<u32> {
-    if fb >= 2 || ff >= 16 {
+    if fb >= 2 || ff >= MCS_PER_FB as u32 {
         None
     } else {
-        Some(fb * 16 + ff)
+        Some(fb * MCS_PER_FB as u32 + ff)
     }
 }
 

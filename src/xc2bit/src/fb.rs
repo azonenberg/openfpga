@@ -34,10 +34,10 @@ use zia::{read_32_zia_fb_row_logical};
 
 #[derive(Copy)]
 pub struct XC2BistreamFB {
-    pub and_terms: [XC2PLAAndTerm; 56],
-    pub or_terms: [XC2PLAOrTerm; 16],
-    pub zia_bits: [XC2ZIARowPiece; 40],
-    pub ffs: [XC2MCFF; 16],
+    pub and_terms: [XC2PLAAndTerm; ANDTERMS_PER_FB],
+    pub or_terms: [XC2PLAOrTerm; MCS_PER_FB],
+    pub zia_bits: [XC2ZIARowPiece; INPUTS_PER_ANDTERM],
+    pub ffs: [XC2MCFF; MCS_PER_FB],
 }
 
 impl Clone for XC2BistreamFB {
@@ -47,24 +47,24 @@ impl Clone for XC2BistreamFB {
 impl Default for XC2BistreamFB {
     fn default() -> XC2BistreamFB {
         XC2BistreamFB {
-            and_terms: [XC2PLAAndTerm::default(); 56],
-            or_terms: [XC2PLAOrTerm::default(); 16],
-            zia_bits: [XC2ZIARowPiece::default(); 40],
-            ffs: [XC2MCFF::default(); 16],
+            and_terms: [XC2PLAAndTerm::default(); ANDTERMS_PER_FB],
+            or_terms: [XC2PLAOrTerm::default(); MCS_PER_FB],
+            zia_bits: [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM],
+            ffs: [XC2MCFF::default(); MCS_PER_FB],
         }
     }
 }
 
 impl XC2BistreamFB {
     pub fn dump_human_readable(&self, fb: u32, writer: &mut Write) {
-        for i in 0..16 {
+        for i in 0..MCS_PER_FB {
             self.ffs[i].dump_human_readable(fb, i as u32, writer);
         }
 
         // FIXME: Move this somewhere else?
         write!(writer, "\n").unwrap();
         write!(writer, "ZIA inputs for FB{}\n", fb + 1).unwrap();
-        for i in 0..40 {
+        for i in 0..INPUTS_PER_ANDTERM {
             write!(writer, "{:2}: ", i).unwrap();
             match self.zia_bits[i].selected {
                 XC2ZIAInput::Zero => write!(writer, "0\n").unwrap(),
@@ -87,9 +87,9 @@ impl XC2BistreamFB {
                                      21|~21| 22|~22| 23|~23| 24|~24| 25|~25| 26|~26| 27|~27| 28|~28| 29|~29| 30|~30| \
                                      31|~31| 32|~32| 33|~33| 34|~34| 35|~35| 36|~36| 37|~37| 38|~38| 39|~39\
                                      \n").unwrap();
-        for i in 0..56 {
+        for i in 0..ANDTERMS_PER_FB {
             write!(writer, "{:2}:", i).unwrap();
-            for j in 0..40 {
+            for j in 0..INPUTS_PER_ANDTERM {
                 if self.and_terms[i].input[j] {
                     write!(writer, "|XXX").unwrap();
                 } else {
@@ -111,9 +111,9 @@ impl XC2BistreamFB {
         write!(writer, "   | 0| 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|16|17|18|19|20|\
                                21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|\
                                41|42|43|44|45|46|47|48|49|50|51|52|53|54|55\n").unwrap();
-        for i in 0..16 {
+        for i in 0..MCS_PER_FB {
             write!(writer, "{:2}:", i).unwrap();
-            for j in 0..56 {
+            for j in 0..ANDTERMS_PER_FB {
                 if self.or_terms[i].input[j] {
                     write!(writer, "|XX").unwrap();
                 } else {
@@ -127,7 +127,7 @@ impl XC2BistreamFB {
 
 
 pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2BistreamFB, &'static str> {
-    let mut and_terms = [XC2PLAAndTerm::default(); 56];
+    let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
     let and_block_idx = match block_idx {
         0 => 320,
         1 => 6448,
@@ -137,7 +137,7 @@ pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2Bistrea
         and_terms[i] = read_and_term_logical(fuses, and_block_idx, i);
     }
 
-    let mut or_terms = [XC2PLAOrTerm::default(); 16];
+    let mut or_terms = [XC2PLAOrTerm::default(); MCS_PER_FB];
     let or_block_idx = match block_idx {
         0 => 4800,
         1 => 10928,
@@ -147,7 +147,7 @@ pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2Bistrea
         or_terms[i] = read_or_term_logical(fuses, or_block_idx, i);
     }
 
-    let mut zia_bits = [XC2ZIARowPiece::default(); 40];
+    let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
     let zia_block_idx = match block_idx {
         0 => 0,
         1 => 6128,
@@ -161,7 +161,7 @@ pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2Bistrea
         zia_bits[i] = result.unwrap();
     }
 
-    let mut ff_bits = [XC2MCFF::default(); 16];
+    let mut ff_bits = [XC2MCFF::default(); MCS_PER_FB];
     let ff_block_idx = match block_idx {
         0 => 5696,
         1 => 11824,

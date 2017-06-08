@@ -266,7 +266,7 @@ impl XC2BitstreamBits {
                     let fuse_base = if fb_i == 0 {0} else {6128};
 
                     // ZIA
-                    for i in 0..40 {
+                    for i in 0..INPUTS_PER_ANDTERM {
                         write!(writer, "L{:06} ", fuse_base + i * 8).unwrap();
                         let zia_choice_bits =
                             encode_32_zia_choice(i as u32, fb[fb_i].zia_bits[i].selected)
@@ -285,9 +285,10 @@ impl XC2BitstreamBits {
                     write!(writer, "\n").unwrap();
 
                     // AND terms
-                    for i in 0..56 {
-                        write!(writer, "L{:06} ", fuse_base + 8 * 40 + i * 80).unwrap();
-                        for j in 0..40 {
+                    for i in 0..ANDTERMS_PER_FB {
+                        write!(writer, "L{:06} ",
+                            fuse_base + 8 * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2).unwrap();
+                        for j in 0..INPUTS_PER_ANDTERM {
                             if fb[fb_i].and_terms[i].input[j] {
                                 write!(writer, "0").unwrap();
                             } else {
@@ -304,9 +305,11 @@ impl XC2BitstreamBits {
                     write!(writer, "\n").unwrap();
 
                     // OR terms
-                    for i in 0..56 {
-                        write!(writer, "L{:06} ", fuse_base + 8 * 40 + 56 * 80 + i * 16).unwrap();
-                        for j in 0..16 {
+                    for i in 0..ANDTERMS_PER_FB {
+                        write!(writer, "L{:06} ",
+                            fuse_base + 8 * INPUTS_PER_ANDTERM +
+                            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB).unwrap();
+                        for j in 0..MCS_PER_FB {
                             if fb[fb_i].or_terms[j].input[i] {
                                 write!(writer, "0").unwrap();
                             } else {
@@ -318,8 +321,10 @@ impl XC2BitstreamBits {
                     write!(writer, "\n").unwrap();
 
                     // Macrocells
-                    for i in 0..16 {
-                        write!(writer, "L{:06} ", fuse_base + 8 * 40 + 56 * 80 + 56 * 16 + i * 27).unwrap();
+                    for i in 0..MCS_PER_FB {
+                        write!(writer, "L{:06} ",
+                            fuse_base + 8 * INPUTS_PER_ANDTERM +
+                            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + ANDTERMS_PER_FB * MCS_PER_FB + i * 27).unwrap();
 
                         let iob = fb_ff_num_to_iob_num_32(fb_i as u32, i as u32).unwrap() as usize;
 
@@ -482,12 +487,12 @@ pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 
     let mut iobs = [XC2MCSmallIOB::default(); 32];
     for i in 0..iobs.len() {
-        let base_fuse = if i < 16 {
+        let base_fuse = if i < MCS_PER_FB {
             5696
         } else {
             11824
         };
-        let res = read_32_iob_logical(fuses, base_fuse, i % 16);
+        let res = read_32_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
         if let Err(err) = res {
             return Err(err);
         }
@@ -521,12 +526,12 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 
     let mut iobs = [XC2MCSmallIOB::default(); 32];
     for i in 0..iobs.len() {
-        let base_fuse = if i < 16 {
+        let base_fuse = if i < MCS_PER_FB {
             5696
         } else {
             11824
         };
-        let res = read_32_iob_logical(fuses, base_fuse, i % 16);
+        let res = read_32_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
         if let Err(err) = res {
             return Err(err);
         }

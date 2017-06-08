@@ -25,6 +25,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Public interface
 
+pub const INPUTS_PER_ANDTERM: usize = 40;
+pub const ANDTERMS_PER_FB: usize = 56;
+pub const MCS_PER_FB: usize = 16;
+
 mod bitstream;
 pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets};
 
