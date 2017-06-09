@@ -23,6 +23,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+//! Testing tool that reads a .jed bitstream and writes it back out (hopefully identically)
+
 use std::fs::File;
 use std::io::Read;
 
@@ -49,5 +51,5 @@ fn main() {
     let bitstream_result = process_jed(&bits, &device_name);
     let bitstream = bitstream_result.expect("failed to process jed");
 
-    bitstream.write_jed(&mut ::std::io::stdout());
+    bitstream.write_jed(&mut ::std::io::stdout()).expect("failed to write jed");
 }

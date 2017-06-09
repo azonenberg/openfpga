@@ -45,5 +45,5 @@ fn main() {
     let (part, spd, pkg) = device_combination.unwrap();
     let bitstream = XC2Bitstream::blank_bitstream(part, spd, pkg).expect("failed to create bitstream");
 
-    bitstream.write_jed(&mut ::std::io::stdout());
+    bitstream.write_jed(&mut ::std::io::stdout()).expect("failed to write jed");
 }
