@@ -29,9 +29,9 @@ use std::io;
 use std::io::Write;
 
 use *;
-use fb::{read_32_fb_logical};
-use iob::{read_32_iob_logical, read_32_extra_ibuf_logical};
-use zia::{encode_32_zia_choice};
+use fb::{read_small_fb_logical};
+use iob::{read_small_iob_logical, read_32_extra_ibuf_logical};
+use zia::{encode_32_zia_choice, encode_64_zia_choice, zia_get_row_width};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
 pub struct XC2Bitstream {
@@ -66,6 +66,14 @@ impl XC2Bitstream {
                 write!(writer, "QF12278*\n")?;
                 write!(writer, "N DEVICE XC2C32A-{}-{}*\n\n", self.speed_grade, self.package)?;
             },
+            XC2BitstreamBits::XC2C64{..} => {
+                write!(writer, "QF25808*\n")?;
+                write!(writer, "N DEVICE XC2C64-{}-{}*\n\n", self.speed_grade, self.package)?;
+            },
+            XC2BitstreamBits::XC2C64A{..} => {
+                write!(writer, "QF25812*\n")?;
+                write!(writer, "N DEVICE XC2C64A-{}-{}*\n\n", self.speed_grade, self.package)?;
+            },
         }
 
         self.bits.write_jed(writer)?;
@@ -86,8 +94,8 @@ impl XC2Bitstream {
         match device {
             XC2Device::XC2C32 => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade.to_owned(),
-                    package: package.to_owned(),
+                    speed_grade: speed_grade,
+                    package: package,
                     bits: XC2BitstreamBits::XC2C32 {
                         fb: [XC2BitstreamFB::default(); 2],
                         iobs: [XC2MCSmallIOB::default(); 32],
@@ -100,12 +108,40 @@ impl XC2Bitstream {
             },
             XC2Device::XC2C32A => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade.to_owned(),
-                    package: package.to_owned(),
+                    speed_grade: speed_grade,
+                    package: package,
                     bits: XC2BitstreamBits::XC2C32A {
                         fb: [XC2BitstreamFB::default(); 2],
                         iobs: [XC2MCSmallIOB::default(); 32],
                         inpin: XC2ExtraIBuf::default(),
+                        global_nets: XC2GlobalNets::default(),
+                        legacy_ivoltage: false,
+                        legacy_ovoltage: false,
+                        ivoltage: [false, false],
+                        ovoltage: [false, false],
+                    }
+                })
+            },
+            XC2Device::XC2C64 => {
+                Ok(XC2Bitstream {
+                    speed_grade: speed_grade,
+                    package: package,
+                    bits: XC2BitstreamBits::XC2C64 {
+                        fb: [XC2BitstreamFB::default(); 4],
+                        iobs: [XC2MCSmallIOB::default(); 64],
+                        global_nets: XC2GlobalNets::default(),
+                        ivoltage: false,
+                        ovoltage: false,
+                    }
+                })
+            },
+            XC2Device::XC2C64A => {
+                Ok(XC2Bitstream {
+                    speed_grade: speed_grade,
+                    package: package,
+                    bits: XC2BitstreamBits::XC2C64A {
+                        fb: [XC2BitstreamFB::default(); 4],
+                        iobs: [XC2MCSmallIOB::default(); 64],
                         global_nets: XC2GlobalNets::default(),
                         legacy_ivoltage: false,
                         legacy_ovoltage: false,
@@ -213,6 +249,32 @@ fn read_32_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
     }
 }
 
+/// Internal function to read the global nets from a 64-macrocell part
+fn read_64_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
+    XC2GlobalNets {
+        gck_enable: [
+            fuses[25792],
+            fuses[25793],
+            fuses[25794],
+        ],
+        gsr_enable: fuses[25796],
+        gsr_invert: fuses[25795],
+        gts_enable: [
+            !fuses[25798],
+            !fuses[25800],
+            !fuses[25802],
+            !fuses[25804],
+        ],
+        gts_invert: [
+            fuses[25797],
+            fuses[25799],
+            fuses[25801],
+            fuses[25803],
+        ],
+        global_pu: fuses[25805],
+    }
+}
+
 /// The actual bitstream bits for each possible Coolrunner-II part
 pub enum XC2BitstreamBits {
     XC2C32 {
@@ -251,6 +313,203 @@ pub enum XC2BitstreamBits {
         /// `false` = low, `true` = high
         ovoltage: [bool; 2],
     },
+    XC2C64 {
+        fb: [XC2BitstreamFB; 4],
+        iobs: [XC2MCSmallIOB; 64],
+        global_nets: XC2GlobalNets,
+        /// Voltage level control
+        ///
+        /// `false` = low, `true` = high
+        ivoltage: bool,
+        /// Voltage level control
+        ///
+        /// `false` = low, `true` = high
+        ovoltage: bool,
+    },
+    XC2C64A {
+        fb: [XC2BitstreamFB; 4],
+        iobs: [XC2MCSmallIOB; 64],
+        global_nets: XC2GlobalNets,
+        /// Legacy voltage level control, should almost always be set to `false`
+        ///
+        /// `false` = low, `true` = high
+        legacy_ivoltage: bool,
+        /// Legacy voltage level control, should almost always be set to `false`
+        ///
+        /// `false` = low, `true` = high
+        legacy_ovoltage: bool,
+        /// Voltage level control for each I/O bank
+        ///
+        /// `false` = low, `true` = high
+        ivoltage: [bool; 2],
+        /// Voltage level control for each I/O bank
+        ///
+        /// `false` = low, `true` = high
+        ovoltage: [bool; 2],
+    },
+}
+
+/// Helper that prints the AND/OR arrays of a PLA
+fn write_pla_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2BitstreamFB, fuse_base: usize)
+    -> Result<(), io::Error> {
+
+    let zia_row_width = zia_get_row_width(device);
+
+    // AND terms
+    for i in 0..ANDTERMS_PER_FB {
+        write!(writer, "L{:06} ",
+            fuse_base + zia_row_width * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2)?;
+        for j in 0..INPUTS_PER_ANDTERM {
+            if fb.and_terms[i].input[j] {
+                write!(writer, "0")?;
+            } else {
+                write!(writer, "1")?;
+            }
+            if fb.and_terms[i].input_b[j] {
+                write!(writer, "0")?;
+            } else {
+                write!(writer, "1")?;
+            }
+        }
+        write!(writer, "*\n")?;
+    }
+    write!(writer, "\n")?;
+
+    // OR terms
+    for i in 0..ANDTERMS_PER_FB {
+        write!(writer, "L{:06} ",
+            fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
+            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB)?;
+        for j in 0..MCS_PER_FB {
+            if fb.or_terms[j].input[i] {
+                write!(writer, "0")?;
+            } else {
+                write!(writer, "1")?;
+            }
+        }
+        write!(writer, "*\n")?;
+    }
+    write!(writer, "\n")?;
+
+    Ok(())
+}
+
+/// Helper that prints the IOB and macrocell configuration on the "small" parts
+fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2BitstreamFB, iobs: &[XC2MCSmallIOB],
+    fb_i: usize, fuse_base: usize) -> Result<(), io::Error> {
+
+    let zia_row_width = zia_get_row_width(device);
+
+    for i in 0..MCS_PER_FB {
+        write!(writer, "L{:06} ",
+            fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
+            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + ANDTERMS_PER_FB * MCS_PER_FB + i * 27)?;
+
+        let iob = fb_ff_num_to_iob_num(device, fb_i as u32, i as u32).unwrap() as usize;
+
+        // aclk
+        write!(writer, "{}", match fb.ffs[i].clk_src {
+            XC2MCRegClkSrc::CTC => "1",
+            _ => "0",
+        })?;
+
+        // clkop
+        write!(writer, "{}", if fb.ffs[i].clk_invert_pol {"1"} else {"0"})?;
+
+        // clk
+        write!(writer, "{}", match fb.ffs[i].clk_src {
+            XC2MCRegClkSrc::GCK0 => "00",
+            XC2MCRegClkSrc::GCK1 => "01",
+            XC2MCRegClkSrc::GCK2 => "10",
+            XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => "11",
+        })?;
+
+        // clkfreq
+        write!(writer, "{}", if fb.ffs[i].is_ddr {"1"} else {"0"})?;
+
+        // r
+        write!(writer, "{}", match fb.ffs[i].r_src {
+            XC2MCRegResetSrc::PTA => "00",
+            XC2MCRegResetSrc::GSR => "01",
+            XC2MCRegResetSrc::CTR => "10",
+            XC2MCRegResetSrc::Disabled => "11",
+        })?;
+
+        // p
+        write!(writer, "{}", match fb.ffs[i].s_src {
+            XC2MCRegSetSrc::PTA => "00",
+            XC2MCRegSetSrc::GSR => "01",
+            XC2MCRegSetSrc::CTS => "10",
+            XC2MCRegSetSrc::Disabled => "11",
+        })?;
+
+        // regmod
+        write!(writer, "{}", match fb.ffs[i].reg_mode {
+            XC2MCRegMode::DFF => "00",
+            XC2MCRegMode::LATCH => "01",
+            XC2MCRegMode::TFF => "10",
+            XC2MCRegMode::DFFCE => "11",
+        })?;
+
+        // inz
+        write!(writer, "{}", match iobs[iob].zia_mode {
+            XC2IOBZIAMode::PAD => "00",
+            XC2IOBZIAMode::REG => "10",
+            XC2IOBZIAMode::Disabled => "11",
+        })?;
+
+        // fb
+        write!(writer, "{}", match fb.ffs[i].fb_mode {
+            XC2MCFeedbackMode::COMB => "00",
+            XC2MCFeedbackMode::REG => "10",
+            XC2MCFeedbackMode::Disabled => "11",
+        })?;
+
+        // inreg
+        write!(writer, "{}", if fb.ffs[i].ff_in_ibuf {"0"} else {"1"})?;
+
+        // st
+        write!(writer, "{}", if iobs[iob].schmitt_trigger {"1"} else {"0"})?;
+
+        // xorin
+        write!(writer, "{}", match fb.ffs[i].xor_mode {
+            XC2MCXorMode::ZERO => "00",
+            XC2MCXorMode::PTCB => "01",
+            XC2MCXorMode::PTC => "10",
+            XC2MCXorMode::ONE => "11",
+        })?;
+
+        // regcom
+        write!(writer, "{}", if iobs[iob].obuf_uses_ff {"0"} else {"1"})?;
+
+        // oe
+        write!(writer, "{}", match iobs[iob].obuf_mode {
+            XC2IOBOBufMode::PushPull => "0000",
+            XC2IOBOBufMode::OpenDrain => "0001",
+            XC2IOBOBufMode::TriStateGTS1 => "0010",
+            XC2IOBOBufMode::TriStatePTB => "0100",
+            XC2IOBOBufMode::TriStateGTS3 => "0110",
+            XC2IOBOBufMode::TriStateCTE => "1000",
+            XC2IOBOBufMode::TriStateGTS2 => "1010",
+            XC2IOBOBufMode::TriStateGTS0 => "1100",
+            XC2IOBOBufMode::CGND => "1110",
+            XC2IOBOBufMode::Disabled => "1111",
+        })?;
+
+        // tm
+        write!(writer, "{}", if iobs[iob].termination_enabled {"1"} else {"0"})?;
+
+        // slw
+        write!(writer, "{}", if iobs[iob].slew_is_fast {"0"} else {"1"})?;
+
+        // pu
+        write!(writer, "{}", if fb.ffs[i].init_state {"0"} else {"1"})?;
+
+        write!(writer, "*\n")?;
+    }
+    write!(writer, "\n")?;
+
+    Ok(())
 }
 
 impl XC2BitstreamBits {
@@ -266,13 +525,13 @@ impl XC2BitstreamBits {
                 global_nets.dump_human_readable(writer)?;
 
                 for i in 0..32 {
-                    iobs[i].dump_human_readable(i as u32, writer)?;
+                    iobs[i].dump_human_readable(XC2Device::XC2C32, i as u32, writer)?;
                 }
 
                 inpin.dump_human_readable(writer)?;
 
-                fb[0].dump_human_readable(0, writer)?;
-                fb[1].dump_human_readable(1, writer)?;
+                fb[0].dump_human_readable(XC2Device::XC2C32, 0, writer)?;
+                fb[1].dump_human_readable(XC2Device::XC2C32, 1, writer)?;
             },
             &XC2BitstreamBits::XC2C32A {
                 ref fb, ref iobs, ref inpin, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
@@ -288,13 +547,52 @@ impl XC2BitstreamBits {
                 global_nets.dump_human_readable(writer)?;
 
                 for i in 0..32 {
-                    iobs[i].dump_human_readable(i as u32, writer)?;
+                    iobs[i].dump_human_readable(XC2Device::XC2C32A, i as u32, writer)?;
                 }
 
                 inpin.dump_human_readable(writer)?;
 
-                fb[0].dump_human_readable(0, writer)?;
-                fb[1].dump_human_readable(1, writer)?;
+                fb[0].dump_human_readable(XC2Device::XC2C32A, 0, writer)?;
+                fb[1].dump_human_readable(XC2Device::XC2C32A, 1, writer)?;
+            },
+            &XC2BitstreamBits::XC2C64 {
+                ref fb, ref iobs, ref global_nets, ref ivoltage, ref ovoltage} => {
+
+                write!(writer, "device type: XC2C64\n")?;
+                write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"})?;
+                write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"})?;
+                global_nets.dump_human_readable(writer)?;
+
+                for i in 0..64 {
+                    iobs[i].dump_human_readable(XC2Device::XC2C64, i as u32, writer)?;
+                }
+
+                fb[0].dump_human_readable(XC2Device::XC2C64, 0, writer)?;
+                fb[1].dump_human_readable(XC2Device::XC2C64, 1, writer)?;
+                fb[2].dump_human_readable(XC2Device::XC2C64, 2, writer)?;
+                fb[3].dump_human_readable(XC2Device::XC2C64, 3, writer)?;
+            },
+            &XC2BitstreamBits::XC2C64A {
+                ref fb, ref iobs, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
+                ref ivoltage, ref ovoltage} => {
+
+                write!(writer, "device type: XC2C64\n")?;
+                write!(writer, "legacy output voltage range: {}\n", if *legacy_ovoltage {"high"} else {"low"})?;
+                write!(writer, "legacy input voltage range: {}\n", if *legacy_ivoltage {"high"} else {"low"})?;
+                write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
+                write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
+                write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
+                write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
+                global_nets.dump_human_readable(writer)?;
+
+                for i in 0..64 {
+                    iobs[i].dump_human_readable(XC2Device::XC2C64A, i as u32, writer)?;
+                }
+
+                fb[0].dump_human_readable(XC2Device::XC2C64A, 0, writer)?;
+                fb[1].dump_human_readable(XC2Device::XC2C64A, 1, writer)?;
+                fb[2].dump_human_readable(XC2Device::XC2C64A, 2, writer)?;
+                fb[3].dump_human_readable(XC2Device::XC2C64A, 3, writer)?;
             },
         }
 
@@ -335,151 +633,11 @@ impl XC2BitstreamBits {
                     }
                     write!(writer, "\n")?;
 
-                    // AND terms
-                    for i in 0..ANDTERMS_PER_FB {
-                        write!(writer, "L{:06} ",
-                            fuse_base + 8 * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2)?;
-                        for j in 0..INPUTS_PER_ANDTERM {
-                            if fb[fb_i].and_terms[i].input[j] {
-                                write!(writer, "0")?;
-                            } else {
-                                write!(writer, "1")?;
-                            }
-                            if fb[fb_i].and_terms[i].input_b[j] {
-                                write!(writer, "0")?;
-                            } else {
-                                write!(writer, "1")?;
-                            }
-                        }
-                        write!(writer, "*\n")?;
-                    }
-                    write!(writer, "\n")?;
-
-                    // OR terms
-                    for i in 0..ANDTERMS_PER_FB {
-                        write!(writer, "L{:06} ",
-                            fuse_base + 8 * INPUTS_PER_ANDTERM +
-                            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB)?;
-                        for j in 0..MCS_PER_FB {
-                            if fb[fb_i].or_terms[j].input[i] {
-                                write!(writer, "0")?;
-                            } else {
-                                write!(writer, "1")?;
-                            }
-                        }
-                        write!(writer, "*\n")?;
-                    }
-                    write!(writer, "\n")?;
+                    // PLA
+                    write_pla_to_jed(writer, XC2Device::XC2C32, &fb[fb_i], fuse_base)?;
 
                     // Macrocells
-                    for i in 0..MCS_PER_FB {
-                        write!(writer, "L{:06} ",
-                            fuse_base + 8 * INPUTS_PER_ANDTERM +
-                            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + ANDTERMS_PER_FB * MCS_PER_FB + i * 27)?;
-
-                        let iob = fb_ff_num_to_iob_num_32(fb_i as u32, i as u32).unwrap() as usize;
-
-                        // aclk
-                        write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
-                            XC2MCRegClkSrc::CTC => "1",
-                            _ => "0",
-                        })?;
-
-                        // clkop
-                        write!(writer, "{}", if fb[fb_i].ffs[i].clk_invert_pol {"1"} else {"0"})?;
-
-                        // clk
-                        write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
-                            XC2MCRegClkSrc::GCK0 => "00",
-                            XC2MCRegClkSrc::GCK1 => "01",
-                            XC2MCRegClkSrc::GCK2 => "10",
-                            XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => "11",
-                        })?;
-
-                        // clkfreq
-                        write!(writer, "{}", if fb[fb_i].ffs[i].is_ddr {"1"} else {"0"})?;
-
-                        // r
-                        write!(writer, "{}", match fb[fb_i].ffs[i].r_src {
-                            XC2MCRegResetSrc::PTA => "00",
-                            XC2MCRegResetSrc::GSR => "01",
-                            XC2MCRegResetSrc::CTR => "10",
-                            XC2MCRegResetSrc::Disabled => "11",
-                        })?;
-
-                        // p
-                        write!(writer, "{}", match fb[fb_i].ffs[i].s_src {
-                            XC2MCRegSetSrc::PTA => "00",
-                            XC2MCRegSetSrc::GSR => "01",
-                            XC2MCRegSetSrc::CTS => "10",
-                            XC2MCRegSetSrc::Disabled => "11",
-                        })?;
-
-                        // regmod
-                        write!(writer, "{}", match fb[fb_i].ffs[i].reg_mode {
-                            XC2MCRegMode::DFF => "00",
-                            XC2MCRegMode::LATCH => "01",
-                            XC2MCRegMode::TFF => "10",
-                            XC2MCRegMode::DFFCE => "11",
-                        })?;
-
-                        // inz
-                        write!(writer, "{}", match iobs[iob].zia_mode {
-                            XC2IOBZIAMode::PAD => "00",
-                            XC2IOBZIAMode::REG => "10",
-                            XC2IOBZIAMode::Disabled => "11",
-                        })?;
-
-                        // fb
-                        write!(writer, "{}", match fb[fb_i].ffs[i].fb_mode {
-                            XC2MCFeedbackMode::COMB => "00",
-                            XC2MCFeedbackMode::REG => "10",
-                            XC2MCFeedbackMode::Disabled => "11",
-                        })?;
-
-                        // inreg
-                        write!(writer, "{}", if fb[fb_i].ffs[i].ff_in_ibuf {"0"} else {"1"})?;
-
-                        // st
-                        write!(writer, "{}", if iobs[iob].schmitt_trigger {"1"} else {"0"})?;
-
-                        // xorin
-                        write!(writer, "{}", match fb[fb_i].ffs[i].xor_mode {
-                            XC2MCXorMode::ZERO => "00",
-                            XC2MCXorMode::PTCB => "01",
-                            XC2MCXorMode::PTC => "10",
-                            XC2MCXorMode::ONE => "11",
-                        })?;
-
-                        // regcom
-                        write!(writer, "{}", if iobs[iob].obuf_uses_ff {"0"} else {"1"})?;
-
-                        // oe
-                        write!(writer, "{}", match iobs[iob].obuf_mode {
-                            XC2IOBOBufMode::PushPull => "0000",
-                            XC2IOBOBufMode::OpenDrain => "0001",
-                            XC2IOBOBufMode::TriStateGTS1 => "0010",
-                            XC2IOBOBufMode::TriStatePTB => "0100",
-                            XC2IOBOBufMode::TriStateGTS3 => "0110",
-                            XC2IOBOBufMode::TriStateCTE => "1000",
-                            XC2IOBOBufMode::TriStateGTS2 => "1010",
-                            XC2IOBOBufMode::TriStateGTS0 => "1100",
-                            XC2IOBOBufMode::CGND => "1110",
-                            XC2IOBOBufMode::Disabled => "1111",
-                        })?;
-
-                        // tm
-                        write!(writer, "{}", if iobs[iob].termination_enabled {"1"} else {"0"})?;
-
-                        // slw
-                        write!(writer, "{}", if iobs[iob].slew_is_fast {"0"} else {"1"})?;
-
-                        // pu
-                        write!(writer, "{}", if fb[fb_i].ffs[i].init_state {"0"} else {"1"})?;
-
-                        write!(writer, "*\n")?;
-                    }
-                    write!(writer, "\n")?;
+                    write_small_mc_to_jed(writer, XC2Device::XC2C32, &fb[fb_i], iobs, fb_i, fuse_base)?;
                 }
 
                 // "other stuff" except bank voltages
@@ -511,6 +669,83 @@ impl XC2BitstreamBits {
                     if inpin.schmitt_trigger {"1"} else {"0"},
                     if inpin.termination_enabled {"1"} else {"0"})?;
             }
+            &XC2BitstreamBits::XC2C64 {
+                ref fb, ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ..
+            } | &XC2BitstreamBits::XC2C64A {
+                ref fb, ref iobs, ref global_nets, legacy_ivoltage: ref ivoltage,
+                legacy_ovoltage: ref ovoltage, ..
+            } => {
+
+                // Each FB
+                for fb_i in 0..4 {
+                    let fuse_base = match fb_i {
+                        0 => 0,
+                        1 => 6448,
+                        2 => 12896,
+                        3 => 19344,
+                        _ => unreachable!(),
+                    };
+
+                    // ZIA
+                    for i in 0..INPUTS_PER_ANDTERM {
+                        write!(writer, "L{:06} ", fuse_base + i * 16)?;
+                        let zia_choice_bits =
+                            encode_64_zia_choice(i as u32, fb[fb_i].zia_bits[i].selected)
+                            // FIXME: Fold this into the error system??
+                            .expect("invalid ZIA input");
+                        write!(writer, "{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+                            if zia_choice_bits[0] {"1"} else {"0"},
+                            if zia_choice_bits[1] {"1"} else {"0"},
+                            if zia_choice_bits[2] {"1"} else {"0"},
+                            if zia_choice_bits[3] {"1"} else {"0"},
+                            if zia_choice_bits[4] {"1"} else {"0"},
+                            if zia_choice_bits[5] {"1"} else {"0"},
+                            if zia_choice_bits[6] {"1"} else {"0"},
+                            if zia_choice_bits[7] {"1"} else {"0"},
+                            if zia_choice_bits[8] {"1"} else {"0"},
+                            if zia_choice_bits[9] {"1"} else {"0"},
+                            if zia_choice_bits[10] {"1"} else {"0"},
+                            if zia_choice_bits[11] {"1"} else {"0"},
+                            if zia_choice_bits[12] {"1"} else {"0"},
+                            if zia_choice_bits[13] {"1"} else {"0"},
+                            if zia_choice_bits[14] {"1"} else {"0"},
+                            if zia_choice_bits[15] {"1"} else {"0"})?;
+                        write!(writer, "*\n")?;
+                    }
+                    write!(writer, "\n")?;
+
+                    // PLA
+                    write_pla_to_jed(writer, XC2Device::XC2C64, &fb[fb_i], fuse_base)?;
+
+                    // Macrocells
+                    write_small_mc_to_jed(writer, XC2Device::XC2C64, &fb[fb_i], iobs, fb_i, fuse_base)?;
+                }
+
+                // "other stuff" except bank voltages
+                write!(writer, "L025792 {}{}{}*\n",
+                    if global_nets.gck_enable[0] {"1"} else {"0"},
+                    if global_nets.gck_enable[1] {"1"} else {"0"},
+                    if global_nets.gck_enable[2] {"1"} else {"0"})?;
+
+                write!(writer, "L025795 {}{}*\n",
+                    if global_nets.gsr_invert {"1"} else {"0"},
+                    if global_nets.gsr_enable {"1"} else {"0"})?;
+
+                write!(writer, "L025797 {}{}{}{}{}{}{}{}*\n",
+                    if global_nets.gts_invert[0] {"1"} else {"0"},
+                    if global_nets.gts_enable[0] {"0"} else {"1"},
+                    if global_nets.gts_invert[1] {"1"} else {"0"},
+                    if global_nets.gts_enable[1] {"0"} else {"1"},
+                    if global_nets.gts_invert[2] {"1"} else {"0"},
+                    if global_nets.gts_enable[2] {"0"} else {"1"},
+                    if global_nets.gts_invert[3] {"1"} else {"0"},
+                    if global_nets.gts_enable[3] {"0"} else {"1"})?;
+
+                write!(writer, "L025805 {}*\n", if global_nets.global_pu {"1"} else {"0"})?;
+
+                write!(writer, "L025806 {}*\n", if *ovoltage {"0"} else {"1"})?;
+                write!(writer, "L025807 {}*\n", if *ivoltage {"0"} else {"1"})?;
+            }
         }
 
         // A-variant bank voltages
@@ -520,6 +755,12 @@ impl XC2BitstreamBits {
                 write!(writer, "L012275 {}*\n", if ovoltage[0] {"0"} else {"1"})?;
                 write!(writer, "L012276 {}*\n", if ivoltage[1] {"0"} else {"1"})?;
                 write!(writer, "L012277 {}*\n", if ovoltage[1] {"0"} else {"1"})?;
+            },
+            &XC2BitstreamBits::XC2C64A {ref ivoltage, ref ovoltage, ..} => {
+                write!(writer, "L025808 {}*\n", if ivoltage[0] {"0"} else {"1"})?;
+                write!(writer, "L025809 {}*\n", if ovoltage[0] {"0"} else {"1"})?;
+                write!(writer, "L025810 {}*\n", if ivoltage[1] {"0"} else {"1"})?;
+                write!(writer, "L025811 {}*\n", if ovoltage[1] {"0"} else {"1"})?;
             },
             _ => {}
         }
@@ -532,7 +773,7 @@ impl XC2BitstreamBits {
 pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     for i in 0..fb.len() {
-        let res = read_32_fb_logical(fuses, i);
+        let res = read_small_fb_logical(XC2Device::XC2C32, fuses, i);
         if let Err(err) = res {
             return Err(err);
         }
@@ -546,7 +787,7 @@ pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
         } else {
             11824
         };
-        let res = read_32_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
+        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
         if let Err(err) = res {
             return Err(err);
         }
@@ -571,7 +812,7 @@ pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     for i in 0..fb.len() {
-        let res = read_32_fb_logical(fuses, i);
+        let res = read_small_fb_logical(XC2Device::XC2C32A, fuses, i);
         if let Err(err) = res {
             return Err(err);
         }
@@ -585,7 +826,7 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         } else {
             11824
         };
-        let res = read_32_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
+        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
         if let Err(err) = res {
             return Err(err);
         }
@@ -610,6 +851,90 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         ovoltage: [
             !fuses[12275],
             !fuses[12277],
+        ]
+    })
+}
+
+/// Internal function for parsing an XC2C64 bitstream
+pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 4];
+    for i in 0..fb.len() {
+        let res = read_small_fb_logical(XC2Device::XC2C64, fuses, i);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        fb[i] = res.unwrap();
+    };
+
+    let mut iobs = [XC2MCSmallIOB::default(); 64];
+    for i in 0..iobs.len() {
+        let base_fuse = match i {
+            0...15 => 6016,
+            16...31 => 12464,
+            32...47 => 18912,
+            48...63 => 25360,
+            _ => unreachable!(),
+        };
+        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        iobs[i] = res.unwrap();
+    }
+
+    let global_nets = read_64_global_nets_logical(fuses);
+
+    Ok(XC2BitstreamBits::XC2C64 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        ovoltage: !fuses[25806],
+        ivoltage: !fuses[25807],
+    })
+}
+
+/// Internal function for parsing an XC2C64A bitstream
+pub fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 4];
+    for i in 0..fb.len() {
+        let res = read_small_fb_logical(XC2Device::XC2C64A, fuses, i);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        fb[i] = res.unwrap();
+    };
+
+    let mut iobs = [XC2MCSmallIOB::default(); 64];
+    for i in 0..iobs.len() {
+        let base_fuse = match i {
+            0...15 => 6016,
+            16...31 => 12464,
+            32...47 => 18912,
+            48...63 => 25360,
+            _ => unreachable!(),
+        };
+        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        iobs[i] = res.unwrap();
+    }
+
+    let global_nets = read_64_global_nets_logical(fuses);
+
+    Ok(XC2BitstreamBits::XC2C64A {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        legacy_ovoltage: !fuses[25806],
+        legacy_ivoltage: !fuses[25807],
+        ivoltage: [
+            !fuses[25808],
+            !fuses[25810],
+        ],
+        ovoltage: [
+            !fuses[25809],
+            !fuses[25811],
         ]
     })
 }
@@ -644,6 +969,34 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
                 return Err("wrong number of fuses");
             }
             let bits = read_32a_bitstream_logical(fuses);
+            if let Err(err) = bits {
+                return Err(err);
+            }
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits.unwrap(),
+            })
+        },
+        XC2Device::XC2C64 => {
+            if fuses.len() != 25808 {
+                return Err("wrong number of fuses");
+            }
+            let bits = read_64_bitstream_logical(fuses);
+            if let Err(err) = bits {
+                return Err(err);
+            }
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits.unwrap(),
+            })
+        },
+        XC2Device::XC2C64A => {
+            if fuses.len() != 25812 {
+                return Err("wrong number of fuses");
+            }
+            let bits = read_64a_bitstream_logical(fuses);
             if let Err(err) = bits {
                 return Err(err);
             }

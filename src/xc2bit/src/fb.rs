@@ -30,8 +30,8 @@ use std::io::Write;
 
 use *;
 use pla::{read_and_term_logical, read_or_term_logical};
-use mc::{read_32_ff_logical};
-use zia::{read_32_zia_fb_row_logical};
+use mc::{read_small_ff_logical};
+use zia::{read_32_zia_fb_row_logical, read_64_zia_fb_row_logical, zia_get_row_width};
 
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
@@ -64,7 +64,7 @@ impl Default for XC2BitstreamFB {
 impl XC2BitstreamFB {
     /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
     /// `fb` must be the index of this function block.
-    pub fn dump_human_readable(&self, fb: u32, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable(&self, device: XC2Device, fb: u32, writer: &mut Write) -> Result<(), io::Error> {
         for i in 0..MCS_PER_FB {
             self.ffs[i].dump_human_readable(fb, i as u32, writer)?;
         }
@@ -80,7 +80,7 @@ impl XC2BitstreamFB {
                 XC2ZIAInput::Macrocell{fb, ff} =>
                     write!(writer, "FB{}_{} FF\n", fb + 1, ff + 1)?,
                 XC2ZIAInput::IBuf{ibuf} => {
-                    let (fb, ff) = iob_num_to_fb_ff_num_32(ibuf).unwrap();
+                    let (fb, ff) = iob_num_to_fb_ff_num(device, ibuf).unwrap();
                     write!(writer, "FB{}_{} pad\n", fb + 1, ff + 1)?;
                 },
                 XC2ZIAInput::DedicatedInput => write!(writer, "dedicated input\n")?,
@@ -135,36 +135,39 @@ impl XC2BitstreamFB {
     }
 }
 
-/// Internal function that reads a function block for 32-macrocell devices
-pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2BitstreamFB, &'static str> {
-    let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
-    let and_block_idx = match block_idx {
-        0 => 320,
-        1 => 6448,
-        _ => return Err("invalid block_idx"),
+/// Internal function that reads a function block for "small" (32/64-macrocell) devices
+pub fn read_small_fb_logical(device: XC2Device, fuses: &[bool], block_idx: usize)
+    -> Result<XC2BitstreamFB, &'static str> {
+
+    let zia_row_width = zia_get_row_width(device);
+    let size_of_zia = zia_row_width * INPUTS_PER_ANDTERM;
+    let size_of_and = INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB;
+    let size_of_or = ANDTERMS_PER_FB * MCS_PER_FB;
+    let size_of_mc = MCS_PER_FB * 27;
+    let size_of_each_fb = size_of_zia + size_of_and + size_of_or + size_of_mc;
+
+    let zia_row_read_function = match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => read_32_zia_fb_row_logical,
+        XC2Device::XC2C64 | XC2Device::XC2C64A => read_64_zia_fb_row_logical,
+        _ => unreachable!(),
     };
+
+    let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
+    let and_block_idx = block_idx * size_of_each_fb + size_of_zia;
     for i in 0..and_terms.len() {
         and_terms[i] = read_and_term_logical(fuses, and_block_idx, i);
     }
 
     let mut or_terms = [XC2PLAOrTerm::default(); MCS_PER_FB];
-    let or_block_idx = match block_idx {
-        0 => 4800,
-        1 => 10928,
-        _ => return Err("invalid block_idx"),
-    };
+    let or_block_idx = block_idx * size_of_each_fb + size_of_zia + size_of_and;
     for i in 0..or_terms.len() {
         or_terms[i] = read_or_term_logical(fuses, or_block_idx, i);
     }
 
     let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
-    let zia_block_idx = match block_idx {
-        0 => 0,
-        1 => 6128,
-        _ => return Err("invalid block_idx"),
-    };
+    let zia_block_idx = block_idx * size_of_each_fb;
     for i in 0..zia_bits.len() {
-        let result = read_32_zia_fb_row_logical(fuses, zia_block_idx, i);
+        let result = zia_row_read_function(fuses, zia_block_idx, i);
         if let Err(err) = result {
             return Err(err);
         }
@@ -172,13 +175,9 @@ pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2Bitstre
     }
 
     let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
-    let ff_block_idx = match block_idx {
-        0 => 5696,
-        1 => 11824,
-        _ => return Err("invalid block_idx"),
-    };
+    let ff_block_idx = block_idx * size_of_each_fb + size_of_zia + size_of_and + size_of_or;
     for i in 0..ff_bits.len() {
-        ff_bits[i] = read_32_ff_logical(fuses, ff_block_idx, i);
+        ff_bits[i] = read_small_ff_logical(fuses, ff_block_idx, i);
     }
 
 
