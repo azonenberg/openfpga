@@ -66,6 +66,9 @@ mod mc;
 pub use mc::{XC2Macrocell, XC2MCRegClkSrc, XC2MCRegResetSrc, XC2MCRegSetSrc, XC2MCRegMode, XC2MCFeedbackMode,
              XC2MCXorMode};
 
+mod partdb;
+pub use partdb::{XC2Device, XC2Speed, XC2Package, is_valid_part_combination, parse_part_name_string};
+
 mod pla;
 pub use pla::{XC2PLAAndTerm, XC2PLAOrTerm};
 
