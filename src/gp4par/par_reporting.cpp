@@ -247,6 +247,12 @@ void PrintPlacementReport(PARGraph* netlist, Greenpak4Device* /*device*/)
  */
 void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
 {
+	if(!device->HasTimingData())
+	{
+		LogWarning("No timing data for target device, not running timing analysis\n");
+		return;
+	}
+
 	LogNotice("\nTiming report:\n");
 	LogIndenter li;
 
@@ -287,6 +293,7 @@ void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
 
 	//DEBUG: print all paths
 	int i=0;
+	bool incomplete = false;
 	for(auto path : paths)
 	{
 		LogVerbose("Path %d\n", i++);
@@ -330,8 +337,9 @@ void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
 					auto rscell = device->GetIOB(3);
 					if(!rscell->GetCombinatorialDelay(previous_port, edge->m_sourceport, corner, delay))
 					{
-						LogWarning("Couldn't get timing data even from fallback pin\n");
-						delay = CombinatorialDelay(0, 0);
+						//LogWarning("Couldn't get timing data even from fallback pin\n");
+						incomplete = true;
+						continue;
 					}
 				}
 
@@ -356,8 +364,9 @@ void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
 			CombinatorialDelay delay;
 			if(!srccell->GetCombinatorialDelay(previous_port, edge->m_sourceport, corner, delay))
 			{
-				LogWarning("Couldn't get timing data\n");
-				delay = CombinatorialDelay(0, 0);
+				//LogWarning("Couldn't get timing data\n");
+				incomplete = true;
+				continue;
 			}
 			float worst = delay.GetWorst();
 			cdelay += worst;
@@ -381,8 +390,9 @@ void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
 			{
 				if(!xc->GetCombinatorialDelay("I", "O", corner, delay))
 				{
-					LogWarning("Couldn't get timing data\n");
-					delay = CombinatorialDelay(0, 0);
+					//LogWarning("Couldn't get timing data\n");
+					incomplete = true;
+					continue;
 				}
 				float worst = delay.GetWorst();
 				cdelay += worst;
@@ -410,8 +420,9 @@ void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
 					auto rscell = device->GetIOB(3);
 					if(!rscell->GetCombinatorialDelay(edge->m_destport, "IO", corner, delay))
 					{
-						LogWarning("Couldn't get timing data even from fallback pin\n");
-						delay = CombinatorialDelay(0, 0);
+						//LogWarning("Couldn't get timing data even from fallback pin\n");
+						incomplete = true;
+						continue;
 					}
 				}
 
@@ -432,6 +443,8 @@ void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
 			"+--------------------------------------------------------------+------------+-----------"
 			"+------------+------------+------------+\n");
 	}
+	if(incomplete)
+		LogWarning("Timing data doesn't have info for all primitives, report is incomplete\n");
 }
 
 /**
@@ -494,6 +507,34 @@ void FindCombinatorialPaths(
 	for(uint32_t i=0; i<destnode->GetEdgeCount(); i++)
 	{
 		auto edge = destnode->GetEdgeByIndex(i);
+
+		//Verify that this edge is not already in the netlist. If it is, complain and stop
+		bool loop = false;
+		for(auto tedge : basepath)
+		{
+			if(edge == tedge)
+			{
+				loop = true;
+
+				LogWarning("Found combinatorial loop, not following it for static timing\n");
+				LogIndenter li;
+
+				for(auto eedge : basepath)
+				{
+					auto snode = static_cast<Greenpak4NetlistEntity*>(eedge->m_sourcenode->GetData());
+					auto dnode = static_cast<Greenpak4NetlistEntity*>(eedge->m_destnode->GetData());
+					LogWarning("From cell %50s port %15s to %50s port %15s\n",
+						snode->m_name.c_str(),
+						eedge->m_sourceport.c_str(),
+						dnode->m_name.c_str(),
+						eedge->m_destport.c_str());
+				}
+
+				break;
+			}
+		}
+		if(loop)
+			continue;
 
 		//Find all paths that begin with the new, longer path
 		CombinatorialPath npath = basepath;

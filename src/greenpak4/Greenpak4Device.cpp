@@ -34,6 +34,7 @@ Greenpak4Device::Greenpak4Device(
 	, m_disableChargePump(false)
 	, m_ldoBypass(false)
 	, m_nvmLoadRetryCount(1)
+	, m_hasTimingData(false)
 {
 	//Create power rails
 	//These have to come first, since all other nodes will refer to these during construction
@@ -1412,6 +1413,8 @@ bool Greenpak4Device::LoadTimingData(json_object* object)
 		if(!bmap[name]->LoadTimingData(child))
 			return false;
 	}
+
+	m_hasTimingData = true;
 
 	return true;
 }

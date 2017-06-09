@@ -336,6 +336,9 @@ public:
 	bool LoadTimingData(json_object* object);
 	bool LoadTimingData(std::string fname);
 
+	bool HasTimingData()
+	{ return m_hasTimingData; }
+
 protected:
 
 	bool GenerateBitstream(bool* bitstream, uint8_t userid, bool readProtect);
@@ -496,6 +499,11 @@ protected:
 		@brief Number of times to attempt re-reading NVM in case of boot failure
 	 */
 	int m_nvmLoadRetryCount;
+
+	/**
+		@brief True if we have static timing data
+	 */
+	bool m_hasTimingData;
 };
 
 #endif
