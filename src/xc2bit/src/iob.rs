@@ -96,7 +96,7 @@ impl XC2MCSmallIOB {
     /// `my_idx` must be the index of this I/O pin in the internal numbering scheme.
     pub fn dump_human_readable(&self, my_idx: u32, writer: &mut Write) -> Result<(), io::Error> {
         write!(writer, "\n")?;
-        let (fb, ff) = iob_num_to_fb_ff_num_32(my_idx).unwrap();
+        let (fb, ff) = iob_num_to_fb_ff_num_64(my_idx).unwrap();
         write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, ff + 1)?;
         write!(writer, "output mode: {}\n", match self.obuf_mode {
             XC2IOBOBufMode::Disabled => "disabled",
