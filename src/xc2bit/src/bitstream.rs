@@ -597,3 +597,49 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         ]
     })
 }
+
+/// Processes a fuse array into a bitstream object
+pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
+    let device_split = device.split('-').collect::<Vec<_>>();
+
+    if device_split.len() != 3 {
+        return Err("malformed device name");
+    }
+
+    // TODO: Validate these
+    let device_speed = device_split[1];
+    let device_package = device_split[2];
+
+    // Part name
+    match device_split[0] {
+        "XC2C32" => {
+            if fuses.len() != 12274 {
+                return Err("wrong number of fuses");
+            }
+            let bits = read_32_bitstream_logical(fuses);
+            if let Err(err) = bits {
+                return Err(err);
+            }
+            Ok(XC2Bitstream {
+                speed_grade: device_speed.to_owned(),
+                package: device_package.to_owned(),
+                bits: bits.unwrap(),
+            })
+        },
+        "XC2C32A" => {
+            if fuses.len() != 12278 {
+                return Err("wrong number of fuses");
+            }
+            let bits = read_32a_bitstream_logical(fuses);
+            if let Err(err) = bits {
+                return Err(err);
+            }
+            Ok(XC2Bitstream {
+                speed_grade: device_speed.to_owned(),
+                package: device_package.to_owned(),
+                bits: bits.unwrap(),
+            })
+        },
+        _ => Err("unsupported part"),
+    }
+}
