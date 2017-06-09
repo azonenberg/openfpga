@@ -31,7 +31,7 @@ use std::io::Write;
 use *;
 use fb::{read_small_fb_logical};
 use iob::{read_small_iob_logical, read_32_extra_ibuf_logical};
-use zia::{encode_32_zia_choice, encode_64_zia_choice};
+use zia::{encode_32_zia_choice, encode_64_zia_choice, zia_get_row_width};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
 pub struct XC2Bitstream {
@@ -349,6 +349,156 @@ pub enum XC2BitstreamBits {
     },
 }
 
+/// Helper that prints the AND/OR arrays of a PLA
+fn write_pla_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2BitstreamFB, fuse_base: usize)
+    -> Result<(), io::Error> {
+
+    let zia_row_width = zia_get_row_width(device);
+
+    // AND terms
+    for i in 0..ANDTERMS_PER_FB {
+        write!(writer, "L{:06} ",
+            fuse_base + zia_row_width * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2)?;
+        for j in 0..INPUTS_PER_ANDTERM {
+            if fb.and_terms[i].input[j] {
+                write!(writer, "0")?;
+            } else {
+                write!(writer, "1")?;
+            }
+            if fb.and_terms[i].input_b[j] {
+                write!(writer, "0")?;
+            } else {
+                write!(writer, "1")?;
+            }
+        }
+        write!(writer, "*\n")?;
+    }
+    write!(writer, "\n")?;
+
+    // OR terms
+    for i in 0..ANDTERMS_PER_FB {
+        write!(writer, "L{:06} ",
+            fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
+            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB)?;
+        for j in 0..MCS_PER_FB {
+            if fb.or_terms[j].input[i] {
+                write!(writer, "0")?;
+            } else {
+                write!(writer, "1")?;
+            }
+        }
+        write!(writer, "*\n")?;
+    }
+    write!(writer, "\n")?;
+
+    Ok(())
+}
+
+/// Helper that prints the IOB and macrocell configuration on the "small" parts
+fn write_small_mc_to_jed(writer: &mut Write, mc: &XC2Macrocell, iob: &XC2MCSmallIOB) -> Result<(), io::Error> {
+    // aclk
+    write!(writer, "{}", match mc.clk_src {
+        XC2MCRegClkSrc::CTC => "1",
+        _ => "0",
+    })?;
+
+    // clkop
+    write!(writer, "{}", if mc.clk_invert_pol {"1"} else {"0"})?;
+
+    // clk
+    write!(writer, "{}", match mc.clk_src {
+        XC2MCRegClkSrc::GCK0 => "00",
+        XC2MCRegClkSrc::GCK1 => "01",
+        XC2MCRegClkSrc::GCK2 => "10",
+        XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => "11",
+    })?;
+
+    // clkfreq
+    write!(writer, "{}", if mc.is_ddr {"1"} else {"0"})?;
+
+    // r
+    write!(writer, "{}", match mc.r_src {
+        XC2MCRegResetSrc::PTA => "00",
+        XC2MCRegResetSrc::GSR => "01",
+        XC2MCRegResetSrc::CTR => "10",
+        XC2MCRegResetSrc::Disabled => "11",
+    })?;
+
+    // p
+    write!(writer, "{}", match mc.s_src {
+        XC2MCRegSetSrc::PTA => "00",
+        XC2MCRegSetSrc::GSR => "01",
+        XC2MCRegSetSrc::CTS => "10",
+        XC2MCRegSetSrc::Disabled => "11",
+    })?;
+
+    // regmod
+    write!(writer, "{}", match mc.reg_mode {
+        XC2MCRegMode::DFF => "00",
+        XC2MCRegMode::LATCH => "01",
+        XC2MCRegMode::TFF => "10",
+        XC2MCRegMode::DFFCE => "11",
+    })?;
+
+    // inz
+    write!(writer, "{}", match iob.zia_mode {
+        XC2IOBZIAMode::PAD => "00",
+        XC2IOBZIAMode::REG => "10",
+        XC2IOBZIAMode::Disabled => "11",
+    })?;
+
+    // fb
+    write!(writer, "{}", match mc.fb_mode {
+        XC2MCFeedbackMode::COMB => "00",
+        XC2MCFeedbackMode::REG => "10",
+        XC2MCFeedbackMode::Disabled => "11",
+    })?;
+
+    // inreg
+    write!(writer, "{}", if mc.ff_in_ibuf {"0"} else {"1"})?;
+
+    // st
+    write!(writer, "{}", if iob.schmitt_trigger {"1"} else {"0"})?;
+
+    // xorin
+    write!(writer, "{}", match mc.xor_mode {
+        XC2MCXorMode::ZERO => "00",
+        XC2MCXorMode::PTCB => "01",
+        XC2MCXorMode::PTC => "10",
+        XC2MCXorMode::ONE => "11",
+    })?;
+
+    // regcom
+    write!(writer, "{}", if iob.obuf_uses_ff {"0"} else {"1"})?;
+
+    // oe
+    write!(writer, "{}", match iob.obuf_mode {
+        XC2IOBOBufMode::PushPull => "0000",
+        XC2IOBOBufMode::OpenDrain => "0001",
+        XC2IOBOBufMode::TriStateGTS1 => "0010",
+        XC2IOBOBufMode::TriStatePTB => "0100",
+        XC2IOBOBufMode::TriStateGTS3 => "0110",
+        XC2IOBOBufMode::TriStateCTE => "1000",
+        XC2IOBOBufMode::TriStateGTS2 => "1010",
+        XC2IOBOBufMode::TriStateGTS0 => "1100",
+        XC2IOBOBufMode::CGND => "1110",
+        XC2IOBOBufMode::Disabled => "1111",
+    })?;
+
+    // tm
+    write!(writer, "{}", if iob.termination_enabled {"1"} else {"0"})?;
+
+    // slw
+    write!(writer, "{}", if iob.slew_is_fast {"0"} else {"1"})?;
+
+    // pu
+    write!(writer, "{}", if mc.init_state {"0"} else {"1"})?;
+
+    write!(writer, "*\n")?;
+
+    Ok(())
+}
+
 impl XC2BitstreamBits {
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
     pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
@@ -470,41 +620,7 @@ impl XC2BitstreamBits {
                     }
                     write!(writer, "\n")?;
 
-                    // AND terms
-                    for i in 0..ANDTERMS_PER_FB {
-                        write!(writer, "L{:06} ",
-                            fuse_base + 8 * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2)?;
-                        for j in 0..INPUTS_PER_ANDTERM {
-                            if fb[fb_i].and_terms[i].input[j] {
-                                write!(writer, "0")?;
-                            } else {
-                                write!(writer, "1")?;
-                            }
-                            if fb[fb_i].and_terms[i].input_b[j] {
-                                write!(writer, "0")?;
-                            } else {
-                                write!(writer, "1")?;
-                            }
-                        }
-                        write!(writer, "*\n")?;
-                    }
-                    write!(writer, "\n")?;
-
-                    // OR terms
-                    for i in 0..ANDTERMS_PER_FB {
-                        write!(writer, "L{:06} ",
-                            fuse_base + 8 * INPUTS_PER_ANDTERM +
-                            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB)?;
-                        for j in 0..MCS_PER_FB {
-                            if fb[fb_i].or_terms[j].input[i] {
-                                write!(writer, "0")?;
-                            } else {
-                                write!(writer, "1")?;
-                            }
-                        }
-                        write!(writer, "*\n")?;
-                    }
-                    write!(writer, "\n")?;
+                    write_pla_to_jed(writer, XC2Device::XC2C32, &fb[fb_i], fuse_base)?;
 
                     // Macrocells
                     for i in 0..MCS_PER_FB {
@@ -514,105 +630,7 @@ impl XC2BitstreamBits {
 
                         let iob = fb_ff_num_to_iob_num_32(fb_i as u32, i as u32).unwrap() as usize;
 
-                        // aclk
-                        write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
-                            XC2MCRegClkSrc::CTC => "1",
-                            _ => "0",
-                        })?;
-
-                        // clkop
-                        write!(writer, "{}", if fb[fb_i].ffs[i].clk_invert_pol {"1"} else {"0"})?;
-
-                        // clk
-                        write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
-                            XC2MCRegClkSrc::GCK0 => "00",
-                            XC2MCRegClkSrc::GCK1 => "01",
-                            XC2MCRegClkSrc::GCK2 => "10",
-                            XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => "11",
-                        })?;
-
-                        // clkfreq
-                        write!(writer, "{}", if fb[fb_i].ffs[i].is_ddr {"1"} else {"0"})?;
-
-                        // r
-                        write!(writer, "{}", match fb[fb_i].ffs[i].r_src {
-                            XC2MCRegResetSrc::PTA => "00",
-                            XC2MCRegResetSrc::GSR => "01",
-                            XC2MCRegResetSrc::CTR => "10",
-                            XC2MCRegResetSrc::Disabled => "11",
-                        })?;
-
-                        // p
-                        write!(writer, "{}", match fb[fb_i].ffs[i].s_src {
-                            XC2MCRegSetSrc::PTA => "00",
-                            XC2MCRegSetSrc::GSR => "01",
-                            XC2MCRegSetSrc::CTS => "10",
-                            XC2MCRegSetSrc::Disabled => "11",
-                        })?;
-
-                        // regmod
-                        write!(writer, "{}", match fb[fb_i].ffs[i].reg_mode {
-                            XC2MCRegMode::DFF => "00",
-                            XC2MCRegMode::LATCH => "01",
-                            XC2MCRegMode::TFF => "10",
-                            XC2MCRegMode::DFFCE => "11",
-                        })?;
-
-                        // inz
-                        write!(writer, "{}", match iobs[iob].zia_mode {
-                            XC2IOBZIAMode::PAD => "00",
-                            XC2IOBZIAMode::REG => "10",
-                            XC2IOBZIAMode::Disabled => "11",
-                        })?;
-
-                        // fb
-                        write!(writer, "{}", match fb[fb_i].ffs[i].fb_mode {
-                            XC2MCFeedbackMode::COMB => "00",
-                            XC2MCFeedbackMode::REG => "10",
-                            XC2MCFeedbackMode::Disabled => "11",
-                        })?;
-
-                        // inreg
-                        write!(writer, "{}", if fb[fb_i].ffs[i].ff_in_ibuf {"0"} else {"1"})?;
-
-                        // st
-                        write!(writer, "{}", if iobs[iob].schmitt_trigger {"1"} else {"0"})?;
-
-                        // xorin
-                        write!(writer, "{}", match fb[fb_i].ffs[i].xor_mode {
-                            XC2MCXorMode::ZERO => "00",
-                            XC2MCXorMode::PTCB => "01",
-                            XC2MCXorMode::PTC => "10",
-                            XC2MCXorMode::ONE => "11",
-                        })?;
-
-                        // regcom
-                        write!(writer, "{}", if iobs[iob].obuf_uses_ff {"0"} else {"1"})?;
-
-                        // oe
-                        write!(writer, "{}", match iobs[iob].obuf_mode {
-                            XC2IOBOBufMode::PushPull => "0000",
-                            XC2IOBOBufMode::OpenDrain => "0001",
-                            XC2IOBOBufMode::TriStateGTS1 => "0010",
-                            XC2IOBOBufMode::TriStatePTB => "0100",
-                            XC2IOBOBufMode::TriStateGTS3 => "0110",
-                            XC2IOBOBufMode::TriStateCTE => "1000",
-                            XC2IOBOBufMode::TriStateGTS2 => "1010",
-                            XC2IOBOBufMode::TriStateGTS0 => "1100",
-                            XC2IOBOBufMode::CGND => "1110",
-                            XC2IOBOBufMode::Disabled => "1111",
-                        })?;
-
-                        // tm
-                        write!(writer, "{}", if iobs[iob].termination_enabled {"1"} else {"0"})?;
-
-                        // slw
-                        write!(writer, "{}", if iobs[iob].slew_is_fast {"0"} else {"1"})?;
-
-                        // pu
-                        write!(writer, "{}", if fb[fb_i].ffs[i].init_state {"0"} else {"1"})?;
-
-                        write!(writer, "*\n")?;
+                        write_small_mc_to_jed(writer, &fb[fb_i].ffs[i], &iobs[iob])?;
                     }
                     write!(writer, "\n")?;
                 }
@@ -691,41 +709,7 @@ impl XC2BitstreamBits {
                     }
                     write!(writer, "\n")?;
 
-                    // AND terms
-                    for i in 0..ANDTERMS_PER_FB {
-                        write!(writer, "L{:06} ",
-                            fuse_base + 16 * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2)?;
-                        for j in 0..INPUTS_PER_ANDTERM {
-                            if fb[fb_i].and_terms[i].input[j] {
-                                write!(writer, "0")?;
-                            } else {
-                                write!(writer, "1")?;
-                            }
-                            if fb[fb_i].and_terms[i].input_b[j] {
-                                write!(writer, "0")?;
-                            } else {
-                                write!(writer, "1")?;
-                            }
-                        }
-                        write!(writer, "*\n")?;
-                    }
-                    write!(writer, "\n")?;
-
-                    // OR terms
-                    for i in 0..ANDTERMS_PER_FB {
-                        write!(writer, "L{:06} ",
-                            fuse_base + 16 * INPUTS_PER_ANDTERM +
-                            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB)?;
-                        for j in 0..MCS_PER_FB {
-                            if fb[fb_i].or_terms[j].input[i] {
-                                write!(writer, "0")?;
-                            } else {
-                                write!(writer, "1")?;
-                            }
-                        }
-                        write!(writer, "*\n")?;
-                    }
-                    write!(writer, "\n")?;
+                    write_pla_to_jed(writer, XC2Device::XC2C64, &fb[fb_i], fuse_base)?;
 
                     // Macrocells
                     for i in 0..MCS_PER_FB {
@@ -735,105 +719,7 @@ impl XC2BitstreamBits {
 
                         let iob = fb_ff_num_to_iob_num_64(fb_i as u32, i as u32).unwrap() as usize;
 
-                        // aclk
-                        write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
-                            XC2MCRegClkSrc::CTC => "1",
-                            _ => "0",
-                        })?;
-
-                        // clkop
-                        write!(writer, "{}", if fb[fb_i].ffs[i].clk_invert_pol {"1"} else {"0"})?;
-
-                        // clk
-                        write!(writer, "{}", match fb[fb_i].ffs[i].clk_src {
-                            XC2MCRegClkSrc::GCK0 => "00",
-                            XC2MCRegClkSrc::GCK1 => "01",
-                            XC2MCRegClkSrc::GCK2 => "10",
-                            XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => "11",
-                        })?;
-
-                        // clkfreq
-                        write!(writer, "{}", if fb[fb_i].ffs[i].is_ddr {"1"} else {"0"})?;
-
-                        // r
-                        write!(writer, "{}", match fb[fb_i].ffs[i].r_src {
-                            XC2MCRegResetSrc::PTA => "00",
-                            XC2MCRegResetSrc::GSR => "01",
-                            XC2MCRegResetSrc::CTR => "10",
-                            XC2MCRegResetSrc::Disabled => "11",
-                        })?;
-
-                        // p
-                        write!(writer, "{}", match fb[fb_i].ffs[i].s_src {
-                            XC2MCRegSetSrc::PTA => "00",
-                            XC2MCRegSetSrc::GSR => "01",
-                            XC2MCRegSetSrc::CTS => "10",
-                            XC2MCRegSetSrc::Disabled => "11",
-                        })?;
-
-                        // regmod
-                        write!(writer, "{}", match fb[fb_i].ffs[i].reg_mode {
-                            XC2MCRegMode::DFF => "00",
-                            XC2MCRegMode::LATCH => "01",
-                            XC2MCRegMode::TFF => "10",
-                            XC2MCRegMode::DFFCE => "11",
-                        })?;
-
-                        // inz
-                        write!(writer, "{}", match iobs[iob].zia_mode {
-                            XC2IOBZIAMode::PAD => "00",
-                            XC2IOBZIAMode::REG => "10",
-                            XC2IOBZIAMode::Disabled => "11",
-                        })?;
-
-                        // fb
-                        write!(writer, "{}", match fb[fb_i].ffs[i].fb_mode {
-                            XC2MCFeedbackMode::COMB => "00",
-                            XC2MCFeedbackMode::REG => "10",
-                            XC2MCFeedbackMode::Disabled => "11",
-                        })?;
-
-                        // inreg
-                        write!(writer, "{}", if fb[fb_i].ffs[i].ff_in_ibuf {"0"} else {"1"})?;
-
-                        // st
-                        write!(writer, "{}", if iobs[iob].schmitt_trigger {"1"} else {"0"})?;
-
-                        // xorin
-                        write!(writer, "{}", match fb[fb_i].ffs[i].xor_mode {
-                            XC2MCXorMode::ZERO => "00",
-                            XC2MCXorMode::PTCB => "01",
-                            XC2MCXorMode::PTC => "10",
-                            XC2MCXorMode::ONE => "11",
-                        })?;
-
-                        // regcom
-                        write!(writer, "{}", if iobs[iob].obuf_uses_ff {"0"} else {"1"})?;
-
-                        // oe
-                        write!(writer, "{}", match iobs[iob].obuf_mode {
-                            XC2IOBOBufMode::PushPull => "0000",
-                            XC2IOBOBufMode::OpenDrain => "0001",
-                            XC2IOBOBufMode::TriStateGTS1 => "0010",
-                            XC2IOBOBufMode::TriStatePTB => "0100",
-                            XC2IOBOBufMode::TriStateGTS3 => "0110",
-                            XC2IOBOBufMode::TriStateCTE => "1000",
-                            XC2IOBOBufMode::TriStateGTS2 => "1010",
-                            XC2IOBOBufMode::TriStateGTS0 => "1100",
-                            XC2IOBOBufMode::CGND => "1110",
-                            XC2IOBOBufMode::Disabled => "1111",
-                        })?;
-
-                        // tm
-                        write!(writer, "{}", if iobs[iob].termination_enabled {"1"} else {"0"})?;
-
-                        // slw
-                        write!(writer, "{}", if iobs[iob].slew_is_fast {"0"} else {"1"})?;
-
-                        // pu
-                        write!(writer, "{}", if fb[fb_i].ffs[i].init_state {"0"} else {"1"})?;
-
-                        write!(writer, "*\n")?;
+                        write_small_mc_to_jed(writer, &fb[fb_i].ffs[i], &iobs[iob])?;
                     }
                     write!(writer, "\n")?;
                 }
