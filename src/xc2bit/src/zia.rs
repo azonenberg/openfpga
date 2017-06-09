@@ -940,3 +940,93 @@ pub fn encode_32_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 8]> 
         Some(ret)
     }
 }
+
+const T: bool = true;
+const F: bool = false;
+
+/// Internal function that reads a piece of the ZIA corresponding to one FB and one row
+pub fn read_64_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
+    -> Result<XC2ZIARowPiece, &'static str> {
+
+    // This is an ugly workaround for the lack of stable slice patterns
+    let zia_row_fuses = (
+        fuses[block_idx + row_idx * 16 + 0],
+        fuses[block_idx + row_idx * 16 + 1],
+        fuses[block_idx + row_idx * 16 + 2],
+        fuses[block_idx + row_idx * 16 + 3],
+        fuses[block_idx + row_idx * 16 + 4],
+        fuses[block_idx + row_idx * 16 + 5],
+        fuses[block_idx + row_idx * 16 + 6],
+        fuses[block_idx + row_idx * 16 + 7],
+        fuses[block_idx + row_idx * 16 + 8],
+        fuses[block_idx + row_idx * 16 + 9],
+        fuses[block_idx + row_idx * 16 + 10],
+        fuses[block_idx + row_idx * 16 + 11],
+        fuses[block_idx + row_idx * 16 + 12],
+        fuses[block_idx + row_idx * 16 + 13],
+        fuses[block_idx + row_idx * 16 + 14],
+        fuses[block_idx + row_idx * 16 + 15],
+    );
+
+    let selected_input = match zia_row_fuses {
+        (T, T, T, T, T, T, T, F, T, T, T, T, F, T, T, F) => ZIA_MAP_64[row_idx][0],
+        (T, T, T, T, T, T, T, F, T, T, T, T, F, T, F, T) => ZIA_MAP_64[row_idx][1],
+        (T, T, T, T, T, T, T, F, T, T, T, T, F, F, T, T) => ZIA_MAP_64[row_idx][2],
+        (T, T, T, T, T, T, T, F, T, T, T, F, F, T, T, T) => ZIA_MAP_64[row_idx][3],
+        (T, T, T, T, T, T, T, F, T, T, F, T, F, T, T, T) => ZIA_MAP_64[row_idx][4],
+        (T, T, T, T, T, T, T, F, T, F, T, T, F, T, T, T) => ZIA_MAP_64[row_idx][5],
+        (T, T, T, F, T, T, F, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][6],
+        (T, T, T, F, T, F, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][7],
+        (T, T, T, F, F, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][8],
+        (T, T, F, F, T, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][9],
+        (T, F, T, F, T, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][10],
+        (F, T, T, F, T, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][11],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
+        // TODO: This one isn't certain
+        (T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T) => XC2ZIAInput::Zero,
+        _ => return Err("unknown ZIA input choice"),
+    };
+
+    Ok(XC2ZIARowPiece {
+        selected: selected_input
+    })
+}
+
+/// Internal function that takes a ZIA row and choice and returns the bit encoding for it
+pub fn encode_64_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 16]> {
+    if choice == XC2ZIAInput::One {
+        Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T])
+    } else if choice == XC2ZIAInput::Zero {
+        // TODO: This one isn't certain
+        Some([T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T])
+    } else {
+        let mut found_bit = 12;
+        for i in 0..ZIA_MAP_64[row as usize].len() {
+            if choice == ZIA_MAP_64[row as usize][i] {
+                found_bit = i;
+                break;
+            }
+        }
+
+        if found_bit == 12 {
+            // Didn't find it
+            return None;
+        }
+
+        match found_bit {
+            0  => Some([T, T, T, T, T, T, T, F, T, T, T, T, F, T, T, F]),
+            1  => Some([T, T, T, T, T, T, T, F, T, T, T, T, F, T, F, T]),
+            2  => Some([T, T, T, T, T, T, T, F, T, T, T, T, F, F, T, T]),
+            3  => Some([T, T, T, T, T, T, T, F, T, T, T, F, F, T, T, T]),
+            4  => Some([T, T, T, T, T, T, T, F, T, T, F, T, F, T, T, T]),
+            5  => Some([T, T, T, T, T, T, T, F, T, F, T, T, F, T, T, T]),
+            6  => Some([T, T, T, F, T, T, F, F, T, T, T, T, T, T, T, T]),
+            7  => Some([T, T, T, F, T, F, T, F, T, T, T, T, T, T, T, T]),
+            8  => Some([T, T, T, F, F, T, T, F, T, T, T, T, T, T, T, T]),
+            9  => Some([T, T, F, F, T, T, T, F, T, T, T, T, T, T, T, T]),
+            10 => Some([T, F, T, F, T, T, T, F, T, T, T, T, T, T, T, T]),
+            11 => Some([F, T, T, F, T, T, T, F, T, T, T, T, T, T, T, T]),
+            _ => unreachable!(),
+        }
+    }
+}
