@@ -200,7 +200,7 @@ impl XC2Macrocell {
 
 
 ///  Internal function that reads only the macrocell-related bits from the macrcocell configuration
-pub fn read_32_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC2Macrocell {
+pub fn read_small_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC2Macrocell {
     let aclk = fuses[block_idx + ff_idx * 27 + 0];
     let clk = (fuses[block_idx + ff_idx * 27 + 2],
                fuses[block_idx + ff_idx * 27 + 3]);

@@ -29,7 +29,7 @@ use std::io;
 use std::io::Write;
 
 use *;
-use fb::{read_32_fb_logical, read_64_fb_logical};
+use fb::{read_small_fb_logical};
 use iob::{read_small_iob_logical, read_32_extra_ibuf_logical};
 use zia::{encode_32_zia_choice, encode_64_zia_choice};
 
@@ -890,7 +890,7 @@ impl XC2BitstreamBits {
 pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     for i in 0..fb.len() {
-        let res = read_32_fb_logical(fuses, i);
+        let res = read_small_fb_logical(XC2Device::XC2C32, fuses, i);
         if let Err(err) = res {
             return Err(err);
         }
@@ -929,7 +929,7 @@ pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     for i in 0..fb.len() {
-        let res = read_32_fb_logical(fuses, i);
+        let res = read_small_fb_logical(XC2Device::XC2C32A, fuses, i);
         if let Err(err) = res {
             return Err(err);
         }
@@ -976,7 +976,7 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 4];
     for i in 0..fb.len() {
-        let res = read_64_fb_logical(fuses, i);
+        let res = read_small_fb_logical(XC2Device::XC2C64, fuses, i);
         if let Err(err) = res {
             return Err(err);
         }
@@ -1014,7 +1014,7 @@ pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 pub fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 4];
     for i in 0..fb.len() {
-        let res = read_64_fb_logical(fuses, i);
+        let res = read_small_fb_logical(XC2Device::XC2C64A, fuses, i);
         if let Err(err) = res {
             return Err(err);
         }

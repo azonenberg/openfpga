@@ -1030,3 +1030,12 @@ pub fn encode_64_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 16]>
         }
     }
 }
+
+/// Returns the width in bits of one row of the ZIA
+pub fn zia_get_row_width(device: XC2Device) -> usize {
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => 8,
+        XC2Device::XC2C64 | XC2Device::XC2C64A => 16,
+        _ => unreachable!(),
+    }
+}
