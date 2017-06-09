@@ -66,6 +66,14 @@ impl XC2Bitstream {
                 write!(writer, "QF12278*\n")?;
                 write!(writer, "N DEVICE XC2C32A-{}-{}*\n\n", self.speed_grade, self.package)?;
             },
+            XC2BitstreamBits::XC2C64{..} => {
+                write!(writer, "QF25808*\n")?;
+                write!(writer, "N DEVICE XC2C64-{}-{}*\n\n", self.speed_grade, self.package)?;
+            },
+            XC2BitstreamBits::XC2C64A{..} => {
+                write!(writer, "QF25812*\n")?;
+                write!(writer, "N DEVICE XC2C64A-{}-{}*\n\n", self.speed_grade, self.package)?;
+            },
         }
 
         self.bits.write_jed(writer)?;
@@ -86,8 +94,8 @@ impl XC2Bitstream {
         match device {
             XC2Device::XC2C32 => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade.to_owned(),
-                    package: package.to_owned(),
+                    speed_grade: speed_grade,
+                    package: package,
                     bits: XC2BitstreamBits::XC2C32 {
                         fb: [XC2BitstreamFB::default(); 2],
                         iobs: [XC2MCSmallIOB::default(); 32],
@@ -100,12 +108,40 @@ impl XC2Bitstream {
             },
             XC2Device::XC2C32A => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade.to_owned(),
-                    package: package.to_owned(),
+                    speed_grade: speed_grade,
+                    package: package,
                     bits: XC2BitstreamBits::XC2C32A {
                         fb: [XC2BitstreamFB::default(); 2],
                         iobs: [XC2MCSmallIOB::default(); 32],
                         inpin: XC2ExtraIBuf::default(),
+                        global_nets: XC2GlobalNets::default(),
+                        legacy_ivoltage: false,
+                        legacy_ovoltage: false,
+                        ivoltage: [false, false],
+                        ovoltage: [false, false],
+                    }
+                })
+            },
+            XC2Device::XC2C64 => {
+                Ok(XC2Bitstream {
+                    speed_grade: speed_grade,
+                    package: package,
+                    bits: XC2BitstreamBits::XC2C64 {
+                        fb: [XC2BitstreamFB::default(); 4],
+                        iobs: [XC2MCSmallIOB::default(); 64],
+                        global_nets: XC2GlobalNets::default(),
+                        ivoltage: false,
+                        ovoltage: false,
+                    }
+                })
+            },
+            XC2Device::XC2C64A => {
+                Ok(XC2Bitstream {
+                    speed_grade: speed_grade,
+                    package: package,
+                    bits: XC2BitstreamBits::XC2C64A {
+                        fb: [XC2BitstreamFB::default(); 4],
+                        iobs: [XC2MCSmallIOB::default(); 64],
                         global_nets: XC2GlobalNets::default(),
                         legacy_ivoltage: false,
                         legacy_ovoltage: false,
@@ -251,6 +287,40 @@ pub enum XC2BitstreamBits {
         /// `false` = low, `true` = high
         ovoltage: [bool; 2],
     },
+    XC2C64 {
+        fb: [XC2BitstreamFB; 4],
+        iobs: [XC2MCSmallIOB; 64],
+        global_nets: XC2GlobalNets,
+        /// Voltage level control
+        ///
+        /// `false` = low, `true` = high
+        ivoltage: bool,
+        /// Voltage level control
+        ///
+        /// `false` = low, `true` = high
+        ovoltage: bool,
+    },
+    XC2C64A {
+        fb: [XC2BitstreamFB; 4],
+        iobs: [XC2MCSmallIOB; 64],
+        global_nets: XC2GlobalNets,
+        /// Legacy voltage level control, should almost always be set to `false`
+        ///
+        /// `false` = low, `true` = high
+        legacy_ivoltage: bool,
+        /// Legacy voltage level control, should almost always be set to `false`
+        ///
+        /// `false` = low, `true` = high
+        legacy_ovoltage: bool,
+        /// Voltage level control for each I/O bank
+        ///
+        /// `false` = low, `true` = high
+        ivoltage: [bool; 2],
+        /// Voltage level control for each I/O bank
+        ///
+        /// `false` = low, `true` = high
+        ovoltage: [bool; 2],
+    },
 }
 
 impl XC2BitstreamBits {
@@ -295,6 +365,45 @@ impl XC2BitstreamBits {
 
                 fb[0].dump_human_readable(0, writer)?;
                 fb[1].dump_human_readable(1, writer)?;
+            },
+            &XC2BitstreamBits::XC2C64 {
+                ref fb, ref iobs, ref global_nets, ref ivoltage, ref ovoltage} => {
+
+                write!(writer, "device type: XC2C64\n")?;
+                write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"})?;
+                write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"})?;
+                global_nets.dump_human_readable(writer)?;
+
+                for i in 0..64 {
+                    iobs[i].dump_human_readable(i as u32, writer)?;
+                }
+
+                fb[0].dump_human_readable(0, writer)?;
+                fb[1].dump_human_readable(1, writer)?;
+                fb[2].dump_human_readable(2, writer)?;
+                fb[3].dump_human_readable(3, writer)?;
+            },
+            &XC2BitstreamBits::XC2C64A {
+                ref fb, ref iobs, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
+                ref ivoltage, ref ovoltage} => {
+
+                write!(writer, "device type: XC2C64\n")?;
+                write!(writer, "legacy output voltage range: {}\n", if *legacy_ovoltage {"high"} else {"low"})?;
+                write!(writer, "legacy input voltage range: {}\n", if *legacy_ivoltage {"high"} else {"low"})?;
+                write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
+                write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
+                write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
+                write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
+                global_nets.dump_human_readable(writer)?;
+
+                for i in 0..64 {
+                    iobs[i].dump_human_readable(i as u32, writer)?;
+                }
+
+                fb[0].dump_human_readable(0, writer)?;
+                fb[1].dump_human_readable(1, writer)?;
+                fb[2].dump_human_readable(2, writer)?;
+                fb[3].dump_human_readable(3, writer)?;
             },
         }
 
@@ -510,6 +619,14 @@ impl XC2BitstreamBits {
                 write!(writer, "L012272 {}{}*\n",
                     if inpin.schmitt_trigger {"1"} else {"0"},
                     if inpin.termination_enabled {"1"} else {"0"})?;
+            }
+            &XC2BitstreamBits::XC2C64 {
+                ref fb, ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ..
+            } | &XC2BitstreamBits::XC2C64A {
+                ref fb, ref iobs, ref global_nets, legacy_ivoltage: ref ivoltage,
+                legacy_ovoltage: ref ovoltage, ..
+            } => {
+                unreachable!();
             }
         }
 
