@@ -25,6 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains functions pertaining to the I/O pins
 
+use std::io;
 use std::io::Write;
 
 use *;
@@ -93,10 +94,10 @@ impl Default for XC2MCSmallIOB {
 impl XC2MCSmallIOB {
     /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
     /// `my_idx` must be the index of this I/O pin in the internal numbering scheme.
-    pub fn dump_human_readable(&self, my_idx: u32, writer: &mut Write) {
-        write!(writer, "\n").unwrap();
+    pub fn dump_human_readable(&self, my_idx: u32, writer: &mut Write) -> Result<(), io::Error> {
+        write!(writer, "\n")?;
         let (fb, ff) = iob_num_to_fb_ff_num_32(my_idx).unwrap();
-        write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, ff + 1).unwrap();
+        write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, ff + 1)?;
         write!(writer, "output mode: {}\n", match self.obuf_mode {
             XC2IOBOBufMode::Disabled => "disabled",
             XC2IOBOBufMode::PushPull => "push-pull",
@@ -108,16 +109,18 @@ impl XC2MCSmallIOB {
             XC2IOBOBufMode::TriStatePTB => "PTB-controlled tri-state",
             XC2IOBOBufMode::TriStateCTE => "CTE-controlled tri-state",
             XC2IOBOBufMode::CGND => "CGND",
-        }).unwrap();
-        write!(writer, "output comes from {}\n", if self.obuf_uses_ff {"FF"} else {"XOR gate"}).unwrap();
-        write!(writer, "slew rate: {}\n", if self.slew_is_fast {"fast"} else {"slow"}).unwrap();
+        })?;
+        write!(writer, "output comes from {}\n", if self.obuf_uses_ff {"FF"} else {"XOR gate"})?;
+        write!(writer, "slew rate: {}\n", if self.slew_is_fast {"fast"} else {"slow"})?;
         write!(writer, "ZIA driven from: {}\n", match self.zia_mode {
             XC2IOBZIAMode::Disabled => "disabled",
             XC2IOBZIAMode::PAD => "input pad",
             XC2IOBZIAMode::REG => "register",
-        }).unwrap();
-        write!(writer, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"}).unwrap();
-        write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"}).unwrap();
+        })?;
+        write!(writer, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"})?;
+        write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
+
+        Ok(())
     }
 }
 
@@ -141,11 +144,13 @@ impl Default for XC2ExtraIBuf {
 
 impl XC2ExtraIBuf {
     /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
-    pub fn dump_human_readable(&self, writer: &mut Write) {
-        write!(writer, "\n").unwrap();
-        write!(writer, "I/O configuration for input-only pin\n").unwrap();
-        write!(writer, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"}).unwrap();
-        write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"}).unwrap();
+    pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
+        write!(writer, "\n")?;
+        write!(writer, "I/O configuration for input-only pin\n")?;
+        write!(writer, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"})?;
+        write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
+
+        Ok(())
     }
 }
 

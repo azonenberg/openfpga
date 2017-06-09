@@ -25,6 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains functions pertaining to function blocks
 
+use std::io;
 use std::io::Write;
 
 use *;
@@ -63,72 +64,74 @@ impl Default for XC2BitstreamFB {
 impl XC2BitstreamFB {
     /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
     /// `fb` must be the index of this function block.
-    pub fn dump_human_readable(&self, fb: u32, writer: &mut Write) {
+    pub fn dump_human_readable(&self, fb: u32, writer: &mut Write) -> Result<(), io::Error> {
         for i in 0..MCS_PER_FB {
-            self.ffs[i].dump_human_readable(fb, i as u32, writer);
+            self.ffs[i].dump_human_readable(fb, i as u32, writer)?;
         }
 
         // FIXME: Move this somewhere else?
-        write!(writer, "\n").unwrap();
-        write!(writer, "ZIA inputs for FB{}\n", fb + 1).unwrap();
+        write!(writer, "\n")?;
+        write!(writer, "ZIA inputs for FB{}\n", fb + 1)?;
         for i in 0..INPUTS_PER_ANDTERM {
-            write!(writer, "{:2}: ", i).unwrap();
+            write!(writer, "{:2}: ", i)?;
             match self.zia_bits[i].selected {
-                XC2ZIAInput::Zero => write!(writer, "0\n").unwrap(),
-                XC2ZIAInput::One => write!(writer, "1\n").unwrap(),
+                XC2ZIAInput::Zero => write!(writer, "0\n")?,
+                XC2ZIAInput::One => write!(writer, "1\n")?,
                 XC2ZIAInput::Macrocell{fb, ff} =>
-                    write!(writer, "FB{}_{} FF\n", fb + 1, ff + 1).unwrap(),
+                    write!(writer, "FB{}_{} FF\n", fb + 1, ff + 1)?,
                 XC2ZIAInput::IBuf{ibuf} => {
                     let (fb, ff) = iob_num_to_fb_ff_num_32(ibuf).unwrap();
-                    write!(writer, "FB{}_{} pad\n", fb + 1, ff + 1).unwrap();
+                    write!(writer, "FB{}_{} pad\n", fb + 1, ff + 1)?;
                 },
-                XC2ZIAInput::DedicatedInput => write!(writer, "dedicated input\n").unwrap(),
+                XC2ZIAInput::DedicatedInput => write!(writer, "dedicated input\n")?,
             }
         }
 
         // FIXME: Move this somewhere else?
-        write!(writer, "\n").unwrap();
-        write!(writer, "AND terms for FB{}\n", fb + 1).unwrap();
+        write!(writer, "\n")?;
+        write!(writer, "AND terms for FB{}\n", fb + 1)?;
         write!(writer, "   |  0| ~0|  1| ~1|  2| ~2|  3| ~3|  4| ~4|  5| ~5|  6| ~6|  7| ~7|  8| ~8|  9| ~9| 10|~10| \
                                      11|~11| 12|~12| 13|~13| 14|~14| 15|~15| 16|~16| 17|~17| 18|~18| 19|~19| 20|~20| \
                                      21|~21| 22|~22| 23|~23| 24|~24| 25|~25| 26|~26| 27|~27| 28|~28| 29|~29| 30|~30| \
                                      31|~31| 32|~32| 33|~33| 34|~34| 35|~35| 36|~36| 37|~37| 38|~38| 39|~39\
-                                     \n").unwrap();
+                                     \n")?;
         for i in 0..ANDTERMS_PER_FB {
-            write!(writer, "{:2}:", i).unwrap();
+            write!(writer, "{:2}:", i)?;
             for j in 0..INPUTS_PER_ANDTERM {
                 if self.and_terms[i].input[j] {
-                    write!(writer, "|XXX").unwrap();
+                    write!(writer, "|XXX")?;
                 } else {
-                    write!(writer, "|   ").unwrap();
+                    write!(writer, "|   ")?;
                 }
 
                 if self.and_terms[i].input_b[j] {
-                    write!(writer, "|XXX").unwrap();
+                    write!(writer, "|XXX")?;
                 } else {
-                    write!(writer, "|   ").unwrap();
+                    write!(writer, "|   ")?;
                 }
             }
-            write!(writer, "\n").unwrap();
+            write!(writer, "\n")?;
         }
 
         // FIXME: Move this somewhere else?
-        write!(writer, "\n").unwrap();
-        write!(writer, "OR terms for FB{}\n", fb + 1).unwrap();
+        write!(writer, "\n")?;
+        write!(writer, "OR terms for FB{}\n", fb + 1)?;
         write!(writer, "   | 0| 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|16|17|18|19|20|\
                                21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|\
-                               41|42|43|44|45|46|47|48|49|50|51|52|53|54|55\n").unwrap();
+                               41|42|43|44|45|46|47|48|49|50|51|52|53|54|55\n")?;
         for i in 0..MCS_PER_FB {
-            write!(writer, "{:2}:", i).unwrap();
+            write!(writer, "{:2}:", i)?;
             for j in 0..ANDTERMS_PER_FB {
                 if self.or_terms[i].input[j] {
-                    write!(writer, "|XX").unwrap();
+                    write!(writer, "|XX")?;
                 } else {
-                    write!(writer, "|  ").unwrap();
+                    write!(writer, "|  ")?;
                 }
             }
-            write!(writer, "\n").unwrap();
+            write!(writer, "\n")?;
         }
+
+        Ok(())
     }
 }
 

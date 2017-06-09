@@ -49,5 +49,5 @@ fn main() {
     let bitstream_result = process_jed(&bits, &device_name);
     let bitstream = bitstream_result.expect("failed to process jed");
 
-    bitstream.dump_human_readable(&mut ::std::io::stdout());
+    bitstream.dump_human_readable(&mut ::std::io::stdout()).expect("failed to print jed");
 }

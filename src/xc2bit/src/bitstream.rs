@@ -25,6 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Toplevel bitstrem stuff
 
+use std::io;
 use std::io::Write;
 
 use *;
@@ -41,11 +42,13 @@ pub struct XC2Bitstream {
 
 impl XC2Bitstream {
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
-    pub fn dump_human_readable(&self, writer: &mut Write) {
-        write!(writer, "xc2bit dump\n").unwrap();
-        write!(writer, "device speed grade: {}\n", self.speed_grade).unwrap();
-        write!(writer, "device package: {}\n", self.package).unwrap();
-        self.bits.dump_human_readable(writer);
+    pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
+        write!(writer, "xc2bit dump\n")?;
+        write!(writer, "device speed grade: {}\n", self.speed_grade)?;
+        write!(writer, "device package: {}\n", self.package)?;
+        self.bits.dump_human_readable(writer)?;
+
+        Ok(())
     }
 
     /// Write a .jed representation of the bitstream to the given `writer` object.
@@ -153,30 +156,32 @@ impl Default for XC2GlobalNets {
 
 impl XC2GlobalNets {
     /// Dump a human-readable explanation of the global net configuration to the given `writer` object.
-    pub fn dump_human_readable(&self, writer: &mut Write) {
-        write!(writer, "\n").unwrap();
-        write!(writer, "GCK0 {}\n", if self.gck_enable[0] {"enabled"} else {"disabled"}).unwrap();
-        write!(writer, "GCK1 {}\n", if self.gck_enable[1] {"enabled"} else {"disabled"}).unwrap();
-        write!(writer, "GCK2 {}\n", if self.gck_enable[2] {"enabled"} else {"disabled"}).unwrap();
+    pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
+        write!(writer, "\n")?;
+        write!(writer, "GCK0 {}\n", if self.gck_enable[0] {"enabled"} else {"disabled"})?;
+        write!(writer, "GCK1 {}\n", if self.gck_enable[1] {"enabled"} else {"disabled"})?;
+        write!(writer, "GCK2 {}\n", if self.gck_enable[2] {"enabled"} else {"disabled"})?;
 
         write!(writer, "GSR {}, active {}\n",
             if self.gsr_enable {"enabled"} else {"disabled"},
-            if self.gsr_invert {"high"} else {"low"}).unwrap();
+            if self.gsr_invert {"high"} else {"low"})?;
 
         write!(writer, "GTS0 {}, acts as {}\n",
             if self.gts_enable[0] {"enabled"} else {"disabled"},
-            if self.gts_invert[0] {"!T"} else {"T"}).unwrap();
+            if self.gts_invert[0] {"!T"} else {"T"})?;
         write!(writer, "GTS1 {}, acts as {}\n",
             if self.gts_enable[1] {"enabled"} else {"disabled"},
-            if self.gts_invert[1] {"!T"} else {"T"}).unwrap();
+            if self.gts_invert[1] {"!T"} else {"T"})?;
         write!(writer, "GTS2 {}, acts as {}\n",
             if self.gts_enable[2] {"enabled"} else {"disabled"},
-            if self.gts_invert[2] {"!T"} else {"T"}).unwrap();
+            if self.gts_invert[2] {"!T"} else {"T"})?;
         write!(writer, "GTS3 {}, acts as {}\n",
             if self.gts_enable[3] {"enabled"} else {"disabled"},
-            if self.gts_invert[3] {"!T"} else {"T"}).unwrap();
+            if self.gts_invert[3] {"!T"} else {"T"})?;
 
-        write!(writer, "global termination is {}\n", if self.global_pu {"pull-up"} else {"bus hold"}).unwrap();
+        write!(writer, "global termination is {}\n", if self.global_pu {"pull-up"} else {"bus hold"})?;
+
+        Ok(())
     }
 }
 
@@ -248,48 +253,50 @@ pub enum XC2BitstreamBits {
 
 impl XC2BitstreamBits {
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
-    pub fn dump_human_readable(&self, writer: &mut Write) {
+    pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
         match self {
             &XC2BitstreamBits::XC2C32 {
                 ref fb, ref iobs, ref inpin, ref global_nets, ref ivoltage, ref ovoltage} => {
 
-                write!(writer, "device type: XC2C32\n").unwrap();
-                write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"}).unwrap();
-                write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"}).unwrap();
-                global_nets.dump_human_readable(writer);
+                write!(writer, "device type: XC2C32\n")?;
+                write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"})?;
+                write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"})?;
+                global_nets.dump_human_readable(writer)?;
 
                 for i in 0..32 {
-                    iobs[i].dump_human_readable(i as u32, writer);
+                    iobs[i].dump_human_readable(i as u32, writer)?;
                 }
 
-                inpin.dump_human_readable(writer);
+                inpin.dump_human_readable(writer)?;
 
-                fb[0].dump_human_readable(0, writer);
-                fb[1].dump_human_readable(1, writer);
+                fb[0].dump_human_readable(0, writer)?;
+                fb[1].dump_human_readable(1, writer)?;
             },
             &XC2BitstreamBits::XC2C32A {
                 ref fb, ref iobs, ref inpin, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
                 ref ivoltage, ref ovoltage} => {
 
-                write!(writer, "device type: XC2C32A\n").unwrap();
-                write!(writer, "legacy output voltage range: {}\n", if *legacy_ovoltage {"high"} else {"low"}).unwrap();
-                write!(writer, "legacy input voltage range: {}\n", if *legacy_ivoltage {"high"} else {"low"}).unwrap();
-                write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"}).unwrap();
-                write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"}).unwrap();
-                write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"}).unwrap();
-                write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"}).unwrap();
-                global_nets.dump_human_readable(writer);
+                write!(writer, "device type: XC2C32A\n")?;
+                write!(writer, "legacy output voltage range: {}\n", if *legacy_ovoltage {"high"} else {"low"})?;
+                write!(writer, "legacy input voltage range: {}\n", if *legacy_ivoltage {"high"} else {"low"})?;
+                write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
+                write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
+                write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
+                write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
+                global_nets.dump_human_readable(writer)?;
 
                 for i in 0..32 {
-                    iobs[i].dump_human_readable(i as u32, writer);
+                    iobs[i].dump_human_readable(i as u32, writer)?;
                 }
 
-                inpin.dump_human_readable(writer);
+                inpin.dump_human_readable(writer)?;
 
-                fb[0].dump_human_readable(0, writer);
-                fb[1].dump_human_readable(1, writer);
+                fb[0].dump_human_readable(0, writer)?;
+                fb[1].dump_human_readable(1, writer)?;
             },
         }
+
+        Ok(())
     }
 
     /// Write a .jed representation of the bitstream to the given `writer` object.

@@ -25,6 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains functions pertaining to macrocells
 
+use std::io;
 use std::io::Write;
 
 /// Clock source for the register in a macrocell
@@ -149,49 +150,51 @@ impl Default for XC2Macrocell {
 impl XC2Macrocell {
     /// Dump a human-readable explanation of the settings for this macrocell to the given `writer` object.
     /// `fb` and `ff` must be the function block number and macrocell number of this macrocell.
-    pub fn dump_human_readable(&self, fb: u32, ff: u32, writer: &mut Write) {
-        write!(writer, "\n").unwrap();
-        write!(writer, "FF configuration for FB{}_{}\n", fb + 1, ff + 1).unwrap();
+    pub fn dump_human_readable(&self, fb: u32, ff: u32, writer: &mut Write) -> Result<(), io::Error> {
+        write!(writer, "\n")?;
+        write!(writer, "FF configuration for FB{}_{}\n", fb + 1, ff + 1)?;
         write!(writer, "FF mode: {}\n", match self.reg_mode {
             XC2MCRegMode::DFF => "D flip-flop",
             XC2MCRegMode::LATCH => "transparent latch",
             XC2MCRegMode::TFF => "T flip-flop",
             XC2MCRegMode::DFFCE => "D flip-flop with clock-enable",
-        }).unwrap();
-        write!(writer, "initial state: {}\n", if self.init_state {1} else {0}).unwrap();
-        write!(writer, "{}-edge triggered\n", if self.clk_invert_pol {"falling"} else {"rising"}).unwrap();
-        write!(writer, "DDR: {}\n", if self.is_ddr {"yes"} else {"no"}).unwrap();
+        })?;
+        write!(writer, "initial state: {}\n", if self.init_state {1} else {0})?;
+        write!(writer, "{}-edge triggered\n", if self.clk_invert_pol {"falling"} else {"rising"})?;
+        write!(writer, "DDR: {}\n", if self.is_ddr {"yes"} else {"no"})?;
         write!(writer, "clock source: {}\n", match self.clk_src {
             XC2MCRegClkSrc::GCK0 => "GCK0",
             XC2MCRegClkSrc::GCK1 => "GCK1",
             XC2MCRegClkSrc::GCK2 => "GCK2",
             XC2MCRegClkSrc::PTC => "PTC",
             XC2MCRegClkSrc::CTC => "CTC",
-        }).unwrap();
+        })?;
         write!(writer, "set source: {}\n", match self.s_src {
             XC2MCRegSetSrc::Disabled => "disabled",
             XC2MCRegSetSrc::PTA => "PTA",
             XC2MCRegSetSrc::GSR => "GSR",
             XC2MCRegSetSrc::CTS => "CTS",
-        }).unwrap();
+        })?;
         write!(writer, "reset source: {}\n", match self.r_src {
             XC2MCRegResetSrc::Disabled => "disabled",
             XC2MCRegResetSrc::PTA => "PTA",
             XC2MCRegResetSrc::GSR => "GSR",
             XC2MCRegResetSrc::CTR => "CTR",
-        }).unwrap();
-        write!(writer, "using ibuf direct path: {}\n", if self.ff_in_ibuf {"yes"} else {"no"}).unwrap();
+        })?;
+        write!(writer, "using ibuf direct path: {}\n", if self.ff_in_ibuf {"yes"} else {"no"})?;
         write!(writer, "XOR gate input: {}\n", match self.xor_mode {
             XC2MCXorMode::ZERO => "0",
             XC2MCXorMode::ONE => "1",
             XC2MCXorMode::PTC => "PTC",
             XC2MCXorMode::PTCB => "~PTC",
-        }).unwrap();
+        })?;
         write!(writer, "ZIA feedback: {}\n", match self.fb_mode {
             XC2MCFeedbackMode::Disabled => "disabled",
             XC2MCFeedbackMode::COMB => "combinatorial",
             XC2MCFeedbackMode::REG => "registered",
-        }).unwrap();
+        })?;
+
+        Ok(())
     }
 }
 
