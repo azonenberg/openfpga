@@ -60,7 +60,7 @@ pub use fb::{XC2BitstreamFB, CTC, CTR, CTS, CTE, get_pta, get_ptb, get_ptc};
 
 mod iob;
 pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, iob_num_to_fb_ff_num_32,
-             fb_ff_num_to_iob_num_32};
+             fb_ff_num_to_iob_num_32, iob_num_to_fb_ff_num_64, fb_ff_num_to_iob_num_64};
 
 mod mc;
 pub use mc::{XC2Macrocell, XC2MCRegClkSrc, XC2MCRegResetSrc, XC2MCRegSetSrc, XC2MCRegMode, XC2MCFeedbackMode,

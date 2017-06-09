@@ -174,6 +174,26 @@ pub fn fb_ff_num_to_iob_num_32(fb: u32, ff: u32) -> Option<u32> {
     }
 }
 
+/// Function to map from the internal numbering scheme for I/O pins to a function block and macrocell number.
+/// This function is for the 64-macrocell devices.
+pub fn iob_num_to_fb_ff_num_64(iob: u32) -> Option<(u32, u32)> {
+    if iob >= 64 {
+        None
+    } else {
+        Some((iob / MCS_PER_FB as u32, iob % MCS_PER_FB as u32))
+    }
+}
+
+/// Function to map from a function block and macrocell number to the internal numbering scheme for I/O pins.
+/// This function is for the 64-macrocell devices.
+pub fn fb_ff_num_to_iob_num_64(fb: u32, ff: u32) -> Option<u32> {
+    if fb >= 4 || ff >= MCS_PER_FB as u32 {
+        None
+    } else {
+        Some(fb * MCS_PER_FB as u32 + ff)
+    }
+}
+
 /// Internal function that reads only the IO-related bits from the macrocell configuration
 pub fn read_32_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -> Result<XC2MCSmallIOB, &'static str> {
     let inz = (fuses[block_idx + io_idx * 27 + 11],
