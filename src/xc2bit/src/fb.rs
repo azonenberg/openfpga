@@ -64,7 +64,7 @@ impl Default for XC2BitstreamFB {
 impl XC2BitstreamFB {
     /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
     /// `fb` must be the index of this function block.
-    pub fn dump_human_readable(&self, fb: u32, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable(&self, device: XC2Device, fb: u32, writer: &mut Write) -> Result<(), io::Error> {
         for i in 0..MCS_PER_FB {
             self.ffs[i].dump_human_readable(fb, i as u32, writer)?;
         }
@@ -80,7 +80,7 @@ impl XC2BitstreamFB {
                 XC2ZIAInput::Macrocell{fb, ff} =>
                     write!(writer, "FB{}_{} FF\n", fb + 1, ff + 1)?,
                 XC2ZIAInput::IBuf{ibuf} => {
-                    let (fb, ff) = iob_num_to_fb_ff_num_32(ibuf).unwrap();
+                    let (fb, ff) = iob_num_to_fb_ff_num(device, ibuf).unwrap();
                     write!(writer, "FB{}_{} pad\n", fb + 1, ff + 1)?;
                 },
                 XC2ZIAInput::DedicatedInput => write!(writer, "dedicated input\n")?,

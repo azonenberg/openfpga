@@ -94,9 +94,9 @@ impl Default for XC2MCSmallIOB {
 impl XC2MCSmallIOB {
     /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
     /// `my_idx` must be the index of this I/O pin in the internal numbering scheme.
-    pub fn dump_human_readable(&self, my_idx: u32, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable(&self, device: XC2Device, my_idx: u32, writer: &mut Write) -> Result<(), io::Error> {
         write!(writer, "\n")?;
-        let (fb, ff) = iob_num_to_fb_ff_num_64(my_idx).unwrap();
+        let (fb, ff) = iob_num_to_fb_ff_num(device, my_idx).unwrap();
         write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, ff + 1)?;
         write!(writer, "output mode: {}\n", match self.obuf_mode {
             XC2IOBOBufMode::Disabled => "disabled",
@@ -155,42 +155,44 @@ impl XC2ExtraIBuf {
 }
 
 /// Function to map from the internal numbering scheme for I/O pins to a function block and macrocell number.
-/// This function is for the 32-macrocell devices.
-pub fn iob_num_to_fb_ff_num_32(iob: u32) -> Option<(u32, u32)> {
-    if iob >= 32 {
-        None
-    } else {
-        Some((iob / MCS_PER_FB as u32, iob % MCS_PER_FB as u32))
+pub fn iob_num_to_fb_ff_num(device: XC2Device, iob: u32) -> Option<(u32, u32)> {
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => {
+            if iob >= 32 {
+                None
+            } else {
+                Some((iob / MCS_PER_FB as u32, iob % MCS_PER_FB as u32))
+            }
+        },
+        XC2Device::XC2C64 | XC2Device::XC2C64A => {
+            if iob >= 64 {
+                None
+            } else {
+                Some((iob / MCS_PER_FB as u32, iob % MCS_PER_FB as u32))
+            }
+        }
+        _ => unreachable!(),
     }
 }
 
 /// Function to map from a function block and macrocell number to the internal numbering scheme for I/O pins.
-/// This function is for the 32-macrocell devices.
-pub fn fb_ff_num_to_iob_num_32(fb: u32, ff: u32) -> Option<u32> {
-    if fb >= 2 || ff >= MCS_PER_FB as u32 {
-        None
-    } else {
-        Some(fb * MCS_PER_FB as u32 + ff)
-    }
-}
-
-/// Function to map from the internal numbering scheme for I/O pins to a function block and macrocell number.
-/// This function is for the 64-macrocell devices.
-pub fn iob_num_to_fb_ff_num_64(iob: u32) -> Option<(u32, u32)> {
-    if iob >= 64 {
-        None
-    } else {
-        Some((iob / MCS_PER_FB as u32, iob % MCS_PER_FB as u32))
-    }
-}
-
-/// Function to map from a function block and macrocell number to the internal numbering scheme for I/O pins.
-/// This function is for the 64-macrocell devices.
-pub fn fb_ff_num_to_iob_num_64(fb: u32, ff: u32) -> Option<u32> {
-    if fb >= 4 || ff >= MCS_PER_FB as u32 {
-        None
-    } else {
-        Some(fb * MCS_PER_FB as u32 + ff)
+pub fn fb_ff_num_to_iob_num(device: XC2Device, fb: u32, ff: u32) -> Option<u32> {
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => {
+            if fb >= 2 || ff >= MCS_PER_FB as u32 {
+                None
+            } else {
+                Some(fb * MCS_PER_FB as u32 + ff)
+            }
+        },
+        XC2Device::XC2C64 | XC2Device::XC2C64A => {
+            if fb >= 4 || ff >= MCS_PER_FB as u32 {
+                None
+            } else {
+                Some(fb * MCS_PER_FB as u32 + ff)
+            }
+        }
+        _ => unreachable!(),
     }
 }
 
