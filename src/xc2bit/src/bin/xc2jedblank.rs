@@ -23,11 +23,27 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+//! Testing tool that prints out a "blank" but valid bitstream for the given part.
+
 extern crate xc2bit;
 use xc2bit::*;
 
 fn main() {
-    let bitstream = XC2Bitstream::blank_bitstream("XC2C32A", "6", "VQ44").expect("failed to create bitstream");
+    let args = ::std::env::args().collect::<Vec<_>>();
+
+    if args.len() != 2 {
+        println!("Usage: {} <device>-<speed>-<package>", args[0]);
+        ::std::process::exit(1);
+    }
+
+    let device_combination = parse_part_name_string(&args[1]);
+    if device_combination.is_none() {
+        println!("Requested part combination {} is invalid", args[1]);
+        ::std::process::exit(1);
+    }
+
+    let (part, spd, pkg) = device_combination.unwrap();
+    let bitstream = XC2Bitstream::blank_bitstream(part, spd, pkg).expect("failed to create bitstream");
 
     bitstream.write_jed(&mut ::std::io::stdout());
 }

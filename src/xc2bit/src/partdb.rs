@@ -26,6 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //! Miscellaneous stuff related to possible part combinations
 
 use std::ascii::AsciiExt;
+use std::fmt;
 
 /// Coolrunner-II devices
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -40,6 +41,12 @@ pub enum XC2Device {
     XC2C512,
 }
 
+impl fmt::Display for XC2Device {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 /// Possible speed grades
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2Speed {
@@ -48,6 +55,18 @@ pub enum XC2Speed {
     Speed6,
     Speed7,
     Speed10,
+}
+
+impl fmt::Display for XC2Speed {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match *self {
+            XC2Speed::Speed4 => "4",
+            XC2Speed::Speed5 => "5",
+            XC2Speed::Speed6 => "6",
+            XC2Speed::Speed7 => "7",
+            XC2Speed::Speed10 => "10",
+        })
+    }
 }
 
 /// Possible physical packages
@@ -64,6 +83,12 @@ pub enum XC2Package {
     PQ208,
     FT256,
     FG324,
+}
+
+impl fmt::Display for XC2Package {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 /// Determine if the given combination of device, speed, and package is a legal combination or not.

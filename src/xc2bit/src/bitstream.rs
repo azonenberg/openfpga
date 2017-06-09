@@ -34,8 +34,8 @@ use zia::{encode_32_zia_choice};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
 pub struct XC2Bitstream {
-    pub speed_grade: String,
-    pub package: String,
+    pub speed_grade: XC2Speed,
+    pub package: XC2Package,
     pub bits: XC2BitstreamBits,
 }
 
@@ -71,11 +71,15 @@ impl XC2Bitstream {
     }
 
     /// Construct a new blank bitstream of the given part
-    pub fn blank_bitstream(device: &str, speed_grade: &str, package: &str) -> Result<XC2Bitstream, &'static str> {
-        // TODO: Validate speed_grade and package
+    pub fn blank_bitstream(device: XC2Device, speed_grade: XC2Speed, package: XC2Package)
+        -> Result<XC2Bitstream, &'static str> {
+
+        if !is_valid_part_combination(device, speed_grade, package) {
+            return Err("requested device/speed/package is not a legal combination")
+        }
 
         match device {
-            "XC2C32" => {
+            XC2Device::XC2C32 => {
                 Ok(XC2Bitstream {
                     speed_grade: speed_grade.to_owned(),
                     package: package.to_owned(),
@@ -89,7 +93,7 @@ impl XC2Bitstream {
                     }
                 })
             },
-            "XC2C32A" => {
+            XC2Device::XC2C32A => {
                 Ok(XC2Bitstream {
                     speed_grade: speed_grade.to_owned(),
                     package: package.to_owned(),
@@ -600,19 +604,16 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 
 /// Processes a fuse array into a bitstream object
 pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
-    let device_split = device.split('-').collect::<Vec<_>>();
 
-    if device_split.len() != 3 {
+    let device_combination = parse_part_name_string(device);
+    if device_combination.is_none() {
         return Err("malformed device name");
     }
 
-    // TODO: Validate these
-    let device_speed = device_split[1];
-    let device_package = device_split[2];
+    let (part, spd, pkg) = device_combination.unwrap();
 
-    // Part name
-    match device_split[0] {
-        "XC2C32" => {
+    match part {
+        XC2Device::XC2C32 => {
             if fuses.len() != 12274 {
                 return Err("wrong number of fuses");
             }
@@ -621,12 +622,12 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
                 return Err(err);
             }
             Ok(XC2Bitstream {
-                speed_grade: device_speed.to_owned(),
-                package: device_package.to_owned(),
+                speed_grade: spd,
+                package: pkg,
                 bits: bits.unwrap(),
             })
         },
-        "XC2C32A" => {
+        XC2Device::XC2C32A => {
             if fuses.len() != 12278 {
                 return Err("wrong number of fuses");
             }
@@ -635,8 +636,8 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
                 return Err(err);
             }
             Ok(XC2Bitstream {
-                speed_grade: device_speed.to_owned(),
-                package: device_package.to_owned(),
+                speed_grade: spd,
+                package: pkg,
                 bits: bits.unwrap(),
             })
         },
