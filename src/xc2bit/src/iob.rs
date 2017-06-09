@@ -195,7 +195,7 @@ pub fn fb_ff_num_to_iob_num_64(fb: u32, ff: u32) -> Option<u32> {
 }
 
 /// Internal function that reads only the IO-related bits from the macrocell configuration
-pub fn read_32_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -> Result<XC2MCSmallIOB, &'static str> {
+pub fn read_small_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -> Result<XC2MCSmallIOB, &'static str> {
     let inz = (fuses[block_idx + io_idx * 27 + 11],
                fuses[block_idx + io_idx * 27 + 12]);
     let input_to_zia = match inz {

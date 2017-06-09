@@ -29,8 +29,8 @@ use std::io;
 use std::io::Write;
 
 use *;
-use fb::{read_32_fb_logical};
-use iob::{read_32_iob_logical, read_32_extra_ibuf_logical};
+use fb::{read_32_fb_logical, read_64_fb_logical};
+use iob::{read_small_iob_logical, read_32_extra_ibuf_logical};
 use zia::{encode_32_zia_choice, encode_64_zia_choice};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
@@ -246,6 +246,32 @@ fn read_32_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
             fuses[12267],
         ],
         global_pu: fuses[12269],
+    }
+}
+
+/// Internal function to read the global nets from a 64-macrocell part
+fn read_64_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
+    XC2GlobalNets {
+        gck_enable: [
+            fuses[25792],
+            fuses[25793],
+            fuses[25794],
+        ],
+        gsr_enable: fuses[25796],
+        gsr_invert: fuses[25795],
+        gts_enable: [
+            !fuses[25798],
+            !fuses[25800],
+            !fuses[25802],
+            !fuses[25804],
+        ],
+        gts_invert: [
+            fuses[25797],
+            fuses[25799],
+            fuses[25801],
+            fuses[25803],
+        ],
+        global_pu: fuses[25805],
     }
 }
 
@@ -878,7 +904,7 @@ pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
         } else {
             11824
         };
-        let res = read_32_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
+        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
         if let Err(err) = res {
             return Err(err);
         }
@@ -917,7 +943,7 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         } else {
             11824
         };
-        let res = read_32_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
+        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
         if let Err(err) = res {
             return Err(err);
         }
@@ -942,6 +968,90 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         ovoltage: [
             !fuses[12275],
             !fuses[12277],
+        ]
+    })
+}
+
+/// Internal function for parsing an XC2C64 bitstream
+pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 4];
+    for i in 0..fb.len() {
+        let res = read_64_fb_logical(fuses, i);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        fb[i] = res.unwrap();
+    };
+
+    let mut iobs = [XC2MCSmallIOB::default(); 64];
+    for i in 0..iobs.len() {
+        let base_fuse = match i {
+            0...15 => 6016,
+            16...31 => 12464,
+            32...47 => 18912,
+            48...63 => 25360,
+            _ => unreachable!(),
+        };
+        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        iobs[i] = res.unwrap();
+    }
+
+    let global_nets = read_64_global_nets_logical(fuses);
+
+    Ok(XC2BitstreamBits::XC2C64 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        ovoltage: !fuses[25806],
+        ivoltage: !fuses[25807],
+    })
+}
+
+/// Internal function for parsing an XC2C64A bitstream
+pub fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 4];
+    for i in 0..fb.len() {
+        let res = read_64_fb_logical(fuses, i);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        fb[i] = res.unwrap();
+    };
+
+    let mut iobs = [XC2MCSmallIOB::default(); 64];
+    for i in 0..iobs.len() {
+        let base_fuse = match i {
+            0...15 => 6016,
+            16...31 => 12464,
+            32...47 => 18912,
+            48...63 => 25360,
+            _ => unreachable!(),
+        };
+        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        iobs[i] = res.unwrap();
+    }
+
+    let global_nets = read_64_global_nets_logical(fuses);
+
+    Ok(XC2BitstreamBits::XC2C64A {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        legacy_ovoltage: !fuses[25806],
+        legacy_ivoltage: !fuses[25807],
+        ivoltage: [
+            !fuses[25808],
+            !fuses[25810],
+        ],
+        ovoltage: [
+            !fuses[25809],
+            !fuses[25811],
         ]
     })
 }
@@ -976,6 +1086,34 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
                 return Err("wrong number of fuses");
             }
             let bits = read_32a_bitstream_logical(fuses);
+            if let Err(err) = bits {
+                return Err(err);
+            }
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits.unwrap(),
+            })
+        },
+        XC2Device::XC2C64 => {
+            if fuses.len() != 25808 {
+                return Err("wrong number of fuses");
+            }
+            let bits = read_64_bitstream_logical(fuses);
+            if let Err(err) = bits {
+                return Err(err);
+            }
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits.unwrap(),
+            })
+        },
+        XC2Device::XC2C64A => {
+            if fuses.len() != 25812 {
+                return Err("wrong number of fuses");
+            }
+            let bits = read_64a_bitstream_logical(fuses);
             if let Err(err) = bits {
                 return Err(err);
             }

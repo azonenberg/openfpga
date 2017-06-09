@@ -31,7 +31,7 @@ use std::io::Write;
 use *;
 use pla::{read_and_term_logical, read_or_term_logical};
 use mc::{read_32_ff_logical};
-use zia::{read_32_zia_fb_row_logical};
+use zia::{read_32_zia_fb_row_logical, read_64_zia_fb_row_logical};
 
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
@@ -175,6 +175,69 @@ pub fn read_32_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2Bitstre
     let ff_block_idx = match block_idx {
         0 => 5696,
         1 => 11824,
+        _ => return Err("invalid block_idx"),
+    };
+    for i in 0..ff_bits.len() {
+        ff_bits[i] = read_32_ff_logical(fuses, ff_block_idx, i);
+    }
+
+
+    Ok(XC2BitstreamFB {
+        and_terms: and_terms,
+        or_terms: or_terms,
+        zia_bits: zia_bits,
+        ffs: ff_bits,
+    })
+}
+
+/// Internal function that reads a function block for 64-macrocell devices
+pub fn read_64_fb_logical(fuses: &[bool], block_idx: usize) -> Result<XC2BitstreamFB, &'static str> {
+    let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
+    let and_block_idx = match block_idx {
+        0 => 640,
+        1 => 7088,
+        2 => 13536,
+        3 => 19984,
+        _ => return Err("invalid block_idx"),
+    };
+    for i in 0..and_terms.len() {
+        and_terms[i] = read_and_term_logical(fuses, and_block_idx, i);
+    }
+
+    let mut or_terms = [XC2PLAOrTerm::default(); MCS_PER_FB];
+    let or_block_idx = match block_idx {
+        0 => 5120,
+        1 => 11568,
+        2 => 18016,
+        3 => 24464,
+        _ => return Err("invalid block_idx"),
+    };
+    for i in 0..or_terms.len() {
+        or_terms[i] = read_or_term_logical(fuses, or_block_idx, i);
+    }
+
+    let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
+    let zia_block_idx = match block_idx {
+        0 => 0,
+        1 => 6448,
+        2 => 12896,
+        3 => 19344,
+        _ => return Err("invalid block_idx"),
+    };
+    for i in 0..zia_bits.len() {
+        let result = read_64_zia_fb_row_logical(fuses, zia_block_idx, i);
+        if let Err(err) = result {
+            return Err(err);
+        }
+        zia_bits[i] = result.unwrap();
+    }
+
+    let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
+    let ff_block_idx = match block_idx {
+        0 => 6016,
+        1 => 12464,
+        2 => 18912,
+        3 => 25360,
         _ => return Err("invalid block_idx"),
     };
     for i in 0..ff_bits.len() {
