@@ -364,22 +364,22 @@ pub fn fb_ff_num_to_iob_num(device: XC2Device, fb: u32, ff: u32) -> Option<u32> 
 }
 
 /// Internal function that reads only the IO-related bits from the macrocell configuration
-pub fn read_small_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -> Result<XC2MCSmallIOB, &'static str> {
-    let inz = (fuses[block_idx + io_idx * 27 + 11],
-               fuses[block_idx + io_idx * 27 + 12]);
+pub fn read_small_iob_logical(fuses: &[bool], fuse_idx: usize) -> Result<XC2MCSmallIOB, &'static str> {
+    let inz = (fuses[fuse_idx + 11],
+               fuses[fuse_idx + 12]);
     let input_to_zia = match inz {
         (false, false) => XC2IOBZIAMode::PAD,
         (true, false) => XC2IOBZIAMode::REG,
         (_, true) => XC2IOBZIAMode::Disabled,
     };
 
-    let st = fuses[block_idx + io_idx * 27 + 16];
-    let regcom = fuses[block_idx + io_idx * 27 + 19];
+    let st = fuses[fuse_idx + 16];
+    let regcom = fuses[fuse_idx + 19];
 
-    let oe = (fuses[block_idx + io_idx * 27 + 20],
-              fuses[block_idx + io_idx * 27 + 21],
-              fuses[block_idx + io_idx * 27 + 22],
-              fuses[block_idx + io_idx * 27 + 23]);
+    let oe = (fuses[fuse_idx + 20],
+              fuses[fuse_idx + 21],
+              fuses[fuse_idx + 22],
+              fuses[fuse_idx + 23]);
     let output_mode = match oe {
         (false, false, false, false) => XC2IOBOBufMode::PushPull,
         (false, false, false, true)  => XC2IOBOBufMode::OpenDrain,
@@ -394,8 +394,8 @@ pub fn read_small_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -
         _ => return Err("unknown Oe mode used"),
     };
 
-    let tm = fuses[block_idx + io_idx * 27 + 24];
-    let slw = fuses[block_idx + io_idx * 27 + 25];
+    let tm = fuses[fuse_idx + 24];
+    let slw = fuses[fuse_idx + 25];
 
     Ok(XC2MCSmallIOB {
         zia_mode: input_to_zia,

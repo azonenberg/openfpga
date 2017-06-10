@@ -1057,35 +1057,69 @@ impl XC2BitstreamBits {
     }
 }
 
+/// Common logic for reading bitstreams on "small" devices
+pub fn read_bitstream_logical_common_small<F>(fuses: &[bool], fb_to_base_fuse: F, device: XC2Device,
+    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCSmallIOB]) -> Result<(), &'static str>
+    where F: Fn(usize) -> usize {
+
+    for i in 0..fb.len() {
+        let base_fuse = fb_to_base_fuse(i);
+        let res = read_fb_logical(device, fuses, i as u32, base_fuse)?;
+        fb[i] = res;
+
+        let zia_row_width = zia_get_row_width(device);
+        let mut iob_fuse = base_fuse + zia_row_width * INPUTS_PER_ANDTERM + INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB +
+            ANDTERMS_PER_FB * MCS_PER_FB;
+        for ff in 0..MCS_PER_FB {
+            let iob = fb_ff_num_to_iob_num(device, i as u32, ff as u32);
+            let res = read_small_iob_logical(fuses, iob_fuse)?;
+            iobs[iob.unwrap() as usize] = res;
+            iob_fuse += 27;
+        }
+    };
+
+    Ok(())
+}
+
+/// Common logic for reading bitstreams on "large" devices
+pub fn read_bitstream_logical_common_large<F>(fuses: &[bool], fb_to_base_fuse: F, device: XC2Device,
+    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCLargeIOB]) -> Result<(), &'static str>
+    where F: Fn(usize) -> usize {
+
+    for i in 0..fb.len() {
+        let base_fuse = fb_to_base_fuse(i);
+        let res = read_fb_logical(device, fuses, i as u32, base_fuse)?;
+        fb[i] = res;
+
+        let zia_row_width = zia_get_row_width(device);
+        let mut iob_fuse = base_fuse + zia_row_width * INPUTS_PER_ANDTERM + INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB +
+            ANDTERMS_PER_FB * MCS_PER_FB;
+        for ff in 0..MCS_PER_FB {
+            let iob = fb_ff_num_to_iob_num(device, i as u32, ff as u32);
+            if iob.is_some() {
+                let res = read_large_iob_logical(fuses, iob_fuse)?;
+                iobs[iob.unwrap() as usize] = res;
+                // Must be not a buried macrocell
+                iob_fuse += 29;
+            } else {
+                // Buried
+                iob_fuse += 16;
+            }
+        }
+    };
+
+    Ok(())
+}
 /// Internal function for parsing an XC2C32 bitstream
 pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
-    for i in 0..fb.len() {
-        let base_fuse = if i < MCS_PER_FB {
-            5696
-        } else {
-            11824
-        };
-        let res = read_fb_logical(XC2Device::XC2C32A, fuses, i as u32, base_fuse);
-        if let Err(err) = res {
-            return Err(err);
-        }
-        fb[i] = res.unwrap();
-    };
-
     let mut iobs = [XC2MCSmallIOB::default(); 32];
-    for i in 0..iobs.len() {
-        let base_fuse = if i < MCS_PER_FB {
-            5696
-        } else {
-            11824
-        };
-        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
-        if let Err(err) = res {
-            return Err(err);
-        }
-        iobs[i] = res.unwrap();
-    }
+    
+    read_bitstream_logical_common_small(fuses, |i| match i {
+            0 => 0,
+            1 => 6128,
+            _ => unreachable!(),
+        }, XC2Device::XC2C32, &mut fb, &mut iobs)?;
 
     let inpin = read_32_extra_ibuf_logical(fuses);
 
@@ -1104,32 +1138,13 @@ pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 /// Internal function for parsing an XC2C32A bitstream
 pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
-    for i in 0..fb.len() {
-        let base_fuse = if i < MCS_PER_FB {
-            5696
-        } else {
-            11824
-        };
-        let res = read_fb_logical(XC2Device::XC2C32A, fuses, i as u32, base_fuse);
-        if let Err(err) = res {
-            return Err(err);
-        }
-        fb[i] = res.unwrap();
-    };
-
     let mut iobs = [XC2MCSmallIOB::default(); 32];
-    for i in 0..iobs.len() {
-        let base_fuse = if i < MCS_PER_FB {
-            5696
-        } else {
-            11824
-        };
-        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
-        if let Err(err) = res {
-            return Err(err);
-        }
-        iobs[i] = res.unwrap();
-    }
+    
+    read_bitstream_logical_common_small(fuses, |i| match i {
+            0 => 0,
+            1 => 6128,
+            _ => unreachable!(),
+        }, XC2Device::XC2C32A, &mut fb, &mut iobs)?;
 
     let inpin = read_32_extra_ibuf_logical(fuses);
 
@@ -1156,36 +1171,15 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 /// Internal function for parsing an XC2C64 bitstream
 pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 4];
-    for i in 0..fb.len() {
-        let base_fuse = match i {
-            0...15 => 6016,
-            16...31 => 12464,
-            32...47 => 18912,
-            48...63 => 25360,
-            _ => unreachable!(),
-        };
-        let res = read_fb_logical(XC2Device::XC2C64, fuses, i as u32, base_fuse);
-        if let Err(err) = res {
-            return Err(err);
-        }
-        fb[i] = res.unwrap();
-    };
-
     let mut iobs = [XC2MCSmallIOB::default(); 64];
-    for i in 0..iobs.len() {
-        let base_fuse = match i {
-            0...15 => 6016,
-            16...31 => 12464,
-            32...47 => 18912,
-            48...63 => 25360,
+    
+    read_bitstream_logical_common_small(fuses, |i| match i {
+            0 => 0,
+            1 => 6448,
+            2 => 12896,
+            3 => 19344,
             _ => unreachable!(),
-        };
-        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
-        if let Err(err) = res {
-            return Err(err);
-        }
-        iobs[i] = res.unwrap();
-    }
+        }, XC2Device::XC2C64, &mut fb, &mut iobs)?;
 
     let global_nets = read_64_global_nets_logical(fuses);
 
@@ -1201,36 +1195,15 @@ pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 /// Internal function for parsing an XC2C64A bitstream
 pub fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 4];
-    for i in 0..fb.len() {
-        let base_fuse = match i {
-            0...15 => 6016,
-            16...31 => 12464,
-            32...47 => 18912,
-            48...63 => 25360,
-            _ => unreachable!(),
-        };
-        let res = read_fb_logical(XC2Device::XC2C64A, fuses, i as u32, base_fuse);
-        if let Err(err) = res {
-            return Err(err);
-        }
-        fb[i] = res.unwrap();
-    };
-
     let mut iobs = [XC2MCSmallIOB::default(); 64];
-    for i in 0..iobs.len() {
-        let base_fuse = match i {
-            0...15 => 6016,
-            16...31 => 12464,
-            32...47 => 18912,
-            48...63 => 25360,
+    
+    read_bitstream_logical_common_small(fuses, |i| match i {
+            0 => 0,
+            1 => 6448,
+            2 => 12896,
+            3 => 19344,
             _ => unreachable!(),
-        };
-        let res = read_small_iob_logical(fuses, base_fuse, i % MCS_PER_FB);
-        if let Err(err) = res {
-            return Err(err);
-        }
-        iobs[i] = res.unwrap();
-    }
+        }, XC2Device::XC2C64A, &mut fb, &mut iobs)?;
 
     let global_nets = read_64_global_nets_logical(fuses);
 
@@ -1255,8 +1228,8 @@ pub fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 pub fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 8];
     let mut iobs = [XC2MCLargeIOB::default(); 100];
-    for i in 0..fb.len() {
-        let base_fuse = match i {
+    
+    read_bitstream_logical_common_large(fuses, |i| match i {
             0 => 0,
             1 => 6908,
             2 => 13816,
@@ -1266,30 +1239,7 @@ pub fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
             6 => 41487,
             7 => 48408,
             _ => unreachable!(),
-        };
-        let res = read_fb_logical(XC2Device::XC2C128, fuses, i as u32, base_fuse);
-        if let Err(err) = res {
-            return Err(err);
-        }
-        fb[i] = res.unwrap();
-
-        let zia_row_width = zia_get_row_width(XC2Device::XC2C128);
-        let mut iob_fuse = base_fuse + zia_row_width * INPUTS_PER_ANDTERM + INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB +
-            ANDTERMS_PER_FB * MCS_PER_FB;
-        for ff in 0..MCS_PER_FB {
-            let iob = fb_ff_num_to_iob_num(XC2Device::XC2C128, i as u32, ff as u32);
-            if iob.is_some() {
-                let res = read_large_iob_logical(fuses, iob_fuse);
-                if let Err(err) = res {
-                    return Err(err);
-                }
-                iobs[iob.unwrap() as usize] = res.unwrap();
-                iob_fuse += 29;
-            } else {
-                iob_fuse += 16;
-            }
-        }
-    };
+        }, XC2Device::XC2C128, &mut fb, &mut iobs)?;
 
     let global_nets = read_128_global_nets_logical(fuses);
 
