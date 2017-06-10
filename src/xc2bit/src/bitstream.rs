@@ -378,6 +378,24 @@ fn read_256_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
     }
 }
 
+/// Internal function to read the clock divider configuration from a 384-macrocell part
+fn read_384_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
+    XC2ClockDiv {
+        delay: !fuses[209335],
+        enabled: !fuses[209331],
+        div_ratio: match (fuses[209332], fuses[209333], fuses[209334]) {
+            (false, false, false) => XC2ClockDivRatio::Div2,
+            (false, false,  true) => XC2ClockDivRatio::Div4,
+            (false,  true, false) => XC2ClockDivRatio::Div6,
+            (false,  true,  true) => XC2ClockDivRatio::Div8,
+            ( true, false, false) => XC2ClockDivRatio::Div10,
+            ( true, false,  true) => XC2ClockDivRatio::Div12,
+            ( true,  true, false) => XC2ClockDivRatio::Div14,
+            ( true,  true,  true) => XC2ClockDivRatio::Div16,
+        }
+    }
+}
+
 
 /// The actual bitstream bits for each possible Coolrunner-II part
 pub enum XC2BitstreamBits {
@@ -1110,7 +1128,7 @@ pub fn read_384_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         fb: fb,
         iobs: iobs,
         global_nets: global_nets,
-        clock_div: read_256_clock_div_logical(fuses),
+        clock_div: read_384_clock_div_logical(fuses),
         data_gate: !fuses[209347],
         use_vref: !fuses[209356],
         ivoltage: [

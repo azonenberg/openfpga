@@ -329,6 +329,20 @@ pub fn iob_num_to_fb_ff_num(device: XC2Device, iob: u32) -> Option<(u32, u32)> {
                 _ => None,
             }
         },
+        XC2Device::XC2C384 => {
+            if iob >= 240 {
+                None
+            } else {
+                // every FB is "missing" 6 IOBs
+                let fb = iob / 10;
+                let mut mc = iob % 10;
+                if mc >= 5 {
+                    mc = mc + 6;
+                }
+
+                Some((fb, mc))
+            }
+        },
         _ => unreachable!(),
     }
 }
