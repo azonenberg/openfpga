@@ -585,6 +585,151 @@ fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bitstrea
     Ok(())
 }
 
+/// Helper that prints the IOB and macrocell configuration on the "large" parts
+fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2BitstreamFB, iobs: &[XC2MCLargeIOB],
+    fb_i: usize, fuse_base: usize) -> Result<(), io::Error> {
+
+    let zia_row_width = zia_get_row_width(device);
+
+    let mut current_fuse_offset = fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
+        ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + ANDTERMS_PER_FB * MCS_PER_FB;
+
+    for i in 0..MCS_PER_FB {
+        write!(writer, "L{:06} ", current_fuse_offset)?;
+
+        let iob = fb_ff_num_to_iob_num(device, fb_i as u32, i as u32);
+
+        // aclk
+        write!(writer, "{}", match fb.ffs[i].clk_src {
+            XC2MCRegClkSrc::CTC => "1",
+            _ => "0",
+        })?;
+
+        // clk
+        write!(writer, "{}", match fb.ffs[i].clk_src {
+            XC2MCRegClkSrc::GCK0 => "00",
+            XC2MCRegClkSrc::GCK1 => "01",
+            XC2MCRegClkSrc::GCK2 => "10",
+            XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => "11",
+        })?;
+
+        // clkfreq
+        write!(writer, "{}", if fb.ffs[i].is_ddr {"1"} else {"0"})?;
+
+        // clkop
+        write!(writer, "{}", if fb.ffs[i].clk_invert_pol {"1"} else {"0"})?;
+
+        // dg
+        if iob.is_some() {
+            write!(writer, "{}", if iobs[iob.unwrap() as usize].uses_data_gate {"1"} else {"0"})?;
+        }
+
+        // fb
+        write!(writer, "{}", match fb.ffs[i].fb_mode {
+            XC2MCFeedbackMode::COMB => "00",
+            XC2MCFeedbackMode::REG => "10",
+            XC2MCFeedbackMode::Disabled => "11",
+        })?;
+
+        if iob.is_some() {
+            let iob = iob.unwrap() as usize;
+
+            // inmod
+            write!(writer, "{}", match iobs[iob].ibuf_mode {
+                XC2IOBIbufMode::NoVrefNoSt => "00",
+                XC2IOBIbufMode::IsVref => "01",
+                XC2IOBIbufMode::UsesVref => "10",
+                XC2IOBIbufMode::NoVrefSt => "11",
+            })?;
+
+            // inreg
+            write!(writer, "{}", if fb.ffs[i].ff_in_ibuf {"0"} else {"1"})?;
+
+            // inz
+            write!(writer, "{}", match iobs[iob].zia_mode {
+                XC2IOBZIAMode::PAD => "00",
+                XC2IOBZIAMode::REG => "10",
+                XC2IOBZIAMode::Disabled => "11",
+            })?;
+
+            // oe
+            write!(writer, "{}", match iobs[iob].obuf_mode {
+                XC2IOBOBufMode::PushPull => "0000",
+                XC2IOBOBufMode::OpenDrain => "0001",
+                XC2IOBOBufMode::TriStateGTS1 => "0010",
+                XC2IOBOBufMode::TriStatePTB => "0100",
+                XC2IOBOBufMode::TriStateGTS3 => "0110",
+                XC2IOBOBufMode::TriStateCTE => "1000",
+                XC2IOBOBufMode::TriStateGTS2 => "1010",
+                XC2IOBOBufMode::TriStateGTS0 => "1100",
+                XC2IOBOBufMode::CGND => "1110",
+                XC2IOBOBufMode::Disabled => "1111",
+            })?;
+        }
+
+        // p
+        write!(writer, "{}", match fb.ffs[i].s_src {
+            XC2MCRegSetSrc::PTA => "00",
+            XC2MCRegSetSrc::GSR => "01",
+            XC2MCRegSetSrc::CTS => "10",
+            XC2MCRegSetSrc::Disabled => "11",
+        })?;
+
+        // pu
+        write!(writer, "{}", if fb.ffs[i].init_state {"0"} else {"1"})?;
+
+        if iob.is_some() {
+            // regcom
+            write!(writer, "{}", if iobs[iob.unwrap() as usize].obuf_uses_ff {"0"} else {"1"})?;
+        }
+
+        // regmod
+        write!(writer, "{}", match fb.ffs[i].reg_mode {
+            XC2MCRegMode::DFF => "00",
+            XC2MCRegMode::LATCH => "01",
+            XC2MCRegMode::TFF => "10",
+            XC2MCRegMode::DFFCE => "11",
+        })?;
+
+        // r
+        write!(writer, "{}", match fb.ffs[i].r_src {
+            XC2MCRegResetSrc::PTA => "00",
+            XC2MCRegResetSrc::GSR => "01",
+            XC2MCRegResetSrc::CTR => "10",
+            XC2MCRegResetSrc::Disabled => "11",
+        })?;
+
+        if iob.is_some() {
+            let iob = iob.unwrap() as usize;
+
+            // slw
+            write!(writer, "{}", if iobs[iob].slew_is_fast {"0"} else {"1"})?;
+
+            // tm
+            write!(writer, "{}", if iobs[iob].termination_enabled {"1"} else {"0"})?;
+        }
+
+        // xorin
+        write!(writer, "{}", match fb.ffs[i].xor_mode {
+            XC2MCXorMode::ZERO => "00",
+            XC2MCXorMode::PTCB => "01",
+            XC2MCXorMode::PTC => "10",
+            XC2MCXorMode::ONE => "11",
+        })?;
+
+        write!(writer, "*\n")?;
+
+        if iob.is_some() {
+            current_fuse_offset += 29;
+        } else {
+            current_fuse_offset += 16;
+        }
+    }
+    write!(writer, "\n")?;
+
+    Ok(())
+}
+
 impl XC2BitstreamBits {
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
     pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
@@ -887,7 +1032,7 @@ impl XC2BitstreamBits {
                     write_pla_to_jed(writer, XC2Device::XC2C128, &fb[fb_i], fuse_base)?;
 
                     // Macrocells
-                    // FIXME
+                    write_large_mc_to_jed(writer, XC2Device::XC2C128, &fb[fb_i], iobs, fb_i, fuse_base)?;
                 }
 
                 // "other stuff"

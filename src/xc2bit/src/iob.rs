@@ -243,7 +243,57 @@ pub fn fb_ff_num_to_iob_num(device: XC2Device, fb: u32, ff: u32) -> Option<u32> 
             } else {
                 Some(fb * MCS_PER_FB as u32 + ff)
             }
-        }
+        },
+        XC2Device::XC2C128 => {
+            match fb {
+                // "Missing" 4 IOBs
+                0 => match ff {
+                    0...5   => Some(0 + ff),
+                    10...15 => Some(6 + (ff - 10)),
+                    _ => None,
+                },
+                1 => match ff {
+                    0...5   => Some(12 + ff),
+                    10...15 => Some(18 + (ff - 10)),
+                    _ => None,
+                },
+                // "Missing" 3 IOBs
+                2 => match ff {
+                    0...6   => Some(24 + ff),
+                    10...15 => Some(31 + (ff - 10)),
+                    _ => None,
+                },
+                3 => match ff {
+                    0...6   => Some(37 + ff),
+                    10...15 => Some(44 + (ff - 10)),
+                    _ => None,
+                },
+                4 => match ff {
+                    0...6   => Some(50 + ff),
+                    10...15 => Some(57 + (ff - 10)),
+                    _ => None,
+                },
+                // "Missing" 4 IOBs
+                5 => match ff {
+                    0...5   => Some(63 + ff),
+                    10...15 => Some(69 + (ff - 10)),
+                    _ => None,
+                },
+                // "Missing" 3 IOBs
+                6 => match ff {
+                    0...6   => Some(75 + ff),
+                    10...15 => Some(82 + (ff - 10)),
+                    _ => None,
+                },
+                // "Missing" 4 IOBs
+                7 => match ff {
+                    0...5   => Some(88 + ff),
+                    10...15 => Some(94 + (ff - 10)),
+                    _ => None,
+                },
+                _ => None,
+            }
+        },
         _ => unreachable!(),
     }
 }
