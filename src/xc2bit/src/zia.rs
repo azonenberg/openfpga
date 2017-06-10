@@ -3915,6 +3915,7 @@ pub fn zia_get_row_width(device: XC2Device) -> usize {
         XC2Device::XC2C32 | XC2Device::XC2C32A => 8,
         XC2Device::XC2C64 | XC2Device::XC2C64A => 16,
         XC2Device::XC2C128 => 28,
+        XC2Device::XC2C256 => 48,
         _ => unreachable!(),
     }
 }

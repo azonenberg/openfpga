@@ -57,6 +57,27 @@ pub fn fb_fuse_idx(device: XC2Device, fb: u32) -> usize {
                 7 => 48408,
                 _ => unreachable!(),
             }
+        },
+        XC2Device::XC2C256 => {
+            match fb {
+                0 => 0,
+                1 => 7695,
+                2 => 15390,
+                3 => 23085,
+                4 => 30780,
+                5 => 38475,
+                6 => 46170,
+                7 => 53878,
+                8 => 61586,
+                9 => 69294,
+                10 => 77002,
+                11 => 84710,
+                12 => 92418,
+                13 => 100113,
+                14 => 107808,
+                15 => 115516,
+                _ => unreachable!(),
+            }
         }
         _ => unreachable!(),
     }
@@ -105,6 +126,7 @@ pub fn total_logical_fuse_count(device: XC2Device) -> usize {
         XC2Device::XC2C64 => 25808,
         XC2Device::XC2C64A => 25812,
         XC2Device::XC2C128 => 55341,
+        XC2Device::XC2C256 => 123249,
         _ => unreachable!(),
     }
 }
