@@ -289,7 +289,7 @@ void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
 
 	//The corner we're testing at (TODO multi-corner)
 	PTVCorner corner(PTVCorner::SPEED_TYPICAL, 25, 3300);
-	LogVerbose("Running static timing for %s\n", corner.toString().c_str());
+	LogVerbose("Running static timing for %s (%zu paths)\n", corner.toString().c_str(), paths.size());
 
 	//DEBUG: print all paths
 	int i=0;
