@@ -3863,7 +3863,6 @@ pub fn encode_256_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 48]
         }
 
         match found_bit {
-
             0  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, F]),
             1  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, F, T]),
             2  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, F, T, T]),

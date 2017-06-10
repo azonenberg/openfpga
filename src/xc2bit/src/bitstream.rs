@@ -344,6 +344,24 @@ fn read_128_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
     }
 }
 
+/// Internal function to read the clock divider configuration from a 256-macrocell part
+fn read_256_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
+    XC2ClockDiv {
+        delay: !fuses[123231],
+        enabled: !fuses[123227],
+        div_ratio: match (fuses[123228], fuses[123229], fuses[123230]) {
+            (false, false, false) => XC2ClockDivRatio::Div2,
+            (false, false,  true) => XC2ClockDivRatio::Div4,
+            (false,  true, false) => XC2ClockDivRatio::Div6,
+            (false,  true,  true) => XC2ClockDivRatio::Div8,
+            ( true, false, false) => XC2ClockDivRatio::Div10,
+            ( true, false,  true) => XC2ClockDivRatio::Div12,
+            ( true,  true, false) => XC2ClockDivRatio::Div14,
+            ( true,  true,  true) => XC2ClockDivRatio::Div16,
+        }
+    }
+}
+
 
 /// The actual bitstream bits for each possible Coolrunner-II part
 pub enum XC2BitstreamBits {
@@ -955,6 +973,33 @@ pub fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
     })
 }
 
+/// Internal function for parsing an XC2C256 bitstream
+pub fn read_256_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 16];
+    let mut iobs = [XC2MCLargeIOB::default(); 184];
+    
+    read_bitstream_logical_common_large(fuses, XC2Device::XC2C256, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_logical(XC2Device::XC2C256, fuses);
+
+    Ok(XC2BitstreamBits::XC2C256 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        clock_div: read_256_clock_div_logical(fuses),
+        data_gate: !fuses[123243],
+        use_vref: !fuses[123248],
+        ivoltage: [
+            !fuses[123244],
+            !fuses[123245],
+        ],
+        ovoltage: [
+            !fuses[123246],
+            !fuses[123247],
+        ]
+    })
+}
+
 /// Processes a fuse array into a bitstream object
 pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
     let device_combination = parse_part_name_string(device);
@@ -1003,6 +1048,14 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
         },
         XC2Device::XC2C128 => {
             let bits = read_128_bitstream_logical(fuses)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
+        XC2Device::XC2C256 => {
+            let bits = read_256_bitstream_logical(fuses)?;
             Ok(XC2Bitstream {
                 speed_grade: spd,
                 package: pkg,
