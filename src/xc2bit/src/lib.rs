@@ -58,6 +58,8 @@ pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets, XC2ClockDivRa
 mod fb;
 pub use fb::{XC2BitstreamFB, CTC, CTR, CTS, CTE, get_pta, get_ptb, get_ptc};
 
+mod fusemap_logical;
+
 mod iob;
 pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, XC2IOBIbufMode, XC2MCLargeIOB,
               iob_num_to_fb_ff_num, fb_ff_num_to_iob_num};
