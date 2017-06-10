@@ -31,7 +31,7 @@ use std::io::Write;
 use *;
 use fb::{read_small_fb_logical};
 use iob::{read_small_iob_logical, read_32_extra_ibuf_logical};
-use zia::{encode_32_zia_choice, encode_64_zia_choice, zia_get_row_width};
+use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice, zia_get_row_width};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
 pub struct XC2Bitstream {
@@ -151,6 +151,22 @@ impl XC2Bitstream {
                         legacy_ovoltage: false,
                         ivoltage: [false, false],
                         ovoltage: [false, false],
+                    }
+                })
+            },
+            XC2Device::XC2C128 => {
+                Ok(XC2Bitstream {
+                    speed_grade: speed_grade,
+                    package: package,
+                    bits: XC2BitstreamBits::XC2C128 {
+                        fb: [XC2BitstreamFB::default(); 8],
+                        iobs: [XC2MCSmallIOB::default(); 100],
+                        global_nets: XC2GlobalNets::default(),
+                        ivoltage: [false, false],
+                        ovoltage: [false, false],
+                        data_gate: false,
+                        use_vref: false,
+                        clock_div: XC2ClockDiv::default(),
                     }
                 })
             },
@@ -299,6 +315,19 @@ pub struct XC2ClockDiv {
     pub div_ratio: XC2ClockDivRatio,
     /// Whether the "delay" feature is enabled
     pub delay: bool,
+    /// Whether the clock divider is enabled (other settings are ignored if not)
+    pub enabled: bool,
+}
+
+impl Default for XC2ClockDiv {
+    /// Returns a "default" clock divider configuration, which is one that is not used
+    fn default() -> Self {
+        XC2ClockDiv {
+            div_ratio: XC2ClockDivRatio::Div16,
+            delay: false,
+            enabled: false,
+        }
+    }
 }
 
 /// The actual bitstream bits for each possible Coolrunner-II part
@@ -800,7 +829,109 @@ impl XC2BitstreamBits {
                 ref fb, ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
                 ref use_vref}  => {
 
-                unreachable!();
+                // Each FB
+                for fb_i in 0..8 {
+                    let fuse_base = match fb_i {
+                        0 => 0,
+                        1 => 6908,
+                        2 => 13816,
+                        3 => 20737,
+                        4 => 27658,
+                        5 => 34579,
+                        6 => 41487,
+                        7 => 48408,
+                        _ => unreachable!(),
+                    };
+
+                    // ZIA
+                    for i in 0..INPUTS_PER_ANDTERM {
+                        write!(writer, "L{:06} ", fuse_base + i * 28)?;
+                        let zia_choice_bits =
+                            encode_128_zia_choice(i as u32, fb[fb_i].zia_bits[i].selected)
+                            // FIXME: Fold this into the error system??
+                            .expect("invalid ZIA input");
+                        write!(writer, "{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+                            if zia_choice_bits[0] {"1"} else {"0"},
+                            if zia_choice_bits[1] {"1"} else {"0"},
+                            if zia_choice_bits[2] {"1"} else {"0"},
+                            if zia_choice_bits[3] {"1"} else {"0"},
+                            if zia_choice_bits[4] {"1"} else {"0"},
+                            if zia_choice_bits[5] {"1"} else {"0"},
+                            if zia_choice_bits[6] {"1"} else {"0"},
+                            if zia_choice_bits[7] {"1"} else {"0"},
+                            if zia_choice_bits[8] {"1"} else {"0"},
+                            if zia_choice_bits[9] {"1"} else {"0"},
+                            if zia_choice_bits[10] {"1"} else {"0"},
+                            if zia_choice_bits[11] {"1"} else {"0"},
+                            if zia_choice_bits[12] {"1"} else {"0"},
+                            if zia_choice_bits[13] {"1"} else {"0"},
+                            if zia_choice_bits[14] {"1"} else {"0"},
+                            if zia_choice_bits[15] {"1"} else {"0"},
+                            if zia_choice_bits[16] {"1"} else {"0"},
+                            if zia_choice_bits[17] {"1"} else {"0"},
+                            if zia_choice_bits[18] {"1"} else {"0"},
+                            if zia_choice_bits[19] {"1"} else {"0"},
+                            if zia_choice_bits[20] {"1"} else {"0"},
+                            if zia_choice_bits[21] {"1"} else {"0"},
+                            if zia_choice_bits[22] {"1"} else {"0"},
+                            if zia_choice_bits[23] {"1"} else {"0"},
+                            if zia_choice_bits[24] {"1"} else {"0"},
+                            if zia_choice_bits[25] {"1"} else {"0"},
+                            if zia_choice_bits[26] {"1"} else {"0"},
+                            if zia_choice_bits[27] {"1"} else {"0"})?;
+                        write!(writer, "*\n")?;
+                    }
+                    write!(writer, "\n")?;
+
+                    // PLA
+                    write_pla_to_jed(writer, XC2Device::XC2C128, &fb[fb_i], fuse_base)?;
+
+                    // Macrocells
+                    // FIXME
+                }
+
+                // "other stuff"
+                write!(writer, "L055316 {}{}{}*\n",
+                    if global_nets.gck_enable[0] {"1"} else {"0"},
+                    if global_nets.gck_enable[1] {"1"} else {"0"},
+                    if global_nets.gck_enable[2] {"1"} else {"0"})?;
+
+                write!(writer, "L055319 {}{}*\n",
+                    if clock_div.enabled {"0"} else {"1"},
+                    match clock_div.div_ratio {
+                        XC2ClockDivRatio::Div2  => "000",
+                        XC2ClockDivRatio::Div4  => "001",
+                        XC2ClockDivRatio::Div6  => "010",
+                        XC2ClockDivRatio::Div8  => "011",
+                        XC2ClockDivRatio::Div10 => "100",
+                        XC2ClockDivRatio::Div12 => "101",
+                        XC2ClockDivRatio::Div14 => "110",
+                        XC2ClockDivRatio::Div16 => "111",
+                    })?;
+                write!(writer, "L055323 {}*\n", if clock_div.delay {"0"} else {"1"})?;
+
+                write!(writer, "L055324 {}{}*\n",
+                    if global_nets.gsr_invert {"1"} else {"0"},
+                    if global_nets.gsr_enable {"1"} else {"0"})?;
+
+                write!(writer, "L055326 {}{}{}{}{}{}{}{}*\n",
+                    if global_nets.gts_invert[0] {"1"} else {"0"},
+                    if global_nets.gts_enable[0] {"0"} else {"1"},
+                    if global_nets.gts_invert[1] {"1"} else {"0"},
+                    if global_nets.gts_enable[1] {"0"} else {"1"},
+                    if global_nets.gts_invert[2] {"1"} else {"0"},
+                    if global_nets.gts_enable[2] {"0"} else {"1"},
+                    if global_nets.gts_invert[3] {"1"} else {"0"},
+                    if global_nets.gts_enable[3] {"0"} else {"1"})?;
+
+                write!(writer, "L055334 {}*\n", if global_nets.global_pu {"1"} else {"0"})?;
+
+                write!(writer, "L055335 {}*\n", if *data_gate {"0"} else {"1"})?;
+
+                write!(writer, "L055336 {}{}*\n", if ivoltage[0] {"0"} else {"1"}, if ivoltage[1] {"0"} else {"1"})?;
+                write!(writer, "L055338 {}{}*\n", if ovoltage[0] {"0"} else {"1"}, if ovoltage[1] {"0"} else {"1"})?;
+
+                write!(writer, "L055340 {}*\n", if *use_vref {"0"} else {"1"})?;
             }
         }
 
