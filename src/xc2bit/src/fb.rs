@@ -30,8 +30,8 @@ use std::io::Write;
 
 use *;
 use pla::{read_and_term_logical, read_or_term_logical};
-use mc::{read_small_ff_logical};
-use zia::{read_32_zia_fb_row_logical, read_64_zia_fb_row_logical, zia_get_row_width};
+use mc::{read_small_ff_logical, read_large_ff_logical, read_large_buried_ff_logical};
+use zia::{read_32_zia_fb_row_logical, read_64_zia_fb_row_logical, read_128_zia_fb_row_logical, zia_get_row_width};
 
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
@@ -180,6 +180,65 @@ pub fn read_small_fb_logical(device: XC2Device, fuses: &[bool], block_idx: usize
         ff_bits[i] = read_small_ff_logical(fuses, ff_block_idx, i);
     }
 
+
+    Ok(XC2BitstreamFB {
+        and_terms: and_terms,
+        or_terms: or_terms,
+        zia_bits: zia_bits,
+        ffs: ff_bits,
+    })
+}
+
+/// Internal function that reads a function block for "large" (>=128-macrocell) devices
+pub fn read_large_fb_logical(device: XC2Device, fuses: &[bool], fb: u32, fuse_base: usize)
+    -> Result<XC2BitstreamFB, &'static str> {
+
+    let zia_row_width = zia_get_row_width(device);
+    let size_of_zia = zia_row_width * INPUTS_PER_ANDTERM;
+    let size_of_and = INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB;
+    let size_of_or = ANDTERMS_PER_FB * MCS_PER_FB;
+
+    let zia_row_read_function = match device {
+        XC2Device::XC2C128 => read_128_zia_fb_row_logical,
+        _ => unreachable!(),
+    };
+
+    let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
+    let and_block_idx = fuse_base + size_of_zia;
+    for i in 0..and_terms.len() {
+        and_terms[i] = read_and_term_logical(fuses, and_block_idx, i);
+    }
+
+    let mut or_terms = [XC2PLAOrTerm::default(); MCS_PER_FB];
+    let or_block_idx = fuse_base + size_of_zia + size_of_and;
+    for i in 0..or_terms.len() {
+        or_terms[i] = read_or_term_logical(fuses, or_block_idx, i);
+    }
+
+    let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
+    let zia_block_idx = fuse_base;
+    for i in 0..zia_bits.len() {
+        let result = zia_row_read_function(fuses, zia_block_idx, i);
+        if let Err(err) = result {
+            return Err(err);
+        }
+        zia_bits[i] = result.unwrap();
+    }
+
+    let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
+    let ff_block_idx = fuse_base + size_of_zia + size_of_and + size_of_or;
+    let mut cur_ff_idx = ff_block_idx;
+    for i in 0..ff_bits.len() {
+        if fb_ff_num_to_iob_num(device, fb, i as u32).is_none() {
+            // Buried
+            ff_bits[i] = read_large_buried_ff_logical(fuses, cur_ff_idx);
+            cur_ff_idx += 16;
+        } else {
+            // Not buried
+            ff_bits[i] = read_large_ff_logical(fuses, cur_ff_idx);
+            cur_ff_idx += 29;
+        }
+    }
 
     Ok(XC2BitstreamFB {
         and_terms: and_terms,

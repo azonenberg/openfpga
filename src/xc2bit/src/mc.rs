@@ -279,3 +279,163 @@ pub fn read_small_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) ->
         xor_mode: xormode,
     }
 }
+
+///  Internal function that reads only the macrocell-related bits from the macrcocell configuration
+pub fn read_large_ff_logical(fuses: &[bool], fuse_idx: usize) -> XC2Macrocell {
+    let aclk = fuses[fuse_idx + 0];
+
+    let clk = (fuses[fuse_idx + 1],
+               fuses[fuse_idx + 2]);
+    let clk_src = match clk {
+        (false, false) => XC2MCRegClkSrc::GCK0,
+        (false, true)  => XC2MCRegClkSrc::GCK1,
+        (true, false)  => XC2MCRegClkSrc::GCK2,
+        (true, true)   => match aclk {
+            true => XC2MCRegClkSrc::CTC,
+            false => XC2MCRegClkSrc::PTC,
+        },
+    };
+
+    let clkfreq = fuses[fuse_idx + 3];
+    let clkop = fuses[fuse_idx + 4];
+
+    let fb = (fuses[fuse_idx + 6],
+              fuses[fuse_idx + 7]);
+    let fb_mode = match fb {
+        (false, false) => XC2MCFeedbackMode::COMB,
+        (true, false)  => XC2MCFeedbackMode::REG,
+        (_, true)      => XC2MCFeedbackMode::Disabled,
+    };
+
+    let inreg = fuses[fuse_idx + 10];
+
+    let p = (fuses[fuse_idx + 17],
+             fuses[fuse_idx + 18]);
+    let set_mode = match p {
+        (false, false) => XC2MCRegSetSrc::PTA,
+        (false, true)  => XC2MCRegSetSrc::GSR,
+        (true, false)  => XC2MCRegSetSrc::CTS,
+        (true, true)   => XC2MCRegSetSrc::Disabled,
+    };
+
+    let pu = fuses[fuse_idx + 19];
+
+    let regmod = (fuses[fuse_idx + 21],
+                  fuses[fuse_idx + 22]);
+    let reg_mode = match regmod {
+        (false, false) => XC2MCRegMode::DFF,
+        (false, true)  => XC2MCRegMode::LATCH,
+        (true, false)  => XC2MCRegMode::TFF,
+        (true, true)   => XC2MCRegMode::DFFCE,
+    };
+
+    let r = (fuses[fuse_idx + 23],
+             fuses[fuse_idx + 24]);
+    let reset_mode = match r {
+        (false, false) => XC2MCRegResetSrc::PTA,
+        (false, true)  => XC2MCRegResetSrc::GSR,
+        (true, false)  => XC2MCRegResetSrc::CTR,
+        (true, true)   => XC2MCRegResetSrc::Disabled,
+    };
+
+    let xorin = (fuses[fuse_idx + 27],
+                 fuses[fuse_idx + 28]);
+    let xormode = match xorin {
+        (false, false) => XC2MCXorMode::ZERO,
+        (false, true)  => XC2MCXorMode::PTCB,
+        (true, false)  => XC2MCXorMode::PTC,
+        (true, true)   => XC2MCXorMode::ONE,
+    };
+
+    XC2Macrocell {
+        clk_src: clk_src,
+        clk_invert_pol: clkop,
+        is_ddr: clkfreq,
+        r_src: reset_mode,
+        s_src: set_mode,
+        init_state: !pu,
+        reg_mode: reg_mode,
+        fb_mode: fb_mode,
+        ff_in_ibuf: !inreg,
+        xor_mode: xormode,
+    }
+}
+
+///  Internal function that reads only the macrocell-related bits from the macrcocell configuration
+pub fn read_large_buried_ff_logical(fuses: &[bool], fuse_idx: usize) -> XC2Macrocell {
+    let aclk = fuses[fuse_idx + 0];
+
+    let clk = (fuses[fuse_idx + 1],
+               fuses[fuse_idx + 2]);
+    let clk_src = match clk {
+        (false, false) => XC2MCRegClkSrc::GCK0,
+        (false, true)  => XC2MCRegClkSrc::GCK1,
+        (true, false)  => XC2MCRegClkSrc::GCK2,
+        (true, true)   => match aclk {
+            true => XC2MCRegClkSrc::CTC,
+            false => XC2MCRegClkSrc::PTC,
+        },
+    };
+
+    let clkfreq = fuses[fuse_idx + 3];
+    let clkop = fuses[fuse_idx + 4];
+
+    let fb = (fuses[fuse_idx + 5],
+              fuses[fuse_idx + 6]);
+    let fb_mode = match fb {
+        (false, false) => XC2MCFeedbackMode::COMB,
+        (true, false)  => XC2MCFeedbackMode::REG,
+        (_, true)      => XC2MCFeedbackMode::Disabled,
+    };
+
+    let p = (fuses[fuse_idx + 7],
+             fuses[fuse_idx + 8]);
+    let set_mode = match p {
+        (false, false) => XC2MCRegSetSrc::PTA,
+        (false, true)  => XC2MCRegSetSrc::GSR,
+        (true, false)  => XC2MCRegSetSrc::CTS,
+        (true, true)   => XC2MCRegSetSrc::Disabled,
+    };
+
+    let pu = fuses[fuse_idx + 9];
+
+    let regmod = (fuses[fuse_idx + 10],
+                  fuses[fuse_idx + 11]);
+    let reg_mode = match regmod {
+        (false, false) => XC2MCRegMode::DFF,
+        (false, true)  => XC2MCRegMode::LATCH,
+        (true, false)  => XC2MCRegMode::TFF,
+        (true, true)   => XC2MCRegMode::DFFCE,
+    };
+
+    let r = (fuses[fuse_idx + 12],
+             fuses[fuse_idx + 13]);
+    let reset_mode = match r {
+        (false, false) => XC2MCRegResetSrc::PTA,
+        (false, true)  => XC2MCRegResetSrc::GSR,
+        (true, false)  => XC2MCRegResetSrc::CTR,
+        (true, true)   => XC2MCRegResetSrc::Disabled,
+    };
+
+    let xorin = (fuses[fuse_idx + 14],
+                 fuses[fuse_idx + 15]);
+    let xormode = match xorin {
+        (false, false) => XC2MCXorMode::ZERO,
+        (false, true)  => XC2MCXorMode::PTCB,
+        (true, false)  => XC2MCXorMode::PTC,
+        (true, true)   => XC2MCXorMode::ONE,
+    };
+
+    XC2Macrocell {
+        clk_src: clk_src,
+        clk_invert_pol: clkop,
+        is_ddr: clkfreq,
+        r_src: reset_mode,
+        s_src: set_mode,
+        init_state: !pu,
+        reg_mode: reg_mode,
+        fb_mode: fb_mode,
+        ff_in_ibuf: false,
+        xor_mode: xormode,
+    }
+}

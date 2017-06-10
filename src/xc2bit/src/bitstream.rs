@@ -29,8 +29,8 @@ use std::io;
 use std::io::Write;
 
 use *;
-use fb::{read_small_fb_logical};
-use iob::{read_small_iob_logical, read_32_extra_ibuf_logical};
+use fb::{read_small_fb_logical, read_large_fb_logical};
+use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical};
 use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice, zia_get_row_width};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
@@ -295,6 +295,32 @@ fn read_64_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
     }
 }
 
+/// Internal function to read the global nets from a 128-macrocell part
+fn read_128_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
+    XC2GlobalNets {
+        gck_enable: [
+            fuses[55316],
+            fuses[55317],
+            fuses[55318],
+        ],
+        gsr_enable: fuses[55325],
+        gsr_invert: fuses[55324],
+        gts_enable: [
+            !fuses[55327],
+            !fuses[55329],
+            !fuses[55331],
+            !fuses[55333],
+        ],
+        gts_invert: [
+            fuses[55326],
+            fuses[55328],
+            fuses[55330],
+            fuses[55332],
+        ],
+        global_pu: fuses[55334],
+    }
+}
+
 /// Possible clock divide ratios for the programmable clock divider
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2ClockDivRatio {
@@ -329,6 +355,25 @@ impl Default for XC2ClockDiv {
         }
     }
 }
+
+/// Internal function to read the clock divider configuration from a 128-macrocell part
+fn read_128_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
+    XC2ClockDiv {
+        delay: !fuses[55323],
+        enabled: !fuses[55319],
+        div_ratio: match (fuses[55320], fuses[55321], fuses[55322]) {
+            (false, false, false) => XC2ClockDivRatio::Div2,
+            (false, false,  true) => XC2ClockDivRatio::Div4,
+            (false,  true, false) => XC2ClockDivRatio::Div6,
+            (false,  true,  true) => XC2ClockDivRatio::Div8,
+            ( true, false, false) => XC2ClockDivRatio::Div10,
+            ( true, false,  true) => XC2ClockDivRatio::Div12,
+            ( true,  true, false) => XC2ClockDivRatio::Div14,
+            ( true,  true,  true) => XC2ClockDivRatio::Div16,
+        }
+    }
+}
+
 
 /// The actual bitstream bits for each possible Coolrunner-II part
 pub enum XC2BitstreamBits {
@@ -1271,6 +1316,66 @@ pub fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
     })
 }
 
+/// Internal function for parsing an XC2C128 bitstream
+pub fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 8];
+    let mut iobs = [XC2MCLargeIOB::default(); 100];
+    for i in 0..fb.len() {
+        let base_fuse = match i {
+            0 => 0,
+            1 => 6908,
+            2 => 13816,
+            3 => 20737,
+            4 => 27658,
+            5 => 34579,
+            6 => 41487,
+            7 => 48408,
+            _ => unreachable!(),
+        };
+        let res = read_large_fb_logical(XC2Device::XC2C128, fuses, i as u32, base_fuse);
+        if let Err(err) = res {
+            return Err(err);
+        }
+        fb[i] = res.unwrap();
+
+        let zia_row_width = zia_get_row_width(XC2Device::XC2C128);
+        let mut iob_fuse = base_fuse + zia_row_width * INPUTS_PER_ANDTERM + INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB +
+            ANDTERMS_PER_FB * MCS_PER_FB;
+        for ff in 0..MCS_PER_FB {
+            let iob = fb_ff_num_to_iob_num(XC2Device::XC2C128, i as u32, ff as u32);
+            if iob.is_some() {
+                let res = read_large_iob_logical(fuses, iob_fuse);
+                if let Err(err) = res {
+                    return Err(err);
+                }
+                iobs[iob.unwrap() as usize] = res.unwrap();
+                iob_fuse += 29;
+            } else {
+                iob_fuse += 16;
+            }
+        }
+    };
+
+    let global_nets = read_128_global_nets_logical(fuses);
+
+    Ok(XC2BitstreamBits::XC2C128 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        clock_div: read_128_clock_div_logical(fuses),
+        data_gate: !fuses[55335],
+        use_vref: !fuses[55340],
+        ivoltage: [
+            !fuses[55336],
+            !fuses[55337],
+        ],
+        ovoltage: [
+            !fuses[55338],
+            !fuses[55339],
+        ]
+    })
+}
+
 /// Processes a fuse array into a bitstream object
 pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
 
@@ -1329,6 +1434,20 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
                 return Err("wrong number of fuses");
             }
             let bits = read_64a_bitstream_logical(fuses);
+            if let Err(err) = bits {
+                return Err(err);
+            }
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits.unwrap(),
+            })
+        },
+        XC2Device::XC2C128 => {
+            if fuses.len() != 55341 {
+                return Err("wrong number of fuses");
+            }
+            let bits = read_128_bitstream_logical(fuses);
             if let Err(err) = bits {
                 return Err(err);
             }

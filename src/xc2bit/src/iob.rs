@@ -342,6 +342,61 @@ pub fn read_small_iob_logical(fuses: &[bool], block_idx: usize, io_idx: usize) -
     })
 }
 
+/// Internal function that reads only the IO-related bits from the macrocell configuration
+pub fn read_large_iob_logical(fuses: &[bool], fuse_idx: usize) -> Result<XC2MCLargeIOB, &'static str> {
+    let dg = fuses[fuse_idx + 5];
+
+    let inmod = (fuses[fuse_idx + 8],
+                 fuses[fuse_idx + 9]);
+    let input_mode = match inmod {
+        (false, false) => XC2IOBIbufMode::NoVrefNoSt,
+        (false, true)  => XC2IOBIbufMode::IsVref,
+        (true, false)  => XC2IOBIbufMode::UsesVref,
+        (true, true)   => XC2IOBIbufMode::NoVrefSt,
+    };
+
+    let inz = (fuses[fuse_idx + 11],
+               fuses[fuse_idx + 12]);
+    let input_to_zia = match inz {
+        (false, false) => XC2IOBZIAMode::PAD,
+        (true, false) => XC2IOBZIAMode::REG,
+        (_, true) => XC2IOBZIAMode::Disabled,
+    };
+
+    let oe = (fuses[fuse_idx + 13],
+              fuses[fuse_idx + 14],
+              fuses[fuse_idx + 15],
+              fuses[fuse_idx + 16]);
+    let output_mode = match oe {
+        (false, false, false, false) => XC2IOBOBufMode::PushPull,
+        (false, false, false, true)  => XC2IOBOBufMode::OpenDrain,
+        (false, false, true, false)  => XC2IOBOBufMode::TriStateGTS1,
+        (false, true, false, false)  => XC2IOBOBufMode::TriStatePTB,
+        (false, true, true, false)   => XC2IOBOBufMode::TriStateGTS3,
+        (true, false, false, false)  => XC2IOBOBufMode::TriStateCTE,
+        (true, false, true, false)   => XC2IOBOBufMode::TriStateGTS2,
+        (true, true, false, false)   => XC2IOBOBufMode::TriStateGTS0,
+        (true, true, true, false)    => XC2IOBOBufMode::CGND,
+        (true, true, true, true)     => XC2IOBOBufMode::Disabled,
+        _ => return Err("unknown Oe mode used"),
+    };
+
+    let regcom = fuses[fuse_idx + 20];
+
+    let slw = fuses[fuse_idx + 25];
+    let tm = fuses[fuse_idx + 26];
+
+    Ok(XC2MCLargeIOB {
+        zia_mode: input_to_zia,
+        ibuf_mode: input_mode,
+        obuf_uses_ff: !regcom,
+        obuf_mode: output_mode,
+        termination_enabled: tm,
+        slew_is_fast: !slw,
+        uses_data_gate: dg,
+    })
+}
+
 /// Internal function that reads only the input-only pin configuration
 pub fn read_32_extra_ibuf_logical(fuses: &[bool]) -> XC2ExtraIBuf {
     let st = fuses[12272];
