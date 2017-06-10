@@ -59,8 +59,8 @@ mod fb;
 pub use fb::{XC2BitstreamFB, CTC, CTR, CTS, CTE, get_pta, get_ptb, get_ptc};
 
 mod iob;
-pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, iob_num_to_fb_ff_num,
-             fb_ff_num_to_iob_num};
+pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, XC2IOBIbufMode, XC2MCLargeIOB,
+              iob_num_to_fb_ff_num, fb_ff_num_to_iob_num};
 
 mod mc;
 pub use mc::{XC2Macrocell, XC2MCRegClkSrc, XC2MCRegResetSrc, XC2MCRegSetSrc, XC2MCRegMode, XC2MCFeedbackMode,

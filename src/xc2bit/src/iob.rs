@@ -124,6 +124,58 @@ impl XC2MCSmallIOB {
     }
 }
 
+/// Input mode selection on larger parts with VREF
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum XC2IOBIbufMode {
+    /// This input buffer is not using VREF, and it is also not using the Schmitt trigger
+    NoVrefNoSt,
+    /// This input buffer is not using VREF, but it is using the Schmitt trigger
+    NoVrefSt,
+    /// This input buffer is using VREF (supposedly it always has the Schmitt trigger?)
+    UsesVref,
+    /// This input pin is serving as VREF
+    IsVref,
+}
+
+/// Represents an I/O pin on "large" (128 and greater macrocell) devices.
+#[derive(Copy, Clone)]
+pub struct XC2MCLargeIOB {
+    /// Mux selection for the ZIA input for this pin
+    pub zia_mode: XC2IOBZIAMode,
+    /// Selects the input mode for this pin
+    pub ibuf_mode: XC2IOBIbufMode,
+    /// Selects the source used to drive this pin's output (if the output is enabled).
+    /// `false` selects the XOR gate in the macrocell (combinatorial output), and `true` selects the register output
+    /// (registered output).
+    pub obuf_uses_ff: bool,
+    /// Selects the output mode for this pin
+    pub obuf_mode: XC2IOBOBufMode,
+    /// Selects if the global termination (bus hold or pull-up) is enabled on this pin
+    pub termination_enabled: bool,
+    /// Selects if fast slew rate is used on this pin
+    pub slew_is_fast: bool,
+    /// Whether this pin is making use of the DataGate feature
+    pub uses_data_gate: bool,
+}
+
+impl Default for XC2MCLargeIOB {
+    /// Returns a "default" I/O pin configuration. The default state is for the output and the input into the ZIA
+    /// to be disabled.
+
+    // FIXME: Do the other defaults come from the particular way I invoked the Xilinx tools??
+    fn default() -> XC2MCLargeIOB {
+        XC2MCLargeIOB {
+            zia_mode: XC2IOBZIAMode::Disabled,
+            ibuf_mode: XC2IOBIbufMode::NoVrefSt,
+            obuf_uses_ff: false,
+            obuf_mode: XC2IOBOBufMode::Disabled,
+            termination_enabled: true,
+            slew_is_fast: true,
+            uses_data_gate: false,
+        }
+    }
+}
+
 /// Represents the one additional special input-only pin on 32-macrocell devices.
 pub struct XC2ExtraIBuf {
     pub schmitt_trigger: bool,

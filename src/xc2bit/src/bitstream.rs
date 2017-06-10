@@ -160,7 +160,7 @@ impl XC2Bitstream {
                     package: package,
                     bits: XC2BitstreamBits::XC2C128 {
                         fb: [XC2BitstreamFB::default(); 8],
-                        iobs: [XC2MCSmallIOB::default(); 100],
+                        iobs: [XC2MCLargeIOB::default(); 100],
                         global_nets: XC2GlobalNets::default(),
                         ivoltage: [false, false],
                         ovoltage: [false, false],
@@ -404,7 +404,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C128 {
         fb: [XC2BitstreamFB; 8],
-        iobs: [XC2MCSmallIOB; 100],
+        iobs: [XC2MCLargeIOB; 100],
         global_nets: XC2GlobalNets,
         clock_div: XC2ClockDiv,
         /// Whether the DataGate feature is used
