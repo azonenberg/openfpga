@@ -148,7 +148,7 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", if zia_choice_bits[zia_choice_bits.len() - 1 - j] {"1"} else {"0"})?;
+                        write!(writer, "{}", if zia_choice_bits[j] {"1"} else {"0"})?;
                     }
                 },
                 XC2Device::XC2C64 | XC2Device::XC2C64A => {
@@ -156,7 +156,7 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", if zia_choice_bits[zia_choice_bits.len() - 1 - j] {"1"} else {"0"})?;
+                        write!(writer, "{}", if zia_choice_bits[j] {"1"} else {"0"})?;
                     }
                 },
                 XC2Device::XC2C128 => {
@@ -164,7 +164,7 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", if zia_choice_bits[zia_choice_bits.len() - 1 - j] {"1"} else {"0"})?;
+                        write!(writer, "{}", if zia_choice_bits[j] {"1"} else {"0"})?;
                     }
                 },
                 XC2Device::XC2C256 => {
@@ -172,7 +172,7 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", if zia_choice_bits[zia_choice_bits.len() - 1 - j] {"1"} else {"0"})?;
+                        write!(writer, "{}", if zia_choice_bits[j] {"1"} else {"0"})?;
                     }
                 },
                 _ => unreachable!(),
