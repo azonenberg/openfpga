@@ -163,7 +163,7 @@ bool Greenpak4PAREngine::InitialPlacement_core()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Congestion metrics
 
-uint32_t Greenpak4PAREngine::ComputeCongestionCost()
+uint32_t Greenpak4PAREngine::ComputeCongestionCost() const
 {
 	uint32_t costs[2] = {0};
 

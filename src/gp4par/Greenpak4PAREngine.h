@@ -34,7 +34,7 @@ protected:
 	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes);
 	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot);
 
-	virtual uint32_t ComputeCongestionCost();
+	virtual uint32_t ComputeCongestionCost() const;
 	virtual bool InitialPlacement_core();
 
 	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate);
