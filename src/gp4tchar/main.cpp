@@ -125,13 +125,9 @@ int main(int argc, char* argv[])
 	LogNotice("Loading timing data...\n");
 	string tfname = "timing.json";
 	if(!g_calDevice.LoadTimingData(tfname))
-	{
 		LogWarning("Couldn't load existing timing data file\n");
-		return 1;
-	}
 
 	//Measure delay through each element
-	/*
 	if(!MeasurePinToPinDelays(sock, hdev))
 		return 1;
 	if(!MeasureCrossConnectionDelays(sock, hdev))
@@ -142,7 +138,6 @@ int main(int argc, char* argv[])
 		return 1;
 	if(!MeasureDelayLineDelays(sock, hdev))
 		return 1;
-	*/
 
 	//Save to disk
 	LogNotice("Saving timing data to file %s\n", tfname.c_str());

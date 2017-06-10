@@ -18,6 +18,7 @@
 
 #include "gp4tchar.h"
 #include "solver.h"
+#include <time.h>
 
 using namespace std;
 
@@ -322,30 +323,12 @@ bool MeasureDelay(Socket& sock, int src, int dst, CombinatorialDelay& delay, boo
 		return false;
 	if(!sock.RecvLooped((uint8_t*)&delay.m_rising, sizeof(float)))
 		return false;
-
-	if(!ok)
-	{
-		LogError("Couldn't measure rising delay (open circuit?)\n");
-		return false;
-	}
-
-	//Repeat for falling edge
-	if(invertOutput)
-		sendbuf[2] = 1;
-	else
-		sendbuf[2] = 0;
-	if(!sock.SendLooped(sendbuf, sizeof(sendbuf)))
-		return false;
-
-	//Read the results back
-	if(!sock.RecvLooped(&ok, 1))
-		return false;
 	if(!sock.RecvLooped((uint8_t*)&delay.m_falling, sizeof(float)))
 		return false;
 
 	if(!ok)
 	{
-		LogError("Couldn't measure falling delay (open circuit?)\n");
+		LogError("Couldn't measure delays (open circuit?)\n");
 		return false;
 	}
 
@@ -447,6 +430,7 @@ bool MeasurePinToPinDelays(Socket& sock, hdevice hdev)
 	//TODO: ↓ edges
 	//TODO: x4 drive (if supported on this pin)
 	//TODO: Tri-states and open-drain/open-source outputs
+	//TODO: more pins?
 	CombinatorialDelay delay;
 	for(auto src : pins)
 	{
