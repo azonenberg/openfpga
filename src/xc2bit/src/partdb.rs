@@ -47,6 +47,32 @@ impl fmt::Display for XC2Device {
     }
 }
 
+impl XC2Device {
+    /// Returns the number of function blocks for the device type
+    pub fn num_fbs(&self) -> usize {
+        match *self {
+            XC2Device::XC2C32 | XC2Device::XC2C32A => 2,
+            XC2Device::XC2C64 | XC2Device::XC2C64A => 4,
+            XC2Device::XC2C128 => 8,
+            XC2Device::XC2C256 => 16,
+            XC2Device::XC2C384 => 24,
+            XC2Device::XC2C512 => 32,
+        }
+    }
+
+    /// Returns the number of I/O pins for the device type
+    pub fn num_iobs(&self) -> usize {
+        match *self {
+            XC2Device::XC2C32 | XC2Device::XC2C32A => 32,
+            XC2Device::XC2C64 | XC2Device::XC2C64A => 64,
+            XC2Device::XC2C128 => 100,
+            XC2Device::XC2C256 => 184,
+            XC2Device::XC2C384 => 240,
+            XC2Device::XC2C512 => 270,
+        }
+    }
+}
+
 /// Possible speed grades
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2Speed {

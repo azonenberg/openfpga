@@ -753,29 +753,42 @@ fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bitstrea
 }
 
 impl XC2BitstreamBits {
+    /// Helper to convert ourself into a `XC2Device` enum because an `XC2Device` enum has various useful methods
+    pub fn device_type(&self) -> XC2Device {
+        match self {
+            &XC2BitstreamBits::XC2C32{..} => XC2Device::XC2C32,
+            &XC2BitstreamBits::XC2C32A{..} => XC2Device::XC2C32A,
+            &XC2BitstreamBits::XC2C64{..} => XC2Device::XC2C64,
+            &XC2BitstreamBits::XC2C64A{..} => XC2Device::XC2C64A,
+            &XC2BitstreamBits::XC2C128{..} => XC2Device::XC2C128,
+        }
+    }
+
+    /// Helper to extract only the function block data without having to perform an explicit `match`
+    pub fn get_fb(&self) -> &[XC2BitstreamFB] {
+        match self {
+            &XC2BitstreamBits::XC2C32{ref fb, ..} => fb,
+            &XC2BitstreamBits::XC2C32A{ref fb, ..} => fb,
+            &XC2BitstreamBits::XC2C64{ref fb, ..} => fb,
+            &XC2BitstreamBits::XC2C64A{ref fb, ..} => fb,
+            &XC2BitstreamBits::XC2C128{ref fb, ..} => fb,
+        }
+    }
+
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
     pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
         match self {
             &XC2BitstreamBits::XC2C32 {
-                ref fb, ref iobs, ref inpin, ref global_nets, ref ivoltage, ref ovoltage} => {
+                ref iobs, ref inpin, ref global_nets, ref ivoltage, ref ovoltage, ..} => {
 
                 write!(writer, "device type: XC2C32\n")?;
                 write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"})?;
                 write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"})?;
                 global_nets.dump_human_readable(writer)?;
-
-                for i in 0..32 {
-                    iobs[i].dump_human_readable(XC2Device::XC2C32, i as u32, writer)?;
-                }
-
-                inpin.dump_human_readable(writer)?;
-
-                fb[0].dump_human_readable(XC2Device::XC2C32, 0, writer)?;
-                fb[1].dump_human_readable(XC2Device::XC2C32, 1, writer)?;
             },
             &XC2BitstreamBits::XC2C32A {
-                ref fb, ref iobs, ref inpin, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
-                ref ivoltage, ref ovoltage} => {
+                ref iobs, ref inpin, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
+                ref ivoltage, ref ovoltage, ..} => {
 
                 write!(writer, "device type: XC2C32A\n")?;
                 write!(writer, "legacy output voltage range: {}\n", if *legacy_ovoltage {"high"} else {"low"})?;
@@ -785,36 +798,18 @@ impl XC2BitstreamBits {
                 write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
                 write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
                 global_nets.dump_human_readable(writer)?;
-
-                for i in 0..32 {
-                    iobs[i].dump_human_readable(XC2Device::XC2C32A, i as u32, writer)?;
-                }
-
-                inpin.dump_human_readable(writer)?;
-
-                fb[0].dump_human_readable(XC2Device::XC2C32A, 0, writer)?;
-                fb[1].dump_human_readable(XC2Device::XC2C32A, 1, writer)?;
             },
             &XC2BitstreamBits::XC2C64 {
-                ref fb, ref iobs, ref global_nets, ref ivoltage, ref ovoltage} => {
+                ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ..} => {
 
                 write!(writer, "device type: XC2C64\n")?;
                 write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"})?;
                 write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"})?;
                 global_nets.dump_human_readable(writer)?;
-
-                for i in 0..64 {
-                    iobs[i].dump_human_readable(XC2Device::XC2C64, i as u32, writer)?;
-                }
-
-                fb[0].dump_human_readable(XC2Device::XC2C64, 0, writer)?;
-                fb[1].dump_human_readable(XC2Device::XC2C64, 1, writer)?;
-                fb[2].dump_human_readable(XC2Device::XC2C64, 2, writer)?;
-                fb[3].dump_human_readable(XC2Device::XC2C64, 3, writer)?;
             },
             &XC2BitstreamBits::XC2C64A {
-                ref fb, ref iobs, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
-                ref ivoltage, ref ovoltage} => {
+                ref iobs, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
+                ref ivoltage, ref ovoltage, ..} => {
 
                 write!(writer, "device type: XC2C64\n")?;
                 write!(writer, "legacy output voltage range: {}\n", if *legacy_ovoltage {"high"} else {"low"})?;
@@ -824,19 +819,10 @@ impl XC2BitstreamBits {
                 write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
                 write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
                 global_nets.dump_human_readable(writer)?;
-
-                for i in 0..64 {
-                    iobs[i].dump_human_readable(XC2Device::XC2C64A, i as u32, writer)?;
-                }
-
-                fb[0].dump_human_readable(XC2Device::XC2C64A, 0, writer)?;
-                fb[1].dump_human_readable(XC2Device::XC2C64A, 1, writer)?;
-                fb[2].dump_human_readable(XC2Device::XC2C64A, 2, writer)?;
-                fb[3].dump_human_readable(XC2Device::XC2C64A, 3, writer)?;
             },
             &XC2BitstreamBits::XC2C128 {
-                ref fb, ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
-                ref use_vref}  => {
+                ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
+                ref use_vref, ..}  => {
 
                 write!(writer, "device type: XC2C128\n")?;
                 write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
@@ -847,20 +833,43 @@ impl XC2BitstreamBits {
                 write!(writer, "VREF used: {}\n", if *use_vref {"high"} else {"low"})?;
                 clock_div.dump_human_readable(writer)?;
                 global_nets.dump_human_readable(writer)?;
-
-                for i in 0..100 {
-                    iobs[i].dump_human_readable(XC2Device::XC2C128, i as u32, writer)?;
-                }
-
-                fb[0].dump_human_readable(XC2Device::XC2C128, 0, writer)?;
-                fb[1].dump_human_readable(XC2Device::XC2C128, 1, writer)?;
-                fb[2].dump_human_readable(XC2Device::XC2C128, 2, writer)?;
-                fb[3].dump_human_readable(XC2Device::XC2C128, 3, writer)?;
-                fb[4].dump_human_readable(XC2Device::XC2C128, 4, writer)?;
-                fb[5].dump_human_readable(XC2Device::XC2C128, 5, writer)?;
-                fb[6].dump_human_readable(XC2Device::XC2C128, 6, writer)?;
-                fb[7].dump_human_readable(XC2Device::XC2C128, 7, writer)?;
             }
+        }
+
+        // IOBs
+        match self {
+            // This match is needed because the different sizes have different IOB structures, and fixed-sized arrays
+            // are gimped enough that returning an array of trait objects is hard.
+            &XC2BitstreamBits::XC2C32 {ref iobs, ..} |
+            &XC2BitstreamBits::XC2C32A {ref iobs, ..} => {
+                for i in 0..self.device_type().num_iobs() {
+                    iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
+                }
+            },
+            &XC2BitstreamBits::XC2C64 {ref iobs, ..} |
+            &XC2BitstreamBits::XC2C64A {ref iobs, ..} => {
+                for i in 0..self.device_type().num_iobs() {
+                    iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
+                }
+            },
+            &XC2BitstreamBits::XC2C128 {ref iobs, ..} => {
+                for i in 0..self.device_type().num_iobs() {
+                    iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
+                }
+            },
+        }
+
+        // Input-only pin
+        match self {
+            &XC2BitstreamBits::XC2C32 {ref inpin, ..} | &XC2BitstreamBits::XC2C32A {ref inpin, ..} => {
+                inpin.dump_human_readable(writer)?;
+            },
+            _ => {}
+        }
+
+        // FBs
+        for i in 0..self.device_type().num_fbs() {
+            self.get_fb()[i].dump_human_readable(self.device_type(), i as u32, writer)?;
         }
 
         Ok(())
