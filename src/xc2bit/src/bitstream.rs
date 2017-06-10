@@ -30,7 +30,8 @@ use std::io::Write;
 
 use *;
 use fb::{read_fb_logical};
-use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx};
+use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx,
+                      total_logical_fuse_count};
 use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical};
 use zia::{zia_get_row_width};
 
@@ -58,28 +59,8 @@ impl XC2Bitstream {
         write!(writer, "https://github.com/azonenberg/openfpga\n\n")?;
         write!(writer, "\x02")?;
 
-        match self.bits {
-            XC2BitstreamBits::XC2C32{..} => {
-                write!(writer, "QF12274*\n")?;
-                write!(writer, "N DEVICE XC2C32-{}-{}*\n\n", self.speed_grade, self.package)?;
-            },
-            XC2BitstreamBits::XC2C32A{..} => {
-                write!(writer, "QF12278*\n")?;
-                write!(writer, "N DEVICE XC2C32A-{}-{}*\n\n", self.speed_grade, self.package)?;
-            },
-            XC2BitstreamBits::XC2C64{..} => {
-                write!(writer, "QF25808*\n")?;
-                write!(writer, "N DEVICE XC2C64-{}-{}*\n\n", self.speed_grade, self.package)?;
-            },
-            XC2BitstreamBits::XC2C64A{..} => {
-                write!(writer, "QF25812*\n")?;
-                write!(writer, "N DEVICE XC2C64A-{}-{}*\n\n", self.speed_grade, self.package)?;
-            },
-            XC2BitstreamBits::XC2C128{..} => {
-                write!(writer, "QF55341*\n")?;
-                write!(writer, "N DEVICE XC2C128-{}-{}*\n\n", self.speed_grade, self.package)?;
-            },
-        }
+        write!(writer, "QF{}*\n", total_logical_fuse_count(self.bits.device_type()))?;
+        write!(writer, "N DEVICE {}-{}-{}*\n\n", self.bits.device_type(), self.speed_grade, self.package)?;
 
         self.bits.write_jed(writer)?;
 
@@ -1157,11 +1138,12 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
 
     let (part, spd, pkg) = device_combination.unwrap();
 
+    if fuses.len() != total_logical_fuse_count(part) {
+        return Err("wrong number of fuses");
+    }
+
     match part {
         XC2Device::XC2C32 => {
-            if fuses.len() != 12274 {
-                return Err("wrong number of fuses");
-            }
             let bits = read_32_bitstream_logical(fuses);
             if let Err(err) = bits {
                 return Err(err);
@@ -1173,9 +1155,6 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
             })
         },
         XC2Device::XC2C32A => {
-            if fuses.len() != 12278 {
-                return Err("wrong number of fuses");
-            }
             let bits = read_32a_bitstream_logical(fuses);
             if let Err(err) = bits {
                 return Err(err);
@@ -1187,9 +1166,6 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
             })
         },
         XC2Device::XC2C64 => {
-            if fuses.len() != 25808 {
-                return Err("wrong number of fuses");
-            }
             let bits = read_64_bitstream_logical(fuses);
             if let Err(err) = bits {
                 return Err(err);
@@ -1201,9 +1177,6 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
             })
         },
         XC2Device::XC2C64A => {
-            if fuses.len() != 25812 {
-                return Err("wrong number of fuses");
-            }
             let bits = read_64a_bitstream_logical(fuses);
             if let Err(err) = bits {
                 return Err(err);
@@ -1215,9 +1188,6 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
             })
         },
         XC2Device::XC2C128 => {
-            if fuses.len() != 55341 {
-                return Err("wrong number of fuses");
-            }
             let bits = read_128_bitstream_logical(fuses);
             if let Err(err) = bits {
                 return Err(err);

@@ -97,3 +97,14 @@ pub fn global_term_fuse_idx(device: XC2Device) -> usize {
         _ => unreachable!(),
     }
 }
+
+pub fn total_logical_fuse_count(device: XC2Device) -> usize {
+    match device {
+        XC2Device::XC2C32 => 12274,
+        XC2Device::XC2C32A => 12278,
+        XC2Device::XC2C64 => 25808,
+        XC2Device::XC2C64A => 25812,
+        XC2Device::XC2C128 => 55341,
+        _ => unreachable!(),
+    }
+}
