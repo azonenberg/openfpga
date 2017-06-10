@@ -489,6 +489,14 @@ pub fn fb_ff_num_to_iob_num(device: XC2Device, fb: u32, ff: u32) -> Option<u32> 
                 _ => None,
             }
         },
+        XC2Device::XC2C384 => {
+            // every FB is "missing" 6 IOBs
+            match ff {
+                0...4 => Some(10 * fb + ff),
+                11...15 => Some(10 * fb + 5 + (ff - 11)),
+                _ => None,
+            }
+        }
         _ => unreachable!(),
     }
 }

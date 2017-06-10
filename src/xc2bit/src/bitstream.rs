@@ -784,6 +784,21 @@ impl XC2BitstreamBits {
                     })?;
                 write!(writer, "L123231 {}*\n", if clock_div.delay {"0"} else {"1"})?;
             },
+            &XC2BitstreamBits::XC2C384 {clock_div, ..} => {
+                write!(writer, "L209331 {}{}*\n",
+                    if clock_div.enabled {"0"} else {"1"},
+                    match clock_div.div_ratio {
+                        XC2ClockDivRatio::Div2  => "000",
+                        XC2ClockDivRatio::Div4  => "001",
+                        XC2ClockDivRatio::Div6  => "010",
+                        XC2ClockDivRatio::Div8  => "011",
+                        XC2ClockDivRatio::Div10 => "100",
+                        XC2ClockDivRatio::Div12 => "101",
+                        XC2ClockDivRatio::Div14 => "110",
+                        XC2ClockDivRatio::Div16 => "111",
+                    })?;
+                write!(writer, "L209335 {}*\n", if clock_div.delay {"0"} else {"1"})?;
+            },
             _ => {},
         }
 
