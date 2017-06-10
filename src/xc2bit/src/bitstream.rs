@@ -29,7 +29,7 @@ use std::io;
 use std::io::Write;
 
 use *;
-use fb::{read_small_fb_logical, read_large_fb_logical};
+use fb::{read_fb_logical};
 use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical};
 use zia::{zia_get_row_width};
 
@@ -778,16 +778,14 @@ impl XC2BitstreamBits {
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
     pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
         match self {
-            &XC2BitstreamBits::XC2C32 {
-                ref iobs, ref inpin, ref global_nets, ref ivoltage, ref ovoltage, ..} => {
+            &XC2BitstreamBits::XC2C32 {ref global_nets, ref ivoltage, ref ovoltage, ..} => {
 
                 write!(writer, "device type: XC2C32\n")?;
                 write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"})?;
                 write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"})?;
                 global_nets.dump_human_readable(writer)?;
             },
-            &XC2BitstreamBits::XC2C32A {
-                ref iobs, ref inpin, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
+            &XC2BitstreamBits::XC2C32A {ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
                 ref ivoltage, ref ovoltage, ..} => {
 
                 write!(writer, "device type: XC2C32A\n")?;
@@ -799,19 +797,17 @@ impl XC2BitstreamBits {
                 write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
                 global_nets.dump_human_readable(writer)?;
             },
-            &XC2BitstreamBits::XC2C64 {
-                ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ..} => {
+            &XC2BitstreamBits::XC2C64 {ref global_nets, ref ivoltage, ref ovoltage, ..} => {
 
                 write!(writer, "device type: XC2C64\n")?;
                 write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"})?;
                 write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"})?;
                 global_nets.dump_human_readable(writer)?;
             },
-            &XC2BitstreamBits::XC2C64A {
-                ref iobs, ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
+            &XC2BitstreamBits::XC2C64A {ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
                 ref ivoltage, ref ovoltage, ..} => {
 
-                write!(writer, "device type: XC2C64\n")?;
+                write!(writer, "device type: XC2C64A\n")?;
                 write!(writer, "legacy output voltage range: {}\n", if *legacy_ovoltage {"high"} else {"low"})?;
                 write!(writer, "legacy input voltage range: {}\n", if *legacy_ivoltage {"high"} else {"low"})?;
                 write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
@@ -820,8 +816,7 @@ impl XC2BitstreamBits {
                 write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
                 global_nets.dump_human_readable(writer)?;
             },
-            &XC2BitstreamBits::XC2C128 {
-                ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
+            &XC2BitstreamBits::XC2C128 {ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
                 ref use_vref, ..}  => {
 
                 write!(writer, "device type: XC2C128\n")?;
@@ -1066,7 +1061,12 @@ impl XC2BitstreamBits {
 pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     for i in 0..fb.len() {
-        let res = read_small_fb_logical(XC2Device::XC2C32, fuses, i);
+        let base_fuse = if i < MCS_PER_FB {
+            5696
+        } else {
+            11824
+        };
+        let res = read_fb_logical(XC2Device::XC2C32A, fuses, i as u32, base_fuse);
         if let Err(err) = res {
             return Err(err);
         }
@@ -1105,7 +1105,12 @@ pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     for i in 0..fb.len() {
-        let res = read_small_fb_logical(XC2Device::XC2C32A, fuses, i);
+        let base_fuse = if i < MCS_PER_FB {
+            5696
+        } else {
+            11824
+        };
+        let res = read_fb_logical(XC2Device::XC2C32A, fuses, i as u32, base_fuse);
         if let Err(err) = res {
             return Err(err);
         }
@@ -1152,7 +1157,14 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 4];
     for i in 0..fb.len() {
-        let res = read_small_fb_logical(XC2Device::XC2C64, fuses, i);
+        let base_fuse = match i {
+            0...15 => 6016,
+            16...31 => 12464,
+            32...47 => 18912,
+            48...63 => 25360,
+            _ => unreachable!(),
+        };
+        let res = read_fb_logical(XC2Device::XC2C64, fuses, i as u32, base_fuse);
         if let Err(err) = res {
             return Err(err);
         }
@@ -1190,7 +1202,14 @@ pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 pub fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 4];
     for i in 0..fb.len() {
-        let res = read_small_fb_logical(XC2Device::XC2C64A, fuses, i);
+        let base_fuse = match i {
+            0...15 => 6016,
+            16...31 => 12464,
+            32...47 => 18912,
+            48...63 => 25360,
+            _ => unreachable!(),
+        };
+        let res = read_fb_logical(XC2Device::XC2C64A, fuses, i as u32, base_fuse);
         if let Err(err) = res {
             return Err(err);
         }
@@ -1248,7 +1267,7 @@ pub fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
             7 => 48408,
             _ => unreachable!(),
         };
-        let res = read_large_fb_logical(XC2Device::XC2C128, fuses, i as u32, base_fuse);
+        let res = read_fb_logical(XC2Device::XC2C128, fuses, i as u32, base_fuse);
         if let Err(err) = res {
             return Err(err);
         }
