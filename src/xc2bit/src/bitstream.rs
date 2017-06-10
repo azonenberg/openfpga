@@ -31,7 +31,7 @@ use std::io::Write;
 use *;
 use fb::{read_small_fb_logical, read_large_fb_logical};
 use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical};
-use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice, zia_get_row_width};
+use zia::{zia_get_row_width};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
 pub struct XC2Bitstream {
@@ -489,51 +489,6 @@ pub enum XC2BitstreamBits {
     }
 }
 
-/// Helper that prints the AND/OR arrays of a PLA
-fn write_pla_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2BitstreamFB, fuse_base: usize)
-    -> Result<(), io::Error> {
-
-    let zia_row_width = zia_get_row_width(device);
-
-    // AND terms
-    for i in 0..ANDTERMS_PER_FB {
-        write!(writer, "L{:06} ",
-            fuse_base + zia_row_width * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2)?;
-        for j in 0..INPUTS_PER_ANDTERM {
-            if fb.and_terms[i].input[j] {
-                write!(writer, "0")?;
-            } else {
-                write!(writer, "1")?;
-            }
-            if fb.and_terms[i].input_b[j] {
-                write!(writer, "0")?;
-            } else {
-                write!(writer, "1")?;
-            }
-        }
-        write!(writer, "*\n")?;
-    }
-    write!(writer, "\n")?;
-
-    // OR terms
-    for i in 0..ANDTERMS_PER_FB {
-        write!(writer, "L{:06} ",
-            fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
-            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB)?;
-        for j in 0..MCS_PER_FB {
-            if fb.or_terms[j].input[i] {
-                write!(writer, "0")?;
-            } else {
-                write!(writer, "1")?;
-            }
-        }
-        write!(writer, "*\n")?;
-    }
-    write!(writer, "\n")?;
-
-    Ok(())
-}
-
 /// Helper that prints the IOB and macrocell configuration on the "small" parts
 fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2BitstreamFB, iobs: &[XC2MCSmallIOB],
     fb_i: usize, fuse_base: usize) -> Result<(), io::Error> {
@@ -925,28 +880,7 @@ impl XC2BitstreamBits {
                 for fb_i in 0..2 {
                     let fuse_base = if fb_i == 0 {0} else {6128};
 
-                    // ZIA
-                    for i in 0..INPUTS_PER_ANDTERM {
-                        write!(writer, "L{:06} ", fuse_base + i * 8)?;
-                        let zia_choice_bits =
-                            encode_32_zia_choice(i as u32, fb[fb_i].zia_bits[i].selected)
-                            // FIXME: Fold this into the error system??
-                            .expect("invalid ZIA input");
-                        write!(writer, "{}{}{}{}{}{}{}{}",
-                            if zia_choice_bits[7] {"1"} else {"0"},
-                            if zia_choice_bits[6] {"1"} else {"0"},
-                            if zia_choice_bits[5] {"1"} else {"0"},
-                            if zia_choice_bits[4] {"1"} else {"0"},
-                            if zia_choice_bits[3] {"1"} else {"0"},
-                            if zia_choice_bits[2] {"1"} else {"0"},
-                            if zia_choice_bits[1] {"1"} else {"0"},
-                            if zia_choice_bits[0] {"1"} else {"0"})?;
-                        write!(writer, "*\n")?;
-                    }
-                    write!(writer, "\n")?;
-
-                    // PLA
-                    write_pla_to_jed(writer, XC2Device::XC2C32, &fb[fb_i], fuse_base)?;
+                    fb[fb_i].write_to_jed(XC2Device::XC2C32, fuse_base, writer)?;
 
                     // Macrocells
                     write_small_mc_to_jed(writer, XC2Device::XC2C32, &fb[fb_i], iobs, fb_i, fuse_base)?;
@@ -998,36 +932,7 @@ impl XC2BitstreamBits {
                         _ => unreachable!(),
                     };
 
-                    // ZIA
-                    for i in 0..INPUTS_PER_ANDTERM {
-                        write!(writer, "L{:06} ", fuse_base + i * 16)?;
-                        let zia_choice_bits =
-                            encode_64_zia_choice(i as u32, fb[fb_i].zia_bits[i].selected)
-                            // FIXME: Fold this into the error system??
-                            .expect("invalid ZIA input");
-                        write!(writer, "{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
-                            if zia_choice_bits[0] {"1"} else {"0"},
-                            if zia_choice_bits[1] {"1"} else {"0"},
-                            if zia_choice_bits[2] {"1"} else {"0"},
-                            if zia_choice_bits[3] {"1"} else {"0"},
-                            if zia_choice_bits[4] {"1"} else {"0"},
-                            if zia_choice_bits[5] {"1"} else {"0"},
-                            if zia_choice_bits[6] {"1"} else {"0"},
-                            if zia_choice_bits[7] {"1"} else {"0"},
-                            if zia_choice_bits[8] {"1"} else {"0"},
-                            if zia_choice_bits[9] {"1"} else {"0"},
-                            if zia_choice_bits[10] {"1"} else {"0"},
-                            if zia_choice_bits[11] {"1"} else {"0"},
-                            if zia_choice_bits[12] {"1"} else {"0"},
-                            if zia_choice_bits[13] {"1"} else {"0"},
-                            if zia_choice_bits[14] {"1"} else {"0"},
-                            if zia_choice_bits[15] {"1"} else {"0"})?;
-                        write!(writer, "*\n")?;
-                    }
-                    write!(writer, "\n")?;
-
-                    // PLA
-                    write_pla_to_jed(writer, XC2Device::XC2C64, &fb[fb_i], fuse_base)?;
+                    fb[fb_i].write_to_jed(XC2Device::XC2C64, fuse_base, writer)?;
 
                     // Macrocells
                     write_small_mc_to_jed(writer, XC2Device::XC2C64, &fb[fb_i], iobs, fb_i, fuse_base)?;
@@ -1076,48 +981,7 @@ impl XC2BitstreamBits {
                         _ => unreachable!(),
                     };
 
-                    // ZIA
-                    for i in 0..INPUTS_PER_ANDTERM {
-                        write!(writer, "L{:06} ", fuse_base + i * 28)?;
-                        let zia_choice_bits =
-                            encode_128_zia_choice(i as u32, fb[fb_i].zia_bits[i].selected)
-                            // FIXME: Fold this into the error system??
-                            .expect("invalid ZIA input");
-                        write!(writer, "{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
-                            if zia_choice_bits[0] {"1"} else {"0"},
-                            if zia_choice_bits[1] {"1"} else {"0"},
-                            if zia_choice_bits[2] {"1"} else {"0"},
-                            if zia_choice_bits[3] {"1"} else {"0"},
-                            if zia_choice_bits[4] {"1"} else {"0"},
-                            if zia_choice_bits[5] {"1"} else {"0"},
-                            if zia_choice_bits[6] {"1"} else {"0"},
-                            if zia_choice_bits[7] {"1"} else {"0"},
-                            if zia_choice_bits[8] {"1"} else {"0"},
-                            if zia_choice_bits[9] {"1"} else {"0"},
-                            if zia_choice_bits[10] {"1"} else {"0"},
-                            if zia_choice_bits[11] {"1"} else {"0"},
-                            if zia_choice_bits[12] {"1"} else {"0"},
-                            if zia_choice_bits[13] {"1"} else {"0"},
-                            if zia_choice_bits[14] {"1"} else {"0"},
-                            if zia_choice_bits[15] {"1"} else {"0"},
-                            if zia_choice_bits[16] {"1"} else {"0"},
-                            if zia_choice_bits[17] {"1"} else {"0"},
-                            if zia_choice_bits[18] {"1"} else {"0"},
-                            if zia_choice_bits[19] {"1"} else {"0"},
-                            if zia_choice_bits[20] {"1"} else {"0"},
-                            if zia_choice_bits[21] {"1"} else {"0"},
-                            if zia_choice_bits[22] {"1"} else {"0"},
-                            if zia_choice_bits[23] {"1"} else {"0"},
-                            if zia_choice_bits[24] {"1"} else {"0"},
-                            if zia_choice_bits[25] {"1"} else {"0"},
-                            if zia_choice_bits[26] {"1"} else {"0"},
-                            if zia_choice_bits[27] {"1"} else {"0"})?;
-                        write!(writer, "*\n")?;
-                    }
-                    write!(writer, "\n")?;
-
-                    // PLA
-                    write_pla_to_jed(writer, XC2Device::XC2C128, &fb[fb_i], fuse_base)?;
+                    fb[fb_i].write_to_jed(XC2Device::XC2C128, fuse_base, writer)?;
 
                     // Macrocells
                     write_large_mc_to_jed(writer, XC2Device::XC2C128, &fb[fb_i], iobs, fb_i, fuse_base)?;

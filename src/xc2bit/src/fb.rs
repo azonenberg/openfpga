@@ -31,7 +31,8 @@ use std::io::Write;
 use *;
 use pla::{read_and_term_logical, read_or_term_logical};
 use mc::{read_small_ff_logical, read_large_ff_logical, read_large_buried_ff_logical};
-use zia::{read_32_zia_fb_row_logical, read_64_zia_fb_row_logical, read_128_zia_fb_row_logical, zia_get_row_width};
+use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice,
+          read_32_zia_fb_row_logical, read_64_zia_fb_row_logical, read_128_zia_fb_row_logical, zia_get_row_width};
 
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
@@ -62,14 +63,14 @@ impl Default for XC2BitstreamFB {
 }
 
 impl XC2BitstreamFB {
-    /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
+    /// Dump a human-readable explanation of the settings for this FB to the given `writer` object.
+    /// `device` must be the device type this FB was extracted from and is needed to decode I/O pin numbers.
     /// `fb` must be the index of this function block.
     pub fn dump_human_readable(&self, device: XC2Device, fb: u32, writer: &mut Write) -> Result<(), io::Error> {
         for i in 0..MCS_PER_FB {
             self.ffs[i].dump_human_readable(fb, i as u32, writer)?;
         }
 
-        // FIXME: Move this somewhere else?
         write!(writer, "\n")?;
         write!(writer, "ZIA inputs for FB{}\n", fb + 1)?;
         for i in 0..INPUTS_PER_ANDTERM {
@@ -87,7 +88,6 @@ impl XC2BitstreamFB {
             }
         }
 
-        // FIXME: Move this somewhere else?
         write!(writer, "\n")?;
         write!(writer, "AND terms for FB{}\n", fb + 1)?;
         write!(writer, "   |  0| ~0|  1| ~1|  2| ~2|  3| ~3|  4| ~4|  5| ~5|  6| ~6|  7| ~7|  8| ~8|  9| ~9| 10|~10| \
@@ -113,7 +113,6 @@ impl XC2BitstreamFB {
             write!(writer, "\n")?;
         }
 
-        // FIXME: Move this somewhere else?
         write!(writer, "\n")?;
         write!(writer, "OR terms for FB{}\n", fb + 1)?;
         write!(writer, "   | 0| 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|16|17|18|19|20|\
@@ -130,6 +129,84 @@ impl XC2BitstreamFB {
             }
             write!(writer, "\n")?;
         }
+
+        Ok(())
+    }
+
+    /// Write the .JED representation of the settings for this FB to the given `writer` object.
+    /// `device` must be the device type this FB was extracted from and is needed to encode the ZIA.
+    /// `fuse_base` must be the starting fuse number of this function block.
+    pub fn write_to_jed(&self, device: XC2Device, fuse_base: usize, writer: &mut Write) -> Result<(), io::Error> {
+        // ZIA
+        let zia_row_width = zia_get_row_width(device);
+        for i in 0..INPUTS_PER_ANDTERM {
+            write!(writer, "L{:06} ", fuse_base + i * zia_row_width)?;
+            match device {
+                XC2Device::XC2C32 | XC2Device::XC2C32A => {
+                    let zia_choice_bits = encode_32_zia_choice(i as u32, self.zia_bits[i].selected)
+                        // FIXME: Fold this into the error system??
+                        .expect("invalid ZIA input");
+                    for j in 0..zia_choice_bits.len() {
+                        write!(writer, "{}", if zia_choice_bits[zia_choice_bits.len() - 1 - j] {"1"} else {"0"})?;
+                    }
+                },
+                XC2Device::XC2C64 | XC2Device::XC2C64A => {
+                    let zia_choice_bits = encode_64_zia_choice(i as u32, self.zia_bits[i].selected)
+                        // FIXME: Fold this into the error system??
+                        .expect("invalid ZIA input");
+                    for j in 0..zia_choice_bits.len() {
+                        write!(writer, "{}", if zia_choice_bits[zia_choice_bits.len() - 1 - j] {"1"} else {"0"})?;
+                    }
+                },
+                XC2Device::XC2C128 => {
+                    let zia_choice_bits = encode_128_zia_choice(i as u32, self.zia_bits[i].selected)
+                        // FIXME: Fold this into the error system??
+                        .expect("invalid ZIA input");
+                    for j in 0..zia_choice_bits.len() {
+                        write!(writer, "{}", if zia_choice_bits[zia_choice_bits.len() - 1 - j] {"1"} else {"0"})?;
+                    }
+                },
+                _ => unreachable!(),
+            }
+            write!(writer, "*\n")?;
+        }
+        write!(writer, "\n")?;
+
+        // AND terms
+        for i in 0..ANDTERMS_PER_FB {
+            write!(writer, "L{:06} ",
+                fuse_base + zia_row_width * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2)?;
+            for j in 0..INPUTS_PER_ANDTERM {
+                if self.and_terms[i].input[j] {
+                    write!(writer, "0")?;
+                } else {
+                    write!(writer, "1")?;
+                }
+                if self.and_terms[i].input_b[j] {
+                    write!(writer, "0")?;
+                } else {
+                    write!(writer, "1")?;
+                }
+            }
+            write!(writer, "*\n")?;
+        }
+        write!(writer, "\n")?;
+
+        // OR terms
+        for i in 0..ANDTERMS_PER_FB {
+            write!(writer, "L{:06} ",
+                fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
+                ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB)?;
+            for j in 0..MCS_PER_FB {
+                if self.or_terms[j].input[i] {
+                    write!(writer, "0")?;
+                } else {
+                    write!(writer, "1")?;
+                }
+            }
+            write!(writer, "*\n")?;
+        }
+        write!(writer, "\n")?;
 
         Ok(())
     }
