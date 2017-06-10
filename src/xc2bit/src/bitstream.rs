@@ -169,6 +169,22 @@ impl XC2Bitstream {
                     }
                 })
             },
+            XC2Device::XC2C384 => {
+                Ok(XC2Bitstream {
+                    speed_grade: speed_grade,
+                    package: package,
+                    bits: XC2BitstreamBits::XC2C384 {
+                        fb: [XC2BitstreamFB::default(); 24],
+                        iobs: [XC2MCLargeIOB::default(); 240],
+                        global_nets: XC2GlobalNets::default(),
+                        ivoltage: [false, false, false, false],
+                        ovoltage: [false, false, false, false],
+                        data_gate: false,
+                        use_vref: false,
+                        clock_div: XC2ClockDiv::default(),
+                    }
+                })
+            },
             _ => Err("invalid device")
         }
     }
@@ -470,6 +486,24 @@ pub enum XC2BitstreamBits {
         ///
         /// `false` = low, `true` = high
         ovoltage: [bool; 2],
+    },
+    XC2C384 {
+        fb: [XC2BitstreamFB; 24],
+        iobs: [XC2MCLargeIOB; 240],
+        global_nets: XC2GlobalNets,
+        clock_div: XC2ClockDiv,
+        /// Whether the DataGate feature is used
+        data_gate: bool,
+        /// Whether I/O standards with VREF are used
+        use_vref: bool,
+        /// Voltage level control for each I/O bank
+        ///
+        /// `false` = low, `true` = high
+        ivoltage: [bool; 4],
+        /// Voltage level control for each I/O bank
+        ///
+        /// `false` = low, `true` = high
+        ovoltage: [bool; 4],
     }
 }
 
@@ -483,6 +517,7 @@ impl XC2BitstreamBits {
             &XC2BitstreamBits::XC2C64A{..} => XC2Device::XC2C64A,
             &XC2BitstreamBits::XC2C128{..} => XC2Device::XC2C128,
             &XC2BitstreamBits::XC2C256{..} => XC2Device::XC2C256,
+            &XC2BitstreamBits::XC2C384{..} => XC2Device::XC2C384,
         }
     }
 
@@ -495,6 +530,7 @@ impl XC2BitstreamBits {
             &XC2BitstreamBits::XC2C64A{ref fb, ..} => fb,
             &XC2BitstreamBits::XC2C128{ref fb, ..} => fb,
             &XC2BitstreamBits::XC2C256{ref fb, ..} => fb,
+            &XC2BitstreamBits::XC2C384{ref fb, ..} => fb,
         }
     }
 
@@ -507,6 +543,7 @@ impl XC2BitstreamBits {
             &XC2BitstreamBits::XC2C64A{ref global_nets, ..} => global_nets,
             &XC2BitstreamBits::XC2C128{ref global_nets, ..} => global_nets,
             &XC2BitstreamBits::XC2C256{ref global_nets, ..} => global_nets,
+            &XC2BitstreamBits::XC2C384{ref global_nets, ..} => global_nets,
         }
     }
 
@@ -576,6 +613,23 @@ impl XC2BitstreamBits {
                 write!(writer, "VREF used: {}\n", if *use_vref {"high"} else {"low"})?;
                 clock_div.dump_human_readable(writer)?;
                 global_nets.dump_human_readable(writer)?;
+            },
+            &XC2BitstreamBits::XC2C384 {ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
+                ref use_vref, ..}  => {
+
+                write!(writer, "device type: XC2C384\n")?;
+                write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
+                write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
+                write!(writer, "bank 2 output voltage range: {}\n", if ovoltage[2] {"high"} else {"low"})?;
+                write!(writer, "bank 3 output voltage range: {}\n", if ovoltage[3] {"high"} else {"low"})?;
+                write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
+                write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
+                write!(writer, "bank 2 input voltage range: {}\n", if ivoltage[2] {"high"} else {"low"})?;
+                write!(writer, "bank 3 input voltage range: {}\n", if ivoltage[3] {"high"} else {"low"})?;
+                write!(writer, "DataGate used: {}\n", if *data_gate {"high"} else {"low"})?;
+                write!(writer, "VREF used: {}\n", if *use_vref {"high"} else {"low"})?;
+                clock_div.dump_human_readable(writer)?;
+                global_nets.dump_human_readable(writer)?;
             }
         }
 
@@ -601,6 +655,11 @@ impl XC2BitstreamBits {
                 }
             },
             &XC2BitstreamBits::XC2C256 {ref iobs, ..} => {
+                for i in 0..self.device_type().num_iobs() {
+                    iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
+                }
+            },
+            &XC2BitstreamBits::XC2C384 {ref iobs, ..} => {
                 for i in 0..self.device_type().num_iobs() {
                     iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
                 }
@@ -671,6 +730,17 @@ impl XC2BitstreamBits {
 
                     // Macrocells
                     write_large_mc_to_jed(writer, XC2Device::XC2C256, &fb[fb_i], iobs, fb_i, fuse_base)?;
+                }
+            }
+            &XC2BitstreamBits::XC2C384 {ref fb, ref iobs, ..}  => {
+                // Each FB
+                for fb_i in 0..24 {
+                    let fuse_base = fb_fuse_idx(XC2Device::XC2C384, fb_i as u32);
+
+                    fb[fb_i].write_to_jed(XC2Device::XC2C384, fuse_base, writer)?;
+
+                    // Macrocells
+                    write_large_mc_to_jed(writer, XC2Device::XC2C384, &fb[fb_i], iobs, fb_i, fuse_base)?;
                 }
             }
         }
@@ -773,6 +843,18 @@ impl XC2BitstreamBits {
                 write!(writer, "L123246 {}{}*\n", if ovoltage[0] {"0"} else {"1"}, if ovoltage[1] {"0"} else {"1"})?;
 
                 write!(writer, "L123248 {}*\n", if *use_vref {"0"} else {"1"})?;
+            }
+            &XC2BitstreamBits::XC2C384 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
+                write!(writer, "L209347 {}*\n", if *data_gate {"0"} else {"1"})?;
+
+                write!(writer, "L209348 {}{}{}{}*\n",
+                    if ivoltage[0] {"0"} else {"1"}, if ivoltage[1] {"0"} else {"1"},
+                    if ivoltage[2] {"0"} else {"1"}, if ivoltage[3] {"0"} else {"1"})?;
+                write!(writer, "L209352 {}{}{}{}*\n",
+                    if ovoltage[0] {"0"} else {"1"}, if ovoltage[1] {"0"} else {"1"},
+                    if ovoltage[2] {"0"} else {"1"}, if ovoltage[3] {"0"} else {"1"})?;
+
+                write!(writer, "L209356 {}*\n", if *use_vref {"0"} else {"1"})?;
             }
         }
 
