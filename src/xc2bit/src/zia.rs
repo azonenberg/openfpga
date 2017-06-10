@@ -3733,6 +3733,182 @@ pub fn encode_128_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 28]
     }
 }
 
+/// Internal function that reads a piece of the ZIA corresponding to one FB and one row
+pub fn read_256_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
+    -> Result<XC2ZIARowPiece, &'static str> {
+
+    // This is an ugly workaround for the lack of stable slice patterns
+    let zia_row_fuses = (
+        fuses[block_idx + row_idx * 48 + 0],
+        fuses[block_idx + row_idx * 48 + 1],
+        fuses[block_idx + row_idx * 48 + 2],
+        fuses[block_idx + row_idx * 48 + 3],
+        fuses[block_idx + row_idx * 48 + 4],
+        fuses[block_idx + row_idx * 48 + 5],
+        fuses[block_idx + row_idx * 48 + 6],
+        fuses[block_idx + row_idx * 48 + 7],
+        fuses[block_idx + row_idx * 48 + 8],
+        fuses[block_idx + row_idx * 48 + 9],
+        fuses[block_idx + row_idx * 48 + 10],
+        fuses[block_idx + row_idx * 48 + 11],
+        fuses[block_idx + row_idx * 48 + 12],
+        fuses[block_idx + row_idx * 48 + 13],
+        fuses[block_idx + row_idx * 48 + 14],
+        fuses[block_idx + row_idx * 48 + 15],
+        fuses[block_idx + row_idx * 48 + 16],
+        fuses[block_idx + row_idx * 48 + 17],
+        fuses[block_idx + row_idx * 48 + 18],
+        fuses[block_idx + row_idx * 48 + 19],
+        fuses[block_idx + row_idx * 48 + 20],
+        fuses[block_idx + row_idx * 48 + 21],
+        fuses[block_idx + row_idx * 48 + 22],
+        fuses[block_idx + row_idx * 48 + 23],
+        fuses[block_idx + row_idx * 48 + 24],
+        fuses[block_idx + row_idx * 48 + 25],
+        fuses[block_idx + row_idx * 48 + 26],
+        fuses[block_idx + row_idx * 48 + 27],
+        fuses[block_idx + row_idx * 48 + 28],
+        fuses[block_idx + row_idx * 48 + 29],
+        fuses[block_idx + row_idx * 48 + 30],
+        fuses[block_idx + row_idx * 48 + 31],
+        fuses[block_idx + row_idx * 48 + 32],
+        fuses[block_idx + row_idx * 48 + 33],
+        fuses[block_idx + row_idx * 48 + 34],
+        fuses[block_idx + row_idx * 48 + 35],
+        fuses[block_idx + row_idx * 48 + 36],
+        fuses[block_idx + row_idx * 48 + 37],
+        fuses[block_idx + row_idx * 48 + 38],
+        fuses[block_idx + row_idx * 48 + 39],
+        fuses[block_idx + row_idx * 48 + 40],
+        fuses[block_idx + row_idx * 48 + 41],
+        fuses[block_idx + row_idx * 48 + 42],
+        fuses[block_idx + row_idx * 48 + 43],
+        fuses[block_idx + row_idx * 48 + 44],
+        fuses[block_idx + row_idx * 48 + 45],
+        fuses[block_idx + row_idx * 48 + 46],
+        fuses[block_idx + row_idx * 48 + 47],
+    );
+
+    let selected_input = match zia_row_fuses {
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, F) => ZIA_MAP_256[row_idx][0],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, F, T) => ZIA_MAP_256[row_idx][1],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, F, T, T) => ZIA_MAP_256[row_idx][2],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, F, T, T, T) => ZIA_MAP_256[row_idx][3],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, F, T, T, T) => ZIA_MAP_256[row_idx][4],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][5],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][6],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][7],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][8],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][9],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][10],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][11],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][12],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][13],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][14],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][15],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][16],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][17],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][18],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][19],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][20],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][21],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][22],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][23],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][24],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][25],
+        (T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][26],
+        (T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][27],
+        (T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][28],
+        (T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][29],
+        (T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][30],
+        (T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][31],
+        (T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][32],
+        (T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][33],
+        (T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][34],
+        (T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][35],
+        (T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][36],
+        (T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][37],
+        (T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][38],
+        (F, T, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T) => ZIA_MAP_256[row_idx][39],
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
+        // TODO: This one isn't certain
+        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T) => XC2ZIAInput::Zero,
+        _ => return Err("unknown ZIA input choice"),
+    };
+
+    Ok(XC2ZIARowPiece {
+        selected: selected_input
+    })
+}
+
+/// Internal function that takes a ZIA row and choice and returns the bit encoding for it
+pub fn encode_256_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 48]> {
+    if choice == XC2ZIAInput::One {
+        Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T])
+    } else if choice == XC2ZIAInput::Zero {
+        // TODO: This one isn't certain
+        Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T])
+    } else {
+        let mut found_bit = 40;
+        for i in 0..ZIA_MAP_256[row as usize].len() {
+            if choice == ZIA_MAP_256[row as usize][i] {
+                found_bit = i;
+                break;
+            }
+        }
+
+        if found_bit == 40 {
+            // Didn't find it
+            return None;
+        }
+
+        match found_bit {
+
+            0  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, F]),
+            1  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, F, T]),
+            2  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, F, T, T]),
+            3  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, F, T, T, T]),
+            4  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, F, T, T, T]),
+            5  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, F, T, T, T, T, T, T, T]),
+            6  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, F, T, T, T, T, T, T, T]),
+            7  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, F, T, T, T, T, T, T, T]),
+            8  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, F, T, T, T, T, T, T, T]),
+            9  => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, F, T, T, T, T, T, T, T]),
+            10 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, F, T, T, T, T, T, T, T]),
+            11 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, T, F, T, T, T, T, T, T, T]),
+            12 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            13 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            14 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            15 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            16 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            17 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            18 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            19 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            20 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            21 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            22 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            23 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            24 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            25 => Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            26 => Some([T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            27 => Some([T, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            28 => Some([T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            29 => Some([T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            30 => Some([T, T, T, T, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            31 => Some([T, T, T, T, T, T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            32 => Some([T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            33 => Some([T, T, T, T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            34 => Some([T, T, T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            35 => Some([T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            36 => Some([T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            37 => Some([T, T, F, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            38 => Some([T, F, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            39 => Some([F, T, T, T, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, T, T, T, T, T, T, T]),
+            _ => unreachable!(),
+        }
+    }
+}
+
 /// Returns the width in bits of one row of the ZIA
 pub fn zia_get_row_width(device: XC2Device) -> usize {
     match device {
