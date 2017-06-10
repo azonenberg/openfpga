@@ -74,6 +74,10 @@ impl XC2Bitstream {
                 write!(writer, "QF25812*\n")?;
                 write!(writer, "N DEVICE XC2C64A-{}-{}*\n\n", self.speed_grade, self.package)?;
             },
+            XC2BitstreamBits::XC2C128{..} => {
+                write!(writer, "QF55341*\n")?;
+                write!(writer, "N DEVICE XC2C128-{}-{}*\n\n", self.speed_grade, self.package)?;
+            },
         }
 
         self.bits.write_jed(writer)?;
@@ -275,6 +279,28 @@ fn read_64_global_nets_logical(fuses: &[bool]) -> XC2GlobalNets {
     }
 }
 
+/// Possible clock divide ratios for the programmable clock divider
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum XC2ClockDivRatio {
+    Div2,
+    Div4,
+    Div6,
+    Div8,
+    Div10,
+    Div12,
+    Div14,
+    Div16,
+}
+
+/// Represents the configuration of the programmable clock divider in devices with 128 macrocells or more. This is
+/// hard-wired onto the GCK2 clock pin.
+pub struct XC2ClockDiv {
+    /// Ratio that input clock is divided by
+    pub div_ratio: XC2ClockDivRatio,
+    /// Whether the "delay" feature is enabled
+    pub delay: bool,
+}
+
 /// The actual bitstream bits for each possible Coolrunner-II part
 pub enum XC2BitstreamBits {
     XC2C32 {
@@ -347,6 +373,24 @@ pub enum XC2BitstreamBits {
         /// `false` = low, `true` = high
         ovoltage: [bool; 2],
     },
+    XC2C128 {
+        fb: [XC2BitstreamFB; 8],
+        iobs: [XC2MCSmallIOB; 100],
+        global_nets: XC2GlobalNets,
+        clock_div: XC2ClockDiv,
+        /// Whether the DataGate feature is used
+        data_gate: bool,
+        /// Whether I/O standards with VREF are used
+        use_vref: bool,
+        /// Voltage level control for each I/O bank
+        ///
+        /// `false` = low, `true` = high
+        ivoltage: [bool; 2],
+        /// Voltage level control for each I/O bank
+        ///
+        /// `false` = low, `true` = high
+        ovoltage: [bool; 2],
+    }
 }
 
 /// Helper that prints the AND/OR arrays of a PLA
@@ -594,6 +638,12 @@ impl XC2BitstreamBits {
                 fb[2].dump_human_readable(XC2Device::XC2C64A, 2, writer)?;
                 fb[3].dump_human_readable(XC2Device::XC2C64A, 3, writer)?;
             },
+            &XC2BitstreamBits::XC2C128 {
+                ref fb, ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
+                ref use_vref}  => {
+
+                unreachable!();
+            }
         }
 
         Ok(())
@@ -745,6 +795,12 @@ impl XC2BitstreamBits {
 
                 write!(writer, "L025806 {}*\n", if *ovoltage {"0"} else {"1"})?;
                 write!(writer, "L025807 {}*\n", if *ivoltage {"0"} else {"1"})?;
+            }
+            &XC2BitstreamBits::XC2C128 {
+                ref fb, ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
+                ref use_vref}  => {
+
+                unreachable!();
             }
         }
 
