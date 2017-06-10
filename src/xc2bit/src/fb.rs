@@ -248,11 +248,8 @@ pub fn read_fb_logical(device: XC2Device, fuses: &[bool], fb: u32, fuse_base: us
     let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
     let zia_block_idx = fuse_base;
     for i in 0..zia_bits.len() {
-        let result = zia_row_read_function(fuses, zia_block_idx, i);
-        if let Err(err) = result {
-            return Err(err);
-        }
-        zia_bits[i] = result.unwrap();
+        let result = zia_row_read_function(fuses, zia_block_idx, i)?;
+        zia_bits[i] = result;
     }
 
     let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];

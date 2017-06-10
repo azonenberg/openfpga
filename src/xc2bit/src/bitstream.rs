@@ -1144,58 +1144,43 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
 
     match part {
         XC2Device::XC2C32 => {
-            let bits = read_32_bitstream_logical(fuses);
-            if let Err(err) = bits {
-                return Err(err);
-            }
+            let bits = read_32_bitstream_logical(fuses)?;
             Ok(XC2Bitstream {
                 speed_grade: spd,
                 package: pkg,
-                bits: bits.unwrap(),
+                bits: bits,
             })
         },
         XC2Device::XC2C32A => {
-            let bits = read_32a_bitstream_logical(fuses);
-            if let Err(err) = bits {
-                return Err(err);
-            }
+            let bits = read_32a_bitstream_logical(fuses)?;
             Ok(XC2Bitstream {
                 speed_grade: spd,
                 package: pkg,
-                bits: bits.unwrap(),
+                bits: bits,
             })
         },
         XC2Device::XC2C64 => {
-            let bits = read_64_bitstream_logical(fuses);
-            if let Err(err) = bits {
-                return Err(err);
-            }
+            let bits = read_64_bitstream_logical(fuses)?;
             Ok(XC2Bitstream {
                 speed_grade: spd,
                 package: pkg,
-                bits: bits.unwrap(),
+                bits: bits,
             })
         },
         XC2Device::XC2C64A => {
-            let bits = read_64a_bitstream_logical(fuses);
-            if let Err(err) = bits {
-                return Err(err);
-            }
+            let bits = read_64a_bitstream_logical(fuses)?;
             Ok(XC2Bitstream {
                 speed_grade: spd,
                 package: pkg,
-                bits: bits.unwrap(),
+                bits: bits,
             })
         },
         XC2Device::XC2C128 => {
-            let bits = read_128_bitstream_logical(fuses);
-            if let Err(err) = bits {
-                return Err(err);
-            }
+            let bits = read_128_bitstream_logical(fuses)?;
             Ok(XC2Bitstream {
                 speed_grade: spd,
                 package: pkg,
-                bits: bits.unwrap(),
+                bits: bits,
             })
         },
         _ => Err("unsupported part"),
