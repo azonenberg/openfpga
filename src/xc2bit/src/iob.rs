@@ -359,6 +359,95 @@ pub fn fb_ff_num_to_iob_num(device: XC2Device, fb: u32, ff: u32) -> Option<u32> 
                 _ => None,
             }
         },
+        XC2Device::XC2C256 => {
+            match fb {
+                // "Missing" 5 IOBs
+                0 => match ff {
+                    0...5   => Some(0 + ff),
+                    11...15 => Some(6 + (ff - 11)),
+                    _ => None,
+                },
+                1 => match ff {
+                    0...5   => Some(11 + ff),
+                    11...15 => Some(17 + (ff - 11)),
+                    _ => None,
+                },
+                2 => match ff {
+                    0...5   => Some(22 + ff),
+                    11...15 => Some(28 + (ff - 11)),
+                    _ => None,
+                },
+                3 => match ff {
+                    0...5   => Some(33 + ff),
+                    11...15 => Some(39 + (ff - 11)),
+                    _ => None,
+                },
+                4 => match ff {
+                    0...5   => Some(44 + ff),
+                    11...15 => Some(50 + (ff - 11)),
+                    _ => None,
+                },
+                5 => match ff {
+                    0...5   => Some(55 + ff),
+                    11...15 => Some(61 + (ff - 11)),
+                    _ => None,
+                },
+                // "Missing" 4 IOBs
+                6 => match ff {
+                    0...5   => Some(66 + ff),
+                    10...15 => Some(72 + (ff - 10)),
+                    _ => None,
+                },
+                7 => match ff {
+                    0...5   => Some(78 + ff),
+                    10...15 => Some(84 + (ff - 10)),
+                    _ => None,
+                },
+                8 => match ff {
+                    0...5   => Some(90 + ff),
+                    10...15 => Some(96 + (ff - 10)),
+                    _ => None,
+                },
+                9 => match ff {
+                    0...5   => Some(102 + ff),
+                    10...15 => Some(108 + (ff - 10)),
+                    _ => None,
+                },
+                10 => match ff {
+                    0...5   => Some(114 + ff),
+                    10...15 => Some(120 + (ff - 10)),
+                    _ => None,
+                },
+                11 => match ff {
+                    0...5   => Some(126 + ff),
+                    10...15 => Some(132 + (ff - 10)),
+                    _ => None,
+                },
+                // "Missing" 5 IOBs
+                12 => match ff {
+                    0...5   => Some(138 + ff),
+                    11...15 => Some(144 + (ff - 11)),
+                    _ => None,
+                },
+                13 => match ff {
+                    0...5   => Some(149 + ff),
+                    11...15 => Some(155 + (ff - 11)),
+                    _ => None,
+                },
+                // "Missing" 4 IOBs
+                14 => match ff {
+                    0...5   => Some(160 + ff),
+                    10...15 => Some(166 + (ff - 10)),
+                    _ => None,
+                },
+                15 => match ff {
+                    0...5   => Some(172 + ff),
+                    10...15 => Some(178 + (ff - 10)),
+                    _ => None,
+                },
+                _ => None,
+            }
+        },
         _ => unreachable!(),
     }
 }

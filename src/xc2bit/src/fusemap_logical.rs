@@ -88,6 +88,7 @@ pub fn gck_fuse_idx(device: XC2Device) -> usize {
         XC2Device::XC2C32 | XC2Device::XC2C32A => 12256,
         XC2Device::XC2C64 | XC2Device::XC2C64A => 25792,
         XC2Device::XC2C128 => 55316,
+        XC2Device::XC2C256 => 123224,
         _ => unreachable!(),
     }
 }
@@ -97,6 +98,7 @@ pub fn gsr_fuse_idx(device: XC2Device) -> usize {
         XC2Device::XC2C32 | XC2Device::XC2C32A => 12259,
         XC2Device::XC2C64 | XC2Device::XC2C64A => 25795,
         XC2Device::XC2C128 => 55324,
+        XC2Device::XC2C256 => 123232,
         _ => unreachable!(),
     }
 }
@@ -106,6 +108,7 @@ pub fn gts_fuse_idx(device: XC2Device) -> usize {
         XC2Device::XC2C32 | XC2Device::XC2C32A => 12261,
         XC2Device::XC2C64 | XC2Device::XC2C64A => 25797,
         XC2Device::XC2C128 => 55326,
+        XC2Device::XC2C256 => 123234,
         _ => unreachable!(),
     }
 }
@@ -115,6 +118,7 @@ pub fn global_term_fuse_idx(device: XC2Device) -> usize {
         XC2Device::XC2C32 | XC2Device::XC2C32A => 12269,
         XC2Device::XC2C64 | XC2Device::XC2C64A => 25805,
         XC2Device::XC2C128 => 55334,
+        XC2Device::XC2C256 => 123242,
         _ => unreachable!(),
     }
 }
