@@ -1097,6 +1097,37 @@ pub fn read_256_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
     })
 }
 
+/// Internal function for parsing an XC2C384 bitstream
+pub fn read_384_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 24];
+    let mut iobs = [XC2MCLargeIOB::default(); 240];
+    
+    read_bitstream_logical_common_large(fuses, XC2Device::XC2C384, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_logical(XC2Device::XC2C384, fuses);
+
+    Ok(XC2BitstreamBits::XC2C384 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        clock_div: read_256_clock_div_logical(fuses),
+        data_gate: !fuses[209347],
+        use_vref: !fuses[209356],
+        ivoltage: [
+            !fuses[209348],
+            !fuses[209349],
+            !fuses[209350],
+            !fuses[209351],
+        ],
+        ovoltage: [
+            !fuses[209352],
+            !fuses[209353],
+            !fuses[209354],
+            !fuses[209355],
+        ]
+    })
+}
+
 /// Processes a fuse array into a bitstream object
 pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
     let device_combination = parse_part_name_string(device);
@@ -1153,6 +1184,14 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
         },
         XC2Device::XC2C256 => {
             let bits = read_256_bitstream_logical(fuses)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
+        XC2Device::XC2C384 => {
+            let bits = read_384_bitstream_logical(fuses)?;
             Ok(XC2Bitstream {
                 speed_grade: spd,
                 package: pkg,

@@ -33,7 +33,7 @@ use pla::{read_and_term_logical, read_or_term_logical};
 use mc::{read_small_ff_logical, read_large_ff_logical, read_large_buried_ff_logical};
 use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice, encode_256_zia_choice,
           encode_384_zia_choice, read_32_zia_fb_row_logical, read_64_zia_fb_row_logical, read_128_zia_fb_row_logical,
-          read_256_zia_fb_row_logical, zia_get_row_width};
+          read_256_zia_fb_row_logical, read_384_zia_fb_row_logical, zia_get_row_width};
 
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
@@ -248,6 +248,7 @@ pub fn read_fb_logical(device: XC2Device, fuses: &[bool], fb: u32, fuse_base: us
         XC2Device::XC2C64 | XC2Device::XC2C64A => read_64_zia_fb_row_logical,
         XC2Device::XC2C128 => read_128_zia_fb_row_logical,
         XC2Device::XC2C256 => read_256_zia_fb_row_logical,
+        XC2Device::XC2C384 => read_384_zia_fb_row_logical,
         _ => unreachable!(),
     };
 
