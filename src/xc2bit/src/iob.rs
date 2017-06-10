@@ -176,6 +176,45 @@ impl Default for XC2MCLargeIOB {
     }
 }
 
+impl XC2MCLargeIOB {
+    /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
+    /// `my_idx` must be the index of this I/O pin in the internal numbering scheme.
+    pub fn dump_human_readable(&self, device: XC2Device, my_idx: u32, writer: &mut Write) -> Result<(), io::Error> {
+        write!(writer, "\n")?;
+        let (fb, ff) = iob_num_to_fb_ff_num(device, my_idx).unwrap();
+        write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, ff + 1)?;
+        write!(writer, "output mode: {}\n", match self.obuf_mode {
+            XC2IOBOBufMode::Disabled => "disabled",
+            XC2IOBOBufMode::PushPull => "push-pull",
+            XC2IOBOBufMode::OpenDrain => "open-drain",
+            XC2IOBOBufMode::TriStateGTS0 => "GTS0-controlled tri-state",
+            XC2IOBOBufMode::TriStateGTS1 => "GTS1-controlled tri-state",
+            XC2IOBOBufMode::TriStateGTS2 => "GTS2-controlled tri-state",
+            XC2IOBOBufMode::TriStateGTS3 => "GTS3-controlled tri-state",
+            XC2IOBOBufMode::TriStatePTB => "PTB-controlled tri-state",
+            XC2IOBOBufMode::TriStateCTE => "CTE-controlled tri-state",
+            XC2IOBOBufMode::CGND => "CGND",
+        })?;
+        write!(writer, "input mode: {}\n", match self.ibuf_mode {
+            XC2IOBIbufMode::NoVrefNoSt => "no VREF, no Schmitt trigger",
+            XC2IOBIbufMode::NoVrefSt => "no VREF, Schmitt trigger",
+            XC2IOBIbufMode::UsesVref => "uses VREF (HSTL/SSTL)",
+            XC2IOBIbufMode::IsVref => "is a VREF pin",
+        })?;
+        write!(writer, "output comes from {}\n", if self.obuf_uses_ff {"FF"} else {"XOR gate"})?;
+        write!(writer, "slew rate: {}\n", if self.slew_is_fast {"fast"} else {"slow"})?;
+        write!(writer, "ZIA driven from: {}\n", match self.zia_mode {
+            XC2IOBZIAMode::Disabled => "disabled",
+            XC2IOBZIAMode::PAD => "input pad",
+            XC2IOBZIAMode::REG => "register",
+        })?;
+        write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
+        write!(writer, "DataGate used: {}\n", if self.uses_data_gate {"yes"} else {"no"})?;
+
+        Ok(())
+    }
+}
+
 /// Represents the one additional special input-only pin on 32-macrocell devices.
 pub struct XC2ExtraIBuf {
     pub schmitt_trigger: bool,
@@ -221,6 +260,32 @@ pub fn iob_num_to_fb_ff_num(device: XC2Device, iob: u32) -> Option<(u32, u32)> {
                 None
             } else {
                 Some((iob / MCS_PER_FB as u32, iob % MCS_PER_FB as u32))
+            }
+        },
+        XC2Device::XC2C128 => {
+            match iob {
+                // "Missing" 4 IOBs
+                 0... 5 => Some((0, iob -  0 +  0)),
+                 6...11 => Some((0, iob -  6 + 10)),
+                12...17 => Some((1, iob - 12 +  0)),
+                18...23 => Some((1, iob - 18 + 10)),
+                // "Missing" 3 IOBs
+                24...30 => Some((2, iob - 24 +  0)),
+                31...36 => Some((2, iob - 31 + 10)),
+                37...43 => Some((3, iob - 37 +  0)),
+                44...49 => Some((3, iob - 44 + 10)),
+                50...56 => Some((4, iob - 50 +  0)),
+                57...62 => Some((4, iob - 57 + 10)),
+                // "Missing" 4 IOBs
+                63...68 => Some((5, iob - 63 +  0)),
+                69...74 => Some((5, iob - 69 + 10)),
+                // "Missing" 3 IOBs
+                75...81 => Some((6, iob - 75 +  0)),
+                82...87 => Some((6, iob - 82 + 10)),
+                // "Missing" 4 IOBs
+                88...93 => Some((7, iob - 88 +  0)),
+                94...99 => Some((7, iob - 94 + 10)),
+                _ => None,
             }
         }
         _ => unreachable!(),

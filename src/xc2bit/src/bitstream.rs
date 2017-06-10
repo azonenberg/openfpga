@@ -345,6 +345,28 @@ pub struct XC2ClockDiv {
     pub enabled: bool,
 }
 
+impl XC2ClockDiv {
+    /// Dump a human-readable explanation of the clock divider to the given `writer` object.
+    pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
+        write!(writer, "\n")?;
+        write!(writer, "GCK2 clock divider {}\n", if self.enabled {"enabled"} else {"disabled"})?;
+        write!(writer, "clock divider delay {}\n", if self.delay {"enabled"} else {"disabled"})?;
+
+        write!(writer, "clock division ratio: {}\n", match self.div_ratio {
+            XC2ClockDivRatio::Div2 => "2",
+            XC2ClockDivRatio::Div4 => "4",
+            XC2ClockDivRatio::Div6 => "6",
+            XC2ClockDivRatio::Div8 => "8",
+            XC2ClockDivRatio::Div10 => "10",
+            XC2ClockDivRatio::Div12 => "12",
+            XC2ClockDivRatio::Div14 => "14",
+            XC2ClockDivRatio::Div16 => "16",
+        })?;
+
+        Ok(())
+    }
+}
+
 impl Default for XC2ClockDiv {
     /// Returns a "default" clock divider configuration, which is one that is not used
     fn default() -> Self {
@@ -861,7 +883,28 @@ impl XC2BitstreamBits {
                 ref fb, ref iobs, ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
                 ref use_vref}  => {
 
-                unreachable!();
+                write!(writer, "device type: XC2C128\n")?;
+                write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
+                write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
+                write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
+                write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
+                write!(writer, "DataGate used: {}\n", if *data_gate {"high"} else {"low"})?;
+                write!(writer, "VREF used: {}\n", if *use_vref {"high"} else {"low"})?;
+                clock_div.dump_human_readable(writer)?;
+                global_nets.dump_human_readable(writer)?;
+
+                for i in 0..100 {
+                    iobs[i].dump_human_readable(XC2Device::XC2C128, i as u32, writer)?;
+                }
+
+                fb[0].dump_human_readable(XC2Device::XC2C128, 0, writer)?;
+                fb[1].dump_human_readable(XC2Device::XC2C128, 1, writer)?;
+                fb[2].dump_human_readable(XC2Device::XC2C128, 2, writer)?;
+                fb[3].dump_human_readable(XC2Device::XC2C128, 3, writer)?;
+                fb[4].dump_human_readable(XC2Device::XC2C128, 4, writer)?;
+                fb[5].dump_human_readable(XC2Device::XC2C128, 5, writer)?;
+                fb[6].dump_human_readable(XC2Device::XC2C128, 6, writer)?;
+                fb[7].dump_human_readable(XC2Device::XC2C128, 7, writer)?;
             }
         }
 
