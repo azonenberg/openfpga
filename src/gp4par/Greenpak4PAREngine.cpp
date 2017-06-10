@@ -209,7 +209,7 @@ uint32_t Greenpak4PAREngine::ComputeCongestionCost() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Print logic
 
-void Greenpak4PAREngine::PrintUnroutes(vector<PARGraphEdge*>& unroutes)
+void Greenpak4PAREngine::PrintUnroutes(vector<const PARGraphEdge*>& unroutes) const
 {
 	Log(Severity::ERROR, "\nUnroutable nets (%zu):\n", unroutes.size());
 	LogIndenter li;
@@ -364,7 +364,7 @@ bool Greenpak4PAREngine::CantMoveSrc(Greenpak4BitstreamEntity* src)
 	return false;
 }
 
-bool Greenpak4PAREngine::CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate)
+bool Greenpak4PAREngine::CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate) const
 {
 	//Let base class filter stuff
 	if(!PAREngine::CanMoveNode(node, old_mate, new_mate))

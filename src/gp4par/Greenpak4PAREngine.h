@@ -29,15 +29,15 @@ public:
 	virtual ~Greenpak4PAREngine();
 
 protected:
-	virtual void PrintUnroutes(std::vector<PARGraphEdge*>& unroutes);
+	virtual void PrintUnroutes(std::vector<const PARGraphEdge*>& unroutes) const override;
 
-	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes);
-	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot);
+	virtual void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes) override;
+	virtual PARGraphNode* GetNewPlacementForNode(PARGraphNode* pivot) override;
 
-	virtual uint32_t ComputeCongestionCost() const;
-	virtual bool InitialPlacement_core();
+	virtual uint32_t ComputeCongestionCost() const override;
+	virtual bool InitialPlacement_core() override;
 
-	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate);
+	virtual bool CanMoveNode(PARGraphNode* node, PARGraphNode* old_mate, PARGraphNode* new_mate) const override;
 
 	bool CantMoveSrc(Greenpak4BitstreamEntity* src);
 	bool CantMoveDst(Greenpak4BitstreamEntity* dst);
