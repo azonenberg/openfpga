@@ -510,8 +510,198 @@ pub fn fb_ff_num_to_iob_num(device: XC2Device, fb: u32, ff: u32) -> Option<u32> 
                 11...15 => Some(10 * fb + 5 + (ff - 11)),
                 _ => None,
             }
+        },
+        XC2Device::XC2C512 => {
+            match fb {
+                // "Missing" 8 IOBs
+                0 => match ff {
+                    0...3   => Some(0 + ff),
+                    12...15 => Some(4 + (ff - 12)),
+                    _ => None,
+                },
+                1 => match ff {
+                    0...3   => Some(8 + ff),
+                    12...15 => Some(12 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                2 => match ff {
+                    0...4   => Some(16 + ff),
+                    12...15 => Some(21 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                3 => match ff {
+                    0...3   => Some(25 + ff),
+                    12...15 => Some(29 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                4 => match ff {
+                    0...4   => Some(33 + ff),
+                    12...15 => Some(38 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                5 => match ff {
+                    0...3   => Some(42 + ff),
+                    12...15 => Some(46 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                6 => match ff {
+                    0...4   => Some(50 + ff),
+                    12...15 => Some(55 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                7 => match ff {
+                    0...3   => Some(59 + ff),
+                    12...15 => Some(63 + (ff - 12)),
+                    _ => None,
+                },
+                8 => match ff {
+                    0...3   => Some(67 + ff),
+                    12...15 => Some(71 + (ff - 12)),
+                    _ => None,
+                },
+                9 => match ff {
+                    0...3   => Some(75 + ff),
+                    12...15 => Some(79 + (ff - 12)),
+                    _ => None,
+                },
+                10 => match ff {
+                    0...3   => Some(83 + ff),
+                    12...15 => Some(87 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                11 => match ff {
+                    0...4   => Some(91 + ff),
+                    12...15 => Some(96 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                12 => match ff {
+                    0...3   => Some(100 + ff),
+                    12...15 => Some(104 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                13 => match ff {
+                    0...4   => Some(108 + ff),
+                    12...15 => Some(113 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                14 => match ff {
+                    0...3   => Some(117 + ff),
+                    12...15 => Some(121 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                15 => match ff {
+                    0...4   => Some(125 + ff),
+                    12...15 => Some(130 + (ff - 12)),
+                    _ => None,
+                },
+                16 => match ff {
+                    0...4   => Some(134 + ff),
+                    12...15 => Some(139 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                17 => match ff {
+                    0...3   => Some(143 + ff),
+                    12...15 => Some(147 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                18 => match ff {
+                    0...4   => Some(151 + ff),
+                    12...15 => Some(156 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                19 => match ff {
+                    0...3   => Some(160 + ff),
+                    12...15 => Some(164 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                20 => match ff {
+                    0...4   => Some(168 + ff),
+                    12...15 => Some(173 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                21 => match ff {
+                    0...3   => Some(177 + ff),
+                    12...15 => Some(181 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                22 => match ff {
+                    0...4   => Some(185 + ff),
+                    12...15 => Some(190 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                23 => match ff {
+                    0...3   => Some(194 + ff),
+                    12...15 => Some(198 + (ff - 12)),
+                    _ => None,
+                },
+                24 => match ff {
+                    0...3   => Some(202 + ff),
+                    12...15 => Some(206 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                25 => match ff {
+                    0...4   => Some(210 + ff),
+                    12...15 => Some(215 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                26 => match ff {
+                    0...3   => Some(219 + ff),
+                    12...15 => Some(223 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                27 => match ff {
+                    0...4   => Some(227 + ff),
+                    12...15 => Some(232 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                28 => match ff {
+                    0...3   => Some(236 + ff),
+                    12...15 => Some(240 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                29 => match ff {
+                    0...4   => Some(244 + ff),
+                    12...15 => Some(249 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 8 IOBs
+                30 => match ff {
+                    0...3   => Some(253 + ff),
+                    12...15 => Some(257 + (ff - 12)),
+                    _ => None,
+                },
+                // "Missing" 7 IOBs
+                31 => match ff {
+                    0...4   => Some(261 + ff),
+                    12...15 => Some(266 + (ff - 12)),
+                    _ => None,
+                },
+                _ => None,
+            }
         }
-        _ => unreachable!(),
     }
 }
 
