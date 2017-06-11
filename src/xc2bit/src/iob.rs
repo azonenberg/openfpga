@@ -343,7 +343,101 @@ pub fn iob_num_to_fb_ff_num(device: XC2Device, iob: u32) -> Option<(u32, u32)> {
                 Some((fb, mc))
             }
         },
-        _ => unreachable!(),
+        XC2Device::XC2C512 => {
+            match iob {
+                // "Missing" 8 IOBs
+                  0...  3 => Some(( 0, iob -   0 +  0)),
+                  4...  7 => Some(( 0, iob -   4 + 12)),
+                  8... 11 => Some(( 1, iob -   8 +  0)),
+                 12... 15 => Some(( 1, iob -  12 + 12)),
+                // "Missing" 7 IOBs
+                 16... 20 => Some(( 2, iob -  16 +  0)),
+                 21... 24 => Some(( 2, iob -  21 + 12)),
+                // "Missing" 8 IOBs
+                 25... 28 => Some(( 3, iob -  25 +  0)),
+                 29... 32 => Some(( 3, iob -  29 + 12)),
+                // "Missing" 7 IOBs
+                 33... 37 => Some(( 4, iob -  33 +  0)),
+                 38... 41 => Some(( 4, iob -  38 + 12)),
+                // "Missing" 8 IOBs
+                 42... 45 => Some(( 5, iob -  42 +  0)),
+                 46... 49 => Some(( 5, iob -  46 + 12)),
+                // "Missing" 7 IOBs
+                 50... 54 => Some(( 6, iob -  50 +  0)),
+                 55... 58 => Some(( 6, iob -  55 + 12)),
+                // "Missing" 8 IOBs
+                 59... 62 => Some(( 7, iob -  59 +  0)),
+                 63... 66 => Some(( 7, iob -  63 + 12)),
+                 67... 70 => Some(( 8, iob -  67 +  0)),
+                 71... 74 => Some(( 8, iob -  71 + 12)),
+                 75... 78 => Some(( 9, iob -  75 +  0)),
+                 79... 82 => Some(( 9, iob -  79 + 12)),
+                 83... 86 => Some((10, iob -  83 +  0)),
+                 87... 90 => Some((10, iob -  87 + 12)),
+                // "Missing" 7 IOBs
+                 91... 95 => Some((11, iob -  91 +  0)),
+                 96... 99 => Some((11, iob -  96 + 12)),
+                // "Missing" 8 IOBs
+                100...103 => Some((12, iob - 100 +  0)),
+                104...107 => Some((12, iob - 104 + 12)),
+                // "Missing" 7 IOBs
+                108...112 => Some((13, iob - 108 +  0)),
+                113...116 => Some((13, iob - 113 + 12)),
+                // "Missing" 8 IOBs
+                117...120 => Some((14, iob - 117 +  0)),
+                121...124 => Some((14, iob - 121 + 12)),
+                // "Missing" 7 IOBs
+                125...129 => Some((15, iob - 125 +  0)),
+                130...133 => Some((15, iob - 130 + 12)),
+                134...138 => Some((16, iob - 134 +  0)),
+                139...142 => Some((16, iob - 139 + 12)),
+                // "Missing" 8 IOBs
+                143...146 => Some((17, iob - 143 +  0)),
+                147...150 => Some((17, iob - 147 + 12)),
+                // "Missing" 7 IOBs
+                151...155 => Some((18, iob - 151 +  0)),
+                156...159 => Some((18, iob - 156 + 12)),
+                // "Missing" 8 IOBs
+                160...163 => Some((19, iob - 160 +  0)),
+                164...167 => Some((19, iob - 164 + 12)),
+                // "Missing" 7 IOBs
+                168...172 => Some((20, iob - 168 +  0)),
+                173...176 => Some((20, iob - 173 + 12)),
+                // "Missing" 8 IOBs
+                177...180 => Some((21, iob - 177 +  0)),
+                181...184 => Some((21, iob - 181 + 12)),
+                // "Missing" 7 IOBs
+                185...189 => Some((22, iob - 185 +  0)),
+                190...193 => Some((22, iob - 190 + 12)),
+                // "Missing" 8 IOBs
+                194...197 => Some((23, iob - 194 +  0)),
+                198...201 => Some((23, iob - 198 + 12)),
+                202...205 => Some((24, iob - 202 +  0)),
+                206...209 => Some((24, iob - 206 + 12)),
+                // "Missing" 7 IOBs
+                210...214 => Some((25, iob - 210 +  0)),
+                215...218 => Some((25, iob - 215 + 12)),
+                // "Missing" 8 IOBs
+                219...222 => Some((26, iob - 219 +  0)),
+                223...226 => Some((26, iob - 223 + 12)),
+                // "Missing" 7 IOBs
+                227...231 => Some((27, iob - 227 +  0)),
+                232...235 => Some((27, iob - 232 + 12)),
+                // "Missing" 8 IOBs
+                236...239 => Some((28, iob - 236 +  0)),
+                240...243 => Some((28, iob - 240 + 12)),
+                // "Missing" 7 IOBs
+                244...248 => Some((29, iob - 244 +  0)),
+                249...252 => Some((29, iob - 249 + 12)),
+                // "Missing" 8 IOBs
+                253...256 => Some((30, iob - 253 +  0)),
+                257...260 => Some((30, iob - 257 + 12)),
+                // "Missing" 7 IOBs
+                261...265 => Some((31, iob - 261 +  0)),
+                266...269 => Some((31, iob - 266 + 12)),
+                _ => None,
+            }
+        },
     }
 }
 
