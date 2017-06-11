@@ -411,6 +411,23 @@ fn read_384_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
     }
 }
 
+/// Internal function to read the clock divider configuration from a 512-macrocell part
+fn read_512_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
+    XC2ClockDiv {
+        delay: !fuses[296381],
+        enabled: !fuses[296377],
+        div_ratio: match (fuses[296378], fuses[296379], fuses[296380]) {
+            (false, false, false) => XC2ClockDivRatio::Div2,
+            (false, false,  true) => XC2ClockDivRatio::Div4,
+            (false,  true, false) => XC2ClockDivRatio::Div6,
+            (false,  true,  true) => XC2ClockDivRatio::Div8,
+            ( true, false, false) => XC2ClockDivRatio::Div10,
+            ( true, false,  true) => XC2ClockDivRatio::Div12,
+            ( true,  true, false) => XC2ClockDivRatio::Div14,
+            ( true,  true,  true) => XC2ClockDivRatio::Div16,
+        }
+    }
+}
 
 /// The actual bitstream bits for each possible Coolrunner-II part
 pub enum XC2BitstreamBits {
@@ -1242,6 +1259,37 @@ pub fn read_384_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
     })
 }
 
+/// Internal function for parsing an XC2C512 bitstream
+pub fn read_512_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 32];
+    let mut iobs = [XC2MCLargeIOB::default(); 270];
+    
+    read_bitstream_logical_common_large(fuses, XC2Device::XC2C512, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_logical(XC2Device::XC2C512, fuses);
+
+    Ok(XC2BitstreamBits::XC2C512 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        clock_div: read_512_clock_div_logical(fuses),
+        data_gate: !fuses[296393],
+        use_vref: !fuses[296402],
+        ivoltage: [
+            !fuses[296394],
+            !fuses[296395],
+            !fuses[296396],
+            !fuses[296397],
+        ],
+        ovoltage: [
+            !fuses[296398],
+            !fuses[296399],
+            !fuses[296400],
+            !fuses[296401],
+        ]
+    })
+}
+
 /// Processes a fuse array into a bitstream object
 pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
     let device_combination = parse_part_name_string(device);
@@ -1312,6 +1360,13 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
                 bits: bits,
             })
         },
-        _ => Err("unsupported part"),
+        XC2Device::XC2C512 => {
+            let bits = read_512_bitstream_logical(fuses)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
     }
 }
