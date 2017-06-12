@@ -994,11 +994,11 @@ impl XC2BitstreamBits {
                 write!(writer, "L296393 {}*\n", if *data_gate {"0"} else {"1"})?;
 
                 write!(writer, "L296394 {}{}{}{}*\n",
-                    if ivoltage[0] {"0"} else {"1"}, if ivoltage[1] {"0"} else {"1"},
-                    if ivoltage[2] {"0"} else {"1"}, if ivoltage[3] {"0"} else {"1"})?;
+                    if ivoltage[0] {"1"} else {"0"}, if ivoltage[1] {"1"} else {"0"},
+                    if ivoltage[2] {"1"} else {"0"}, if ivoltage[3] {"1"} else {"0"})?;
                 write!(writer, "L296398 {}{}{}{}*\n",
-                    if ovoltage[0] {"0"} else {"1"}, if ovoltage[1] {"0"} else {"1"},
-                    if ovoltage[2] {"0"} else {"1"}, if ovoltage[3] {"0"} else {"1"})?;
+                    if ovoltage[0] {"1"} else {"0"}, if ovoltage[1] {"1"} else {"0"},
+                    if ovoltage[2] {"1"} else {"0"}, if ovoltage[3] {"1"} else {"0"})?;
 
                 write!(writer, "L296402 {}*\n", if *use_vref {"0"} else {"1"})?;
             }
@@ -1276,16 +1276,16 @@ pub fn read_512_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         data_gate: !fuses[296393],
         use_vref: !fuses[296402],
         ivoltage: [
-            !fuses[296394],
-            !fuses[296395],
-            !fuses[296396],
-            !fuses[296397],
+            fuses[296394],
+            fuses[296395],
+            fuses[296396],
+            fuses[296397],
         ],
         ovoltage: [
-            !fuses[296398],
-            !fuses[296399],
-            !fuses[296400],
-            !fuses[296401],
+            fuses[296398],
+            fuses[296399],
+            fuses[296400],
+            fuses[296401],
         ]
     })
 }

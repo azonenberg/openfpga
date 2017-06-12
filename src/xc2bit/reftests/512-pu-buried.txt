@@ -2,14 +2,14 @@ xc2bit dump
 device speed grade: 7
 device package: FG324
 device type: XC2C512
-bank 0 output voltage range: high
-bank 1 output voltage range: high
-bank 2 output voltage range: high
-bank 3 output voltage range: high
-bank 0 input voltage range: high
-bank 1 input voltage range: high
-bank 2 input voltage range: high
-bank 3 input voltage range: high
+bank 0 output voltage range: low
+bank 1 output voltage range: low
+bank 2 output voltage range: low
+bank 3 output voltage range: low
+bank 0 input voltage range: low
+bank 1 input voltage range: low
+bank 2 input voltage range: low
+bank 3 input voltage range: low
 DataGate used: low
 VREF used: low
 
