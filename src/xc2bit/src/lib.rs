@@ -98,6 +98,8 @@ mod tests {
                 let mut txt_path = jed_path.clone();
                 txt_path.set_extension("txt");
 
+                println!("{:?}", jed_path);
+
                 let mut jed_data = Vec::new();
                 let mut txt_data = Vec::new();
 
