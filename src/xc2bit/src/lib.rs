@@ -79,3 +79,49 @@ pub use zia::{XC2ZIARowPiece, XC2ZIAInput, ZIA_MAP_32, ZIA_MAP_64, ZIA_MAP_128, 
 
 mod jed;
 pub use jed::{read_jed};
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::fs::File;
+    use std::io::Read;
+
+    #[test]
+    fn xc2bit_reftests() {
+        let files = std::fs::read_dir("./reftests").unwrap();
+
+        for file in files {
+            let path = file.expect("failed to get path").path();
+            if path.extension().expect("bogus reftest filename (doesn't have extension)") == "jed" {
+                let jed_path = path;
+                let mut txt_path = jed_path.clone();
+                txt_path.set_extension("txt");
+
+                let mut jed_data = Vec::new();
+                let mut txt_data = Vec::new();
+
+                File::open(&jed_path).expect("failed to open jed file")
+                    .read_to_end(&mut jed_data).expect("failed to read jed file");
+                File::open(&txt_path).expect("failed to open txt file")
+                    .read_to_end(&mut txt_data).expect("failed to read txt file");
+
+                let (parsed_jed_data, device_name) = read_jed(&jed_data).expect("failed to read jed");
+                let device_name = device_name.expect("missing device name in jed");
+
+                let parsed_bitstream_data = process_jed(&parsed_jed_data, &device_name)
+                    .expect("failed to process jed");
+
+                // FIXME: This is quite hacky
+                let mut new_jed = Vec::new();
+                parsed_bitstream_data.write_jed(&mut new_jed).expect("failed to write jed");
+                assert_eq!(jed_data, new_jed);
+
+                let mut human_readable_data = Vec::new();
+                parsed_bitstream_data.dump_human_readable(&mut human_readable_data)
+                    .expect("failed to get human readable");
+                assert_eq!(txt_data, human_readable_data);
+            }
+        }
+    }
+}
