@@ -9154,59 +9154,50 @@ pub static ZIA_MAP_512: [[XC2ZIAInput; 78]; INPUTS_PER_ANDTERM] = [
      XC2ZIAInput::IBuf{ibuf: 0}],
 ];
 
+const T: bool = true;
+const F: bool = false;
+
 /// Internal function that reads a piece of the ZIA corresponding to one FB and one row
 pub fn read_32_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
     -> Result<XC2ZIARowPiece, &'static str> {
 
-    let mut zia_row_fuses = [false; 8];
-    
-    for i in 0..8 {
-        zia_row_fuses[7 - i] = fuses[block_idx + row_idx * 8 + i];
-    }
+    // This is an ugly workaround for the lack of stable slice patterns
+    let zia_row_fuses = (
+        fuses[block_idx + row_idx * 8 + 0],
+        fuses[block_idx + row_idx * 8 + 1],
+        fuses[block_idx + row_idx * 8 + 2],
+        fuses[block_idx + row_idx * 8 + 3],
+        fuses[block_idx + row_idx * 8 + 4],
+        fuses[block_idx + row_idx * 8 + 5],
+        fuses[block_idx + row_idx * 8 + 6],
+        fuses[block_idx + row_idx * 8 + 7],
+    );
 
-    // 7th bit is active-high unlike the rest
-    zia_row_fuses[7] = !zia_row_fuses[7];
-
-    let mut active_bit = 8;
-    for i in 0..8 {
-        // active low
-        if !zia_row_fuses[i] {
-            if active_bit != 8 {
-                return Err("multiple ZIA inputs selected!");
-            }
-
-            active_bit = i;
-        }
-    }
-
-    if active_bit == 8 {
-        // FIXME: Is this an error?
-        return Err("no ZIA inputs selected!");
-    }
+    let selected_input = match zia_row_fuses {
+        (F, T, T, T, T, T, T, F) => ZIA_MAP_32[row_idx][0],
+        (F, T, T, T, T, T, F, T) => ZIA_MAP_32[row_idx][1],
+        (F, T, T, T, T, F, T, T) => ZIA_MAP_32[row_idx][2],
+        (F, T, T, T, F, T, T, T) => ZIA_MAP_32[row_idx][3],
+        (F, T, T, F, T, T, T, T) => ZIA_MAP_32[row_idx][4],
+        (F, T, F, T, T, T, T, T) => ZIA_MAP_32[row_idx][5],
+        (T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
+        (F, F, T, T, T, T, T, T) => XC2ZIAInput::Zero,
+        _ => return Err("unknown ZIA input choice"),
+    };
 
     Ok(XC2ZIARowPiece {
-        selected: if active_bit == 6 {
-            XC2ZIAInput::Zero
-        } else if active_bit == 7 {
-            XC2ZIAInput::One
-        } else {
-            ZIA_MAP_32[row_idx][active_bit]
-        }
+        selected: selected_input
     })
 }
 
 /// Internal function that takes a ZIA row and choice and returns the bit encoding for it
 pub fn encode_32_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 8]> {
     if choice == XC2ZIAInput::One {
-        Some([true, true, true, true, true, true, true, true])
+        Some([T, T, T, T, T, T, T, T])
     } else if choice == XC2ZIAInput::Zero {
-        Some([true, true, true, true, true, true, false, false])
+        Some([F, F, T, T, T, T, T, T])
     } else {
-        let mut ret = [true; 8];
-        // This bit is active-high unlike the rest
-        ret[7] = false;
-
-        let mut found_bit = 8;
+        let mut found_bit = ZIA_MAP_32[0].len();
         for i in 0..ZIA_MAP_32[row as usize].len() {
             if choice == ZIA_MAP_32[row as usize][i] {
                 found_bit = i;
@@ -9214,19 +9205,22 @@ pub fn encode_32_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 8]> 
             }
         }
 
-        if found_bit == 8 {
+        if found_bit == ZIA_MAP_32[0].len() {
             // Didn't find it
             return None;
         }
 
-        ret[found_bit] = false;
-
-        Some(ret)
+        match found_bit {
+            0  => Some([F, T, T, T, T, T, T, F]),
+            1  => Some([F, T, T, T, T, T, F, T]),
+            2  => Some([F, T, T, T, T, F, T, T]),
+            3  => Some([F, T, T, T, F, T, T, T]),
+            4  => Some([F, T, T, F, T, T, T, T]),
+            5  => Some([F, T, F, T, T, T, T, T]),
+            _ => unreachable!(),
+        }
     }
 }
-
-const T: bool = true;
-const F: bool = false;
 
 /// Internal function that reads a piece of the ZIA corresponding to one FB and one row
 pub fn read_64_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
@@ -9284,7 +9278,7 @@ pub fn encode_64_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 16]>
         // TODO: This one isn't certain
         Some([T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T])
     } else {
-        let mut found_bit = 12;
+        let mut found_bit = ZIA_MAP_64[0].len();
         for i in 0..ZIA_MAP_64[row as usize].len() {
             if choice == ZIA_MAP_64[row as usize][i] {
                 found_bit = i;
@@ -9292,7 +9286,7 @@ pub fn encode_64_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 16]>
             }
         }
 
-        if found_bit == 12 {
+        if found_bit == ZIA_MAP_64[0].len() {
             // Didn't find it
             return None;
         }
@@ -9393,7 +9387,7 @@ pub fn encode_128_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 28]
         // TODO: This one isn't certain
         Some([T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T])
     } else {
-        let mut found_bit = 22;
+        let mut found_bit = ZIA_MAP_128[0].len();
         for i in 0..ZIA_MAP_128[row as usize].len() {
             if choice == ZIA_MAP_128[row as usize][i] {
                 found_bit = i;
@@ -9401,7 +9395,7 @@ pub fn encode_128_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 28]
             }
         }
 
-        if found_bit == 22 {
+        if found_bit == ZIA_MAP_128[0].len() {
             // Didn't find it
             return None;
         }
@@ -9550,7 +9544,7 @@ pub fn encode_256_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 48]
         // TODO: This one isn't certain
         Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T])
     } else {
-        let mut found_bit = 40;
+        let mut found_bit = ZIA_MAP_256[0].len();
         for i in 0..ZIA_MAP_256[row as usize].len() {
             if choice == ZIA_MAP_256[row as usize][i] {
                 found_bit = i;
@@ -9558,7 +9552,7 @@ pub fn encode_256_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 48]
             }
         }
 
-        if found_bit == 40 {
+        if found_bit == ZIA_MAP_256[0].len() {
             // Didn't find it
             return None;
         }
@@ -9773,7 +9767,7 @@ pub fn encode_384_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 74]
         // TODO: This one isn't certain
         Some([T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T])
     } else {
-        let mut found_bit = 62;
+        let mut found_bit = ZIA_MAP_384[0].len();
         for i in 0..ZIA_MAP_384[row as usize].len() {
             if choice == ZIA_MAP_384[row as usize][i] {
                 found_bit = i;
@@ -9781,7 +9775,7 @@ pub fn encode_384_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 74]
             }
         }
 
-        if found_bit == 62 {
+        if found_bit == ZIA_MAP_384[0].len() {
             // Didn't find it
             return None;
         }
@@ -10048,7 +10042,7 @@ pub fn encode_512_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 88]
         // TODO: This one isn't certain
         Some([T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T])
     } else {
-        let mut found_bit = 78;
+        let mut found_bit = ZIA_MAP_512[0].len();
         for i in 0..ZIA_MAP_512[row as usize].len() {
             if choice == ZIA_MAP_512[row as usize][i] {
                 found_bit = i;
@@ -10056,7 +10050,7 @@ pub fn encode_512_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 88]
             }
         }
 
-        if found_bit == 78 {
+        if found_bit == ZIA_MAP_512[0].len() {
             // Didn't find it
             return None;
         }
