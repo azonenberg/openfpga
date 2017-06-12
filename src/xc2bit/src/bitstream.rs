@@ -667,8 +667,8 @@ impl XC2BitstreamBits {
                 write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
                 write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
                 write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
-                write!(writer, "DataGate used: {}\n", if *data_gate {"high"} else {"low"})?;
-                write!(writer, "VREF used: {}\n", if *use_vref {"high"} else {"low"})?;
+                write!(writer, "DataGate used: {}\n", if *data_gate {"yes"} else {"no"})?;
+                write!(writer, "VREF used: {}\n", if *use_vref {"yes"} else {"no"})?;
                 clock_div.dump_human_readable(writer)?;
                 global_nets.dump_human_readable(writer)?;
             },
@@ -680,8 +680,8 @@ impl XC2BitstreamBits {
                 write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
                 write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
                 write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
-                write!(writer, "DataGate used: {}\n", if *data_gate {"high"} else {"low"})?;
-                write!(writer, "VREF used: {}\n", if *use_vref {"high"} else {"low"})?;
+                write!(writer, "DataGate used: {}\n", if *data_gate {"yes"} else {"no"})?;
+                write!(writer, "VREF used: {}\n", if *use_vref {"yes"} else {"no"})?;
                 clock_div.dump_human_readable(writer)?;
                 global_nets.dump_human_readable(writer)?;
             },
@@ -697,8 +697,8 @@ impl XC2BitstreamBits {
                 write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
                 write!(writer, "bank 2 input voltage range: {}\n", if ivoltage[2] {"high"} else {"low"})?;
                 write!(writer, "bank 3 input voltage range: {}\n", if ivoltage[3] {"high"} else {"low"})?;
-                write!(writer, "DataGate used: {}\n", if *data_gate {"high"} else {"low"})?;
-                write!(writer, "VREF used: {}\n", if *use_vref {"high"} else {"low"})?;
+                write!(writer, "DataGate used: {}\n", if *data_gate {"yes"} else {"no"})?;
+                write!(writer, "VREF used: {}\n", if *use_vref {"yes"} else {"no"})?;
                 clock_div.dump_human_readable(writer)?;
                 global_nets.dump_human_readable(writer)?;
             },
@@ -714,8 +714,8 @@ impl XC2BitstreamBits {
                 write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
                 write!(writer, "bank 2 input voltage range: {}\n", if ivoltage[2] {"high"} else {"low"})?;
                 write!(writer, "bank 3 input voltage range: {}\n", if ivoltage[3] {"high"} else {"low"})?;
-                write!(writer, "DataGate used: {}\n", if *data_gate {"high"} else {"low"})?;
-                write!(writer, "VREF used: {}\n", if *use_vref {"high"} else {"low"})?;
+                write!(writer, "DataGate used: {}\n", if *data_gate {"yes"} else {"no"})?;
+                write!(writer, "VREF used: {}\n", if *use_vref {"yes"} else {"no"})?;
                 clock_div.dump_human_readable(writer)?;
                 global_nets.dump_human_readable(writer)?;
             }

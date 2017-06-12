@@ -6,8 +6,8 @@ bank 0 output voltage range: low
 bank 1 output voltage range: low
 bank 0 input voltage range: low
 bank 1 input voltage range: low
-DataGate used: low
-VREF used: low
+DataGate used: no
+VREF used: no
 
 GCK2 clock divider disabled
 clock divider delay disabled
