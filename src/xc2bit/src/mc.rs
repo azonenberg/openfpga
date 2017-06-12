@@ -210,8 +210,8 @@ pub fn read_small_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) ->
 
     let clk_src = match clk {
         (false, false) => XC2MCRegClkSrc::GCK0,
-        (false, true)  => XC2MCRegClkSrc::GCK1,
-        (true, false)  => XC2MCRegClkSrc::GCK2,
+        (false, true)  => XC2MCRegClkSrc::GCK2,
+        (true, false)  => XC2MCRegClkSrc::GCK1,
         (true, true)   => match aclk {
             true => XC2MCRegClkSrc::CTC,
             false => XC2MCRegClkSrc::PTC,
@@ -291,8 +291,8 @@ pub fn read_large_ff_logical(fuses: &[bool], fuse_idx: usize) -> XC2Macrocell {
                fuses[fuse_idx + 2]);
     let clk_src = match clk {
         (false, false) => XC2MCRegClkSrc::GCK0,
-        (false, true)  => XC2MCRegClkSrc::GCK1,
-        (true, false)  => XC2MCRegClkSrc::GCK2,
+        (false, true)  => XC2MCRegClkSrc::GCK2,
+        (true, false)  => XC2MCRegClkSrc::GCK1,
         (true, true)   => match aclk {
             true => XC2MCRegClkSrc::CTC,
             false => XC2MCRegClkSrc::PTC,
@@ -372,8 +372,8 @@ pub fn read_large_buried_ff_logical(fuses: &[bool], fuse_idx: usize) -> XC2Macro
                fuses[fuse_idx + 2]);
     let clk_src = match clk {
         (false, false) => XC2MCRegClkSrc::GCK0,
-        (false, true)  => XC2MCRegClkSrc::GCK1,
-        (true, false)  => XC2MCRegClkSrc::GCK2,
+        (false, true)  => XC2MCRegClkSrc::GCK2,
+        (true, false)  => XC2MCRegClkSrc::GCK1,
         (true, true)   => match aclk {
             true => XC2MCRegClkSrc::CTC,
             false => XC2MCRegClkSrc::PTC,
@@ -468,8 +468,8 @@ pub fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         // clk
         write!(writer, "{}", match fb.ffs[i].clk_src {
             XC2MCRegClkSrc::GCK0 => "00",
-            XC2MCRegClkSrc::GCK1 => "01",
-            XC2MCRegClkSrc::GCK2 => "10",
+            XC2MCRegClkSrc::GCK1 => "10",
+            XC2MCRegClkSrc::GCK2 => "01",
             XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => "11",
         })?;
 
@@ -584,8 +584,8 @@ pub fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         // clk
         write!(writer, "{}", match fb.ffs[i].clk_src {
             XC2MCRegClkSrc::GCK0 => "00",
-            XC2MCRegClkSrc::GCK1 => "01",
-            XC2MCRegClkSrc::GCK2 => "10",
+            XC2MCRegClkSrc::GCK1 => "10",
+            XC2MCRegClkSrc::GCK2 => "01",
             XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => "11",
         })?;
 
