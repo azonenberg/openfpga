@@ -24,7 +24,9 @@ module XC2CJTAG(tdi, tms, tck, tdo);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
 
-	parameter MACROCELLS = 32;	//A variant implied for 32/64, no support for base version
+	parameter MACROCELLS = 32;		//A variant implied for 32/64, no support for base version
+
+	parameter PACKAGE = "QFG32";	//Package code (lead-free G assumed)
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/Os
@@ -167,36 +169,39 @@ module XC2CJTAG(tdi, tms, tck, tdo);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The instruction register
 
-	localparam INST_BYPASS			= 8'hff;
-	localparam INST_ISC_ENABLE		= 8'he8;
-	localparam INST_ISC_ENABLEOTF	= 8'he4;
-	localparam INST_ISC_SRAM_READ	= 8'he7;
-	localparam INST_ISC_SRAM_WRITE	= 8'he6;
-	localparam INST_ISC_ERASE		= 8'hed;
-	localparam INST_ISC_PROGRAM		= 8'hea;
-	localparam INST_ISC_INIT		= 8'hf0;
-	localparam INST_ISC_DISABLE		= 8'hc0;
-	localparam INST_ISC_READ		= 8'hee;
+	//see XC2C programmer qualification spec v1.3 p25-26
+	localparam INST_EXTEST				= 8'h00;
+	localparam INST_IDCODE				= 8'h01;
+	localparam INST_INTEST				= 8'h02;
+	localparam INST_SAMPLE_PRELOAD		= 8'h03;
+	localparam INST_TEST_ENABLE			= 8'h11;	//Private1, got this info from BSDL
+	localparam INST_BULKPROG			= 8'h12;	//Private2, got this info from BSDL
+													//Guessing this programs the IDCODE memory etc
+	localparam INST_MVERIFY				= 8'h13;	//Private3, got this info from BSDL
+													//Guessing this is a full read including IDCODE.
+													//May bypass protection?
+	localparam INST_ERASE_ALL			= 8'h14;	//Private4, got this info from BSDL
+													//Probably wipes IDCODE too
+	localparam INST_TEST_DISABLE		= 8'h15;	//Private5, got this info from BSDL
+	localparam INST_STCTEST				= 8'h16;	//Private6, got this info from BSDL.
+													//Note, it was commented out there! Wonder why...
+	localparam INST_ISC_DISABLE			= 8'hc0;
+	localparam INST_ISC_NOOP			= 8'he0;
+	localparam INST_ISC_ENABLEOTF		= 8'he4;
+	localparam INST_ISC_SRAM_WRITE		= 8'he6;
+	localparam INST_ISC_SRAM_READ		= 8'he7;
+	localparam INST_ISC_ENABLE			= 8'he8;
+	localparam INST_ISC_ENABLE_CLAMP	= 8'he9;
+	localparam INST_ISC_PROGRAM			= 8'hea;
+	localparam INST_ISC_ERASE			= 8'hed;
+	localparam INST_ISC_READ			= 8'hee;
+	localparam INST_ISC_INIT			= 8'hf0;
+	localparam INST_CLAMP				= 8'hfa;
+	localparam INST_HIGHZ				= 8'hfc;
+	localparam INST_USERCODE			= 8'hfd;
+	localparam INST_BYPASS				= 8'hff;
 
-	/*
-		//TODO: implement some of these?
-
-		"INTEST         (00000010)," &
-		"SAMPLE         (00000011)," &
-		"EXTEST         (00000000)," &
-		"IDCODE         (00000001)," &
-		"USERCODE       (11111101)," &
-		"HIGHZ          (11111100)," &
-		"ISC_ENABLE_CLAMP (11101001)," &
-		"TEST_ENABLE    (00010001)," &
-		"BULKPROG       (00010010)," &
-		"ERASE_ALL      (00010100)," &
-		"MVERIFY        (00010011)," &
-		"TEST_DISABLE   (00010101)," &
-		"ISC_NOOP       (11100000)";
-	*/
-
-	reg[7:0] ir = INST_BYPASS;
+	reg[7:0] ir = INST_IDCODE;
 
 	//Capture stuff
 

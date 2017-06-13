@@ -26,7 +26,9 @@ module XC2CDevice(
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
 
-	parameter MACROCELLS = 32;	//A variant implied for 32/64, no support for base version
+	parameter MACROCELLS = 32;		//A variant implied for 32/64, no support for base version
+
+	parameter PACKAGE = "QFG32";	//Package code (lead-free G assumed)
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Helpers for figuring out dimensions etc of the device
@@ -82,7 +84,8 @@ module XC2CDevice(
 	// JTAG stuff
 
 	XC2CJTAG #(
-		.MACROCELLS(MACROCELLS)
+		.MACROCELLS(MACROCELLS),
+		.PACKAGE(PACKAGE)
 	) jtag (
 		.tdi(jtag_tdi),
 		.tdo(jtag_tdo),
