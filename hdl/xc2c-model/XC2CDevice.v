@@ -61,6 +61,21 @@ module XC2CDevice(
 	localparam MEM_DEPTH	= ConfigMemoryDepth(MACROCELLS);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Sanity checks
+
+	initial begin
+		if( (MACROCELLS != 32) &&
+			(MACROCELLS != 64) &&
+			(MACROCELLS != 128) &&
+			(MACROCELLS != 256) &&
+			(MACROCELLS != 384) &&
+			(MACROCELLS != 512) ) begin
+			$display("Invalid macrocell count");
+			$finish;
+		end
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/Os
 
 	input wire					jtag_tdi;
