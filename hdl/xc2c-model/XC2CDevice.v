@@ -36,6 +36,11 @@ module XC2CDevice(
 	function integer ConfigMemoryWidth(integer cells)
 		case(cells)
 			32:			ConfigMemoryWidth <= 260;
+			64:			ConfigMemoryWidth <= 274;
+			128:		ConfigMemoryWidth <= 752;
+			256:		ConfigMemoryWidth <= 1364;
+			384:		ConfigMemoryWidth <= 1868;
+			512:		ConfigMemoryWidth <= 1980;
 			default:	ConfigMemoryWidth <= 0;
 		endcase
 	endfunction
@@ -43,6 +48,11 @@ module XC2CDevice(
 	function integer ConfigMemoryDepth(integer cells)
 		case(cells)
 			32:			ConfigMemoryDepth <= 49;
+			64:			ConfigMemoryDepth <= 97;
+			128:		ConfigMemoryDepth <= 81;
+			256:		ConfigMemoryDepth <= 97;
+			384:		ConfigMemoryDepth <= 121;
+			512:		ConfigMemoryDepth <= 161;
 			default:	ConfigMemoryDepth <= 0;
 		endcase
 	endfunction
