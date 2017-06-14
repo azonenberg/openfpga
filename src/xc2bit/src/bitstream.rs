@@ -642,75 +642,35 @@ impl XC2BitstreamBits {
 
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
     pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
+        write!(writer, "device type: {}\n", self.device_type())?;
+
+        // Bank voltages
         match self {
-            &XC2BitstreamBits::XC2C32 {ref global_nets, ref ivoltage, ref ovoltage, ..} => {
-
-                write!(writer, "device type: XC2C32\n")?;
+            &XC2BitstreamBits::XC2C32 {ref ivoltage, ref ovoltage, ..} |
+            &XC2BitstreamBits::XC2C64 {ref ivoltage, ref ovoltage, ..} => {
                 write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"})?;
                 write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"})?;
-                global_nets.dump_human_readable(writer)?;
             },
-            &XC2BitstreamBits::XC2C32A {ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
-                ref ivoltage, ref ovoltage, ..} => {
-
-                write!(writer, "device type: XC2C32A\n")?;
+            &XC2BitstreamBits::XC2C32A {ref legacy_ivoltage, ref legacy_ovoltage, ref ivoltage, ref ovoltage, ..} |
+            &XC2BitstreamBits::XC2C64A {ref legacy_ivoltage, ref legacy_ovoltage, ref ivoltage, ref ovoltage, ..} => {
                 write!(writer, "legacy output voltage range: {}\n", if *legacy_ovoltage {"high"} else {"low"})?;
                 write!(writer, "legacy input voltage range: {}\n", if *legacy_ivoltage {"high"} else {"low"})?;
                 write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
                 write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
                 write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
                 write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
-                global_nets.dump_human_readable(writer)?;
             },
-            &XC2BitstreamBits::XC2C64 {ref global_nets, ref ivoltage, ref ovoltage, ..} => {
-
-                write!(writer, "device type: XC2C64\n")?;
-                write!(writer, "output voltage range: {}\n", if *ovoltage {"high"} else {"low"})?;
-                write!(writer, "input voltage range: {}\n", if *ivoltage {"high"} else {"low"})?;
-                global_nets.dump_human_readable(writer)?;
-            },
-            &XC2BitstreamBits::XC2C64A {ref global_nets, ref legacy_ivoltage, ref legacy_ovoltage,
-                ref ivoltage, ref ovoltage, ..} => {
-
-                write!(writer, "device type: XC2C64A\n")?;
-                write!(writer, "legacy output voltage range: {}\n", if *legacy_ovoltage {"high"} else {"low"})?;
-                write!(writer, "legacy input voltage range: {}\n", if *legacy_ivoltage {"high"} else {"low"})?;
-                write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
-                write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
-                write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
-                write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
-                global_nets.dump_human_readable(writer)?;
-            },
-            &XC2BitstreamBits::XC2C128 {ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
-                ref use_vref, ..}  => {
-
-                write!(writer, "device type: XC2C128\n")?;
+            &XC2BitstreamBits::XC2C128 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..} |
+            &XC2BitstreamBits::XC2C256 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..} => {
                 write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
                 write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
                 write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
                 write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
                 write!(writer, "DataGate used: {}\n", if *data_gate {"yes"} else {"no"})?;
                 write!(writer, "VREF used: {}\n", if *use_vref {"yes"} else {"no"})?;
-                clock_div.dump_human_readable(writer)?;
-                global_nets.dump_human_readable(writer)?;
             },
-            &XC2BitstreamBits::XC2C256 {ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
-                ref use_vref, ..}  => {
-
-                write!(writer, "device type: XC2C256\n")?;
-                write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
-                write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
-                write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
-                write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
-                write!(writer, "DataGate used: {}\n", if *data_gate {"yes"} else {"no"})?;
-                write!(writer, "VREF used: {}\n", if *use_vref {"yes"} else {"no"})?;
-                clock_div.dump_human_readable(writer)?;
-                global_nets.dump_human_readable(writer)?;
-            },
-            &XC2BitstreamBits::XC2C384 {ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
-                ref use_vref, ..}  => {
-
-                write!(writer, "device type: XC2C384\n")?;
+            &XC2BitstreamBits::XC2C384 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..} |
+            &XC2BitstreamBits::XC2C512 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..} => {
                 write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
                 write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
                 write!(writer, "bank 2 output voltage range: {}\n", if ovoltage[2] {"high"} else {"low"})?;
@@ -721,27 +681,16 @@ impl XC2BitstreamBits {
                 write!(writer, "bank 3 input voltage range: {}\n", if ivoltage[3] {"high"} else {"low"})?;
                 write!(writer, "DataGate used: {}\n", if *data_gate {"yes"} else {"no"})?;
                 write!(writer, "VREF used: {}\n", if *use_vref {"yes"} else {"no"})?;
-                clock_div.dump_human_readable(writer)?;
-                global_nets.dump_human_readable(writer)?;
-            },
-            &XC2BitstreamBits::XC2C512 {ref global_nets, ref ivoltage, ref ovoltage, ref clock_div, ref data_gate,
-                ref use_vref, ..}  => {
-
-                write!(writer, "device type: XC2C512\n")?;
-                write!(writer, "bank 0 output voltage range: {}\n", if ovoltage[0] {"high"} else {"low"})?;
-                write!(writer, "bank 1 output voltage range: {}\n", if ovoltage[1] {"high"} else {"low"})?;
-                write!(writer, "bank 2 output voltage range: {}\n", if ovoltage[2] {"high"} else {"low"})?;
-                write!(writer, "bank 3 output voltage range: {}\n", if ovoltage[3] {"high"} else {"low"})?;
-                write!(writer, "bank 0 input voltage range: {}\n", if ivoltage[0] {"high"} else {"low"})?;
-                write!(writer, "bank 1 input voltage range: {}\n", if ivoltage[1] {"high"} else {"low"})?;
-                write!(writer, "bank 2 input voltage range: {}\n", if ivoltage[2] {"high"} else {"low"})?;
-                write!(writer, "bank 3 input voltage range: {}\n", if ivoltage[3] {"high"} else {"low"})?;
-                write!(writer, "DataGate used: {}\n", if *data_gate {"yes"} else {"no"})?;
-                write!(writer, "VREF used: {}\n", if *use_vref {"yes"} else {"no"})?;
-                clock_div.dump_human_readable(writer)?;
-                global_nets.dump_human_readable(writer)?;
             }
         }
+
+        // Clock divider
+        if let Some(clock_div) = self.get_clock_div() {
+            clock_div.dump_human_readable(writer)?;
+        }
+
+        // Global net configuration
+        self.get_global_nets().dump_human_readable(writer)?;
 
         // IOBs
         match self {
