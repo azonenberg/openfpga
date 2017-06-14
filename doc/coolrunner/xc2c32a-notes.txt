@@ -52,42 +52,42 @@ Mask ROM mux inputs:
 		FB0 macrocell 2 (row 2, 11, 30, 39)
 		FB0 macrocell 1 (row 0, 18, 27, 37)
 		FB0 macrocell 0 (row 6, 15, 25)
-		FB1 pad 15 (row 7, 19, 31)
+		FB1 input 15 (row 7, 19, 31)
 	Bit 2:
-		FB1 pad 14 (row 5, 14, 24)
-		FB1 pad 13 (row 2, 12, 28)
-		FB1 pad 12 (row 10, 16, 31, 39)
-		FB1 pad 11 (row 4, 19, 27, 34)
-		FB1 pad 10 (row 7, 15, 32, 35)
-		FB1 pad 9 (row 3, 20, 23, 37)
-		FB1 pad 8 (row 8, 21, 25, 33)
-		FB1 pad 7 (row 9, 13, 22)
-		FB1 pad 6 (row 1, 11, 29, 38)
-		FB1 pad 5 (row 0, 17, 26, 36)
-		FB1 pad 4 (row 6, 18, 30)
+		FB1 input 14 (row 5, 14, 24)
+		FB1 input 13 (row 2, 12, 28)
+		FB1 input 12 (row 10, 16, 31, 39)
+		FB1 input 11 (row 4, 19, 27, 34)
+		FB1 input 10 (row 7, 15, 32, 35)
+		FB1 input 9 (row 3, 20, 23, 37)
+		FB1 input 8 (row 8, 21, 25, 33)
+		FB1 input 7 (row 9, 13, 22)
+		FB1 input 6 (row 1, 11, 29, 38)
+		FB1 input 5 (row 0, 17, 26, 36)
+		FB1 input 4 (row 6, 18, 30)
 	Bit 1:
-		FB1 pad 3 (row 10, 16, 25, 35)
-		FB1 pad 2 (row 9, 13, 23, 39)
-		FB1 pad 1 (row 8, 21, 27)
-		FB1 pad 0 (row 7, 15, 30, 38)
+		FB1 input 3 (row 10, 16, 25, 35)
+		FB1 input 2 (row 9, 13, 23, 39)
+		FB1 input 1 (row 8, 21, 27)
+		FB1 input 0 (row 7, 15, 30, 38)
 		Dedicated input (row 6, 18, 26)
-		FB0 pad 15 (row 5, 14, 31, 34)
-		FB0 pad 14 (row 4, 19, 32, 36)
-		FB0 pad 13 (row 3, 20, 24, 33)
-		FB0 pad 12 (row 2, 12, 22)
-		FB0 pad 11 (row 1, 11, 28, 37)
-		FB0 pad 10 (row 0, 17, 29)
+		FB0 input 15 (row 5, 14, 31, 34)
+		FB0 input 14 (row 4, 19, 32, 36)
+		FB0 input 13 (row 3, 20, 24, 33)
+		FB0 input 12 (row 2, 12, 22)
+		FB0 input 11 (row 1, 11, 28, 37)
+		FB0 input 10 (row 0, 17, 29)
 	Bit 0 (rightmost group on M4 bus, only 10 signals vs 11):
-		FB0 pad 9 (row 9, 20, 31, 32)
-		FB0 pad 8 (row 8, 19, 21, 30)
-		FB0 pad 7 (row 7, 10, 18, 29)
-		FB0 pad 6 (row 6, 17, 28, 39)
-		FB0 pad 5 (row 5, 16, 27, 38)
-		FB0 pad 4 (row 4, 15, 26, 37)
-		FB0 pad 3 (row 3, 14, 25, 36)
-		FB0 pad 2 (row 2, 13, 24, 35)
-		FB0 pad 1 (row 1, 12, 23, 34)
-		FB0 pad 0 (row 0, 11, 22, 33)
+		FB0 input 9 (row 9, 20, 31, 32)
+		FB0 input 8 (row 8, 19, 21, 30)
+		FB0 input 7 (row 7, 10, 18, 29)
+		FB0 input 6 (row 6, 17, 28, 39)
+		FB0 input 5 (row 5, 16, 27, 38)
+		FB0 input 4 (row 4, 15, 26, 37)
+		FB0 input 3 (row 3, 14, 25, 36)
+		FB0 input 2 (row 2, 13, 24, 35)
+		FB0 input 1 (row 1, 12, 23, 34)
+		FB0 input 0 (row 0, 11, 22, 33)
 
 Bitstream mux inputs:
 Inputs are active-low except for bit 7, which is active high.
@@ -164,12 +164,12 @@ Macrocells
 				01 = latch
 				10 = T flipflop
 				11 = D flipflop with clock enable
-	15		Doesn't seem to do anything. Probably related to input buffer.
-				 0 = Input buffer used
-				 1 = Input buffer not used. Seems to not disable the IBUF -> macrocell FF fast path (bit 11).
-	14		Enable input pad -> ZIA buffer
+	15		Specifies source of input -> ZIA feedback
+				 0 = Input buffer
+				 1 = Macrocell flipflop
+	14		Enable input -> ZIA driver
 				 0 = ZIA driver enabled
-				 1 = ZIA driver disabled (constant zero)
+				 1 = ZIA driver disabled (reads as constant zero)
 	13		Specifies source of macrocell -> ZIA feedback
 				 0 = Macrocell XOR gate
 				 1 = Macrocell flipflop
