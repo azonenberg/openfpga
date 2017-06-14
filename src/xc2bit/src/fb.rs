@@ -82,6 +82,29 @@ fn zia_row_crbit_helper(x: usize, y: usize, zia_row: usize, zia_bits: &[bool], h
     }
 }
 
+// Weird mapping here in (mostly) groups of 3
+// TODO: Explain better
+static AND_BLOCK_TYPE2_P2L_MAP: [usize; ANDTERMS_PER_FB] = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    55, 54, 53,
+    11, 12, 13,
+    52, 51, 50,
+    14, 15, 16,
+    49, 48, 47,
+    17, 18, 19,
+    46, 45, 44,
+    20, 21, 22,
+    43, 42, 41,
+    23, 24, 25,
+    40, 39, 38,
+    26, 27, 28,
+    37, 36, 35,
+    29, 30, 31,
+    34, 33, 32];
+
+static OR_BLOCK_TYPE2_ROW_MAP: [usize; ANDTERMS_PER_FB / 2] =
+    [17, 19, 22, 20, 0, 1, 3, 4, 5, 7, 8, 11, 12, 13, 15, 16, 23, 24, 26, 27, 28, 31, 32, 34, 35, 36, 38, 39];
+
 impl XC2BitstreamFB {
     /// Dump a human-readable explanation of the settings for this FB to the given `writer` object.
     /// `device` must be the device type this FB was extracted from and is needed to decode I/O pin numbers.
@@ -235,7 +258,26 @@ impl XC2BitstreamFB {
             },
             // "Type 2" blocks (OR array is on the sides)
             XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
-                unimplemented!();
+                for term_idx in 0..ANDTERMS_PER_FB {
+                    for input_idx in 0..INPUTS_PER_ANDTERM {
+                        let phys_term_idx = AND_BLOCK_TYPE2_P2L_MAP[term_idx];
+                        if !mirror {
+                            // true input
+                            fuse_array.set(x + term_idx * 2 + 1, y + input_idx,
+                                !self.and_terms[phys_term_idx].input[input_idx]);
+                            // complement input
+                            fuse_array.set(x + term_idx * 2 + 0, y + input_idx,
+                                !self.and_terms[phys_term_idx].input_b[input_idx]);
+                        } else {
+                            // true input
+                            fuse_array.set(x - term_idx * 2 - 1, y + input_idx,
+                                !self.and_terms[phys_term_idx].input[input_idx]);
+                            // complement input
+                            fuse_array.set(x - term_idx * 2 - 0, y + input_idx,
+                                !self.and_terms[phys_term_idx].input_b[input_idx]);
+                        }
+                    }
+                }
             },
         }
 
@@ -260,7 +302,31 @@ impl XC2BitstreamFB {
             },
             // "Type 2" blocks (OR array is on the sides)
             XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
-                unimplemented!();
+                for or_term_idx in 0..MCS_PER_FB {
+                    for and_term_idx in 0..ANDTERMS_PER_FB {
+                        let out_y = y + OR_BLOCK_TYPE2_ROW_MAP[and_term_idx / 2];
+                        let mut out_x = or_term_idx * 2;
+                        // TODO: Explain wtf is happening here
+                        if OR_BLOCK_TYPE2_ROW_MAP[and_term_idx / 2] >= 23 {
+                            // "Reverse"
+                            if and_term_idx % 2 == 0 {
+                                out_x += 1;
+                            }
+                        } else {
+                            if and_term_idx % 2 == 1 {
+                                out_x += 1;
+                            }
+                        }
+
+                        let out_x = if !mirror {
+                            x + out_x
+                        } else {
+                            x - out_x
+                        };
+
+                        fuse_array.set(out_x, out_y, !self.or_terms[or_term_idx].input[and_term_idx]);
+                    }
+                }
             },
         }
     }
