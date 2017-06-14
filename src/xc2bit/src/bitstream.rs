@@ -32,7 +32,7 @@ use *;
 use fb::{read_fb_logical};
 use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx,
                       total_logical_fuse_count, clock_div_fuse_idx};
-use fusemap_physical::{fuse_array_dims};
+use fusemap_physical::{fuse_array_dims, gck_fuse_coords, gsr_fuse_coords, gts_fuse_coords, global_term_fuse_coord};
 use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical};
 use mc::{write_small_mc_to_jed, write_large_mc_to_jed};
 use zia::{zia_get_row_width};
@@ -283,6 +283,33 @@ impl XC2GlobalNets {
         write!(writer, "global termination is {}\n", if self.global_pu {"pull-up"} else {"bus hold"})?;
 
         Ok(())
+    }
+
+    /// Write the crbit representation of the global net settings to the given `fuse_array`.
+    pub fn to_crbit(&self, device: XC2Device, fuse_array: &mut FuseArray) {
+        let ((gck0x, gck0y), (gck1x, gck1y), (gck2x, gck2y)) = gck_fuse_coords(device);
+        fuse_array.set(gck0x, gck0y, self.gck_enable[0]);
+        fuse_array.set(gck1x, gck1y, self.gck_enable[1]);
+        fuse_array.set(gck2x, gck2y, self.gck_enable[2]);
+
+        let ((gsren_x, gsren_y), (gsrinv_x, gsrinv_y)) = gsr_fuse_coords(device);
+        fuse_array.set(gsren_x, gsren_y, self.gsr_enable);
+        fuse_array.set(gsrinv_x, gsrinv_y, self.gsr_invert);
+
+        let (((gts0en_x, gts0en_y), (gts0inv_x, gts0inv_y)), ((gts1en_x, gts1en_y), (gts1inv_x, gts1inv_y)),
+             ((gts2en_x, gts2en_y), (gts2inv_x, gts2inv_y)), ((gts3en_x, gts3en_y), (gts3inv_x, gts3inv_y))) =
+                gts_fuse_coords(device);
+        fuse_array.set(gts0en_x, gts0en_y, !self.gts_enable[0]);
+        fuse_array.set(gts0inv_x, gts0inv_y, self.gts_invert[0]);
+        fuse_array.set(gts1en_x, gts1en_y, !self.gts_enable[1]);
+        fuse_array.set(gts1inv_x, gts1inv_y, self.gts_invert[1]);
+        fuse_array.set(gts2en_x, gts2en_y, !self.gts_enable[2]);
+        fuse_array.set(gts2inv_x, gts2inv_y, self.gts_invert[2]);
+        fuse_array.set(gts3en_x, gts3en_y, !self.gts_enable[3]);
+        fuse_array.set(gts3inv_x, gts3inv_y, self.gts_invert[3]);
+
+        let (term_x, term_y) = global_term_fuse_coord(device);
+        fuse_array.set(term_x, term_y, self.global_pu);
     }
 }
 
@@ -638,6 +665,8 @@ impl XC2BitstreamBits {
                 }
             },
         }
+
+        self.get_global_nets().to_crbit(self.device_type(), fuse_array);
     }
 
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.

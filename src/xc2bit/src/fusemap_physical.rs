@@ -201,3 +201,58 @@ pub fn mc_block_loc(device: XC2Device, fb: u32) -> (usize, usize, bool) {
         }
     }
 }
+
+pub fn gck_fuse_coords(device: XC2Device) -> ((usize, usize), (usize, usize), (usize, usize)) {
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => ((126, 23), (127, 23), (128, 23)),
+        XC2Device::XC2C64 | XC2Device::XC2C64A => ((133, 23), (134, 23), (135, 23)),
+        XC2Device::XC2C128 => ((365, 67), (366, 67), (367, 67)),
+        XC2Device::XC2C256 => ((519, 23), (520, 23), (521, 23)),
+        XC2Device::XC2C384 => ((467, 102), (468, 102), (469, 102)),
+        XC2Device::XC2C512 => ((979, 147), (980, 147), (981, 147)),
+    }
+}
+
+// (enable, invert)
+pub fn gsr_fuse_coords(device: XC2Device) -> ((usize, usize), (usize, usize)) {
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => ((130, 23), (129, 23)),
+        XC2Device::XC2C64 | XC2Device::XC2C64A => ((136, 73), (135, 73)),
+        XC2Device::XC2C128 => ((2, 67), (1, 67)),
+        XC2Device::XC2C256 => ((179, 23), (178, 23)),
+        XC2Device::XC2C384 => ((2, 97), (1, 97)),
+        XC2Device::XC2C512 => ((2, 27), (1, 27)),
+    }
+}
+
+// (enable, invert)
+pub fn gts_fuse_coords(device: XC2Device) ->
+    (((usize, usize), (usize, usize)), ((usize, usize), (usize, usize)),
+     ((usize, usize), (usize, usize)), ((usize, usize), (usize, usize))) {
+
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A =>
+            (((127, 24), (126, 24)), ((129, 24), (128, 24)), ((127, 25), (126, 25)), ((129, 25), (128, 25))),
+        XC2Device::XC2C64 | XC2Device::XC2C64A =>
+            (((134, 24), (133, 24)), ((136, 24), (135, 24)), ((138, 73), (137, 73)), ((138, 24), (137, 24))),
+        XC2Device::XC2C128 =>
+            (((6, 27), (5, 27)), ((8, 27), (7, 27)), ((6, 67), (5, 67)), ((8, 67), (7, 67))),
+        XC2Device::XC2C256 =>
+            (((182, 23), (181, 23)), ((177, 24), (176, 24)), ((179, 24), (178, 24)), ((182, 24), (181, 24))),
+        XC2Device::XC2C384 =>
+            (((463, 107), (463, 102)), ((464, 107), (464, 102)), ((465, 107), (465, 102)), ((466, 107), (466, 102))),
+        XC2Device::XC2C512 =>
+            (((4, 27), (3, 27)), ((481, 27), (480, 27)), ((6, 27), (5, 27)), ((8, 27), (7, 27))),
+    }
+}
+
+pub fn global_term_fuse_coord(device: XC2Device) -> (usize, usize) {
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => (131, 23),
+        XC2Device::XC2C64 | XC2Device::XC2C64A => (136, 23),
+        XC2Device::XC2C128 => (370, 67),
+        XC2Device::XC2C256 => (517, 23),
+        XC2Device::XC2C384 => (931, 17),
+        XC2Device::XC2C512 => (983, 147),
+    }
+}
