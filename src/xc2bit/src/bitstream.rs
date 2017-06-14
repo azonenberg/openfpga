@@ -600,6 +600,44 @@ impl XC2BitstreamBits {
         for i in 0..self.device_type().num_fbs() {
             self.get_fb()[i].to_crbit(self.device_type(), i as u32, fuse_array);
         }
+
+        // IOBs
+        match self {
+            // This match is needed because the different sizes have different IOB structures, and fixed-sized arrays
+            // are gimped enough that returning an array of trait objects is hard.
+            &XC2BitstreamBits::XC2C32 {ref iobs, ..} |
+            &XC2BitstreamBits::XC2C32A {ref iobs, ..} => {
+                for i in 0..self.device_type().num_iobs() {
+                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
+                }
+            },
+            &XC2BitstreamBits::XC2C64 {ref iobs, ..} |
+            &XC2BitstreamBits::XC2C64A {ref iobs, ..} => {
+                for i in 0..self.device_type().num_iobs() {
+                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
+                }
+            },
+            &XC2BitstreamBits::XC2C128 {ref iobs, ..} => {
+                for i in 0..self.device_type().num_iobs() {
+                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
+                }
+            },
+            &XC2BitstreamBits::XC2C256 {ref iobs, ..} => {
+                for i in 0..self.device_type().num_iobs() {
+                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
+                }
+            },
+            &XC2BitstreamBits::XC2C384 {ref iobs, ..} => {
+                for i in 0..self.device_type().num_iobs() {
+                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
+                }
+            },
+            &XC2BitstreamBits::XC2C512 {ref iobs, ..} => {
+                for i in 0..self.device_type().num_iobs() {
+                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
+                }
+            },
+        }
     }
 
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.

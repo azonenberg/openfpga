@@ -151,7 +151,7 @@ impl Default for XC2Macrocell {
     }
 }
 
-static MC_TO_ROW_MAP_LARGE: [usize; MCS_PER_FB] = 
+pub static MC_TO_ROW_MAP_LARGE: [usize; MCS_PER_FB] = 
     [0, 3, 5, 8, 10, 13, 15, 18, 20, 23, 25, 28, 30, 33, 35, 38];
 
 impl XC2Macrocell {
@@ -257,7 +257,7 @@ impl XC2Macrocell {
 
                 // skipped St (belongs to IOB)
 
-                // regmod
+                // xorin
                 let xorin = self.xorin();
                 fuse_array.set((x + d * 8) as usize, y + 1, xorin.0);
                 fuse_array.set((x + d * 0) as usize, y + 2, xorin.1);
@@ -803,11 +803,8 @@ pub fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         write!(writer, "{}{}", if regmod.0 {"1"} else {"0"}, if regmod.1 {"1"} else {"0"})?;
 
         // inz
-        write!(writer, "{}", match iobs[iob].zia_mode {
-            XC2IOBZIAMode::PAD => "00",
-            XC2IOBZIAMode::REG => "10",
-            XC2IOBZIAMode::Disabled => "11",
-        })?;
+        let inz = iobs[iob].inz();
+        write!(writer, "{}{}", if inz.0 {"1"} else {"0"}, if inz.1 {"1"} else {"0"})?;
 
         // fb
         let fb_bits = fb.ffs[i].fb();
@@ -827,18 +824,10 @@ pub fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         write!(writer, "{}", if iobs[iob].obuf_uses_ff {"0"} else {"1"})?;
 
         // oe
-        write!(writer, "{}", match iobs[iob].obuf_mode {
-            XC2IOBOBufMode::PushPull => "0000",
-            XC2IOBOBufMode::OpenDrain => "0001",
-            XC2IOBOBufMode::TriStateGTS1 => "0010",
-            XC2IOBOBufMode::TriStatePTB => "0100",
-            XC2IOBOBufMode::TriStateGTS3 => "0110",
-            XC2IOBOBufMode::TriStateCTE => "1000",
-            XC2IOBOBufMode::TriStateGTS2 => "1010",
-            XC2IOBOBufMode::TriStateGTS0 => "1100",
-            XC2IOBOBufMode::CGND => "1110",
-            XC2IOBOBufMode::Disabled => "1111",
-        })?;
+        let oe = iobs[iob].oe();
+        write!(writer, "{}{}{}{}",
+            if oe.0 {"1"} else {"0"}, if oe.1 {"1"} else {"0"},
+            if oe.2 {"1"} else {"0"}, if oe.3 {"1"} else {"0"})?;
 
         // tm
         write!(writer, "{}", if iobs[iob].termination_enabled {"1"} else {"0"})?;
@@ -897,36 +886,21 @@ pub fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
             let iob = iob.unwrap() as usize;
 
             // inmod
-            write!(writer, "{}", match iobs[iob].ibuf_mode {
-                XC2IOBIbufMode::NoVrefNoSt => "00",
-                XC2IOBIbufMode::IsVref => "01",
-                XC2IOBIbufMode::UsesVref => "10",
-                XC2IOBIbufMode::NoVrefSt => "11",
-            })?;
+            let inmod = iobs[iob].inmod();
+            write!(writer, "{}{}", if inmod.0 {"1"} else {"0"}, if inmod.1 {"1"} else {"0"})?;
 
             // inreg
             write!(writer, "{}", if fb.ffs[i].ff_in_ibuf {"0"} else {"1"})?;
 
             // inz
-            write!(writer, "{}", match iobs[iob].zia_mode {
-                XC2IOBZIAMode::PAD => "00",
-                XC2IOBZIAMode::REG => "10",
-                XC2IOBZIAMode::Disabled => "11",
-            })?;
+            let inz = iobs[iob].inz();
+            write!(writer, "{}{}", if inz.0 {"1"} else {"0"}, if inz.1 {"1"} else {"0"})?;
 
             // oe
-            write!(writer, "{}", match iobs[iob].obuf_mode {
-                XC2IOBOBufMode::PushPull => "0000",
-                XC2IOBOBufMode::OpenDrain => "0001",
-                XC2IOBOBufMode::TriStateGTS1 => "0010",
-                XC2IOBOBufMode::TriStatePTB => "0100",
-                XC2IOBOBufMode::TriStateGTS3 => "0110",
-                XC2IOBOBufMode::TriStateCTE => "1000",
-                XC2IOBOBufMode::TriStateGTS2 => "1010",
-                XC2IOBOBufMode::TriStateGTS0 => "1100",
-                XC2IOBOBufMode::CGND => "1110",
-                XC2IOBOBufMode::Disabled => "1111",
-            })?;
+            let oe = iobs[iob].oe();
+            write!(writer, "{}{}{}{}",
+                if oe.0 {"1"} else {"0"}, if oe.1 {"1"} else {"0"},
+                if oe.2 {"1"} else {"0"}, if oe.3 {"1"} else {"0"})?;
         }
 
         // p
