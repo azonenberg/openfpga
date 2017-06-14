@@ -132,3 +132,40 @@ pub fn and_block_loc(device: XC2Device, fb: u32) -> (usize, usize, bool) {
         },
     }
 }
+
+pub fn or_block_loc(device: XC2Device, fb: u32) -> (usize, usize, bool) {
+    match device {
+        // "Type 1" blocks (OR array is in the middle)
+        XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A | XC2Device::XC2C256 => {
+            // We know we are in the middle of the AND array
+            let (and_x, and_y, mirror) = and_block_loc(device, fb);
+            (and_x, and_y + 20, mirror)
+        },
+        // "Type 2" blocks (OR array is on the sides)
+        XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
+            // "left-hand" non-mirrored blocks need to shift left 32
+            // "right-hand" mirrored blocks need to shift right 32
+            let (and_x, and_y, mirror) = and_block_loc(device, fb);
+            if !mirror {
+                (and_x - 32, and_y, mirror)
+            } else {
+                (and_x + 32, and_y, mirror)
+            }
+        },
+    }
+}
+
+pub fn zia_block_loc(device: XC2Device, fb: u32) -> (usize, usize) {
+    // The ZIA is always to the right of the "left-hand" even-numbered FB. If the FB is odd-numbered, it shifts
+    // right by 1.
+
+    let (and_x, and_y, _) = and_block_loc(device, (fb / 2) * 2);
+
+    if fb % 2 == 0 {
+        // "left-hand"
+        (and_x + 112, and_y)
+    } else {
+        // "right-hand"
+        (and_x + 113, and_y)
+    }
+}
