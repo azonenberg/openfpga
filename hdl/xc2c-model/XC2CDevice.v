@@ -65,8 +65,24 @@ module XC2CDevice(
 		end
 	endfunction
 
+	function integer ConfigMemoryAbits;
+		input[15:0] cells;
+		begin
+			case(cells)
+				32:			ConfigMemoryAbits = 6;
+				64:			ConfigMemoryAbits = 7;
+				128:		ConfigMemoryAbits = 7;
+				256:		ConfigMemoryAbits = 7;
+				384:		ConfigMemoryAbits = 7;
+				512:		ConfigMemoryAbits = 8;
+				default:	ConfigMemoryAbits = 0;
+			endcase
+		end
+	endfunction
+
 	localparam SHREG_WIDTH	= ConfigMemoryWidth(MACROCELLS);
 	localparam MEM_DEPTH	= ConfigMemoryDepth(MACROCELLS);
+	localparam ADDR_BITS	= ConfigMemoryAbits(MACROCELLS);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Sanity checks
@@ -108,7 +124,8 @@ module XC2CDevice(
 	integer i;
 	initial begin
 		for(i=0; i<MEM_DEPTH; i=i+1)
-			ram_bitstream[i] <= {SHREG_WIDTH{1'b1}};	//copied from blank EEPROM = all 1s
+			//ram_bitstream[i] <= {SHREG_WIDTH{1'b1}};	//copied from blank EEPROM = all 1s
+			ram_bitstream[i] <= {SHREG_WIDTH{1'b0}};	//default initial value
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,18 +136,45 @@ module XC2CDevice(
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// JTAG stuff
 
+	wire					config_erase;
+	wire[ADDR_BITS-1:0]		config_read_addr;
+	reg[SHREG_WIDTH-1:0]	config_read_data = 0;
+
+	//Read the EEPROM
+	//TODO: add read enable?
+	always @(posedge jtag_tck) begin
+		config_read_data <= ram_bitstream[config_read_addr];
+	end
+
 	XC2CJTAG #(
 		.MACROCELLS(MACROCELLS),
-		.PACKAGE(PACKAGE)
+		.PACKAGE(PACKAGE),
+		.SHREG_WIDTH(SHREG_WIDTH),
+		.ADDR_BITS(ADDR_BITS)
 	) jtag (
 		.tdi(jtag_tdi),
 		.tdo(jtag_tdo),
 		.tms(jtag_tms),
 		.tck(jtag_tck),
 
+		.config_erase(config_erase),
+		.config_read_addr(config_read_addr),
+		.config_read_data(config_read_data),
+
 		.debug_led(debug_led),
 		.debug_gpio(debug_gpio)
 	);
+
+	always @(posedge jtag_tck) begin
+
+		//Wipe the config memory when asked
+		//TODO: pipeline this or are we OK in one cycle?
+		if(config_erase) begin
+			for(i=0; i<MEM_DEPTH; i=i+1)
+				ram_bitstream[i] <= {SHREG_WIDTH{1'b1}};
+		end
+
+	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The actual CPLD function blocks

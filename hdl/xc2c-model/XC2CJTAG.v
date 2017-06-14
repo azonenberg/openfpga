@@ -20,7 +20,12 @@
 /**
 	@brief JTAG stuff for an XC2C-series device
  */
-module XC2CJTAG(tdi, tms, tck, tdo, debug_led, debug_gpio);
+module XC2CJTAG(
+	tdi, tms, tck, tdo,
+	config_erase,
+	config_read_addr, config_read_data,
+
+	debug_led, debug_gpio);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
@@ -29,6 +34,10 @@ module XC2CJTAG(tdi, tms, tck, tdo, debug_led, debug_gpio);
 
 	parameter PACKAGE = "QFG32";	//Package code (lead-free G assumed)
 
+	parameter SHREG_WIDTH = 1;		//ISC shift register width
+
+	parameter ADDR_BITS = 1;		//Bits in ISC address shift register
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/Os
 
@@ -36,6 +45,12 @@ module XC2CJTAG(tdi, tms, tck, tdo, debug_led, debug_gpio);
 	input wire					tms;
 	input wire					tck;
 	output reg					tdo;
+
+	//Status signals to the configuration memory
+	output reg					config_erase		= 0;	//Erases all config memory
+															//This takes 100 ms IRL but for now we'll model it instantly
+	output reg[ADDR_BITS-1:0]	config_read_addr	 = 0;	//Address for reading the bitstream (real, not gray code)
+	input wire[SHREG_WIDTH-1:0]	config_read_data;
 
 	output reg[3:0]				debug_led = 0;
 	output reg[7:0]				debug_gpio = 0;
@@ -219,6 +234,8 @@ module XC2CJTAG(tdi, tms, tck, tdo, debug_led, debug_gpio);
 	//Instruction loading and capture
 	always @(posedge tck) begin
 
+		config_erase			<= 0;
+
 		case(state)
 
 			//Reset instruction to IDCODE upon reset
@@ -243,7 +260,23 @@ module XC2CJTAG(tdi, tms, tck, tdo, debug_led, debug_gpio);
 
 			//Done, save the new IR
 			STATE_UPDATE_IR: begin
-				ir				<= ir_shreg;
+				ir					<= ir_shreg;
+
+				//If we're entering/exiting ISC mode, set the ISC bits appropriately
+				//TODO: support OTF mode
+				if(ir_shreg == INST_ISC_ENABLE)
+					isc_enabled		<= 1;
+				if(ir_shreg == INST_ISC_DISABLE)
+					isc_enabled		<= 0;
+
+				//Wipe config memory when we get an ERASE instruction
+				if(ir_shreg == INST_ISC_ERASE) begin
+					config_erase	<= 1;
+					configured		<= 0;
+				end
+
+				//TODO: copy EEPROM to RAM when we get an ISC_INIT command
+
 			end	//end STATE_UPDATE_IR
 
 		endcase
@@ -400,12 +433,55 @@ module XC2CJTAG(tdi, tms, tck, tdo, debug_led, debug_gpio);
 				idcode_shreg <= idcode;
 			end	//end STATE_CAPTURE_DR
 
-			//Loading a new IR
+			//Read the IDCODE
 			STATE_SHIFT_DR: begin
 				idcode_shreg		<= {tdi, idcode_shreg[31:1]};
 			end	//end STATE_SHIFT_DR
 
 			//no update, writes to IDCODE are ignored
+
+		endcase
+
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Config memory read
+
+	reg[SHREG_WIDTH-1:0] 	isc_read_shreg	= 0;
+
+	//New value for the read shreg
+	wire[SHREG_WIDTH-1:0]	isc_read_shreg_adv = {tdi, isc_read_shreg[SHREG_WIDTH-1:1]};
+
+	//Gray coded read address: left N bits of the shift register
+	wire[ADDR_BITS-1:0]		isc_read_addr_gray	= isc_read_shreg_adv[SHREG_WIDTH-1 : SHREG_WIDTH-ADDR_BITS];
+
+	//Convert Gray code to normal
+	reg[ADDR_BITS-1:0]		isc_read_addr_normal;
+	integer i;
+	always @(*) begin
+		isc_read_addr_normal[ADDR_BITS-1]	<= isc_read_addr_gray[ADDR_BITS-1];
+		for(i=ADDR_BITS-2; i>=0; i=i-1)
+			isc_read_addr_normal[i]	<= isc_read_addr_gray[i] ^ isc_read_addr_normal[i+1];
+	end
+
+	always @(posedge tck) begin
+
+		case(state)
+
+			//Load the data that we read
+			STATE_CAPTURE_DR: begin
+				isc_read_shreg		<= config_read_data;
+			end	//end STATE_CAPTURE_DR
+
+			//Actual readout happens here
+			STATE_SHIFT_DR: begin
+				isc_read_shreg		<= isc_read_shreg_adv;
+			end	//end STATE_SHIFT_DR
+
+			//Update: save the de-Gray-ified read address
+			STATE_UPDATE_DR: begin
+				config_read_addr	<= isc_read_addr_normal;
+			end	//end STATE_UPDATE_DR
 
 		endcase
 
@@ -427,6 +503,7 @@ module XC2CJTAG(tdi, tms, tck, tdo, debug_led, debug_gpio);
 			case(ir)
 				INST_BYPASS:	tdo <= bypass_shreg;
 				INST_IDCODE:	tdo <= idcode_shreg[0];
+				INST_ISC_READ:	tdo <= isc_read_shreg[0];
 			endcase
 		end
 
@@ -439,7 +516,7 @@ module XC2CJTAG(tdi, tms, tck, tdo, debug_led, debug_gpio);
 	//7:0 = pmod_c[3:0]
 	always @(*) begin
 		debug_gpio		<= 0;
-		debug_gpio[0]	<= (ir == INST_IDCODE);
+		debug_gpio[0]	<= (ir == INST_ISC_READ);
 		debug_gpio[1]	<= (ir == INST_BYPASS);
 	end
 
