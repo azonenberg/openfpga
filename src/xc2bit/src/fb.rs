@@ -29,6 +29,7 @@ use std::io;
 use std::io::Write;
 
 use *;
+use fusemap_physical::{and_block_loc};
 use pla::{read_and_term_logical, read_or_term_logical};
 use mc::{read_small_ff_logical, read_large_ff_logical, read_large_buried_ff_logical};
 use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice, encode_256_zia_choice,
@@ -133,6 +134,44 @@ impl XC2BitstreamFB {
         }
 
         Ok(())
+    }
+
+    /// Write the crbit representation of the settings for this FB to the given `fuse_array`.
+    /// `device` must be the device type this FB was extracted from.
+    /// `fb` must be the index of this function block.
+    pub fn to_crbit(&self, device: XC2Device, fb: u32, fuse_array: &mut FuseArray) {
+        // AND block
+        let (x, y, mirror) = and_block_loc(device, fb);
+        match device {
+            // "Type 1" blocks (OR array is in the middle)
+            XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A | XC2Device::XC2C256 => {
+                for term_idx in 0..ANDTERMS_PER_FB {
+                    for input_idx in 0..INPUTS_PER_ANDTERM {
+                        let mut out_y = y + input_idx;
+                        if input_idx >= 20 {
+                            // There is an OR array in the middle, 8 rows high
+                            out_y += 8;
+                        }
+
+                        if !mirror {
+                            // true input
+                            fuse_array.set(x + term_idx * 2 + 1, out_y, !self.and_terms[term_idx].input[input_idx]);
+                            // complement input
+                            fuse_array.set(x + term_idx * 2 + 0, out_y, !self.and_terms[term_idx].input_b[input_idx]);
+                        } else {
+                            // true input
+                            fuse_array.set(x - term_idx * 2 - 1, out_y, !self.and_terms[term_idx].input[input_idx]);
+                            // complement input
+                            fuse_array.set(x - term_idx * 2 - 0, out_y, !self.and_terms[term_idx].input_b[input_idx]);
+                        }
+                    }
+                }
+            },
+            // "Type 2" blocks (OR array is on the sides)
+            XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
+                unimplemented!();
+            },
+        }
     }
 
     /// Write the .JED representation of the settings for this FB to the given `writer` object.

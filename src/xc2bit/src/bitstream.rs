@@ -78,7 +78,7 @@ impl XC2Bitstream {
 
         fuse_array.dev_name_str = Some(format!("{}-{}-{}", self.bits.device_type(), self.speed_grade, self.package));
 
-        // TODO: Actual stuff
+        self.bits.to_crbit(&mut fuse_array);
 
         fuse_array
     }
@@ -589,6 +589,16 @@ impl XC2BitstreamBits {
             &XC2BitstreamBits::XC2C256{ref clock_div, ..} => Some(clock_div),
             &XC2BitstreamBits::XC2C384{ref clock_div, ..} => Some(clock_div),
             &XC2BitstreamBits::XC2C512{ref clock_div, ..} => Some(clock_div),
+        }
+    }
+
+    /// Convert the actual bitstream bits to crbit format
+    pub fn to_crbit(&self, fuse_array: &mut FuseArray) {
+        // TODO
+
+        // FBs
+        for i in 0..self.device_type().num_fbs() {
+            self.get_fb()[i].to_crbit(self.device_type(), i as u32, fuse_array);
         }
     }
 
