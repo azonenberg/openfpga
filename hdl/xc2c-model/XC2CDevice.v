@@ -124,8 +124,7 @@ module XC2CDevice(
 	integer i;
 	initial begin
 		for(i=0; i<MEM_DEPTH; i=i+1)
-			//ram_bitstream[i] <= {SHREG_WIDTH{1'b1}};	//copied from blank EEPROM = all 1s
-			ram_bitstream[i] <= {SHREG_WIDTH{1'b0}};	//default initial value
+			ram_bitstream[i] <= {SHREG_WIDTH{1'b1}};	//copied from blank EEPROM = all 1s
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,10 +139,26 @@ module XC2CDevice(
 	wire[ADDR_BITS-1:0]		config_read_addr;
 	reg[SHREG_WIDTH-1:0]	config_read_data = 0;
 
-	//Read the EEPROM
+	wire					config_write_en;
+	wire[ADDR_BITS-1:0]		config_write_addr;
+	wire[SHREG_WIDTH-1:0]	config_write_data;
+
+	//Read/write the EEPROM
 	//TODO: add read enable?
 	always @(posedge jtag_tck) begin
 		config_read_data <= ram_bitstream[config_read_addr];
+
+		if(config_write_en)
+			ram_bitstream[config_write_addr]	<= config_write_data;
+
+		//Wipe the config memory
+		//TODO: pipeline this or are we OK in one cycle?
+		//If we go multicycle, how do we handle this with no clock? Real chip is self-timed internally
+		if(config_erase) begin
+			for(i=0; i<MEM_DEPTH; i=i+1)
+				ram_bitstream[i] <= {SHREG_WIDTH{1'b1}};
+		end
+
 	end
 
 	XC2CJTAG #(
@@ -161,20 +176,14 @@ module XC2CDevice(
 		.config_read_addr(config_read_addr),
 		.config_read_data(config_read_data),
 
+		.config_write_en(config_write_en),
+		.config_write_addr(config_write_addr),
+		.config_write_data(config_write_data),
+
 		.debug_led(debug_led),
 		.debug_gpio(debug_gpio)
 	);
 
-	always @(posedge jtag_tck) begin
-
-		//Wipe the config memory when asked
-		//TODO: pipeline this or are we OK in one cycle?
-		if(config_erase) begin
-			for(i=0; i<MEM_DEPTH; i=i+1)
-				ram_bitstream[i] <= {SHREG_WIDTH{1'b1}};
-		end
-
-	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The actual CPLD function blocks

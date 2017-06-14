@@ -24,6 +24,7 @@ module XC2CJTAG(
 	tdi, tms, tck, tdo,
 	config_erase,
 	config_read_addr, config_read_data,
+	config_write_en, config_write_addr, config_write_data,
 
 	debug_led, debug_gpio);
 
@@ -49,8 +50,13 @@ module XC2CJTAG(
 	//Status signals to the configuration memory
 	output reg					config_erase		= 0;	//Erases all config memory
 															//This takes 100 ms IRL but for now we'll model it instantly
-	output reg[ADDR_BITS-1:0]	config_read_addr	 = 0;	//Address for reading the bitstream (real, not gray code)
+
+	output reg[ADDR_BITS-1:0]	config_read_addr	= 0;	//Address for reading the bitstream (real, not gray code)
 	input wire[SHREG_WIDTH-1:0]	config_read_data;
+
+	output reg					config_write_en		= 0;
+	output reg[ADDR_BITS-1:0]	config_write_addr	= 0;
+	output reg[SHREG_WIDTH-1:0]	config_write_data	= 0;
 
 	output reg[3:0]				debug_led = 0;
 	output reg[7:0]				debug_gpio = 0;
@@ -275,6 +281,12 @@ module XC2CJTAG(
 					configured		<= 0;
 				end
 
+				//DEBUG: declare us configured as soon as we get a PROGRAM instruction
+				//TODO: check DONE / transfer bits first
+				if(ir_shreg == INST_ISC_PROGRAM) begin
+					configured		<= 1;
+				end
+
 				//TODO: copy EEPROM to RAM when we get an ISC_INIT command
 
 			end	//end STATE_UPDATE_IR
@@ -488,6 +500,51 @@ module XC2CJTAG(
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Config memory writes
+
+	reg[SHREG_WIDTH + ADDR_BITS - 1 : 0] isc_write_shreg	= 0;
+
+	//Gray coded write address: left N bits of the shift register
+	wire[ADDR_BITS-1:0]		isc_write_addr_gray	= isc_write_shreg[SHREG_WIDTH +: ADDR_BITS];
+
+	//Convert Gray code to normal
+	reg[ADDR_BITS-1:0]		isc_write_addr_normal;
+	always @(*) begin
+		isc_write_addr_normal[ADDR_BITS-1]	<= isc_write_addr_gray[ADDR_BITS-1];
+		for(i=ADDR_BITS-2; i>=0; i=i-1)
+			isc_write_addr_normal[i]	<= isc_write_addr_gray[i] ^ isc_write_addr_normal[i+1];
+	end
+
+	always @(posedge tck) begin
+
+		config_write_en	<= 0;
+
+		if(ir == INST_ISC_PROGRAM) begin
+			case(state)
+
+				//Capture data is ignored
+				STATE_CAPTURE_DR: begin
+					isc_write_shreg		<= 0;
+				end	//end STATE_CAPTURE_DR
+
+				//Read the new bitstream
+				STATE_SHIFT_DR: begin
+					isc_write_shreg		<= {tdi, isc_write_shreg[SHREG_WIDTH + ADDR_BITS -1 : 1]};
+				end	//end STATE_SHIFT_DR
+
+				//Update: commit the write to bitstream
+				STATE_UPDATE_DR: begin
+					config_write_en		<= 1;
+					config_write_addr	<= isc_write_addr_normal;
+					config_write_data	<= isc_write_shreg[SHREG_WIDTH-1 : 0];
+				end	//end STATE_UPDATE_DR
+
+			endcase
+		end
+
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// TDO muxing
 
 	always @(*) begin
@@ -501,9 +558,10 @@ module XC2CJTAG(
 		//DR stuff
 		else if(state == STATE_SHIFT_DR) begin
 			case(ir)
-				INST_BYPASS:	tdo <= bypass_shreg;
-				INST_IDCODE:	tdo <= idcode_shreg[0];
-				INST_ISC_READ:	tdo <= isc_read_shreg[0];
+				INST_BYPASS:		tdo <= bypass_shreg;
+				INST_IDCODE:		tdo <= idcode_shreg[0];
+				INST_ISC_READ:		tdo <= isc_read_shreg[0];
+				INST_ISC_PROGRAM:	tdo	<= isc_write_shreg[0];
 			endcase
 		end
 
