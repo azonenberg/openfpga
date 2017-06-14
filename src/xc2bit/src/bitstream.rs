@@ -31,7 +31,7 @@ use std::io::Write;
 use *;
 use fb::{read_fb_logical};
 use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx,
-                      total_logical_fuse_count};
+                      total_logical_fuse_count, clock_div_fuse_idx};
 use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical};
 use mc::{write_small_mc_to_jed, write_large_mc_to_jed};
 use zia::{zia_get_row_width};
@@ -358,65 +358,13 @@ impl Default for XC2ClockDiv {
 }
 
 /// Internal function to read the clock divider configuration from a 128-macrocell part
-fn read_128_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
-    XC2ClockDiv {
-        delay: !fuses[55323],
-        enabled: !fuses[55319],
-        div_ratio: match (fuses[55320], fuses[55321], fuses[55322]) {
-            (false, false, false) => XC2ClockDivRatio::Div2,
-            (false, false,  true) => XC2ClockDivRatio::Div4,
-            (false,  true, false) => XC2ClockDivRatio::Div6,
-            (false,  true,  true) => XC2ClockDivRatio::Div8,
-            ( true, false, false) => XC2ClockDivRatio::Div10,
-            ( true, false,  true) => XC2ClockDivRatio::Div12,
-            ( true,  true, false) => XC2ClockDivRatio::Div14,
-            ( true,  true,  true) => XC2ClockDivRatio::Div16,
-        }
-    }
-}
+fn read_clock_div_logical(device: XC2Device, fuses: &[bool]) -> XC2ClockDiv {
+    let clock_fuse_block = clock_div_fuse_idx(device);
 
-/// Internal function to read the clock divider configuration from a 256-macrocell part
-fn read_256_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
     XC2ClockDiv {
-        delay: !fuses[123231],
-        enabled: !fuses[123227],
-        div_ratio: match (fuses[123228], fuses[123229], fuses[123230]) {
-            (false, false, false) => XC2ClockDivRatio::Div2,
-            (false, false,  true) => XC2ClockDivRatio::Div4,
-            (false,  true, false) => XC2ClockDivRatio::Div6,
-            (false,  true,  true) => XC2ClockDivRatio::Div8,
-            ( true, false, false) => XC2ClockDivRatio::Div10,
-            ( true, false,  true) => XC2ClockDivRatio::Div12,
-            ( true,  true, false) => XC2ClockDivRatio::Div14,
-            ( true,  true,  true) => XC2ClockDivRatio::Div16,
-        }
-    }
-}
-
-/// Internal function to read the clock divider configuration from a 384-macrocell part
-fn read_384_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
-    XC2ClockDiv {
-        delay: !fuses[209335],
-        enabled: !fuses[209331],
-        div_ratio: match (fuses[209332], fuses[209333], fuses[209334]) {
-            (false, false, false) => XC2ClockDivRatio::Div2,
-            (false, false,  true) => XC2ClockDivRatio::Div4,
-            (false,  true, false) => XC2ClockDivRatio::Div6,
-            (false,  true,  true) => XC2ClockDivRatio::Div8,
-            ( true, false, false) => XC2ClockDivRatio::Div10,
-            ( true, false,  true) => XC2ClockDivRatio::Div12,
-            ( true,  true, false) => XC2ClockDivRatio::Div14,
-            ( true,  true,  true) => XC2ClockDivRatio::Div16,
-        }
-    }
-}
-
-/// Internal function to read the clock divider configuration from a 512-macrocell part
-fn read_512_clock_div_logical(fuses: &[bool]) -> XC2ClockDiv {
-    XC2ClockDiv {
-        delay: !fuses[296381],
-        enabled: !fuses[296377],
-        div_ratio: match (fuses[296378], fuses[296379], fuses[296380]) {
+        delay: !fuses[clock_fuse_block + 4],
+        enabled: !fuses[clock_fuse_block],
+        div_ratio: match (fuses[clock_fuse_block + 1], fuses[clock_fuse_block + 2], fuses[clock_fuse_block + 3]) {
             (false, false, false) => XC2ClockDivRatio::Div2,
             (false, false,  true) => XC2ClockDivRatio::Div4,
             (false,  true, false) => XC2ClockDivRatio::Div6,
@@ -615,6 +563,19 @@ impl XC2BitstreamBits {
             &XC2BitstreamBits::XC2C256{ref global_nets, ..} => global_nets,
             &XC2BitstreamBits::XC2C384{ref global_nets, ..} => global_nets,
             &XC2BitstreamBits::XC2C512{ref global_nets, ..} => global_nets,
+        }
+    }
+
+    pub fn get_clock_div(&self) -> Option<&XC2ClockDiv> {
+        match self {
+            &XC2BitstreamBits::XC2C32{..} => None,
+            &XC2BitstreamBits::XC2C32A{..} => None,
+            &XC2BitstreamBits::XC2C64{..} => None,
+            &XC2BitstreamBits::XC2C64A{..} => None,
+            &XC2BitstreamBits::XC2C128{ref clock_div, ..} => Some(clock_div),
+            &XC2BitstreamBits::XC2C256{ref clock_div, ..} => Some(clock_div),
+            &XC2BitstreamBits::XC2C384{ref clock_div, ..} => Some(clock_div),
+            &XC2BitstreamBits::XC2C512{ref clock_div, ..} => Some(clock_div),
         }
     }
 
@@ -857,68 +818,25 @@ impl XC2BitstreamBits {
             if self.get_global_nets().gck_enable[2] {"1"} else {"0"})?;
 
         // Clock divider
-        match self {
-            &XC2BitstreamBits::XC2C128 {clock_div, ..} => {
-                write!(writer, "L055319 {}{}*\n",
-                    if clock_div.enabled {"0"} else {"1"},
-                    match clock_div.div_ratio {
-                        XC2ClockDivRatio::Div2  => "000",
-                        XC2ClockDivRatio::Div4  => "001",
-                        XC2ClockDivRatio::Div6  => "010",
-                        XC2ClockDivRatio::Div8  => "011",
-                        XC2ClockDivRatio::Div10 => "100",
-                        XC2ClockDivRatio::Div12 => "101",
-                        XC2ClockDivRatio::Div14 => "110",
-                        XC2ClockDivRatio::Div16 => "111",
-                    })?;
-                write!(writer, "L055323 {}*\n", if clock_div.delay {"0"} else {"1"})?;
-            },
-            &XC2BitstreamBits::XC2C256 {clock_div, ..} => {
-                write!(writer, "L123227 {}{}*\n",
-                    if clock_div.enabled {"0"} else {"1"},
-                    match clock_div.div_ratio {
-                        XC2ClockDivRatio::Div2  => "000",
-                        XC2ClockDivRatio::Div4  => "001",
-                        XC2ClockDivRatio::Div6  => "010",
-                        XC2ClockDivRatio::Div8  => "011",
-                        XC2ClockDivRatio::Div10 => "100",
-                        XC2ClockDivRatio::Div12 => "101",
-                        XC2ClockDivRatio::Div14 => "110",
-                        XC2ClockDivRatio::Div16 => "111",
-                    })?;
-                write!(writer, "L123231 {}*\n", if clock_div.delay {"0"} else {"1"})?;
-            },
-            &XC2BitstreamBits::XC2C384 {clock_div, ..} => {
-                write!(writer, "L209331 {}{}*\n",
-                    if clock_div.enabled {"0"} else {"1"},
-                    match clock_div.div_ratio {
-                        XC2ClockDivRatio::Div2  => "000",
-                        XC2ClockDivRatio::Div4  => "001",
-                        XC2ClockDivRatio::Div6  => "010",
-                        XC2ClockDivRatio::Div8  => "011",
-                        XC2ClockDivRatio::Div10 => "100",
-                        XC2ClockDivRatio::Div12 => "101",
-                        XC2ClockDivRatio::Div14 => "110",
-                        XC2ClockDivRatio::Div16 => "111",
-                    })?;
-                write!(writer, "L209335 {}*\n", if clock_div.delay {"0"} else {"1"})?;
-            },
-            &XC2BitstreamBits::XC2C512 {clock_div, ..} => {
-                write!(writer, "L296377 {}{}*\n",
-                    if clock_div.enabled {"0"} else {"1"},
-                    match clock_div.div_ratio {
-                        XC2ClockDivRatio::Div2  => "000",
-                        XC2ClockDivRatio::Div4  => "001",
-                        XC2ClockDivRatio::Div6  => "010",
-                        XC2ClockDivRatio::Div8  => "011",
-                        XC2ClockDivRatio::Div10 => "100",
-                        XC2ClockDivRatio::Div12 => "101",
-                        XC2ClockDivRatio::Div14 => "110",
-                        XC2ClockDivRatio::Div16 => "111",
-                    })?;
-                write!(writer, "L296381 {}*\n", if clock_div.delay {"0"} else {"1"})?;
-            },
-            _ => {},
+        if let Some(clock_div) = self.get_clock_div() {
+            let clock_fuse_block = clock_div_fuse_idx(self.device_type());
+
+            write!(writer, "L{:06} {}{}*\n",
+                clock_fuse_block,
+                if clock_div.enabled {"0"} else {"1"},
+                match clock_div.div_ratio {
+                    XC2ClockDivRatio::Div2  => "000",
+                    XC2ClockDivRatio::Div4  => "001",
+                    XC2ClockDivRatio::Div6  => "010",
+                    XC2ClockDivRatio::Div8  => "011",
+                    XC2ClockDivRatio::Div10 => "100",
+                    XC2ClockDivRatio::Div12 => "101",
+                    XC2ClockDivRatio::Div14 => "110",
+                    XC2ClockDivRatio::Div16 => "111",
+                })?;
+            write!(writer, "L{:06} {}*\n",
+                clock_fuse_block + 4,
+                if clock_div.delay {"0"} else {"1"})?;
         }
 
         // GSR
@@ -1187,7 +1105,7 @@ pub fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         fb: fb,
         iobs: iobs,
         global_nets: global_nets,
-        clock_div: read_128_clock_div_logical(fuses),
+        clock_div: read_clock_div_logical(XC2Device::XC2C128, fuses),
         data_gate: !fuses[55335],
         use_vref: !fuses[55340],
         ivoltage: [
@@ -1214,7 +1132,7 @@ pub fn read_256_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         fb: fb,
         iobs: iobs,
         global_nets: global_nets,
-        clock_div: read_256_clock_div_logical(fuses),
+        clock_div: read_clock_div_logical(XC2Device::XC2C256, fuses),
         data_gate: !fuses[123243],
         use_vref: !fuses[123248],
         ivoltage: [
@@ -1241,7 +1159,7 @@ pub fn read_384_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         fb: fb,
         iobs: iobs,
         global_nets: global_nets,
-        clock_div: read_384_clock_div_logical(fuses),
+        clock_div: read_clock_div_logical(XC2Device::XC2C384, fuses),
         data_gate: !fuses[209347],
         use_vref: !fuses[209356],
         ivoltage: [
@@ -1272,7 +1190,7 @@ pub fn read_512_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
         fb: fb,
         iobs: iobs,
         global_nets: global_nets,
-        clock_div: read_512_clock_div_logical(fuses),
+        clock_div: read_clock_div_logical(XC2Device::XC2C512, fuses),
         data_gate: !fuses[296393],
         use_vref: !fuses[296402],
         ivoltage: [

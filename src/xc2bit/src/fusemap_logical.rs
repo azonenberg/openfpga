@@ -204,3 +204,13 @@ pub fn total_logical_fuse_count(device: XC2Device) -> usize {
         XC2Device::XC2C512 => 296403,
     }
 }
+
+pub fn clock_div_fuse_idx(device: XC2Device) -> usize {
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A => unreachable!(),
+        XC2Device::XC2C128 => 55319,
+        XC2Device::XC2C256 => 123227,
+        XC2Device::XC2C384 => 209331,
+        XC2Device::XC2C512 => 296377,
+    }
+}
