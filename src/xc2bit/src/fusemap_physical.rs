@@ -169,3 +169,35 @@ pub fn zia_block_loc(device: XC2Device, fb: u32) -> (usize, usize) {
         (and_x + 113, and_y)
     }
 }
+
+pub fn mc_block_loc(device: XC2Device, fb: u32) -> (usize, usize, bool) {
+    match device {
+        // "OR in the middle" but "small" macrocells (note that internal bit ordering is different!)
+        XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A => {
+            let (and_x, and_y, mirror) = and_block_loc(device, fb);
+            if !mirror {
+                (and_x - 9, and_y, mirror)
+            } else {
+                (and_x + 9, and_y, mirror)
+            }
+        },
+        // "OR in the middle" but "large" macrocells
+        XC2Device::XC2C256 => {
+            let (and_x, and_y, mirror) = and_block_loc(device, fb);
+            if !mirror {
+                (and_x - 10, and_y, mirror)
+            } else {
+                (and_x + 10, and_y, mirror)
+            }
+        },
+        // "OR on the side" (can only be with "large" macrocells, but these are different from the 256 ones)
+        XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
+            let (or_x, or_y, mirror) = or_block_loc(device, fb);
+            if !mirror {
+                (or_x - 15, or_y, mirror)
+            } else {
+                (or_x + 15, or_y, mirror)
+            }
+        }
+    }
+}

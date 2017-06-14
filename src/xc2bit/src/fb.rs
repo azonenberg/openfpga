@@ -180,6 +180,10 @@ impl XC2BitstreamFB {
     /// `device` must be the device type this FB was extracted from.
     /// `fb` must be the index of this function block.
     pub fn to_crbit(&self, device: XC2Device, fb: u32, fuse_array: &mut FuseArray) {
+        for i in 0..MCS_PER_FB {
+            self.ffs[i].to_crbit(device, fb, i as u32, fuse_array);
+        }
+
         // ZIA
         let (x, y) = zia_block_loc(device, fb);
         for zia_row in 0..INPUTS_PER_ANDTERM {
