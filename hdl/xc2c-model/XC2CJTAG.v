@@ -1,3 +1,4 @@
+`default_nettype none
 /***********************************************************************************************************************
  * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
@@ -19,7 +20,7 @@
 /**
 	@brief JTAG stuff for an XC2C-series device
  */
-module XC2CJTAG(tdi, tms, tck, tdo);
+module XC2CJTAG(tdi, tms, tck, tdo, debug_led, debug_gpio);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
@@ -34,7 +35,10 @@ module XC2CJTAG(tdi, tms, tck, tdo);
 	input wire					tdi;
 	input wire					tms;
 	input wire					tck;
-	output wire					tdo;
+	output reg					tdo;
+
+	output reg[3:0]				debug_led = 0;
+	output reg[7:0]				debug_gpio = 0;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The core JTAG state machine
@@ -63,7 +67,7 @@ module XC2CJTAG(tdi, tms, tck, tdo);
 		case(state)
 
 			STATE_TEST_LOGIC_RESET: begin
-				if(tms)
+				if(!tms)
 					state			<= STATE_RUN_TEST_IDLE;
 			end	//end STATE_TEST_LOGIC_RESET
 
@@ -167,6 +171,14 @@ module XC2CJTAG(tdi, tms, tck, tdo);
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Device configuration states
+
+	reg			isc_enabled				= 0;
+	reg			isc_disabled			= 0;
+	reg			configured				= 0;
+	reg			read_locked				= 0;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The instruction register
 
 	//see XC2C programmer qualification spec v1.3 p25-26
@@ -201,11 +213,157 @@ module XC2CJTAG(tdi, tms, tck, tdo);
 	localparam INST_USERCODE			= 8'hfd;
 	localparam INST_BYPASS				= 8'hff;
 
-	reg[7:0] ir = INST_IDCODE;
+	reg[7:0] ir			= INST_IDCODE;
+	reg[7:0] ir_shreg	= 0;
 
-	//Capture stuff
+	//Instruction loading and capture
+	always @(posedge tck) begin
+
+		case(state)
+
+			//Reset instruction to IDCODE upon reset
+			STATE_TEST_LOGIC_RESET: begin
+				ir				<= INST_IDCODE;
+			end	//end STATE_TEST_LOGIC_RESET
+
+			//Instruction capture, per XC2C programming spec figure 12 (p. 21)
+			STATE_CAPTURE_IR: begin
+				ir_shreg[7:6]	<= 2'b00;
+				ir_shreg[5]		<= isc_disabled;
+				ir_shreg[4]		<= isc_enabled;
+				ir_shreg[3]		<= read_locked;
+				ir_shreg[2]		<= configured;
+				ir_shreg[1:0]	<= 2'b01;
+			end	//end STATE_CAPTURE_IR
+
+			//Loading a new IR
+			STATE_SHIFT_IR: begin
+				ir_shreg		<= {tdi, ir_shreg[7:1]};
+			end	//end STATE_SHIFT_IR
+
+			//Done, save the new IR
+			STATE_UPDATE_IR: begin
+				ir				<= ir_shreg;
+			end	//end STATE_UPDATE_IR
+
+		endcase
+
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// BYPASS DR
+
+	reg		bypass_shreg	= 0;
+
+	always @(posedge tck) begin
+
+		case(state)
+			STATE_SHIFT_DR: begin
+				bypass_shreg	<= tdi;
+			end	//end STATE_SHIFT_DR
+		endcase
+
+	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// IDCODE DR
+
+	reg[31:0] idcode;
+	initial begin
+		idcode[31:28]	<= 4'hf;	//stepping 0xF, this hopefully doesn't exist IRL
+		idcode[27:25]	<= 3'h3;	//CoolRunner-II
+		idcode[24:22]	<= 3'h3;	//CoolRunner-II
+
+		//Macrocell count
+		case(MACROCELLS)
+			32:	idcode[21:16]		<= 6'h21;	//01 = xc2c32, not supported
+			64: idcode[21:16]		<= 6'h25;	//05 = xc2c64, not supported
+			128: idcode[21:16]		<= 6'h18;
+			256: idcode[21:16]		<= 6'h14;
+			384: idcode[21:16]		<= 6'h15;
+			512: idcode[21:16]		<= 6'h17;
+			default: idcode[21:16]	<= 0;
+		endcase
+
+		idcode[15]		<= 1'h1;	//always 1
+
+		//Package identifier
+		case(MACROCELLS)
+			32: begin
+				if(PACKAGE == "QFG32")
+					idcode[14:12]	<= 3'h1;
+				else if(PACKAGE == "CPG56")
+					idcode[14:12]	<= 3'h3;
+				else if(PACKAGE == "VQG44")
+					idcode[14:12]	<= 3'h4;
+				else begin
+					$display("Invalid package %s for 32 macrocells", PACKAGE);
+					$finish;
+				end
+			end
+
+			default: begin
+				$display("Don't have package IDs coded up for other densities yet\n");
+				$finish;
+			end
+		endcase
+
+		idcode[11:0]	<= 12'h093;	//Xilinx vendor code
+
+	end
+
+	reg[31:0] idcode_shreg = 0;
+
+	always @(posedge tck) begin
+
+		case(state)
+
+			//IDCODE capture
+			STATE_CAPTURE_DR: begin
+				idcode_shreg <= idcode;
+			end	//end STATE_CAPTURE_DR
+
+			//Loading a new IR
+			STATE_SHIFT_DR: begin
+				idcode_shreg		<= {tdi, idcode_shreg[31:1]};
+			end	//end STATE_SHIFT_DR
+
+			//no update, writes to IDCODE are ignored
+
+		endcase
+
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// TDO muxing
+
+	always @(*) begin
+
+		tdo <= 0;
+
+		//IR stuff
+		if(state == STATE_SHIFT_IR)
+			tdo		<= ir_shreg[0];
+
+		//DR stuff
+		else if(state == STATE_SHIFT_DR) begin
+			case(ir)
+				INST_BYPASS:	tdo <= bypass_shreg;
+				INST_IDCODE:	tdo <= idcode_shreg[0];
+			endcase
+		end
+
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Debug status outputs
+
+	//3:0 = pmod_d[3:0]
+	//7:0 = pmod_c[3:0]
+	always @(*) begin
+		debug_gpio		<= 0;
+		debug_gpio[0]	<= (ir == INST_IDCODE);
+		debug_gpio[1]	<= (ir == INST_BYPASS);
+	end
 
 endmodule

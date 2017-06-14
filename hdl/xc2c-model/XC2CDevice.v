@@ -1,3 +1,4 @@
+`default_nettype none
 /***********************************************************************************************************************
  * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
@@ -21,7 +22,8 @@
  */
 module XC2CDevice(
 	jtag_tdi, jtag_tms, jtag_tck, jtag_tdo,
-	dedicated_input, macrocell_io);
+	dedicated_input, macrocell_io,
+	debug_led, debug_gpio);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
@@ -33,28 +35,34 @@ module XC2CDevice(
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Helpers for figuring out dimensions etc of the device
 
-	function integer ConfigMemoryWidth(integer cells)
-		case(cells)
-			32:			ConfigMemoryWidth <= 260;
-			64:			ConfigMemoryWidth <= 274;
-			128:		ConfigMemoryWidth <= 752;
-			256:		ConfigMemoryWidth <= 1364;
-			384:		ConfigMemoryWidth <= 1868;
-			512:		ConfigMemoryWidth <= 1980;
-			default:	ConfigMemoryWidth <= 0;
-		endcase
+	function integer ConfigMemoryWidth;
+		input[15:0] cells;
+		begin
+			case(cells)
+				32:			ConfigMemoryWidth = 260;
+				64:			ConfigMemoryWidth = 274;
+				128:		ConfigMemoryWidth = 752;
+				256:		ConfigMemoryWidth = 1364;
+				384:		ConfigMemoryWidth = 1868;
+				512:		ConfigMemoryWidth = 1980;
+				default:	ConfigMemoryWidth = 0;
+			endcase
+		end
 	endfunction
 
-	function integer ConfigMemoryDepth(integer cells)
-		case(cells)
-			32:			ConfigMemoryDepth <= 49;
-			64:			ConfigMemoryDepth <= 97;
-			128:		ConfigMemoryDepth <= 81;
-			256:		ConfigMemoryDepth <= 97;
-			384:		ConfigMemoryDepth <= 121;
-			512:		ConfigMemoryDepth <= 161;
-			default:	ConfigMemoryDepth <= 0;
-		endcase
+	function integer ConfigMemoryDepth;
+		input[15:0] cells;
+		begin
+			case(cells)
+				32:			ConfigMemoryDepth = 49;
+				64:			ConfigMemoryDepth = 97;
+				128:		ConfigMemoryDepth = 81;
+				256:		ConfigMemoryDepth = 97;
+				384:		ConfigMemoryDepth = 121;
+				512:		ConfigMemoryDepth = 161;
+				default:	ConfigMemoryDepth = 0;
+			endcase
+		end
 	endfunction
 
 	localparam SHREG_WIDTH	= ConfigMemoryWidth(MACROCELLS);
@@ -89,6 +97,9 @@ module XC2CDevice(
 													//Note that not all of these are broken out to bond pads;
 													//buried macrocells drive a constant 0 here
 
+	output wire[3:0]			debug_led;
+	output wire[7:0]			debug_gpio;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The SRAM copy of the config bitstream (directly drives device behavior)
 
@@ -96,7 +107,7 @@ module XC2CDevice(
 
 	integer i;
 	initial begin
-		for(i=0; i<MEM_DEPTH; i++)
+		for(i=0; i<MEM_DEPTH; i=i+1)
 			ram_bitstream[i] <= {SHREG_WIDTH{1'b1}};	//copied from blank EEPROM = all 1s
 	end
 
@@ -115,7 +126,10 @@ module XC2CDevice(
 		.tdi(jtag_tdi),
 		.tdo(jtag_tdo),
 		.tms(jtag_tms),
-		.tck(jtag_tck)
+		.tck(jtag_tck),
+
+		.debug_led(debug_led),
+		.debug_gpio(debug_gpio)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
