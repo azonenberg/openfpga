@@ -32,6 +32,7 @@ use *;
 use fb::{read_fb_logical};
 use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx,
                       total_logical_fuse_count, clock_div_fuse_idx};
+use fusemap_physical::{fuse_array_dims};
 use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical};
 use mc::{write_small_mc_to_jed, write_large_mc_to_jed};
 use zia::{zia_get_row_width};
@@ -68,6 +69,18 @@ impl XC2Bitstream {
         write!(writer, "\x030000\n")?;
 
         Ok(())
+    }
+
+    /// Converts the bitstream into a FuseArray object so that it can be written to the native "crbit" format
+    pub fn to_crbit(&self) -> FuseArray {
+        let (w, h) = fuse_array_dims(self.bits.device_type());
+        let mut fuse_array = FuseArray::from_dim(w, h);
+
+        fuse_array.dev_name_str = Some(format!("{}-{}-{}", self.bits.device_type(), self.speed_grade, self.package));
+
+        // TODO: Actual stuff
+
+        fuse_array
     }
 
     /// Construct a new blank bitstream of the given part

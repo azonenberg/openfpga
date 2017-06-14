@@ -55,10 +55,14 @@ pub const MCS_PER_FB: usize = 16;
 mod bitstream;
 pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets, XC2ClockDivRatio, XC2ClockDiv, process_jed};
 
+mod crbit;
+pub use crbit::{FuseArray};
+
 mod fb;
 pub use fb::{XC2BitstreamFB, CTC, CTR, CTS, CTE, get_pta, get_ptb, get_ptc};
 
 mod fusemap_logical;
+mod fusemap_physical;
 
 mod iob;
 pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, XC2IOBIbufMode, XC2MCLargeIOB,
