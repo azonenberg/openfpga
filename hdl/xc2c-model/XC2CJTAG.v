@@ -302,6 +302,83 @@ module XC2CJTAG(tdi, tms, tck, tdo, debug_led, debug_gpio);
 				end
 			end
 
+			64: begin
+				if(PACKAGE == "VQG44")
+					idcode[14:12]	<= 3'h6;
+				else if(PACKAGE == "QFG48")
+					idcode[14:12]	<= 3'h1;
+				else if(PACKAGE == "CPG56")
+					idcode[14:12]	<= 3'h5;
+				else if(PACKAGE == "VQG100")
+					idcode[14:12]	<= 3'h4;
+				else if(PACKAGE == "CPG132")
+					idcode[14:12]	<= 3'h3;
+				else begin
+					$display("Invalid package %s for 64 macrocells", PACKAGE);
+					$finish;
+				end
+			end
+
+			128: begin
+				if(PACKAGE == "VQG100")
+					idcode[14:12]	<= 3'h2;
+				else if(PACKAGE == "CPG132")
+					idcode[14:12]	<= 3'h3;
+				else if(PACKAGE == "TQG144")
+					idcode[14:12]	<= 3'h4;
+				else if(PACKAGE == "FTG256")
+					idcode[14:12]	<= 3'h6;
+				else begin
+					$display("Invalid package %s for 128 macrocells", PACKAGE);
+					$finish;
+				end
+			end
+
+			256: begin
+				if(PACKAGE == "VQG100")
+					idcode[14:12]	<= 3'h2;
+				else if(PACKAGE == "CPG132")
+					idcode[14:12]	<= 3'h3;
+				else if(PACKAGE == "TQG144")
+					idcode[14:12]	<= 3'h4;
+				else if(PACKAGE == "PQG208")
+					idcode[14:12]	<= 3'h5;
+				else if(PACKAGE == "FTG256")
+					idcode[14:12]	<= 3'h6;
+				else begin
+					$display("Invalid package %s for 256 macrocells", PACKAGE);
+					$finish;
+				end
+			end
+
+			384: begin
+				if(PACKAGE == "TQG144")
+					idcode[14:12]	<= 3'h4;
+				else if(PACKAGE == "PQG208")
+					idcode[14:12]	<= 3'h5;
+				else if(PACKAGE == "FTG256")
+					idcode[14:12]	<= 3'h7;
+				else if(PACKAGE == "FGG324")
+					idcode[14:12]	<= 3'h2;
+				else begin
+					$display("Invalid package %s for 384 macrocells", PACKAGE);
+					$finish;
+				end
+			end
+
+			512: begin
+				if(PACKAGE == "PQG208")
+					idcode[14:12]	<= 3'h4;
+				else if(PACKAGE == "FTG256")
+					idcode[14:12]	<= 3'h6;
+				else if(PACKAGE == "FGG324")
+					idcode[14:12]	<= 3'h2;
+				else begin
+					$display("Invalid package %s for 512 macrocells", PACKAGE);
+					$finish;
+				end
+			end
+
 			default: begin
 				$display("Don't have package IDs coded up for other densities yet\n");
 				$finish;
