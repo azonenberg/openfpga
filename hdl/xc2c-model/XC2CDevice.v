@@ -136,6 +136,8 @@ module XC2CDevice(
 	// JTAG stuff
 
 	wire					config_erase;
+
+	wire					config_read_en;
 	wire[ADDR_BITS-1:0]		config_read_addr;
 	reg[SHREG_WIDTH-1:0]	config_read_data = 0;
 
@@ -146,7 +148,9 @@ module XC2CDevice(
 	//Read/write the EEPROM
 	//TODO: add read enable?
 	always @(posedge jtag_tck) begin
-		config_read_data <= ram_bitstream[config_read_addr];
+
+		if(config_read_en)
+			config_read_data <= ram_bitstream[config_read_addr];
 
 		if(config_write_en)
 			ram_bitstream[config_write_addr]	<= config_write_data;
@@ -173,6 +177,8 @@ module XC2CDevice(
 		.tck(jtag_tck),
 
 		.config_erase(config_erase),
+
+		.config_read_en(config_read_en),
 		.config_read_addr(config_read_addr),
 		.config_read_data(config_read_data),
 

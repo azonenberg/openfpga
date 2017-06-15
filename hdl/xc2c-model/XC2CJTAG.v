@@ -23,7 +23,7 @@
 module XC2CJTAG(
 	tdi, tms, tck, tdo,
 	config_erase,
-	config_read_addr, config_read_data,
+	config_read_en, config_read_addr, config_read_data,
 	config_write_en, config_write_addr, config_write_data,
 
 	debug_led, debug_gpio);
@@ -51,6 +51,7 @@ module XC2CJTAG(
 	output reg					config_erase		= 0;	//Erases all config memory
 															//This takes 100 ms IRL but for now we'll model it instantly
 
+	output reg					config_read_en		= 0;
 	output reg[ADDR_BITS-1:0]	config_read_addr	= 0;	//Address for reading the bitstream (real, not gray code)
 	input wire[SHREG_WIDTH-1:0]	config_read_data;
 
@@ -457,6 +458,17 @@ module XC2CJTAG(
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Gray code decode ROM
+
+	reg[7:0] gray_to_bin[255:0];
+
+	integer i;
+	initial begin
+		for(i=0; i<256; i=i+1)
+			gray_to_bin[i ^ (i >> 1)]	<= i;
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Config memory read
 
 	reg[SHREG_WIDTH-1:0] 	isc_read_shreg	= 0;
@@ -465,54 +477,58 @@ module XC2CJTAG(
 	wire[SHREG_WIDTH-1:0]	isc_read_shreg_adv = {tdi, isc_read_shreg[SHREG_WIDTH-1:1]};
 
 	//Gray coded read address: left N bits of the shift register
-	wire[ADDR_BITS-1:0]		isc_read_addr_gray	= isc_read_shreg_adv[SHREG_WIDTH-1 : SHREG_WIDTH-ADDR_BITS];
+	wire[ADDR_BITS-1:0]		isc_read_addr_gray	= isc_read_shreg[SHREG_WIDTH-1 : SHREG_WIDTH-ADDR_BITS];
 
-	//Convert Gray code to normal
-	reg[ADDR_BITS-1:0]		isc_read_addr_normal;
-	integer i;
+	//Invert the bit ordering of the address since the protocol is weird and has MSB at right
+	reg[ADDR_BITS-1:0]		isc_read_addr_gray_flipped;
 	always @(*) begin
-		isc_read_addr_normal[ADDR_BITS-1]	<= isc_read_addr_gray[ADDR_BITS-1];
-		for(i=ADDR_BITS-2; i>=0; i=i-1)
-			isc_read_addr_normal[i]	<= isc_read_addr_gray[i] ^ isc_read_addr_normal[i+1];
+		for(i=0; i<ADDR_BITS; i=i+1)
+			isc_read_addr_gray_flipped[i]	<= isc_read_addr_gray[ADDR_BITS - 1 - i];
 	end
 
+	reg	config_read_real = 0;
 	always @(posedge tck) begin
 
-		case(state)
+		config_read_en	<= 0;
 
-			//Load the data that we read
-			STATE_CAPTURE_DR: begin
-				isc_read_shreg		<= config_read_data;
-			end	//end STATE_CAPTURE_DR
+		if(ir == INST_ISC_READ) begin
+			case(state)
 
-			//Actual readout happens here
-			STATE_SHIFT_DR: begin
-				isc_read_shreg		<= isc_read_shreg_adv;
-			end	//end STATE_SHIFT_DR
+				//Load the data that we read
+				STATE_CAPTURE_DR: begin
+					isc_read_shreg		<= config_read_data;
+				end	//end STATE_CAPTURE_DR
 
-			//Update: save the de-Gray-ified read address
-			STATE_UPDATE_DR: begin
-				config_read_addr	<= isc_read_addr_normal;
-			end	//end STATE_UPDATE_DR
+				//Actual readout happens here
+				STATE_SHIFT_DR: begin
+					isc_read_shreg		<= isc_read_shreg_adv;
+				end	//end STATE_SHIFT_DR
 
-		endcase
+				//Update: save the de-Gray-ified read address
+				STATE_UPDATE_DR: begin
+					config_read_en		<= 1;
+					config_read_addr	<= gray_to_bin[isc_read_addr_gray_flipped];
+				end	//end STATE_UPDATE_DR
+
+			endcase
+		end
 
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Config memory writes
 
-	reg[SHREG_WIDTH + ADDR_BITS - 1 : 0] isc_write_shreg	= 0;
+	localparam WRITE_WIDTH = SHREG_WIDTH + ADDR_BITS;
+	reg[WRITE_WIDTH - 1 : 0] isc_write_shreg	= 0;
 
 	//Gray coded write address: left N bits of the shift register
 	wire[ADDR_BITS-1:0]		isc_write_addr_gray	= isc_write_shreg[SHREG_WIDTH +: ADDR_BITS];
 
-	//Convert Gray code to normal
-	reg[ADDR_BITS-1:0]		isc_write_addr_normal;
+	//Invert the bit ordering of the address since the protocol is weird and has MSB at right
+	reg[ADDR_BITS-1:0]		isc_write_addr_gray_flipped;
 	always @(*) begin
-		isc_write_addr_normal[ADDR_BITS-1]	<= isc_write_addr_gray[ADDR_BITS-1];
-		for(i=ADDR_BITS-2; i>=0; i=i-1)
-			isc_write_addr_normal[i]	<= isc_write_addr_gray[i] ^ isc_write_addr_normal[i+1];
+		for(i=0; i<ADDR_BITS; i=i+1)
+			isc_write_addr_gray_flipped[i]	<= isc_write_addr_gray[ADDR_BITS - 1 - i];
 	end
 
 	always @(posedge tck) begin
@@ -529,13 +545,13 @@ module XC2CJTAG(
 
 				//Read the new bitstream
 				STATE_SHIFT_DR: begin
-					isc_write_shreg		<= {tdi, isc_write_shreg[SHREG_WIDTH + ADDR_BITS -1 : 1]};
+					isc_write_shreg		<= {tdi, isc_write_shreg[WRITE_WIDTH - 1 : 1]};
 				end	//end STATE_SHIFT_DR
 
 				//Update: commit the write to bitstream
 				STATE_UPDATE_DR: begin
 					config_write_en		<= 1;
-					config_write_addr	<= isc_write_addr_normal;
+					config_write_addr	<= gray_to_bin[isc_write_addr_gray_flipped];
 					config_write_data	<= isc_write_shreg[SHREG_WIDTH-1 : 0];
 				end	//end STATE_UPDATE_DR
 
