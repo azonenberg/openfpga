@@ -666,7 +666,97 @@ impl XC2BitstreamBits {
             },
         }
 
+        // Weird extra input-only pin
+        match self {
+            &XC2BitstreamBits::XC2C32 {ref inpin, ..} |
+            &XC2BitstreamBits::XC2C32A {ref inpin, ..} => {
+                fuse_array.set(131, 24, inpin.schmitt_trigger);
+                fuse_array.set(132, 24, inpin.termination_enabled);
+            },
+            _ => {}
+        }
+
+        // Global nets
         self.get_global_nets().to_crbit(self.device_type(), fuse_array);
+
+        // Bank voltages and miscellaneous
+        match self {
+            &XC2BitstreamBits::XC2C32 {ref ivoltage, ref ovoltage, ..} |
+            &XC2BitstreamBits::XC2C32A {legacy_ivoltage: ref ivoltage, legacy_ovoltage: ref ovoltage, ..} => {
+                fuse_array.set(130, 24, !*ovoltage);
+                fuse_array.set(130, 25, !*ivoltage);
+            }
+            &XC2BitstreamBits::XC2C64 {ref ivoltage, ref ovoltage, ..} |
+            &XC2BitstreamBits::XC2C64A {legacy_ivoltage: ref ivoltage, legacy_ovoltage: ref ovoltage, ..} => {
+                fuse_array.set(137, 23, !*ovoltage);
+                fuse_array.set(138, 23, !*ivoltage);
+            }
+            &XC2BitstreamBits::XC2C128 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
+                fuse_array.set(371, 67, !*data_gate);
+
+                fuse_array.set(8, 67, !ivoltage[0]);
+                fuse_array.set(9, 67, !ovoltage[0]);
+                fuse_array.set(368, 67, !ivoltage[1]);
+                fuse_array.set(369, 67, !ovoltage[1]);
+
+                fuse_array.set(10, 67, !*use_vref);
+            }
+            &XC2BitstreamBits::XC2C256 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
+                fuse_array.set(518, 23, !*data_gate);
+
+                fuse_array.set(175, 23, !ivoltage[0]);
+                fuse_array.set(176, 23, !ovoltage[0]);
+                fuse_array.set(515, 23, !ivoltage[1]);
+                fuse_array.set(516, 23, !ovoltage[1]);
+                
+                fuse_array.set(177, 23, !*use_vref);
+            }
+            &XC2BitstreamBits::XC2C384 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
+                fuse_array.set(932, 17, !*data_gate);
+
+                fuse_array.set(936, 17, !ivoltage[0]);
+                fuse_array.set(937, 17, !ovoltage[0]);
+                fuse_array.set(1864, 17, !ivoltage[1]);
+                fuse_array.set(1865, 17, !ovoltage[1]);
+                fuse_array.set(1, 17, !ivoltage[2]);
+                fuse_array.set(2, 17, !ovoltage[2]);
+                fuse_array.set(929, 17, !ivoltage[3]);
+                fuse_array.set(930, 17, !ovoltage[3]);
+                
+                fuse_array.set(3, 17, !*use_vref);
+            }
+            &XC2BitstreamBits::XC2C512 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
+                fuse_array.set(982, 147, !*data_gate);
+
+                fuse_array.set(992, 147, ivoltage[0]);
+                fuse_array.set(991, 147, ovoltage[0]);
+                fuse_array.set(1965, 147, ivoltage[1]);
+                fuse_array.set(1964, 147, ovoltage[1]);
+                fuse_array.set(3, 147, ivoltage[2]);
+                fuse_array.set(2, 147, ovoltage[2]);
+                fuse_array.set(985, 147, ivoltage[3]);
+                fuse_array.set(984, 147, ovoltage[3]);
+                
+                fuse_array.set(1, 147, !*use_vref);
+            }
+        }
+
+        // A-variant bank voltages
+        match self {
+            &XC2BitstreamBits::XC2C32A {ref ivoltage, ref ovoltage, ..} => {
+                fuse_array.set(131, 25, !ivoltage[0]);
+                fuse_array.set(132, 25, !ovoltage[0]);
+                fuse_array.set(133, 25, !ivoltage[1]);
+                fuse_array.set(134, 25, !ovoltage[1]);
+            },
+            &XC2BitstreamBits::XC2C64A {ref ivoltage, ref ovoltage, ..} => {
+                fuse_array.set(139, 23, !ivoltage[0]);
+                fuse_array.set(140, 23, !ovoltage[0]);
+                fuse_array.set(141, 23, !ivoltage[1]);
+                fuse_array.set(142, 23, !ovoltage[1]);
+            },
+            _ => {}
+        }
     }
 
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
