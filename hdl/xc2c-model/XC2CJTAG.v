@@ -24,9 +24,7 @@ module XC2CJTAG(
 	tdi, tms, tck, tdo,
 	config_erase,
 	config_read_en, config_read_addr, config_read_data,
-	config_write_en, config_write_addr, config_write_data,
-
-	debug_led, debug_gpio);
+	config_write_en, config_write_addr, config_write_data);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
@@ -58,9 +56,6 @@ module XC2CJTAG(
 	output reg					config_write_en		= 0;
 	output reg[ADDR_BITS-1:0]	config_write_addr	= 0;
 	output reg[SHREG_WIDTH-1:0]	config_write_data	= 0;
-
-	output reg[3:0]				debug_led = 0;
-	output reg[7:0]				debug_gpio = 0;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The core JTAG state machine
@@ -581,17 +576,6 @@ module XC2CJTAG(
 			endcase
 		end
 
-	end
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Debug status outputs
-
-	//3:0 = pmod_d[3:0]
-	//7:0 = pmod_c[3:0]
-	always @(*) begin
-		debug_gpio		<= 0;
-		debug_gpio[0]	<= (ir == INST_ISC_READ);
-		debug_gpio[1]	<= (ir == INST_BYPASS);
 	end
 
 endmodule

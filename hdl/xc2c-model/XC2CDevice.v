@@ -22,8 +22,7 @@
  */
 module XC2CDevice(
 	jtag_tdi, jtag_tms, jtag_tck, jtag_tdo,
-	dedicated_input, macrocell_io,
-	debug_led, debug_gpio);
+	dedicated_input, macrocell_io);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
@@ -113,13 +112,21 @@ module XC2CDevice(
 													//Note that not all of these are broken out to bond pads;
 													//buried macrocells drive a constant 0 here
 
-	output wire[3:0]			debug_led;
-	output wire[7:0]			debug_gpio;
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The SRAM copy of the config bitstream (directly drives device behavior)
 
 	reg[SHREG_WIDTH-1:0] ram_bitstream[MEM_DEPTH-1:0];
+
+	/*
+		Row configuration, left to right:
+		1		259			Transfer bit (ignored)
+		9		258:250		FB2 macrocells
+		112		249:138		FB2 PLA
+		16		137:122		ZIA (interleaved)
+		112		121:10		FB1 PLA
+		9		9:1			FB1 macrocells
+		1		0			Transfer bit (ignored)
+	 */
 
 	integer i;
 	initial begin
@@ -184,14 +191,111 @@ module XC2CDevice(
 
 		.config_write_en(config_write_en),
 		.config_write_addr(config_write_addr),
-		.config_write_data(config_write_data),
-
-		.debug_led(debug_led),
-		.debug_gpio(debug_gpio)
+		.config_write_data(config_write_data)
 	);
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Global routing
+
+	//TODO: input buffers and muxes for these based on InZ etc
+	wire[31:0]		macrocell_to_zia = 32'h0;
+	wire[31:0]		ibuf_to_zia = macrocell_io;
+
+	//Left side (FB2)
+	wire[39:0]		left_zia_out;
+	reg[40*8-1:0]	left_zia_config;
+	XC2CZIA #(
+		.MACROCELLS(MACROCELLS)
+	) left_zia (
+		.dedicated_in(dedicated_input),
+		.ibuf_in(ibuf_to_zia),
+		.macrocell_in(macrocell_to_zia),
+		.zia_out(left_zia_out),
+		.config_bits(left_zia_config)
+		);
+
+	//Right side (FB1)
+	wire[39:0]		right_zia_out;
+	reg[40*8-1:0]	right_zia_config;
+	XC2CZIA #(
+		.MACROCELLS(MACROCELLS)
+	) right_zia (
+		.dedicated_in(dedicated_input),
+		.ibuf_in(ibuf_to_zia),
+		.macrocell_in(macrocell_to_zia),
+		.zia_out(right_zia_out),
+		.config_bits(right_zia_config)
+		);
+
+	//Hook up the config bits
+	always @(*) begin
+		for(i=0; i<40; i=i+1) begin
+
+			//The ZIA is bits 137:122
+			//MSB is FB1, next is FB2.
+			//We have stuff at the top and bottom of array, with global config in the middle
+			if(i > 20) begin
+				right_zia_config[i*8 +: 8] <=
+				{
+					ram_bitstream[i-8][137],
+					ram_bitstream[i-8][135],
+					ram_bitstream[i-8][133],
+					ram_bitstream[i-8][131],
+					ram_bitstream[i-8][129],
+					ram_bitstream[i-8][127],
+					ram_bitstream[i-8][125],
+					ram_bitstream[i-8][123]
+				};
+
+				left_zia_config[i*8 +: 8] <=
+				{
+					ram_bitstream[i-8][136],
+					ram_bitstream[i-8][134],
+					ram_bitstream[i-8][132],
+					ram_bitstream[i-8][130],
+					ram_bitstream[i-8][128],
+					ram_bitstream[i-8][126],
+					ram_bitstream[i-8][124],
+					ram_bitstream[i-8][122]
+				};
+			end
+			else begin
+				right_zia_config[i*8 +: 8] <=
+				{
+					ram_bitstream[i][137],
+					ram_bitstream[i][135],
+					ram_bitstream[i][133],
+					ram_bitstream[i][131],
+					ram_bitstream[i][129],
+					ram_bitstream[i][127],
+					ram_bitstream[i][125],
+					ram_bitstream[i][123]
+				};
+
+				left_zia_config[i*8 +: 8] <=
+				{
+					ram_bitstream[i][136],
+					ram_bitstream[i][134],
+					ram_bitstream[i][132],
+					ram_bitstream[i][130],
+					ram_bitstream[i][128],
+					ram_bitstream[i][126],
+					ram_bitstream[i][124],
+					ram_bitstream[i][122]
+				};
+			end
+
+		end
+	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The actual CPLD function blocks
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Debug stuff
+
+	assign macrocell_io[6:3] = right_zia_out[7:4];
+
+	assign macrocell_io[7] = 1'b0;
 
 endmodule
