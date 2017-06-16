@@ -32,7 +32,8 @@ use *;
 use fb::{read_fb_logical};
 use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx,
                       total_logical_fuse_count, clock_div_fuse_idx};
-use fusemap_physical::{fuse_array_dims, gck_fuse_coords, gsr_fuse_coords, gts_fuse_coords, global_term_fuse_coord};
+use fusemap_physical::{fuse_array_dims, gck_fuse_coords, gsr_fuse_coords, gts_fuse_coords, global_term_fuse_coord,
+                       clock_div_fuse_coord};
 use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical};
 use mc::{write_small_mc_to_jed, write_large_mc_to_jed};
 use zia::{zia_get_row_width};
@@ -621,8 +622,6 @@ impl XC2BitstreamBits {
 
     /// Convert the actual bitstream bits to crbit format
     pub fn to_crbit(&self, fuse_array: &mut FuseArray) {
-        // TODO
-
         // FBs
         for i in 0..self.device_type().num_fbs() {
             self.get_fb()[i].to_crbit(self.device_type(), i as u32, fuse_array);
@@ -678,6 +677,30 @@ impl XC2BitstreamBits {
 
         // Global nets
         self.get_global_nets().to_crbit(self.device_type(), fuse_array);
+
+        // Clock divider
+        if let Some(clock_div) = self.get_clock_div() {
+            let ((clken_x, clken_y), (clkdiv0_x, clkdiv0_y), (clkdiv1_x, clkdiv1_y), (clkdiv2_x, clkdiv2_y),
+                (clkdelay_x, clkdelay_y)) = clock_div_fuse_coord(self.device_type());
+
+            fuse_array.set(clken_x, clken_y, !clock_div.enabled);
+
+            let divratio = match clock_div.div_ratio {
+                XC2ClockDivRatio::Div2  => (false, false, false),
+                XC2ClockDivRatio::Div4  => (false, false, true),
+                XC2ClockDivRatio::Div6  => (false, true, false),
+                XC2ClockDivRatio::Div8  => (false, true, true),
+                XC2ClockDivRatio::Div10 => (true, false, false),
+                XC2ClockDivRatio::Div12 => (true, false, true),
+                XC2ClockDivRatio::Div14 => (true, true, false),
+                XC2ClockDivRatio::Div16 => (true, true, true),
+            };
+            fuse_array.set(clkdiv0_x, clkdiv0_y, divratio.0);
+            fuse_array.set(clkdiv1_x, clkdiv1_y, divratio.1);
+            fuse_array.set(clkdiv2_x, clkdiv2_y, divratio.2);
+
+            fuse_array.set(clkdelay_x, clkdelay_y, !clock_div.delay);
+        }
 
         // Bank voltages and miscellaneous
         match self {
