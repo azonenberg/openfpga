@@ -105,6 +105,7 @@ impl FuseArray {
         })
     }
 
+    /// Constructs a new `FuseArray` object with the given dimensions and filled with 0s
     pub fn from_dim(w: usize, h: usize) -> FuseArray {
         FuseArray {
             w,
@@ -113,6 +114,8 @@ impl FuseArray {
         }
     }
 
+    /// Writes the fuse array to the internal "crbit" file format, which is an ASCII file containing '1' and '0'.
+    /// (This format is intended to be compatible with `$readmemb`.)
     pub fn write_to_writer(&self, writer: &mut Write) -> Result<(), io::Error> {
         write!(writer, "// crbit native bitstream file written by xc2bit\n")?;
         write!(writer, "// https://github.com/azonenberg/openfpga\n\n")?;

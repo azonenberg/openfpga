@@ -52,6 +52,7 @@ impl XC2IOBZIAMode {
         }
     }
 
+    /// decodes the INz bits
     pub fn decode(inz: (bool, bool)) -> Self {
         match inz {
             (false, false) => XC2IOBZIAMode::PAD,
@@ -93,6 +94,7 @@ impl XC2IOBOBufMode {
         }
     }
 
+    /// decodes the Oe bits
     pub fn decode(oe: (bool, bool, bool, bool)) -> Result<Self, &'static str> {
         Ok(match oe {
             (false, false, false, false) => XC2IOBOBufMode::PushPull,
@@ -178,6 +180,9 @@ impl XC2MCSmallIOB {
         Ok(())
     }
 
+    /// Write the crbit representation of the settings for this IO pin to the given `fuse_array`.
+    /// `device` must be the device type this FB was extracted from.
+    /// `iob` must be the index of this IO pin.
     pub fn to_crbit(&self, device: XC2Device, iob: u32, fuse_array: &mut FuseArray) {
         let (fb, mc) = iob_num_to_fb_ff_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
@@ -247,6 +252,9 @@ impl XC2MCSmallIOB {
         }
     }
 
+    /// Read the crbit representation of the settings for this IO pin from the given `fuse_array`.
+    /// `device` must be the device type this FB was extracted from.
+    /// `iob` must be the index of this IO pin.
     pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<XC2MCSmallIOB, &'static str> {
         let (fb, mc) = iob_num_to_fb_ff_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
@@ -355,6 +363,7 @@ impl XC2IOBIbufMode {
         }
     }
 
+    /// decodes the InMod bits
     pub fn decode(inmod: (bool, bool)) -> Self {
         match inmod {
             (false, false) => XC2IOBIbufMode::NoVrefNoSt,
@@ -442,6 +451,9 @@ impl XC2MCLargeIOB {
         Ok(())
     }
 
+    /// Write the crbit representation of the settings for this IO pin to the given `fuse_array`.
+    /// `device` must be the device type this FB was extracted from.
+    /// `iob` must be the index of this IO pin.
     pub fn to_crbit(&self, device: XC2Device, iob: u32, fuse_array: &mut FuseArray) {
         let (fb, mc) = iob_num_to_fb_ff_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
@@ -521,6 +533,9 @@ impl XC2MCLargeIOB {
         }
     }
 
+    /// Read the crbit representation of the settings for this IO pin from the given `fuse_array`.
+    /// `device` must be the device type this FB was extracted from.
+    /// `iob` must be the index of this IO pin.
     pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<XC2MCLargeIOB, &'static str> {
         let (fb, mc) = iob_num_to_fb_ff_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
