@@ -113,11 +113,21 @@ mod tests {
                 File::open(&txt_path).expect("failed to open txt file")
                     .read_to_end(&mut txt_data).expect("failed to read txt file");
 
+                // Read original JED
                 let (parsed_jed_data, device_name) = read_jed(&jed_data).expect("failed to read jed");
                 let device_name = device_name.expect("missing device name in jed");
 
                 let parsed_bitstream_data = process_jed(&parsed_jed_data, &device_name)
                     .expect("failed to process jed");
+
+                // Write to crbit
+                let mut crbit = Vec::new();
+                let write_fuse_array = parsed_bitstream_data.to_crbit();
+                write_fuse_array.write_to_writer(&mut crbit).expect("failed to write crbit");
+
+                // Read back from crbit
+                let read_fuse_array = FuseArray::from_file_contents(&crbit).expect("failed to read crbit");
+                let parsed_bitstream_data = process_crbit(&read_fuse_array).expect("failed to process crbit");
 
                 // FIXME: This is quite hacky
                 let mut new_jed = Vec::new();
