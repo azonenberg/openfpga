@@ -9161,33 +9161,37 @@ const F: bool = false;
 pub fn read_32_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
     -> Result<XC2ZIARowPiece, &'static str> {
 
+    let zia_row_fuses = &fuses[block_idx + row_idx * 8..block_idx + (row_idx + 1) * 8];
+
+    decode_32_zia_choice(row_idx, zia_row_fuses)
+}
+
+/// Internal function that takes a ZIA row and decodes the bit encoding for it
+pub fn decode_32_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, &'static str> {
     // This is an ugly workaround for the lack of stable slice patterns
     let zia_row_fuses = (
-        fuses[block_idx + row_idx * 8 + 0],
-        fuses[block_idx + row_idx * 8 + 1],
-        fuses[block_idx + row_idx * 8 + 2],
-        fuses[block_idx + row_idx * 8 + 3],
-        fuses[block_idx + row_idx * 8 + 4],
-        fuses[block_idx + row_idx * 8 + 5],
-        fuses[block_idx + row_idx * 8 + 6],
-        fuses[block_idx + row_idx * 8 + 7],
+        row_bits[0],
+        row_bits[1],
+        row_bits[2],
+        row_bits[3],
+        row_bits[4],
+        row_bits[5],
+        row_bits[6],
+        row_bits[7],
     );
 
-    let selected_input = match zia_row_fuses {
-        (F, T, T, T, T, T, T, F) => ZIA_MAP_32[row_idx][0],
-        (F, T, T, T, T, T, F, T) => ZIA_MAP_32[row_idx][1],
-        (F, T, T, T, T, F, T, T) => ZIA_MAP_32[row_idx][2],
-        (F, T, T, T, F, T, T, T) => ZIA_MAP_32[row_idx][3],
-        (F, T, T, F, T, T, T, T) => ZIA_MAP_32[row_idx][4],
-        (F, T, F, T, T, T, T, T) => ZIA_MAP_32[row_idx][5],
-        (T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
-        (F, F, T, T, T, T, T, T) => XC2ZIAInput::Zero,
-        _ => return Err("unknown ZIA input choice"),
-    };
-
     Ok(XC2ZIARowPiece {
-        selected: selected_input
-    })
+        selected: match zia_row_fuses {
+            (F, T, T, T, T, T, T, F) => ZIA_MAP_32[row][0],
+            (F, T, T, T, T, T, F, T) => ZIA_MAP_32[row][1],
+            (F, T, T, T, T, F, T, T) => ZIA_MAP_32[row][2],
+            (F, T, T, T, F, T, T, T) => ZIA_MAP_32[row][3],
+            (F, T, T, F, T, T, T, T) => ZIA_MAP_32[row][4],
+            (F, T, F, T, T, T, T, T) => ZIA_MAP_32[row][5],
+            (T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
+            (F, F, T, T, T, T, T, T) => XC2ZIAInput::Zero,
+            _ => return Err("unknown ZIA input choice"),
+    }})
 }
 
 /// Internal function that takes a ZIA row and choice and returns the bit encoding for it

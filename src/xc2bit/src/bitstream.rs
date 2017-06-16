@@ -1396,12 +1396,38 @@ pub fn read_512_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
     })
 }
 
+/// Common logic for reading bitstreams on "small" devices
+pub fn read_bitstream_physical_common_small(fuse_array: &FuseArray, device: XC2Device,
+    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCSmallIOB]) -> Result<(), &'static str> {
+
+    for i in 0..fb.len() {
+        fb[i] = XC2BitstreamFB::from_crbit(device, i as u32, fuse_array)?;
+        // let base_fuse = fb_fuse_idx(device, i as u32);
+        // let res = read_fb_logical(device, fuses, i as u32, base_fuse)?;
+        // fb[i] = res;
+
+        // let zia_row_width = zia_get_row_width(device);
+        // let size_of_zia = zia_row_width * INPUTS_PER_ANDTERM;
+        // let size_of_and = INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB;
+        // let size_of_or = ANDTERMS_PER_FB * MCS_PER_FB;
+        // let mut iob_fuse = base_fuse + size_of_zia + size_of_and + size_of_or;
+        // for ff in 0..MCS_PER_FB {
+        //     let iob = fb_ff_num_to_iob_num(device, i as u32, ff as u32);
+        //     let res = read_small_iob_logical(fuses, iob_fuse)?;
+        //     iobs[iob.unwrap() as usize] = res;
+        //     iob_fuse += 27;
+        // }
+    };
+
+    Ok(())
+}
+
 /// Internal function for parsing an XC2C32A bitstream
 pub fn read_32a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     let mut iobs = [XC2MCSmallIOB::default(); 32];
     
-    // read_bitstream_logical_common_small(fuses, XC2Device::XC2C32A, &mut fb, &mut iobs)?;
+    read_bitstream_physical_common_small(fuse_array, XC2Device::XC2C32A, &mut fb, &mut iobs)?;
 
     let inpin = read_32_extra_ibuf_physical(fuse_array);
 
