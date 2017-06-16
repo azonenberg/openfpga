@@ -59,7 +59,10 @@ impl FuseArray {
 
     /// Processes the given data and converts it into a `FuseArray` struct.
     pub fn from_file_contents(in_bytes: &[u8]) -> Result<FuseArray, &'static str> {
-        // let w = None;
+        // This capacity is approximate but close enough
+        let mut v = Vec::with_capacity(in_bytes.len());
+        let mut w = None;
+        let mut dev_name_str = None;
 
         let in_str = str::from_utf8(in_bytes);
         if in_str.is_err() {
@@ -69,14 +72,37 @@ impl FuseArray {
         for l in in_str.unwrap().split('\n') {
             let l = l.trim_matches(|c| c == ' ' || c == '\r' || c == '\n');
             if l.len() == 0 {
-                // ignore empty fields
+                // ignore empty lines
                 continue;
             }
 
-            println!("{}", l);
+            if l.starts_with("// DEVICE ") {
+                dev_name_str = Some(l["// DEVICE ".len()..].to_owned());
+            } else if !l.starts_with("//") {
+                // not a comment
+                if w.is_none() {
+                    w = Some(l.len());
+                }
+
+                for c in l.chars() {
+                    match c {
+                        '0' => v.push(false),
+                        '1' => v.push(true),
+                        _ => return Err("invalid character in crbit"),
+                    }
+                }
+            }
         }
 
-        unimplemented!();
+        if w.is_none() {
+            return Err("crbit contained no data");
+        }
+
+        Ok(FuseArray {
+            v,
+            w: w.unwrap(),
+            dev_name_str
+        })
     }
 
     pub fn from_dim(w: usize, h: usize) -> FuseArray {

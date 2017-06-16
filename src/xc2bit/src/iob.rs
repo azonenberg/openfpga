@@ -1118,3 +1118,14 @@ pub fn read_32_extra_ibuf_logical(fuses: &[bool]) -> XC2ExtraIBuf {
         termination_enabled: tm,
     }
 }
+
+/// Internal function that reads only the input-only pin configuration
+pub fn read_32_extra_ibuf_physical(fuse_array: &FuseArray) -> XC2ExtraIBuf {
+    let st = fuse_array.get(131, 24);
+    let tm = fuse_array.get(132, 24);
+
+    XC2ExtraIBuf {
+        schmitt_trigger: st,
+        termination_enabled: tm,
+    }
+}
