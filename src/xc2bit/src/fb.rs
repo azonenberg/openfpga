@@ -36,7 +36,7 @@ use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice, enc
           encode_384_zia_choice, encode_512_zia_choice, read_32_zia_fb_row_logical, read_64_zia_fb_row_logical,
           read_128_zia_fb_row_logical, read_256_zia_fb_row_logical, read_384_zia_fb_row_logical,
           read_512_zia_fb_row_logical, zia_get_row_width, decode_32_zia_choice, decode_64_zia_choice,
-          decode_128_zia_choice};
+          decode_128_zia_choice, decode_256_zia_choice};
 
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
@@ -381,12 +381,9 @@ impl XC2BitstreamFB {
                     decode_128_zia_choice(zia_row, &zia_bits)?
                 },
                 XC2Device::XC2C256 => {
-                    unimplemented!();
-                    // let zia_choice_bits = encode_256_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
-                    //     // FIXME: Fold this into the error system??
-                    //     .expect("invalid ZIA input");
-
-                    // zia_row_crbit_helper(x, y, zia_row, &zia_choice_bits, true, fuse_array);
+                    let mut zia_bits = [false; 48];
+                    zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, true, fuse_array);
+                    decode_256_zia_choice(zia_row, &zia_bits)?
                 },
                 XC2Device::XC2C384 => {
                     unimplemented!();

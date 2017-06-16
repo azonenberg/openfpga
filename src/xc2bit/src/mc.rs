@@ -594,68 +594,73 @@ impl XC2Macrocell {
                 }
             },
             XC2Device::XC2C256 => {
-                unimplemented!();
+                // The "256" variant
+                // each macrocell is 3 rows high
+                let y = y + (mc as usize) * 3;
 
-                // // The "256" variant
-                // // each macrocell is 3 rows high
-                // let y = y + (mc as usize) * 3;
+                // skipped InMod (belongs to IOB)
 
-                // // skipped InMod (belongs to IOB)
+                // fb
+                let fb = (fuse_array.get((x + d * 2) as usize, y + 0),
+                          fuse_array.get((x + d * 3) as usize, y + 0));
 
-                // // fb
-                // let fb = self.fb();
-                // fuse_array.set((x + d * 2) as usize, y + 0, fb.0);
-                // fuse_array.set((x + d * 3) as usize, y + 0, fb.1);
+                // skipped DG (belongs to IOB)
 
-                // // skipped DG (belongs to IOB)
+                // clkop
+                let clk_invert_pol = fuse_array.get((x + d * 5) as usize, y + 0);
 
-                // // clkop
-                // fuse_array.set((x + d * 5) as usize, y + 0, self.clk_invert_pol);
+                // clkfreq
+                let is_ddr = fuse_array.get((x + d * 6) as usize, y + 0);
 
-                // // clkfreq
-                // fuse_array.set((x + d * 6) as usize, y + 0, self.is_ddr);
+                // clk
+                let clk = (fuse_array.get((x + d * 7) as usize, y + 0),
+                           fuse_array.get((x + d * 8) as usize, y + 0));
 
-                // // clk
-                // let clk = self.clk();
-                // fuse_array.set((x + d * 7) as usize, y + 0, clk.0);
-                // fuse_array.set((x + d * 8) as usize, y + 0, clk.1);
+                // aclk
+                let aclk = fuse_array.get((x + d * 9) as usize, y + 0);
 
-                // // aclk
-                // fuse_array.set((x + d * 9) as usize, y + 0, self.aclk());
+                // pu
+                let init_state = !fuse_array.get((x + d * 0) as usize, y + 1);
 
-                // // pu
-                // fuse_array.set((x + d * 0) as usize, y + 1, self.init_state);
+                // p
+                let p = (fuse_array.get((x + d * 1) as usize, y + 1),
+                         fuse_array.get((x + d * 2) as usize, y + 1));
 
-                // // p
-                // let p = self.p();
-                // fuse_array.set((x + d * 1) as usize, y + 1, p.0);
-                // fuse_array.set((x + d * 2) as usize, y + 1, p.1);
+                // skipped Oe (belongs to IOB)
+                // skipped INz (belongs to IOB)
 
-                // // skipped Oe (belongs to IOB)
-                // // skipped INz (belongs to IOB)
+                // inreg
+                let ff_in_ibuf = !fuse_array.get((x + d * 9) as usize, y + 1);
 
-                // // inreg
-                // fuse_array.set((x + d * 9) as usize, y + 1, !self.ff_in_ibuf);
+                // xorin
+                let xorin = (fuse_array.get((x + d * 0) as usize, y + 2),
+                             fuse_array.get((x + d * 1) as usize, y + 2));
 
-                // // xorin
-                // let xorin = self.xorin();
-                // fuse_array.set((x + d * 0) as usize, y + 2, xorin.0);
-                // fuse_array.set((x + d * 1) as usize, y + 2, xorin.1);
+                // skipped Tm (belongs to IOB)
+                // skipped Slw (belongs to IOB)
 
-                // // skipped Tm (belongs to IOB)
-                // // skipped Slw (belongs to IOB)
+                // r
+                let r = (fuse_array.get((x + d * 4) as usize, y + 2),
+                         fuse_array.get((x + d * 5) as usize, y + 2));
 
-                // // r
-                // let r = self.r();
-                // fuse_array.set((x + d * 4) as usize, y + 2, r.0);
-                // fuse_array.set((x + d * 5) as usize, y + 2, r.1);
+                // regmod
+                let regmod = (fuse_array.get((x + d * 6) as usize, y + 2),
+                              fuse_array.get((x + d * 7) as usize, y + 2));
 
-                // // regmod
-                // let regmod = self.regmod();
-                // fuse_array.set((x + d * 6) as usize, y + 2, regmod.0);
-                // fuse_array.set((x + d * 7) as usize, y + 2, regmod.1);
+                // skipped RegCom (belongs to IOB)
 
-                // // skipped RegCom (belongs to IOB)
+                XC2Macrocell {
+                    clk_src: XC2Macrocell::decode_clk_src(aclk, clk),
+                    clk_invert_pol,
+                    is_ddr,
+                    r_src: XC2Macrocell::decode_r(r),
+                    s_src: XC2Macrocell::decode_p(p),
+                    init_state,
+                    reg_mode: XC2Macrocell::decode_regmod(regmod),
+                    fb_mode: XC2Macrocell::decode_fb(fb),
+                    ff_in_ibuf,
+                    xor_mode: XC2Macrocell::decode_xorin(xorin),
+                }
             },
             XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
                 // The "common large macrocell" variant

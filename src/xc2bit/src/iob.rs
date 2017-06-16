@@ -529,40 +529,45 @@ impl XC2MCLargeIOB {
         let d = if !mirror {1} else {-1};
         match device {
             XC2Device::XC2C256 => {
-                unimplemented!();
+                // The "256" variant
+                // each macrocell is 3 rows high
+                let y = y + (mc as usize) * 3;
 
-                // // The "256" variant
-                // // each macrocell is 3 rows high
-                // let y = y + (mc as usize) * 3;
+                // inmod
+                let inmod = (fuse_array.get((x + d * 0) as usize, y + 0),
+                             fuse_array.get((x + d * 1) as usize, y + 0));
 
-                // // inmod
-                // let inmod = self.inmod();
-                // fuse_array.set((x + d * 0) as usize, y + 0, inmod.0);
-                // fuse_array.set((x + d * 1) as usize, y + 0, inmod.1);
+                // dg
+                let uses_data_gate = fuse_array.get((x + d * 4) as usize, y + 0);
 
-                // // dg
-                // fuse_array.set((x + d * 4) as usize, y + 0, self.uses_data_gate);
+                // oe
+                let oe = (fuse_array.get((x + d * 3) as usize, y + 1),
+                          fuse_array.get((x + d * 4) as usize, y + 1),
+                          fuse_array.get((x + d * 5) as usize, y + 1),
+                          fuse_array.get((x + d * 6) as usize, y + 1));
 
-                // // oe
-                // let oe = self.obuf_mode.encode();
-                // fuse_array.set((x + d * 3) as usize, y + 1, oe.0);
-                // fuse_array.set((x + d * 4) as usize, y + 1, oe.1);
-                // fuse_array.set((x + d * 5) as usize, y + 1, oe.2);
-                // fuse_array.set((x + d * 6) as usize, y + 1, oe.3);
+                // inz
+                let inz = (fuse_array.get((x + d * 7) as usize, y + 1),
+                           fuse_array.get((x + d * 8) as usize, y + 1));
 
-                // // inz
-                // let inz = self.zia_mode.encode();
-                // fuse_array.set((x + d * 7) as usize, y + 1, inz.0);
-                // fuse_array.set((x + d * 8) as usize, y + 1, inz.1);
+                // tm
+                let termination_enabled = fuse_array.get((x + d * 2) as usize, y + 2);
 
-                // // tm
-                // fuse_array.set((x + d * 2) as usize, y + 2, self.termination_enabled);
+                // slw
+                let slew_is_fast = !fuse_array.get((x + d * 3) as usize, y + 2);
 
-                // // slw
-                // fuse_array.set((x + d * 3) as usize, y + 2, !self.slew_is_fast);
+                // regcom
+                let obuf_uses_ff = !fuse_array.get((x + d * 8) as usize, y + 2);
 
-                // // regcom
-                // fuse_array.set((x + d * 8) as usize, y + 2, !self.obuf_uses_ff);
+                Ok(XC2MCLargeIOB {
+                    zia_mode: XC2IOBZIAMode::decode(inz),
+                    ibuf_mode: XC2IOBIbufMode::decode(inmod),
+                    obuf_uses_ff,
+                    obuf_mode: XC2IOBOBufMode::decode(oe)?,
+                    termination_enabled,
+                    slew_is_fast,
+                    uses_data_gate,
+                })
             },
             XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
                 // The "common large macrocell" variant
