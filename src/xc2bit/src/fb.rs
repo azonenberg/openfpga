@@ -199,6 +199,7 @@ impl XC2BitstreamFB {
     /// `device` must be the device type this FB was extracted from.
     /// `fb` must be the index of this function block.
     pub fn to_crbit(&self, device: XC2Device, fb: u32, fuse_array: &mut FuseArray) {
+        // FFs
         for i in 0..MCS_PER_FB {
             self.ffs[i].to_crbit(device, fb, i as u32, fuse_array);
         }
@@ -358,7 +359,6 @@ impl XC2BitstreamFB {
     /// `device` must be the device type this FB was extracted from.
     /// `fb` must be the index of this function block.
     pub fn from_crbit(device: XC2Device, fb: u32, fuse_array: &FuseArray) -> Result<XC2BitstreamFB, &'static str> {
-
         // ZIA
         let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
         let (x, y) = zia_block_loc(device, fb);
@@ -515,8 +515,11 @@ impl XC2BitstreamFB {
             },
         }
 
-        // TODO
-    let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
+        // FFs
+        let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
+        for i in 0..MCS_PER_FB {
+            ff_bits[i] = XC2Macrocell::from_crbit(device, fb, i as u32, fuse_array);
+        }
 
         Ok(XC2BitstreamFB {
             and_terms: and_terms,
