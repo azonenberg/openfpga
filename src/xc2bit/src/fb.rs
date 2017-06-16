@@ -412,13 +412,112 @@ impl XC2BitstreamFB {
             };
         }
 
+        // AND block
+        let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
+        let (x, y, mirror) = and_block_loc(device, fb);
+        match device {
+            // "Type 1" blocks (OR array is in the middle)
+            XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A | XC2Device::XC2C256 => {
+                for term_idx in 0..ANDTERMS_PER_FB {
+                    for input_idx in 0..INPUTS_PER_ANDTERM {
+                        let mut out_y = y + input_idx;
+                        if input_idx >= 20 {
+                            // There is an OR array in the middle, 8 rows high
+                            out_y += 8;
+                        }
+
+                        if !mirror {
+                            // true input
+                            and_terms[term_idx].input[input_idx] = !fuse_array.get(x + term_idx * 2 + 1, out_y);
+                            // complement input
+                            and_terms[term_idx].input_b[input_idx] = !fuse_array.get(x + term_idx * 2 + 0, out_y);
+                        } else {
+                            // true input
+                            and_terms[term_idx].input[input_idx] = !fuse_array.get(x - term_idx * 2 - 1, out_y);
+                            // complement input
+                            and_terms[term_idx].input_b[input_idx] = !fuse_array.get(x - term_idx * 2 - 0, out_y);
+                        }
+                    }
+                }
+            },
+            // "Type 2" blocks (OR array is on the sides)
+            XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
+                for term_idx in 0..ANDTERMS_PER_FB {
+                    for input_idx in 0..INPUTS_PER_ANDTERM {
+                        let phys_term_idx = AND_BLOCK_TYPE2_P2L_MAP[term_idx];
+                        if !mirror {
+                            // true input
+                            and_terms[phys_term_idx].input[input_idx] =
+                                !fuse_array.get(x + term_idx * 2 + 1, y + input_idx);
+                            // complement input
+                            and_terms[phys_term_idx].input_b[input_idx] =
+                                !fuse_array.get(x + term_idx * 2 + 0, y + input_idx);
+                        } else {
+                            // true input
+                            and_terms[phys_term_idx].input[input_idx] =
+                                !fuse_array.get(x - term_idx * 2 - 1, y + input_idx);
+                            // complement input
+                            and_terms[phys_term_idx].input_b[input_idx] =
+                                !fuse_array.get(x - term_idx * 2 - 0, y + input_idx);
+                        }
+                    }
+                }
+            },
+        }
+
+        // OR block
+        let mut or_terms = [XC2PLAOrTerm::default(); MCS_PER_FB];
+        let (x, y, mirror) = or_block_loc(device, fb);
+        match device {
+            // "Type 1" blocks (OR array is in the middle)
+            XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A | XC2Device::XC2C256 => {
+                for or_term_idx in 0..MCS_PER_FB {
+                    for and_term_idx in 0..ANDTERMS_PER_FB {
+                        let out_y = y + (or_term_idx / 2);
+                        let off_x = and_term_idx * 2 + (or_term_idx % 2);
+                        let out_x = if !mirror {
+                            x + off_x
+                        } else {
+                            x - off_x
+                        };
+
+                        or_terms[or_term_idx].input[and_term_idx] = !fuse_array.get(out_x, out_y);
+                    }
+                }
+            },
+            // "Type 2" blocks (OR array is on the sides)
+            XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
+                for or_term_idx in 0..MCS_PER_FB {
+                    for and_term_idx in 0..ANDTERMS_PER_FB {
+                        let out_y = y + OR_BLOCK_TYPE2_ROW_MAP[and_term_idx / 2];
+                        let mut out_x = or_term_idx * 2;
+                        // TODO: Explain wtf is happening here
+                        if OR_BLOCK_TYPE2_ROW_MAP[and_term_idx / 2] >= 23 {
+                            // "Reverse"
+                            if and_term_idx % 2 == 0 {
+                                out_x += 1;
+                            }
+                        } else {
+                            if and_term_idx % 2 == 1 {
+                                out_x += 1;
+                            }
+                        }
+
+                        let out_x = if !mirror {
+                            x + out_x
+                        } else {
+                            x - out_x
+                        };
+
+                        or_terms[or_term_idx].input[and_term_idx] = !fuse_array.get(out_x, out_y);
+                    }
+                }
+            },
+        }
+
         // TODO
-    let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
-
-    let mut or_terms = [XC2PLAOrTerm::default(); MCS_PER_FB];
-
     let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
-        
+
         Ok(XC2BitstreamFB {
             and_terms: and_terms,
             or_terms: or_terms,
