@@ -1034,7 +1034,7 @@ pub fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         write!(writer, "{}{}", if regmod.0 {"1"} else {"0"}, if regmod.1 {"1"} else {"0"})?;
 
         // inz
-        let inz = iobs[iob].inz();
+        let inz = iobs[iob].zia_mode.encode();
         write!(writer, "{}{}", if inz.0 {"1"} else {"0"}, if inz.1 {"1"} else {"0"})?;
 
         // fb
@@ -1055,7 +1055,7 @@ pub fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         write!(writer, "{}", if iobs[iob].obuf_uses_ff {"0"} else {"1"})?;
 
         // oe
-        let oe = iobs[iob].oe();
+        let oe = iobs[iob].obuf_mode.encode();
         write!(writer, "{}{}{}{}",
             if oe.0 {"1"} else {"0"}, if oe.1 {"1"} else {"0"},
             if oe.2 {"1"} else {"0"}, if oe.3 {"1"} else {"0"})?;
@@ -1124,11 +1124,11 @@ pub fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
             write!(writer, "{}", if fb.ffs[i].ff_in_ibuf {"0"} else {"1"})?;
 
             // inz
-            let inz = iobs[iob].inz();
+            let inz = iobs[iob].zia_mode.encode();
             write!(writer, "{}{}", if inz.0 {"1"} else {"0"}, if inz.1 {"1"} else {"0"})?;
 
             // oe
-            let oe = iobs[iob].oe();
+            let oe = iobs[iob].obuf_mode.encode();
             write!(writer, "{}{}{}{}",
                 if oe.0 {"1"} else {"0"}, if oe.1 {"1"} else {"0"},
                 if oe.2 {"1"} else {"0"}, if oe.3 {"1"} else {"0"})?;
