@@ -291,35 +291,40 @@ impl XC2MCSmallIOB {
                 })
             },
             XC2Device::XC2C64 | XC2Device::XC2C64A => {
-                unimplemented!();
+                // The "64" variant
+                // each macrocell is 3 rows high
+                let y = y + (mc as usize) * 3;
 
-                // // The "64" variant
-                // // each macrocell is 3 rows high
-                // let y = y + (mc as usize) * 3;
+                // inz
+                let inz = (fuse_array.get((x + d * 5) as usize, y + 1),
+                           fuse_array.get((x + d * 6) as usize, y + 1));
 
-                // // inz
-                // let inz = self.inz();
-                // fuse_array.set((x + d * 5) as usize, y + 1, inz.0);
-                // fuse_array.set((x + d * 6) as usize, y + 1, inz.1);
+                // st
+                let schmitt_trigger = fuse_array.get((x + d * 1) as usize, y + 1);
 
-                // // st
-                // fuse_array.set((x + d * 1) as usize, y + 1, self.schmitt_trigger);
+                // regcom
+                let obuf_uses_ff = !fuse_array.get((x + d * 0) as usize, y + 1);
 
-                // // regcom
-                // fuse_array.set((x + d * 0) as usize, y + 1, !self.obuf_uses_ff);
+                // oe
+                let oe = (fuse_array.get((x + d * 3) as usize, y + 2),
+                          fuse_array.get((x + d * 4) as usize, y + 2),
+                          fuse_array.get((x + d * 5) as usize, y + 2),
+                          fuse_array.get((x + d * 6) as usize, y + 2));
 
-                // // oe
-                // let oe = self.oe();
-                // fuse_array.set((x + d * 3) as usize, y + 2, oe.0);
-                // fuse_array.set((x + d * 4) as usize, y + 2, oe.1);
-                // fuse_array.set((x + d * 5) as usize, y + 2, oe.2);
-                // fuse_array.set((x + d * 6) as usize, y + 2, oe.3);
+                // tm
+                let termination_enabled = fuse_array.get((x + d * 2) as usize, y + 2);
 
-                // // tm
-                // fuse_array.set((x + d * 2) as usize, y + 2, self.termination_enabled);
+                // slw
+                let slew_is_fast = !fuse_array.get((x + d * 1) as usize, y + 2);
 
-                // // slw
-                // fuse_array.set((x + d * 1) as usize, y + 2, !self.slew_is_fast);
+                Ok(XC2MCSmallIOB {
+                    zia_mode: XC2IOBZIAMode::decode(inz),
+                    schmitt_trigger,
+                    obuf_uses_ff,
+                    obuf_mode: XC2IOBOBufMode::decode(oe)?,
+                    termination_enabled,
+                    slew_is_fast,
+                })
             },
             _ => unreachable!(),
         }

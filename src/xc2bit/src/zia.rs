@@ -9230,47 +9230,52 @@ pub fn encode_32_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 8]> 
 pub fn read_64_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
     -> Result<XC2ZIARowPiece, &'static str> {
 
+    let zia_row_fuses = &fuses[block_idx + row_idx * 16..block_idx + (row_idx + 1) * 16];
+
+    decode_32_zia_choice(row_idx, zia_row_fuses)
+}
+
+/// Internal function that takes a ZIA row and decodes the bit encoding for it
+pub fn decode_64_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, &'static str> {
     // This is an ugly workaround for the lack of stable slice patterns
     let zia_row_fuses = (
-        fuses[block_idx + row_idx * 16 + 0],
-        fuses[block_idx + row_idx * 16 + 1],
-        fuses[block_idx + row_idx * 16 + 2],
-        fuses[block_idx + row_idx * 16 + 3],
-        fuses[block_idx + row_idx * 16 + 4],
-        fuses[block_idx + row_idx * 16 + 5],
-        fuses[block_idx + row_idx * 16 + 6],
-        fuses[block_idx + row_idx * 16 + 7],
-        fuses[block_idx + row_idx * 16 + 8],
-        fuses[block_idx + row_idx * 16 + 9],
-        fuses[block_idx + row_idx * 16 + 10],
-        fuses[block_idx + row_idx * 16 + 11],
-        fuses[block_idx + row_idx * 16 + 12],
-        fuses[block_idx + row_idx * 16 + 13],
-        fuses[block_idx + row_idx * 16 + 14],
-        fuses[block_idx + row_idx * 16 + 15],
+        row_bits[0],
+        row_bits[1],
+        row_bits[2],
+        row_bits[3],
+        row_bits[4],
+        row_bits[5],
+        row_bits[6],
+        row_bits[7],
+        row_bits[8],
+        row_bits[9],
+        row_bits[10],
+        row_bits[11],
+        row_bits[12],
+        row_bits[13],
+        row_bits[14],
+        row_bits[15],
     );
 
-    let selected_input = match zia_row_fuses {
-        (T, T, T, T, T, T, T, F, T, T, T, T, F, T, T, F) => ZIA_MAP_64[row_idx][0],
-        (T, T, T, T, T, T, T, F, T, T, T, T, F, T, F, T) => ZIA_MAP_64[row_idx][1],
-        (T, T, T, T, T, T, T, F, T, T, T, T, F, F, T, T) => ZIA_MAP_64[row_idx][2],
-        (T, T, T, T, T, T, T, F, T, T, T, F, F, T, T, T) => ZIA_MAP_64[row_idx][3],
-        (T, T, T, T, T, T, T, F, T, T, F, T, F, T, T, T) => ZIA_MAP_64[row_idx][4],
-        (T, T, T, T, T, T, T, F, T, F, T, T, F, T, T, T) => ZIA_MAP_64[row_idx][5],
-        (T, T, T, F, T, T, F, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][6],
-        (T, T, T, F, T, F, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][7],
-        (T, T, T, F, F, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][8],
-        (T, T, F, F, T, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][9],
-        (T, F, T, F, T, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][10],
-        (F, T, T, F, T, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row_idx][11],
-        (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
-        // TODO: This one isn't certain
-        (T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T) => XC2ZIAInput::Zero,
-        _ => return Err("unknown ZIA input choice"),
-    };
-
     Ok(XC2ZIARowPiece {
-        selected: selected_input
+        selected: match zia_row_fuses {
+            (T, T, T, T, T, T, T, F, T, T, T, T, F, T, T, F) => ZIA_MAP_64[row][0],
+            (T, T, T, T, T, T, T, F, T, T, T, T, F, T, F, T) => ZIA_MAP_64[row][1],
+            (T, T, T, T, T, T, T, F, T, T, T, T, F, F, T, T) => ZIA_MAP_64[row][2],
+            (T, T, T, T, T, T, T, F, T, T, T, F, F, T, T, T) => ZIA_MAP_64[row][3],
+            (T, T, T, T, T, T, T, F, T, T, F, T, F, T, T, T) => ZIA_MAP_64[row][4],
+            (T, T, T, T, T, T, T, F, T, F, T, T, F, T, T, T) => ZIA_MAP_64[row][5],
+            (T, T, T, F, T, T, F, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row][6],
+            (T, T, T, F, T, F, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row][7],
+            (T, T, T, F, F, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row][8],
+            (T, T, F, F, T, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row][9],
+            (T, F, T, F, T, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row][10],
+            (F, T, T, F, T, T, T, F, T, T, T, T, T, T, T, T) => ZIA_MAP_64[row][11],
+            (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
+            // TODO: This one isn't certain
+            (T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T) => XC2ZIAInput::Zero,
+            _ => return Err("unknown ZIA input choice"),
+        }
     })
 }
 
