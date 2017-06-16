@@ -268,7 +268,7 @@ impl XC2Macrocell {
                 // skipped Slw (belongs to IOB)
 
                 // pu
-                fuse_array.set((x + d * 8) as usize, y + 2, self.init_state);
+                fuse_array.set((x + d * 8) as usize, y + 2, !self.init_state);
             },
             XC2Device::XC2C64 | XC2Device::XC2C64A => {
                 // The "64" variant
@@ -327,7 +327,7 @@ impl XC2Macrocell {
                 // skipped Slw (belongs to IOB)
 
                 // pu
-                fuse_array.set((x + d * 0) as usize, y + 2, self.init_state);
+                fuse_array.set((x + d * 0) as usize, y + 2, !self.init_state);
             },
             XC2Device::XC2C256 => {
                 // The "256" variant
@@ -358,7 +358,7 @@ impl XC2Macrocell {
                 fuse_array.set((x + d * 9) as usize, y + 0, self.aclk());
 
                 // pu
-                fuse_array.set((x + d * 0) as usize, y + 1, self.init_state);
+                fuse_array.set((x + d * 0) as usize, y + 1, !self.init_state);
 
                 // p
                 let p = self.p();
@@ -425,7 +425,7 @@ impl XC2Macrocell {
                 fuse_array.set((x + d * 13) as usize, y + 0, !self.ff_in_ibuf);
 
                 // pu
-                fuse_array.set((x + d * 14) as usize, y + 0, self.init_state);
+                fuse_array.set((x + d * 14) as usize, y + 0, !self.init_state);
 
                 // xorin
                 let xorin = self.xorin();
