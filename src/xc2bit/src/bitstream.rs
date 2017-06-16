@@ -1630,6 +1630,37 @@ pub fn read_384_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstrea
     })
 }
 
+/// Internal function for parsing an XC2C512 bitstream
+pub fn read_512_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 32];
+    let mut iobs = [XC2MCLargeIOB::default(); 270];
+    
+    read_bitstream_physical_common_large(fuse_array, XC2Device::XC2C512, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_physical(XC2Device::XC2C512, fuse_array);
+
+    Ok(XC2BitstreamBits::XC2C512 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        clock_div: read_clock_div_physical(XC2Device::XC2C512, fuse_array),
+        data_gate: !fuse_array.get(982, 147),
+        use_vref: !fuse_array.get(1, 147),
+        ivoltage: [
+            fuse_array.get(992, 147),
+            fuse_array.get(1965, 147),
+            fuse_array.get(3, 147),
+            fuse_array.get(985, 147),
+        ],
+        ovoltage: [
+            fuse_array.get(991, 147),
+            fuse_array.get(1964, 147),
+            fuse_array.get(2, 147),
+            fuse_array.get(984, 147),
+        ]
+    })
+}
+
 /// Processes a fuse array into a bitstream object
 pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
     let device_combination = parse_part_name_string(device);
@@ -1788,13 +1819,12 @@ pub fn process_crbit(fuse_array: &FuseArray) -> Result<XC2Bitstream, &'static st
             })
         },
         XC2Device::XC2C512 => {
-            unimplemented!();
-            // let bits = read_512_bitstream_physical(fuse_array)?;
-            // Ok(XC2Bitstream {
-            //     speed_grade: spd,
-            //     package: pkg,
-            //     bits: bits,
-            // })
+            let bits = read_512_bitstream_physical(fuse_array)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
         },
     }
 }
