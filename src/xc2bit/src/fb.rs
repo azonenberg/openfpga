@@ -35,7 +35,8 @@ use mc::{read_small_ff_logical, read_large_ff_logical, read_large_buried_ff_logi
 use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice, encode_256_zia_choice,
           encode_384_zia_choice, encode_512_zia_choice, read_32_zia_fb_row_logical, read_64_zia_fb_row_logical,
           read_128_zia_fb_row_logical, read_256_zia_fb_row_logical, read_384_zia_fb_row_logical,
-          read_512_zia_fb_row_logical, zia_get_row_width, decode_32_zia_choice, decode_64_zia_choice};
+          read_512_zia_fb_row_logical, zia_get_row_width, decode_32_zia_choice, decode_64_zia_choice,
+          decode_128_zia_choice};
 
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
@@ -375,12 +376,9 @@ impl XC2BitstreamFB {
                     decode_64_zia_choice(zia_row, &zia_bits)?
                 },
                 XC2Device::XC2C128 => {
-                    unimplemented!();
-                    // let zia_choice_bits = encode_128_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
-                    //     // FIXME: Fold this into the error system??
-                    //     .expect("invalid ZIA input");
-
-                    // zia_row_crbit_helper(x, y, zia_row, &zia_choice_bits, false, fuse_array);
+                    let mut zia_bits = [false; 28];
+                    zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, false, fuse_array);
+                    decode_128_zia_choice(zia_row, &zia_bits)?
                 },
                 XC2Device::XC2C256 => {
                     unimplemented!();

@@ -344,6 +344,27 @@ pub enum XC2IOBIbufMode {
     IsVref,
 }
 
+impl XC2IOBIbufMode {
+    /// encodes the InMod bits
+    pub fn encode(&self) -> (bool, bool) {
+        match *self {
+            XC2IOBIbufMode::NoVrefNoSt => (false, false),
+            XC2IOBIbufMode::IsVref => (false, true),
+            XC2IOBIbufMode::UsesVref => (true, false),
+            XC2IOBIbufMode::NoVrefSt => (true, true),
+        }
+    }
+
+    pub fn decode(inmod: (bool, bool)) -> Self {
+        match inmod {
+            (false, false) => XC2IOBIbufMode::NoVrefNoSt,
+            (false, true)  => XC2IOBIbufMode::IsVref,
+            (true, false)  => XC2IOBIbufMode::UsesVref,
+            (true, true)   => XC2IOBIbufMode::NoVrefSt,
+        }
+    }
+}
+
 /// Represents an I/O pin on "large" (128 and greater macrocell) devices.
 #[derive(Copy, Clone)]
 pub struct XC2MCLargeIOB {
@@ -421,16 +442,6 @@ impl XC2MCLargeIOB {
         Ok(())
     }
 
-    /// encodes the InMod bits
-    pub fn inmod(&self) -> (bool, bool) {
-        match self.ibuf_mode {
-            XC2IOBIbufMode::NoVrefNoSt => (false, false),
-            XC2IOBIbufMode::IsVref => (false, true),
-            XC2IOBIbufMode::UsesVref => (true, false),
-            XC2IOBIbufMode::NoVrefSt => (true, true),
-        }
-    }
-
     pub fn to_crbit(&self, device: XC2Device, iob: u32, fuse_array: &mut FuseArray) {
         let (fb, mc) = iob_num_to_fb_ff_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
@@ -444,7 +455,7 @@ impl XC2MCLargeIOB {
                 let y = y + (mc as usize) * 3;
 
                 // inmod
-                let inmod = self.inmod();
+                let inmod = self.ibuf_mode.encode();
                 fuse_array.set((x + d * 0) as usize, y + 0, inmod.0);
                 fuse_array.set((x + d * 1) as usize, y + 0, inmod.1);
 
@@ -479,19 +490,19 @@ impl XC2MCLargeIOB {
 
                 // inz
                 let inz = self.zia_mode.encode();
-                fuse_array.set((x + d * 0) as usize, y + 1, inz.0);
-                fuse_array.set((x + d * 1) as usize, y + 1, inz.1);
+                fuse_array.set((x + d * 0) as usize, y + 0, inz.0);
+                fuse_array.set((x + d * 1) as usize, y + 0, inz.1);
 
                 // dg
                 fuse_array.set((x + d * 4) as usize, y + 0, self.uses_data_gate);
 
                 // inmod
-                let inmod = self.inmod();
+                let inmod = self.ibuf_mode.encode();
                 fuse_array.set((x + d * 5) as usize, y + 0, inmod.0);
                 fuse_array.set((x + d * 6) as usize, y + 0, inmod.1);
 
                 // tm
-                fuse_array.set((x + d * 7) as usize, y + 2, self.termination_enabled);
+                fuse_array.set((x + d * 7) as usize, y + 0, self.termination_enabled);
 
                 // oe
                 let oe = self.obuf_mode.encode();
@@ -505,6 +516,94 @@ impl XC2MCLargeIOB {
 
                 // regcom
                 fuse_array.set((x + d * 8) as usize, y + 1, !self.obuf_uses_ff);
+            },
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<XC2MCLargeIOB, &'static str> {
+        let (fb, mc) = iob_num_to_fb_ff_num(device, iob).unwrap();
+        let (x, y, mirror) = mc_block_loc(device, fb);
+        // direction
+        let x = x as i32;
+        let d = if !mirror {1} else {-1};
+        match device {
+            XC2Device::XC2C256 => {
+                unimplemented!();
+
+                // // The "256" variant
+                // // each macrocell is 3 rows high
+                // let y = y + (mc as usize) * 3;
+
+                // // inmod
+                // let inmod = self.inmod();
+                // fuse_array.set((x + d * 0) as usize, y + 0, inmod.0);
+                // fuse_array.set((x + d * 1) as usize, y + 0, inmod.1);
+
+                // // dg
+                // fuse_array.set((x + d * 4) as usize, y + 0, self.uses_data_gate);
+
+                // // oe
+                // let oe = self.obuf_mode.encode();
+                // fuse_array.set((x + d * 3) as usize, y + 1, oe.0);
+                // fuse_array.set((x + d * 4) as usize, y + 1, oe.1);
+                // fuse_array.set((x + d * 5) as usize, y + 1, oe.2);
+                // fuse_array.set((x + d * 6) as usize, y + 1, oe.3);
+
+                // // inz
+                // let inz = self.zia_mode.encode();
+                // fuse_array.set((x + d * 7) as usize, y + 1, inz.0);
+                // fuse_array.set((x + d * 8) as usize, y + 1, inz.1);
+
+                // // tm
+                // fuse_array.set((x + d * 2) as usize, y + 2, self.termination_enabled);
+
+                // // slw
+                // fuse_array.set((x + d * 3) as usize, y + 2, !self.slew_is_fast);
+
+                // // regcom
+                // fuse_array.set((x + d * 8) as usize, y + 2, !self.obuf_uses_ff);
+            },
+            XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
+                // The "common large macrocell" variant
+                // we need this funny lookup table, but otherwise macrocells are 2x15
+                let y = y + MC_TO_ROW_MAP_LARGE[mc as usize];
+
+                // inz
+                let inz = (fuse_array.get((x + d * 0) as usize, y + 0),
+                           fuse_array.get((x + d * 1) as usize, y + 0));
+
+                // dg
+                let uses_data_gate = fuse_array.get((x + d * 4) as usize, y + 0);
+
+                // inmod
+                let inmod =  (fuse_array.get((x + d * 5) as usize, y + 0),
+                              fuse_array.get((x + d * 6) as usize, y + 0));
+
+                // tm
+                let termination_enabled = fuse_array.get((x + d * 7) as usize, y + 0);
+
+                // oe
+                let oe = (fuse_array.get((x + d * 2) as usize, y + 1),
+                          fuse_array.get((x + d * 3) as usize, y + 1),
+                          fuse_array.get((x + d * 4) as usize, y + 1),
+                          fuse_array.get((x + d * 5) as usize, y + 1));
+
+                // slw
+                let slew_is_fast = !fuse_array.get((x + d * 6) as usize, y + 1);
+
+                // regcom
+                let obuf_uses_ff = !fuse_array.get((x + d * 8) as usize, y + 1);
+
+                Ok(XC2MCLargeIOB {
+                    zia_mode: XC2IOBZIAMode::decode(inz),
+                    ibuf_mode: XC2IOBIbufMode::decode(inmod),
+                    obuf_uses_ff,
+                    obuf_mode: XC2IOBOBufMode::decode(oe)?,
+                    termination_enabled,
+                    slew_is_fast,
+                    uses_data_gate,
+                })
             },
             _ => unreachable!(),
         }
@@ -1129,12 +1228,7 @@ pub fn read_large_iob_logical(fuses: &[bool], fuse_idx: usize) -> Result<XC2MCLa
 
     let inmod = (fuses[fuse_idx + 8],
                  fuses[fuse_idx + 9]);
-    let input_mode = match inmod {
-        (false, false) => XC2IOBIbufMode::NoVrefNoSt,
-        (false, true)  => XC2IOBIbufMode::IsVref,
-        (true, false)  => XC2IOBIbufMode::UsesVref,
-        (true, true)   => XC2IOBIbufMode::NoVrefSt,
-    };
+    let input_mode = XC2IOBIbufMode::decode(inmod);
 
     let inz = (fuses[fuse_idx + 11],
                fuses[fuse_idx + 12]);

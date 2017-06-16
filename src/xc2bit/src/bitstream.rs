@@ -454,6 +454,31 @@ fn read_clock_div_logical(device: XC2Device, fuses: &[bool]) -> XC2ClockDiv {
     }
 }
 
+/// Internal function to read the clock divider configuration from a 128-macrocell part
+fn read_clock_div_physical(device: XC2Device, fuse_array: &FuseArray) -> XC2ClockDiv {
+    let ((clken_x, clken_y), (clkdiv0_x, clkdiv0_y), (clkdiv1_x, clkdiv1_y), (clkdiv2_x, clkdiv2_y),
+        (clkdelay_x, clkdelay_y)) = clock_div_fuse_coord(device);
+
+    let div_ratio_bits = (fuse_array.get(clkdiv0_x, clkdiv0_y),
+                          fuse_array.get(clkdiv1_x, clkdiv1_y),
+                          fuse_array.get(clkdiv2_x, clkdiv2_y));
+
+    XC2ClockDiv {
+        delay: !fuse_array.get(clkdelay_x, clkdelay_y),
+        enabled: !fuse_array.get(clken_x, clken_y),
+        div_ratio: match div_ratio_bits {
+            (false, false, false) => XC2ClockDivRatio::Div2,
+            (false, false,  true) => XC2ClockDivRatio::Div4,
+            (false,  true, false) => XC2ClockDivRatio::Div6,
+            (false,  true,  true) => XC2ClockDivRatio::Div8,
+            ( true, false, false) => XC2ClockDivRatio::Div10,
+            ( true, false,  true) => XC2ClockDivRatio::Div12,
+            ( true,  true, false) => XC2ClockDivRatio::Div14,
+            ( true,  true,  true) => XC2ClockDivRatio::Div16,
+        }
+    }
+}
+
 /// The actual bitstream bits for each possible Coolrunner-II part
 pub enum XC2BitstreamBits {
     XC2C32 {
@@ -1411,6 +1436,21 @@ pub fn read_bitstream_physical_common_small(fuse_array: &FuseArray, device: XC2D
     Ok(())
 }
 
+/// Common logic for reading bitstreams on "large" devices
+pub fn read_bitstream_physical_common_large(fuse_array: &FuseArray, device: XC2Device,
+    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCLargeIOB]) -> Result<(), &'static str> {
+
+    for i in 0..fb.len() {
+        fb[i] = XC2BitstreamFB::from_crbit(device, i as u32, fuse_array)?;
+    };
+
+    for i in 0..iobs.len() {
+        iobs[i] = XC2MCLargeIOB::from_crbit(device, i as u32, fuse_array)?;
+    }
+
+    Ok(())
+}
+
 /// Internal function for parsing an XC2C32 bitstream
 pub fn read_32_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
     let mut fb = [XC2BitstreamFB::default(); 2];
@@ -1501,6 +1541,33 @@ pub fn read_64a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstrea
         ovoltage: [
             !fuse_array.get(140, 23),
             !fuse_array.get(142, 23),
+        ]
+    })
+}
+
+/// Internal function for parsing an XC2C128 bitstream
+pub fn read_128_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 8];
+    let mut iobs = [XC2MCLargeIOB::default(); 100];
+    
+    read_bitstream_physical_common_large(fuse_array, XC2Device::XC2C128, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_physical(XC2Device::XC2C128, fuse_array);
+
+    Ok(XC2BitstreamBits::XC2C128 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        clock_div: read_clock_div_physical(XC2Device::XC2C128, fuse_array),
+        data_gate: !fuse_array.get(371, 67),
+        use_vref: !fuse_array.get(10, 67),
+        ivoltage: [
+            !fuse_array.get(8, 67),
+            !fuse_array.get(368, 67),
+        ],
+        ovoltage: [
+            !fuse_array.get(9, 67),
+            !fuse_array.get(369, 67),
         ]
     })
 }
@@ -1639,13 +1706,12 @@ pub fn process_crbit(fuse_array: &FuseArray) -> Result<XC2Bitstream, &'static st
             })
         },
         XC2Device::XC2C128 => {
-            unimplemented!();
-            // let bits = read_128_bitstream_physical(fuse_array)?;
-            // Ok(XC2Bitstream {
-            //     speed_grade: spd,
-            //     package: pkg,
-            //     bits: bits,
-            // })
+            let bits = read_128_bitstream_physical(fuse_array)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
         },
         XC2Device::XC2C256 => {
             unimplemented!();
