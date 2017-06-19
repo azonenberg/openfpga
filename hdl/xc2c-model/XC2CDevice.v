@@ -22,7 +22,7 @@
  */
 module XC2CDevice(
 	jtag_tdi, jtag_tms, jtag_tck, jtag_tdo,
-	dedicated_input, macrocell_io);
+	dedicated_input, iob_out, iob_in, iob_t);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
@@ -108,9 +108,11 @@ module XC2CDevice(
 
 	input wire					dedicated_input;	//only present in 32a
 
-	inout wire[MACROCELLS-1:0]	macrocell_io;		//The actual device I/O pins.
+	output wire[MACROCELLS-1:0]	iob_out;			//The actual device I/O pins.
 													//Note that not all of these are broken out to bond pads;
 													//buried macrocells drive a constant 0 here
+	output wire[MACROCELLS-1:0]	iob_t;
+	input wire[MACROCELLS-1:0]	iob_in;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The SRAM copy of the config bitstream (directly drives device behavior)
@@ -128,10 +130,10 @@ module XC2CDevice(
 		1		0			Transfer bit (ignored)
 	 */
 
-	integer i;
+	integer row;
 	initial begin
-		for(i=0; i<MEM_DEPTH; i=i+1)
-			ram_bitstream[i] <= {SHREG_WIDTH{1'b1}};	//copied from blank EEPROM = all 1s
+		for(row=0; row<MEM_DEPTH; row=row+1)
+			ram_bitstream[row] <= {SHREG_WIDTH{1'b1}};	//copied from blank EEPROM = all 1s
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -199,7 +201,7 @@ module XC2CDevice(
 
 	//TODO: input buffers and muxes for these based on InZ etc
 	wire[31:0]		macrocell_to_zia = 32'h0;
-	wire[31:0]		ibuf_to_zia = macrocell_io;
+	wire[31:0]		ibuf_to_zia = iob_in;
 
 	//Left side (FB2)
 	wire[39:0]		left_zia_out;
@@ -228,74 +230,94 @@ module XC2CDevice(
 		);
 
 	//Hook up the config bits
+	integer nbit;
 	always @(*) begin
-		for(i=0; i<40; i=i+1) begin
+		for(row=0; row<40; row=row+1) begin
 
 			//The ZIA is bits 137:122
 			//MSB is FB1, next is FB2.
 			//We have stuff at the top and bottom of array, with global config in the middle
-			if(i > 20) begin
-				right_zia_config[i*8 +: 8] <=
-				{
-					ram_bitstream[i-8][137],
-					ram_bitstream[i-8][135],
-					ram_bitstream[i-8][133],
-					ram_bitstream[i-8][131],
-					ram_bitstream[i-8][129],
-					ram_bitstream[i-8][127],
-					ram_bitstream[i-8][125],
-					ram_bitstream[i-8][123]
-				};
-
-				left_zia_config[i*8 +: 8] <=
-				{
-					ram_bitstream[i-8][136],
-					ram_bitstream[i-8][134],
-					ram_bitstream[i-8][132],
-					ram_bitstream[i-8][130],
-					ram_bitstream[i-8][128],
-					ram_bitstream[i-8][126],
-					ram_bitstream[i-8][124],
-					ram_bitstream[i-8][122]
-				};
+			if(row >= 20) begin
+				for(nbit=0; nbit<8; nbit=nbit+1) begin
+					right_zia_config[row*8 + nbit]	<= ram_bitstream[row-8][123 + nbit*2];
+					left_zia_config[row*8 + nbit]	<= ram_bitstream[row-8][122 + nbit*2];
+				end
 			end
 			else begin
-				right_zia_config[i*8 +: 8] <=
-				{
-					ram_bitstream[i][137],
-					ram_bitstream[i][135],
-					ram_bitstream[i][133],
-					ram_bitstream[i][131],
-					ram_bitstream[i][129],
-					ram_bitstream[i][127],
-					ram_bitstream[i][125],
-					ram_bitstream[i][123]
-				};
-
-				left_zia_config[i*8 +: 8] <=
-				{
-					ram_bitstream[i][136],
-					ram_bitstream[i][134],
-					ram_bitstream[i][132],
-					ram_bitstream[i][130],
-					ram_bitstream[i][128],
-					ram_bitstream[i][126],
-					ram_bitstream[i][124],
-					ram_bitstream[i][122]
-				};
+				for(nbit=0; nbit<8; nbit=nbit+1) begin
+					right_zia_config[row*8 + nbit]	<= ram_bitstream[row][123 + nbit*2];
+					left_zia_config[row*8 + nbit]	<= ram_bitstream[row][122 + nbit*2];
+				end
 			end
 
 		end
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// The actual CPLD function blocks
+	// PLA AND array
+
+	reg[56*80-1:0]		left_and_config;
+	reg[56*80-1:0]		right_and_config;
+
+	wire[55:0]			left_pterms;
+	wire[55:0]			right_pterms;
+
+	//FB2
+	XC2CAndArray left_pla_and(
+		.zia_in(left_zia_out),
+		.config_bits(left_and_config),
+		.pterm_out(left_pterms)
+	);
+
+	//FB1
+	XC2CAndArray right_pla_and(
+		.zia_in(right_zia_out),
+		.config_bits(right_and_config),
+		.pterm_out(right_pterms)
+	);
+
+	//Hook up the config bits
+	always @(*) begin
+
+		for(row=0; row<40; row=row+1) begin
+
+			//We have stuff at the top and bottom of array, with OR array in the middle
+			//Left side: 249:138
+			//Right side: 121:10 (mirrored)
+			if(row >= 20) begin
+				for(nbit=0; nbit<112; nbit=nbit+1) begin
+					right_and_config[row*112 + nbit] <= ram_bitstream[row-8][138 + nbit];
+					left_and_config[row*112 + nbit] <= ram_bitstream[row-8][121 - nbit];
+				end
+			end
+
+			else begin
+				for(nbit=0; nbit<112; nbit=nbit+1) begin
+					right_and_config[row*112 + nbit] <= ram_bitstream[row][138 + nbit];
+					left_and_config[row*112 + nbit] <= ram_bitstream[row][121 - nbit];
+				end
+			end
+
+		end
+
+	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Debug stuff
 
-	assign macrocell_io[6:3] = right_zia_out[7:4];
+	//Tristate all pins except our outputs (6:3)
+	assign iob_t[31:7] = 25'h1ffffff;
+	assign iob_t[6:3] = 4'h0;
+	assign iob_t[2:0] = 3'h7;
 
-	assign macrocell_io[7] = 1'b0;
+	//Drive all unused outputs to 0, then hook up our outputs
+	//Should be X, !X, X, X
+	assign iob_out[31:7] = 25'h0;
+	//assign iob_out[6:3] = {right_pterms[19], right_pterms[22], right_pterms[25], right_pterms[28]};
+	assign iob_out[6]	= &right_pterms;
+	assign iob_out[5]	= &left_pterms;
+	assign iob_out[4]	= &left_and_config[19*80 +: 80];
+	assign iob_out[3]	= &right_and_config[19*80 +: 80];
+	assign iob_out[2:0] = 3'h0;
 
 endmodule
