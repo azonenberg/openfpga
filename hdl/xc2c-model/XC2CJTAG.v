@@ -502,7 +502,7 @@ module XC2CJTAG(
 				//Update: save the de-Gray-ified read address
 				STATE_UPDATE_DR: begin
 					config_read_en		<= 1;
-					config_read_addr	<= gray_to_bin[isc_read_addr_gray_flipped];
+					config_read_addr	<= gray_to_bin[isc_read_addr_gray_flipped][ADDR_BITS-1:0];
 				end	//end STATE_UPDATE_DR
 
 			endcase
@@ -546,7 +546,7 @@ module XC2CJTAG(
 				//Update: commit the write to bitstream
 				STATE_UPDATE_DR: begin
 					config_write_en		<= 1;
-					config_write_addr	<= gray_to_bin[isc_write_addr_gray_flipped];
+					config_write_addr	<= gray_to_bin[isc_write_addr_gray_flipped][ADDR_BITS-1:0];
 					config_write_data	<= isc_write_shreg[SHREG_WIDTH-1 : 0];
 				end	//end STATE_UPDATE_DR
 
