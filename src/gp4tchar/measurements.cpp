@@ -286,6 +286,7 @@ bool ReadTraceDelays()
 		LogNotice("FPGA pin %2d to DUT: %.3f ns rising, %.3f ns falling\n", i, r, f);
 	}
 
+	fclose(fp);
 	return true;
 }
 
