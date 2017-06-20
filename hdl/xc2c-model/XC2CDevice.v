@@ -312,6 +312,34 @@ module XC2CDevice(
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// PLA OR array
+
+	reg[16*56-1:0]	left_or_config;
+	reg[16*56-1:0]	right_or_config;
+
+	wire[15:0]		left_orterms;
+	wire[15:0]		right_orterms;
+
+	//FB2
+	XC2COrArray left_pla_or(
+		.pterms_in(left_pterms),
+		.config_bits(left_or_config),
+		.or_out(left_orterms)
+	);
+
+	//FB1
+	XC2COrArray right_pla_or(
+		.pterms_in(right_pterms),
+		.config_bits(right_or_config),
+		.or_out(right_orterms)
+	);
+
+	//Hook up the config bits
+	always @(*) begin
+
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Debug stuff
 
 	//Tristate all pins except our outputs (6:3)
@@ -322,7 +350,11 @@ module XC2CDevice(
 	//Drive all unused outputs to 0, then hook up our outputs
 	//Should be X, !X, X, X
 	assign iob_out[31:7] = 25'h0;
-	assign iob_out[6:3] = {right_pterms[19], right_pterms[22], right_pterms[25], right_pterms[28]};
+	//assign iob_out[6:3] = {right_pterms[19], right_pterms[22], right_pterms[25], right_pterms[28]};
+	assign iob_out[6] = ^right_pterms;
+	assign iob_out[5] = ^left_pterms;
+	assign iob_out[4] = ^right_orterms;
+	assign iob_out[3] = ^left_orterms;
 	assign iob_out[2:0] = 3'h0;
 
 endmodule

@@ -16,48 +16,44 @@
  * or you may search the http://www.gnu.org website for the version 2.1 license, or you may write to the Free Software *
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
-module XC2CAndArray(zia_in, config_bits, pterm_out);
+module XC2COrArray(pterms_in, config_bits, or_out);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// No configuration, all AND arrays are the same.
+	// No configuration, all OR arrays are the same.
 	// Differences in bitstream ordering, if any, are handled by XC2CDevice
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/Os
 
-	input wire[39:0]			zia_in;
-	input wire[80*56 - 1 : 0]	config_bits;
-	output reg[55:0]			pterm_out;
+	input wire[55:0]			pterms_in;
+	input wire[16*56 - 1 : 0]	config_bits;
+	output reg[15:0]			or_out;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Shuffle the config bits back to their proper 2D form
 
+	integer nout;
 	integer nterm;
-	integer nrow;
-	integer nin;
 
-	reg[79:0] and_config[55:0];
+	reg[55:0] or_config[15:0];
 	always @(*) begin
 		for(nterm=0; nterm<56; nterm=nterm+1) begin
-			for(nin=0; nin<80; nin=nin + 1)
-				and_config[nterm][nin]		<= config_bits[nterm*80 + nin];
+			for(nout=0; nout<16; nout=nout + 1)
+				or_config[nout][nterm]		<= config_bits[nout*56 + nterm];
 		end
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// The actual AND array
+	// The actual OR array
 
-	//Higher value is !X, lower is X
 	always @(*) begin
-		for(nterm=0; nterm<56; nterm = nterm+1) begin
-			pterm_out[nterm] = 1;		//default if no terms selected
+		for(nout=0; nout<16; nout = nout+1) begin
+			or_out[nout] = 0;		//default if no terms selected
 
-			//AND in the ZIA stuff
-			for(nrow=0; nrow<40; nrow=nrow+1) begin
-				if(!and_config[nterm][nrow*2])
-					pterm_out[nterm] = pterm_out[nterm] & zia_in[nrow];
-				if(!and_config[nterm][nrow*2 + 1])
-					pterm_out[nterm] = pterm_out[nterm] & !zia_in[nrow];
+			//OR in the PLA outputs
+			for(nterm=0; nterm<56; nterm=nterm+1) begin
+				if(!or_config[nout][nterm])
+					or_out[nout] = or_out[nout] | pterms_in[nterm];
 			end
 		end
 	end
