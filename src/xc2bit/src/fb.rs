@@ -35,7 +35,8 @@ use mc::{read_small_ff_logical, read_large_ff_logical, read_large_buried_ff_logi
 use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice, encode_256_zia_choice,
           encode_384_zia_choice, encode_512_zia_choice, read_32_zia_fb_row_logical, read_64_zia_fb_row_logical,
           read_128_zia_fb_row_logical, read_256_zia_fb_row_logical, read_384_zia_fb_row_logical,
-          read_512_zia_fb_row_logical, zia_get_row_width};
+          read_512_zia_fb_row_logical, zia_get_row_width, decode_32_zia_choice, decode_64_zia_choice,
+          decode_128_zia_choice, decode_256_zia_choice, decode_384_zia_choice, decode_512_zia_choice};
 
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
@@ -66,7 +67,7 @@ impl Default for XC2BitstreamFB {
 }
 
 /// Internal helper that writes a ZIA row to the fuse array
-fn zia_row_crbit_helper(x: usize, y: usize, zia_row: usize, zia_bits: &[bool], has_gap: bool,
+fn zia_row_crbit_write_helper(x: usize, y: usize, zia_row: usize, zia_bits: &[bool], has_gap: bool,
     fuse_array: &mut FuseArray) {
 
     for zia_bit in 0..zia_bits.len() {
@@ -79,6 +80,25 @@ fn zia_row_crbit_helper(x: usize, y: usize, zia_row: usize, zia_bits: &[bool], h
         let out_x = x + zia_bit * 2;
 
         fuse_array.set(out_x, out_y, zia_bits[zia_bits.len() - 1 - zia_bit]);
+    }
+}
+
+/// Internal helper that reads a ZIA row from the fuse array
+fn zia_row_crbit_read_helper(x: usize, y: usize, zia_row: usize, zia_bits: &mut [bool], has_gap: bool,
+    fuse_array: &FuseArray) {
+
+    let l = zia_bits.len();
+
+    for zia_bit in 0..l {
+        let mut out_y = y + zia_row;
+        if has_gap && zia_row >= 20 {
+            // There is an OR array in the middle, 8 rows high
+            out_y += 8;
+        }
+
+        let out_x = x + zia_bit * 2;
+
+        zia_bits[l - 1 - zia_bit] = fuse_array.get(out_x, out_y);
     }
 }
 
@@ -180,6 +200,7 @@ impl XC2BitstreamFB {
     /// `device` must be the device type this FB was extracted from.
     /// `fb` must be the index of this function block.
     pub fn to_crbit(&self, device: XC2Device, fb: u32, fuse_array: &mut FuseArray) {
+        // FFs
         for i in 0..MCS_PER_FB {
             self.ffs[i].to_crbit(device, fb, i as u32, fuse_array);
         }
@@ -193,42 +214,42 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
-                    zia_row_crbit_helper(x, y, zia_row, &zia_choice_bits, true, fuse_array);
+                    zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, true, fuse_array);
                 },
                 XC2Device::XC2C64 | XC2Device::XC2C64A => {
                     let zia_choice_bits = encode_64_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
-                    zia_row_crbit_helper(x, y, zia_row, &zia_choice_bits, true, fuse_array);
+                    zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, true, fuse_array);
                 },
                 XC2Device::XC2C128 => {
                     let zia_choice_bits = encode_128_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
-                    zia_row_crbit_helper(x, y, zia_row, &zia_choice_bits, false, fuse_array);
+                    zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, false, fuse_array);
                 },
                 XC2Device::XC2C256 => {
                     let zia_choice_bits = encode_256_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
-                    zia_row_crbit_helper(x, y, zia_row, &zia_choice_bits, true, fuse_array);
+                    zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, true, fuse_array);
                 },
                 XC2Device::XC2C384 => {
                     let zia_choice_bits = encode_384_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
-                    zia_row_crbit_helper(x, y, zia_row, &zia_choice_bits, false, fuse_array);
+                    zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, false, fuse_array);
                 },
                 XC2Device::XC2C512 => {
                     let zia_choice_bits = encode_512_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
-                    zia_row_crbit_helper(x, y, zia_row, &zia_choice_bits, false, fuse_array);
+                    zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, false, fuse_array);
                 },
             };
         }
@@ -333,6 +354,165 @@ impl XC2BitstreamFB {
                 }
             },
         }
+    }
+
+    /// Reads the crbit representation of the settings for this FB from the given `fuse_array`.
+    /// `device` must be the device type this FB was extracted from.
+    /// `fb` must be the index of this function block.
+    pub fn from_crbit(device: XC2Device, fb: u32, fuse_array: &FuseArray) -> Result<XC2BitstreamFB, &'static str> {
+        // ZIA
+        let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
+        let (x, y) = zia_block_loc(device, fb);
+        for zia_row in 0..INPUTS_PER_ANDTERM {
+            zia_bits[zia_row] = match device {
+                XC2Device::XC2C32 | XC2Device::XC2C32A => {
+                    let mut zia_bits = [false; 8];
+                    zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, true, fuse_array);
+                    decode_32_zia_choice(zia_row, &zia_bits)?
+                },
+                XC2Device::XC2C64 | XC2Device::XC2C64A => {
+                    let mut zia_bits = [false; 16];
+                    zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, true, fuse_array);
+                    decode_64_zia_choice(zia_row, &zia_bits)?
+                },
+                XC2Device::XC2C128 => {
+                    let mut zia_bits = [false; 28];
+                    zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, false, fuse_array);
+                    decode_128_zia_choice(zia_row, &zia_bits)?
+                },
+                XC2Device::XC2C256 => {
+                    let mut zia_bits = [false; 48];
+                    zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, true, fuse_array);
+                    decode_256_zia_choice(zia_row, &zia_bits)?
+                },
+                XC2Device::XC2C384 => {
+                    let mut zia_bits = [false; 74];
+                    zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, false, fuse_array);
+                    decode_384_zia_choice(zia_row, &zia_bits)?
+                },
+                XC2Device::XC2C512 => {
+                    let mut zia_bits = [false; 88];
+                    zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, false, fuse_array);
+                    decode_512_zia_choice(zia_row, &zia_bits)?
+                },
+            };
+        }
+
+        // AND block
+        let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
+        let (x, y, mirror) = and_block_loc(device, fb);
+        match device {
+            // "Type 1" blocks (OR array is in the middle)
+            XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A | XC2Device::XC2C256 => {
+                for term_idx in 0..ANDTERMS_PER_FB {
+                    for input_idx in 0..INPUTS_PER_ANDTERM {
+                        let mut out_y = y + input_idx;
+                        if input_idx >= 20 {
+                            // There is an OR array in the middle, 8 rows high
+                            out_y += 8;
+                        }
+
+                        if !mirror {
+                            // true input
+                            and_terms[term_idx].input[input_idx] = !fuse_array.get(x + term_idx * 2 + 1, out_y);
+                            // complement input
+                            and_terms[term_idx].input_b[input_idx] = !fuse_array.get(x + term_idx * 2 + 0, out_y);
+                        } else {
+                            // true input
+                            and_terms[term_idx].input[input_idx] = !fuse_array.get(x - term_idx * 2 - 1, out_y);
+                            // complement input
+                            and_terms[term_idx].input_b[input_idx] = !fuse_array.get(x - term_idx * 2 - 0, out_y);
+                        }
+                    }
+                }
+            },
+            // "Type 2" blocks (OR array is on the sides)
+            XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
+                for term_idx in 0..ANDTERMS_PER_FB {
+                    for input_idx in 0..INPUTS_PER_ANDTERM {
+                        let phys_term_idx = AND_BLOCK_TYPE2_P2L_MAP[term_idx];
+                        if !mirror {
+                            // true input
+                            and_terms[phys_term_idx].input[input_idx] =
+                                !fuse_array.get(x + term_idx * 2 + 1, y + input_idx);
+                            // complement input
+                            and_terms[phys_term_idx].input_b[input_idx] =
+                                !fuse_array.get(x + term_idx * 2 + 0, y + input_idx);
+                        } else {
+                            // true input
+                            and_terms[phys_term_idx].input[input_idx] =
+                                !fuse_array.get(x - term_idx * 2 - 1, y + input_idx);
+                            // complement input
+                            and_terms[phys_term_idx].input_b[input_idx] =
+                                !fuse_array.get(x - term_idx * 2 - 0, y + input_idx);
+                        }
+                    }
+                }
+            },
+        }
+
+        // OR block
+        let mut or_terms = [XC2PLAOrTerm::default(); MCS_PER_FB];
+        let (x, y, mirror) = or_block_loc(device, fb);
+        match device {
+            // "Type 1" blocks (OR array is in the middle)
+            XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A | XC2Device::XC2C256 => {
+                for or_term_idx in 0..MCS_PER_FB {
+                    for and_term_idx in 0..ANDTERMS_PER_FB {
+                        let out_y = y + (or_term_idx / 2);
+                        let off_x = and_term_idx * 2 + (or_term_idx % 2);
+                        let out_x = if !mirror {
+                            x + off_x
+                        } else {
+                            x - off_x
+                        };
+
+                        or_terms[or_term_idx].input[and_term_idx] = !fuse_array.get(out_x, out_y);
+                    }
+                }
+            },
+            // "Type 2" blocks (OR array is on the sides)
+            XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
+                for or_term_idx in 0..MCS_PER_FB {
+                    for and_term_idx in 0..ANDTERMS_PER_FB {
+                        let out_y = y + OR_BLOCK_TYPE2_ROW_MAP[and_term_idx / 2];
+                        let mut out_x = or_term_idx * 2;
+                        // TODO: Explain wtf is happening here
+                        if OR_BLOCK_TYPE2_ROW_MAP[and_term_idx / 2] >= 23 {
+                            // "Reverse"
+                            if and_term_idx % 2 == 0 {
+                                out_x += 1;
+                            }
+                        } else {
+                            if and_term_idx % 2 == 1 {
+                                out_x += 1;
+                            }
+                        }
+
+                        let out_x = if !mirror {
+                            x + out_x
+                        } else {
+                            x - out_x
+                        };
+
+                        or_terms[or_term_idx].input[and_term_idx] = !fuse_array.get(out_x, out_y);
+                    }
+                }
+            },
+        }
+
+        // FFs
+        let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
+        for i in 0..MCS_PER_FB {
+            ff_bits[i] = XC2Macrocell::from_crbit(device, fb, i as u32, fuse_array);
+        }
+
+        Ok(XC2BitstreamFB {
+            and_terms: and_terms,
+            or_terms: or_terms,
+            zia_bits: zia_bits,
+            ffs: ff_bits,
+        })
     }
 
     /// Write the .JED representation of the settings for this FB to the given `writer` object.

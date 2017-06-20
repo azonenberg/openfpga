@@ -32,8 +32,9 @@ use *;
 use fb::{read_fb_logical};
 use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx,
                       total_logical_fuse_count, clock_div_fuse_idx};
-use fusemap_physical::{fuse_array_dims, gck_fuse_coords, gsr_fuse_coords, gts_fuse_coords, global_term_fuse_coord};
-use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical};
+use fusemap_physical::{fuse_array_dims, gck_fuse_coords, gsr_fuse_coords, gts_fuse_coords, global_term_fuse_coord,
+                       clock_div_fuse_coord};
+use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical, read_32_extra_ibuf_physical};
 use mc::{write_small_mc_to_jed, write_large_mc_to_jed};
 use zia::{zia_get_row_width};
 
@@ -339,6 +340,42 @@ fn read_global_nets_logical(device: XC2Device, fuses: &[bool]) -> XC2GlobalNets 
     }
 }
 
+/// Internal function to read the global nets
+fn read_global_nets_physical(device: XC2Device, fuse_array: &FuseArray) -> XC2GlobalNets {
+    let ((gck0x, gck0y), (gck1x, gck1y), (gck2x, gck2y)) = gck_fuse_coords(device);
+
+    let ((gsren_x, gsren_y), (gsrinv_x, gsrinv_y)) = gsr_fuse_coords(device);
+
+    let (((gts0en_x, gts0en_y), (gts0inv_x, gts0inv_y)), ((gts1en_x, gts1en_y), (gts1inv_x, gts1inv_y)),
+         ((gts2en_x, gts2en_y), (gts2inv_x, gts2inv_y)), ((gts3en_x, gts3en_y), (gts3inv_x, gts3inv_y))) =
+            gts_fuse_coords(device);
+
+    let (term_x, term_y) = global_term_fuse_coord(device);
+
+    XC2GlobalNets {
+        gck_enable: [
+            fuse_array.get(gck0x, gck0y),
+            fuse_array.get(gck1x, gck1y),
+            fuse_array.get(gck2x, gck2y),
+        ],
+        gsr_enable: fuse_array.get(gsren_x, gsren_y),
+        gsr_invert: fuse_array.get(gsrinv_x, gsrinv_y),
+        gts_enable: [
+            !fuse_array.get(gts0en_x, gts0en_y),
+            !fuse_array.get(gts1en_x, gts1en_y),
+            !fuse_array.get(gts2en_x, gts2en_y),
+            !fuse_array.get(gts3en_x, gts3en_y),
+        ],
+        gts_invert: [
+            fuse_array.get(gts0inv_x, gts0inv_y),
+            fuse_array.get(gts1inv_x, gts1inv_y),
+            fuse_array.get(gts2inv_x, gts2inv_y),
+            fuse_array.get(gts3inv_x, gts3inv_y),
+        ],
+        global_pu: fuse_array.get(term_x, term_y),
+    }
+}
+
 /// Possible clock divide ratios for the programmable clock divider
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2ClockDivRatio {
@@ -405,6 +442,31 @@ fn read_clock_div_logical(device: XC2Device, fuses: &[bool]) -> XC2ClockDiv {
         delay: !fuses[clock_fuse_block + 4],
         enabled: !fuses[clock_fuse_block],
         div_ratio: match (fuses[clock_fuse_block + 1], fuses[clock_fuse_block + 2], fuses[clock_fuse_block + 3]) {
+            (false, false, false) => XC2ClockDivRatio::Div2,
+            (false, false,  true) => XC2ClockDivRatio::Div4,
+            (false,  true, false) => XC2ClockDivRatio::Div6,
+            (false,  true,  true) => XC2ClockDivRatio::Div8,
+            ( true, false, false) => XC2ClockDivRatio::Div10,
+            ( true, false,  true) => XC2ClockDivRatio::Div12,
+            ( true,  true, false) => XC2ClockDivRatio::Div14,
+            ( true,  true,  true) => XC2ClockDivRatio::Div16,
+        }
+    }
+}
+
+/// Internal function to read the clock divider configuration from a 128-macrocell part
+fn read_clock_div_physical(device: XC2Device, fuse_array: &FuseArray) -> XC2ClockDiv {
+    let ((clken_x, clken_y), (clkdiv0_x, clkdiv0_y), (clkdiv1_x, clkdiv1_y), (clkdiv2_x, clkdiv2_y),
+        (clkdelay_x, clkdelay_y)) = clock_div_fuse_coord(device);
+
+    let div_ratio_bits = (fuse_array.get(clkdiv0_x, clkdiv0_y),
+                          fuse_array.get(clkdiv1_x, clkdiv1_y),
+                          fuse_array.get(clkdiv2_x, clkdiv2_y));
+
+    XC2ClockDiv {
+        delay: !fuse_array.get(clkdelay_x, clkdelay_y),
+        enabled: !fuse_array.get(clken_x, clken_y),
+        div_ratio: match div_ratio_bits {
             (false, false, false) => XC2ClockDivRatio::Div2,
             (false, false,  true) => XC2ClockDivRatio::Div4,
             (false,  true, false) => XC2ClockDivRatio::Div6,
@@ -621,8 +683,6 @@ impl XC2BitstreamBits {
 
     /// Convert the actual bitstream bits to crbit format
     pub fn to_crbit(&self, fuse_array: &mut FuseArray) {
-        // TODO
-
         // FBs
         for i in 0..self.device_type().num_fbs() {
             self.get_fb()[i].to_crbit(self.device_type(), i as u32, fuse_array);
@@ -678,6 +738,30 @@ impl XC2BitstreamBits {
 
         // Global nets
         self.get_global_nets().to_crbit(self.device_type(), fuse_array);
+
+        // Clock divider
+        if let Some(clock_div) = self.get_clock_div() {
+            let ((clken_x, clken_y), (clkdiv0_x, clkdiv0_y), (clkdiv1_x, clkdiv1_y), (clkdiv2_x, clkdiv2_y),
+                (clkdelay_x, clkdelay_y)) = clock_div_fuse_coord(self.device_type());
+
+            fuse_array.set(clken_x, clken_y, !clock_div.enabled);
+
+            let divratio = match clock_div.div_ratio {
+                XC2ClockDivRatio::Div2  => (false, false, false),
+                XC2ClockDivRatio::Div4  => (false, false, true),
+                XC2ClockDivRatio::Div6  => (false, true, false),
+                XC2ClockDivRatio::Div8  => (false, true, true),
+                XC2ClockDivRatio::Div10 => (true, false, false),
+                XC2ClockDivRatio::Div12 => (true, false, true),
+                XC2ClockDivRatio::Div14 => (true, true, false),
+                XC2ClockDivRatio::Div16 => (true, true, true),
+            };
+            fuse_array.set(clkdiv0_x, clkdiv0_y, divratio.0);
+            fuse_array.set(clkdiv1_x, clkdiv1_y, divratio.1);
+            fuse_array.set(clkdiv2_x, clkdiv2_y, divratio.2);
+
+            fuse_array.set(clkdelay_x, clkdelay_y, !clock_div.delay);
+        }
 
         // Bank voltages and miscellaneous
         match self {
@@ -1337,6 +1421,246 @@ pub fn read_512_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
     })
 }
 
+/// Common logic for reading bitstreams on "small" devices
+pub fn read_bitstream_physical_common_small(fuse_array: &FuseArray, device: XC2Device,
+    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCSmallIOB]) -> Result<(), &'static str> {
+
+    for i in 0..fb.len() {
+        fb[i] = XC2BitstreamFB::from_crbit(device, i as u32, fuse_array)?;
+    };
+
+    for i in 0..iobs.len() {
+        iobs[i] = XC2MCSmallIOB::from_crbit(device, i as u32, fuse_array)?;
+    }
+
+    Ok(())
+}
+
+/// Common logic for reading bitstreams on "large" devices
+pub fn read_bitstream_physical_common_large(fuse_array: &FuseArray, device: XC2Device,
+    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCLargeIOB]) -> Result<(), &'static str> {
+
+    for i in 0..fb.len() {
+        fb[i] = XC2BitstreamFB::from_crbit(device, i as u32, fuse_array)?;
+    };
+
+    for i in 0..iobs.len() {
+        iobs[i] = XC2MCLargeIOB::from_crbit(device, i as u32, fuse_array)?;
+    }
+
+    Ok(())
+}
+
+/// Internal function for parsing an XC2C32 bitstream
+pub fn read_32_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 2];
+    let mut iobs = [XC2MCSmallIOB::default(); 32];
+    
+    read_bitstream_physical_common_small(fuse_array, XC2Device::XC2C32, &mut fb, &mut iobs)?;
+
+    let inpin = read_32_extra_ibuf_physical(fuse_array);
+
+    let global_nets = read_global_nets_physical(XC2Device::XC2C32, fuse_array);
+
+    Ok(XC2BitstreamBits::XC2C32 {
+        fb: fb,
+        iobs: iobs,
+        inpin: inpin,
+        global_nets: global_nets,
+        ovoltage: !fuse_array.get(130, 24),
+        ivoltage: !fuse_array.get(130, 25),
+    })
+}
+
+/// Internal function for parsing an XC2C32A bitstream
+pub fn read_32a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 2];
+    let mut iobs = [XC2MCSmallIOB::default(); 32];
+    
+    read_bitstream_physical_common_small(fuse_array, XC2Device::XC2C32A, &mut fb, &mut iobs)?;
+
+    let inpin = read_32_extra_ibuf_physical(fuse_array);
+
+    let global_nets = read_global_nets_physical(XC2Device::XC2C32A, fuse_array);
+
+    Ok(XC2BitstreamBits::XC2C32A {
+        fb: fb,
+        iobs: iobs,
+        inpin: inpin,
+        global_nets: global_nets,
+        legacy_ovoltage: !fuse_array.get(130, 24),
+        legacy_ivoltage: !fuse_array.get(130, 25),
+        ivoltage: [
+            !fuse_array.get(131, 25),
+            !fuse_array.get(133, 25),
+        ],
+        ovoltage: [
+            !fuse_array.get(132, 25),
+            !fuse_array.get(134, 25),
+        ]
+    })
+}
+
+/// Internal function for parsing an XC2C64 bitstream
+pub fn read_64_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 4];
+    let mut iobs = [XC2MCSmallIOB::default(); 64];
+    
+    read_bitstream_physical_common_small(fuse_array, XC2Device::XC2C64, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_physical(XC2Device::XC2C64, fuse_array);
+
+    Ok(XC2BitstreamBits::XC2C64 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        ovoltage: !fuse_array.get(137, 23),
+        ivoltage: !fuse_array.get(138, 23),
+    })
+}
+
+/// Internal function for parsing an XC2C64A bitstream
+pub fn read_64a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 4];
+    let mut iobs = [XC2MCSmallIOB::default(); 64];
+    
+    read_bitstream_physical_common_small(fuse_array, XC2Device::XC2C64A, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_physical(XC2Device::XC2C64A, fuse_array);
+
+    Ok(XC2BitstreamBits::XC2C64A {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        legacy_ovoltage: !fuse_array.get(137, 23),
+        legacy_ivoltage: !fuse_array.get(138, 23),
+        ivoltage: [
+            !fuse_array.get(139, 23),
+            !fuse_array.get(141, 23),
+        ],
+        ovoltage: [
+            !fuse_array.get(140, 23),
+            !fuse_array.get(142, 23),
+        ]
+    })
+}
+
+/// Internal function for parsing an XC2C128 bitstream
+pub fn read_128_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 8];
+    let mut iobs = [XC2MCLargeIOB::default(); 100];
+    
+    read_bitstream_physical_common_large(fuse_array, XC2Device::XC2C128, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_physical(XC2Device::XC2C128, fuse_array);
+
+    Ok(XC2BitstreamBits::XC2C128 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        clock_div: read_clock_div_physical(XC2Device::XC2C128, fuse_array),
+        data_gate: !fuse_array.get(371, 67),
+        use_vref: !fuse_array.get(10, 67),
+        ivoltage: [
+            !fuse_array.get(8, 67),
+            !fuse_array.get(368, 67),
+        ],
+        ovoltage: [
+            !fuse_array.get(9, 67),
+            !fuse_array.get(369, 67),
+        ]
+    })
+}
+
+/// Internal function for parsing an XC2C256 bitstream
+pub fn read_256_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 16];
+    let mut iobs = [XC2MCLargeIOB::default(); 184];
+    
+    read_bitstream_physical_common_large(fuse_array, XC2Device::XC2C256, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_physical(XC2Device::XC2C256, fuse_array);
+
+    Ok(XC2BitstreamBits::XC2C256 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        clock_div: read_clock_div_physical(XC2Device::XC2C256, fuse_array),
+        data_gate: !fuse_array.get(518, 23),
+        use_vref: !fuse_array.get(177, 23),
+        ivoltage: [
+            !fuse_array.get(175, 23),
+            !fuse_array.get(515, 23),
+        ],
+        ovoltage: [
+            !fuse_array.get(176, 23),
+            !fuse_array.get(516, 23),
+        ]
+    })
+}
+
+/// Internal function for parsing an XC2C384 bitstream
+pub fn read_384_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 24];
+    let mut iobs = [XC2MCLargeIOB::default(); 240];
+    
+    read_bitstream_physical_common_large(fuse_array, XC2Device::XC2C384, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_physical(XC2Device::XC2C384, fuse_array);
+
+    Ok(XC2BitstreamBits::XC2C384 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        clock_div: read_clock_div_physical(XC2Device::XC2C384, fuse_array),
+        data_gate: !fuse_array.get(932, 17),
+        use_vref: !fuse_array.get(3, 17),
+        ivoltage: [
+            !fuse_array.get(936, 17),
+            !fuse_array.get(1864, 17),
+            !fuse_array.get(1, 17),
+            !fuse_array.get(929, 17),
+        ],
+        ovoltage: [
+            !fuse_array.get(937, 17),
+            !fuse_array.get(1865, 17),
+            !fuse_array.get(2, 17),
+            !fuse_array.get(930, 17),
+        ]
+    })
+}
+
+/// Internal function for parsing an XC2C512 bitstream
+pub fn read_512_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+    let mut fb = [XC2BitstreamFB::default(); 32];
+    let mut iobs = [XC2MCLargeIOB::default(); 270];
+    
+    read_bitstream_physical_common_large(fuse_array, XC2Device::XC2C512, &mut fb, &mut iobs)?;
+
+    let global_nets = read_global_nets_physical(XC2Device::XC2C512, fuse_array);
+
+    Ok(XC2BitstreamBits::XC2C512 {
+        fb: fb,
+        iobs: iobs,
+        global_nets: global_nets,
+        clock_div: read_clock_div_physical(XC2Device::XC2C512, fuse_array),
+        data_gate: !fuse_array.get(982, 147),
+        use_vref: !fuse_array.get(1, 147),
+        ivoltage: [
+            fuse_array.get(992, 147),
+            fuse_array.get(1965, 147),
+            fuse_array.get(3, 147),
+            fuse_array.get(985, 147),
+        ],
+        ovoltage: [
+            fuse_array.get(991, 147),
+            fuse_array.get(1964, 147),
+            fuse_array.get(2, 147),
+            fuse_array.get(984, 147),
+        ]
+    })
+}
+
 /// Processes a fuse array into a bitstream object
 pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
     let device_combination = parse_part_name_string(device);
@@ -1409,6 +1733,93 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
         },
         XC2Device::XC2C512 => {
             let bits = read_512_bitstream_logical(fuses)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
+    }
+}
+
+/// Processes a fuse array (in physical addressing) into a bitstream object
+pub fn process_crbit(fuse_array: &FuseArray) -> Result<XC2Bitstream, &'static str> {
+    // FIXME: Can we guess the device type from the dimensions?
+    if fuse_array.dev_name_str.is_none() {
+        return Err("unspecified device name");
+    }
+
+    let device_combination = parse_part_name_string(fuse_array.dev_name_str.as_ref().unwrap());
+    if device_combination.is_none() {
+        return Err("malformed device name");
+    }
+
+    let (part, spd, pkg) = device_combination.unwrap();
+
+    if fuse_array.dim() != fuse_array_dims(part) {
+        return Err("wrong number of fuses");
+    }
+
+
+    match part {
+        XC2Device::XC2C32 => {
+            let bits = read_32_bitstream_physical(fuse_array)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
+        XC2Device::XC2C32A => {
+            let bits = read_32a_bitstream_physical(fuse_array)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
+        XC2Device::XC2C64 => {
+            let bits = read_64_bitstream_physical(fuse_array)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
+        XC2Device::XC2C64A => {
+            let bits = read_64a_bitstream_physical(fuse_array)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
+        XC2Device::XC2C128 => {
+            let bits = read_128_bitstream_physical(fuse_array)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
+        XC2Device::XC2C256 => {
+            let bits = read_256_bitstream_physical(fuse_array)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
+        XC2Device::XC2C384 => {
+            let bits = read_384_bitstream_physical(fuse_array)?;
+            Ok(XC2Bitstream {
+                speed_grade: spd,
+                package: pkg,
+                bits: bits,
+            })
+        },
+        XC2Device::XC2C512 => {
+            let bits = read_512_bitstream_physical(fuse_array)?;
             Ok(XC2Bitstream {
                 speed_grade: spd,
                 package: pkg,

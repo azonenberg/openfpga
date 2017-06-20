@@ -256,3 +256,16 @@ pub fn global_term_fuse_coord(device: XC2Device) -> (usize, usize) {
         XC2Device::XC2C512 => (983, 147),
     }
 }
+
+// enable, div, div, div, delay
+pub fn clock_div_fuse_coord(device: XC2Device)
+    -> ((usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize)) {
+
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A => unreachable!(),
+        XC2Device::XC2C128 => ((364, 67), (363, 67), (362, 67), (361, 67), (360, 67)),
+        XC2Device::XC2C256 => ((519, 24), (518, 24), (517, 24), (516, 24), (515, 24)),
+        XC2Device::XC2C384 => ((471, 107), (470, 107), (469, 107), (468, 107), (467, 107)),
+        XC2Device::XC2C512 => ((978, 147), (977, 147), (976, 147), (975, 147), (974, 147)),
+    }
+}
