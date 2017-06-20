@@ -1316,6 +1316,7 @@ bool Greenpak4Device::LoadTimingData(string fname)
 	if(0 != fseek(fp, 0, SEEK_SET))
 	{
 		LogError("Failed to seek to start of timing data file %s\n", fname.c_str());
+		fclose(fp);
 		return false;
 	}
 	char* json_string = new char[len + 1];
