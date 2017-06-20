@@ -168,8 +168,8 @@ module XC2CDevice(
 		//TODO: pipeline this or are we OK in one cycle?
 		//If we go multicycle, how do we handle this with no clock? Real chip is self-timed internally
 		if(config_erase) begin
-			for(i=0; i<MEM_DEPTH; i=i+1)
-				ram_bitstream[i] <= {SHREG_WIDTH{1'b1}};
+			for(row=0; row<MEM_DEPTH; row=row+1)
+				ram_bitstream[row] <= {SHREG_WIDTH{1'b1}};
 		end
 
 	end
@@ -256,8 +256,8 @@ module XC2CDevice(
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// PLA AND array
 
-	reg[56*80-1:0]		left_and_config;
-	reg[56*80-1:0]		right_and_config;
+	reg[80*56-1:0]		left_and_config;
+	reg[80*56-1:0]		right_and_config;
 
 	wire[55:0]			left_pterms;
 	wire[55:0]			right_pterms;
@@ -277,24 +277,33 @@ module XC2CDevice(
 	);
 
 	//Hook up the config bits
+	integer nterm;
 	always @(*) begin
 
 		for(row=0; row<40; row=row+1) begin
 
 			//We have stuff at the top and bottom of array, with OR array in the middle
-			//Left side: 249:138
-			//Right side: 121:10 (mirrored)
+			//Each row is two bits from PT0, two from PT1, two from PT2, etc
+
+			//Right side: 249:138 (mirrored)
+			//Left side: 121:10
 			if(row >= 20) begin
-				for(nbit=0; nbit<112; nbit=nbit+1) begin
-					right_and_config[row*112 + nbit] <= ram_bitstream[row-8][138 + nbit];
-					left_and_config[row*112 + nbit] <= ram_bitstream[row-8][121 - nbit];
+				for(nterm=0; nterm<56; nterm=nterm+1) begin
+					right_and_config[nterm*80 + row*2 + 0] <= ram_bitstream[row-8][249 - nterm*2 - 1];
+					right_and_config[nterm*80 + row*2 + 1] <= ram_bitstream[row-8][249 - nterm*2 - 0];
+
+					left_and_config[nterm*80 + row*2 + 0] <= ram_bitstream[row-8][10 + nterm*2 + 0];
+					left_and_config[nterm*80 + row*2 + 1] <= ram_bitstream[row-8][10 + nterm*2 + 1];
 				end
 			end
 
 			else begin
-				for(nbit=0; nbit<112; nbit=nbit+1) begin
-					right_and_config[row*112 + nbit] <= ram_bitstream[row][138 + nbit];
-					left_and_config[row*112 + nbit] <= ram_bitstream[row][121 - nbit];
+				for(nterm=0; nterm<56; nterm=nterm+1) begin
+					right_and_config[nterm*80 + row*2 + 0] <= ram_bitstream[row][249 - nterm*2 - 1];
+					right_and_config[nterm*80 + row*2 + 1] <= ram_bitstream[row][249 - nterm*2 - 0];
+
+					left_and_config[nterm*80 + row*2 + 0] <= ram_bitstream[row][10 + nterm*2 + 0];
+					left_and_config[nterm*80 + row*2 + 1] <= ram_bitstream[row][10 + nterm*2 + 1];
 				end
 			end
 
@@ -313,11 +322,7 @@ module XC2CDevice(
 	//Drive all unused outputs to 0, then hook up our outputs
 	//Should be X, !X, X, X
 	assign iob_out[31:7] = 25'h0;
-	//assign iob_out[6:3] = {right_pterms[19], right_pterms[22], right_pterms[25], right_pterms[28]};
-	assign iob_out[6]	= &right_pterms;
-	assign iob_out[5]	= &left_pterms;
-	assign iob_out[4]	= &left_and_config[19*80 +: 80];
-	assign iob_out[3]	= &right_and_config[19*80 +: 80];
+	assign iob_out[6:3] = {right_pterms[19], right_pterms[22], right_pterms[25], right_pterms[28]};
 	assign iob_out[2:0] = 3'h0;
 
 endmodule
