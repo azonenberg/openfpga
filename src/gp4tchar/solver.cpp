@@ -105,6 +105,11 @@ bool EquationSystem::Solve()
 			if(!found)
 			{
 				LogError("Cannot solve for variable %d (%s)\n", nvar, nmap[nvar].c_str());
+
+				for(int i=0; i<numEq; i++)
+					delete[] rows[i];
+				delete[] rows;
+				
 				return false;
 			}
 		}
