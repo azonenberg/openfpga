@@ -115,64 +115,54 @@ module XC2CDevice(
 	input wire[MACROCELLS-1:0]	iob_in;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// The SRAM copy of the config bitstream (directly drives device behavior)
-
-	reg[SHREG_WIDTH-1:0] ram_bitstream[MEM_DEPTH-1:0];
-
-	/*
-		Row configuration, left to right:
-		1		259			Transfer bit (ignored)
-		9		258:250		FB2 macrocells
-		112		249:138		FB2 PLA
-		16		137:122		ZIA (interleaved)
-		112		121:10		FB1 PLA
-		9		9:1			FB1 macrocells
-		1		0			Transfer bit (ignored)
-	 */
-
-	integer row;
-	initial begin
-		for(row=0; row<MEM_DEPTH; row=row+1)
-			ram_bitstream[row] <= {SHREG_WIDTH{1'b1}};	//copied from blank EEPROM = all 1s
-	end
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// The EEPROM copy of the config bitstream (used to configure ram_bitstream at startup)
-
-	//TODO
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// JTAG stuff
+	// The bitstream
 
 	wire					config_erase;
 
 	wire					config_read_en;
 	wire[ADDR_BITS-1:0]		config_read_addr;
-	reg[SHREG_WIDTH-1:0]	config_read_data = 0;
+	wire[SHREG_WIDTH-1:0]	config_read_data;
 
 	wire					config_write_en;
 	wire[ADDR_BITS-1:0]		config_write_addr;
 	wire[SHREG_WIDTH-1:0]	config_write_data;
 
-	//Read/write the EEPROM
-	//TODO: add read enable?
-	always @(posedge jtag_tck) begin
+	wire[40*8-1:0]			left_zia_config;
+	wire[40*8-1:0]			right_zia_config;
 
-		if(config_read_en)
-			config_read_data <= ram_bitstream[config_read_addr];
+	wire[80*56-1:0]			left_and_config;
+	wire[80*56-1:0]			right_and_config;
 
-		if(config_write_en)
-			ram_bitstream[config_write_addr]	<= config_write_data;
+	wire[16*56-1:0]			left_or_config;
+	wire[16*56-1:0]			right_or_config;
 
-		//Wipe the config memory
-		//TODO: pipeline this or are we OK in one cycle?
-		//If we go multicycle, how do we handle this with no clock? Real chip is self-timed internally
-		if(config_erase) begin
-			for(row=0; row<MEM_DEPTH; row=row+1)
-				ram_bitstream[row] <= {SHREG_WIDTH{1'b1}};
-		end
+	XC2CBitstream #(
+		.ADDR_BITS(ADDR_BITS),
+		.MEM_DEPTH(MEM_DEPTH),
+		.SHREG_WIDTH(SHREG_WIDTH)
+	) bitstream (
+		.jtag_tck(jtag_tck),
 
-	end
+		.config_erase(config_erase),
+
+		.config_read_en(config_read_en),
+		.config_read_addr(config_read_addr),
+		.config_read_data(config_read_data),
+
+		.config_write_en(config_write_en),
+		.config_write_addr(config_write_addr),
+		.config_write_data(config_write_data),
+
+		.left_zia_config(left_zia_config),
+		.left_and_config(left_and_config),
+		.left_or_config(left_or_config),
+		.right_zia_config(right_zia_config),
+		.right_and_config(right_and_config),
+		.right_or_config(right_or_config)
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// The JTAG TAP (for now, basic bitstream config only)
 
 	XC2CJTAG #(
 		.MACROCELLS(MACROCELLS),
@@ -205,7 +195,6 @@ module XC2CDevice(
 
 	//Left side (FB2)
 	wire[39:0]		left_zia_out;
-	reg[40*8-1:0]	left_zia_config;
 	XC2CZIA #(
 		.MACROCELLS(MACROCELLS)
 	) left_zia (
@@ -218,7 +207,6 @@ module XC2CDevice(
 
 	//Right side (FB1)
 	wire[39:0]		right_zia_out;
-	reg[40*8-1:0]	right_zia_config;
 	XC2CZIA #(
 		.MACROCELLS(MACROCELLS)
 	) right_zia (
@@ -229,35 +217,8 @@ module XC2CDevice(
 		.config_bits(right_zia_config)
 		);
 
-	//Hook up the config bits
-	integer nbit;
-	always @(*) begin
-		for(row=0; row<40; row=row+1) begin
-
-			//The ZIA is bits 137:122
-			//MSB is FB1, next is FB2.
-			//We have stuff at the top and bottom of array, with global config in the middle
-			if(row >= 20) begin
-				for(nbit=0; nbit<8; nbit=nbit+1) begin
-					right_zia_config[row*8 + nbit]	<= ram_bitstream[row-8][123 + nbit*2];
-					left_zia_config[row*8 + nbit]	<= ram_bitstream[row-8][122 + nbit*2];
-				end
-			end
-			else begin
-				for(nbit=0; nbit<8; nbit=nbit+1) begin
-					right_zia_config[row*8 + nbit]	<= ram_bitstream[row][123 + nbit*2];
-					left_zia_config[row*8 + nbit]	<= ram_bitstream[row][122 + nbit*2];
-				end
-			end
-
-		end
-	end
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// PLA AND array
-
-	reg[80*56-1:0]		left_and_config;
-	reg[80*56-1:0]		right_and_config;
 
 	wire[55:0]			left_pterms;
 	wire[55:0]			right_pterms;
@@ -276,46 +237,8 @@ module XC2CDevice(
 		.pterm_out(right_pterms)
 	);
 
-	//Hook up the config bits
-	integer nterm;
-	always @(*) begin
-
-		for(row=0; row<40; row=row+1) begin
-
-			//We have stuff at the top and bottom of array, with OR array in the middle
-			//Each row is two bits from PT0, two from PT1, two from PT2, etc
-
-			//Right side: 249:138 (mirrored)
-			//Left side: 121:10
-			if(row >= 20) begin
-				for(nterm=0; nterm<56; nterm=nterm+1) begin
-					right_and_config[nterm*80 + row*2 + 0] <= ram_bitstream[row-8][249 - nterm*2 - 1];
-					right_and_config[nterm*80 + row*2 + 1] <= ram_bitstream[row-8][249 - nterm*2 - 0];
-
-					left_and_config[nterm*80 + row*2 + 0] <= ram_bitstream[row-8][10 + nterm*2 + 0];
-					left_and_config[nterm*80 + row*2 + 1] <= ram_bitstream[row-8][10 + nterm*2 + 1];
-				end
-			end
-
-			else begin
-				for(nterm=0; nterm<56; nterm=nterm+1) begin
-					right_and_config[nterm*80 + row*2 + 0] <= ram_bitstream[row][249 - nterm*2 - 1];
-					right_and_config[nterm*80 + row*2 + 1] <= ram_bitstream[row][249 - nterm*2 - 0];
-
-					left_and_config[nterm*80 + row*2 + 0] <= ram_bitstream[row][10 + nterm*2 + 0];
-					left_and_config[nterm*80 + row*2 + 1] <= ram_bitstream[row][10 + nterm*2 + 1];
-				end
-			end
-
-		end
-
-	end
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// PLA OR array
-
-	reg[16*56-1:0]	left_or_config;
-	reg[16*56-1:0]	right_or_config;
 
 	wire[15:0]		left_orterms;
 	wire[15:0]		right_orterms;
@@ -333,11 +256,6 @@ module XC2CDevice(
 		.config_bits(right_or_config),
 		.or_out(right_orterms)
 	);
-
-	//Hook up the config bits
-	always @(*) begin
-
-	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Debug stuff
