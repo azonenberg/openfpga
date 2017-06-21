@@ -136,6 +136,9 @@ module XC2CDevice(
 	wire[16*56-1:0]			left_or_config;
 	wire[16*56-1:0]			right_or_config;
 
+	wire[27*16-1:0]			left_mc_config;
+	wire[27*16-1:0]			right_mc_config;
+
 	XC2CBitstream #(
 		.ADDR_BITS(ADDR_BITS),
 		.MEM_DEPTH(MEM_DEPTH),
@@ -156,9 +159,11 @@ module XC2CDevice(
 		.left_zia_config(left_zia_config),
 		.left_and_config(left_and_config),
 		.left_or_config(left_or_config),
+		.left_mc_config(left_mc_config),
 		.right_zia_config(right_zia_config),
 		.right_and_config(right_and_config),
-		.right_or_config(right_or_config)
+		.right_or_config(right_or_config),
+		.right_mc_config(right_mc_config)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,6 +263,37 @@ module XC2CDevice(
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Macrocells
+
+	wire[15:0]		left_mc_out;
+	wire[15:0]		right_mc_out;
+
+	genvar g;
+	generate
+		for(g=0; g<16; g=g+1) begin : mcells
+
+			XC2CMacrocell left(
+				.config_bits(left_mc_config[g*27 +: 27]),
+				.pterm_a(left_pterms[g*3 + 8]),
+				.pterm_b(left_pterms[g*3 + 9]),
+				.pterm_c(left_pterms[g*3 + 10]),
+				.or_term(left_orterms[g]),
+				.mc_out(left_mc_out[g])
+			);
+
+			XC2CMacrocell right(
+				.config_bits(right_mc_config[g*27 +: 27]),
+				.pterm_a(right_pterms[g*3 + 8]),
+				.pterm_b(right_pterms[g*3 + 9]),
+				.pterm_c(right_pterms[g*3 + 10]),
+				.or_term(right_orterms[g]),
+				.mc_out(right_mc_out[g])
+			);
+
+		end
+	endgenerate
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Debug stuff
 
 	//Tristate all pins except our outputs (6:3)
@@ -268,11 +304,10 @@ module XC2CDevice(
 	//Drive all unused outputs to 0, then hook up our outputs
 	//Should be X, !X, X, X
 	assign iob_out[31:7] = 25'h0;
-	//assign iob_out[6:3] = {right_pterms[19], right_pterms[22], right_pterms[25], right_pterms[28]};
-	assign iob_out[6] = ^right_pterms;
-	assign iob_out[5] = ^left_pterms;
-	assign iob_out[4] = ^right_orterms;
-	assign iob_out[3] = ^left_orterms;
+	assign iob_out[6] = right_mc_out[6];
+	assign iob_out[5] = right_mc_out[5];
+	assign iob_out[4] = right_mc_out[4];
+	assign iob_out[3] = right_mc_out[3];
 	assign iob_out[2:0] = 3'h0;
 
 endmodule

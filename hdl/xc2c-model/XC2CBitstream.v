@@ -27,7 +27,8 @@ module XC2CBitstream(
 	config_write_en, config_write_addr, config_write_data,
 	left_zia_config, right_zia_config,
 	left_and_config, right_and_config,
-	left_or_config, right_or_config
+	left_or_config, right_or_config,
+	left_mc_config, right_mc_config
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,6 +58,9 @@ module XC2CBitstream(
 
 	output reg[16*56-1:0]			left_or_config;
 	output reg[16*56-1:0]			right_or_config;
+
+	output reg[27*16-1:0]			left_mc_config;
+	output reg[27*16-1:0]			right_mc_config;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The SRAM copy of the config bitstream (directly drives device behavior)
@@ -114,11 +118,17 @@ module XC2CBitstream(
 	integer nbit;
 	integer nterm;
 	integer toprow;
+	integer orow;
+	integer mcell;
+	integer mcblock;
 
 	always @(*) begin
 		for(row=0; row<48; row=row+1) begin
 
 			toprow = row - 8;
+			orow = row - 20;
+			mcell = row / 3;
+			mcblock = row % 3;
 
 			//Rows 0..19: 	MC-AND-ZIA-AND-MC
 			//Rows 20...27: MC-OR--GLB-OR--MC
@@ -129,14 +139,14 @@ module XC2CBitstream(
 			//We have stuff at the top and bottom of array, with global config in the middle
 			if(row > 27) begin
 				for(nbit=0; nbit<8; nbit=nbit+1) begin
-					right_zia_config[toprow*8 + nbit]	<= ram_bitstream[toprow][123 + nbit*2];
-					left_zia_config[toprow*8 + nbit]	<= ram_bitstream[toprow][122 + nbit*2];
+					right_zia_config[toprow*8 + nbit]			<= ram_bitstream[toprow][123 + nbit*2];
+					left_zia_config[toprow*8 + nbit]			<= ram_bitstream[toprow][122 + nbit*2];
 				end
 			end
 			else if(row < 20) begin
 				for(nbit=0; nbit<8; nbit=nbit+1) begin
-					right_zia_config[row*8 + nbit]	<= ram_bitstream[row][123 + nbit*2];
-					left_zia_config[row*8 + nbit]	<= ram_bitstream[row][122 + nbit*2];
+					right_zia_config[row*8 + nbit]				<= ram_bitstream[row][123 + nbit*2];
+					left_zia_config[row*8 + nbit]				<= ram_bitstream[row][122 + nbit*2];
 				end
 			end
 
@@ -146,27 +156,43 @@ module XC2CBitstream(
 			//Left side: 121:10
 			if(row > 27) begin
 				for(nterm=0; nterm<56; nterm=nterm+1) begin
-					right_and_config[nterm*80 + toprow*2 + 0] <= ram_bitstream[toprow][249 - nterm*2 - 1];
-					right_and_config[nterm*80 + toprow*2 + 1] <= ram_bitstream[toprow][249 - nterm*2 - 0];
+					right_and_config[nterm*80 + toprow*2 + 0] 	<= ram_bitstream[toprow][249 - nterm*2 - 1];
+					right_and_config[nterm*80 + toprow*2 + 1] 	<= ram_bitstream[toprow][249 - nterm*2 - 0];
 
-					left_and_config[nterm*80 + toprow*2 + 0] <= ram_bitstream[toprow][10 + nterm*2 + 0];
-					left_and_config[nterm*80 + toprow*2 + 1] <= ram_bitstream[toprow][10 + nterm*2 + 1];
+					left_and_config[nterm*80 + toprow*2 + 0]	 <= ram_bitstream[toprow][10 + nterm*2 + 0];
+					left_and_config[nterm*80 + toprow*2 + 1] 	<= ram_bitstream[toprow][10 + nterm*2 + 1];
 				end
 			end
 
 			else if(row < 20) begin
 				for(nterm=0; nterm<56; nterm=nterm+1) begin
-					right_and_config[nterm*80 + row*2 + 0] <= ram_bitstream[row][249 - nterm*2 - 1];
-					right_and_config[nterm*80 + row*2 + 1] <= ram_bitstream[row][249 - nterm*2 - 0];
+					right_and_config[nterm*80 + row*2 + 0]		<= ram_bitstream[row][249 - nterm*2 - 1];
+					right_and_config[nterm*80 + row*2 + 1] 		<= ram_bitstream[row][249 - nterm*2 - 0];
 
-					left_and_config[nterm*80 + row*2 + 0] <= ram_bitstream[row][10 + nterm*2 + 0];
-					left_and_config[nterm*80 + row*2 + 1] <= ram_bitstream[row][10 + nterm*2 + 1];
+					left_and_config[nterm*80 + row*2 + 0] 		<= ram_bitstream[row][10 + nterm*2 + 0];
+					left_and_config[nterm*80 + row*2 + 1] 		<= ram_bitstream[row][10 + nterm*2 + 1];
 				end
 			end
 
 			//PLA OR array
+			//One bit per product term, two OR terms per row
 			if( (row >= 20) && (row <= 27) ) begin
-				//TODO
+				for(nterm=0; nterm<56; nterm=nterm+1) begin
+					right_or_config[(orow*2)*56 + nterm]		<= ram_bitstream[orow][249 - nterm*2 + 0];
+					right_or_config[(orow*2+1)*56 + nterm]		<= ram_bitstream[orow][249 - nterm*2 + 1];
+
+					left_or_config[(orow*2)*56 + nterm]			<= ram_bitstream[orow][249 - nterm*2 + 0];
+					left_or_config[(orow*2+1)*56 + nterm]		<= ram_bitstream[orow][249 - nterm*2 + 1];
+				end
+			end
+
+			//Macrocells
+			//9 bits per row, takes 3 rows to provision one macrocell
+			//Right side: 258:250 (mirrored)
+			//Left side: 9:1
+			for(nbit=0; nbit<9; nbit=nbit+1) begin
+				left_mc_config[mcell*27 + (2 - mcblock)*9 + nbit]	<= ram_bitstream[row][9 - nbit];
+				right_mc_config[mcell*27 + (2 - mcblock)*9 + nbit]	<= ram_bitstream[row][250 + nbit];
 			end
 
 		end
