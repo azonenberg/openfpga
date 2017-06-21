@@ -22,7 +22,9 @@
  */
 module XC2CDevice(
 	jtag_tdi, jtag_tms, jtag_tck, jtag_tdo,
-	dedicated_input, iob_out, iob_in, iob_t);
+	dedicated_input, iob_out, iob_in, iob_t,
+	done, dbgout
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
@@ -114,6 +116,9 @@ module XC2CDevice(
 	output wire[MACROCELLS-1:0]	iob_t;
 	input wire[MACROCELLS-1:0]	iob_in;
 
+	output wire					done;
+	output wire					dbgout;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The bitstream
 
@@ -188,7 +193,9 @@ module XC2CDevice(
 
 		.config_write_en(config_write_en),
 		.config_write_addr(config_write_addr),
-		.config_write_data(config_write_data)
+		.config_write_data(config_write_data),
+
+		.config_done(done)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -308,6 +315,14 @@ module XC2CDevice(
 	assign iob_out[5] = right_mc_out[5];
 	assign iob_out[4] = right_mc_out[4];
 	assign iob_out[3] = right_mc_out[3];
+
+	//assign iob_out[5] = right_pterms[22];		//pterm, should be copy of x
+	//assign iob_out[4] = right_mc_out[3];		//led_0, constant 1: OR arrays 0 xor 1
+	//assign iob_out[3] = right_mc_out[4];		//led_1, passthrough of pterm C
+												//for MC4 this is pterm 22
 	assign iob_out[2:0] = 3'h0;
+
+	//Helper to keep stuff from getting optimized out
+	assign dbgout = ^right_mc_out ^ ^left_mc_out;
 
 endmodule

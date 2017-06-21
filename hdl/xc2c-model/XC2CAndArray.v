@@ -55,9 +55,9 @@ module XC2CAndArray(zia_in, config_bits, pterm_out);
 			//AND in the ZIA stuff
 			for(nrow=0; nrow<40; nrow=nrow+1) begin
 				if(!and_config[nterm][nrow*2])
-					pterm_out[nterm] = pterm_out[nterm] & zia_in[nrow];
+					pterm_out[nterm] = pterm_out[nterm] & ~zia_in[nrow];
 				if(!and_config[nterm][nrow*2 + 1])
-					pterm_out[nterm] = pterm_out[nterm] & !zia_in[nrow];
+					pterm_out[nterm] = pterm_out[nterm] & zia_in[nrow];
 			end
 		end
 	end

@@ -178,11 +178,11 @@ module XC2CBitstream(
 			//One bit per product term, two OR terms per row
 			if( (row >= 20) && (row <= 27) ) begin
 				for(nterm=0; nterm<56; nterm=nterm+1) begin
-					right_or_config[(orow*2)*56 + nterm]		<= ram_bitstream[orow][249 - nterm*2 + 0];
-					right_or_config[(orow*2+1)*56 + nterm]		<= ram_bitstream[orow][249 - nterm*2 + 1];
+					right_or_config[(orow*2)*56 + nterm]		<= ram_bitstream[orow][249 - nterm*2 - 0];
+					right_or_config[(orow*2+1)*56 + nterm]		<= ram_bitstream[orow][249 - nterm*2 - 1];
 
-					left_or_config[(orow*2)*56 + nterm]			<= ram_bitstream[orow][249 - nterm*2 + 0];
-					left_or_config[(orow*2+1)*56 + nterm]		<= ram_bitstream[orow][249 - nterm*2 + 1];
+					left_or_config[(orow*2)*56 + nterm]			<= ram_bitstream[orow][10 + nterm*2 + 0];
+					left_or_config[(orow*2+1)*56 + nterm]		<= ram_bitstream[orow][10 + nterm*2 + 1];
 				end
 			end
 

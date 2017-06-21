@@ -37,10 +37,25 @@ module XC2CMacrocell(
 	output reg					mc_out;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// XOR logic
+	// Macrocell XOR
+
+	reg							xor_out;
 
 	always @(*) begin
-		mc_out					<= config_bits == 27'b000001111001111110011111100;
+
+		case(config_bits[9:8])
+			2'h0:	xor_out		<= or_term ^ 1'b0;
+			2'h1:	xor_out		<= or_term ^ ~pterm_c;
+			2'h2:	xor_out		<= or_term ^ pterm_c;
+			2'h3:	xor_out		<= or_term ^ 1'b1;
+		endcase
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Final output muxing
+
+	always @(*) begin
+		mc_out					<= xor_out;
 	end
 
 endmodule

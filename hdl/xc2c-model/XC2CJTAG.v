@@ -24,7 +24,8 @@ module XC2CJTAG(
 	tdi, tms, tck, tdo,
 	config_erase,
 	config_read_en, config_read_addr, config_read_data,
-	config_write_en, config_write_addr, config_write_data);
+	config_write_en, config_write_addr, config_write_data,
+	config_done);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
@@ -56,6 +57,8 @@ module XC2CJTAG(
 	output reg					config_write_en		= 0;
 	output reg[ADDR_BITS-1:0]	config_write_addr	= 0;
 	output reg[SHREG_WIDTH-1:0]	config_write_data	= 0;
+
+	output wire					config_done;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The core JTAG state machine
@@ -194,6 +197,8 @@ module XC2CJTAG(
 	reg			isc_disabled			= 0;
 	reg			configured				= 0;
 	reg			read_locked				= 0;
+
+	assign		config_done = configured;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The instruction register
