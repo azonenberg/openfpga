@@ -59,6 +59,9 @@ pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets, XC2ClockDivRa
 mod crbit;
 pub use crbit::{FuseArray};
 
+mod errors;
+pub use errors::{JedParserError, XC2BitError};
+
 mod fb;
 pub use fb::{XC2BitstreamFB, CTC, CTR, CTS, CTE, get_pta, get_ptb, get_ptc};
 

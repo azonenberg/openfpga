@@ -9159,7 +9159,7 @@ const F: bool = false;
 
 /// Internal function that reads a piece of the ZIA corresponding to one FB and one row
 pub fn read_32_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
-    -> Result<XC2ZIARowPiece, &'static str> {
+    -> Result<XC2ZIARowPiece, XC2BitError> {
 
     let zia_row_fuses = &fuses[block_idx + row_idx * 8..block_idx + (row_idx + 1) * 8];
 
@@ -9167,7 +9167,7 @@ pub fn read_32_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usi
 }
 
 /// Internal function that takes a ZIA row and decodes the bit encoding for it
-pub fn decode_32_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, &'static str> {
+pub fn decode_32_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, XC2BitError> {
     // This is an ugly workaround for the lack of stable slice patterns
     let zia_row_fuses = (
         row_bits[0],
@@ -9190,7 +9190,7 @@ pub fn decode_32_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPi
             (F, T, F, T, T, T, T, T) => ZIA_MAP_32[row][5],
             (T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
             (F, F, T, T, T, T, T, T) => XC2ZIAInput::Zero,
-            _ => return Err("unknown ZIA input choice"),
+            _ => return Err(XC2BitError::UnsupportedZIAConfiguration(row_bits.to_vec())),
     }})
 }
 
@@ -9228,7 +9228,7 @@ pub fn encode_32_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 8]> 
 
 /// Internal function that reads a piece of the ZIA corresponding to one FB and one row
 pub fn read_64_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
-    -> Result<XC2ZIARowPiece, &'static str> {
+    -> Result<XC2ZIARowPiece, XC2BitError> {
 
     let zia_row_fuses = &fuses[block_idx + row_idx * 16..block_idx + (row_idx + 1) * 16];
 
@@ -9236,7 +9236,7 @@ pub fn read_64_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usi
 }
 
 /// Internal function that takes a ZIA row and decodes the bit encoding for it
-pub fn decode_64_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, &'static str> {
+pub fn decode_64_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, XC2BitError> {
     // This is an ugly workaround for the lack of stable slice patterns
     let zia_row_fuses = (
         row_bits[0],
@@ -9274,7 +9274,7 @@ pub fn decode_64_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPi
             (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
             // TODO: This one isn't certain
             (T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T) => XC2ZIAInput::Zero,
-            _ => return Err("unknown ZIA input choice"),
+            _ => return Err(XC2BitError::UnsupportedZIAConfiguration(row_bits.to_vec())),
         }
     })
 }
@@ -9320,7 +9320,7 @@ pub fn encode_64_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 16]>
 
 /// Internal function that reads a piece of the ZIA corresponding to one FB and one row
 pub fn read_128_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
-    -> Result<XC2ZIARowPiece, &'static str> {
+    -> Result<XC2ZIARowPiece, XC2BitError> {
 
     let zia_row_fuses = &fuses[block_idx + row_idx * 28..block_idx + (row_idx + 1) * 28];
 
@@ -9328,7 +9328,7 @@ pub fn read_128_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: us
 }
 
 /// Internal function that takes a ZIA row and decodes the bit encoding for it
-pub fn decode_128_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, &'static str> {
+pub fn decode_128_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, XC2BitError> {
     // This is an ugly workaround for the lack of stable slice patterns
     let zia_row_fuses = (
         row_bits[0],
@@ -9388,7 +9388,7 @@ pub fn decode_128_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowP
             (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
             // TODO: This one isn't certain
             (T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::Zero,
-            _ => return Err("unknown ZIA input choice"),
+            _ => return Err(XC2BitError::UnsupportedZIAConfiguration(row_bits.to_vec())),
         }
     })
 }
@@ -9444,7 +9444,7 @@ pub fn encode_128_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 28]
 
 /// Internal function that reads a piece of the ZIA corresponding to one FB and one row
 pub fn read_256_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
-    -> Result<XC2ZIARowPiece, &'static str> {
+    -> Result<XC2ZIARowPiece, XC2BitError> {
 
     let zia_row_fuses = &fuses[block_idx + row_idx * 48..block_idx + (row_idx + 1) * 48];
 
@@ -9452,7 +9452,7 @@ pub fn read_256_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: us
 }
 
 /// Internal function that takes a ZIA row and decodes the bit encoding for it
-pub fn decode_256_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, &'static str> {
+pub fn decode_256_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, XC2BitError> {
     // This is an ugly workaround for the lack of stable slice patterns
     let zia_row_fuses = (
         row_bits[0],
@@ -9550,7 +9550,7 @@ pub fn decode_256_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowP
             (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
             // TODO: This one isn't certain
             (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T) => XC2ZIAInput::Zero,
-            _ => return Err("unknown ZIA input choice"),
+            _ => return Err(XC2BitError::UnsupportedZIAConfiguration(row_bits.to_vec())),
         }
     })
 }
@@ -9624,7 +9624,7 @@ pub fn encode_256_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 48]
 
 /// Internal function that reads a piece of the ZIA corresponding to one FB and one row
 pub fn read_384_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
-    -> Result<XC2ZIARowPiece, &'static str> {
+    -> Result<XC2ZIARowPiece, XC2BitError> {
 
     let zia_row_fuses = &fuses[block_idx + row_idx * 74..block_idx + (row_idx + 1) * 74];
 
@@ -9632,7 +9632,7 @@ pub fn read_384_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: us
 }
 
 /// Internal function that takes a ZIA row and decodes the bit encoding for it
-pub fn decode_384_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, &'static str> {
+pub fn decode_384_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, XC2BitError> {
     // This is an ugly workaround for the lack of stable slice patterns
     let zia_row_fuses = (
         row_bits[0],
@@ -9778,7 +9778,7 @@ pub fn decode_384_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowP
             (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
             // TODO: This one isn't certain
             (T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::Zero,
-            _ => return Err("unknown ZIA input choice"),
+            _ => return Err(XC2BitError::UnsupportedZIAConfiguration(row_bits.to_vec())),
         }
     })
 }
@@ -9874,7 +9874,7 @@ pub fn encode_384_zia_choice(row: u32, choice: XC2ZIAInput) -> Option<[bool; 74]
 
 /// Internal function that reads a piece of the ZIA corresponding to one FB and one row
 pub fn read_512_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: usize)
-    -> Result<XC2ZIARowPiece, &'static str> {
+    -> Result<XC2ZIARowPiece, XC2BitError> {
 
     let zia_row_fuses = &fuses[block_idx + row_idx * 88..block_idx + (row_idx + 1) * 88];
 
@@ -9882,7 +9882,7 @@ pub fn read_512_zia_fb_row_logical(fuses: &[bool], block_idx: usize, row_idx: us
 }
 
 /// Internal function that takes a ZIA row and decodes the bit encoding for it
-pub fn decode_512_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, &'static str> {
+pub fn decode_512_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowPiece, XC2BitError> {
     // This is an ugly workaround for the lack of stable slice patterns
     let zia_row_fuses = (
         row_bits[0],
@@ -10058,7 +10058,7 @@ pub fn decode_512_zia_choice(row: usize, row_bits: &[bool]) -> Result<XC2ZIARowP
             (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::One,
             // TODO: This one isn't certain
             (T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T) => XC2ZIAInput::Zero,
-            _ => return Err("unknown ZIA input choice"),
+            _ => return Err(XC2BitError::UnsupportedZIAConfiguration(row_bits.to_vec())),
         }
     })
 }

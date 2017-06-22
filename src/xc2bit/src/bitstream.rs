@@ -86,10 +86,10 @@ impl XC2Bitstream {
 
     /// Construct a new blank bitstream of the given part
     pub fn blank_bitstream(device: XC2Device, speed_grade: XC2Speed, package: XC2Package)
-        -> Result<XC2Bitstream, &'static str> {
+        -> Result<XC2Bitstream, XC2BitError> {
 
         if !is_valid_part_combination(device, speed_grade, package) {
-            return Err("requested device/speed/package is not a legal combination")
+            return Err(XC2BitError::BadDeviceName(format!("{}-{}-{}", device, speed_grade, package)));
         }
 
         match device {
@@ -1158,7 +1158,7 @@ impl XC2BitstreamBits {
 
 /// Common logic for reading bitstreams on "small" devices
 pub fn read_bitstream_logical_common_small(fuses: &[bool], device: XC2Device,
-    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCSmallIOB]) -> Result<(), &'static str> {
+    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCSmallIOB]) -> Result<(), XC2BitError> {
 
     for i in 0..fb.len() {
         let base_fuse = fb_fuse_idx(device, i as u32);
@@ -1183,7 +1183,7 @@ pub fn read_bitstream_logical_common_small(fuses: &[bool], device: XC2Device,
 
 /// Common logic for reading bitstreams on "large" devices
 pub fn read_bitstream_logical_common_large(fuses: &[bool], device: XC2Device,
-    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCLargeIOB]) -> Result<(), &'static str> {
+    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCLargeIOB]) -> Result<(), XC2BitError> {
 
     for i in 0..fb.len() {
         let base_fuse = fb_fuse_idx(device, i as u32);
@@ -1212,7 +1212,7 @@ pub fn read_bitstream_logical_common_large(fuses: &[bool], device: XC2Device,
     Ok(())
 }
 /// Internal function for parsing an XC2C32 bitstream
-pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     let mut iobs = [XC2MCSmallIOB::default(); 32];
     
@@ -1233,7 +1233,7 @@ pub fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 }
 
 /// Internal function for parsing an XC2C32A bitstream
-pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     let mut iobs = [XC2MCSmallIOB::default(); 32];
     
@@ -1262,7 +1262,7 @@ pub fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 }
 
 /// Internal function for parsing an XC2C64 bitstream
-pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 4];
     let mut iobs = [XC2MCSmallIOB::default(); 64];
     
@@ -1280,7 +1280,7 @@ pub fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'s
 }
 
 /// Internal function for parsing an XC2C64A bitstream
-pub fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 4];
     let mut iobs = [XC2MCSmallIOB::default(); 64];
     
@@ -1306,7 +1306,7 @@ pub fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 }
 
 /// Internal function for parsing an XC2C128 bitstream
-pub fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 8];
     let mut iobs = [XC2MCLargeIOB::default(); 100];
     
@@ -1333,7 +1333,7 @@ pub fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 }
 
 /// Internal function for parsing an XC2C256 bitstream
-pub fn read_256_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_256_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 16];
     let mut iobs = [XC2MCLargeIOB::default(); 184];
     
@@ -1360,7 +1360,7 @@ pub fn read_256_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 }
 
 /// Internal function for parsing an XC2C384 bitstream
-pub fn read_384_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_384_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 24];
     let mut iobs = [XC2MCLargeIOB::default(); 240];
     
@@ -1391,7 +1391,7 @@ pub fn read_384_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 }
 
 /// Internal function for parsing an XC2C512 bitstream
-pub fn read_512_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_512_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 32];
     let mut iobs = [XC2MCLargeIOB::default(); 270];
     
@@ -1423,7 +1423,7 @@ pub fn read_512_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, &'
 
 /// Common logic for reading bitstreams on "small" devices
 pub fn read_bitstream_physical_common_small(fuse_array: &FuseArray, device: XC2Device,
-    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCSmallIOB]) -> Result<(), &'static str> {
+    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCSmallIOB]) -> Result<(), XC2BitError> {
 
     for i in 0..fb.len() {
         fb[i] = XC2BitstreamFB::from_crbit(device, i as u32, fuse_array)?;
@@ -1438,7 +1438,7 @@ pub fn read_bitstream_physical_common_small(fuse_array: &FuseArray, device: XC2D
 
 /// Common logic for reading bitstreams on "large" devices
 pub fn read_bitstream_physical_common_large(fuse_array: &FuseArray, device: XC2Device,
-    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCLargeIOB]) -> Result<(), &'static str> {
+    fb: &mut [XC2BitstreamFB], iobs: &mut [XC2MCLargeIOB]) -> Result<(), XC2BitError> {
 
     for i in 0..fb.len() {
         fb[i] = XC2BitstreamFB::from_crbit(device, i as u32, fuse_array)?;
@@ -1452,7 +1452,7 @@ pub fn read_bitstream_physical_common_large(fuse_array: &FuseArray, device: XC2D
 }
 
 /// Internal function for parsing an XC2C32 bitstream
-pub fn read_32_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_32_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     let mut iobs = [XC2MCSmallIOB::default(); 32];
     
@@ -1473,7 +1473,7 @@ pub fn read_32_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstream
 }
 
 /// Internal function for parsing an XC2C32A bitstream
-pub fn read_32a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_32a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 2];
     let mut iobs = [XC2MCSmallIOB::default(); 32];
     
@@ -1502,7 +1502,7 @@ pub fn read_32a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstrea
 }
 
 /// Internal function for parsing an XC2C64 bitstream
-pub fn read_64_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_64_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 4];
     let mut iobs = [XC2MCSmallIOB::default(); 64];
     
@@ -1520,7 +1520,7 @@ pub fn read_64_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstream
 }
 
 /// Internal function for parsing an XC2C64A bitstream
-pub fn read_64a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_64a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 4];
     let mut iobs = [XC2MCSmallIOB::default(); 64];
     
@@ -1546,7 +1546,7 @@ pub fn read_64a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstrea
 }
 
 /// Internal function for parsing an XC2C128 bitstream
-pub fn read_128_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_128_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 8];
     let mut iobs = [XC2MCLargeIOB::default(); 100];
     
@@ -1573,7 +1573,7 @@ pub fn read_128_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstrea
 }
 
 /// Internal function for parsing an XC2C256 bitstream
-pub fn read_256_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_256_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 16];
     let mut iobs = [XC2MCLargeIOB::default(); 184];
     
@@ -1600,7 +1600,7 @@ pub fn read_256_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstrea
 }
 
 /// Internal function for parsing an XC2C384 bitstream
-pub fn read_384_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_384_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 24];
     let mut iobs = [XC2MCLargeIOB::default(); 240];
     
@@ -1631,7 +1631,7 @@ pub fn read_384_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstrea
 }
 
 /// Internal function for parsing an XC2C512 bitstream
-pub fn read_512_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, &'static str> {
+pub fn read_512_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits, XC2BitError> {
     let mut fb = [XC2BitstreamFB::default(); 32];
     let mut iobs = [XC2MCLargeIOB::default(); 270];
     
@@ -1662,16 +1662,16 @@ pub fn read_512_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstrea
 }
 
 /// Processes a fuse array into a bitstream object
-pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'static str> {
+pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, XC2BitError> {
     let device_combination = parse_part_name_string(device);
     if device_combination.is_none() {
-        return Err("malformed device name");
+        return Err(XC2BitError::BadDeviceName(device.to_owned()));
     }
 
     let (part, spd, pkg) = device_combination.unwrap();
 
     if fuses.len() != total_logical_fuse_count(part) {
-        return Err("wrong number of fuses");
+        return Err(XC2BitError::WrongFuseCount);
     }
 
     match part {
@@ -1743,21 +1743,21 @@ pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, &'stati
 }
 
 /// Processes a fuse array (in physical addressing) into a bitstream object
-pub fn process_crbit(fuse_array: &FuseArray) -> Result<XC2Bitstream, &'static str> {
+pub fn process_crbit(fuse_array: &FuseArray) -> Result<XC2Bitstream, XC2BitError> {
     // FIXME: Can we guess the device type from the dimensions?
     if fuse_array.dev_name_str.is_none() {
-        return Err("unspecified device name");
+        return Err(XC2BitError::BadDeviceName(String::from("")));
     }
 
     let device_combination = parse_part_name_string(fuse_array.dev_name_str.as_ref().unwrap());
     if device_combination.is_none() {
-        return Err("malformed device name");
+        return Err(XC2BitError::BadDeviceName(fuse_array.dev_name_str.as_ref().unwrap().to_owned()));
     }
 
     let (part, spd, pkg) = device_combination.unwrap();
 
     if fuse_array.dim() != fuse_array_dims(part) {
-        return Err("wrong number of fuses");
+        return Err(XC2BitError::WrongFuseCount);
     }
 
 
