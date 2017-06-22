@@ -25,6 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Xilinx JED file I/O
 
+use *;
+
 use std::num::Wrapping;
 use std::str;
 
@@ -39,7 +41,7 @@ const STX: u8 = 0x02;
 const ETX: u8 = 0x03;
 
 /// Reads .jed file and outputs the fuses as an array of booleans and optional device name
-pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static str> {
+pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), JedParserError> {
     let mut fuse_csum = Wrapping(0u16);
     let mut fuse_expected_csum = None;
     let mut file_csum = Wrapping(0u16);
@@ -54,7 +56,7 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
     while in_bytes[jed_stx] != STX {
         jed_stx += 1;
         if jed_stx >= in_bytes.len() {
-            return Err("STX not found");
+            return Err(JedParserError::MissingSTX);
         }
     }
 
@@ -64,7 +66,7 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
         file_csum += Wrapping(in_bytes[jed_etx] as u16);
         jed_etx += 1;
         if jed_etx >= in_bytes.len() {
-            return Err("ETX not found");
+            return Err(JedParserError::MissingETX);
         }
     }
     // Add the ETX to the checksum too
@@ -72,28 +74,17 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
 
     // Check the checksum
     if jed_etx + 4 >= in_bytes.len() {
-        return Err("unexpected end of file - checksum");
+        return Err(JedParserError::UnexpectedEnd);
     }
     let csum_expected = &in_bytes[jed_etx + 1..jed_etx + 5];
-    let csum_expected = str::from_utf8(csum_expected);
-    if csum_expected.is_err() {
-        return Err("invalid character encountered - file checksum");
-    }
-    let csum_expected = u16::from_str_radix(csum_expected.unwrap(), 16);
-    if csum_expected.is_err() {
-        return Err("invalid character encountered - file checksum");
-    }
-    let csum_expected = csum_expected.unwrap();
+    let csum_expected = str::from_utf8(csum_expected)?;
+    let csum_expected = u16::from_str_radix(csum_expected, 16)?;
     if csum_expected != 0 && csum_expected != file_csum.0 {
-        return Err("invalid file checksum");
+        return Err(JedParserError::BadFileChecksum);
     }
 
     // Make a str object out of the body
-    let jed_body = str::from_utf8(&in_bytes[jed_stx + 1..jed_etx]);
-    if jed_body.is_err() {
-        return Err("invalid character encountered - non-ASCII");
-    }
-    let jed_body = jed_body.unwrap();
+    let jed_body = str::from_utf8(&in_bytes[jed_stx + 1..jed_etx])?;
 
     // Ready to parse each line
     for l in jed_body.split('*') {
@@ -113,7 +104,7 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
                 default_fuse = match default_state_str {
                     "0" => Ternary::Zero,
                     "1" => Ternary::One,
-                    _ => return Err("invalid character encountered - F field")
+                    _ => return Err(JedParserError::InvalidCharacter)
                 }
             },
             'N' => {
@@ -127,11 +118,7 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
                 // Look for QF
                 if l.starts_with("QF") {
                     let (_, num_fuses_str) = l.split_at(2);
-                    let num_fuses_maybe = u32::from_str_radix(num_fuses_str, 10);
-                    if num_fuses_maybe.is_err() {
-                        return Err("invalid character encountered - QF field");
-                    }
-                    num_fuses = num_fuses_maybe.unwrap();
+                    num_fuses = u32::from_str_radix(num_fuses_str, 10)?;
                     fuses_ternary.reserve(num_fuses as usize);
                     for _ in 0..num_fuses {
                         fuses_ternary.push(Ternary::Undef);
@@ -141,41 +128,37 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
             'L' => {
                 // A set of fuses
                 if num_fuses == 0 {
-                    return Err("missing QF field");
+                    return Err(JedParserError::MissingQF);
                 }
 
                 let mut fuse_field_splitter = l.splitn(2, |c| c == ' ' || c == '\r' || c == '\n');
                 let fuse_idx_str = fuse_field_splitter.next();
                 let (_, fuse_idx_str) = fuse_idx_str.unwrap().split_at(1);
-                let fuse_idx_maybe = u32::from_str_radix(fuse_idx_str, 10);
-                if fuse_idx_maybe.is_err() {
-                    return Err("invalid character encountered - fuse number");
-                }
-                let mut fuse_idx = fuse_idx_maybe.unwrap();
+                let mut fuse_idx = u32::from_str_radix(fuse_idx_str, 10)?;
 
                 let fuse_bits_part = fuse_field_splitter.next();
                 if fuse_bits_part.is_none() {
-                    return Err("malformed L field");
+                    return Err(JedParserError::InvalidFuseIndex);
                 }
                 let fuse_bits_part = fuse_bits_part.unwrap();
                 for fuse in fuse_bits_part.chars() {
                     match fuse {
                         '0' => {
                             if fuse_idx >= num_fuses {
-                                return Err("invalid fuse index out of range");
+                                return Err(JedParserError::InvalidFuseIndex);
                             }
                             fuses_ternary[fuse_idx as usize] = Ternary::Zero;
                             fuse_idx += 1;
                         },
                         '1' => {
                             if fuse_idx >= num_fuses {
-                                return Err("invalid fuse index out of range");
+                                return Err(JedParserError::InvalidFuseIndex);
                             }
                             fuses_ternary[fuse_idx as usize] = Ternary::One;
                             fuse_idx += 1;
                         },
                         ' ' | '\r' | '\n' => {}, // Do nothing
-                        _ => return Err("invalid character encountered - fuse value"),
+                        _ => return Err(JedParserError::InvalidCharacter),
                     }
                 }
             },
@@ -183,15 +166,11 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
                 // Checksum
                 let (_, csum_str) = l.split_at(1);
                 if csum_str.len() != 4 {
-                    return Err("malformed fuse checksum");
+                    return Err(JedParserError::BadFuseChecksum);
                 }
-                let csum_maybe = u16::from_str_radix(csum_str, 16);
-                if csum_maybe.is_err() {
-                    return Err("invalid character encountered - C");
-                }
-                fuse_expected_csum = Some(csum_maybe.unwrap());
+                fuse_expected_csum = Some(u16::from_str_radix(csum_str, 16)?);
             }
-            _ => return Err("unrecognized field"),
+            _ => return Err(JedParserError::UnrecognizedField),
         }
     }
 
@@ -200,7 +179,7 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
         if *x == Ternary::Undef {
             // There cannot be undefined fuses if there isn't an F field
             if default_fuse == Ternary::Undef {
-                return Err("missing F field")
+                return Err(JedParserError::MissingF)
             }
 
             *x = default_fuse;
@@ -224,7 +203,7 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), &'static
         }
 
         if fuse_expected_csum != fuse_csum.0 {
-            return Err("invalid fuse checksum");
+            return Err(JedParserError::BadFuseChecksum);
         }
     }
 
@@ -239,44 +218,44 @@ mod tests {
     fn read_no_stx() {
         let ret = read_jed(b"asdf");
 
-        assert_eq!(ret, Err("STX not found"));
+        assert_eq!(ret, Err(JedParserError::MissingSTX));
     }
 
     #[test]
     fn read_no_etx() {
         let ret = read_jed(b"asdf\x02fdsa");
 
-        assert_eq!(ret, Err("ETX not found"));
+        assert_eq!(ret, Err(JedParserError::MissingETX));
     }
 
     #[test]
     fn read_no_csum() {
         let ret = read_jed(b"asdf\x02fdsa\x03");
-        assert_eq!(ret, Err("unexpected end of file - checksum"));
+        assert_eq!(ret, Err(JedParserError::UnexpectedEnd));
 
         let ret = read_jed(b"asdf\x02fdsa\x03AAA");
-        assert_eq!(ret, Err("unexpected end of file - checksum"));
+        assert_eq!(ret, Err(JedParserError::UnexpectedEnd));
     }
 
     #[test]
     fn read_bad_csum() {
         let ret = read_jed(b"asdf\x02fdsa\x03AAAA");
 
-        assert_eq!(ret, Err("invalid file checksum"));
+        assert_eq!(ret, Err(JedParserError::BadFileChecksum));
     }
 
     #[test]
     fn read_malformed_csum() {
         let ret = read_jed(b"asdf\x02fdsa\x03AAAZ");
 
-        assert_eq!(ret, Err("invalid character encountered - file checksum"));
+        assert_eq!(ret, Err(JedParserError::InvalidCharacter));
     }
 
     #[test]
     fn read_no_f() {
         let ret = read_jed(b"\x02QF1*\x030000");
 
-        assert_eq!(ret, Err("missing F field"));
+        assert_eq!(ret, Err(JedParserError::MissingF));
     }
 
     #[test]
@@ -290,7 +269,7 @@ mod tests {
     fn read_bogus_f_command() {
         let ret = read_jed(b"\x02F2*\x030000");
 
-        assert_eq!(ret, Err("invalid character encountered - F field"));
+        assert_eq!(ret, Err(JedParserError::InvalidCharacter));
     }
 
     #[test]
@@ -304,7 +283,7 @@ mod tests {
     fn read_l_without_qf() {
         let ret = read_jed(b"\x02F0*L0 0*\x030000");
 
-        assert_eq!(ret, Err("missing QF field"));
+        assert_eq!(ret, Err(JedParserError::MissingQF));
     }
 
     #[test]
@@ -325,7 +304,7 @@ mod tests {
     fn read_one_fuse_csum_bad() {
         let ret = read_jed(b"\x02F0*QF1*L0 1*C0002*\x030000");
 
-        assert_eq!(ret, Err("invalid fuse checksum"));
+        assert_eq!(ret, Err(JedParserError::BadFuseChecksum));
     }
 
     #[test]

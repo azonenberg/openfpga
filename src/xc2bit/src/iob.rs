@@ -95,7 +95,7 @@ impl XC2IOBOBufMode {
     }
 
     /// decodes the Oe bits
-    pub fn decode(oe: (bool, bool, bool, bool)) -> Result<Self, &'static str> {
+    pub fn decode(oe: (bool, bool, bool, bool)) -> Result<Self, XC2BitError> {
         Ok(match oe {
             (false, false, false, false) => XC2IOBOBufMode::PushPull,
             (false, false, false, true)  => XC2IOBOBufMode::OpenDrain,
@@ -107,7 +107,7 @@ impl XC2IOBOBufMode {
             (true, true, false, false)   => XC2IOBOBufMode::TriStateGTS0,
             (true, true, true, false)    => XC2IOBOBufMode::CGND,
             (true, true, true, true)     => XC2IOBOBufMode::Disabled,
-            _ => return Err("unknown Oe mode used"),
+            _ => return Err(XC2BitError::UnsupportedOeConfiguration(oe)),
         })
     }
 }
@@ -255,7 +255,7 @@ impl XC2MCSmallIOB {
     /// Read the crbit representation of the settings for this IO pin from the given `fuse_array`.
     /// `device` must be the device type this FB was extracted from.
     /// `iob` must be the index of this IO pin.
-    pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<XC2MCSmallIOB, &'static str> {
+    pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<XC2MCSmallIOB, XC2BitError> {
         let (fb, mc) = iob_num_to_fb_ff_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
         // direction
@@ -536,7 +536,7 @@ impl XC2MCLargeIOB {
     /// Read the crbit representation of the settings for this IO pin from the given `fuse_array`.
     /// `device` must be the device type this FB was extracted from.
     /// `iob` must be the index of this IO pin.
-    pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<XC2MCLargeIOB, &'static str> {
+    pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<XC2MCLargeIOB, XC2BitError> {
         let (fb, mc) = iob_num_to_fb_ff_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
         // direction
@@ -1215,7 +1215,7 @@ pub fn fb_ff_num_to_iob_num(device: XC2Device, fb: u32, ff: u32) -> Option<u32> 
 }
 
 /// Internal function that reads only the IO-related bits from the macrocell configuration
-pub fn read_small_iob_logical(fuses: &[bool], fuse_idx: usize) -> Result<XC2MCSmallIOB, &'static str> {
+pub fn read_small_iob_logical(fuses: &[bool], fuse_idx: usize) -> Result<XC2MCSmallIOB, XC2BitError> {
     let inz = (fuses[fuse_idx + 11],
                fuses[fuse_idx + 12]);
     let input_to_zia = XC2IOBZIAMode::decode(inz);
@@ -1243,7 +1243,7 @@ pub fn read_small_iob_logical(fuses: &[bool], fuse_idx: usize) -> Result<XC2MCSm
 }
 
 /// Internal function that reads only the IO-related bits from the macrocell configuration
-pub fn read_large_iob_logical(fuses: &[bool], fuse_idx: usize) -> Result<XC2MCLargeIOB, &'static str> {
+pub fn read_large_iob_logical(fuses: &[bool], fuse_idx: usize) -> Result<XC2MCLargeIOB, XC2BitError> {
     let dg = fuses[fuse_idx + 5];
 
     let inmod = (fuses[fuse_idx + 8],

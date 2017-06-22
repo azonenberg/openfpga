@@ -359,7 +359,7 @@ impl XC2BitstreamFB {
     /// Reads the crbit representation of the settings for this FB from the given `fuse_array`.
     /// `device` must be the device type this FB was extracted from.
     /// `fb` must be the index of this function block.
-    pub fn from_crbit(device: XC2Device, fb: u32, fuse_array: &FuseArray) -> Result<XC2BitstreamFB, &'static str> {
+    pub fn from_crbit(device: XC2Device, fb: u32, fuse_array: &FuseArray) -> Result<XC2BitstreamFB, XC2BitError> {
         // ZIA
         let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
         let (x, y) = zia_block_loc(device, fb);
@@ -619,7 +619,7 @@ impl XC2BitstreamFB {
 
 /// Internal function that reads a function block
 pub fn read_fb_logical(device: XC2Device, fuses: &[bool], fb: u32, fuse_base: usize)
-    -> Result<XC2BitstreamFB, &'static str> {
+    -> Result<XC2BitstreamFB, XC2BitError> {
 
     let zia_row_width = zia_get_row_width(device);
     let size_of_zia = zia_row_width * INPUTS_PER_ANDTERM;
