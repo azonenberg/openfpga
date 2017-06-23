@@ -43,6 +43,39 @@ pub enum XC2MCRegClkSrc {
     CTC,
 }
 
+impl XC2MCRegClkSrc {
+    /// decodes the Aclk and Clk bits
+    pub fn decode(aclk: bool, clk: (bool, bool)) -> Self {
+        match clk {
+            (false, false) => XC2MCRegClkSrc::GCK0,
+            (false, true)  => XC2MCRegClkSrc::GCK2,
+            (true, false)  => XC2MCRegClkSrc::GCK1,
+            (true, true)   => match aclk {
+                true => XC2MCRegClkSrc::CTC,
+                false => XC2MCRegClkSrc::PTC,
+            },
+        }
+    }
+
+    /// encodes the Aclk bit
+    pub fn encode_aclk(&self) -> bool {
+        match *self {
+            XC2MCRegClkSrc::CTC => true,
+            _ => false,
+        }
+    }
+
+    /// encodes the Clk bits
+    pub fn encode_clk(&self) -> (bool, bool) {
+        match *self {
+            XC2MCRegClkSrc::GCK0 => (false, false),
+            XC2MCRegClkSrc::GCK1 => (true, false),
+            XC2MCRegClkSrc::GCK2 => (false, true),
+            XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => (true, true),
+        }
+    }
+}
+
 /// Reset source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCRegResetSrc {
@@ -52,6 +85,28 @@ pub enum XC2MCRegResetSrc {
     CTR,
 }
 
+impl XC2MCRegResetSrc {
+    /// decodes the R bits
+    pub fn decode(r: (bool, bool)) -> Self {
+        match r {
+            (false, false) => XC2MCRegResetSrc::PTA,
+            (false, true)  => XC2MCRegResetSrc::GSR,
+            (true, false)  => XC2MCRegResetSrc::CTR,
+            (true, true)   => XC2MCRegResetSrc::Disabled,
+        }
+    }
+
+    /// encodes the R bits
+    pub fn encode(&self) -> (bool, bool) {
+        match *self {
+            XC2MCRegResetSrc::PTA => (false, false),
+            XC2MCRegResetSrc::GSR => (false, true),
+            XC2MCRegResetSrc::CTR => (true, false),
+            XC2MCRegResetSrc::Disabled => (true, true),
+        }
+    }
+}
+
 /// Set source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum XC2MCRegSetSrc {
@@ -59,6 +114,28 @@ pub enum XC2MCRegSetSrc {
     PTA,
     GSR,
     CTS,
+}
+
+impl XC2MCRegSetSrc {
+    /// decodes the P bits
+    pub fn decode(r: (bool, bool)) -> Self {
+        match r {
+            (false, false) => XC2MCRegSetSrc::PTA,
+            (false, true)  => XC2MCRegSetSrc::GSR,
+            (true, false)  => XC2MCRegSetSrc::CTS,
+            (true, true)   => XC2MCRegSetSrc::Disabled,
+        }
+    }
+
+    /// encodes the P bits
+    pub fn encode(&self) -> (bool, bool) {
+        match *self {
+            XC2MCRegSetSrc::PTA => (false, false),
+            XC2MCRegSetSrc::GSR => (false, true),
+            XC2MCRegSetSrc::CTS => (true, false),
+            XC2MCRegSetSrc::Disabled => (true, true),
+        }
+    }
 }
 
 /// Mode of the register in a macrocell.
@@ -74,6 +151,28 @@ pub enum XC2MCRegMode {
     DFFCE,
 }
 
+impl XC2MCRegMode {
+    /// decodes the RegMod bits
+    pub fn decode(regmod: (bool, bool)) -> Self {
+        match regmod {
+            (false, false) => XC2MCRegMode::DFF,
+            (false, true)  => XC2MCRegMode::LATCH,
+            (true, false)  => XC2MCRegMode::TFF,
+            (true, true)   => XC2MCRegMode::DFFCE,
+        }
+    }
+
+    /// encodes the RegMod bits
+    pub fn encode(&self) -> (bool, bool) {
+        match *self {
+            XC2MCRegMode::DFF => (false, false),
+            XC2MCRegMode::LATCH => (false, true),
+            XC2MCRegMode::TFF => (true, false),
+            XC2MCRegMode::DFFCE => (true, true),
+        }
+    }
+}
+
 /// Mux selection for the ZIA input from this macrocell. The ZIA input can be chosen to come from either the XOR gate
 /// or from the output of the register.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -81,6 +180,26 @@ pub enum XC2MCFeedbackMode {
     Disabled,
     COMB,
     REG,
+}
+
+impl XC2MCFeedbackMode {
+    /// decodes the FB bits
+    pub fn decode(fb: (bool, bool)) -> Self {
+        match fb {
+            (false, false) => XC2MCFeedbackMode::COMB,
+            (true, false)  => XC2MCFeedbackMode::REG,
+            (_, true)      => XC2MCFeedbackMode::Disabled,
+        }
+    }
+
+    /// encodes the FB bits
+    pub fn encode(&self) -> (bool, bool) {
+        match *self {
+            XC2MCFeedbackMode::COMB => (false, false),
+            XC2MCFeedbackMode::REG => (true, false),
+            XC2MCFeedbackMode::Disabled => (true, true),
+        }
+    }
 }
 
 /// Mux selection for the "not from OR gate" input to the XOR gate. The XOR gate in a macrocell contains two inputs,
@@ -95,6 +214,28 @@ pub enum XC2MCXorMode {
     PTC,
     /// XNOR the OR term with the special product term C
     PTCB,
+}
+
+impl XC2MCXorMode {
+    /// decodes the XorIn bits
+    pub fn decode(xorin: (bool, bool)) -> Self {
+        match xorin {
+            (false, false) => XC2MCXorMode::ZERO,
+            (false, true)  => XC2MCXorMode::PTCB,
+            (true, false)  => XC2MCXorMode::PTC,
+            (true, true)   => XC2MCXorMode::ONE,
+        }
+    }
+
+    /// encodes the XorIn bits
+    pub fn encode(&self) -> (bool, bool) {
+        match *self {
+            XC2MCXorMode::ZERO => (false, false),
+            XC2MCXorMode::PTCB => (false, true),
+            XC2MCXorMode::PTC => (true, false),
+            XC2MCXorMode::ONE => (true, true),
+        }
+    }
 }
 
 /// Represents a macrocell.
@@ -218,13 +359,13 @@ impl XC2Macrocell {
                 let y = y + (mc as usize) * 3;
 
                 // aclk
-                fuse_array.set((x + d * 0) as usize, y + 0, self.aclk());
+                fuse_array.set((x + d * 0) as usize, y + 0, self.clk_src.encode_aclk());
 
                 // clkop
                 fuse_array.set((x + d * 1) as usize, y + 0, self.clk_invert_pol);
 
                 // clk
-                let clk = self.clk();
+                let clk = self.clk_src.encode_clk();
                 fuse_array.set((x + d * 2) as usize, y + 0, clk.0);
                 fuse_array.set((x + d * 3) as usize, y + 0, clk.1);
 
@@ -232,24 +373,24 @@ impl XC2Macrocell {
                 fuse_array.set((x + d * 4) as usize, y + 0, self.is_ddr);
 
                 // r
-                let r = self.r();
+                let r = self.r_src.encode();
                 fuse_array.set((x + d * 5) as usize, y + 0, r.0);
                 fuse_array.set((x + d * 6) as usize, y + 0, r.1);
 
                 // p
-                let p = self.p();
+                let p = self.s_src.encode();
                 fuse_array.set((x + d * 7) as usize, y + 0, p.0);
                 fuse_array.set((x + d * 8) as usize, y + 0, p.1);
 
                 // regmod
-                let regmod = self.regmod();
+                let regmod = self.reg_mode.encode();
                 fuse_array.set((x + d * 0) as usize, y + 1, regmod.0);
                 fuse_array.set((x + d * 1) as usize, y + 1, regmod.1);
 
                 // skipped INz (belongs to IOB)
 
                 // fb
-                let fb = self.fb();
+                let fb = self.fb_mode.encode();
                 fuse_array.set((x + d * 4) as usize, y + 1, fb.0);
                 fuse_array.set((x + d * 5) as usize, y + 1, fb.1);
 
@@ -259,7 +400,7 @@ impl XC2Macrocell {
                 // skipped St (belongs to IOB)
 
                 // xorin
-                let xorin = self.xorin();
+                let xorin = self.xor_mode.encode();
                 fuse_array.set((x + d * 8) as usize, y + 1, xorin.0);
                 fuse_array.set((x + d * 0) as usize, y + 2, xorin.1);
 
@@ -277,13 +418,13 @@ impl XC2Macrocell {
                 let y = y + (mc as usize) * 3;
 
                 // aclk
-                fuse_array.set((x + d * 8) as usize, y + 0, self.aclk());
+                fuse_array.set((x + d * 8) as usize, y + 0, self.clk_src.encode_aclk());
 
                 // clkop
                 fuse_array.set((x + d * 7) as usize, y + 0, self.clk_invert_pol);
 
                 // clk
-                let clk = self.clk();
+                let clk = self.clk_src.encode_clk();
                 fuse_array.set((x + d * 5) as usize, y + 0, clk.0);
                 fuse_array.set((x + d * 6) as usize, y + 0, clk.1);
 
@@ -291,24 +432,24 @@ impl XC2Macrocell {
                 fuse_array.set((x + d * 4) as usize, y + 0, self.is_ddr);
 
                 // r
-                let r = self.r();
+                let r = self.r_src.encode();
                 fuse_array.set((x + d * 2) as usize, y + 0, r.0);
                 fuse_array.set((x + d * 3) as usize, y + 0, r.1);
 
                 // p
-                let p = self.p();
+                let p = self.s_src.encode();
                 fuse_array.set((x + d * 0) as usize, y + 0, p.0);
                 fuse_array.set((x + d * 1) as usize, y + 0, p.1);
 
                 // regmod
-                let regmod = self.regmod();
+                let regmod = self.reg_mode.encode();
                 fuse_array.set((x + d * 7) as usize, y + 1, regmod.0);
                 fuse_array.set((x + d * 8) as usize, y + 1, regmod.1);
 
                 // skipped INz (belongs to IOB)
 
                 // fb
-                let fb = self.fb();
+                let fb = self.fb_mode.encode();
                 fuse_array.set((x + d * 3) as usize, y + 1, fb.0);
                 fuse_array.set((x + d * 4) as usize, y + 1, fb.1);
 
@@ -318,7 +459,7 @@ impl XC2Macrocell {
                 // skipped St (belongs to IOB)
 
                 // xorin
-                let xorin = self.xorin();
+                let xorin = self.xor_mode.encode();
                 fuse_array.set((x + d * 7) as usize, y + 2, xorin.0);
                 fuse_array.set((x + d * 8) as usize, y + 2, xorin.1);
 
@@ -338,7 +479,7 @@ impl XC2Macrocell {
                 // skipped InMod (belongs to IOB)
 
                 // fb
-                let fb = self.fb();
+                let fb = self.fb_mode.encode();
                 fuse_array.set((x + d * 2) as usize, y + 0, fb.0);
                 fuse_array.set((x + d * 3) as usize, y + 0, fb.1);
 
@@ -351,18 +492,18 @@ impl XC2Macrocell {
                 fuse_array.set((x + d * 6) as usize, y + 0, self.is_ddr);
 
                 // clk
-                let clk = self.clk();
+                let clk = self.clk_src.encode_clk();
                 fuse_array.set((x + d * 7) as usize, y + 0, clk.0);
                 fuse_array.set((x + d * 8) as usize, y + 0, clk.1);
 
                 // aclk
-                fuse_array.set((x + d * 9) as usize, y + 0, self.aclk());
+                fuse_array.set((x + d * 9) as usize, y + 0, self.clk_src.encode_aclk());
 
                 // pu
                 fuse_array.set((x + d * 0) as usize, y + 1, !self.init_state);
 
                 // p
-                let p = self.p();
+                let p = self.s_src.encode();
                 fuse_array.set((x + d * 1) as usize, y + 1, p.0);
                 fuse_array.set((x + d * 2) as usize, y + 1, p.1);
 
@@ -373,7 +514,7 @@ impl XC2Macrocell {
                 fuse_array.set((x + d * 9) as usize, y + 1, !self.ff_in_ibuf);
 
                 // xorin
-                let xorin = self.xorin();
+                let xorin = self.xor_mode.encode();
                 fuse_array.set((x + d * 0) as usize, y + 2, xorin.0);
                 fuse_array.set((x + d * 1) as usize, y + 2, xorin.1);
 
@@ -381,12 +522,12 @@ impl XC2Macrocell {
                 // skipped Slw (belongs to IOB)
 
                 // r
-                let r = self.r();
+                let r = self.r_src.encode();
                 fuse_array.set((x + d * 4) as usize, y + 2, r.0);
                 fuse_array.set((x + d * 5) as usize, y + 2, r.1);
 
                 // regmod
-                let regmod = self.regmod();
+                let regmod = self.reg_mode.encode();
                 fuse_array.set((x + d * 6) as usize, y + 2, regmod.0);
                 fuse_array.set((x + d * 7) as usize, y + 2, regmod.1);
 
@@ -400,7 +541,7 @@ impl XC2Macrocell {
                 // skipped INz (belongs to IOB)
 
                 // fb
-                let fb = self.fb();
+                let fb = self.fb_mode.encode();
                 fuse_array.set((x + d * 2) as usize, y + 0, fb.0);
                 fuse_array.set((x + d * 3) as usize, y + 0, fb.1);
 
@@ -409,10 +550,10 @@ impl XC2Macrocell {
                 // skipped Tm (belongs to IOB)
 
                 // aclk
-                fuse_array.set((x + d * 8) as usize, y + 0, self.aclk());
+                fuse_array.set((x + d * 8) as usize, y + 0, self.clk_src.encode_aclk());
 
                 // clk
-                let clk = self.clk();
+                let clk = self.clk_src.encode_clk();
                 fuse_array.set((x + d * 9) as usize, y + 0, clk.0);
                 fuse_array.set((x + d * 10) as usize, y + 0, clk.1);
 
@@ -429,7 +570,7 @@ impl XC2Macrocell {
                 fuse_array.set((x + d * 14) as usize, y + 0, !self.init_state);
 
                 // xorin
-                let xorin = self.xorin();
+                let xorin = self.xor_mode.encode();
                 fuse_array.set((x + d * 0) as usize, y + 1, xorin.0);
                 fuse_array.set((x + d * 1) as usize, y + 1, xorin.1);
 
@@ -438,17 +579,17 @@ impl XC2Macrocell {
                 // skipped RegCom (belongs to IOB)
 
                 // regmod
-                let regmod = self.regmod();
+                let regmod = self.reg_mode.encode();
                 fuse_array.set((x + d * 9) as usize, y + 1, regmod.0);
                 fuse_array.set((x + d * 10) as usize, y + 1, regmod.1);
 
                 // r
-                let r = self.r();
+                let r = self.r_src.encode();
                 fuse_array.set((x + d * 11) as usize, y + 1, r.0);
                 fuse_array.set((x + d * 12) as usize, y + 1, r.1);
 
                 // p
-                let p = self.p();
+                let p = self.s_src.encode();
                 fuse_array.set((x + d * 13) as usize, y + 1, p.0);
                 fuse_array.set((x + d * 14) as usize, y + 1, p.1);
             }
@@ -516,16 +657,16 @@ impl XC2Macrocell {
                 let init_state = !fuse_array.get((x + d * 8) as usize, y + 2);
 
                 XC2Macrocell {
-                    clk_src: XC2Macrocell::decode_clk_src(aclk, clk),
+                    clk_src: XC2MCRegClkSrc::decode(aclk, clk),
                     clk_invert_pol,
                     is_ddr,
-                    r_src: XC2Macrocell::decode_r(r),
-                    s_src: XC2Macrocell::decode_p(p),
+                    r_src: XC2MCRegResetSrc::decode(r),
+                    s_src: XC2MCRegSetSrc::decode(p),
                     init_state,
-                    reg_mode: XC2Macrocell::decode_regmod(regmod),
-                    fb_mode: XC2Macrocell::decode_fb(fb),
+                    reg_mode: XC2MCRegMode::decode(regmod),
+                    fb_mode: XC2MCFeedbackMode::decode(fb),
                     ff_in_ibuf,
-                    xor_mode: XC2Macrocell::decode_xorin(xorin),
+                    xor_mode: XC2MCXorMode::decode(xorin),
                 }
             },
             XC2Device::XC2C64 | XC2Device::XC2C64A => {
@@ -582,16 +723,16 @@ impl XC2Macrocell {
                 let init_state = !fuse_array.get((x + d * 0) as usize, y + 2);
 
                 XC2Macrocell {
-                    clk_src: XC2Macrocell::decode_clk_src(aclk, clk),
+                    clk_src: XC2MCRegClkSrc::decode(aclk, clk),
                     clk_invert_pol,
                     is_ddr,
-                    r_src: XC2Macrocell::decode_r(r),
-                    s_src: XC2Macrocell::decode_p(p),
+                    r_src: XC2MCRegResetSrc::decode(r),
+                    s_src: XC2MCRegSetSrc::decode(p),
                     init_state,
-                    reg_mode: XC2Macrocell::decode_regmod(regmod),
-                    fb_mode: XC2Macrocell::decode_fb(fb),
+                    reg_mode: XC2MCRegMode::decode(regmod),
+                    fb_mode: XC2MCFeedbackMode::decode(fb),
                     ff_in_ibuf,
-                    xor_mode: XC2Macrocell::decode_xorin(xorin),
+                    xor_mode: XC2MCXorMode::decode(xorin),
                 }
             },
             XC2Device::XC2C256 => {
@@ -651,16 +792,16 @@ impl XC2Macrocell {
                 // skipped RegCom (belongs to IOB)
 
                 XC2Macrocell {
-                    clk_src: XC2Macrocell::decode_clk_src(aclk, clk),
+                    clk_src: XC2MCRegClkSrc::decode(aclk, clk),
                     clk_invert_pol,
                     is_ddr,
-                    r_src: XC2Macrocell::decode_r(r),
-                    s_src: XC2Macrocell::decode_p(p),
+                    r_src: XC2MCRegResetSrc::decode(r),
+                    s_src: XC2MCRegSetSrc::decode(p),
                     init_state,
-                    reg_mode: XC2Macrocell::decode_regmod(regmod),
-                    fb_mode: XC2Macrocell::decode_fb(fb),
+                    reg_mode: XC2MCRegMode::decode(regmod),
+                    fb_mode: XC2MCFeedbackMode::decode(fb),
                     ff_in_ibuf,
-                    xor_mode: XC2Macrocell::decode_xorin(xorin),
+                    xor_mode: XC2MCXorMode::decode(xorin),
                 }
             },
             XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
@@ -718,151 +859,21 @@ impl XC2Macrocell {
                          fuse_array.get((x + d * 14) as usize, y + 1));
 
                 XC2Macrocell {
-                    clk_src: XC2Macrocell::decode_clk_src(aclk, clk),
+                    clk_src: XC2MCRegClkSrc::decode(aclk, clk),
                     clk_invert_pol,
                     is_ddr,
-                    r_src: XC2Macrocell::decode_r(r),
-                    s_src: XC2Macrocell::decode_p(p),
+                    r_src: XC2MCRegResetSrc::decode(r),
+                    s_src: XC2MCRegSetSrc::decode(p),
                     init_state,
-                    reg_mode: XC2Macrocell::decode_regmod(regmod),
-                    fb_mode: XC2Macrocell::decode_fb(fb),
+                    reg_mode: XC2MCRegMode::decode(regmod),
+                    fb_mode: XC2MCFeedbackMode::decode(fb),
                     ff_in_ibuf,
-                    xor_mode: XC2Macrocell::decode_xorin(xorin),
+                    xor_mode: XC2MCXorMode::decode(xorin),
                 }
             }
         }
     }
-
-    /// encodes the Aclk bit
-    pub fn aclk(&self) -> bool {
-        match self.clk_src {
-            XC2MCRegClkSrc::CTC => true,
-            _ => false,
-        }
-    }
-
-    /// encodes the Clk bits
-    pub fn clk(&self) -> (bool, bool) {
-        match self.clk_src {
-            XC2MCRegClkSrc::GCK0 => (false, false),
-            XC2MCRegClkSrc::GCK1 => (true, false),
-            XC2MCRegClkSrc::GCK2 => (false, true),
-            XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => (true, true),
-        }
-    }
-
-    /// decodes the Aclk and Clk bits
-    pub fn decode_clk_src(aclk: bool, clk: (bool, bool)) -> XC2MCRegClkSrc {
-        match clk {
-            (false, false) => XC2MCRegClkSrc::GCK0,
-            (false, true)  => XC2MCRegClkSrc::GCK2,
-            (true, false)  => XC2MCRegClkSrc::GCK1,
-            (true, true)   => match aclk {
-                true => XC2MCRegClkSrc::CTC,
-                false => XC2MCRegClkSrc::PTC,
-            },
-        }
-    }
-
-    /// encodes the R bits
-    pub fn r(&self) -> (bool, bool) {
-        match self.r_src {
-            XC2MCRegResetSrc::PTA => (false, false),
-            XC2MCRegResetSrc::GSR => (false, true),
-            XC2MCRegResetSrc::CTR => (true, false),
-            XC2MCRegResetSrc::Disabled => (true, true),
-        }
-    }
-
-    /// decodes the R bits
-    pub fn decode_r(r: (bool, bool)) -> XC2MCRegResetSrc {
-        match r {
-            (false, false) => XC2MCRegResetSrc::PTA,
-            (false, true)  => XC2MCRegResetSrc::GSR,
-            (true, false)  => XC2MCRegResetSrc::CTR,
-            (true, true)   => XC2MCRegResetSrc::Disabled,
-        }
-    }
-
-    /// encodes the P bits
-    pub fn p(&self) -> (bool, bool) {
-        match self.s_src {
-            XC2MCRegSetSrc::PTA => (false, false),
-            XC2MCRegSetSrc::GSR => (false, true),
-            XC2MCRegSetSrc::CTS => (true, false),
-            XC2MCRegSetSrc::Disabled => (true, true),
-        }
-    }
-
-    /// decodes the P bits
-    pub fn decode_p(r: (bool, bool)) -> XC2MCRegSetSrc {
-        match r {
-            (false, false) => XC2MCRegSetSrc::PTA,
-            (false, true)  => XC2MCRegSetSrc::GSR,
-            (true, false)  => XC2MCRegSetSrc::CTS,
-            (true, true)   => XC2MCRegSetSrc::Disabled,
-        }
-    }
-
-    /// encodes the RegMod bits
-    pub fn regmod(&self) -> (bool, bool) {
-        match self.reg_mode {
-            XC2MCRegMode::DFF => (false, false),
-            XC2MCRegMode::LATCH => (false, true),
-            XC2MCRegMode::TFF => (true, false),
-            XC2MCRegMode::DFFCE => (true, true),
-        }
-    }
-
-    /// decodes the RegMod bits
-    pub fn decode_regmod(regmod: (bool, bool)) -> XC2MCRegMode {
-        match regmod {
-            (false, false) => XC2MCRegMode::DFF,
-            (false, true)  => XC2MCRegMode::LATCH,
-            (true, false)  => XC2MCRegMode::TFF,
-            (true, true)   => XC2MCRegMode::DFFCE,
-        }
-    }
-
-    /// encodes the FB bits
-    pub fn fb(&self) -> (bool, bool) {
-        match self.fb_mode {
-            XC2MCFeedbackMode::COMB => (false, false),
-            XC2MCFeedbackMode::REG => (true, false),
-            XC2MCFeedbackMode::Disabled => (true, true),
-        }
-    }
-
-    /// decodes the FB bits
-    pub fn decode_fb(fb: (bool, bool)) -> XC2MCFeedbackMode {
-        match fb {
-            (false, false) => XC2MCFeedbackMode::COMB,
-            (true, false)  => XC2MCFeedbackMode::REG,
-            (_, true)      => XC2MCFeedbackMode::Disabled,
-        }
-    }
-
-    /// encodes the XorIn bits
-    pub fn xorin(&self) -> (bool, bool) {
-        match self.xor_mode {
-            XC2MCXorMode::ZERO => (false, false),
-            XC2MCXorMode::PTCB => (false, true),
-            XC2MCXorMode::PTC => (true, false),
-            XC2MCXorMode::ONE => (true, true),
-        }
-    }
-
-    /// decodes the XorIn bits
-    pub fn decode_xorin(xorin: (bool, bool)) -> XC2MCXorMode {
-        match xorin {
-            (false, false) => XC2MCXorMode::ZERO,
-            (false, true)  => XC2MCXorMode::PTCB,
-            (true, false)  => XC2MCXorMode::PTC,
-            (true, true)   => XC2MCXorMode::ONE,
-        }
-    }
 }
-
 
 ///  Internal function that reads only the macrocell-related bits from the macrcocell configuration
 pub fn read_small_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) -> XC2Macrocell {
@@ -870,32 +881,32 @@ pub fn read_small_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) ->
     let clk = (fuses[block_idx + ff_idx * 27 + 2],
                fuses[block_idx + ff_idx * 27 + 3]);
 
-    let clk_src = XC2Macrocell::decode_clk_src(aclk, clk);
+    let clk_src = XC2MCRegClkSrc::decode(aclk, clk);
 
     let clkop = fuses[block_idx + ff_idx * 27 + 1];
     let clkfreq = fuses[block_idx + ff_idx * 27 + 4];
 
     let r = (fuses[block_idx + ff_idx * 27 + 5],
              fuses[block_idx + ff_idx * 27 + 6]);
-    let reset_mode = XC2Macrocell::decode_r(r);
+    let reset_mode = XC2MCRegResetSrc::decode(r);
 
     let p = (fuses[block_idx + ff_idx * 27 + 7],
              fuses[block_idx + ff_idx * 27 + 8]);
-    let set_mode = XC2Macrocell::decode_p(p);
+    let set_mode = XC2MCRegSetSrc::decode(p);
 
     let regmod = (fuses[block_idx + ff_idx * 27 + 9],
                   fuses[block_idx + ff_idx * 27 + 10]);
-    let reg_mode = XC2Macrocell::decode_regmod(regmod);
+    let reg_mode = XC2MCRegMode::decode(regmod);
 
     let fb = (fuses[block_idx + ff_idx * 27 + 13],
               fuses[block_idx + ff_idx * 27 + 14]);
-    let fb_mode = XC2Macrocell::decode_fb(fb);
+    let fb_mode = XC2MCFeedbackMode::decode(fb);
 
     let inreg = fuses[block_idx + ff_idx * 27 + 15];
 
     let xorin = (fuses[block_idx + ff_idx * 27 + 17],
                  fuses[block_idx + ff_idx * 27 + 18]);
-    let xormode = XC2Macrocell::decode_xorin(xorin);
+    let xormode = XC2MCXorMode::decode(xorin);
 
     let pu = fuses[block_idx + ff_idx * 27 + 26];
 
@@ -920,34 +931,34 @@ pub fn read_large_ff_logical(fuses: &[bool], fuse_idx: usize) -> XC2Macrocell {
     let clk = (fuses[fuse_idx + 1],
                fuses[fuse_idx + 2]);
 
-    let clk_src = XC2Macrocell::decode_clk_src(aclk, clk);
+    let clk_src = XC2MCRegClkSrc::decode(aclk, clk);
 
     let clkfreq = fuses[fuse_idx + 3];
     let clkop = fuses[fuse_idx + 4];
 
     let fb = (fuses[fuse_idx + 6],
               fuses[fuse_idx + 7]);
-    let fb_mode = XC2Macrocell::decode_fb(fb);
+    let fb_mode = XC2MCFeedbackMode::decode(fb);
 
     let inreg = fuses[fuse_idx + 10];
 
     let p = (fuses[fuse_idx + 17],
              fuses[fuse_idx + 18]);
-    let set_mode = XC2Macrocell::decode_p(p);
+    let set_mode = XC2MCRegSetSrc::decode(p);
 
     let pu = fuses[fuse_idx + 19];
 
     let regmod = (fuses[fuse_idx + 21],
                   fuses[fuse_idx + 22]);
-    let reg_mode = XC2Macrocell::decode_regmod(regmod);
+    let reg_mode = XC2MCRegMode::decode(regmod);
 
     let r = (fuses[fuse_idx + 23],
              fuses[fuse_idx + 24]);
-    let reset_mode = XC2Macrocell::decode_r(r);
+    let reset_mode = XC2MCRegResetSrc::decode(r);
 
     let xorin = (fuses[fuse_idx + 27],
                  fuses[fuse_idx + 28]);
-    let xormode = XC2Macrocell::decode_xorin(xorin);
+    let xormode = XC2MCXorMode::decode(xorin);
 
     XC2Macrocell {
         clk_src: clk_src,
@@ -970,32 +981,32 @@ pub fn read_large_buried_ff_logical(fuses: &[bool], fuse_idx: usize) -> XC2Macro
     let clk = (fuses[fuse_idx + 1],
                fuses[fuse_idx + 2]);
 
-    let clk_src = XC2Macrocell::decode_clk_src(aclk, clk);
+    let clk_src = XC2MCRegClkSrc::decode(aclk, clk);
 
     let clkfreq = fuses[fuse_idx + 3];
     let clkop = fuses[fuse_idx + 4];
 
     let fb = (fuses[fuse_idx + 5],
               fuses[fuse_idx + 6]);
-    let fb_mode = XC2Macrocell::decode_fb(fb);
+    let fb_mode = XC2MCFeedbackMode::decode(fb);
 
     let p = (fuses[fuse_idx + 7],
              fuses[fuse_idx + 8]);
-    let set_mode = XC2Macrocell::decode_p(p);
+    let set_mode = XC2MCRegSetSrc::decode(p);
 
     let pu = fuses[fuse_idx + 9];
 
     let regmod = (fuses[fuse_idx + 10],
                   fuses[fuse_idx + 11]);
-    let reg_mode = XC2Macrocell::decode_regmod(regmod);
+    let reg_mode = XC2MCRegMode::decode(regmod);
 
     let r = (fuses[fuse_idx + 12],
              fuses[fuse_idx + 13]);
-    let reset_mode = XC2Macrocell::decode_r(r);
+    let reset_mode = XC2MCRegResetSrc::decode(r);
 
     let xorin = (fuses[fuse_idx + 14],
                  fuses[fuse_idx + 15]);
-    let xormode = XC2Macrocell::decode_xorin(xorin);
+    let xormode = XC2MCXorMode::decode(xorin);
 
     XC2Macrocell {
         clk_src: clk_src,
@@ -1025,28 +1036,28 @@ pub fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         let iob = fb_ff_num_to_iob_num(device, fb_i as u32, i as u32).unwrap() as usize;
 
         // aclk
-        write!(writer, "{}", b2s(fb.ffs[i].aclk()))?;
+        write!(writer, "{}", b2s(fb.ffs[i].clk_src.encode_aclk()))?;
 
         // clkop
         write!(writer, "{}", b2s(fb.ffs[i].clk_invert_pol))?;
 
         // clk
-        let clk = fb.ffs[i].clk();
+        let clk = fb.ffs[i].clk_src.encode_clk();
         write!(writer, "{}{}", b2s(clk.0), b2s(clk.1))?;
 
         // clkfreq
         write!(writer, "{}", b2s(fb.ffs[i].is_ddr))?;
 
         // r
-        let r = fb.ffs[i].r();
+        let r = fb.ffs[i].r_src.encode();
         write!(writer, "{}{}", b2s(r.0), b2s(r.1))?;
 
         // p
-        let p = fb.ffs[i].p();
+        let p = fb.ffs[i].s_src.encode();
         write!(writer, "{}{}", b2s(p.0), b2s(p.1))?;
 
         // regmod
-        let regmod = fb.ffs[i].regmod();
+        let regmod = fb.ffs[i].reg_mode.encode();
         write!(writer, "{}{}", b2s(regmod.0), b2s(regmod.1))?;
 
         // inz
@@ -1054,7 +1065,7 @@ pub fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         write!(writer, "{}{}", b2s(inz.0), b2s(inz.1))?;
 
         // fb
-        let fb_bits = fb.ffs[i].fb();
+        let fb_bits = fb.ffs[i].fb_mode.encode();
         write!(writer, "{}{}", b2s(fb_bits.0), b2s(fb_bits.1))?;
 
         // inreg
@@ -1064,7 +1075,7 @@ pub fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         write!(writer, "{}", b2s(iobs[iob].schmitt_trigger))?;
 
         // xorin
-        let xorin = fb.ffs[i].xorin();
+        let xorin = fb.ffs[i].xor_mode.encode();
         write!(writer, "{}{}", b2s(xorin.0), b2s(xorin.1))?;
 
         // regcom
@@ -1107,10 +1118,10 @@ pub fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         let iob = fb_ff_num_to_iob_num(device, fb_i as u32, i as u32);
 
         // aclk
-        write!(writer, "{}", b2s(fb.ffs[i].aclk()))?;
+        write!(writer, "{}", b2s(fb.ffs[i].clk_src.encode_aclk()))?;
 
         // clk
-        let clk = fb.ffs[i].clk();
+        let clk = fb.ffs[i].clk_src.encode_clk();
         write!(writer, "{}{}", b2s(clk.0), b2s(clk.1))?;
 
 
@@ -1126,7 +1137,7 @@ pub fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         }
 
         // fb
-        let fb_bits = fb.ffs[i].fb();
+        let fb_bits = fb.ffs[i].fb_mode.encode();
         write!(writer, "{}{}", b2s(fb_bits.0), b2s(fb_bits.1))?;
 
         if iob.is_some() {
@@ -1151,7 +1162,7 @@ pub fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         }
 
         // p
-        let p = fb.ffs[i].p();
+        let p = fb.ffs[i].s_src.encode();
         write!(writer, "{}{}", b2s(p.0), b2s(p.1))?;
 
         // pu
@@ -1163,11 +1174,11 @@ pub fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         }
 
         // regmod
-        let regmod = fb.ffs[i].regmod();
+        let regmod = fb.ffs[i].reg_mode.encode();
         write!(writer, "{}{}", b2s(regmod.0), b2s(regmod.1))?;
 
         // r
-        let r = fb.ffs[i].r();
+        let r = fb.ffs[i].r_src.encode();
         write!(writer, "{}{}", b2s(r.0), b2s(r.1))?;
 
         if iob.is_some() {
@@ -1181,7 +1192,7 @@ pub fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         }
 
         // xorin
-        let xorin = fb.ffs[i].xorin();
+        let xorin = fb.ffs[i].xor_mode.encode();
         write!(writer, "{}{}", b2s(xorin.0), b2s(xorin.1))?;
 
         write!(writer, "*\n")?;
