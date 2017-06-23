@@ -32,6 +32,7 @@ use *;
 use fusemap_physical::{zia_block_loc, and_block_loc, or_block_loc};
 use pla::{read_and_term_logical, read_or_term_logical};
 use mc::{read_small_ff_logical, read_large_ff_logical, read_large_buried_ff_logical};
+use util::{b2s};
 use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice, encode_256_zia_choice,
           encode_384_zia_choice, encode_512_zia_choice, read_32_zia_fb_row_logical, read_64_zia_fb_row_logical,
           read_128_zia_fb_row_logical, read_256_zia_fb_row_logical, read_384_zia_fb_row_logical,
@@ -529,7 +530,7 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", if zia_choice_bits[j] {"1"} else {"0"})?;
+                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
                     }
                 },
                 XC2Device::XC2C64 | XC2Device::XC2C64A => {
@@ -537,7 +538,7 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", if zia_choice_bits[j] {"1"} else {"0"})?;
+                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
                     }
                 },
                 XC2Device::XC2C128 => {
@@ -545,7 +546,7 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", if zia_choice_bits[j] {"1"} else {"0"})?;
+                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
                     }
                 },
                 XC2Device::XC2C256 => {
@@ -553,7 +554,7 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", if zia_choice_bits[j] {"1"} else {"0"})?;
+                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
                     }
                 },
                 XC2Device::XC2C384 => {
@@ -561,7 +562,7 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", if zia_choice_bits[j] {"1"} else {"0"})?;
+                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
                     }
                 },
                 XC2Device::XC2C512 => {
@@ -569,7 +570,7 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", if zia_choice_bits[j] {"1"} else {"0"})?;
+                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
                     }
                 },
             }

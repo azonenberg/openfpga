@@ -88,6 +88,8 @@ pub use zia::{XC2ZIARowPiece, XC2ZIAInput, ZIA_MAP_32, ZIA_MAP_64, ZIA_MAP_128, 
 mod jed;
 pub use jed::{read_jed};
 
+mod util;
+
 #[cfg(test)]
 mod tests {
     use super::*;
