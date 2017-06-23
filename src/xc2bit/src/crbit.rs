@@ -25,6 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains routines for dealing with xc2bit's "native" crbit format. TODO: Document this format.
 
+use util::{b2s};
+
 use std::io;
 use std::io::Write;
 use std::str;
@@ -127,7 +129,7 @@ impl FuseArray {
         let (w, h) = self.dim();
         for y in 0..h {
             for x in 0..w {
-                write!(writer, "{}", if self.get(x, y) {"1"} else {"0"})?;
+                write!(writer, "{}", b2s(self.get(x, y)))?;
             }
             write!(writer, "\n")?;
         }

@@ -53,8 +53,7 @@ pub const ANDTERMS_PER_FB: usize = 56;
 pub const MCS_PER_FB: usize = 16;
 
 mod bitstream;
-pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets, XC2ClockDivRatio, XC2ClockDiv, process_jed,
-                    process_crbit};
+pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets, XC2ClockDivRatio, XC2ClockDiv};
 
 mod crbit;
 pub use crbit::{FuseArray};
@@ -87,6 +86,8 @@ pub use zia::{XC2ZIARowPiece, XC2ZIAInput, ZIA_MAP_32, ZIA_MAP_64, ZIA_MAP_128, 
 
 mod jed;
 pub use jed::{read_jed};
+
+mod util;
 
 #[cfg(test)]
 mod tests {

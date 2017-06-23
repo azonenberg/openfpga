@@ -23,6 +23,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+use util::{b2s};
+
 use std::error;
 use std::error::Error;
 use std::fmt;
@@ -151,13 +153,13 @@ impl fmt::Display for XC2BitError {
             },
             XC2BitError::UnsupportedOeConfiguration(bits) => {
                 write!(f, "unknown Oe field value {}{}{}{}",
-                    if bits.0 {"1"} else {"0"}, if bits.1 {"1"} else {"0"},
-                    if bits.2 {"1"} else {"0"}, if bits.3 {"1"} else {"0"})
+                    b2s(bits.0), b2s(bits.1),
+                    b2s(bits.2), b2s(bits.3))
             },
             XC2BitError::UnsupportedZIAConfiguration(ref bits) => {
                 write!(f, "unknown ZIA selection bit pattern ")?;
-                for bit in bits {
-                    write!(f, "{}", if *bit {"1"} else {"0"})?;
+                for &bit in bits {
+                    write!(f, "{}", b2s(bit))?;
                 }
                 Ok(())
             },

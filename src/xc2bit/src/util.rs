@@ -23,33 +23,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-//! Testing tool that reads a .jed bitstream and writes it back out (hopefully identically)
-
-use std::fs::File;
-use std::io::Read;
-
-extern crate xc2bit;
-use xc2bit::*;
-
-fn main() {
-    let args = ::std::env::args().collect::<Vec<_>>();
-
-    if args.len() != 2 {
-        println!("Usage: {} file.jed", args[0]);
-        ::std::process::exit(1);
-    }
-
-    // Read the entire file
-    let mut f = File::open(&args[1]).expect("failed to open file");
-    let mut data = Vec::new();
-    f.read_to_end(&mut data).expect("failed to read data");
-
-    let bits_result = read_jed(&data);
-    let (bits, device_name_option) = bits_result.expect("failed to read jed");
-    let device_name = device_name_option.expect("missing device name in jed");
-
-    let bitstream_result = XC2Bitstream::from_jed(&bits, &device_name);
-    let bitstream = bitstream_result.expect("failed to process jed");
-
-    bitstream.write_jed(&mut ::std::io::stdout()).expect("failed to write jed");
+pub fn b2s(b: bool) -> &'static str {
+    if b {"1"} else {"0"}
 }

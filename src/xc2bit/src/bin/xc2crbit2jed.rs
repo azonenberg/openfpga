@@ -46,7 +46,7 @@ fn main() {
 
     let fuse_array = FuseArray::from_file_contents(&data).expect("failed to read crbit");
 
-    let bitstream = process_crbit(&fuse_array).expect("failed to process crbit");
+    let bitstream = XC2Bitstream::from_crbit(&fuse_array).expect("failed to process crbit");
 
     bitstream.write_jed(&mut ::std::io::stdout()).expect("failed to write jed");
 }

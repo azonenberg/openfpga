@@ -30,6 +30,7 @@ use std::io::Write;
 
 use *;
 use fusemap_physical::{mc_block_loc};
+use util::{b2s};
 use zia::{zia_get_row_width};
 
 /// Clock source for the register in a macrocell
@@ -1024,65 +1025,65 @@ pub fn write_small_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         let iob = fb_ff_num_to_iob_num(device, fb_i as u32, i as u32).unwrap() as usize;
 
         // aclk
-        write!(writer, "{}", if fb.ffs[i].aclk() {"1"} else {"0"})?;
+        write!(writer, "{}", b2s(fb.ffs[i].aclk()))?;
 
         // clkop
-        write!(writer, "{}", if fb.ffs[i].clk_invert_pol {"1"} else {"0"})?;
+        write!(writer, "{}", b2s(fb.ffs[i].clk_invert_pol))?;
 
         // clk
         let clk = fb.ffs[i].clk();
-        write!(writer, "{}{}", if clk.0 {"1"} else {"0"}, if clk.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(clk.0), b2s(clk.1))?;
 
         // clkfreq
-        write!(writer, "{}", if fb.ffs[i].is_ddr {"1"} else {"0"})?;
+        write!(writer, "{}", b2s(fb.ffs[i].is_ddr))?;
 
         // r
         let r = fb.ffs[i].r();
-        write!(writer, "{}{}", if r.0 {"1"} else {"0"}, if r.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(r.0), b2s(r.1))?;
 
         // p
         let p = fb.ffs[i].p();
-        write!(writer, "{}{}", if p.0 {"1"} else {"0"}, if p.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(p.0), b2s(p.1))?;
 
         // regmod
         let regmod = fb.ffs[i].regmod();
-        write!(writer, "{}{}", if regmod.0 {"1"} else {"0"}, if regmod.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(regmod.0), b2s(regmod.1))?;
 
         // inz
         let inz = iobs[iob].zia_mode.encode();
-        write!(writer, "{}{}", if inz.0 {"1"} else {"0"}, if inz.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(inz.0), b2s(inz.1))?;
 
         // fb
         let fb_bits = fb.ffs[i].fb();
-        write!(writer, "{}{}", if fb_bits.0 {"1"} else {"0"}, if fb_bits.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(fb_bits.0), b2s(fb_bits.1))?;
 
         // inreg
-        write!(writer, "{}", if fb.ffs[i].ff_in_ibuf {"0"} else {"1"})?;
+        write!(writer, "{}", b2s(!fb.ffs[i].ff_in_ibuf))?;
 
         // st
-        write!(writer, "{}", if iobs[iob].schmitt_trigger {"1"} else {"0"})?;
+        write!(writer, "{}", b2s(iobs[iob].schmitt_trigger))?;
 
         // xorin
         let xorin = fb.ffs[i].xorin();
-        write!(writer, "{}{}", if xorin.0 {"1"} else {"0"}, if xorin.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(xorin.0), b2s(xorin.1))?;
 
         // regcom
-        write!(writer, "{}", if iobs[iob].obuf_uses_ff {"0"} else {"1"})?;
+        write!(writer, "{}", b2s(!iobs[iob].obuf_uses_ff))?;
 
         // oe
         let oe = iobs[iob].obuf_mode.encode();
         write!(writer, "{}{}{}{}",
-            if oe.0 {"1"} else {"0"}, if oe.1 {"1"} else {"0"},
-            if oe.2 {"1"} else {"0"}, if oe.3 {"1"} else {"0"})?;
+            b2s(oe.0), b2s(oe.1),
+            b2s(oe.2), b2s(oe.3))?;
 
         // tm
-        write!(writer, "{}", if iobs[iob].termination_enabled {"1"} else {"0"})?;
+        write!(writer, "{}", b2s(iobs[iob].termination_enabled))?;
 
         // slw
-        write!(writer, "{}", if iobs[iob].slew_is_fast {"0"} else {"1"})?;
+        write!(writer, "{}", b2s(!iobs[iob].slew_is_fast))?;
 
         // pu
-        write!(writer, "{}", if fb.ffs[i].init_state {"0"} else {"1"})?;
+        write!(writer, "{}", b2s(!fb.ffs[i].init_state))?;
 
         write!(writer, "*\n")?;
     }
@@ -1106,82 +1107,82 @@ pub fn write_large_mc_to_jed(writer: &mut Write, device: XC2Device, fb: &XC2Bits
         let iob = fb_ff_num_to_iob_num(device, fb_i as u32, i as u32);
 
         // aclk
-        write!(writer, "{}", if fb.ffs[i].aclk() {"1"} else {"0"})?;
+        write!(writer, "{}", b2s(fb.ffs[i].aclk()))?;
 
         // clk
         let clk = fb.ffs[i].clk();
-        write!(writer, "{}{}", if clk.0 {"1"} else {"0"}, if clk.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(clk.0), b2s(clk.1))?;
 
 
         // clkfreq
-        write!(writer, "{}", if fb.ffs[i].is_ddr {"1"} else {"0"})?;
+        write!(writer, "{}", b2s(fb.ffs[i].is_ddr))?;
 
         // clkop
-        write!(writer, "{}", if fb.ffs[i].clk_invert_pol {"1"} else {"0"})?;
+        write!(writer, "{}", b2s(fb.ffs[i].clk_invert_pol))?;
 
         // dg
         if iob.is_some() {
-            write!(writer, "{}", if iobs[iob.unwrap() as usize].uses_data_gate {"1"} else {"0"})?;
+            write!(writer, "{}", b2s(iobs[iob.unwrap() as usize].uses_data_gate))?;
         }
 
         // fb
         let fb_bits = fb.ffs[i].fb();
-        write!(writer, "{}{}", if fb_bits.0 {"1"} else {"0"}, if fb_bits.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(fb_bits.0), b2s(fb_bits.1))?;
 
         if iob.is_some() {
             let iob = iob.unwrap() as usize;
 
             // inmod
             let inmod = iobs[iob].ibuf_mode.encode();
-            write!(writer, "{}{}", if inmod.0 {"1"} else {"0"}, if inmod.1 {"1"} else {"0"})?;
+            write!(writer, "{}{}", b2s(inmod.0), b2s(inmod.1))?;
 
             // inreg
-            write!(writer, "{}", if fb.ffs[i].ff_in_ibuf {"0"} else {"1"})?;
+            write!(writer, "{}", b2s(!fb.ffs[i].ff_in_ibuf))?;
 
             // inz
             let inz = iobs[iob].zia_mode.encode();
-            write!(writer, "{}{}", if inz.0 {"1"} else {"0"}, if inz.1 {"1"} else {"0"})?;
+            write!(writer, "{}{}", b2s(inz.0), b2s(inz.1))?;
 
             // oe
             let oe = iobs[iob].obuf_mode.encode();
             write!(writer, "{}{}{}{}",
-                if oe.0 {"1"} else {"0"}, if oe.1 {"1"} else {"0"},
-                if oe.2 {"1"} else {"0"}, if oe.3 {"1"} else {"0"})?;
+                b2s(oe.0), b2s(oe.1),
+                b2s(oe.2), b2s(oe.3))?;
         }
 
         // p
         let p = fb.ffs[i].p();
-        write!(writer, "{}{}", if p.0 {"1"} else {"0"}, if p.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(p.0), b2s(p.1))?;
 
         // pu
-        write!(writer, "{}", if fb.ffs[i].init_state {"0"} else {"1"})?;
+        write!(writer, "{}", b2s(!fb.ffs[i].init_state))?;
 
         if iob.is_some() {
             // regcom
-            write!(writer, "{}", if iobs[iob.unwrap() as usize].obuf_uses_ff {"0"} else {"1"})?;
+            write!(writer, "{}", b2s(!iobs[iob.unwrap() as usize].obuf_uses_ff))?;
         }
 
         // regmod
         let regmod = fb.ffs[i].regmod();
-        write!(writer, "{}{}", if regmod.0 {"1"} else {"0"}, if regmod.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(regmod.0), b2s(regmod.1))?;
 
         // r
         let r = fb.ffs[i].r();
-        write!(writer, "{}{}", if r.0 {"1"} else {"0"}, if r.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(r.0), b2s(r.1))?;
 
         if iob.is_some() {
             let iob = iob.unwrap() as usize;
 
             // slw
-            write!(writer, "{}", if iobs[iob].slew_is_fast {"0"} else {"1"})?;
+            write!(writer, "{}", b2s(!iobs[iob].slew_is_fast))?;
 
             // tm
-            write!(writer, "{}", if iobs[iob].termination_enabled {"1"} else {"0"})?;
+            write!(writer, "{}", b2s(iobs[iob].termination_enabled))?;
         }
 
         // xorin
         let xorin = fb.ffs[i].xorin();
-        write!(writer, "{}{}", if xorin.0 {"1"} else {"0"}, if xorin.1 {"1"} else {"0"})?;
+        write!(writer, "{}{}", b2s(xorin.0), b2s(xorin.1))?;
 
         write!(writer, "*\n")?;
 

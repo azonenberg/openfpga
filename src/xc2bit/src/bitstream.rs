@@ -36,6 +36,7 @@ use fusemap_physical::{fuse_array_dims, gck_fuse_coords, gsr_fuse_coords, gts_fu
                        clock_div_fuse_coord};
 use iob::{read_small_iob_logical, read_large_iob_logical, read_32_extra_ibuf_logical, read_32_extra_ibuf_physical};
 use mc::{write_small_mc_to_jed, write_large_mc_to_jed};
+use util::{b2s};
 use zia::{zia_get_row_width};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
@@ -82,6 +83,174 @@ impl XC2Bitstream {
         self.bits.to_crbit(&mut fuse_array);
 
         fuse_array
+    }
+
+    /// Processes a fuse array into a bitstream object
+    pub fn from_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, XC2BitError> {
+        let device_combination = parse_part_name_string(device);
+        if device_combination.is_none() {
+            return Err(XC2BitError::BadDeviceName(device.to_owned()));
+        }
+
+        let (part, spd, pkg) = device_combination.unwrap();
+
+        if fuses.len() != total_logical_fuse_count(part) {
+            return Err(XC2BitError::WrongFuseCount);
+        }
+
+        match part {
+            XC2Device::XC2C32 => {
+                let bits = read_32_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C32A => {
+                let bits = read_32a_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C64 => {
+                let bits = read_64_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C64A => {
+                let bits = read_64a_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C128 => {
+                let bits = read_128_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C256 => {
+                let bits = read_256_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C384 => {
+                let bits = read_384_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C512 => {
+                let bits = read_512_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+        }
+    }
+
+    /// Processes a fuse array (in physical addressing) into a bitstream object
+    pub fn from_crbit(fuse_array: &FuseArray) -> Result<XC2Bitstream, XC2BitError> {
+        // FIXME: Can we guess the device type from the dimensions?
+        if fuse_array.dev_name_str.is_none() {
+            return Err(XC2BitError::BadDeviceName(String::from("")));
+        }
+
+        let device_combination = parse_part_name_string(fuse_array.dev_name_str.as_ref().unwrap());
+        if device_combination.is_none() {
+            return Err(XC2BitError::BadDeviceName(fuse_array.dev_name_str.as_ref().unwrap().to_owned()));
+        }
+
+        let (part, spd, pkg) = device_combination.unwrap();
+
+        if fuse_array.dim() != fuse_array_dims(part) {
+            return Err(XC2BitError::WrongFuseCount);
+        }
+
+
+        match part {
+            XC2Device::XC2C32 => {
+                let bits = read_32_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C32A => {
+                let bits = read_32a_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C64 => {
+                let bits = read_64_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C64A => {
+                let bits = read_64a_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C128 => {
+                let bits = read_128_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C256 => {
+                let bits = read_256_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C384 => {
+                let bits = read_384_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C512 => {
+                let bits = read_512_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+        }
     }
 
     /// Construct a new blank bitstream of the given part
@@ -1026,9 +1195,9 @@ impl XC2BitstreamBits {
         // GCK
         write!(writer, "L{:06} {}{}{}*\n",
             gck_fuse_idx(self.device_type()),
-            if self.get_global_nets().gck_enable[0] {"1"} else {"0"},
-            if self.get_global_nets().gck_enable[1] {"1"} else {"0"},
-            if self.get_global_nets().gck_enable[2] {"1"} else {"0"})?;
+            b2s(self.get_global_nets().gck_enable[0]),
+            b2s(self.get_global_nets().gck_enable[1]),
+            b2s(self.get_global_nets().gck_enable[2]))?;
 
         // Clock divider
         if let Some(clock_div) = self.get_clock_div() {
@@ -1036,7 +1205,7 @@ impl XC2BitstreamBits {
 
             write!(writer, "L{:06} {}{}*\n",
                 clock_fuse_block,
-                if clock_div.enabled {"0"} else {"1"},
+                b2s(!clock_div.enabled),
                 match clock_div.div_ratio {
                     XC2ClockDivRatio::Div2  => "000",
                     XC2ClockDivRatio::Div4  => "001",
@@ -1049,31 +1218,31 @@ impl XC2BitstreamBits {
                 })?;
             write!(writer, "L{:06} {}*\n",
                 clock_fuse_block + 4,
-                if clock_div.delay {"0"} else {"1"})?;
+                b2s(!clock_div.delay))?;
         }
 
         // GSR
         write!(writer, "L{:06} {}{}*\n",
             gsr_fuse_idx(self.device_type()),
-            if self.get_global_nets().gsr_invert {"1"} else {"0"},
-            if self.get_global_nets().gsr_enable {"1"} else {"0"})?;
+            b2s(self.get_global_nets().gsr_invert),
+            b2s(self.get_global_nets().gsr_enable))?;
 
         // GTS
         write!(writer, "L{:06} {}{}{}{}{}{}{}{}*\n",
             gts_fuse_idx(self.device_type()),
-            if self.get_global_nets().gts_invert[0] {"1"} else {"0"},
-            if self.get_global_nets().gts_enable[0] {"0"} else {"1"},
-            if self.get_global_nets().gts_invert[1] {"1"} else {"0"},
-            if self.get_global_nets().gts_enable[1] {"0"} else {"1"},
-            if self.get_global_nets().gts_invert[2] {"1"} else {"0"},
-            if self.get_global_nets().gts_enable[2] {"0"} else {"1"},
-            if self.get_global_nets().gts_invert[3] {"1"} else {"0"},
-            if self.get_global_nets().gts_enable[3] {"0"} else {"1"})?;
+            b2s(self.get_global_nets().gts_invert[0]),
+            b2s(!self.get_global_nets().gts_enable[0]),
+            b2s(self.get_global_nets().gts_invert[1]),
+            b2s(!self.get_global_nets().gts_enable[1]),
+            b2s(self.get_global_nets().gts_invert[2]),
+            b2s(!self.get_global_nets().gts_enable[2]),
+            b2s(self.get_global_nets().gts_invert[3]),
+            b2s(!self.get_global_nets().gts_enable[3]))?;
 
         // Global termination
         write!(writer, "L{:06} {}*\n",
             global_term_fuse_idx(self.device_type()),
-            if self.get_global_nets().global_pu {"1"} else {"0"})?;
+            b2s(self.get_global_nets().global_pu))?;
 
         // Bank voltages and miscellaneous
         match self {
@@ -1081,73 +1250,73 @@ impl XC2BitstreamBits {
             &XC2BitstreamBits::XC2C32A {ref inpin, legacy_ivoltage: ref ivoltage,
                 legacy_ovoltage: ref ovoltage, ..} => {
 
-                write!(writer, "L012270 {}*\n", if *ovoltage {"0"} else {"1"})?;
-                write!(writer, "L012271 {}*\n", if *ivoltage {"0"} else {"1"})?;
+                write!(writer, "L012270 {}*\n", b2s(!ovoltage))?;
+                write!(writer, "L012271 {}*\n", b2s(!ivoltage))?;
 
                 write!(writer, "L012272 {}{}*\n",
-                    if inpin.schmitt_trigger {"1"} else {"0"},
-                    if inpin.termination_enabled {"1"} else {"0"})?;
+                    b2s(inpin.schmitt_trigger),
+                    b2s(inpin.termination_enabled))?;
             }
             &XC2BitstreamBits::XC2C64 {ref ivoltage, ref ovoltage, ..} |
             &XC2BitstreamBits::XC2C64A {legacy_ivoltage: ref ivoltage, legacy_ovoltage: ref ovoltage, ..} => {
-                write!(writer, "L025806 {}*\n", if *ovoltage {"0"} else {"1"})?;
-                write!(writer, "L025807 {}*\n", if *ivoltage {"0"} else {"1"})?;
+                write!(writer, "L025806 {}*\n", b2s(!ovoltage))?;
+                write!(writer, "L025807 {}*\n", b2s(!ivoltage))?;
             }
             &XC2BitstreamBits::XC2C128 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
-                write!(writer, "L055335 {}*\n", if *data_gate {"0"} else {"1"})?;
+                write!(writer, "L055335 {}*\n", b2s(!data_gate))?;
 
-                write!(writer, "L055336 {}{}*\n", if ivoltage[0] {"0"} else {"1"}, if ivoltage[1] {"0"} else {"1"})?;
-                write!(writer, "L055338 {}{}*\n", if ovoltage[0] {"0"} else {"1"}, if ovoltage[1] {"0"} else {"1"})?;
+                write!(writer, "L055336 {}{}*\n", b2s(!ivoltage[0]), b2s(!ivoltage[1]))?;
+                write!(writer, "L055338 {}{}*\n", b2s(!ovoltage[0]), b2s(!ovoltage[1]))?;
 
-                write!(writer, "L055340 {}*\n", if *use_vref {"0"} else {"1"})?;
+                write!(writer, "L055340 {}*\n", b2s(!use_vref))?;
             }
             &XC2BitstreamBits::XC2C256 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
-                write!(writer, "L123243 {}*\n", if *data_gate {"0"} else {"1"})?;
+                write!(writer, "L123243 {}*\n", b2s(!data_gate))?;
 
-                write!(writer, "L123244 {}{}*\n", if ivoltage[0] {"0"} else {"1"}, if ivoltage[1] {"0"} else {"1"})?;
-                write!(writer, "L123246 {}{}*\n", if ovoltage[0] {"0"} else {"1"}, if ovoltage[1] {"0"} else {"1"})?;
+                write!(writer, "L123244 {}{}*\n", b2s(!ivoltage[0]), b2s(!ivoltage[1]))?;
+                write!(writer, "L123246 {}{}*\n", b2s(!ovoltage[0]), b2s(!ovoltage[1]))?;
 
-                write!(writer, "L123248 {}*\n", if *use_vref {"0"} else {"1"})?;
+                write!(writer, "L123248 {}*\n", b2s(!use_vref))?;
             }
             &XC2BitstreamBits::XC2C384 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
-                write!(writer, "L209347 {}*\n", if *data_gate {"0"} else {"1"})?;
+                write!(writer, "L209347 {}*\n", b2s(!data_gate))?;
 
                 write!(writer, "L209348 {}{}{}{}*\n",
-                    if ivoltage[0] {"0"} else {"1"}, if ivoltage[1] {"0"} else {"1"},
-                    if ivoltage[2] {"0"} else {"1"}, if ivoltage[3] {"0"} else {"1"})?;
+                    b2s(!ivoltage[0]), b2s(!ivoltage[1]),
+                    b2s(!ivoltage[2]), b2s(!ivoltage[3]))?;
                 write!(writer, "L209352 {}{}{}{}*\n",
-                    if ovoltage[0] {"0"} else {"1"}, if ovoltage[1] {"0"} else {"1"},
-                    if ovoltage[2] {"0"} else {"1"}, if ovoltage[3] {"0"} else {"1"})?;
+                    b2s(!ovoltage[0]), b2s(!ovoltage[1]),
+                    b2s(!ovoltage[2]), b2s(!ovoltage[3]))?;
 
-                write!(writer, "L209356 {}*\n", if *use_vref {"0"} else {"1"})?;
+                write!(writer, "L209356 {}*\n", b2s(!use_vref))?;
             }
             &XC2BitstreamBits::XC2C512 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
-                write!(writer, "L296393 {}*\n", if *data_gate {"0"} else {"1"})?;
+                write!(writer, "L296393 {}*\n", b2s(!data_gate))?;
 
                 write!(writer, "L296394 {}{}{}{}*\n",
-                    if ivoltage[0] {"1"} else {"0"}, if ivoltage[1] {"1"} else {"0"},
-                    if ivoltage[2] {"1"} else {"0"}, if ivoltage[3] {"1"} else {"0"})?;
+                    b2s(ivoltage[0]), b2s(ivoltage[1]),
+                    b2s(ivoltage[2]), b2s(ivoltage[3]))?;
                 write!(writer, "L296398 {}{}{}{}*\n",
-                    if ovoltage[0] {"1"} else {"0"}, if ovoltage[1] {"1"} else {"0"},
-                    if ovoltage[2] {"1"} else {"0"}, if ovoltage[3] {"1"} else {"0"})?;
+                    b2s(ovoltage[0]), b2s(ovoltage[1]),
+                    b2s(ovoltage[2]), b2s(ovoltage[3]))?;
 
-                write!(writer, "L296402 {}*\n", if *use_vref {"0"} else {"1"})?;
+                write!(writer, "L296402 {}*\n", b2s(!use_vref))?;
             }
         }
 
         // A-variant bank voltages
         match self {
             &XC2BitstreamBits::XC2C32A {ref ivoltage, ref ovoltage, ..} => {
-                write!(writer, "L012274 {}*\n", if ivoltage[0] {"0"} else {"1"})?;
-                write!(writer, "L012275 {}*\n", if ovoltage[0] {"0"} else {"1"})?;
-                write!(writer, "L012276 {}*\n", if ivoltage[1] {"0"} else {"1"})?;
-                write!(writer, "L012277 {}*\n", if ovoltage[1] {"0"} else {"1"})?;
+                write!(writer, "L012274 {}*\n", b2s(!ivoltage[0]))?;
+                write!(writer, "L012275 {}*\n", b2s(!ovoltage[0]))?;
+                write!(writer, "L012276 {}*\n", b2s(!ivoltage[1]))?;
+                write!(writer, "L012277 {}*\n", b2s(!ovoltage[1]))?;
             },
             &XC2BitstreamBits::XC2C64A {ref ivoltage, ref ovoltage, ..} => {
-                write!(writer, "L025808 {}*\n", if ivoltage[0] {"0"} else {"1"})?;
-                write!(writer, "L025809 {}*\n", if ovoltage[0] {"0"} else {"1"})?;
-                write!(writer, "L025810 {}*\n", if ivoltage[1] {"0"} else {"1"})?;
-                write!(writer, "L025811 {}*\n", if ovoltage[1] {"0"} else {"1"})?;
+                write!(writer, "L025808 {}*\n", b2s(!ivoltage[0]))?;
+                write!(writer, "L025809 {}*\n", b2s(!ovoltage[0]))?;
+                write!(writer, "L025810 {}*\n", b2s(!ivoltage[1]))?;
+                write!(writer, "L025811 {}*\n", b2s(!ovoltage[1]))?;
             },
             _ => {}
         }
@@ -1659,172 +1828,4 @@ pub fn read_512_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstrea
             fuse_array.get(984, 147),
         ]
     })
-}
-
-/// Processes a fuse array into a bitstream object
-pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, XC2BitError> {
-    let device_combination = parse_part_name_string(device);
-    if device_combination.is_none() {
-        return Err(XC2BitError::BadDeviceName(device.to_owned()));
-    }
-
-    let (part, spd, pkg) = device_combination.unwrap();
-
-    if fuses.len() != total_logical_fuse_count(part) {
-        return Err(XC2BitError::WrongFuseCount);
-    }
-
-    match part {
-        XC2Device::XC2C32 => {
-            let bits = read_32_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C32A => {
-            let bits = read_32a_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C64 => {
-            let bits = read_64_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C64A => {
-            let bits = read_64a_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C128 => {
-            let bits = read_128_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C256 => {
-            let bits = read_256_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C384 => {
-            let bits = read_384_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C512 => {
-            let bits = read_512_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-    }
-}
-
-/// Processes a fuse array (in physical addressing) into a bitstream object
-pub fn process_crbit(fuse_array: &FuseArray) -> Result<XC2Bitstream, XC2BitError> {
-    // FIXME: Can we guess the device type from the dimensions?
-    if fuse_array.dev_name_str.is_none() {
-        return Err(XC2BitError::BadDeviceName(String::from("")));
-    }
-
-    let device_combination = parse_part_name_string(fuse_array.dev_name_str.as_ref().unwrap());
-    if device_combination.is_none() {
-        return Err(XC2BitError::BadDeviceName(fuse_array.dev_name_str.as_ref().unwrap().to_owned()));
-    }
-
-    let (part, spd, pkg) = device_combination.unwrap();
-
-    if fuse_array.dim() != fuse_array_dims(part) {
-        return Err(XC2BitError::WrongFuseCount);
-    }
-
-
-    match part {
-        XC2Device::XC2C32 => {
-            let bits = read_32_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C32A => {
-            let bits = read_32a_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C64 => {
-            let bits = read_64_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C64A => {
-            let bits = read_64a_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C128 => {
-            let bits = read_128_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C256 => {
-            let bits = read_256_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C384 => {
-            let bits = read_384_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C512 => {
-            let bits = read_512_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-    }
 }
