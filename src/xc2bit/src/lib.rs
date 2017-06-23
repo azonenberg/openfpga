@@ -53,8 +53,7 @@ pub const ANDTERMS_PER_FB: usize = 56;
 pub const MCS_PER_FB: usize = 16;
 
 mod bitstream;
-pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets, XC2ClockDivRatio, XC2ClockDiv, process_jed,
-                    process_crbit};
+pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets, XC2ClockDivRatio, XC2ClockDiv};
 
 mod crbit;
 pub use crbit::{FuseArray};

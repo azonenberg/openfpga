@@ -85,6 +85,174 @@ impl XC2Bitstream {
         fuse_array
     }
 
+    /// Processes a fuse array into a bitstream object
+    pub fn from_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, XC2BitError> {
+        let device_combination = parse_part_name_string(device);
+        if device_combination.is_none() {
+            return Err(XC2BitError::BadDeviceName(device.to_owned()));
+        }
+
+        let (part, spd, pkg) = device_combination.unwrap();
+
+        if fuses.len() != total_logical_fuse_count(part) {
+            return Err(XC2BitError::WrongFuseCount);
+        }
+
+        match part {
+            XC2Device::XC2C32 => {
+                let bits = read_32_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C32A => {
+                let bits = read_32a_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C64 => {
+                let bits = read_64_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C64A => {
+                let bits = read_64a_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C128 => {
+                let bits = read_128_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C256 => {
+                let bits = read_256_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C384 => {
+                let bits = read_384_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C512 => {
+                let bits = read_512_bitstream_logical(fuses)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+        }
+    }
+
+    /// Processes a fuse array (in physical addressing) into a bitstream object
+    pub fn from_crbit(fuse_array: &FuseArray) -> Result<XC2Bitstream, XC2BitError> {
+        // FIXME: Can we guess the device type from the dimensions?
+        if fuse_array.dev_name_str.is_none() {
+            return Err(XC2BitError::BadDeviceName(String::from("")));
+        }
+
+        let device_combination = parse_part_name_string(fuse_array.dev_name_str.as_ref().unwrap());
+        if device_combination.is_none() {
+            return Err(XC2BitError::BadDeviceName(fuse_array.dev_name_str.as_ref().unwrap().to_owned()));
+        }
+
+        let (part, spd, pkg) = device_combination.unwrap();
+
+        if fuse_array.dim() != fuse_array_dims(part) {
+            return Err(XC2BitError::WrongFuseCount);
+        }
+
+
+        match part {
+            XC2Device::XC2C32 => {
+                let bits = read_32_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C32A => {
+                let bits = read_32a_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C64 => {
+                let bits = read_64_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C64A => {
+                let bits = read_64a_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C128 => {
+                let bits = read_128_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C256 => {
+                let bits = read_256_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C384 => {
+                let bits = read_384_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+            XC2Device::XC2C512 => {
+                let bits = read_512_bitstream_physical(fuse_array)?;
+                Ok(XC2Bitstream {
+                    speed_grade: spd,
+                    package: pkg,
+                    bits: bits,
+                })
+            },
+        }
+    }
+
     /// Construct a new blank bitstream of the given part
     pub fn blank_bitstream(device: XC2Device, speed_grade: XC2Speed, package: XC2Package)
         -> Result<XC2Bitstream, XC2BitError> {
@@ -1660,172 +1828,4 @@ pub fn read_512_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2Bitstrea
             fuse_array.get(984, 147),
         ]
     })
-}
-
-/// Processes a fuse array into a bitstream object
-pub fn process_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, XC2BitError> {
-    let device_combination = parse_part_name_string(device);
-    if device_combination.is_none() {
-        return Err(XC2BitError::BadDeviceName(device.to_owned()));
-    }
-
-    let (part, spd, pkg) = device_combination.unwrap();
-
-    if fuses.len() != total_logical_fuse_count(part) {
-        return Err(XC2BitError::WrongFuseCount);
-    }
-
-    match part {
-        XC2Device::XC2C32 => {
-            let bits = read_32_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C32A => {
-            let bits = read_32a_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C64 => {
-            let bits = read_64_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C64A => {
-            let bits = read_64a_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C128 => {
-            let bits = read_128_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C256 => {
-            let bits = read_256_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C384 => {
-            let bits = read_384_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C512 => {
-            let bits = read_512_bitstream_logical(fuses)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-    }
-}
-
-/// Processes a fuse array (in physical addressing) into a bitstream object
-pub fn process_crbit(fuse_array: &FuseArray) -> Result<XC2Bitstream, XC2BitError> {
-    // FIXME: Can we guess the device type from the dimensions?
-    if fuse_array.dev_name_str.is_none() {
-        return Err(XC2BitError::BadDeviceName(String::from("")));
-    }
-
-    let device_combination = parse_part_name_string(fuse_array.dev_name_str.as_ref().unwrap());
-    if device_combination.is_none() {
-        return Err(XC2BitError::BadDeviceName(fuse_array.dev_name_str.as_ref().unwrap().to_owned()));
-    }
-
-    let (part, spd, pkg) = device_combination.unwrap();
-
-    if fuse_array.dim() != fuse_array_dims(part) {
-        return Err(XC2BitError::WrongFuseCount);
-    }
-
-
-    match part {
-        XC2Device::XC2C32 => {
-            let bits = read_32_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C32A => {
-            let bits = read_32a_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C64 => {
-            let bits = read_64_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C64A => {
-            let bits = read_64a_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C128 => {
-            let bits = read_128_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C256 => {
-            let bits = read_256_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C384 => {
-            let bits = read_384_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-        XC2Device::XC2C512 => {
-            let bits = read_512_bitstream_physical(fuse_array)?;
-            Ok(XC2Bitstream {
-                speed_grade: spd,
-                package: pkg,
-                bits: bits,
-            })
-        },
-    }
 }

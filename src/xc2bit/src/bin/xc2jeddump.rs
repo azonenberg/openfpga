@@ -48,7 +48,7 @@ fn main() {
     let (bits, device_name_option) = bits_result.expect("failed to read jed");
     let device_name = device_name_option.expect("missing device name in jed");
 
-    let bitstream_result = process_jed(&bits, &device_name);
+    let bitstream_result = XC2Bitstream::from_jed(&bits, &device_name);
     let bitstream = bitstream_result.expect("failed to process jed");
 
     bitstream.dump_human_readable(&mut ::std::io::stdout()).expect("failed to print jed");
