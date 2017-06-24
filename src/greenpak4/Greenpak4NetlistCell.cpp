@@ -29,6 +29,9 @@ Greenpak4NetlistCell::~Greenpak4NetlistCell()
 	//do not delete wires, module dtor handles that
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Accessors
+
 string Greenpak4NetlistCell::GetLOC()
 {
 	string loc = m_attributes.at("LOC");
@@ -97,4 +100,22 @@ string Greenpak4NetlistCell::GetLOC()
 	//Single bit signal, just return the attribute
 	else
 		return loc;
+}
+
+bool Greenpak4NetlistCell::IsStateful()
+{
+	if(m_type.find("GP_COUNT") == 0)
+		return true;
+	if(m_type.find("GP_DFF") == 0)
+		return true;
+	if(m_type.find("GP_DLATCH") == 0)
+		return true;
+	if(m_type == "GP_PGEN")
+		return true;
+	if(m_type.find("GP_SHREG") == 0)
+		return true;
+	if(m_type.find("GP_SPI") == 0)
+		return true;
+
+	return false;
 }

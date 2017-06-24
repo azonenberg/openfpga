@@ -264,8 +264,7 @@ void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
 	{
 		auto cell = it->second;
 
-		//TODO: check stateful internal blocks too
-		if(!cell->IsIbuf())
+		if(!cell->IsIbuf() && !cell->IsStateful())
 			continue;
 		sources.emplace(cell);
 	}
@@ -278,7 +277,7 @@ void PrintTimingReport(Greenpak4Netlist* netlist, Greenpak4Device* device)
 		auto cell = it->second;
 
 		//TODO: check stateful internal blocks too
-		if(!cell->IsObuf())
+		if(!cell->IsObuf() && !cell->IsStateful())
 			continue;
 		sinks.emplace(cell);
 	}

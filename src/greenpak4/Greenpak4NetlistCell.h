@@ -66,6 +66,9 @@ public:
 	bool IsPowerRail()
 	{ return (m_type == "GP_VDD") || (m_type == "GP_VSS"); }
 
+	//Indicates whether the cell is stateful (can start or end a combinatorial path)
+	bool IsStateful();
+
 	std::string GetLOC();
 
 	bool HasLOC()
