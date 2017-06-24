@@ -74,5 +74,5 @@ fn main() {
     // Get a bitstream result
     let bitstream = produce_bitstream(&par_graphs, &dgraph_rs, &ngraph_rs);
     println!("********************************************************************************");
-    bitstream.write_jed(&mut ::std::io::stdout());
+    bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
 }

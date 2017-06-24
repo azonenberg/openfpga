@@ -105,7 +105,7 @@ impl DeviceGraph {
         let bufg_l = alloc_label(par_graphs, &mut lmap, "BUFG");
 
         let (num_fbs, num_iobs, has_inpad, iob_to_fb_ff, zia_table) = if device_name.eq_ignore_ascii_case("XC2C32A") {
-            (2, 32, true, iob_num_to_fb_ff_num_32, ZIA_BIT_TO_CHOICE_32)
+            (2, 32, true, iob_num_to_fb_mc_num, ZIA_MAP_32)
         } else {
             panic!("Unsupported device name!");
         };
@@ -198,7 +198,7 @@ impl DeviceGraph {
                     par_graphs.borrow_mut_d().add_edge(bufg_clk_par_idxs[j], "OUT", reg_par_idxs[i], "CLK");
                 }
                 // CTC
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_ctc() as usize], "OUT",
+                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[CTC as usize], "OUT",
                     reg_par_idxs[i], "CLK");
                 // PTC
                 par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_ptc(i as u32) as usize], "OUT",
@@ -208,7 +208,7 @@ impl DeviceGraph {
                 // GSR
                 par_graphs.borrow_mut_d().add_edge(bufg_gsr_par_idx, "OUT", reg_par_idxs[i], "S");
                 // CTS
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_cts() as usize], "OUT",
+                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[CTS as usize], "OUT",
                     reg_par_idxs[i], "CLK");
                 // PTA
                 par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_pta(i as u32) as usize], "OUT",
@@ -218,7 +218,7 @@ impl DeviceGraph {
                 // GSR
                 par_graphs.borrow_mut_d().add_edge(bufg_gsr_par_idx, "OUT", reg_par_idxs[i], "S");
                 // CTR
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_ctr() as usize], "OUT",
+                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[CTR as usize], "OUT",
                     reg_par_idxs[i], "CLK");
                 // PTA
                 par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_pta(i as u32) as usize], "OUT",
@@ -235,14 +235,14 @@ impl DeviceGraph {
             let iob_par_idx = par_graphs.borrow_mut_d().add_new_node(iopad_l, iob_pool_idx);
 
             // Create the edges that don't need ZIA-related knowledge (OE, direct input, output data)
-            let (fb, ff) = iob_to_fb_ff(iob).unwrap();
+            let (fb, ff) = iob_to_fb_ff(XC2Device::XC2C32A, iob).unwrap();
 
             // GTS
             for j in 0..bufg_gts_par_idxs.len() {
                 par_graphs.borrow_mut_d().add_edge(bufg_gts_par_idxs[j], "OUT", iob_par_idx, "OE");
             }
             // CTE
-            par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].0[get_cte() as usize], "OUT",
+            par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].0[CTE as usize], "OUT",
                 iob_par_idx, "OE");
             // PTB
             par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].0[get_ptb(ff as u32) as usize], "OUT",
@@ -280,18 +280,18 @@ impl DeviceGraph {
                 for andterm_i in 0..fb_related_par_idxs[fb as usize].0.len() {
                     for zia_choice in zia_row {
                         match zia_choice {
-                            &XC2ZIAInput::Macrocell{fb, ff} => {
+                            &XC2ZIAInput::Macrocell{fb, mc} => {
                                 // From the XOR gate
                                 par_graphs.borrow_mut_d().add_edge(
-                                    fb_related_par_idxs[fb as usize].1[ff as usize], "OUT",
+                                    fb_related_par_idxs[fb as usize].1[mc as usize], "OUT",
                                     fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
                                 // From the register
                                 par_graphs.borrow_mut_d().add_edge(
-                                    fb_related_par_idxs[fb as usize].2[ff as usize], "Q",
+                                    fb_related_par_idxs[fb as usize].2[mc as usize], "Q",
                                     fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
                             },
                             &XC2ZIAInput::IBuf{ibuf} => {
-                                let (fb, ff) = iob_to_fb_ff(ibuf).unwrap();
+                                let (fb, ff) = iob_to_fb_ff(XC2Device::XC2C32A, ibuf).unwrap();
                                 // From the pad
                                 par_graphs.borrow_mut_d().add_edge(
                                     iob_par_idxs[ibuf as usize], "OUT",

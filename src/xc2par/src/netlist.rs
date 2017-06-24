@@ -56,7 +56,7 @@ pub enum NetlistGraphNodeVariant {
         output: ObjPoolIndex<NetlistGraphNet>,
     },
     Reg {
-        mode: XC2MCFFMode,
+        mode: XC2MCRegMode,
         clkinv: bool,
         set_input: Option<ObjPoolIndex<NetlistGraphNet>>,
         reset_input: Option<ObjPoolIndex<NetlistGraphNet>>,

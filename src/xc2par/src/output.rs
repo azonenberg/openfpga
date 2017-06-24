@@ -40,7 +40,7 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
     let ngraph = graphs.n;
 
     // FIXME: Don't hardcode
-    let mut fb_bits = [XC2BistreamFB::default(); 2];
+    let mut fb_bits = [XC2BitstreamFB::default(); 2];
     let mut iob_bits = [XC2MCSmallIOB::default(); 32];
 
     // Walk all device graph nodes
@@ -129,9 +129,9 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
                                 panic!("mismatched FFs");
                             }
 
-                            fb_bits[fb_xor as usize].ffs[i_xor as usize].ff_in_ibuf = false;
+                            fb_bits[fb_xor as usize].mcs[i_xor as usize].ff_in_ibuf = false;
                         } else if let &DeviceGraphNode::IOBuf{i: i_iob} = sink_node_dgraph {
-                            let (fb_iob, ff_iob) = iob_num_to_fb_ff_num_32(i_iob).unwrap();
+                            let (fb_iob, ff_iob) = iob_num_to_fb_mc_num(XC2Device::XC2C32A, i_iob).unwrap();
 
                             if fb_xor != fb_iob {
                                 panic!("mismatched FBs");
@@ -157,18 +157,18 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
                     } else {
                         XC2MCXorMode::PTCB
                     };
-                    fb_bits[fb_xor as usize].ffs[i_xor as usize].xor_mode = xormode;
+                    fb_bits[fb_xor as usize].mcs[i_xor as usize].xor_mode = xormode;
                 } else {
                     panic!("mismatched graph node types");
                 }
             },
             &DeviceGraphNode::IOBuf{i: i_iob} => {
-                let (fb_iob, ff_iob) = iob_num_to_fb_ff_num_32(i_iob).unwrap();
+                let (fb_iob, ff_iob) = iob_num_to_fb_mc_num(XC2Device::XC2C32A, i_iob).unwrap();
                 if let NetlistGraphNodeVariant::IOBuf{output, oe, input} = ngraph_node_rs.variant {
                     if input.is_some() {
                         // pin is used as an OUTPUT
                         iob_bits[i_iob as usize].termination_enabled = false;
-                        iob_bits[i_iob as usize].obuf_mode = XC2MCOBufMode::PushPull;
+                        iob_bits[i_iob as usize].obuf_mode = XC2IOBOBufMode::PushPull;
                     }
 
                     if oe.is_some() {
@@ -195,13 +195,13 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
                                 panic!("mismatched FFs");
                             }
 
-                            fb_bits[fb_iob as usize].ffs[ff_iob as usize].ff_in_ibuf = true;
+                            fb_bits[fb_iob as usize].mcs[ff_iob as usize].ff_in_ibuf = true;
                         } else if let &DeviceGraphNode::AndTerm{fb: fb_and, i: i_and} = sink_node_dgraph {
                             // TODO
 
                             // FIXME FIXME FIXME FIXME THIS IS TOTALLY BOGUS
                             for zia_row in 0..40 {
-                                let maybe_zia_data = encode_32_zia_choice(zia_row, XC2ZIAInput::IBuf{ibuf: i_iob});
+                                let maybe_zia_data = XC2ZIARowPiece::encode_32_zia_choice(zia_row, XC2ZIAInput::IBuf{ibuf: i_iob});
                                 if maybe_zia_data.is_some() {
                                     fb_bits[fb_and as usize].zia_bits[zia_row as usize] = XC2ZIARowPiece {
                                         selected: XC2ZIAInput::IBuf{ibuf: i_iob},
@@ -225,8 +225,8 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
     }
 
     XC2Bitstream {
-        speed_grade: String::from("6"),
-        package: String::from("VQ44"),
+        speed_grade: XC2Speed::Speed6,
+        package: XC2Package::VQ44,
         bits: XC2BitstreamBits::XC2C32A {
             fb: fb_bits,
             iobs: iob_bits,
