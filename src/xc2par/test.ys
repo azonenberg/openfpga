@@ -1,0 +1,29 @@
+read_verilog test.v
+
+# begin
+hierarchy -check -top top
+
+# flatten
+proc
+flatten
+tribuf -logic
+deminout
+
+# coarse
+synth -run coarse
+
+# fine
+# why?
+opt -fast -full
+techmap
+abc -sop -I 40 -P 56
+# why?
+opt -fast
+
+# check
+hierarchy -check
+stat
+check -noinit
+
+show
+write_json test.json
