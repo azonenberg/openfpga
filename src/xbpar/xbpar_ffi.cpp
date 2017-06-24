@@ -252,12 +252,12 @@ public:
 	~FFIPAREngine() {}
 
 	//Pure virtual
-	PARGraphNode* GetNewPlacementForNode(const PARGraphNode* pivot)
+	PARGraphNode* GetNewPlacementForNode(const PARGraphNode* pivot) override
 	{
 		return this->f_GetNewPlacementForNode(ffiengine, pivot);
 	}
 
-	void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes)
+	void FindSubOptimalPlacements(std::vector<PARGraphNode*>& bad_nodes) override
 	{
 		PARGraphNode*const* bad_nodes_ptr;
 		size_t bad_nodes_len, bad_nodes_extra;
@@ -266,12 +266,12 @@ public:
 		this->f_free_nodevec(bad_nodes_ptr, bad_nodes_len, bad_nodes_extra);
 	}
 
-	bool InitialPlacement_core()
+	bool InitialPlacement_core() override
 	{
 		return this->f_InitialPlacement_core(ffiengine);
 	}
 
-	const char* GetLabelName(uint32_t label) const
+	const char* GetLabelName(uint32_t label) const override
 	{
 		return this->f_GetLabelName(ffiengine, label);
 	}
@@ -360,12 +360,12 @@ public:
 	bool CanMoveNode(
 		const PARGraphNode* node,
 		const PARGraphNode* old_mate,
-		const PARGraphNode* new_mate) const
+		const PARGraphNode* new_mate) const override
 	{
 		return this->f_CanMoveNode(ffiengine, node, old_mate, new_mate);
 	}
 
-	uint32_t ComputeAndPrintScore(std::vector<const PARGraphEdge*>& unroutes, uint32_t iteration) const
+	uint32_t ComputeAndPrintScore(std::vector<const PARGraphEdge*>& unroutes, uint32_t iteration) const override
 	{
 		const PARGraphEdge*const* unroutes_ptr;
 		size_t unroutes_len, unroutes_extra;
@@ -375,24 +375,24 @@ public:
 		return ret;
 	}
 
-	void PrintUnroutes(const std::vector<const PARGraphEdge*>& unroutes) const
+	void PrintUnroutes(const std::vector<const PARGraphEdge*>& unroutes) const override
 	{
 		VECTOR_TO_PTR_LEN(unroutes);
 		this->f_PrintUnroutes(ffiengine, unroutes_ptr, unroutes_len);
 		free(unroutes_ptr);
 	}
 
-	uint32_t ComputeCongestionCost() const
+	uint32_t ComputeCongestionCost() const override
 	{
 		return this->f_ComputeCongestionCost(ffiengine);
 	}
 
-	uint32_t ComputeTimingCost() const
+	uint32_t ComputeTimingCost() const override
 	{
 		return this->f_ComputeTimingCost(ffiengine);
 	}
 
-	uint32_t ComputeUnroutableCost(std::vector<const PARGraphEdge*>& unroutes) const
+	uint32_t ComputeUnroutableCost(std::vector<const PARGraphEdge*>& unroutes) const override
 	{
 		const PARGraphEdge*const* unroutes_ptr;
 		size_t unroutes_len, unroutes_extra;
@@ -402,17 +402,17 @@ public:
 		return ret;
 	}
 
-	bool SanityCheck() const
+	bool SanityCheck() const override
 	{
 		return this->f_SanityCheck(ffiengine);
 	}
 
-	bool InitialPlacement()
+	bool InitialPlacement() override
 	{
 		return this->f_InitialPlacement(ffiengine);
 	}
 
-	bool OptimizePlacement(const std::vector<PARGraphNode*>& badnodes)
+	bool OptimizePlacement(const std::vector<PARGraphNode*>& badnodes) override
 	{
 		VECTOR_TO_PTR_LEN(badnodes);
 		auto ret = this->f_OptimizePlacement(ffiengine, badnodes_ptr, badnodes_len);
@@ -420,7 +420,7 @@ public:
 		return ret;
 	}
 
-	uint32_t ComputeNodeUnroutableCost(const PARGraphNode* pivot, const PARGraphNode* candidate) const
+	uint32_t ComputeNodeUnroutableCost(const PARGraphNode* pivot, const PARGraphNode* candidate) const override
 	{
 		return this->f_ComputeNodeUnroutableCost(ffiengine, pivot, candidate);
 	}
