@@ -90,26 +90,51 @@ module XC2CBitstream(
 	//TODO
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// JTAG access
+	// JTAG access - we have a separate, untouched copy of the raw bitstream (including transfer bits etc) for readouts
+
+	//KNOWN ISSUE: partial bitstream writes after an erase are not correctly emulated by this code.
+	//The entire bitstream must be written in one go to get correct readback.
+	//Note that actual device behavior is correct, only readback is busticated.
+	reg						read_as_blank = 0;
+
+	reg[SHREG_WIDTH-1:0]	config_read_data_raw							= 0;
+	reg[SHREG_WIDTH-1:0]	ram_bitstream_for_readback[MEM_DEPTH-1:0];
+
+	initial begin
+		for(row=0; row<MEM_DEPTH; row=row+1)
+			ram_bitstream_for_readback[row] <= {SHREG_WIDTH{1'b1}};	//copied from blank EEPROM = all 1s
+	end
 
 	//Read/write the EEPROM
 	//TODO: add read enable?
 	always @(posedge jtag_tck) begin
 
 		if(config_read_en)
-			config_read_data <= ram_bitstream[config_read_addr];
+			config_read_data_raw <= ram_bitstream_for_readback[config_read_addr];
 
-		if(config_write_en)
-			ram_bitstream[config_write_addr]	<= config_write_data;
+		if(config_write_en) begin
+			ram_bitstream[config_write_addr]				<= config_write_data;
+			ram_bitstream_for_readback[config_write_addr]	<= config_write_data;
+			read_as_blank									<= 0;
+		end
 
 		//Wipe the config memory
 		//TODO: go multicycle?
 		//If we go multicycle, how do we handle this with no clock? Real chip is self-timed internally
 		if(config_erase) begin
+			read_as_blank			<= 1;
 			for(row=0; row<MEM_DEPTH; row=row+1)
-				ram_bitstream[row] <= {SHREG_WIDTH{1'b1}};
+				ram_bitstream[row]	<= {SHREG_WIDTH{1'b1}};
 		end
 
+	end
+
+	//Muxing for readout
+	always @(*) begin
+		if(read_as_blank)
+			config_read_data		<= {SHREG_WIDTH{1'b1}};
+		else
+			config_read_data		<= config_read_data_raw;
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
