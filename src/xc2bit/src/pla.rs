@@ -55,6 +55,24 @@ impl Default for XC2PLAAndTerm {
     }
 }
 
+impl XC2PLAAndTerm {
+    /// Internal function that reads one single AND term from a block of fuses using logical fuse indexing
+    pub fn from_jed(fuses: &[bool], block_idx: usize, term_idx: usize) -> XC2PLAAndTerm {
+        let mut input = [false; INPUTS_PER_ANDTERM];
+        let mut input_b = [false; INPUTS_PER_ANDTERM];
+
+        for i in 0..INPUTS_PER_ANDTERM {
+            input[i]   = !fuses[block_idx + term_idx * INPUTS_PER_ANDTERM * 2 + i * 2 + 0];
+            input_b[i] = !fuses[block_idx + term_idx * INPUTS_PER_ANDTERM * 2 + i * 2 + 1];
+        }
+
+        XC2PLAAndTerm {
+            input,
+            input_b,
+        }
+    }
+}
+
 /// Represents one single OR term in the PLA. Each OR term can perform an OR function on any subset of its inputs.
 /// The index for each input is the index of the corresponding AND term in the same PLA.
 #[derive(Copy)]
@@ -78,31 +96,17 @@ impl Default for XC2PLAOrTerm {
     }
 }
 
-/// Internal function that reads one single AND term from a block of fuses using logical fuse indexing
-pub fn read_and_term_logical(fuses: &[bool], block_idx: usize, term_idx: usize) -> XC2PLAAndTerm {
-    let mut input = [false; INPUTS_PER_ANDTERM];
-    let mut input_b = [false; INPUTS_PER_ANDTERM];
+impl XC2PLAOrTerm {
+    /// Internal function that reads one single OR term from a block of fuses using logical fuse indexing
+    pub fn from_jed(fuses: &[bool], block_idx: usize, term_idx: usize) -> XC2PLAOrTerm {
+        let mut input = [false; ANDTERMS_PER_FB];
 
-    for i in 0..INPUTS_PER_ANDTERM {
-        input[i]   = !fuses[block_idx + term_idx * INPUTS_PER_ANDTERM * 2 + i * 2 + 0];
-        input_b[i] = !fuses[block_idx + term_idx * INPUTS_PER_ANDTERM * 2 + i * 2 + 1];
-    }
+        for i in 0..ANDTERMS_PER_FB {
+            input[i] = !fuses[block_idx + term_idx +i * MCS_PER_FB];
+        }
 
-    XC2PLAAndTerm {
-        input,
-        input_b,
-    }
-}
-
-/// Internal function that reads one single OR term from a block of fuses using logical fuse indexing
-pub fn read_or_term_logical(fuses: &[bool], block_idx: usize, term_idx: usize) -> XC2PLAOrTerm {
-    let mut input = [false; ANDTERMS_PER_FB];
-
-    for i in 0..ANDTERMS_PER_FB {
-        input[i] = !fuses[block_idx + term_idx +i * MCS_PER_FB];
-    }
-
-    XC2PLAOrTerm {
-        input,
+        XC2PLAOrTerm {
+            input,
+        }
     }
 }

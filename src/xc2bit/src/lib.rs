@@ -135,7 +135,7 @@ mod tests {
 
                 // FIXME: This is quite hacky
                 let mut new_jed = Vec::new();
-                parsed_bitstream_data.write_jed(&mut new_jed).expect("failed to write jed");
+                parsed_bitstream_data.to_jed(&mut new_jed).expect("failed to write jed");
                 assert_eq!(jed_data, new_jed);
 
                 let mut human_readable_data = Vec::new();

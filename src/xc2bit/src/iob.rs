@@ -337,6 +337,34 @@ impl XC2MCSmallIOB {
             _ => unreachable!(),
         }
     }
+
+    /// Internal function that reads only the IO-related bits from the macrocell configuration
+    pub fn from_jed(fuses: &[bool], fuse_idx: usize) -> Result<Self, XC2BitError> {
+        let inz = (fuses[fuse_idx + 11],
+                   fuses[fuse_idx + 12]);
+        let input_to_zia = XC2IOBZIAMode::decode(inz);
+
+        let st = fuses[fuse_idx + 16];
+        let regcom = fuses[fuse_idx + 19];
+
+        let oe = (fuses[fuse_idx + 20],
+                  fuses[fuse_idx + 21],
+                  fuses[fuse_idx + 22],
+                  fuses[fuse_idx + 23]);
+        let output_mode = XC2IOBOBufMode::decode(oe)?;
+
+        let tm = fuses[fuse_idx + 24];
+        let slw = fuses[fuse_idx + 25];
+
+        Ok(XC2MCSmallIOB {
+            zia_mode: input_to_zia,
+            schmitt_trigger: st,
+            obuf_uses_ff: !regcom,
+            obuf_mode: output_mode,
+            termination_enabled: tm,
+            slew_is_fast: !slw,
+        })
+    }
 }
 
 /// Input mode selection on larger parts with VREF
@@ -628,6 +656,40 @@ impl XC2MCLargeIOB {
             _ => unreachable!(),
         }
     }
+
+    /// Internal function that reads only the IO-related bits from the macrocell configuration
+    pub fn from_jed(fuses: &[bool], fuse_idx: usize) -> Result<Self, XC2BitError> {
+        let dg = fuses[fuse_idx + 5];
+
+        let inmod = (fuses[fuse_idx + 8],
+                     fuses[fuse_idx + 9]);
+        let input_mode = XC2IOBIbufMode::decode(inmod);
+
+        let inz = (fuses[fuse_idx + 11],
+                   fuses[fuse_idx + 12]);
+        let input_to_zia = XC2IOBZIAMode::decode(inz);
+
+        let oe = (fuses[fuse_idx + 13],
+                  fuses[fuse_idx + 14],
+                  fuses[fuse_idx + 15],
+                  fuses[fuse_idx + 16]);
+        let output_mode = XC2IOBOBufMode::decode(oe)?;
+
+        let regcom = fuses[fuse_idx + 20];
+
+        let slw = fuses[fuse_idx + 25];
+        let tm = fuses[fuse_idx + 26];
+
+        Ok(XC2MCLargeIOB {
+            zia_mode: input_to_zia,
+            ibuf_mode: input_mode,
+            obuf_uses_ff: !regcom,
+            obuf_mode: output_mode,
+            termination_enabled: tm,
+            slew_is_fast: !slw,
+            uses_data_gate: dg,
+        })
+    }
 }
 
 /// Represents the one additional special input-only pin on 32-macrocell devices.
@@ -657,6 +719,28 @@ impl XC2ExtraIBuf {
         write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
 
         Ok(())
+    }
+
+    /// Internal function that reads only the input-only pin configuration
+    pub fn from_jed(fuses: &[bool]) -> Self {
+        let st = fuses[12272];
+        let tm = fuses[12273];
+
+        XC2ExtraIBuf {
+            schmitt_trigger: st,
+            termination_enabled: tm,
+        }
+    }
+
+    /// Internal function that reads only the input-only pin configuration
+    pub fn from_crbit(fuse_array: &FuseArray) -> Self {
+        let st = fuse_array.get(131, 24);
+        let tm = fuse_array.get(132, 24);
+
+        XC2ExtraIBuf {
+            schmitt_trigger: st,
+            termination_enabled: tm,
+        }
     }
 }
 
@@ -1211,89 +1295,5 @@ pub fn fb_ff_num_to_iob_num(device: XC2Device, fb: u32, ff: u32) -> Option<u32> 
                 _ => None,
             }
         }
-    }
-}
-
-/// Internal function that reads only the IO-related bits from the macrocell configuration
-pub fn read_small_iob_logical(fuses: &[bool], fuse_idx: usize) -> Result<XC2MCSmallIOB, XC2BitError> {
-    let inz = (fuses[fuse_idx + 11],
-               fuses[fuse_idx + 12]);
-    let input_to_zia = XC2IOBZIAMode::decode(inz);
-
-    let st = fuses[fuse_idx + 16];
-    let regcom = fuses[fuse_idx + 19];
-
-    let oe = (fuses[fuse_idx + 20],
-              fuses[fuse_idx + 21],
-              fuses[fuse_idx + 22],
-              fuses[fuse_idx + 23]);
-    let output_mode = XC2IOBOBufMode::decode(oe)?;
-
-    let tm = fuses[fuse_idx + 24];
-    let slw = fuses[fuse_idx + 25];
-
-    Ok(XC2MCSmallIOB {
-        zia_mode: input_to_zia,
-        schmitt_trigger: st,
-        obuf_uses_ff: !regcom,
-        obuf_mode: output_mode,
-        termination_enabled: tm,
-        slew_is_fast: !slw,
-    })
-}
-
-/// Internal function that reads only the IO-related bits from the macrocell configuration
-pub fn read_large_iob_logical(fuses: &[bool], fuse_idx: usize) -> Result<XC2MCLargeIOB, XC2BitError> {
-    let dg = fuses[fuse_idx + 5];
-
-    let inmod = (fuses[fuse_idx + 8],
-                 fuses[fuse_idx + 9]);
-    let input_mode = XC2IOBIbufMode::decode(inmod);
-
-    let inz = (fuses[fuse_idx + 11],
-               fuses[fuse_idx + 12]);
-    let input_to_zia = XC2IOBZIAMode::decode(inz);
-
-    let oe = (fuses[fuse_idx + 13],
-              fuses[fuse_idx + 14],
-              fuses[fuse_idx + 15],
-              fuses[fuse_idx + 16]);
-    let output_mode = XC2IOBOBufMode::decode(oe)?;
-
-    let regcom = fuses[fuse_idx + 20];
-
-    let slw = fuses[fuse_idx + 25];
-    let tm = fuses[fuse_idx + 26];
-
-    Ok(XC2MCLargeIOB {
-        zia_mode: input_to_zia,
-        ibuf_mode: input_mode,
-        obuf_uses_ff: !regcom,
-        obuf_mode: output_mode,
-        termination_enabled: tm,
-        slew_is_fast: !slw,
-        uses_data_gate: dg,
-    })
-}
-
-/// Internal function that reads only the input-only pin configuration
-pub fn read_32_extra_ibuf_logical(fuses: &[bool]) -> XC2ExtraIBuf {
-    let st = fuses[12272];
-    let tm = fuses[12273];
-
-    XC2ExtraIBuf {
-        schmitt_trigger: st,
-        termination_enabled: tm,
-    }
-}
-
-/// Internal function that reads only the input-only pin configuration
-pub fn read_32_extra_ibuf_physical(fuse_array: &FuseArray) -> XC2ExtraIBuf {
-    let st = fuse_array.get(131, 24);
-    let tm = fuse_array.get(132, 24);
-
-    XC2ExtraIBuf {
-        schmitt_trigger: st,
-        termination_enabled: tm,
     }
 }

@@ -48,5 +48,5 @@ fn main() {
 
     let bitstream = XC2Bitstream::from_crbit(&fuse_array).expect("failed to process crbit");
 
-    bitstream.write_jed(&mut ::std::io::stdout()).expect("failed to write jed");
+    bitstream.to_jed(&mut ::std::io::stdout()).expect("failed to write jed");
 }

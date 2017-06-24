@@ -30,14 +30,8 @@ use std::io::Write;
 
 use *;
 use fusemap_physical::{zia_block_loc, and_block_loc, or_block_loc};
-use pla::{read_and_term_logical, read_or_term_logical};
-use mc::{read_small_ff_logical, read_large_ff_logical, read_large_buried_ff_logical};
 use util::{b2s};
-use zia::{encode_32_zia_choice, encode_64_zia_choice, encode_128_zia_choice, encode_256_zia_choice,
-          encode_384_zia_choice, encode_512_zia_choice, read_32_zia_fb_row_logical, read_64_zia_fb_row_logical,
-          read_128_zia_fb_row_logical, read_256_zia_fb_row_logical, read_384_zia_fb_row_logical,
-          read_512_zia_fb_row_logical, zia_get_row_width, decode_32_zia_choice, decode_64_zia_choice,
-          decode_128_zia_choice, decode_256_zia_choice, decode_384_zia_choice, decode_512_zia_choice};
+use zia::{zia_get_row_width};
 
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy)]
@@ -211,42 +205,42 @@ impl XC2BitstreamFB {
         for zia_row in 0..INPUTS_PER_ANDTERM {
             match device {
                 XC2Device::XC2C32 | XC2Device::XC2C32A => {
-                    let zia_choice_bits = encode_32_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_32_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
                     zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, true, fuse_array);
                 },
                 XC2Device::XC2C64 | XC2Device::XC2C64A => {
-                    let zia_choice_bits = encode_64_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_64_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
                     zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, true, fuse_array);
                 },
                 XC2Device::XC2C128 => {
-                    let zia_choice_bits = encode_128_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_128_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
                     zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, false, fuse_array);
                 },
                 XC2Device::XC2C256 => {
-                    let zia_choice_bits = encode_256_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_256_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
                     zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, true, fuse_array);
                 },
                 XC2Device::XC2C384 => {
-                    let zia_choice_bits = encode_384_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_384_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
                     zia_row_crbit_write_helper(x, y, zia_row, &zia_choice_bits, false, fuse_array);
                 },
                 XC2Device::XC2C512 => {
-                    let zia_choice_bits = encode_512_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_512_zia_choice(zia_row as u32, self.zia_bits[zia_row].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
 
@@ -369,32 +363,32 @@ impl XC2BitstreamFB {
                 XC2Device::XC2C32 | XC2Device::XC2C32A => {
                     let mut zia_bits = [false; 8];
                     zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, true, fuse_array);
-                    decode_32_zia_choice(zia_row, &zia_bits)?
+                    XC2ZIARowPiece::decode_32_zia_choice(zia_row, &zia_bits)?
                 },
                 XC2Device::XC2C64 | XC2Device::XC2C64A => {
                     let mut zia_bits = [false; 16];
                     zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, true, fuse_array);
-                    decode_64_zia_choice(zia_row, &zia_bits)?
+                    XC2ZIARowPiece::decode_64_zia_choice(zia_row, &zia_bits)?
                 },
                 XC2Device::XC2C128 => {
                     let mut zia_bits = [false; 28];
                     zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, false, fuse_array);
-                    decode_128_zia_choice(zia_row, &zia_bits)?
+                    XC2ZIARowPiece::decode_128_zia_choice(zia_row, &zia_bits)?
                 },
                 XC2Device::XC2C256 => {
                     let mut zia_bits = [false; 48];
                     zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, true, fuse_array);
-                    decode_256_zia_choice(zia_row, &zia_bits)?
+                    XC2ZIARowPiece::decode_256_zia_choice(zia_row, &zia_bits)?
                 },
                 XC2Device::XC2C384 => {
                     let mut zia_bits = [false; 74];
                     zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, false, fuse_array);
-                    decode_384_zia_choice(zia_row, &zia_bits)?
+                    XC2ZIARowPiece::decode_384_zia_choice(zia_row, &zia_bits)?
                 },
                 XC2Device::XC2C512 => {
                     let mut zia_bits = [false; 88];
                     zia_row_crbit_read_helper(x, y, zia_row, &mut zia_bits, false, fuse_array);
-                    decode_512_zia_choice(zia_row, &zia_bits)?
+                    XC2ZIARowPiece::decode_512_zia_choice(zia_row, &zia_bits)?
                 },
             };
         }
@@ -519,14 +513,14 @@ impl XC2BitstreamFB {
     /// Write the .JED representation of the settings for this FB to the given `writer` object.
     /// `device` must be the device type this FB was extracted from and is needed to encode the ZIA.
     /// `fuse_base` must be the starting fuse number of this function block.
-    pub fn write_to_jed(&self, device: XC2Device, fuse_base: usize, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn to_jed(&self, device: XC2Device, fuse_base: usize, writer: &mut Write) -> Result<(), io::Error> {
         // ZIA
         let zia_row_width = zia_get_row_width(device);
         for i in 0..INPUTS_PER_ANDTERM {
             write!(writer, "L{:06} ", fuse_base + i * zia_row_width)?;
             match device {
                 XC2Device::XC2C32 | XC2Device::XC2C32A => {
-                    let zia_choice_bits = encode_32_zia_choice(i as u32, self.zia_bits[i].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_32_zia_choice(i as u32, self.zia_bits[i].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
@@ -534,7 +528,7 @@ impl XC2BitstreamFB {
                     }
                 },
                 XC2Device::XC2C64 | XC2Device::XC2C64A => {
-                    let zia_choice_bits = encode_64_zia_choice(i as u32, self.zia_bits[i].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_64_zia_choice(i as u32, self.zia_bits[i].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
@@ -542,7 +536,7 @@ impl XC2BitstreamFB {
                     }
                 },
                 XC2Device::XC2C128 => {
-                    let zia_choice_bits = encode_128_zia_choice(i as u32, self.zia_bits[i].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_128_zia_choice(i as u32, self.zia_bits[i].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
@@ -550,7 +544,7 @@ impl XC2BitstreamFB {
                     }
                 },
                 XC2Device::XC2C256 => {
-                    let zia_choice_bits = encode_256_zia_choice(i as u32, self.zia_bits[i].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_256_zia_choice(i as u32, self.zia_bits[i].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
@@ -558,7 +552,7 @@ impl XC2BitstreamFB {
                     }
                 },
                 XC2Device::XC2C384 => {
-                    let zia_choice_bits = encode_384_zia_choice(i as u32, self.zia_bits[i].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_384_zia_choice(i as u32, self.zia_bits[i].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
@@ -566,7 +560,7 @@ impl XC2BitstreamFB {
                     }
                 },
                 XC2Device::XC2C512 => {
-                    let zia_choice_bits = encode_512_zia_choice(i as u32, self.zia_bits[i].selected)
+                    let zia_choice_bits = XC2ZIARowPiece::encode_512_zia_choice(i as u32, self.zia_bits[i].selected)
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
@@ -616,76 +610,76 @@ impl XC2BitstreamFB {
 
         Ok(())
     }
-}
 
-/// Internal function that reads a function block
-pub fn read_fb_logical(device: XC2Device, fuses: &[bool], fb: u32, fuse_base: usize)
-    -> Result<XC2BitstreamFB, XC2BitError> {
+    /// Internal function that reads a function block
+    pub fn from_jed(device: XC2Device, fuses: &[bool], fb: u32, fuse_base: usize)
+        -> Result<XC2BitstreamFB, XC2BitError> {
 
-    let zia_row_width = zia_get_row_width(device);
-    let size_of_zia = zia_row_width * INPUTS_PER_ANDTERM;
-    let size_of_and = INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB;
-    let size_of_or = ANDTERMS_PER_FB * MCS_PER_FB;
+        let zia_row_width = zia_get_row_width(device);
+        let size_of_zia = zia_row_width * INPUTS_PER_ANDTERM;
+        let size_of_and = INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB;
+        let size_of_or = ANDTERMS_PER_FB * MCS_PER_FB;
 
-    let device_is_large =  match device {
-        XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A => false,
-        _ => true,
-    };
+        let device_is_large =  match device {
+            XC2Device::XC2C32 | XC2Device::XC2C32A | XC2Device::XC2C64 | XC2Device::XC2C64A => false,
+            _ => true,
+        };
 
-    let zia_row_read_function = match device {
-        XC2Device::XC2C32 | XC2Device::XC2C32A => read_32_zia_fb_row_logical,
-        XC2Device::XC2C64 | XC2Device::XC2C64A => read_64_zia_fb_row_logical,
-        XC2Device::XC2C128 => read_128_zia_fb_row_logical,
-        XC2Device::XC2C256 => read_256_zia_fb_row_logical,
-        XC2Device::XC2C384 => read_384_zia_fb_row_logical,
-        XC2Device::XC2C512 => read_512_zia_fb_row_logical,
-    };
+        let zia_row_read_function = match device {
+            XC2Device::XC2C32 | XC2Device::XC2C32A => XC2ZIARowPiece::read_32_zia_fb_row_logical,
+            XC2Device::XC2C64 | XC2Device::XC2C64A => XC2ZIARowPiece::read_64_zia_fb_row_logical,
+            XC2Device::XC2C128 => XC2ZIARowPiece::read_128_zia_fb_row_logical,
+            XC2Device::XC2C256 => XC2ZIARowPiece::read_256_zia_fb_row_logical,
+            XC2Device::XC2C384 => XC2ZIARowPiece::read_384_zia_fb_row_logical,
+            XC2Device::XC2C512 => XC2ZIARowPiece::read_512_zia_fb_row_logical,
+        };
 
-    let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
-    let and_block_idx = fuse_base + size_of_zia;
-    for i in 0..and_terms.len() {
-        and_terms[i] = read_and_term_logical(fuses, and_block_idx, i);
-    }
+        let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
+        let and_block_idx = fuse_base + size_of_zia;
+        for i in 0..and_terms.len() {
+            and_terms[i] = XC2PLAAndTerm::from_jed(fuses, and_block_idx, i);
+        }
 
-    let mut or_terms = [XC2PLAOrTerm::default(); MCS_PER_FB];
-    let or_block_idx = fuse_base + size_of_zia + size_of_and;
-    for i in 0..or_terms.len() {
-        or_terms[i] = read_or_term_logical(fuses, or_block_idx, i);
-    }
+        let mut or_terms = [XC2PLAOrTerm::default(); MCS_PER_FB];
+        let or_block_idx = fuse_base + size_of_zia + size_of_and;
+        for i in 0..or_terms.len() {
+            or_terms[i] = XC2PLAOrTerm::from_jed(fuses, or_block_idx, i);
+        }
 
-    let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
-    let zia_block_idx = fuse_base;
-    for i in 0..zia_bits.len() {
-        let result = zia_row_read_function(fuses, zia_block_idx, i)?;
-        zia_bits[i] = result;
-    }
+        let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
+        let zia_block_idx = fuse_base;
+        for i in 0..zia_bits.len() {
+            let result = zia_row_read_function(fuses, zia_block_idx, i)?;
+            zia_bits[i] = result;
+        }
 
-    let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
-    let ff_block_idx = fuse_base + size_of_zia + size_of_and + size_of_or;
-    let mut cur_ff_idx = ff_block_idx;
-    for i in 0..ff_bits.len() {
-        if fb_ff_num_to_iob_num(device, fb, i as u32).is_none() {
-            // Buried (must be large)
-            ff_bits[i] = read_large_buried_ff_logical(fuses, cur_ff_idx);
-            cur_ff_idx += 16;
-        } else {
-            // Not buried
-            if device_is_large {
-                ff_bits[i] = read_large_ff_logical(fuses, cur_ff_idx);
-                cur_ff_idx += 29;
+        let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
+        let ff_block_idx = fuse_base + size_of_zia + size_of_and + size_of_or;
+        let mut cur_ff_idx = ff_block_idx;
+        for i in 0..ff_bits.len() {
+            if fb_ff_num_to_iob_num(device, fb, i as u32).is_none() {
+                // Buried (must be large)
+                ff_bits[i] = XC2Macrocell::from_jed_large_buried(fuses, cur_ff_idx);
+                cur_ff_idx += 16;
             } else {
-                ff_bits[i] = read_small_ff_logical(fuses, ff_block_idx, i);
-                cur_ff_idx += 27;
+                // Not buried
+                if device_is_large {
+                    ff_bits[i] = XC2Macrocell::from_jed_large(fuses, cur_ff_idx);
+                    cur_ff_idx += 29;
+                } else {
+                    ff_bits[i] = XC2Macrocell::from_jed_small(fuses, ff_block_idx, i);
+                    cur_ff_idx += 27;
+                }
             }
         }
-    }
 
-    Ok(XC2BitstreamFB {
-        and_terms,
-        or_terms,
-        zia_bits,
-        ffs: ff_bits,
-    })
+        Ok(XC2BitstreamFB {
+            and_terms,
+            or_terms,
+            zia_bits,
+            ffs: ff_bits,
+        })
+    }
 }
 
 // TODO: This is the same across all sizes, right?

@@ -51,5 +51,5 @@ fn main() {
     let bitstream_result = XC2Bitstream::from_jed(&bits, &device_name);
     let bitstream = bitstream_result.expect("failed to process jed");
 
-    bitstream.write_jed(&mut ::std::io::stdout()).expect("failed to write jed");
+    bitstream.to_jed(&mut ::std::io::stdout()).expect("failed to write jed");
 }
