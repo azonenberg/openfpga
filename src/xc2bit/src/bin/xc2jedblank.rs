@@ -36,14 +36,8 @@ fn main() {
         ::std::process::exit(1);
     }
 
-    let device_combination = parse_part_name_string(&args[1]);
-    if device_combination.is_none() {
-        println!("Requested part combination {} is invalid", args[1]);
-        ::std::process::exit(1);
-    }
-
-    let (part, spd, pkg) = device_combination.unwrap();
-    let bitstream = XC2Bitstream::blank_bitstream(part, spd, pkg).expect("failed to create bitstream");
+    let device_combination = &args[1];
+    let bitstream = XC2Bitstream::blank_bitstream(device_combination).expect("failed to create bitstream");
 
     bitstream.to_jed(&mut ::std::io::stdout()).expect("failed to write jed");
 }

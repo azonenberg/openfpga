@@ -118,7 +118,7 @@ impl fmt::Display for XC2Package {
 }
 
 /// Determine if the given combination of device, speed, and package is a legal combination or not.
-pub fn is_valid_part_combination(device: XC2Device, speed: XC2Speed, package: XC2Package) -> bool {
+fn is_valid_part_combination(device: XC2Device, speed: XC2Speed, package: XC2Package) -> bool {
     match device {
         XC2Device::XC2C32 => {
             if speed == XC2Speed::Speed4 || speed == XC2Speed::Speed6 {

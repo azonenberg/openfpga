@@ -33,6 +33,7 @@ use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, glo
                       total_logical_fuse_count, clock_div_fuse_idx};
 use fusemap_physical::{fuse_array_dims, gck_fuse_coords, gsr_fuse_coords, gts_fuse_coords, global_term_fuse_coord,
                        clock_div_fuse_coord};
+use partdb::{parse_part_name_string};
 use util::{b2s};
 use zia::{zia_get_row_width};
 
@@ -251,12 +252,13 @@ impl XC2Bitstream {
     }
 
     /// Construct a new blank bitstream of the given part
-    pub fn blank_bitstream(device: XC2Device, speed_grade: XC2Speed, package: XC2Package)
-        -> Result<Self, XC2BitError> {
-
-        if !is_valid_part_combination(device, speed_grade, package) {
-            return Err(XC2BitError::BadDeviceName(format!("{}-{}-{}", device, speed_grade, package)));
+    pub fn blank_bitstream(device_name: &str) -> Result<Self, XC2BitError> {
+        let maybe_part_combination = parse_part_name_string(device_name);
+        if maybe_part_combination.is_none() {
+            return Err(XC2BitError::BadDeviceName(device_name.to_owned()));
         }
+
+        let (device, speed_grade, package) = maybe_part_combination.unwrap();
 
         match device {
             XC2Device::XC2C32 => {
