@@ -31,18 +31,30 @@ use std::fmt;
 use std::num;
 use std::str;
 
+/// Errors that can occur when parsing a .jed file
 #[derive(Debug, PartialEq, Eq)]
 pub enum JedParserError {
+    /// No STX byte found
     MissingSTX,
+    /// No ETX byte found
     MissingETX,
+    /// An invalid UTF-8 sequence occurred
     InvalidUtf8(str::Utf8Error),
+    /// A field contains a character not appropriate for that field (e.g. non-hex digit in a hex field)
     InvalidCharacter,
+    /// An unexpected end of file was encountered in the file checksum
     UnexpectedEnd,
+    /// The file checksum was nonzero and incorrect
     BadFileChecksum,
+    /// The fuse checksum (`C` command) was incorrect
     BadFuseChecksum,
+    /// A `L` field index was out of range
     InvalidFuseIndex,
+    /// There was no `QF` field
     MissingQF,
+    /// There was no `F` field, but not all fuses had a value specified
     MissingF,
+    /// There was a field that this program does not recognize
     UnrecognizedField,
 }
 
@@ -102,12 +114,18 @@ impl From<num::ParseIntError> for JedParserError {
     }
 }
 
+/// Errors that can occur when parsing a bitstream
 #[derive(Debug, PartialEq, Eq)]
 pub enum XC2BitError {
+    /// The .jed file could not be parsed
     JedParseError(JedParserError),
+    /// The device name is invalid
     BadDeviceName(String),
+    /// The number of fuses was incorrect for the device
     WrongFuseCount,
+    /// An unknown value was used in the `Oe` field
     UnsupportedOeConfiguration((bool, bool, bool, bool)),
+    /// An unknown value was used in the ZIA selection bits
     UnsupportedZIAConfiguration(Vec<bool>),
 }
 

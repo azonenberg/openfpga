@@ -625,13 +625,13 @@ impl XC2BitstreamFB {
             _ => true,
         };
 
-        let zia_row_read_function = match device {
-            XC2Device::XC2C32 | XC2Device::XC2C32A => XC2ZIARowPiece::read_32_zia_fb_row_logical,
-            XC2Device::XC2C64 | XC2Device::XC2C64A => XC2ZIARowPiece::read_64_zia_fb_row_logical,
-            XC2Device::XC2C128 => XC2ZIARowPiece::read_128_zia_fb_row_logical,
-            XC2Device::XC2C256 => XC2ZIARowPiece::read_256_zia_fb_row_logical,
-            XC2Device::XC2C384 => XC2ZIARowPiece::read_384_zia_fb_row_logical,
-            XC2Device::XC2C512 => XC2ZIARowPiece::read_512_zia_fb_row_logical,
+        let zia_row_decode_function = match device {
+            XC2Device::XC2C32 | XC2Device::XC2C32A => XC2ZIARowPiece::decode_32_zia_choice,
+            XC2Device::XC2C64 | XC2Device::XC2C64A => XC2ZIARowPiece::decode_64_zia_choice,
+            XC2Device::XC2C128 => XC2ZIARowPiece::decode_128_zia_choice,
+            XC2Device::XC2C256 => XC2ZIARowPiece::decode_256_zia_choice,
+            XC2Device::XC2C384 => XC2ZIARowPiece::decode_384_zia_choice,
+            XC2Device::XC2C512 => XC2ZIARowPiece::decode_512_zia_choice,
         };
 
         let mut and_terms = [XC2PLAAndTerm::default(); ANDTERMS_PER_FB];
@@ -649,7 +649,8 @@ impl XC2BitstreamFB {
         let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
         let zia_block_idx = fuse_base;
         for i in 0..zia_bits.len() {
-            let result = zia_row_read_function(fuses, zia_block_idx, i)?;
+            let zia_row_fuses = &fuses[zia_block_idx + i * zia_row_width..zia_block_idx + (i + 1) * zia_row_width];
+            let result = zia_row_decode_function(i, zia_row_fuses)?;
             zia_bits[i] = result;
         }
 
