@@ -43,7 +43,7 @@ pub struct XC2BitstreamFB {
     /// The inputs to the function block from the ZIA
     pub zia_bits: [XC2ZIARowPiece; INPUTS_PER_ANDTERM],
     /// The macrocells of the function block
-    pub ffs: [XC2Macrocell; MCS_PER_FB],
+    pub mcs: [XC2Macrocell; MCS_PER_FB],
 }
 
 impl Clone for XC2BitstreamFB {
@@ -56,7 +56,7 @@ impl Default for XC2BitstreamFB {
             and_terms: [XC2PLAAndTerm::default(); ANDTERMS_PER_FB],
             or_terms: [XC2PLAOrTerm::default(); MCS_PER_FB],
             zia_bits: [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM],
-            ffs: [XC2Macrocell::default(); MCS_PER_FB],
+            mcs: [XC2Macrocell::default(); MCS_PER_FB],
         }
     }
 }
@@ -126,7 +126,7 @@ impl XC2BitstreamFB {
     /// `fb` must be the index of this function block.
     pub fn dump_human_readable(&self, device: XC2Device, fb: u32, writer: &mut Write) -> Result<(), io::Error> {
         for i in 0..MCS_PER_FB {
-            self.ffs[i].dump_human_readable(fb, i as u32, writer)?;
+            self.mcs[i].dump_human_readable(fb, i as u32, writer)?;
         }
 
         write!(writer, "\n")?;
@@ -136,11 +136,11 @@ impl XC2BitstreamFB {
             match self.zia_bits[i].selected {
                 XC2ZIAInput::Zero => write!(writer, "0\n")?,
                 XC2ZIAInput::One => write!(writer, "1\n")?,
-                XC2ZIAInput::Macrocell{fb, ff} =>
-                    write!(writer, "FB{}_{} FF\n", fb + 1, ff + 1)?,
+                XC2ZIAInput::Macrocell{fb, mc} =>
+                    write!(writer, "FB{}_{} FF\n", fb + 1, mc + 1)?,
                 XC2ZIAInput::IBuf{ibuf} => {
-                    let (fb, ff) = iob_num_to_fb_ff_num(device, ibuf).unwrap();
-                    write!(writer, "FB{}_{} pad\n", fb + 1, ff + 1)?;
+                    let (fb, mc) = iob_num_to_fb_mc_num(device, ibuf).unwrap();
+                    write!(writer, "FB{}_{} pad\n", fb + 1, mc + 1)?;
                 },
                 XC2ZIAInput::DedicatedInput => write!(writer, "dedicated input\n")?,
             }
@@ -197,7 +197,7 @@ impl XC2BitstreamFB {
     pub fn to_crbit(&self, device: XC2Device, fb: u32, fuse_array: &mut FuseArray) {
         // FFs
         for i in 0..MCS_PER_FB {
-            self.ffs[i].to_crbit(device, fb, i as u32, fuse_array);
+            self.mcs[i].to_crbit(device, fb, i as u32, fuse_array);
         }
 
         // ZIA
@@ -497,16 +497,16 @@ impl XC2BitstreamFB {
         }
 
         // FFs
-        let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
+        let mut mcs = [XC2Macrocell::default(); MCS_PER_FB];
         for i in 0..MCS_PER_FB {
-            ff_bits[i] = XC2Macrocell::from_crbit(device, fb, i as u32, fuse_array);
+            mcs[i] = XC2Macrocell::from_crbit(device, fb, i as u32, fuse_array);
         }
 
         Ok(XC2BitstreamFB {
             and_terms,
             or_terms,
             zia_bits,
-            ffs: ff_bits,
+            mcs,
         })
     }
 
@@ -653,22 +653,22 @@ impl XC2BitstreamFB {
             zia_bits[i] = result;
         }
 
-        let mut ff_bits = [XC2Macrocell::default(); MCS_PER_FB];
-        let ff_block_idx = fuse_base + size_of_zia + size_of_and + size_of_or;
-        let mut cur_ff_idx = ff_block_idx;
-        for i in 0..ff_bits.len() {
-            if fb_ff_num_to_iob_num(device, fb, i as u32).is_none() {
+        let mut mcs = [XC2Macrocell::default(); MCS_PER_FB];
+        let mc_block_idx = fuse_base + size_of_zia + size_of_and + size_of_or;
+        let mut cur_mc_idx = mc_block_idx;
+        for i in 0..mcs.len() {
+            if fb_mc_num_to_iob_num(device, fb, i as u32).is_none() {
                 // Buried (must be large)
-                ff_bits[i] = XC2Macrocell::from_jed_large_buried(fuses, cur_ff_idx);
-                cur_ff_idx += 16;
+                mcs[i] = XC2Macrocell::from_jed_large_buried(fuses, cur_mc_idx);
+                cur_mc_idx += 16;
             } else {
                 // Not buried
                 if device_is_large {
-                    ff_bits[i] = XC2Macrocell::from_jed_large(fuses, cur_ff_idx);
-                    cur_ff_idx += 29;
+                    mcs[i] = XC2Macrocell::from_jed_large(fuses, cur_mc_idx);
+                    cur_mc_idx += 29;
                 } else {
-                    ff_bits[i] = XC2Macrocell::from_jed_small(fuses, ff_block_idx, i);
-                    cur_ff_idx += 27;
+                    mcs[i] = XC2Macrocell::from_jed_small(fuses, mc_block_idx, i);
+                    cur_mc_idx += 27;
                 }
             }
         }
@@ -677,7 +677,7 @@ impl XC2BitstreamFB {
             and_terms,
             or_terms,
             zia_bits,
-            ffs: ff_bits,
+            mcs,
         })
     }
 }

@@ -1338,8 +1338,8 @@ pub fn read_bitstream_logical_common_small(fuses: &[bool], device: XC2Device,
         let size_of_and = INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB;
         let size_of_or = ANDTERMS_PER_FB * MCS_PER_FB;
         let mut iob_fuse = base_fuse + size_of_zia + size_of_and + size_of_or;
-        for ff in 0..MCS_PER_FB {
-            let iob = fb_ff_num_to_iob_num(device, i as u32, ff as u32);
+        for mc in 0..MCS_PER_FB {
+            let iob = fb_mc_num_to_iob_num(device, i as u32, mc as u32);
             let res = XC2MCSmallIOB::from_jed(fuses, iob_fuse)?;
             iobs[iob.unwrap() as usize] = res;
             iob_fuse += 27;
@@ -1363,8 +1363,8 @@ pub fn read_bitstream_logical_common_large(fuses: &[bool], device: XC2Device,
         let size_of_and = INPUTS_PER_ANDTERM * 2 * ANDTERMS_PER_FB;
         let size_of_or = ANDTERMS_PER_FB * MCS_PER_FB;
         let mut iob_fuse = base_fuse + size_of_zia + size_of_and + size_of_or;
-        for ff in 0..MCS_PER_FB {
-            let iob = fb_ff_num_to_iob_num(device, i as u32, ff as u32);
+        for mc in 0..MCS_PER_FB {
+            let iob = fb_mc_num_to_iob_num(device, i as u32, mc as u32);
             if iob.is_some() {
                 let res = XC2MCLargeIOB::from_jed(fuses, iob_fuse)?;
                 iobs[iob.unwrap() as usize] = res;
