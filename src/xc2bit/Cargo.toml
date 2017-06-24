@@ -1,6 +1,6 @@
 [package]
 name = "xc2bit"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Robert Ou <rqou@robertou.com>"]
 license = "BSD-2-Clause"
 description = "A library for working with Xilinx Coolrunner-II bitstreams"
