@@ -60,7 +60,7 @@ impl FuseArray {
     }
 
     /// Processes the given data and converts it into a `FuseArray` struct.
-    pub fn from_file_contents(in_bytes: &[u8]) -> Result<FuseArray, &'static str> {
+    pub fn from_file_contents(in_bytes: &[u8]) -> Result<Self, &'static str> {
         // This capacity is approximate but close enough
         let mut v = Vec::with_capacity(in_bytes.len());
         let mut w = None;
@@ -108,7 +108,7 @@ impl FuseArray {
     }
 
     /// Constructs a new `FuseArray` object with the given dimensions and filled with 0s
-    pub fn from_dim(w: usize, h: usize) -> FuseArray {
+    pub fn from_dim(w: usize, h: usize) -> Self {
         FuseArray {
             w,
             v: vec![false; w*h],

@@ -136,7 +136,7 @@ impl Default for XC2MCSmallIOB {
     /// to be disabled.
 
     // FIXME: Do the other defaults come from the particular way I invoked the Xilinx tools??
-    fn default() -> XC2MCSmallIOB {
+    fn default() -> Self {
         XC2MCSmallIOB {
             zia_mode: XC2IOBZIAMode::Disabled,
             schmitt_trigger: true,
@@ -255,7 +255,7 @@ impl XC2MCSmallIOB {
     /// Read the crbit representation of the settings for this IO pin from the given `fuse_array`.
     /// `device` must be the device type this FB was extracted from.
     /// `iob` must be the index of this IO pin.
-    pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<XC2MCSmallIOB, XC2BitError> {
+    pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<Self, XC2BitError> {
         let (fb, mc) = iob_num_to_fb_ff_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
         // direction
@@ -400,7 +400,7 @@ impl Default for XC2MCLargeIOB {
     /// to be disabled.
 
     // FIXME: Do the other defaults come from the particular way I invoked the Xilinx tools??
-    fn default() -> XC2MCLargeIOB {
+    fn default() -> Self {
         XC2MCLargeIOB {
             zia_mode: XC2IOBZIAMode::Disabled,
             ibuf_mode: XC2IOBIbufMode::NoVrefSt,
@@ -536,7 +536,7 @@ impl XC2MCLargeIOB {
     /// Read the crbit representation of the settings for this IO pin from the given `fuse_array`.
     /// `device` must be the device type this FB was extracted from.
     /// `iob` must be the index of this IO pin.
-    pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<XC2MCLargeIOB, XC2BitError> {
+    pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<Self, XC2BitError> {
         let (fb, mc) = iob_num_to_fb_ff_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
         // direction
@@ -640,7 +640,7 @@ impl Default for XC2ExtraIBuf {
     /// Returns a "default" pin configuration.
 
     // FIXME: Do the other defaults come from the particular way I invoked the Xilinx tools??
-    fn default() -> XC2ExtraIBuf {
+    fn default() -> Self {
         XC2ExtraIBuf {
             schmitt_trigger: true,
             termination_enabled: true,

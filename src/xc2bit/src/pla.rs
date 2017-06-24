@@ -42,12 +42,12 @@ pub struct XC2PLAAndTerm {
 }
 
 impl Clone for XC2PLAAndTerm {
-    fn clone(&self) -> XC2PLAAndTerm {*self}
+    fn clone(&self) -> Self {*self}
 }
 
 impl Default for XC2PLAAndTerm {
     /// Returns a "default" AND term. The default state is for none of the inputs to be selected.
-    fn default() -> XC2PLAAndTerm {
+    fn default() -> Self {
         XC2PLAAndTerm {
             input: [false; INPUTS_PER_ANDTERM],
             input_b: [false; INPUTS_PER_ANDTERM],
@@ -66,12 +66,12 @@ pub struct XC2PLAOrTerm {
 }
 
 impl Clone for XC2PLAOrTerm {
-    fn clone(&self) -> XC2PLAOrTerm {*self}
+    fn clone(&self) -> Self {*self}
 }
 
 impl Default for XC2PLAOrTerm {
     /// Returns a "default" OR term. The default state is for none of the inputs to be selected.
-    fn default() -> XC2PLAOrTerm {
+    fn default() -> Self {
         XC2PLAOrTerm {
             input: [false; ANDTERMS_PER_FB],
         }
@@ -89,8 +89,8 @@ pub fn read_and_term_logical(fuses: &[bool], block_idx: usize, term_idx: usize) 
     }
 
     XC2PLAAndTerm {
-        input: input,
-        input_b: input_b,
+        input,
+        input_b,
     }
 }
 
@@ -103,6 +103,6 @@ pub fn read_or_term_logical(fuses: &[bool], block_idx: usize, term_idx: usize) -
     }
 
     XC2PLAOrTerm {
-        input: input,
+        input,
     }
 }

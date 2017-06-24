@@ -52,7 +52,7 @@ pub enum XC2ZIAInput {
 
 impl Default for XC2ZIAInput {
     /// Returns a "default" ZIA selection, which is a constant one.
-    fn default() -> XC2ZIAInput { XC2ZIAInput::One }
+    fn default() -> Self { XC2ZIAInput::One }
 }
 
 /// A map of the connections that exist within the ZIA for 32-macrocell parts

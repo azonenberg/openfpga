@@ -86,7 +86,7 @@ impl XC2Bitstream {
     }
 
     /// Processes a fuse array into a bitstream object
-    pub fn from_jed(fuses: &[bool], device: &str) -> Result<XC2Bitstream, XC2BitError> {
+    pub fn from_jed(fuses: &[bool], device: &str) -> Result<Self, XC2BitError> {
         let device_combination = parse_part_name_string(device);
         if device_combination.is_none() {
             return Err(XC2BitError::BadDeviceName(device.to_owned()));
@@ -104,7 +104,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C32A => {
@@ -112,7 +112,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C64 => {
@@ -120,7 +120,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C64A => {
@@ -128,7 +128,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C128 => {
@@ -136,7 +136,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C256 => {
@@ -144,7 +144,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C384 => {
@@ -152,7 +152,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C512 => {
@@ -160,14 +160,14 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
         }
     }
 
     /// Processes a fuse array (in physical addressing) into a bitstream object
-    pub fn from_crbit(fuse_array: &FuseArray) -> Result<XC2Bitstream, XC2BitError> {
+    pub fn from_crbit(fuse_array: &FuseArray) -> Result<Self, XC2BitError> {
         // FIXME: Can we guess the device type from the dimensions?
         if fuse_array.dev_name_str.is_none() {
             return Err(XC2BitError::BadDeviceName(String::from("")));
@@ -191,7 +191,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C32A => {
@@ -199,7 +199,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C64 => {
@@ -207,7 +207,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C64A => {
@@ -215,7 +215,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C128 => {
@@ -223,7 +223,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C256 => {
@@ -231,7 +231,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C384 => {
@@ -239,7 +239,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
             XC2Device::XC2C512 => {
@@ -247,7 +247,7 @@ impl XC2Bitstream {
                 Ok(XC2Bitstream {
                     speed_grade: spd,
                     package: pkg,
-                    bits: bits,
+                    bits,
                 })
             },
         }
@@ -255,7 +255,7 @@ impl XC2Bitstream {
 
     /// Construct a new blank bitstream of the given part
     pub fn blank_bitstream(device: XC2Device, speed_grade: XC2Speed, package: XC2Package)
-        -> Result<XC2Bitstream, XC2BitError> {
+        -> Result<Self, XC2BitError> {
 
         if !is_valid_part_combination(device, speed_grade, package) {
             return Err(XC2BitError::BadDeviceName(format!("{}-{}-{}", device, speed_grade, package)));
@@ -264,8 +264,8 @@ impl XC2Bitstream {
         match device {
             XC2Device::XC2C32 => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade,
-                    package: package,
+                    speed_grade,
+                    package,
                     bits: XC2BitstreamBits::XC2C32 {
                         fb: [XC2BitstreamFB::default(); 2],
                         iobs: [XC2MCSmallIOB::default(); 32],
@@ -278,8 +278,8 @@ impl XC2Bitstream {
             },
             XC2Device::XC2C32A => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade,
-                    package: package,
+                    speed_grade,
+                    package,
                     bits: XC2BitstreamBits::XC2C32A {
                         fb: [XC2BitstreamFB::default(); 2],
                         iobs: [XC2MCSmallIOB::default(); 32],
@@ -294,8 +294,8 @@ impl XC2Bitstream {
             },
             XC2Device::XC2C64 => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade,
-                    package: package,
+                    speed_grade,
+                    package,
                     bits: XC2BitstreamBits::XC2C64 {
                         fb: [XC2BitstreamFB::default(); 4],
                         iobs: [XC2MCSmallIOB::default(); 64],
@@ -307,8 +307,8 @@ impl XC2Bitstream {
             },
             XC2Device::XC2C64A => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade,
-                    package: package,
+                    speed_grade,
+                    package,
                     bits: XC2BitstreamBits::XC2C64A {
                         fb: [XC2BitstreamFB::default(); 4],
                         iobs: [XC2MCSmallIOB::default(); 64],
@@ -322,8 +322,8 @@ impl XC2Bitstream {
             },
             XC2Device::XC2C128 => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade,
-                    package: package,
+                    speed_grade,
+                    package,
                     bits: XC2BitstreamBits::XC2C128 {
                         fb: [XC2BitstreamFB::default(); 8],
                         iobs: [XC2MCLargeIOB::default(); 100],
@@ -338,8 +338,8 @@ impl XC2Bitstream {
             },
             XC2Device::XC2C256 => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade,
-                    package: package,
+                    speed_grade,
+                    package,
                     bits: XC2BitstreamBits::XC2C256 {
                         fb: [XC2BitstreamFB::default(); 16],
                         iobs: [XC2MCLargeIOB::default(); 184],
@@ -354,8 +354,8 @@ impl XC2Bitstream {
             },
             XC2Device::XC2C384 => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade,
-                    package: package,
+                    speed_grade,
+                    package,
                     bits: XC2BitstreamBits::XC2C384 {
                         fb: [XC2BitstreamFB::default(); 24],
                         iobs: [XC2MCLargeIOB::default(); 240],
@@ -370,8 +370,8 @@ impl XC2Bitstream {
             },
             XC2Device::XC2C512 => {
                 Ok(XC2Bitstream {
-                    speed_grade: speed_grade,
-                    package: package,
+                    speed_grade,
+                    package,
                     bits: XC2BitstreamBits::XC2C512 {
                         fb: [XC2BitstreamFB::default(); 32],
                         iobs: [XC2MCLargeIOB::default(); 270],
@@ -413,7 +413,7 @@ pub struct XC2GlobalNets {
 
 impl Default for XC2GlobalNets {
     /// Returns a "default" global net configuration which has everything disabled.
-    fn default() -> XC2GlobalNets {
+    fn default() -> Self {
         XC2GlobalNets {
             gck_enable: [false; 3],
             gsr_enable: false,

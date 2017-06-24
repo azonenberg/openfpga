@@ -277,7 +277,7 @@ pub struct XC2Macrocell {
 impl Default for XC2Macrocell {
     /// Returns a "default" macrocell configuration.
     // XXX what should the default state be???
-    fn default() -> XC2Macrocell {
+    fn default() -> Self {
         XC2Macrocell {
             clk_src: XC2MCRegClkSrc::GCK0,
             clk_invert_pol: false,
@@ -597,7 +597,7 @@ impl XC2Macrocell {
     }
 
     /// Reads the crbit representation of this macrocell from the given `fuse_array`.
-    pub fn from_crbit(device: XC2Device, fb: u32, mc: u32, fuse_array: &FuseArray) -> XC2Macrocell {
+    pub fn from_crbit(device: XC2Device, fb: u32, mc: u32, fuse_array: &FuseArray) -> Self {
         let (x, y, mirror) = mc_block_loc(device, fb);
         // direction
         let x = x as i32;
@@ -911,14 +911,14 @@ pub fn read_small_ff_logical(fuses: &[bool], block_idx: usize, ff_idx: usize) ->
     let pu = fuses[block_idx + ff_idx * 27 + 26];
 
     XC2Macrocell {
-        clk_src: clk_src,
+        clk_src,
         clk_invert_pol: clkop,
         is_ddr: clkfreq,
         r_src: reset_mode,
         s_src: set_mode,
         init_state: !pu,
-        reg_mode: reg_mode,
-        fb_mode: fb_mode,
+        reg_mode,
+        fb_mode,
         ff_in_ibuf: !inreg,
         xor_mode: xormode,
     }
@@ -961,14 +961,14 @@ pub fn read_large_ff_logical(fuses: &[bool], fuse_idx: usize) -> XC2Macrocell {
     let xormode = XC2MCXorMode::decode(xorin);
 
     XC2Macrocell {
-        clk_src: clk_src,
+        clk_src,
         clk_invert_pol: clkop,
         is_ddr: clkfreq,
         r_src: reset_mode,
         s_src: set_mode,
         init_state: !pu,
-        reg_mode: reg_mode,
-        fb_mode: fb_mode,
+        reg_mode,
+        fb_mode,
         ff_in_ibuf: !inreg,
         xor_mode: xormode,
     }
@@ -1009,14 +1009,14 @@ pub fn read_large_buried_ff_logical(fuses: &[bool], fuse_idx: usize) -> XC2Macro
     let xormode = XC2MCXorMode::decode(xorin);
 
     XC2Macrocell {
-        clk_src: clk_src,
+        clk_src,
         clk_invert_pol: clkop,
         is_ddr: clkfreq,
         r_src: reset_mode,
         s_src: set_mode,
         init_state: !pu,
-        reg_mode: reg_mode,
-        fb_mode: fb_mode,
+        reg_mode,
+        fb_mode,
         ff_in_ibuf: false,
         xor_mode: xormode,
     }

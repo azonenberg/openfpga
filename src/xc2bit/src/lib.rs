@@ -121,7 +121,7 @@ mod tests {
                 let (parsed_jed_data, device_name) = read_jed(&jed_data).expect("failed to read jed");
                 let device_name = device_name.expect("missing device name in jed");
 
-                let parsed_bitstream_data = process_jed(&parsed_jed_data, &device_name)
+                let parsed_bitstream_data = XC2Bitstream::from_jed(&parsed_jed_data, &device_name)
                     .expect("failed to process jed");
 
                 // Write to crbit
@@ -131,7 +131,7 @@ mod tests {
 
                 // Read back from crbit
                 let read_fuse_array = FuseArray::from_file_contents(&crbit).expect("failed to read crbit");
-                let parsed_bitstream_data = process_crbit(&read_fuse_array).expect("failed to process crbit");
+                let parsed_bitstream_data = XC2Bitstream::from_crbit(&read_fuse_array).expect("failed to process crbit");
 
                 // FIXME: This is quite hacky
                 let mut new_jed = Vec::new();

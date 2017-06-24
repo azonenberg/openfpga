@@ -53,11 +53,11 @@ pub struct XC2BitstreamFB {
 }
 
 impl Clone for XC2BitstreamFB {
-    fn clone(&self) -> XC2BitstreamFB {*self}
+    fn clone(&self) -> Self {*self}
 }
 
 impl Default for XC2BitstreamFB {
-    fn default() -> XC2BitstreamFB {
+    fn default() -> Self {
         XC2BitstreamFB {
             and_terms: [XC2PLAAndTerm::default(); ANDTERMS_PER_FB],
             or_terms: [XC2PLAOrTerm::default(); MCS_PER_FB],
@@ -360,7 +360,7 @@ impl XC2BitstreamFB {
     /// Reads the crbit representation of the settings for this FB from the given `fuse_array`.
     /// `device` must be the device type this FB was extracted from.
     /// `fb` must be the index of this function block.
-    pub fn from_crbit(device: XC2Device, fb: u32, fuse_array: &FuseArray) -> Result<XC2BitstreamFB, XC2BitError> {
+    pub fn from_crbit(device: XC2Device, fb: u32, fuse_array: &FuseArray) -> Result<Self, XC2BitError> {
         // ZIA
         let mut zia_bits = [XC2ZIARowPiece::default(); INPUTS_PER_ANDTERM];
         let (x, y) = zia_block_loc(device, fb);
@@ -509,9 +509,9 @@ impl XC2BitstreamFB {
         }
 
         Ok(XC2BitstreamFB {
-            and_terms: and_terms,
-            or_terms: or_terms,
-            zia_bits: zia_bits,
+            and_terms,
+            or_terms,
+            zia_bits,
             ffs: ff_bits,
         })
     }
@@ -681,9 +681,9 @@ pub fn read_fb_logical(device: XC2Device, fuses: &[bool], fb: u32, fuse_base: us
     }
 
     Ok(XC2BitstreamFB {
-        and_terms: and_terms,
-        or_terms: or_terms,
-        zia_bits: zia_bits,
+        and_terms,
+        or_terms,
+        zia_bits,
         ffs: ff_bits,
     })
 }

@@ -91,13 +91,13 @@ impl fmt::Display for JedParserError {
 }
 
 impl From<str::Utf8Error> for JedParserError {
-    fn from(err: str::Utf8Error) -> JedParserError {
+    fn from(err: str::Utf8Error) -> Self {
         JedParserError::InvalidUtf8(err)
     }
 }
 
 impl From<num::ParseIntError> for JedParserError {
-    fn from(_: num::ParseIntError) -> JedParserError {
+    fn from(_: num::ParseIntError) -> Self {
         JedParserError::InvalidCharacter
     }
 }
@@ -112,7 +112,7 @@ pub enum XC2BitError {
 }
 
 impl From<JedParserError> for XC2BitError {
-    fn from(err: JedParserError) -> XC2BitError {
+    fn from(err: JedParserError) -> Self {
         XC2BitError::JedParseError(err)
     }
 }
