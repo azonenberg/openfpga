@@ -14,4 +14,8 @@ if(BUILD_RUST)
     add_custom_target(xc2bit ALL
         ${CMAKE_COMMAND} -E env CARGO_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR}/xc2bit ${CARGO} build
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/xc2bit)
+
+    add_custom_target(xc2par ALL
+        ${CMAKE_COMMAND} -E env CARGO_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR}/xc2par ${CARGO} build
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/xc2par)
 endif()
