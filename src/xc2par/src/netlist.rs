@@ -649,16 +649,16 @@ impl NetlistGraph {
         }
 
         // Check for undriven nets
-        // for net_idx in nets.iter() {
-        //     if net_idx == vdd_net || net_idx == vss_net {
-        //         continue;
-        //     }
+        for net_idx in nets.iter() {
+            if net_idx == vdd_net || net_idx == vss_net {
+                continue;
+            }
 
-        //     let net = nets.get(net_idx);
-        //     if net.source.is_none() {
-        //         return Err("net without driver");
-        //     }
-        // }
+            let net = nets.get(net_idx);
+            if net.source.is_none() {
+                return Err("net without driver");
+            }
+        }
 
         Ok(NetlistGraph {
             nodes: nodes,

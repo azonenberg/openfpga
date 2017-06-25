@@ -103,6 +103,8 @@ impl DeviceGraph {
         let orterm_l = alloc_label(par_graphs, &mut lmap, "ORTERM");
         let andterm_l = alloc_label(par_graphs, &mut lmap, "ANDTERM");
         let bufg_l = alloc_label(par_graphs, &mut lmap, "BUFG");
+        // FIXME HACK
+        let hackhack_l = alloc_label(par_graphs, &mut lmap, "INPAD HACK HACK NOT IMPLEMENTED");
 
         let (num_fbs, num_iobs, has_inpad, iob_to_fb_ff, zia_table) = if device_name.eq_ignore_ascii_case("XC2C32A") {
             (2, 32, true, iob_num_to_fb_mc_num, ZIA_MAP_32)
@@ -266,7 +268,7 @@ impl DeviceGraph {
         let inpad_par_idx = if has_inpad {
             // Create node
             let inpad_pool_idx = graph.nodes.insert(DeviceGraphNode::InBuf);
-            Some(par_graphs.borrow_mut_d().add_new_node(inpad_l, inpad_pool_idx))
+            Some(par_graphs.borrow_mut_d().add_new_node(hackhack_l, inpad_pool_idx))
         } else {
             None
         };
