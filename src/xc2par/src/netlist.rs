@@ -175,7 +175,7 @@ impl NetlistGraph {
                             if module_ports.contains(&yosys_edge_idx) {
                                 continue;
                             }
-                
+
                             if net_map.get(&yosys_edge_idx).is_none() {
                                 // Need to add a new one
                                 let our_edge_idx = nets.insert(NetlistGraphNet {
@@ -228,53 +228,6 @@ impl NetlistGraph {
         // This maps from a Yosys cell/port name to an internal node number
         // FIXME: Use of owned strings is inefficient
         let mut cell_map: HashMap<String, ObjPoolIndex<NetlistGraphNode>> = HashMap::new();
-
-        // We now process ports and create buffer objects for them
-        // for (port_name, port_obj) in &top_module.ports {
-        //     if cell_map.get(port_name).is_some() {
-        //         return Err("duplicate cell/port name");
-        //     }
-
-        //     if port_obj.direction == "input" {
-        //         if port_obj.bits.len() != 1 {
-        //             return Err("too many bits entries for port");
-        //         }
-
-        //         let connected_net_idx = *net_map.get(&port_obj.bits[0]).unwrap();
-
-        //         let node_idx = nodes.insert(NetlistGraphNode {
-        //             name: port_name.to_owned(),
-        //             variant: NetlistGraphNodeVariant::IOBuf {
-        //                 input: None,
-        //                 oe: None,
-        //                 output: Some(connected_net_idx),
-        //             },
-        //             par_idx: None,
-        //         });
-
-        //         cell_map.insert(port_name.to_owned(), node_idx);
-        //     } else if port_obj.direction == "output" {
-        //         if port_obj.bits.len() != 1 {
-        //             return Err("too many bits entries for port");
-        //         }
-
-        //         let connected_net_idx = *net_map.get(&port_obj.bits[0]).unwrap();
-
-        //         let node_idx = nodes.insert(NetlistGraphNode {
-        //             name: port_name.to_owned(),
-        //             variant: NetlistGraphNodeVariant::IOBuf {
-        //                 input: Some(connected_net_idx),
-        //                 oe: None,
-        //                 output: None,
-        //             },
-        //             par_idx: None,
-        //         });
-
-        //         cell_map.insert(port_name.to_owned(), node_idx);
-        //     } else {
-        //         return Err("invalid port direction");
-        //     }
-        // }
 
         // and finally process cells
         for (cell_name, cell_obj) in &top_module.cells {
@@ -442,6 +395,77 @@ impl NetlistGraph {
                 });
                 // FIXME: Copypasta
                 cell_map.insert(cell_name.to_owned(), node_idx_and);
+            } else if cell_obj.cell_type == "ORTERM" {
+                let num_inputs = cell_obj.parameters.get("WIDTH");
+                if num_inputs.is_none() {
+                    return Err("required parameter WIDTH missing");
+                }
+                let num_inputs = if let &Value::Number(ref n) = num_inputs.unwrap() {
+                    if !n.is_u64() {
+                        return Err("parameter WIDTH is not a number")
+                    }
+
+                    n.as_u64().unwrap()
+                } else {
+                    return Err("parameter WIDTH is not a number")
+                };
+
+                let mut inputs = Vec::new();
+                for input_i in 0..num_inputs {
+                    let input_vec_obj = cell_obj.connections.get("IN");
+                    if input_vec_obj.is_none() {
+                        return Err("$sop cell is missing IN input");
+                    }
+                    let input_vec_obj = input_vec_obj.unwrap();
+
+                    let input_used_value_obj = &input_vec_obj[input_i as usize];
+                    let input_used_net_idx = if let &Value::Number(ref n) = input_used_value_obj {
+                        *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
+                    } else if let &Value::String(ref s) = input_used_value_obj {
+                        if s == "1" {
+                            vdd_net
+                        } else if s == "0" {
+                            vss_net
+                        } else {
+                            return Err("invalid connection in cell");
+                        }
+                    } else {
+                        // We already checked for this earlier
+                        unreachable!();
+                    };
+
+                    inputs.push(input_used_net_idx);
+                }
+
+                let output_y_obj = cell_obj.connections.get("OUT");
+                if output_y_obj.is_none() {
+                    return Err("$sop cell is missing OUT output");
+                }
+                let output_y_obj = output_y_obj.unwrap();
+                if output_y_obj.len() != 1 {
+                    return Err("cell OUT output has too many nets")
+                }
+                let output_y_obj = &output_y_obj[0];
+
+                let output_y_net_idx = if let &Value::Number(ref n) = output_y_obj {
+                    *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
+                } else if let &Value::String(..) = output_y_obj {
+                    return Err("invalid connection in cell");
+                } else {
+                    // We already checked for this earlier
+                    unreachable!();
+                };
+
+                let node_idx_and = nodes.insert(NetlistGraphNode {
+                    name: cell_name.to_owned(),
+                    variant: NetlistGraphNodeVariant::OrTerm {
+                        inputs,
+                        output: output_y_net_idx,
+                    },
+                    par_idx: None,
+                });
+                // FIXME: Copypasta
+                cell_map.insert(cell_name.to_owned(), node_idx_and);
             } else if cell_obj.cell_type == "MACROCELL_XOR" {
                 let invert_out = cell_obj.parameters.get("INVERT_OUT");
                 if invert_out.is_none() {
@@ -526,160 +550,6 @@ impl NetlistGraph {
                 });
                 // FIXME: Copypasta
                 cell_map.insert(cell_name.to_owned(), node_idx_xor);
-            } else if cell_obj.cell_type == "$sop" {
-                let num_and_terms = cell_obj.parameters.get("DEPTH");
-                if num_and_terms.is_none() {
-                    return Err("required parameter DEPTH missing");
-                }
-                let num_and_terms = if let &Value::Number(ref n) = num_and_terms.unwrap() {
-                    if !n.is_u64() {
-                        return Err("parameter DEPTH is not a number")
-                    }
-
-                    n.as_u64().unwrap()
-                } else {
-                    return Err("parameter DEPTH is not a number")
-                };
-
-                let num_inputs = cell_obj.parameters.get("WIDTH");
-                if num_inputs.is_none() {
-                    return Err("required parameter WIDTH missing");
-                }
-                let num_inputs = if let &Value::Number(ref n) = num_inputs.unwrap() {
-                    if !n.is_u64() {
-                        return Err("parameter WIDTH is not a number")
-                    }
-
-                    n.as_u64().unwrap()
-                } else {
-                    return Err("parameter WIDTH is not a number")
-                };
-
-                // FIXME: larger than 32 bits
-                let table = cell_obj.parameters.get("TABLE");
-                if table.is_none() {
-                    return Err("required parameter TABLE missing");
-                }
-                let table = if let &Value::Number(ref n) = table.unwrap() {
-                    if !n.is_u64() {
-                        return Err("parameter TABLE is not a number")
-                    }
-
-                    n.as_u64().unwrap()
-                } else {
-                    return Err("parameter TABLE is not a number")
-                };
-
-                // Create nets to connect AND outputs to OR
-                let and_to_or_nets = (0..num_and_terms).map(|_| {
-                    nets.insert(NetlistGraphNet {
-                        name: None,
-                        source: None,
-                        sinks: Vec::new(),
-                    })
-                }).collect::<Vec<_>>();
-
-                // Net to connect OR to XOR
-                let or_to_xor_net = nets.insert(NetlistGraphNet {
-                    name: None,
-                    source: None,
-                    sinks: Vec::new(),
-                });
-
-                // Create AND cells
-                for and_i in 0..num_and_terms {
-                    let mut inputs = Vec::new();
-                    for input_i in 0..num_inputs {
-                        let input_used_comp = (table & (1 << (and_i * num_inputs * 2 + input_i * 2 + 0))) != 0;
-                        let input_used_true = (table & (1 << (and_i * num_inputs * 2 + input_i * 2 + 1))) != 0;
-
-                        if input_used_comp && input_used_true {
-                            return Err("AND term tried to use both true and complement inputs");
-                        }
-
-                        if input_used_comp | input_used_true {
-                            let input_a_obj = cell_obj.connections.get("A");
-                            if input_a_obj.is_none() {
-                                return Err("$sop cell is missing A input");
-                            }
-                            let input_a_obj = input_a_obj.unwrap();
-
-                            let input_used_value_obj = &input_a_obj[input_i as usize];
-                            let input_used_net_idx = if let &Value::Number(ref n) = input_used_value_obj {
-                                *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
-                            } else if let &Value::String(ref s) = input_used_value_obj {
-                                if s == "1" {
-                                    vdd_net
-                                } else if s == "0" {
-                                    vss_net
-                                } else {
-                                    return Err("invalid connection in cell");
-                                }
-                            } else {
-                                // We already checked for this earlier
-                                unreachable!();
-                            };
-
-                            inputs.push((input_used_net_idx, input_used_comp));
-                        }
-                    }
-
-                    // let node_idx_and = nodes.insert(NetlistGraphNode {
-                    //     name: format!("{}__and_{}", cell_name, and_i),
-                    //     variant: NetlistGraphNodeVariant::AndTerm {
-                    //         inputs: inputs,
-                    //         output: and_to_or_nets[and_i as usize],
-                    //     },
-                    //     par_idx: None,
-                    // });
-                    // // FIXME: Copypasta
-                    // cell_map.insert(format!("{}__and_{}", cell_name, and_i), node_idx_and);
-                }
-
-                // Create OR cell
-                let node_idx_or = nodes.insert(NetlistGraphNode {
-                    name: format!("{}__or", cell_name),
-                    variant: NetlistGraphNodeVariant::OrTerm {
-                        inputs: and_to_or_nets,
-                        output: or_to_xor_net,
-                    },
-                    par_idx: None,
-                });
-                // FIXME: Copypasta
-                cell_map.insert(format!("{}__or", cell_name), node_idx_or);
-
-                // Create XOR cell
-                let output_y_obj = cell_obj.connections.get("Y");
-                if output_y_obj.is_none() {
-                    return Err("$sop cell is missing Y output");
-                }
-                let output_y_obj = output_y_obj.unwrap();
-                if output_y_obj.len() != 1 {
-                    return Err("cell Y output has too many nets")
-                }
-                let output_y_obj = &output_y_obj[0];
-
-                let output_y_net_idx = if let &Value::Number(ref n) = output_y_obj {
-                    *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
-                } else if let &Value::String(..) = output_y_obj {
-                    return Err("invalid connection in cell");
-                } else {
-                    // We already checked for this earlier
-                    unreachable!();
-                };
-
-                // let node_idx_xor = nodes.insert(NetlistGraphNode {
-                //     name: format!("{}__xor", cell_name),
-                //     variant: NetlistGraphNodeVariant::Xor {
-                //         andterm_input: None,
-                //         orterm_input: or_to_xor_net,
-                //         invert_out: false,
-                //         output: output_y_net_idx,
-                //     },
-                //     par_idx: None,
-                // });
-                // // FIXME: Copypasta
-                // cell_map.insert(format!("{}__xor", cell_name), node_idx_xor);
             } else {
                 return Err("unsupported cell type");
             }

@@ -4,6 +4,6 @@ output wire o;
 input a;
 input b;
 
-assign o = a & b;
+assign o = a ^ b;
 
 endmodule
