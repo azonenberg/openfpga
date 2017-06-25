@@ -20,7 +20,8 @@ module XC2CMacrocell(
 	config_bits,
 	pterm_a, pterm_b, pterm_c,
 	or_term,
-	mc_out
+	mc_to_zia, mc_to_obuf,
+	config_done_rst
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,8 +34,10 @@ module XC2CMacrocell(
 	input wire					pterm_c;
 
 	input wire					or_term;
+	input wire					config_done_rst;
 
-	output reg					mc_out;
+	output reg					mc_to_zia;
+	output reg					mc_to_obuf;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Macrocell XOR
@@ -52,10 +55,43 @@ module XC2CMacrocell(
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Macrocell flipflop
+
+	reg							mc_dff = 1;
+
+	//Flipflop reset
+	always @(/*posedge config_done_rst*/*) begin
+		mc_dff					<= !config_bits[0];
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Final output muxing
 
+	//TODO: mux for bit 15 (ibuf/mc flipflop)
+
 	always @(*) begin
-		mc_out					<= xor_out;
+
+		//Enable for macrocell->ZIA driver (active low so we're powered down when device is blank)
+		if(!config_bits[12]) begin
+
+			//See where macrocell->ZIA driver should go
+			if(config_bits[13])
+				mc_to_zia				<= mc_dff;
+			else
+				mc_to_zia				<= xor_out;
+
+		end
+
+		//Output driver powered down, feed a constant zero into the ZIA to prevent spurious toggles
+		else
+			mc_to_zia					<= 1'b0;
+
+		//Mux for pad driver
+		if(config_bits[7])
+			mc_to_obuf					<= xor_out;
+		else
+			mc_to_obuf					<= mc_dff;
+
 	end
 
 endmodule

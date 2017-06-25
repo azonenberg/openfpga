@@ -174,6 +174,8 @@ module XC2CDevice(
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The JTAG TAP (for now, basic bitstream config only)
 
+	wire			config_done_rst;
+
 	XC2CJTAG #(
 		.MACROCELLS(MACROCELLS),
 		.PACKAGE(PACKAGE),
@@ -195,14 +197,15 @@ module XC2CDevice(
 		.config_write_addr(config_write_addr),
 		.config_write_data(config_write_data),
 
-		.config_done(done)
+		.config_done(done),
+		.config_done_rst(config_done_rst)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Global routing
 
-	//TODO: input buffers and muxes for these based on InZ etc
-	wire[31:0]		macrocell_to_zia = 32'h0;
+	//TODO: muxes for iob_in
+	wire[31:0]		macrocell_to_zia;
 	wire[31:0]		ibuf_to_zia = iob_in;
 
 	//Left side (FB2)
@@ -272,8 +275,8 @@ module XC2CDevice(
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Macrocells
 
-	wire[15:0]		left_mc_out;
-	wire[15:0]		right_mc_out;
+	wire[15:0]		left_mc_to_obuf;
+	wire[15:0]		right_mc_to_obuf;
 
 	genvar g;
 	generate
@@ -285,7 +288,9 @@ module XC2CDevice(
 				.pterm_b(left_pterms[g*3 + 9]),
 				.pterm_c(left_pterms[g*3 + 10]),
 				.or_term(left_orterms[g]),
-				.mc_out(left_mc_out[g])
+				.config_done_rst(config_done_rst),
+				.mc_to_zia(macrocell_to_zia[g + 16]),
+				.mc_to_obuf(left_mc_to_obuf[g])
 			);
 
 			XC2CMacrocell right(
@@ -294,7 +299,9 @@ module XC2CDevice(
 				.pterm_b(right_pterms[g*3 + 9]),
 				.pterm_c(right_pterms[g*3 + 10]),
 				.or_term(right_orterms[g]),
-				.mc_out(right_mc_out[g])
+				.config_done_rst(config_done_rst),
+				.mc_to_zia(macrocell_to_zia[g]),
+				.mc_to_obuf(right_mc_to_obuf[g])
 			);
 
 		end
@@ -311,18 +318,14 @@ module XC2CDevice(
 	//Drive all unused outputs to 0, then hook up our outputs
 	//Should be X, !X, X, X
 	assign iob_out[31:7] = 25'h0;
-	assign iob_out[6] = right_mc_out[6];
-	assign iob_out[5] = right_mc_out[5];
-	assign iob_out[4] = right_mc_out[4];
-	assign iob_out[3] = right_mc_out[3];
+	assign iob_out[6] = right_mc_to_obuf[6];
+	assign iob_out[5] = right_mc_to_obuf[5];
+	assign iob_out[4] = right_mc_to_obuf[4];
+	assign iob_out[3] = right_mc_to_obuf[3];
 
-	//assign iob_out[5] = right_pterms[22];		//pterm, should be copy of x
-	//assign iob_out[4] = right_mc_out[3];		//led_0, constant 1: OR arrays 0 xor 1
-	//assign iob_out[3] = right_mc_out[4];		//led_1, passthrough of pterm C
-												//for MC4 this is pterm 22
 	assign iob_out[2:0] = 3'h0;
 
 	//Helper to keep stuff from getting optimized out
-	assign dbgout = ^right_mc_out ^ ^left_mc_out;
+	assign dbgout = ^macrocell_to_zia ^ ^right_mc_to_obuf ^ ^left_mc_to_obuf;
 
 endmodule

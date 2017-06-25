@@ -25,7 +25,7 @@ module XC2CJTAG(
 	config_erase,
 	config_read_en, config_read_addr, config_read_data,
 	config_write_en, config_write_addr, config_write_data,
-	config_done);
+	config_done, config_done_rst);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Device configuration
@@ -59,6 +59,7 @@ module XC2CJTAG(
 	output reg[SHREG_WIDTH-1:0]	config_write_data	= 0;
 
 	output wire					config_done;
+	output reg					config_done_rst		= 0;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The core JTAG state machine
@@ -242,6 +243,7 @@ module XC2CJTAG(
 	always @(posedge tck) begin
 
 		config_erase			<= 0;
+		config_done_rst			<= 0;
 
 		case(state)
 
@@ -286,6 +288,7 @@ module XC2CJTAG(
 				//TODO: check DONE / transfer bits first
 				if(ir_shreg == INST_ISC_PROGRAM) begin
 					configured		<= 1;
+					config_done_rst <= 1;
 				end
 
 				//TODO: copy EEPROM to RAM when we get an ISC_INIT command
