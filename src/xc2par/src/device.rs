@@ -64,6 +64,9 @@ pub enum DeviceGraphNode {
         i: u32,
     },
     InBuf,
+    ZIADummyBuf {
+        row: u32,
+    }
 }
 
 #[derive(Debug)]
@@ -103,6 +106,7 @@ impl DeviceGraph {
         let orterm_l = alloc_label(par_graphs, &mut lmap, "ORTERM");
         let andterm_l = alloc_label(par_graphs, &mut lmap, "ANDTERM");
         let bufg_l = alloc_label(par_graphs, &mut lmap, "BUFG");
+        let ziabuf_l = alloc_label(par_graphs, &mut lmap, "ZIA dummy buffer");
         // FIXME HACK
         let hackhack_l = alloc_label(par_graphs, &mut lmap, "INPAD HACK HACK NOT IMPLEMENTED");
 
@@ -165,7 +169,22 @@ impl DeviceGraph {
                 reg_par_idxs[reg_i] = par_graphs.borrow_mut_d().add_new_node(reg_l, reg_pool_idx);
             }
 
+            // 40 ZIA row outputs
+            let mut zia_par_idxs = [0u32; 40];
+            for zia_i in 0..zia_par_idxs.len() {
+                let zia_pool_idx = graph.nodes.insert(DeviceGraphNode::ZIADummyBuf{row: zia_i as u32});
+                zia_par_idxs[zia_i] = par_graphs.borrow_mut_d().add_new_node(ziabuf_l, zia_pool_idx);
+            }
+
             // Create edges that exist within the FB
+
+            // ZIA to AND term
+            for zia_row_i in 0..zia_par_idxs.len() {
+                for andterm_i in 0..andterm_par_idxs.len() {
+                    par_graphs.borrow_mut_d().add_edge(zia_par_idxs[zia_row_i], "OUT",
+                        andterm_par_idxs[andterm_i], "IN");
+                }
+            }
 
             // AND term to OR term
             for orterm_i in 0..orterm_par_idxs.len() {
@@ -227,7 +246,7 @@ impl DeviceGraph {
                     reg_par_idxs[i], "CLK");
             }
 
-            (andterm_par_idxs, xor_par_idxs, reg_par_idxs)
+            (andterm_par_idxs, xor_par_idxs, reg_par_idxs, zia_par_idxs)
         }).collect::<Vec<_>>();
 
         // IO buffer stuff
@@ -279,39 +298,36 @@ impl DeviceGraph {
 
             // Into each FB from ZIA
             for fb in 0..num_fbs {
-                // Into every AND term
-                for andterm_i in 0..fb_related_par_idxs[fb as usize].0.len() {
-                    for zia_choice in zia_row {
-                        match zia_choice {
-                            &XC2ZIAInput::Macrocell{fb, mc} => {
-                                // From the XOR gate
-                                par_graphs.borrow_mut_d().add_edge(
-                                    fb_related_par_idxs[fb as usize].1[mc as usize], "OUT",
-                                    fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
-                                // From the register
-                                par_graphs.borrow_mut_d().add_edge(
-                                    fb_related_par_idxs[fb as usize].2[mc as usize], "Q",
-                                    fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
-                            },
-                            &XC2ZIAInput::IBuf{ibuf} => {
-                                let (fb, ff) = iob_to_fb_ff(XC2Device::XC2C32A, ibuf).unwrap();
-                                // From the pad
-                                par_graphs.borrow_mut_d().add_edge(
-                                    iob_par_idxs[ibuf as usize], "OUT",
-                                    fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
-                                // From the register
-                                par_graphs.borrow_mut_d().add_edge(
-                                    fb_related_par_idxs[fb as usize].2[ff as usize], "Q",
-                                    fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
-                            },
-                            &XC2ZIAInput::DedicatedInput => {
-                                par_graphs.borrow_mut_d().add_edge(
-                                    inpad_par_idx.unwrap(), "OUT",
-                                    fb_related_par_idxs[fb as usize].0[andterm_i], "IN");
-                            },
-                            // These cannot be in the choices table; they are special cases
-                            _ => unreachable!(),
-                        }
+                for zia_choice in zia_row {
+                    match zia_choice {
+                        &XC2ZIAInput::Macrocell{fb, mc} => {
+                            // From the XOR gate
+                            par_graphs.borrow_mut_d().add_edge(
+                                fb_related_par_idxs[fb as usize].1[mc as usize], "OUT",
+                                fb_related_par_idxs[fb as usize].3[zia_row_i], "IN");
+                            // From the register
+                            par_graphs.borrow_mut_d().add_edge(
+                                fb_related_par_idxs[fb as usize].2[mc as usize], "Q",
+                                fb_related_par_idxs[fb as usize].3[zia_row_i], "IN");
+                        },
+                        &XC2ZIAInput::IBuf{ibuf} => {
+                            let (fb, ff) = iob_to_fb_ff(XC2Device::XC2C32A, ibuf).unwrap();
+                            // From the pad
+                            par_graphs.borrow_mut_d().add_edge(
+                                iob_par_idxs[ibuf as usize], "OUT",
+                                fb_related_par_idxs[fb as usize].3[zia_row_i], "IN");
+                            // From the register
+                            par_graphs.borrow_mut_d().add_edge(
+                                fb_related_par_idxs[fb as usize].2[ff as usize], "Q",
+                                fb_related_par_idxs[fb as usize].3[zia_row_i], "IN");
+                        },
+                        &XC2ZIAInput::DedicatedInput => {
+                            par_graphs.borrow_mut_d().add_edge(
+                                inpad_par_idx.unwrap(), "OUT",
+                                fb_related_par_idxs[fb as usize].3[zia_row_i], "IN");
+                        },
+                        // These cannot be in the choices table; they are special cases
+                        _ => unreachable!(),
                     }
                 }
             }

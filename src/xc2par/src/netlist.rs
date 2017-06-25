@@ -84,6 +84,10 @@ pub enum NetlistGraphNodeVariant {
     },
     InBuf {
         output: ObjPoolIndex<NetlistGraphNet>,
+    },
+    ZIADummyBuf {
+        input: ObjPoolIndex<NetlistGraphNet>,
+        output: ObjPoolIndex<NetlistGraphNet>,
     }
 }
 
@@ -384,6 +388,47 @@ impl NetlistGraph {
                     unreachable!();
                 };
 
+                // Create dummy buffer nodes for all inputs
+                // TODO: What about redundant ones?
+                let inputs_true = inputs_true.into_iter().map(|before_ziabuf_net| {
+                    let after_ziabuf_net = nets.insert(NetlistGraphNet {
+                        name: None,
+                        source: None,
+                        sinks: Vec::new(),
+                    });
+
+                    let node_idx_ziabuf = nodes.insert(NetlistGraphNode {
+                        name: format!("__ziabuf_{}", cell_name),
+                        variant: NetlistGraphNodeVariant::ZIADummyBuf {
+                            input: before_ziabuf_net,
+                            output: after_ziabuf_net,
+                        },
+                        par_idx: None,
+                    });
+                    cell_map.insert(format!("__ziabuf_{}", cell_name), node_idx_ziabuf);
+
+                    after_ziabuf_net
+                }).collect::<Vec<_>>();
+                let inputs_comp = inputs_comp.into_iter().map(|before_ziabuf_net| {
+                    let after_ziabuf_net = nets.insert(NetlistGraphNet {
+                        name: None,
+                        source: None,
+                        sinks: Vec::new(),
+                    });
+
+                    let node_idx_ziabuf = nodes.insert(NetlistGraphNode {
+                        name: format!("__ziabuf_{}", cell_name),
+                        variant: NetlistGraphNodeVariant::ZIADummyBuf {
+                            input: before_ziabuf_net,
+                            output: after_ziabuf_net,
+                        },
+                        par_idx: None,
+                    });
+                    cell_map.insert(format!("__ziabuf_{}", cell_name), node_idx_ziabuf);
+
+                    after_ziabuf_net
+                }).collect::<Vec<_>>();
+
                 let node_idx_and = nodes.insert(NetlistGraphNode {
                     name: cell_name.to_owned(),
                     variant: NetlistGraphNodeVariant::AndTerm {
@@ -645,6 +690,14 @@ impl NetlistGraph {
                     }
                     output_net.source = Some((node_idx, "OUT"));
                 },
+                NetlistGraphNodeVariant::ZIADummyBuf{input, output} => {
+                    nets.get_mut(input).sinks.push((node_idx, "IN"));
+                    let output_net = nets.get_mut(output);
+                    if output_net.source.is_some() {
+                        return Err("multiple drivers for net");
+                    }
+                    output_net.source = Some((node_idx, "OUT"));
+                },
             }
         }
 
@@ -686,6 +739,7 @@ impl NetlistGraph {
         let orterm_l = *ilmap.get("ORTERM").unwrap();
         let andterm_l = *ilmap.get("ANDTERM").unwrap();
         let bufg_l = *ilmap.get("BUFG").unwrap();
+        let ziabuf_l = *ilmap.get("ZIA dummy buffer").unwrap();
 
         // Create corresponding nodes
         let mut node_par_idx_map = HashMap::new();
@@ -702,6 +756,7 @@ impl NetlistGraph {
                 NetlistGraphNodeVariant::BufgGSR{..} => bufg_l,
                 NetlistGraphNodeVariant::IOBuf{..} => iopad_l,
                 NetlistGraphNodeVariant::InBuf{..} => inpad_l,
+                NetlistGraphNodeVariant::ZIADummyBuf{..} => ziabuf_l,
             };
 
             let node_idx_par = par_graphs.borrow_mut_n().add_new_node(lbl, node_idx_ours);
