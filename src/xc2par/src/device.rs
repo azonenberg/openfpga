@@ -233,6 +233,7 @@ impl DeviceGraph {
             // Create node
             let iob_pool_idx = graph.nodes.insert(DeviceGraphNode::IOBuf{i: iob as u32});
             let iob_par_idx = par_graphs.borrow_mut_d().add_new_node(iopad_l, iob_pool_idx);
+            par_graphs.borrow_mut_d().get_node_by_index_mut(iob_par_idx).add_alternate_label(inpad_l);
 
             // Create the edges that don't need ZIA-related knowledge (OE, direct input, output data)
             let (fb, ff) = iob_to_fb_ff(XC2Device::XC2C32A, iob).unwrap();

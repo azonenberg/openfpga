@@ -175,7 +175,7 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for XC2PAREngine
 
                     // If the site is used, we don't want to disturb what's already there
                     // because it was probably LOC'd
-                    if base_engine.get_graphs().d.get_node_by_label_and_index(label, nsite).get_mate().is_some() {
+                    if base_engine.get_graphs().d.get_node_by_label_and_index(label, nsite - 1).get_mate().is_some() {
                         continue;
                     }
 

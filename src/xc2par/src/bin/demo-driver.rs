@@ -59,8 +59,8 @@ fn main() {
 
     // Netlist graph (native part)
     let mut ngraph_rs = NetlistGraph::from_yosys_netlist(&yosys_netlist).unwrap();
-    println!("{:?}", ngraph_rs);
     ngraph_rs.insert_into_par_graph(&mut par_graphs, &lmap);
+    println!("{:?}", ngraph_rs);
 
     // Do the PAR!
     {
