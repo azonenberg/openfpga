@@ -65,6 +65,7 @@ pub enum DeviceGraphNode {
     },
     InBuf,
     ZIADummyBuf {
+        fb: u32,
         row: u32,
     }
 }
@@ -172,7 +173,7 @@ impl DeviceGraph {
             // 40 ZIA row outputs
             let mut zia_par_idxs = [0u32; 40];
             for zia_i in 0..zia_par_idxs.len() {
-                let zia_pool_idx = graph.nodes.insert(DeviceGraphNode::ZIADummyBuf{row: zia_i as u32});
+                let zia_pool_idx = graph.nodes.insert(DeviceGraphNode::ZIADummyBuf{fb: fb, row: zia_i as u32});
                 zia_par_idxs[zia_i] = par_graphs.borrow_mut_d().add_new_node(ziabuf_l, zia_pool_idx);
             }
 

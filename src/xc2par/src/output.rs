@@ -58,29 +58,39 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
 
         match dgraph_node_rs {
             &DeviceGraphNode::AndTerm{fb: fb_and, i: i_and} => {
-                if let NetlistGraphNodeVariant::AndTerm{output, ..} = ngraph_node_rs.variant {
-                    let out_net = ngraph_rs.nets.get(output);
-                    for &sink_or_term in &out_net.sinks {
-                        let sink_node_ngraph = ngraph_rs.nodes.get(sink_or_term.0);
-                        let sink_node_dgraph = dgraph_rs.nodes.get(
-                            *ngraph.get_node_by_index(sink_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
+                if let NetlistGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, ..} = ngraph_node_rs.variant {
+                    for input in inputs_true {
+                        let in_net = ngraph_rs.nets.get(*input);
+                        let source_node_ngraph = ngraph_rs.nodes.get(in_net.source.unwrap().0);
+                        let source_node_dgraph = dgraph_rs.nodes.get(
+                            *ngraph.get_node_by_index(source_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
                             .get_associated_data());
 
-                        if let &DeviceGraphNode::OrTerm{fb: fb_or, i: i_or} = sink_node_dgraph {
-                            if fb_and != fb_or {
+                        if let &DeviceGraphNode::ZIADummyBuf{fb: fb_zia, row: zia_row} = source_node_dgraph {
+                            if fb_zia != fb_and {
                                 panic!("mismatched FBs");
                             }
 
-                            // Finally, we know that we are connecting this AND gate to an OR gate, and we know which
-                            // one
-                            fb_bits[fb_and as usize].or_terms[i_or as usize].input[i_and as usize] = true;
-                        } else if let &DeviceGraphNode::Xor{fb: fb_xor, i: _} = sink_node_dgraph {
-                            if fb_and != fb_xor {
+                            // We are connecting a particular ZIA row into this and term's true input
+                            fb_bits[fb_and as usize].and_terms[i_and as usize].input[zia_row as usize] = true;
+                        } else {
+                            panic!("mismatched graph node types");
+                        }
+                    }
+                    for input in inputs_comp {
+                        let in_net = ngraph_rs.nets.get(*input);
+                        let source_node_ngraph = ngraph_rs.nodes.get(in_net.source.unwrap().0);
+                        let source_node_dgraph = dgraph_rs.nodes.get(
+                            *ngraph.get_node_by_index(source_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
+                            .get_associated_data());
+
+                        if let &DeviceGraphNode::ZIADummyBuf{fb: fb_zia, row: zia_row} = source_node_dgraph {
+                            if fb_zia != fb_and {
                                 panic!("mismatched FBs");
                             }
-
-                            // Finally, we know that we are connecting this AND gate to an XOR gate, and we know which
-                            // one. However, due to crappy code, the hooking up doesn't happen here.
+                            
+                            // We are connecting a particular ZIA row into this and term's complement input
+                            fb_bits[fb_and as usize].and_terms[i_and as usize].input_b[zia_row as usize] = true;
                         } else {
                             panic!("mismatched graph node types");
                         }
@@ -90,65 +100,64 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
                 }
             },
             &DeviceGraphNode::OrTerm{fb: fb_or, i: i_or} => {
-                // This is hard-wired and we don't actually have to do anything, but we validate just in case
-                if let NetlistGraphNodeVariant::OrTerm{output, ..} = ngraph_node_rs.variant {
-                    let out_net = ngraph_rs.nets.get(output);
-                    if out_net.sinks.len() != 1 {
-                        panic!("OR output incorrectly conected");
-                    }
-                    let sink_xor = out_net.sinks[0];
-                    let sink_xor_node_ngraph = ngraph_rs.nodes.get(sink_xor.0);
-                    let sink_xor_node_dgraph = dgraph_rs.nodes.get(
-                        *ngraph.get_node_by_index(sink_xor_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
-                        .get_associated_data());
+                if let NetlistGraphNodeVariant::OrTerm{ref inputs, ..} = ngraph_node_rs.variant {
+                    for input in inputs {
+                        let in_net = ngraph_rs.nets.get(*input);
+                        let source_node_ngraph = ngraph_rs.nodes.get(in_net.source.unwrap().0);
+                        let source_node_dgraph = dgraph_rs.nodes.get(
+                            *ngraph.get_node_by_index(source_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
+                            .get_associated_data());
 
-                    if let &DeviceGraphNode::Xor{fb: fb_xor, i: i_xor} = sink_xor_node_dgraph {
-                        if fb_or != fb_xor {
-                            panic!("mismatched FBs");
+                        if let &DeviceGraphNode::AndTerm{fb: fb_and, i: i_and} = source_node_dgraph {
+                            if fb_and != fb_or {
+                                panic!("mismatched FBs");
+                            }
+
+                            // We are connecting a particular AND term into this OR term's input
+                            fb_bits[fb_and as usize].or_terms[i_or as usize].input[i_and as usize] = true;
+                        } else {
+                            panic!("mismatched graph node types");
                         }
-                        if i_or != i_xor {
-                            panic!("mismatched FFs");
-                        }
-                    } else {
-                        panic!("mismatched graph node types");
                     }
                 } else {
                     panic!("mismatched graph node types");
                 }
             },
             &DeviceGraphNode::Xor{fb: fb_xor, i: i_xor} => {
-                if let NetlistGraphNodeVariant::Xor{output, invert_out, andterm_input, ..} = ngraph_node_rs.variant {
-                    let out_net = ngraph_rs.nets.get(output);
-                    if out_net.sinks.len() != 1 && out_net.sinks.len() != 2 {
-                        panic!("XOR output incorrectly conected");
-                    }
-                    for &sink_node in &out_net.sinks {
-                        let sink_node_ngraph = ngraph_rs.nodes.get(sink_node.0);
-                        let sink_node_dgraph = dgraph_rs.nodes.get(
-                            *ngraph.get_node_by_index(sink_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
+                if let NetlistGraphNodeVariant::Xor{orterm_input, andterm_input, invert_out, ..} = ngraph_node_rs.variant {
+                    // Validate
+                    if let Some(input) = orterm_input {
+                        let in_net = ngraph_rs.nets.get(input);
+                        let source_node_ngraph = ngraph_rs.nodes.get(in_net.source.unwrap().0);
+                        let source_node_dgraph = dgraph_rs.nodes.get(
+                            *ngraph.get_node_by_index(source_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
                             .get_associated_data());
 
-                        if let &DeviceGraphNode::Reg{fb: fb_reg, i: i_reg} = sink_node_dgraph {
-                            if fb_xor != fb_reg {
+                        if let &DeviceGraphNode::OrTerm{fb: fb_or, i: i_or} = source_node_dgraph {
+                            if fb_xor != fb_or {
                                 panic!("mismatched FBs");
                             }
-                            if i_xor != i_reg {
+                            if i_xor != i_or {
                                 panic!("mismatched FFs");
                             }
+                        } else {
+                            panic!("mismatched graph node types");
+                        }
+                    }
+                    if let Some(input) = andterm_input {
+                        let in_net = ngraph_rs.nets.get(input);
+                        let source_node_ngraph = ngraph_rs.nodes.get(in_net.source.unwrap().0);
+                        let source_node_dgraph = dgraph_rs.nodes.get(
+                            *ngraph.get_node_by_index(source_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
+                            .get_associated_data());
 
-                            fb_bits[fb_xor as usize].mcs[i_xor as usize].ff_in_ibuf = false;
-                        } else if let &DeviceGraphNode::IOBuf{i: i_iob} = sink_node_dgraph {
-                            let (fb_iob, ff_iob) = iob_num_to_fb_mc_num(XC2Device::XC2C32A, i_iob).unwrap();
-
-                            if fb_xor != fb_iob {
+                        if let &DeviceGraphNode::AndTerm{fb: fb_and, i: i_and} = source_node_dgraph {
+                            if fb_xor != fb_and {
                                 panic!("mismatched FBs");
                             }
-                            if i_xor != ff_iob {
+                            if get_ptc(i_xor) != i_and {
                                 panic!("mismatched FFs");
                             }
-
-                            // TODO
-                            iob_bits[i_iob as usize].obuf_uses_ff = false;
                         } else {
                             panic!("mismatched graph node types");
                         }
@@ -170,10 +179,11 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
                 }
             },
             &DeviceGraphNode::IOBuf{i: i_iob} => {
-                let (fb_iob, ff_iob) = iob_num_to_fb_mc_num(XC2Device::XC2C32A, i_iob).unwrap();
-                if let NetlistGraphNodeVariant::IOBuf{output, oe, input} = ngraph_node_rs.variant {
+                if let NetlistGraphNodeVariant::IOBuf{oe, input, ..} = ngraph_node_rs.variant {
                     if input.is_some() {
                         // pin is used as an OUTPUT
+                        // TODO
+                        iob_bits[i_iob as usize].obuf_uses_ff = false;
                         iob_bits[i_iob as usize].termination_enabled = false;
                         iob_bits[i_iob as usize].obuf_mode = XC2IOBOBufMode::PushPull;
                     }
@@ -181,92 +191,30 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
                     if oe.is_some() {
                         panic!("not implemented");
                     }
-
-                    if output.is_some() {
-                        // pin is used as an input
-                        let out_net = ngraph_rs.nets.get(output.unwrap());
-                        if out_net.sinks.len() != 1 {
-                            panic!("IOB output incorrectly conected");
-                        }
-                        let sink_node_net = out_net.sinks[0];
-                        let sink_node_ngraph = ngraph_rs.nodes.get(sink_node_net.0);
-                        let sink_node_dgraph = dgraph_rs.nodes.get(
-                            *ngraph.get_node_by_index(sink_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
-                            .get_associated_data());
-
-                        if let &DeviceGraphNode::Reg{fb: fb_reg, i: i_reg} = sink_node_dgraph {
-                            if fb_iob != fb_reg {
-                                panic!("mismatched FBs");
-                            }
-                            if i_iob != i_reg {
-                                panic!("mismatched FFs");
-                            }
-
-                            fb_bits[fb_iob as usize].mcs[ff_iob as usize].ff_in_ibuf = true;
-                        } else if let &DeviceGraphNode::AndTerm{fb: fb_and, i: i_and} = sink_node_dgraph {
-                            // TODO
-
-                            // FIXME FIXME FIXME FIXME THIS IS TOTALLY BOGUS
-                            for zia_row in 0..40 {
-                                let maybe_zia_data = XC2ZIARowPiece::encode_32_zia_choice(zia_row, XC2ZIAInput::IBuf{ibuf: i_iob});
-                                if maybe_zia_data.is_some() {
-                                    fb_bits[fb_and as usize].zia_bits[zia_row as usize] = XC2ZIARowPiece {
-                                        selected: XC2ZIAInput::IBuf{ibuf: i_iob},
-                                    };
-                                    // XXX where the heck did invert go?
-                                    fb_bits[fb_and as usize].and_terms[i_and as usize].input[zia_row as usize] = true;
-
-                                    break;
-                                }
-                            }
-
-                            iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
-                        } else {
-                            panic!("mismatched graph node types");
-                        }
-                    }
-                } else if let NetlistGraphNodeVariant::InBuf{output} = ngraph_node_rs.variant {
-                    // pin is used as an input
-                    let out_net = ngraph_rs.nets.get(output);
-                    if out_net.sinks.len() != 1 {
-                        panic!("IOB output incorrectly conected");
-                    }
-                    let sink_node_net = out_net.sinks[0];
-                    let sink_node_ngraph = ngraph_rs.nodes.get(sink_node_net.0);
-                    let sink_node_dgraph = dgraph_rs.nodes.get(
-                        *ngraph.get_node_by_index(sink_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
+                } else if let NetlistGraphNodeVariant::InBuf{..} = ngraph_node_rs.variant {
+                    // TODO???
+                    iob_bits[i_iob as usize].termination_enabled = false;
+                } else {
+                    panic!("mismatched graph node types");
+                }
+            },
+            &DeviceGraphNode::ZIADummyBuf{fb: fb_zia, row: zia_row} => {
+                if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = ngraph_node_rs.variant {
+                    let in_net = ngraph_rs.nets.get(input);
+                    let source_node_ngraph = ngraph_rs.nodes.get(in_net.source.unwrap().0);
+                    let source_node_dgraph = dgraph_rs.nodes.get(
+                        *ngraph.get_node_by_index(source_node_ngraph.par_idx.unwrap()).get_mate().unwrap()
                         .get_associated_data());
 
-                    if let &DeviceGraphNode::Reg{fb: fb_reg, i: i_reg} = sink_node_dgraph {
-                        if fb_iob != fb_reg {
-                            panic!("mismatched FBs");
-                        }
-                        if i_iob != i_reg {
-                            panic!("mismatched FFs");
-                        }
-
-                        fb_bits[fb_iob as usize].mcs[ff_iob as usize].ff_in_ibuf = true;
-                    } else if let &DeviceGraphNode::AndTerm{fb: fb_and, i: i_and} = sink_node_dgraph {
-                        // TODO
-
-                        // FIXME FIXME FIXME FIXME THIS IS TOTALLY BOGUS
-                        for zia_row in 0..40 {
-                            let maybe_zia_data = XC2ZIARowPiece::encode_32_zia_choice(zia_row, XC2ZIAInput::IBuf{ibuf: i_iob});
-                            if maybe_zia_data.is_some() {
-                                fb_bits[fb_and as usize].zia_bits[zia_row as usize] = XC2ZIARowPiece {
-                                    selected: XC2ZIAInput::IBuf{ibuf: i_iob},
-                                };
-                                // XXX where the heck did invert go?
-                                fb_bits[fb_and as usize].and_terms[i_and as usize].input[zia_row as usize] = true;
-
-                                break;
-                            }
-                        }
-
-                        iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
+                    if let &DeviceGraphNode::IOBuf{i: i_iob} = source_node_dgraph {
+                        fb_bits[fb_zia as usize].zia_bits[zia_row as usize] = XC2ZIARowPiece {
+                            selected: XC2ZIAInput::IBuf{ibuf: i_iob},
+                        };
                     } else {
-                        panic!("mismatched graph node types");
+                        unimplemented!();
                     }
+                } else {
+                    panic!("mismatched graph node types");
                 }
             },
             _ => unreachable!(),
