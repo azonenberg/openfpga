@@ -20,7 +20,9 @@ module XC2CMacrocell(
 	config_bits,
 	pterm_a, pterm_b, pterm_c,
 	or_term,
+	cterm_clk, global_clk,
 	mc_to_zia, mc_to_obuf,
+	raw_ibuf,
 	config_done_rst
 	);
 
@@ -34,10 +36,16 @@ module XC2CMacrocell(
 	input wire					pterm_c;
 
 	input wire					or_term;
-	input wire					config_done_rst;
+
+	input wire					cterm_clk;
+	input wire[2:0]				global_clk;
 
 	output reg					mc_to_zia;
 	output reg					mc_to_obuf;
+
+	input wire					raw_ibuf;
+
+	input wire					config_done_rst;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Macrocell XOR
@@ -55,13 +63,169 @@ module XC2CMacrocell(
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// FF input muxing
+
+	//TODO: implement latch mode
+
+	reg		dff_imux;
+
+	reg		dff_in;
+	always @(*) begin
+
+		//Normal input source mux
+		if(config_bits[11])
+			dff_imux		<= xor_out;
+		else
+			dff_imux		<= raw_ibuf;
+
+		//T flipflop has inverting feedback path
+		if(config_bits[17:16] == 2) begin
+
+			//Toggling?
+			if(dff_imux)
+				dff_in		<= ~mc_dff_muxed;
+
+			//Nope, preserve it
+			else
+				dff_in		<= mc_dff_muxed;
+
+		end
+
+		//D flipflop just takes data from input
+		else
+			dff_in			<= dff_imux;
+
+
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// FF clock enable
+
+	reg		dff_ce;
+
+	always @(*) begin
+
+		//We have a clock enable
+		if(config_bits[17:16] == 3)
+			dff_ce			<= pterm_c;
+
+		//No clock enable, always on
+		else
+			dff_ce			<= 1'b1;
+
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// FF set/reset logic
+
+	reg		dff_sr;
+	reg		dff_srval;
+
+	always @(*) begin
+
+		//Power-on reset
+		if(config_done_rst) begin
+			dff_sr		<= 1;
+			dff_srval	<= !config_bits[0];
+		end
+
+		//TODO: set/reset inputs
+		else begin
+			dff_sr		<= 0;
+			dff_srval	<= 0;
+		end
+
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Macrocell flipflop
 
-	reg							mc_dff = 1;
+	wire	dff_rising_en	= !config_bits[25] || config_bits[22];
+	wire	dff_falling_en	= config_bits[25] || config_bits[22];
 
-	//Flipflop reset
-	always @(/*posedge config_done_rst*/*) begin
-		mc_dff					<= !config_bits[0];
+	//FF is replicated a bunch of times b/c of complex clocking structure.
+	//It's not too practical to have a FF with one of many possible clocks in a 7-series device.
+	//It's way easier to just have one FF per clock, then mux the outputs combinatorially.
+
+	wire mc_dff_ctc;
+	ConfigurableEdgeFlipflop ff_ctc(
+		.d(dff_in),
+		.clk(cterm_clk),
+		.ce(dff_ce),
+		.sr(dff_sr),
+		.srval(dff_srval),
+		.q(mc_dff_ctc),
+		.rising_en(dff_rising_en),
+		.falling_en(dff_falling_en)
+	);
+
+	wire mc_dff_ptc;
+	ConfigurableEdgeFlipflop ff_ptc(
+		.d(dff_in),
+		.clk(pterm_c),
+		.ce(dff_ce),
+		.sr(dff_sr),
+		.srval(dff_srval),
+		.q(mc_dff_ptc),
+		.rising_en(dff_rising_en),
+		.falling_en(dff_falling_en)
+	);
+
+	wire mc_dff_gck0;
+	ConfigurableEdgeFlipflop ff_gck0(
+		.d(dff_in),
+		.clk(global_clk[0]),
+		.ce(dff_ce),
+		.sr(dff_sr),
+		.srval(dff_srval),
+		.q(mc_dff_gck0),
+		.rising_en(dff_rising_en),
+		.falling_en(dff_falling_en)
+	);
+
+	wire mc_dff_gck1;
+	ConfigurableEdgeFlipflop ff_gck1(
+		.d(dff_in),
+		.clk(global_clk[1]),
+		.ce(dff_ce),
+		.sr(dff_sr),
+		.srval(dff_srval),
+		.q(mc_dff_gck1),
+		.rising_en(dff_rising_en),
+		.falling_en(dff_falling_en)
+	);
+
+	wire mc_dff_gck2;
+	ConfigurableEdgeFlipflop ff_gck2(
+		.d(dff_in),
+		.clk(global_clk[2]),
+		.ce(dff_ce),
+		.sr(dff_sr),
+		.srval(dff_srval),
+		.q(mc_dff_gck2),
+		.rising_en(dff_rising_en),
+		.falling_en(dff_falling_en)
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// FF output muxing
+
+	//Final clock output mux
+	reg							mc_dff_muxed;
+	always @(*) begin
+
+		case(config_bits[24:23])
+			0:	mc_dff_muxed	<= mc_dff_gck0;
+			1:	mc_dff_muxed	<= mc_dff_gck2;
+			2:	mc_dff_muxed	<= mc_dff_gck1;
+			3: begin
+				if(config_bits[26])
+					mc_dff_muxed	<= mc_dff_ctc;
+				else
+					mc_dff_muxed	<= mc_dff_ptc;
+			end
+		endcase
+
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +240,7 @@ module XC2CMacrocell(
 
 			//See where macrocell->ZIA driver should go
 			if(config_bits[13])
-				mc_to_zia				<= mc_dff;
+				mc_to_zia				<= mc_dff_muxed;
 			else
 				mc_to_zia				<= xor_out;
 
@@ -90,7 +254,7 @@ module XC2CMacrocell(
 		if(config_bits[7])
 			mc_to_obuf					<= xor_out;
 		else
-			mc_to_obuf					<= mc_dff;
+			mc_to_obuf					<= mc_dff_muxed;
 
 	end
 

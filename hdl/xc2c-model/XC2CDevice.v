@@ -176,6 +176,9 @@ module XC2CDevice(
 
 	wire			config_done_rst;
 
+	wire			config_erase_raw;
+	BUFG bufg_reset(.I(config_erase_raw), .O(config_erase));
+
 	XC2CJTAG #(
 		.MACROCELLS(MACROCELLS),
 		.PACKAGE(PACKAGE),
@@ -187,7 +190,7 @@ module XC2CDevice(
 		.tms(jtag_tms),
 		.tck(jtag_tck),
 
-		.config_erase(config_erase),
+		.config_erase(config_erase_raw),
 
 		.config_read_en(config_read_en),
 		.config_read_addr(config_read_addr),
@@ -273,10 +276,26 @@ module XC2CDevice(
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Global clock buffers
+
+	//TODO: gclk enables
+	wire[2:0]		global_ce = 3'b111;
+
+	wire[2:0]		global_clk;
+	BUFGCE bufg_gclk0(.I(iob_in[20]), .O(global_clk[0]), .CE(global_ce[0]));
+	BUFGCE bufg_gclk1(.I(iob_in[21]), .O(global_clk[1]), .CE(global_ce[1]));
+	BUFGCE bufg_gclk2(.I(iob_in[22]), .O(global_clk[2]), .CE(global_ce[2]));
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Macrocells
 
 	wire[15:0]		left_mc_to_obuf;
 	wire[15:0]		right_mc_to_obuf;
+
+	wire			left_cterm_clk;
+	wire			right_cterm_clk;
+	BUFG bufg_left_ctc(.I(left_pterms[4]), .O(left_cterm_clk));
+	BUFG bufg_right_ctc(.I(right_pterms[4]), .O(right_cterm_clk));
 
 	genvar g;
 	generate
@@ -288,9 +307,12 @@ module XC2CDevice(
 				.pterm_b(left_pterms[g*3 + 9]),
 				.pterm_c(left_pterms[g*3 + 10]),
 				.or_term(left_orterms[g]),
+				.cterm_clk(left_cterm_clk),
+				.global_clk(global_clk),
 				.config_done_rst(config_done_rst),
 				.mc_to_zia(macrocell_to_zia[g + 16]),
-				.mc_to_obuf(left_mc_to_obuf[g])
+				.mc_to_obuf(left_mc_to_obuf[g]),
+				.raw_ibuf(iob_in[g + 16])
 			);
 
 			XC2CMacrocell right(
@@ -299,9 +321,12 @@ module XC2CDevice(
 				.pterm_b(right_pterms[g*3 + 9]),
 				.pterm_c(right_pterms[g*3 + 10]),
 				.or_term(right_orterms[g]),
+				.cterm_clk(right_cterm_clk),
+				.global_clk(global_clk),
 				.config_done_rst(config_done_rst),
 				.mc_to_zia(macrocell_to_zia[g]),
-				.mc_to_obuf(right_mc_to_obuf[g])
+				.mc_to_obuf(right_mc_to_obuf[g]),
+				.raw_ibuf(iob_in[g])
 			);
 
 		end
@@ -322,7 +347,6 @@ module XC2CDevice(
 	assign iob_out[5] = right_mc_to_obuf[5];
 	assign iob_out[4] = right_mc_to_obuf[4];
 	assign iob_out[3] = right_mc_to_obuf[3];
-
 	assign iob_out[2:0] = 3'h0;
 
 	//Helper to keep stuff from getting optimized out
