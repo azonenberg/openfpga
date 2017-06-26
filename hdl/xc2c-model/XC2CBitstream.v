@@ -164,14 +164,14 @@ module XC2CBitstream(
 			//We have stuff at the top and bottom of array, with global config in the middle
 			if(row > 27) begin
 				for(nbit=0; nbit<8; nbit=nbit+1) begin
-					right_zia_config[toprow*8 + nbit]			<= ram_bitstream[toprow][123 + nbit*2];
-					left_zia_config[toprow*8 + nbit]			<= ram_bitstream[toprow][122 + nbit*2];
+					right_zia_config[toprow*8 + nbit]			<= ram_bitstream[toprow][137 - nbit*2];
+					left_zia_config[toprow*8 + nbit]			<= ram_bitstream[toprow][136 - nbit*2];
 				end
 			end
 			else if(row < 20) begin
 				for(nbit=0; nbit<8; nbit=nbit+1) begin
-					right_zia_config[row*8 + nbit]				<= ram_bitstream[row][123 + nbit*2];
-					left_zia_config[row*8 + nbit]				<= ram_bitstream[row][122 + nbit*2];
+					right_zia_config[row*8 + nbit]				<= ram_bitstream[row][137 - nbit*2];
+					left_zia_config[row*8 + nbit]				<= ram_bitstream[row][136 - nbit*2];
 				end
 			end
 
