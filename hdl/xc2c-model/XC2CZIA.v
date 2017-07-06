@@ -54,7 +54,7 @@ module XC2CZIA(
 
 	output reg[39:0]					zia_out;			//40 outputs to the function block
 
-	input wire[40 * BITS_PER_ROW-1 : 0]	config_bits;	//The actual config bitstream for this ZIA block
+	input wire[40 * BITS_PER_ROW-1 : 0]	config_bits;		//The actual config bitstream for this ZIA block
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reshuffle the bitstream into proper rows
