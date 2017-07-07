@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA                                      *
  **********************************************************************************************************************/
 module JtagPipeBridge(
-	output reg		tck = 0,
-	output reg		tdi = 0,
-	output reg		tms = 0,
+	output wire		tck,
+	output wire		tdi,
+	output wire		tms,
 	input wire		tdo
 	);
 
@@ -28,25 +28,88 @@ module JtagPipeBridge(
 
 	//The canonical copy of these is in jtaghal/jtagd_opcodes.yml but we're not building with Splash
 	//For now, replicate by hand
-	localparam JTAGD_OP_GET_NAME 	= 8'h00;
-	localparam JTAGD_OP_GET_SERIAL	= 8'h01;
-	localparam JTAGD_OP_GET_USERID	= 8'h02;
+	localparam JTAGD_OP_GET_NAME 		= 8'h00;
+	localparam JTAGD_OP_GET_SERIAL		= 8'h01;
+	localparam JTAGD_OP_GET_USERID		= 8'h02;
+	localparam JTAGD_OP_GET_FREQ		= 8'h03;
+	localparam JTAGD_OP_SHIFT_DATA_WO	= 8'h06;
+	localparam JTAGD_OP_SHIFT_DATA		= 8'h07;
+	localparam JTAGD_OP_DUMMY_CLOCK		= 8'h08;
+	localparam JTAGD_OP_QUIT			= 8'h0e;
+	localparam JTAGD_OP_TLR				= 8'h18;
+	localparam JTAGD_OP_ENTER_SIR		= 8'h19;
+	localparam JTAGD_OP_LEAVE_E1IR		= 8'h1a;
+	localparam JTAGD_OP_ENTER_SDR		= 8'h1b;
+	localparam JTAGD_OP_LEAVE_E1DR		= 8'h1c;
+	localparam JTAGD_OP_RESET_IDLE		= 8'h1d;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Adapter metadata
 
-	localparam ADAPTER_NAME = "JtagPipeBridge";
-	localparam ADAPTER_SERIAL = "NoSerialYet";
-	localparam ADAPTER_USERID = "NoUserIDYet";
+	localparam ADAPTER_NAME		= "JtagPipeBridge";
+	localparam ADAPTER_SERIAL	= "NoSerialYet";
+	localparam ADAPTER_USERID	= "NoUserIDYet";
+	localparam ADAPTER_FREQ		= 25000000;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// GSR wait
 
-	integer ready = 0;
+	reg ready = 0;
 	initial begin
 		#100;
 		ready = 1;
 	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Clock oscillator
+
+	reg		clk = 0;
+	always begin
+		#5;
+		clk = 1;
+		#5;
+		clk = 0;
+	end
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Protocol parsing stuff
+
+	`include "JtagMaster_states.vh"
+
+	wire		jtag_done;
+
+	reg			state_en	= 0;
+	reg[2:0]	next_state	= OP_TEST_RESET;
+
+	reg			shift_en		= 0;
+	reg			packet_last_tms	= 0;
+	reg			last_tms		= 0;
+	reg[31:0]	packet_len		= 0;
+	reg[5:0]	shift_len		= 0;
+	reg[7:0]	shift_din		= 0;
+	wire[31:0]	shift_dout;
+
+	JtagMaster master(
+		.clk(clk),
+		.clkdiv(8'h1),
+
+		.tck(tck),
+		.tdi(tdi),
+		.tms(tms),
+		.tdo(tdo),
+
+		.state_en(state_en),
+		.next_state(next_state),
+
+		.shift_en(shift_en),
+		.len(shift_len),
+		.last_tms(last_tms),
+		.din({24'h0, shift_din}),
+		.dout(shift_dout),
+		.done(jtag_done)
+	);
+
+	wire[7:0]	shift_dout_byte	= shift_dout >> (32 - shift_len);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Protocol parsing stuff
@@ -60,52 +123,211 @@ module JtagPipeBridge(
 		writepipe = $fopen("/tmp/simwritepipe", "w");
 	end
 
-	reg[7:0] cmd_byte;
-	always begin
+	localparam PROTO_STATE_BOOT			= 8'h00;
+	localparam PROTO_STATE_IDLE			= 8'h01;
+	localparam PROTO_STATE_WAIT			= 8'h02;
+	localparam PROTO_STATE_DONE			= 8'h03;
+	localparam PROTO_STATE_SHIFT		= 8'h04;
+	localparam PROTO_STATE_SHIFT_WAIT	= 8'h05;
 
-		if(ready) begin
+	reg[7:0] 	cmd_byte 		= 0;
+	reg[7:0]	proto_state		= PROTO_STATE_BOOT;
+	reg			want_response	= 0;
 
-			//Read a command byte from the pipe
-			$display("Reading opcode...");
-			if(1 != $fscanf(readpipe, "%x", cmd_byte)) begin
-				$display("Read failed");
-				$finish;
-			end
-			$display("Read command %x", cmd_byte);
+	always @(posedge clk) begin
 
-			//See what the command is
-			case(cmd_byte)
+		state_en	<= 0;
+		shift_en	<= 0;
 
-				JTAGD_OP_GET_NAME: begin
-					$fdisplay(writepipe, "%s", ADAPTER_NAME);
-					$fflush(writepipe);
-				end	//end JTAGD_OP_GET_NAME
+		case(proto_state)
 
-				JTAGD_OP_GET_SERIAL: begin
-					$fdisplay(writepipe, "%s", ADAPTER_SERIAL);
-					$fflush(writepipe);
-				end	//end JTAGD_OP_GET_SERIAL
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// BOOT - sit around and wait for GSR
 
-				JTAGD_OP_GET_USERID: begin
-					$fdisplay(writepipe, "%s", ADAPTER_USERID);
-					$fflush(writepipe);
-				end	//end JTAGD_OP_GET_USERID
+			PROTO_STATE_BOOT: begin
+				if(ready)
+					proto_state	<= PROTO_STATE_IDLE;
+			end	//end PROTO_STATE_BOOT
 
-			endcase
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// IDLE - read a command and execute it
 
-		end
+			PROTO_STATE_IDLE: begin
 
-		//Wait 5 ns to force sim time to advance
-		#5;
+				//Read a command byte from the pipe
+				if(1 != $fscanf(readpipe, "%x", cmd_byte)) begin
+					$display("Read failed");
+					$finish;
+				end
 
-	end
+				//See what the command is. Info-query commands run in a single clock
+				case(cmd_byte)
 
-	//Cleanup
-	initial begin
-		#1000;
-		$fclose(readpipe);
-		$fclose(writepipe);
-		$finish;
+					JTAGD_OP_GET_NAME: begin
+						$display("Reading adapter name");
+						$fdisplay(writepipe, "%s", ADAPTER_NAME);
+						$fflush(writepipe);
+					end	//end JTAGD_OP_GET_NAME
+
+					JTAGD_OP_GET_SERIAL: begin
+						$display("Reading adapter serial");
+						$fdisplay(writepipe, "%s", ADAPTER_SERIAL);
+						$fflush(writepipe);
+					end	//end JTAGD_OP_GET_SERIAL
+
+					JTAGD_OP_GET_USERID: begin
+						$display("Reading adapter userid");
+						$fdisplay(writepipe, "%s", ADAPTER_USERID);
+						$fflush(writepipe);
+					end	//end JTAGD_OP_GET_USERID
+
+					JTAGD_OP_GET_FREQ: begin
+						$display("Reading adapter clock frequency");
+						$fdisplay(writepipe, "%d", ADAPTER_FREQ);
+						$fflush(writepipe);
+					end	//end JTAGD_OP_GET_FREQ
+
+					JTAGD_OP_SHIFT_DATA: begin
+						$fscanf(readpipe, "%x", packet_last_tms);
+						$fscanf(readpipe, "%x", packet_len);
+						$display("Shifting %d bits of data (ending with tms=%d)",
+							packet_len, packet_last_tms);
+						proto_state		<= PROTO_STATE_SHIFT;
+						want_response	<= 1;
+					end	//end JTAGD_OP_SHIFT_DATA
+
+					JTAGD_OP_SHIFT_DATA_WO: begin
+						$fscanf(readpipe, "%x", packet_last_tms);
+						$fscanf(readpipe, "%x", packet_len);
+						$display("Shifting %d bits of data (ending with tms=%d, no reply required)",
+							packet_len, packet_last_tms);
+						proto_state		<= PROTO_STATE_SHIFT;
+						want_response	<= 0;
+					end	//end JTAGD_OP_SHIFT_DATA_WO
+
+					JTAGD_OP_TLR: begin
+						$display("Resetting to TLR");
+						state_en		<= 1;
+						next_state		<= OP_TEST_RESET;
+						proto_state		<= PROTO_STATE_WAIT;
+					end	//end JTAGD_OP_TLR
+
+					JTAGD_OP_ENTER_SIR: begin
+						$display("Entering Shift-IR");
+						state_en		<= 1;
+						next_state		<= OP_SELECT_IR;
+						proto_state		<= PROTO_STATE_WAIT;
+					end	//end JTAGD_OP_ENTER_SIR
+
+					JTAGD_OP_LEAVE_E1IR: begin
+						$display("Leaving Exit1-IR");
+						state_en		<= 1;
+						next_state		<= OP_LEAVE_IR;
+						proto_state		<= PROTO_STATE_WAIT;
+					end	//end JTAGD_OP_LEAVE_E1IR
+
+					JTAGD_OP_LEAVE_E1DR: begin
+						$display("Leaving Exit1-DR");
+						state_en		<= 1;
+						next_state		<= OP_LEAVE_DR;
+						proto_state		<= PROTO_STATE_WAIT;
+					end	//end JTAGD_OP_LEAVE_E1DR
+
+					JTAGD_OP_ENTER_SDR: begin
+						$display("Entering Shift-DR");
+						state_en		<= 1;
+						next_state		<= OP_SELECT_DR;
+						proto_state		<= PROTO_STATE_WAIT;
+					end	//end JTAGD_OP_ENTER_SDR
+
+					JTAGD_OP_RESET_IDLE: begin
+						$display("Resetting to RTI");
+						state_en		<= 1;
+						next_state		<= OP_RESET_IDLE;
+						proto_state		<= PROTO_STATE_WAIT;
+					end	//end JTAGD_OP_RESET_IDLE
+
+					JTAGD_OP_DUMMY_CLOCK: begin
+						$display("Sending dummy clocks");
+						$display("WARNING: dummy clocks not implemented");
+					end	//end JTAGD_OP_DUMMY_CLOCK
+
+					JTAGD_OP_QUIT: begin
+						$display("Client disconnected");
+						$fclose(readpipe);
+						$fclose(writepipe);
+						proto_state		<= PROTO_STATE_DONE;
+					end
+
+					default: begin
+						$display("Command value %x not implemented", cmd_byte);
+					end
+
+				endcase
+
+			end	//end PROTO_STATE_IDLE
+
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// WAIT - sit around until the pending command executes (no readback)
+
+			PROTO_STATE_WAIT: begin
+				if(jtag_done)
+					proto_state			<= PROTO_STATE_IDLE;
+			end	//end PROTO_STATE_WAIT
+
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// SHIFT - push data out through the JTAG interface
+
+			PROTO_STATE_SHIFT: begin
+
+				//Read a byte of data and send it out
+				$fscanf(readpipe, "%x", shift_din);
+				shift_en	<= 1;
+
+				//Last block? Send actual length and final TMS value
+				if(packet_len <= 8) begin
+					last_tms	<= packet_last_tms;
+					shift_len	<= packet_len;
+					packet_len	<= 0;
+				end
+
+				//Nope, more bytes coming
+				else begin
+					last_tms	<= 0;
+					shift_len	<= 8;
+					packet_len	<= packet_len - 8;
+				end
+
+				proto_state	<= PROTO_STATE_SHIFT_WAIT;
+
+			end	//end PROTO_STATE_SHIFT
+
+			PROTO_STATE_SHIFT_WAIT: begin
+				if(jtag_done) begin
+
+					//Send the output value
+					//NOTE: it's left justified! 1 bit is in [31] etc
+					if(want_response)
+						$fdisplay(writepipe, "%x", shift_dout_byte);
+
+					if(packet_len == 0) begin
+						proto_state			<= PROTO_STATE_IDLE;
+						if(want_response)
+							$fflush(writepipe);
+					end
+					else
+						proto_state			<= PROTO_STATE_SHIFT;
+				end
+			end	//end PROTO_STATE_SHIFT_WAIT
+
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// DONE - permanent shutdown of the pipe logic
+
+			PROTO_STATE_DONE: begin
+			end	//end PROTO_STATE_DONE
+
+		endcase
+
 	end
 
 endmodule
