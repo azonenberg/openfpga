@@ -238,6 +238,7 @@ module XC2CJTAG(
 
 	reg[7:0] ir			= INST_IDCODE;
 	reg[7:0] ir_shreg	= 0;
+	reg	programming		= 0;
 
 	//Instruction loading and capture
 	always @(posedge tck) begin
@@ -275,8 +276,10 @@ module XC2CJTAG(
 				//TODO: support OTF mode
 				if(ir_shreg == INST_ISC_ENABLE)
 					isc_enabled		<= 1;
-				if(ir_shreg == INST_ISC_DISABLE)
+				if(ir_shreg == INST_ISC_DISABLE) begin
+					programming		<= 0;
 					isc_enabled		<= 0;
+				end
 
 				//Wipe config memory when we get an ERASE instruction
 				if(ir_shreg == INST_ISC_ERASE) begin
@@ -284,11 +287,19 @@ module XC2CJTAG(
 					configured		<= 0;
 				end
 
-				//DEBUG: declare us configured as soon as we get a PROGRAM instruction
+				//Declare us to be programming when we load ISC_PROGRAM
 				//TODO: check DONE / transfer bits first
 				if(ir_shreg == INST_ISC_PROGRAM) begin
+					programming		<= 1;
+				end
+
+				//If we leave programming mode after programming, set us to be done and reset everything
+				if(ir_shreg == INST_ISC_DISABLE && programming) begin
 					configured		<= 1;
 					config_done_rst <= 1;
+					`ifdef XILINX_ISIM
+						$display("Configuration complete");
+					`endif
 				end
 
 				//TODO: copy EEPROM to RAM when we get an ISC_INIT command
