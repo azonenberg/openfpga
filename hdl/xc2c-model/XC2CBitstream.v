@@ -28,7 +28,8 @@ module XC2CBitstream(
 	left_zia_config, right_zia_config,
 	left_and_config, right_and_config,
 	left_or_config, right_or_config,
-	left_mc_config, right_mc_config
+	left_mc_config, right_mc_config,
+	global_ce, global_sr_invert, global_sr_en, global_tris_invert, global_tris_en
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,6 +63,13 @@ module XC2CBitstream(
 	output reg[27*16-1:0]			left_mc_config;
 	output reg[27*16-1:0]			right_mc_config;
 
+	output reg[2:0]					global_ce;
+	output reg						global_sr_invert;
+	output reg						global_sr_en;
+
+	output reg[3:0]					global_tris_invert;
+	output reg[3:0]					global_tris_en;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The SRAM copy of the config bitstream (directly drives device behavior)
 
@@ -85,9 +93,7 @@ module XC2CBitstream(
 	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// The EEPROM copy of the config bitstream (used to configure ram_bitstream at startup)
-
-	//TODO
+	// TODO: The EEPROM copy of the config bitstream (used to configure ram_bitstream at startup)
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// JTAG access - we have a separate, untouched copy of the raw bitstream (including transfer bits etc) for readouts
@@ -106,7 +112,6 @@ module XC2CBitstream(
 	end
 
 	//Read/write the EEPROM
-	//TODO: add read enable?
 	always @(posedge jtag_tck) begin
 
 		if(config_read_en)
@@ -221,6 +226,28 @@ module XC2CBitstream(
 			end
 
 		end
+
+		//Pull out global config bits (no rhyme or reason here!)
+		global_ce[0]	<= ram_bitstream[23][133];
+		global_ce[1]	<= ram_bitstream[23][132];
+		global_ce[2]	<= ram_bitstream[23][131];
+
+		//GSR enable
+		global_sr_invert	<= !ram_bitstream[23][130];
+		global_sr_en		<= ram_bitstream[23][129];
+
+		//GTS invert/enable
+		global_tris_invert[0]	<= ram_bitstream[24][133];
+		global_tris_en[0]		<= ram_bitstream[24][132];
+		global_tris_invert[1]	<= ram_bitstream[24][131];
+		global_tris_en[1]		<= ram_bitstream[24][130];
+
+		global_tris_invert[2]	<= ram_bitstream[25][133];
+		global_tris_en[2]		<= ram_bitstream[25][132];
+		global_tris_invert[3]	<= ram_bitstream[25][131];
+		global_tris_en[3]		<= ram_bitstream[25][130];
+
+		//All other global config is meaningless as we don't have a pad ring
 
 		//TODO: read row 48 (SEC/done) and 49 (usercode)
 	end

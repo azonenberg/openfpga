@@ -144,6 +144,12 @@ module XC2CDevice(
 	wire[27*16-1:0]			left_mc_config;
 	wire[27*16-1:0]			right_mc_config;
 
+	wire[2:0]				global_ce;
+	wire					global_sr_invert;
+	wire					global_sr_en;
+	wire[3:0]				global_tris_invert;
+	wire[3:0]				global_tris_en;
+
 	XC2CBitstream #(
 		.ADDR_BITS(ADDR_BITS),
 		.MEM_DEPTH(MEM_DEPTH),
@@ -168,7 +174,13 @@ module XC2CDevice(
 		.right_zia_config(right_zia_config),
 		.right_and_config(right_and_config),
 		.right_or_config(right_or_config),
-		.right_mc_config(right_mc_config)
+		.right_mc_config(right_mc_config),
+
+		.global_ce(global_ce),
+		.global_sr_invert(global_sr_invert),
+		.global_sr_en(global_sr_en),
+		.global_tris_invert(global_tris_invert),
+		.global_tris_en(global_tris_en),
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -277,39 +289,56 @@ module XC2CDevice(
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Global buffers
 
-	/*
-		Fuse #12256 =
-	 */
-
-	//TODO: gclk enables
-	reg[2:0]		global_ce;
-	always @(*) begin
-		global_ce	<=  3'b111;
-	end
-
 	//Clocks
 	wire[2:0]		global_clk;
 	BUFGCE bufg_gclk0(.I(iob_in[20]), .O(global_clk[0]), .CE(global_ce[0]));
 	BUFGCE bufg_gclk1(.I(iob_in[21]), .O(global_clk[1]), .CE(global_ce[1]));
 	BUFGCE bufg_gclk2(.I(iob_in[22]), .O(global_clk[2]), .CE(global_ce[2]));
 
-	//TODO: gts enables (and inversions)
-	wire[2:0]		global_te = 3'b111;
-	reg[3:0]		global_tris;
-
-	always @(*) begin
-		global_tris	<= 4'h0;
-	end
-
-	//TODO: gsr enables
+	//Set/reset
 	reg				global_sr_raw;
-	reg				global_sr_en = 1'b1;
 	always @(*) begin
-		global_sr_raw	<= 1'b0;
-		global_sr_en	<= 1'b0;
+		if(global_sr_invert)
+			global_sr_raw	<= !iob_in[7];
+		else
+			global_sr_raw	<= iob_in[7];
 	end
 	wire			global_sr;
 	BUFGCE bufg_gsr(.I(global_sr_raw), .O(global_sr), .CE(global_sr_en));
+
+	//Global tristates
+	reg[3:0]		global_tris;
+	always @(*) begin
+
+		if(!global_tris_en[3])
+			global_tris[3]	<= 0;
+		else if(global_tris_invert[3])
+			global_tris[3]	<= !iob_in[5];
+		else
+			global_tris[3]	<= iob_in[5];
+
+		if(!global_tris_en[2])
+			global_tris[2]	<= 0;
+		else if(global_tris_invert[2])
+			global_tris[2]	<= !iob_in[6];
+		else
+			global_tris[2]	<= iob_in[6];
+
+		if(!global_tris_en[1])
+			global_tris[1]	<= 0;
+		else if(global_tris_invert[1])
+			global_tris[1]	<= !iob_in[3];
+		else
+			global_tris[1]	<= iob_in[3];
+
+		if(!global_tris_en[0])
+			global_tris[0]	<= 0;
+		else if(global_tris_invert[0])
+			global_tris[0]	<= !iob_in[4];
+		else
+			global_tris[0]	<= iob_in[4];
+
+	end
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Macrocells
@@ -327,9 +356,9 @@ module XC2CDevice(
 	wire			right_cterm_set;
 	wire			right_cterm_oe = right_pterms[7];
 
-	BUFG bufg_left_ctr(.I(left_pterms[5]), .O(left_cterm_rst));
+	BUFG bufg_left_ctr (.I(left_pterms[5]),  .O(left_cterm_rst));
 	BUFG bufg_right_ctr(.I(right_pterms[5]), .O(right_cterm_rst));
-	BUFG bufg_left_cts(.I(left_pterms[6]), .O(left_cterm_set));
+	BUFG bufg_left_cts (.I(left_pterms[6]),  .O(left_cterm_set));
 	BUFG bufg_right_cts(.I(right_pterms[6]), .O(right_cterm_set));
 
 	genvar g;
