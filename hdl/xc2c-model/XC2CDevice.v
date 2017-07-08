@@ -180,7 +180,7 @@ module XC2CDevice(
 		.global_sr_invert(global_sr_invert),
 		.global_sr_en(global_sr_en),
 		.global_tris_invert(global_tris_invert),
-		.global_tris_en(global_tris_en),
+		.global_tris_en(global_tris_en)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
