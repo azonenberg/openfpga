@@ -207,9 +207,8 @@ module XC2CDevice(
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Global routing
 
-	//TODO: muxes for iob_in
 	wire[31:0]		macrocell_to_zia;
-	wire[31:0]		ibuf_to_zia = iob_in;
+	wire[31:0]		ibuf_to_zia;
 
 	//Left side (FB2)
 	wire[39:0]		left_zia_out;
@@ -276,26 +275,62 @@ module XC2CDevice(
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Global clock buffers
+	// Global buffers
+
+	/*
+		Fuse #12256 =
+	 */
 
 	//TODO: gclk enables
-	wire[2:0]		global_ce = 3'b111;
+	reg[2:0]		global_ce;
+	always @(*) begin
+		global_ce	<=  3'b111;
+	end
 
+	//Clocks
 	wire[2:0]		global_clk;
 	BUFGCE bufg_gclk0(.I(iob_in[20]), .O(global_clk[0]), .CE(global_ce[0]));
 	BUFGCE bufg_gclk1(.I(iob_in[21]), .O(global_clk[1]), .CE(global_ce[1]));
 	BUFGCE bufg_gclk2(.I(iob_in[22]), .O(global_clk[2]), .CE(global_ce[2]));
 
+	//TODO: gts enables (and inversions)
+	wire[2:0]		global_te = 3'b111;
+	reg[3:0]		global_tris;
+
+	always @(*) begin
+		global_tris	<= 4'h0;
+	end
+
+	//TODO: gsr enables
+	reg				global_sr_raw;
+	reg				global_sr_en = 1'b1;
+	always @(*) begin
+		global_sr_raw	<= 1'b0;
+		global_sr_en	<= 1'b0;
+	end
+	wire			global_sr;
+	BUFGCE bufg_gsr(.I(global_sr_raw), .O(global_sr), .CE(global_sr_en));
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Macrocells
-
-	wire[15:0]		left_mc_to_obuf;
-	wire[15:0]		right_mc_to_obuf;
 
 	wire			left_cterm_clk;
 	wire			right_cterm_clk;
 	BUFG bufg_left_ctc(.I(left_pterms[4]), .O(left_cterm_clk));
 	BUFG bufg_right_ctc(.I(right_pterms[4]), .O(right_cterm_clk));
+
+	//Global buffers
+	wire			left_cterm_rst;
+	wire			left_cterm_set;
+	wire			left_cterm_oe = left_pterms[7];
+	wire			right_cterm_rst;
+	wire			right_cterm_set;
+	wire			right_cterm_oe = right_pterms[7];
+
+	BUFG bufg_left_ctr(.I(left_pterms[5]), .O(left_cterm_rst));
+	BUFG bufg_right_ctr(.I(right_pterms[5]), .O(right_cterm_rst));
+	BUFG bufg_left_cts(.I(left_pterms[6]), .O(left_cterm_set));
+	BUFG bufg_right_cts(.I(right_pterms[6]), .O(right_cterm_set));
 
 	genvar g;
 	generate
@@ -307,12 +342,24 @@ module XC2CDevice(
 				.pterm_b(left_pterms[g*3 + 9]),
 				.pterm_c(left_pterms[g*3 + 10]),
 				.or_term(left_orterms[g]),
+				.raw_ibuf(iob_in[g + 16]),
+
 				.cterm_clk(left_cterm_clk),
 				.global_clk(global_clk),
+
+				.global_sr(global_sr),
+				.cterm_reset(left_cterm_rst),
+				.cterm_set(left_cterm_set),
+				.cterm_oe(left_cterm_oe),
+				.global_tris(global_tris),
+
 				.config_done_rst(config_done_rst),
+
 				.mc_to_zia(macrocell_to_zia[g + 16]),
-				.mc_to_obuf(left_mc_to_obuf[g]),
-				.raw_ibuf(iob_in[g + 16])
+				.ibuf_to_zia(ibuf_to_zia[g + 16]),
+
+				.mc_to_obuf(iob_out[g + 16]),
+				.tristate_to_obuf(iob_t[g + 16])
 			);
 
 			XC2CMacrocell right(
@@ -321,12 +368,24 @@ module XC2CDevice(
 				.pterm_b(right_pterms[g*3 + 9]),
 				.pterm_c(right_pterms[g*3 + 10]),
 				.or_term(right_orterms[g]),
+				.raw_ibuf(iob_in[g]),
+
 				.cterm_clk(right_cterm_clk),
 				.global_clk(global_clk),
+
+				.global_sr(global_sr),
+				.cterm_reset(right_cterm_rst),
+				.cterm_set(right_cterm_set),
+				.cterm_oe(right_cterm_oe),
+				.global_tris(global_tris),
+
 				.config_done_rst(config_done_rst),
+
 				.mc_to_zia(macrocell_to_zia[g]),
-				.mc_to_obuf(right_mc_to_obuf[g]),
-				.raw_ibuf(iob_in[g])
+				.ibuf_to_zia(ibuf_to_zia[g]),
+
+				.mc_to_obuf(iob_out[g]),
+				.tristate_to_obuf(iob_t[g])
 			);
 
 		end
@@ -335,21 +394,7 @@ module XC2CDevice(
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Debug stuff
 
-	//Tristate all pins except our outputs (6:3)
-	assign iob_t[31:7] = 25'h1ffffff;
-	assign iob_t[6:3] = 4'h0;
-	assign iob_t[2:0] = 3'h7;
-
-	//Drive all unused outputs to 0, then hook up our outputs
-	//Should be X, !X, X, X
-	assign iob_out[31:7] = 25'h0;
-	assign iob_out[6] = right_mc_to_obuf[6];
-	assign iob_out[5] = right_mc_to_obuf[5];
-	assign iob_out[4] = right_mc_to_obuf[4];
-	assign iob_out[3] = right_mc_to_obuf[3];
-	assign iob_out[2:0] = 3'h0;
-
 	//Helper to keep stuff from getting optimized out
-	assign dbgout = ^macrocell_to_zia ^ ^right_mc_to_obuf ^ ^left_mc_to_obuf;
+	assign dbgout = ^macrocell_to_zia ^ ^iob_out ^ ^iob_t;
 
 endmodule
