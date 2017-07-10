@@ -1,6 +1,7 @@
 add_subdirectory(vendor)
 add_subdirectory(gpdevboard)
 add_subdirectory(greenpak4)
+add_subdirectory(gpkjson)
 add_subdirectory(gp4prog)
 add_subdirectory(gp4par)
 add_subdirectory(gp4tchar)

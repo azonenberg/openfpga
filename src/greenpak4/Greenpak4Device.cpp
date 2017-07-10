@@ -985,6 +985,241 @@ string Greenpak4Device::GetPartAsString()
 // File I/O
 
 /**
+	@brief Reads the bitstream from a file
+ */
+bool Greenpak4Device::ReadFromFile(string fname)
+{
+	//Allocate the bitstream
+	bool* bitstream = new bool[m_bitlen];
+	for(unsigned int i=0; i<m_bitlen; i++)
+		bitstream[i] = false;
+
+	//Open the file
+	FILE* fp = fopen(fname.c_str(), "r");
+	if(!fp)
+	{
+		LogError("Couldn't open %s for reading\n", fname.c_str());
+		return false;
+	}
+
+	//Parse the bitfile
+	char unused[128];
+	fgets(unused, sizeof(unused), fp);
+	int index;
+	int value;
+	unsigned int nlines = 0;
+	while(true)
+	{
+		if(2 != fscanf(fp, "%d %d //\n", &index, &value))
+			break;
+		if( ((size_t)index >= m_bitlen) || (index < 0) )
+		{
+			LogWarning("Ignoring invalid index %d (valid = 0...%d)\n", index, m_bitlen);
+			continue;
+		}
+		bitstream[index] = value;
+		nlines ++;
+	}
+	fclose(fp);
+
+	if(nlines != m_bitlen)
+		LogWarning("Bitstream may be incomplete (read %u lines, expected %u)\n", nlines, m_bitlen);
+
+	//Parse the bitstream
+	bool ok = true;
+
+	//Get the config data from each of our blocks
+	for(auto x : m_bitstuff)
+	{
+		if(!x->Load(bitstream))
+		{
+			LogError("Bitstream node %s failed to load\n", x->GetDescription().c_str());
+			ok = false;
+		}
+	}
+
+	/*
+	//Write chip-wide tuning data and ID code
+	switch(m_part)
+	{
+		case GREENPAK4_SLG46621:
+
+			//Tie the unused on-die IOB for pin 14 to ground
+			//TODO: warn if anything tried to use pin 14?
+			for(int i=1378; i<=1389; i++)
+				bitstream[i] = false;
+
+			//Fall through to 46620 for shared config.
+			//Other than the bondout for this IOB the devices are identical.
+
+		case GREENPAK4_SLG46620:
+
+			//FIXME: Disable ADC block (until we have the logic for that implemented)
+			bitstream[486] = true;
+			bitstream[487] = true;
+			bitstream[488] = true;
+			bitstream[489] = true;
+			bitstream[490] = true;
+			bitstream[491] = true;
+
+			//Force ADC block speed to 100 kHz (all other speeds not supported according to GreenPAK Designer)
+			//TODO: Do this in the ADC class once that exists
+			bitstream[838] = 0;
+			bitstream[839] = 1;
+
+			//Vref fine tune, magic value from datasheet (TODO do calibration?)
+			//Seems to have been removed from most recent datasheet
+			bitstream[891] = false;
+			bitstream[890] = false;
+			bitstream[889] = false;
+			bitstream[888] = false;
+			bitstream[887] = false;
+
+			//I/O precharge
+			bitstream[940] = m_ioPrecharge;
+
+			//Device ID; immutable on the device but added to aid verification
+			//5A: more data to follow
+			bitstream[1016] = false;
+			bitstream[1017] = true;
+			bitstream[1018] = false;
+			bitstream[1019] = true;
+			bitstream[1020] = true;
+			bitstream[1021] = false;
+			bitstream[1022] = true;
+			bitstream[1023] = false;
+
+			if(m_nvmLoadRetryCount != 1)
+				LogWarning("NVM retry count values other than 1 are not currently supported for SLG4662x\n");
+
+			//Internal LDO disable
+			bitstream[2008] = m_ldoBypass;
+
+			//Charge pump disable
+			bitstream[2010] = m_disableChargePump;
+
+			//User ID of the bitstream
+			bitstream[2031] = (userid & 0x01) ? true : false;
+			bitstream[2032] = (userid & 0x02) ? true : false;
+			bitstream[2033] = (userid & 0x04) ? true : false;
+			bitstream[2034] = (userid & 0x08) ? true : false;
+			bitstream[2035] = (userid & 0x10) ? true : false;
+			bitstream[2036] = (userid & 0x20) ? true : false;
+			bitstream[2037] = (userid & 0x40) ? true : false;
+			bitstream[2038] = (userid & 0x80) ? true : false;
+
+			//Read protection flag
+			bitstream[2039] = readProtect;
+
+			//A5: end of bitstream
+			bitstream[2040] = true;
+			bitstream[2041] = false;
+			bitstream[2042] = true;
+			bitstream[2043] = false;
+			bitstream[2044] = false;
+			bitstream[2045] = true;
+			bitstream[2046] = false;
+			bitstream[2047] = true;
+
+			break;
+
+		case GREENPAK4_SLG46140:
+
+			//FIXME: Disable ADC block (until we have the logic for that implemented)
+			bitstream[378] = true;
+			bitstream[379] = true;
+			bitstream[380] = true;
+			bitstream[381] = true;
+			bitstream[383] = true;
+			bitstream[383] = true;
+
+			//Force ADC block speed to 100 kHz (all other speeds not supported according to GreenPAK Designer)
+			//Note that the SLG46140V datasheet r100 still lists the other speed values, but SLG46620 rev 100 does not.
+			//Furthermore, GreenPAK Designer v6.02 complains about bitstreams generated using 2'b11.
+			//It says "setting speed to 100 kHz" and writes to 2'b10 instead. One of these is wrong, need to ask Silego.
+			//TODO: Do this in the ADC class once that exists
+			bitstream[542] = 1;
+			bitstream[543] = 1;
+
+			//Vref fine tune, magic value from datasheet (TODO do calibration?)
+			//Seems to have been removed from most recent datasheet, used rev 079 for this
+			bitstream[495] = false;
+			bitstream[494] = false;
+			bitstream[493] = false;
+			bitstream[492] = false;
+			bitstream[491] = false;
+
+			//I/O precharge
+			bitstream[760] = m_ioPrecharge;
+
+			//NVM boot retry
+			switch(m_nvmLoadRetryCount)
+			{
+				case 1:
+					bitstream[995] = false;
+					bitstream[994] = false;
+					break;
+
+				case 2:
+					bitstream[995] = false;
+					bitstream[994] = true;
+					break;
+
+				case 3:
+					bitstream[995] = true;
+					bitstream[994] = false;
+					break;
+
+				case 4:
+					bitstream[995] = true;
+					bitstream[994] = true;
+					break;
+
+				default:
+					LogError("NVM retry count for SLG46140 must be 1...4\n");
+					ok = false;
+			}
+
+			//Internal LDO disable
+			bitstream[1003] = m_ldoBypass;
+
+			//Charge pump disable
+			bitstream[1005] = m_disableChargePump;
+
+			//User ID of the bitstream
+			bitstream[1007] = (userid & 0x01) ? true : false;
+			bitstream[1008] = (userid & 0x02) ? true : false;
+			bitstream[1009] = (userid & 0x04) ? true : false;
+			bitstream[1010] = (userid & 0x08) ? true : false;
+			bitstream[1011] = (userid & 0x10) ? true : false;
+			bitstream[1012] = (userid & 0x20) ? true : false;
+			bitstream[1013] = (userid & 0x40) ? true : false;
+			bitstream[1014] = (userid & 0x80) ? true : false;
+
+			//Device ID; immutable on the device but added to aid verification
+			//A5: end of bitstream
+			bitstream[1016] = true;
+			bitstream[1017] = false;
+			bitstream[1018] = true;
+			bitstream[1019] = false;
+			bitstream[1020] = false;
+			bitstream[1021] = true;
+			bitstream[1022] = false;
+			bitstream[1023] = true;
+
+			break;
+
+		//Invalid device
+		default:
+			LogError("Greenpak4Device: WriteToFile(): unknown device\n");
+			ok = false;
+	}
+	*/
+	delete[] bitstream;
+	return ok;
+}
+
+/**
 	@brief Writes the bitstream to a file
 
 	@param fname		Name of the file to write to

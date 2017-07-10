@@ -44,7 +44,10 @@ public:
 
 	virtual ~Greenpak4Device();
 
-	//Write to a bitfile
+	//Initialize this device from a bitfile
+	bool ReadFromFile(std::string fname);
+
+	//Write our config to a bitfile
 	bool WriteToFile(std::string fname, uint8_t userid, bool readProtect);
 
 	//Write to an in-memory array
