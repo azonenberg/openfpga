@@ -134,10 +134,19 @@ bool Greenpak4Bandgap::CommitChanges()
 	return true;
 }
 
-bool Greenpak4Bandgap::Load(bool* /*bitstream*/)
+bool Greenpak4Bandgap::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	if(bitstream[m_configBase])
+		m_outDelay = 100;
+	else
+		m_outDelay = 550;
+
+	m_autoPowerDown = !bitstream[m_cbasePowerEn];
+
+	if(m_cbaseChopper)
+		m_chopperEn = bitstream[m_cbaseChopper];
+
+	return true;
 }
 
 bool Greenpak4Bandgap::Save(bool* bitstream)

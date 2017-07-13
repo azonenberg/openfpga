@@ -97,10 +97,11 @@ bool Greenpak4DCMPMux::CommitChanges()
 	return true;
 }
 
-bool Greenpak4DCMPMux::Load(bool* /*bitstream*/)
+bool Greenpak4DCMPMux::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	ReadMatrixSelector(bitstream, m_inputBaseWord + 0, m_matrix, m_sel0);
+	ReadMatrixSelector(bitstream, m_inputBaseWord + 1, m_matrix, m_sel1);
+	return true;
 }
 
 bool Greenpak4DCMPMux::Save(bool* bitstream)

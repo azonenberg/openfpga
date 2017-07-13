@@ -95,11 +95,11 @@ bool Greenpak4ClockBuffer::CommitChanges()
 	return true;
 }
 
-bool Greenpak4ClockBuffer::Load(bool* /*bitstream*/)
+bool Greenpak4ClockBuffer::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
-	LogError("Unimplemented\n");
-	return false;
+	//Load our input
+	ReadMatrixSelector(bitstream, m_inputBaseWord, m_matrix, m_input);
+	return true;
 }
 
 bool Greenpak4ClockBuffer::Save(bool* bitstream)

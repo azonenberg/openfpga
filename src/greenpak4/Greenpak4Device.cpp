@@ -1038,6 +1038,10 @@ bool Greenpak4Device::ReadFromFile(string fname)
 		}
 	}
 
+	//TODO: Do some post-processing to create logical connections (e.g. infer VREF blocks)
+
+	//TODO: read this somewhere
+
 	/*
 	//Write chip-wide tuning data and ID code
 	switch(m_part)
