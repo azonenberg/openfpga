@@ -112,10 +112,14 @@ bool Greenpak4PowerOnReset::CommitChanges()
 	return true;
 }
 
-bool Greenpak4PowerOnReset::Load(bool* /*bitstream*/)
+bool Greenpak4PowerOnReset::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	if(bitstream[m_configBase])
+		m_resetDelay = true;
+	else
+		m_resetDelay = false;
+
+	return true;
 }
 
 bool Greenpak4PowerOnReset::Save(bool* bitstream)

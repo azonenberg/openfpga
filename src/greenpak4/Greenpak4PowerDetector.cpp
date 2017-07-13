@@ -89,8 +89,8 @@ bool Greenpak4PowerDetector::CommitChanges()
 
 bool Greenpak4PowerDetector::Load(bool* /*bitstream*/)
 {
-	LogError("Unimplemented\n");
-	return false;
+	//no configuration - output only
+	return true;
 }
 
 bool Greenpak4PowerDetector::Save(bool* /*bitstream*/)

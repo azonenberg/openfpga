@@ -217,8 +217,6 @@ void Greenpak4BitstreamEntity::ReadMatrixSelector(
 			netnum |= (1 << i);
 	}
 
-	LogVerbose("Got netnum %d\n", netnum);
-
 	//Convert the net number back to an EntityOutput
 	//For now, do this exhaustively (TODO be smart about it?)
 	int nhits = 0;
@@ -237,7 +235,7 @@ void Greenpak4BitstreamEntity::ReadMatrixSelector(
 			//TODO: Properly handle configuration if the primitive has multiple ports mapping to one net (e.g. Q/nQ)
 			if(output.GetMatrix() == matrix || output.HasDual() )
 			{
-				LogVerbose("Source: %s\n", output.GetOutputName().c_str());
+				LogVerbose("Source for netnum %d: %s\n", netnum, output.GetOutputName().c_str());
 				signal = output;
 				nhits ++;
 			}

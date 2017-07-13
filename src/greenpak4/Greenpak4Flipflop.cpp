@@ -150,10 +150,33 @@ bool Greenpak4Flipflop::CommitChanges()
 	return true;
 }
 
-bool Greenpak4Flipflop::Load(bool* /*bitstream*/)
+bool Greenpak4Flipflop::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	//Read inputs (set/reset comes first, if present)
+	int ibase = m_inputBaseWord;
+	if(m_hasSR)
+	{
+		ReadMatrixSelector(bitstream, ibase + 0, m_matrix, m_nsr);
+		ibase ++;
+	}
+	else
+		m_nsr = m_device->GetPower();
+	ReadMatrixSelector(bitstream, ibase + 0, m_matrix, m_input);
+	ReadMatrixSelector(bitstream, ibase + 1, m_matrix, m_clock);
+
+	//Read configuration
+	m_latchMode = bitstream[m_configBase + 0];
+	m_outputInvert = bitstream[m_configBase + 1];
+
+	if(m_hasSR)
+	{
+		m_srmode = bitstream[m_configBase + 2];
+		m_initValue = bitstream[m_configBase + 3];
+	}
+	else
+		m_initValue = bitstream[m_configBase + 2];
+
+	return true;
 }
 
 bool Greenpak4Flipflop::Save(bool* bitstream)

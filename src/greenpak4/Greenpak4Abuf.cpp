@@ -96,11 +96,38 @@ bool Greenpak4Abuf::CommitChanges()
 	return true;
 }
 
-bool Greenpak4Abuf::Load(bool* /*bitstream*/)
+bool Greenpak4Abuf::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
-	LogError("Unimplemented\n");
-	return false;
+	//TODO: set input as coming from the one pin it can come from?
+
+	//Input buffer bandwidth
+	int bw = 0;
+	if(bitstream[m_configBase + 0])
+		bw |= 1;
+	if(bitstream[m_configBase + 1])
+		bw |= 2;
+
+	switch(bw)
+	{
+		case 0:
+			m_bufferBandwidth = 1;
+			break;
+
+		case 1:
+			m_bufferBandwidth = 5;
+			break;
+
+		case 2:
+			m_bufferBandwidth = 20;
+			break;
+
+		case 3:
+		default:
+			m_bufferBandwidth = 50;
+			break;
+	}
+
+	return true;
 }
 
 bool Greenpak4Abuf::Save(bool* bitstream)
