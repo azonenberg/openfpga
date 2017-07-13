@@ -50,13 +50,23 @@ public:
 	//Write our config to a bitfile
 	bool WriteToFile(std::string fname, uint8_t userid, bool readProtect);
 
+	//Write our config to a cell-level JSON netlist
+	bool WriteToJSON(std::string fname, std::string top);
+
 	//Write to an in-memory array
 	bool WriteToBuffer(std::vector<uint8_t>& bitstream, uint8_t userid, bool readProtect);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Config accessors
 
 	GREENPAK4_PART GetPart()
 	{ return m_part; }
 
 	std::string GetPartAsString();
+
+	//TODO: save and query userid from bitstream
+
+	//TODO: read protection, precharge, etc, cal, etc status
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// POWER RAILS

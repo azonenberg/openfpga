@@ -181,6 +181,12 @@ protected:
 		Greenpak4EntityOutput signal,
 		bool cross_matrix = false);
 
+	void ReadMatrixSelector(
+		bool* bitstream,
+		unsigned int wordpos,
+		unsigned int matrix,
+		Greenpak4EntityOutput& signal);
+
 	///The device we're attached to
 	Greenpak4Device* m_device;
 

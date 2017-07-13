@@ -139,6 +139,9 @@ public:
 	Greenpak4EntityOutput GetOutputSignal()
 	{ return m_outputSignal; }
 
+	Greenpak4EntityOutput GetOutputEnable()
+	{ return m_outputEnable; }
+
 	bool IsAnalogIbuf()
 	{ return (m_inputThreshold == THRESHOLD_ANALOG); }
 

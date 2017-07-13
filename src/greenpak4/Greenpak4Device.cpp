@@ -1260,6 +1260,61 @@ bool Greenpak4Device::WriteToFile(string fname, uint8_t userid, bool readProtect
 	return ok;
 }
 
+bool Greenpak4Device::WriteToJSON(string fname, string top)
+{
+	//Open the file
+	FILE* fp = fopen(fname.c_str(), "w");
+	if(!fp)
+	{
+		LogError("Couldn't open %s for writing\n", fname.c_str());
+		return false;
+	}
+
+	//Write the header
+	fprintf(fp, "{\n");
+	fprintf(fp, "  \"creator\": \"gpkjson\",\n");
+	fprintf(fp, "  \"modules\": {\n");
+
+	//Write the top-level module header
+	fprintf(fp, "    \"%s\": {\n", top.c_str());
+	fprintf(fp, "      \"attributes\": {\n");
+	fprintf(fp, "        \"top\": 1\n");
+	fprintf(fp, "      },\n");
+
+	//Write ports
+	//For now, name one pin for each IOB that's used
+	//vector<string> portnames;
+	for(auto it : m_iobs)
+	{
+		auto iob = it.second;
+
+		auto oe = iob->GetOutputEnable();
+
+		//Input or unused
+		if(oe.IsPowerRail() && oe.GetPowerRailValue() == 0)
+		{
+		}
+
+		//Output or bidir
+		else
+		{
+			LogNotice("Pin %s is output or bidir\n", iob->GetDescription().c_str());
+		}
+	}
+
+	//Done with module
+	fprintf(fp, "    }\n");
+
+	//TODO: Spit out generic cell library stuff so Yosys can import it correctly?
+	//Alternatively, don't have those cells at all and rely on Yosys to import cells_greenpak4 first?
+
+	//Done
+	fprintf(fp, "  }\n");
+	fprintf(fp, "}\n");
+	fclose(fp);
+	return true;
+}
+
 /**
 	@brief Writes a bitstream to an in-memory netlist
  */

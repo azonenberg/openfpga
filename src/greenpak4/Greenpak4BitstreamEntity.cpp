@@ -226,6 +226,58 @@ bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	return true;
 }
 
+void Greenpak4BitstreamEntity::ReadMatrixSelector(
+	bool* bitstream,
+	unsigned int wordpos,
+	unsigned int matrix,
+	Greenpak4EntityOutput& signal)
+{
+	//TODO
+	LogVerbose("Reading matrix selector for %s\n", GetDescription().c_str());
+
+	unsigned int nbits = m_device->GetMatrixBits();
+	unsigned int startbit = m_device->GetMatrixBase(matrix) + wordpos * nbits;
+
+	//Need to flip bit ordering since lowest array index is the MSB
+	unsigned int netnum = 0;
+	for(unsigned int i=0; i<nbits; i++)
+	{
+		if(bitstream[startbit + i])
+			netnum |= (1 << i);
+	}
+
+	LogVerbose("Got netnum %d\n", netnum);
+	LogIndenter li;
+
+	//Convert the net number back to an EntityOutput
+	//For now, do this exhaustively (TODO be smart about it?)
+	int nhits = 0;
+	for(size_t i=0; i<m_device->GetEntityCount(); i++)
+	{
+		auto entity = m_device->GetEntity(i);
+		auto outputs = entity->GetOutputPorts();
+		for(auto pname : outputs)
+		{
+			//Skip mismatched net numbers
+			auto output = entity->GetOutput(pname);
+			if(output.GetNetNumber() != netnum)
+				continue;
+
+			//TODO: Properly handle paired entities (e.g. LUT/PGEN)
+			//TODO: Properly handle configuration if the primitive has multiple ports mapping to one net (e.g. Q/nQ)
+			if(output.GetMatrix() == matrix || output.HasDual() )
+			{
+				LogVerbose("HIT: %s\n", output.GetOutputName().c_str());
+				signal = output;
+				nhits ++;
+			}
+		}
+	}
+
+	if(nhits != 1)
+		LogWarning("Did not get exactly one hit in ReadMatrixSelector\n");
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Timing analysis
 

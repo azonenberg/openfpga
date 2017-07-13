@@ -131,15 +131,9 @@ int main(int argc, char* argv[])
 	//Initialize the device
 	Greenpak4Device device(part);
 	if(!device.ReadFromFile(fname))
-		return 1;
-
-	/*
-	//Parse the unplaced netlist
-	//We need to load the netlist first to handle the unused_* attributes
-	LogNotice("\nLoading Yosys JSON file \"%s\".\n", fname.c_str());
-	Greenpak4Netlist netlist(fname, pcfname);
-	if(!netlist.Validate())
-		return 1;
+	{
+		//return 1;
+	}
 
 	//Print configuration
 	LogNotice("\nDevice configuration:\n");
@@ -147,7 +141,7 @@ int main(int argc, char* argv[])
 		LogIndenter li;
 
 		string dev = "<invalid>";
-		switch(part)
+		switch(device.GetPart())
 		{
 			case Greenpak4Device::GREENPAK4_SLG46620:
 				dev = "SLG46620V";
@@ -165,88 +159,23 @@ int main(int argc, char* argv[])
 		LogNotice("Target device:   %s\n", dev.c_str());
 		LogNotice("VCC range:       not yet implemented\n");
 
-		string pull;
-		string drive;
-
-		switch(unused_pull)
-		{
-			case Greenpak4IOB::PULL_NONE:
-				pull = "float";
-				break;
-
-			case Greenpak4IOB::PULL_DOWN:
-				pull = "pull down with ";
-				break;
-
-			case Greenpak4IOB::PULL_UP:
-				pull = "pull up with ";
-				break;
-
-			default:
-				LogError("Invalid pull direction\n");
-				return 1;
-		}
-
-		if(unused_pull != Greenpak4IOB::PULL_NONE)
-		{
-			switch(unused_drive)
-			{
-				case Greenpak4IOB::PULL_10K:
-					drive = "10K";
-					break;
-
-				case Greenpak4IOB::PULL_100K:
-					drive = "100K";
-					break;
-
-				case Greenpak4IOB::PULL_1M:
-					drive = "1M";
-					break;
-
-				default:
-					LogError("Invalid pull strength\n");
-					return 1;
-			}
-		}
-
-		LogNotice("Unused pins:     %s%s\n", pull.c_str(), drive.c_str());
-
+		/*
 		LogNotice("User ID code:    %02x\n", userid);
 		LogNotice("Read protection: %s\n", readProtect ? "enabled" : "disabled");
 		LogNotice("I/O precharge:   %s\n", ioPrecharge ? "enabled" : "disabled");
 		LogNotice("Charge pump:     %s\n", disableChargePump ? "off" : "auto");
 		LogNotice("LDO:             %s\n", ldoBypass ? "bypassed" : "enabled");
 		LogNotice("Boot retry:      %d times\n", bootRetry);
+		*/
 	}
-
-	//Create the device and initialize all IO pins
-	Greenpak4Device device(part, unused_pull, unused_drive);
-	device.SetIOPrecharge(ioPrecharge);
-	device.SetDisableChargePump(disableChargePump);
-	device.SetLDOBypass(ldoBypass);
-	device.SetNVMRetryCount(bootRetry);
-
-	//Attempt to load the timing data file, if present
-	//FIXME: get this from a sane location and make it chip specific
-	string tfname = "../../../timing.json";
-	LogNotice("\nLoading timing data file \"%s\"\n", tfname.c_str());
-	if(!device.LoadTimingData(tfname))
-		LogWarning("Timing data file not found, unable to do timing-driven placement or evaluate post-PAR timing\n");
-
-	//Do the actual P&R
-	LogNotice("\nImplementing top-level module \"%s\".\n", netlist.GetTopModule()->GetName().c_str());
-	if(!DoPAR(&netlist, &device))
-		return 1;
 
 	//Write the final bitstream
-	LogNotice("\nWriting final bitstream to output file \"%s\", using ID code 0x%x.\n",
-		ofname.c_str(), (int)userid);
+	LogNotice("\nWriting final bitstream to output file \"%s\"\n", ofname.c_str());
 	{
 		LogIndenter li;
-		if(!device.WriteToFile(ofname, userid, readProtect))
+		if(!device.WriteToJSON(ofname, "Bitstream"))
 			return 1;
 	}
-	*/
 	return 0;
 }
 

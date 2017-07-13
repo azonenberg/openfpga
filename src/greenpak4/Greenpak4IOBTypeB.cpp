@@ -55,11 +55,109 @@ string Greenpak4IOBTypeB::GetDescription() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4IOBTypeB::Load(bool* /*bitstream*/)
+bool Greenpak4IOBTypeB::Load(bool* bitstream)
 {
-	//TODO
-	LogError("Unimplemented\n");
-	return false;
+	//Read the output signal
+	ReadMatrixSelector(bitstream, m_inputBaseWord, m_matrix, m_outputSignal);
+
+	//Don't read dedicated routing config, it doesn't matter for the netlist
+
+
+	int drivetype = 0;
+	if(bitstream[m_configBase + 0])
+		drivetype |= 1;
+	if(bitstream[m_configBase + 1])
+		drivetype |= 2;
+
+	//See if we're an output
+	if(bitstream[m_configBase + 2])
+	{
+		m_outputEnable = m_device->GetPowerRail(true);
+
+		switch(drivetype)
+		{
+			case 0:
+				m_driveType = DRIVE_PUSHPULL;
+				break;
+			case 1:
+				m_driveType = DRIVE_NMOS_OPENDRAIN;
+				break;
+			case 2:
+				m_driveType = DRIVE_PMOS_OPENDRAIN;
+				break;
+
+			//does this make sense?
+			case 3:
+			default:
+				m_driveType = DRIVE_NMOS_OPENDRAIN;
+				m_inputThreshold = THRESHOLD_ANALOG;
+				break;
+		}
+	}
+
+	//INPUT
+	else
+	{
+		m_outputEnable = m_device->GetPowerRail(false);
+
+		switch(drivetype)
+		{
+			case 0:
+				m_inputThreshold = THRESHOLD_NORMAL;
+				m_schmittTrigger = false;
+
+			case 1:
+				m_inputThreshold = THRESHOLD_NORMAL;
+				m_schmittTrigger = true;
+
+			case 2:
+				m_inputThreshold = THRESHOLD_LOW;
+				break;
+
+			case 3:
+				m_inputThreshold = THRESHOLD_ANALOG;
+				break;
+		}
+	}
+
+	//Pullup/down resistor
+	int pull = 0;
+	if(bitstream[m_configBase + 3])
+		pull |= 1;
+	if(bitstream[m_configBase + 4])
+		pull |= 2;
+	if(bitstream[m_configBase + 5])
+		m_pullDirection = PULL_UP;
+	else
+		m_pullDirection = PULL_DOWN;
+	switch(pull)
+	{
+		case 0:
+			m_pullDirection = PULL_NONE;
+			break;
+		case 1:
+			m_pullStrength = PULL_10K;
+			break;
+		case 2:
+			m_pullStrength = PULL_100K;
+			break;
+		case 3:
+			m_pullStrength = PULL_1M;
+			break;
+	}
+
+	//Output drive strength
+	if(bitstream[m_configBase + 6])
+		m_driveStrength = DRIVE_2X;
+	else
+		m_driveStrength = DRIVE_1X;
+
+	//Quad driver, if implemented
+	if( (m_flags & IOB_FLAG_X4DRIVE) && (bitstream[m_configBase + 7]) )
+		m_driveStrength = DRIVE_4X;
+
+	//All good
+	return true;
 }
 
 bool Greenpak4IOBTypeB::Save(bool* bitstream)
