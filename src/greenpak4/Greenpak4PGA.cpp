@@ -170,27 +170,90 @@ bool Greenpak4PGA::CommitChanges()
 	return true;
 }
 
-bool Greenpak4PGA::Load(bool* /*bitstream*/)
+bool Greenpak4PGA::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
-	LogError("Unimplemented\n");
-	return false;
+	//TODO: read config bit 0
+
+	//If input mux is disabled, vin_sel is vdd
+	if(bitstream[m_configBase + 1] == false)
+		m_vinsel = m_device->GetPowerRail(true);
+
+	//If input mux is enabled, what do we do here? Not yet supported
+
+	//Read the mode
+	int mode = 0;
+	if(bitstream[m_configBase + 7])
+		mode |= 1;
+	if(bitstream[m_configBase + 2])
+		mode |= 2;
+	switch(mode)
+	{
+		case 0:
+			m_inputMode = MODE_SINGLE;
+			break;
+
+		case 2:
+			m_inputMode = MODE_DIFF;
+			break;
+
+		case 3:
+			m_inputMode = MODE_PDIFF;
+			break;
+
+		default:
+			LogError("Don't know how to handle this PGA mode\n");
+			return false;
+	}
+
+	//Set the gain
+	int gain = 0;
+	if(bitstream[m_configBase + 3])
+		gain |= 1;
+	if(bitstream[m_configBase + 4])
+		gain |= 2;
+	if(bitstream[m_configBase + 5])
+		gain |= 4;
+	switch(gain)
+	{
+		case 0:
+			m_gain = 25;
+			break;
+		case 1:
+			m_gain = 50;
+			break;
+		case 2:
+			m_gain = 100;
+			break;
+		case 3:
+			m_gain = 200;
+			break;
+		case 4:
+			m_gain = 400;
+			break;
+		case 5:
+			m_gain = 800;
+			break;
+		case 6:
+			m_gain = 1600;
+			break;
+
+		default:
+			LogError("Bitstream calls for 32x PGA gain but this isn't supported in current silicon rev\n");
+			return false;
+	}
+
+	//Ignore force-on bits when reading, we'll recompute this when exporting a bitstream.
+	//They don't matter when exporting a netlist
+
+	return true;
 }
 
 bool Greenpak4PGA::Save(bool* bitstream)
 {
-	/*
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
 
-	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 0, m_clock))
-		return false;
-	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 1, m_input))
-		return false;
-	if(!WriteMatrixSelector(bitstream, m_inputBaseWord + 2, m_reset))
-		return false;
-
-	*/
+	//no digital inputs
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Configuration
