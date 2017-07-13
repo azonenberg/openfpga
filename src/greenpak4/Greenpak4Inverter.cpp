@@ -96,11 +96,10 @@ bool Greenpak4Inverter::CommitChanges()
 	return true;
 }
 
-bool Greenpak4Inverter::Load(bool* /*bitstream*/)
+bool Greenpak4Inverter::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
-	LogError("Unimplemented\n");
-	return false;
+	ReadMatrixSelector(bitstream, m_inputBaseWord, m_matrix, m_input);
+	return true;
 }
 
 bool Greenpak4Inverter::Save(bool* bitstream)

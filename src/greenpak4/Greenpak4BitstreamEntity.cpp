@@ -203,8 +203,8 @@ void Greenpak4BitstreamEntity::ReadMatrixSelector(
 	unsigned int matrix,
 	Greenpak4EntityOutput& signal)
 {
-	//TODO
 	LogVerbose("Reading matrix selector for %s\n", GetDescription().c_str());
+	LogIndenter li;
 
 	unsigned int nbits = m_device->GetMatrixBits();
 	unsigned int startbit = m_device->GetMatrixBase(matrix) + wordpos * nbits;
@@ -218,7 +218,6 @@ void Greenpak4BitstreamEntity::ReadMatrixSelector(
 	}
 
 	LogVerbose("Got netnum %d\n", netnum);
-	LogIndenter li;
 
 	//Convert the net number back to an EntityOutput
 	//For now, do this exhaustively (TODO be smart about it?)
@@ -238,7 +237,7 @@ void Greenpak4BitstreamEntity::ReadMatrixSelector(
 			//TODO: Properly handle configuration if the primitive has multiple ports mapping to one net (e.g. Q/nQ)
 			if(output.GetMatrix() == matrix || output.HasDual() )
 			{
-				LogVerbose("HIT: %s\n", output.GetOutputName().c_str());
+				LogVerbose("Source: %s\n", output.GetOutputName().c_str());
 				signal = output;
 				nhits ++;
 			}

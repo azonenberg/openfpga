@@ -109,11 +109,11 @@ unsigned int Greenpak4CrossConnection::GetOutputNetNumber(string /*port*/)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Load/save logic
 
-bool Greenpak4CrossConnection::Load(bool* /*bitstream*/)
+bool Greenpak4CrossConnection::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
-	LogError("Unimplemented\n");
-	return false;
+	//Input should come from opposite matrix as us
+	ReadMatrixSelector(bitstream, m_inputBaseWord, !m_matrix, m_input);
+	return true;
 }
 
 bool Greenpak4CrossConnection::Save(bool* bitstream)
