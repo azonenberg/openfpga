@@ -85,13 +85,6 @@ public:
 	{ return m_parnode; }
 
 	/**
-		@brief Gets the net name of our output
-
-		FIXME: this is fundamentally wrong, this should be a function on EntityOutput instead
-	 */
-	std::string GetOutputName();
-
-	/**
 		@brief Returns true if this entity maps to a node in the netlist.
 	 */
 	bool IsUsed()

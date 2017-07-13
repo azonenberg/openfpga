@@ -122,35 +122,6 @@ bool Greenpak4BitstreamEntity::IsGeneralFabricInput(string port) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Debug log helpers
-
-string Greenpak4BitstreamEntity::GetOutputName()
-{
-	auto mate = m_parnode->GetMate();
-	if(mate == NULL)
-		return "";
-	auto entity = static_cast<Greenpak4NetlistEntity*>(mate->GetData());
-
-	//If it's an IOB, return the IOB name
-	if(dynamic_cast<Greenpak4NetlistPort*>(entity))
-		return entity->m_name;
-
-	//Nope, it's a cell
-	auto cell = dynamic_cast<Greenpak4NetlistCell*>(entity);
-	if(!cell)
-		return "error";
-
-	//Look up our first output port... HACK!
-	//TODO: Fix this
-	string portname = GetOutputPorts()[0];
-
-	//Find the net we connect to
-	if(cell->m_connections.find(portname) == cell->m_connections.end())
-		return "error";
-	return cell->m_connections[portname][0]->m_name;	//FIXME:VECTOR
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Load/save helpers
 
 Greenpak4BitstreamEntity* Greenpak4BitstreamEntity::GetRealEntity()
