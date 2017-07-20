@@ -515,8 +515,8 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		// FSM input data source
 
 		//NVM data (FSM data = max count)
-		//NB: on SLG4662x, FSM0 and FSM1 encoding for this register does not match
-		//this one bit value is the same for both though
+		//WARNING: on SLG4662x, FSM0 and FSM1 encoding for this register are not the same!
+		//This one case uses the same encoding for both so we're OK until we support the other modes
 		bitstream[nbase + 0] = false;
 		bitstream[nbase + 1] = false;
 

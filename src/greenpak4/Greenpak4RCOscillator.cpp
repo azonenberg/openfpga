@@ -164,10 +164,34 @@ bool Greenpak4RCOscillator::CommitChanges()
 	return true;
 }
 
-bool Greenpak4RCOscillator::Load(bool* /*bitstream*/)
+bool Greenpak4RCOscillator::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	//Load PWRDN
+	ReadMatrixSelector(bitstream, m_inputBaseWord, m_matrix, m_powerDown);
+
+	//If output is disabled, force us to be powered down
+	if(!bitstream[m_configBase + 0])
+		m_powerDown = m_device->GetPower();
+
+	//Ignore power-down enable
+
+	//Read other status bits
+	m_autoPowerDown = !bitstream[m_configBase + 7];
+	m_fastClock = bitstream[m_configBase + 8];
+
+	//TODO: bypass
+
+	//Output pre-divider
+	int prediv = bitstream[m_configBase + 1] | (bitstream[m_configBase + 2] << 1);
+	int predivs[4] = {1, 2, 4, 8};
+	m_preDiv = predivs[prediv];
+
+	//Output post-divider
+	int postdiv = bitstream[m_configBase + 3] | (bitstream[m_configBase + 4] << 1) | (bitstream[m_configBase + 5] << 2);
+	int postdivs[8] = {1, 2, 4, 3, 8, 12, 24, 64};
+	m_postDiv = postdivs[postdiv];
+
+	return true;
 }
 
 bool Greenpak4RCOscillator::Save(bool* bitstream)
@@ -209,7 +233,7 @@ bool Greenpak4RCOscillator::Save(bool* bitstream)
 	//Frequency selection
 	bitstream[m_configBase + 8] = m_fastClock;
 
-	//Bypass RC oscillator (TODO: what does this do??) matrix_out1_73
+	//Bypass RC oscillator (feed external clock to our output) matrix_out1_73
 	bitstream[m_configBase + 9] = false;
 
 	//Output pre-divider

@@ -144,11 +144,24 @@ bool Greenpak4SPI::CommitChanges()
 	return true;
 }
 
-bool Greenpak4SPI::Load(bool* /*bitstream*/)
+bool Greenpak4SPI::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
-	LogError("Unimplemented\n");
-	return false;
+	//Read the chip select
+	ReadMatrixSelector(bitstream, m_inputBaseWord, m_matrix, m_csn);
+
+	//TODO: set other ports for MOSI/MISO/SCK?
+
+	//Read configuration
+	m_useAsBuffer				= bitstream[m_configBase + 0];
+	//TODO: bit 1 = input source
+	m_cpha						= bitstream[m_configBase + 2];
+	m_cpol						= bitstream[m_configBase + 3];
+	m_width8Bits				= bitstream[m_configBase + 4];
+	m_dirIsOutput				= bitstream[m_configBase + 5];
+	m_parallelOutputToFabric	= bitstream[m_configBase + 6];
+	//TODO: SDIO mux selector
+
+	return true;
 }
 
 bool Greenpak4SPI::Save(bool* bitstream)

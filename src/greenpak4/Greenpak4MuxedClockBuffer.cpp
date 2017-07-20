@@ -41,11 +41,19 @@ Greenpak4MuxedClockBuffer::~Greenpak4MuxedClockBuffer()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4MuxedClockBuffer::Load(bool* /*bitstream*/)
+bool Greenpak4MuxedClockBuffer::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
-	LogError("Unimplemented\n");
-	return false;
+	unsigned int muxsel = (bitstream[m_configBase + 1] << 1) | bitstream[m_configBase + 0];
+	for(auto it : m_inputs)
+	{
+		if(it.second == muxsel)
+		{
+			m_input = it.first;
+			break;
+		}
+	}
+
+	return true;
 }
 
 bool Greenpak4MuxedClockBuffer::Save(bool* bitstream)
