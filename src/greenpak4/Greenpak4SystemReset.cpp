@@ -133,10 +133,29 @@ bool Greenpak4SystemReset::CommitChanges()
 	return true;
 }
 
-bool Greenpak4SystemReset::Load(bool* /*bitstream*/)
+bool Greenpak4SystemReset::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	if(bitstream[m_configBase + 0])
+		m_resetMode = HIGH_LEVEL;
+	else
+		m_resetMode = RISING_EDGE;
+
+	if(bitstream[m_configBase + 1])
+		m_resetDelay = 500;
+	else
+		m_resetDelay = 4;
+
+	//Tie reset off to ground if we're not enabled
+	if(!bitstream[m_configBase + 2])
+		m_reset = m_device->GetGround();
+
+	else
+	{
+		//TODO: Load m_input
+		LogWarning("Greenpak4SystemReset::Load: not setting m_reset to pin 2's output yet");
+	}
+
+	return true;
 }
 
 bool Greenpak4SystemReset::Save(bool* bitstream)

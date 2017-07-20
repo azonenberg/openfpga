@@ -96,10 +96,12 @@ bool Greenpak4DCMPRef::CommitChanges()
 	return true;
 }
 
-bool Greenpak4DCMPRef::Load(bool* /*bitstream*/)
+bool Greenpak4DCMPRef::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	m_referenceValue = bitstream[m_configBase + 0];
+	for(int i=1; i<8; i++)
+		m_referenceValue |= bitstream[m_configBase + i] << 1;
+	return true;
 }
 
 bool Greenpak4DCMPRef::Save(bool* bitstream)
