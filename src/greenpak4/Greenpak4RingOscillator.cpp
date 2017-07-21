@@ -158,7 +158,7 @@ bool Greenpak4RingOscillator::Load(bool* bitstream)
 
 	//If powerdown isn't enabled, tie powerdown off
 	else if(!bitstream[m_configBase + 8])
-		m_powerDown = m-device->GetGround();
+		m_powerDown = m_device->GetGround();
 
 	//Read other config
 	m_autoPowerDown = !bitstream[m_configBase + 10];
