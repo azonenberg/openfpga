@@ -152,7 +152,7 @@ bool Greenpak4SystemReset::Load(bool* bitstream)
 	else
 	{
 		//TODO: Load m_input
-		LogWarning("Greenpak4SystemReset::Load: not setting m_reset to pin 2's output yet");
+		LogWarning("Greenpak4SystemReset::Load: not setting m_reset to pin 2's output yet\n");
 	}
 
 	return true;
