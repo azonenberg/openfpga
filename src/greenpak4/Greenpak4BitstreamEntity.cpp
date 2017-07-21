@@ -444,7 +444,7 @@ bool Greenpak4BitstreamEntity::LoadTimingDataForCorner(json_object* object)
 		speed = PTVCorner::SPEED_FAST;
 	else if(sprocess == "slow")
 		speed = PTVCorner::SPEED_SLOW;
-	else if(sprocess == "typical")
+	else //if(sprocess == "typical")
 		speed = PTVCorner::SPEED_TYPICAL;
 
 	//This is the process corner we're loading
