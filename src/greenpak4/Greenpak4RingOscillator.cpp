@@ -147,10 +147,34 @@ bool Greenpak4RingOscillator::CommitChanges()
 	return true;
 }
 
-bool Greenpak4RingOscillator::Load(bool* /*bitstream*/)
+bool Greenpak4RingOscillator::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	//Load PWRDN
+	ReadMatrixSelector(bitstream, m_inputBaseWord, m_matrix, m_powerDown);
+
+	//If output is disabled, force us to be powered down
+	if(!bitstream[m_configBase + 7])
+		m_powerDown = m_device->GetPower();
+
+	//If powerdown isn't enabled, tie powerdown off
+	else if(!bitstream[m_configBase + 8])
+		m_powerDown = m-device->GetGround();
+
+	//Read other config
+	m_autoPowerDown = !bitstream[m_configBase + 10];
+
+	//Read clock dividers
+	int prediv = (bitstream[m_configBase + 6] << 1) | bitstream[m_configBase + 5];
+	int predivs[4] = {1, 4, 8, 16};
+	m_preDiv = predivs[prediv];
+
+	int postdiv =	(bitstream[m_configBase + 2] << 2) |
+					(bitstream[m_configBase + 1] << 1) |
+					 bitstream[m_configBase + 0];
+	int postdivs[8] = {1, 2, 4, 3, 8, 12, 24, 64};
+	m_postDiv = postdivs[postdiv];
+
+	return true;
 }
 
 bool Greenpak4RingOscillator::Save(bool* bitstream)

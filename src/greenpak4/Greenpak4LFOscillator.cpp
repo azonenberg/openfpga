@@ -133,10 +133,24 @@ bool Greenpak4LFOscillator::CommitChanges()
 	return true;
 }
 
-bool Greenpak4LFOscillator::Load(bool* /*bitstream*/)
+bool Greenpak4LFOscillator::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	//Load PWRDN
+	ReadMatrixSelector(bitstream, m_inputBaseWord, m_matrix, m_powerDown);
+
+	//If powerdown isn't enabled, tie powerdown off
+	if(!bitstream[m_configBase + 0])
+		m_powerDown = m_device->GetGround();
+
+	//Read other config
+	m_autoPowerDown = !bitstream[m_configBase + 1];
+
+	//Read clock dividers
+	int clkdiv = (bitstream[m_cbaseClkdiv + 1] << 1) | bitstream[m_cbaseClkdiv + 0];
+	int clkdivs[4] = {1, 2, 4, 16};
+	m_outDiv = clkdivs[clkdiv];
+
+	return true;
 }
 
 bool Greenpak4LFOscillator::Save(bool* bitstream)
