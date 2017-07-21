@@ -57,7 +57,7 @@ FCCoolRunnerIIZIAEntry::FCCoolRunnerIIZIAEntry(int row, string muxsel_hex, int z
 	
 	//Temporary easy code for width=8
 	int val;
-	sscanf(muxsel_hex.c_str(), "%2x", (unsigned)&val);
+	sscanf(muxsel_hex.c_str(), "%2x", (unsigned int*)&val);
 	m_muxsel.push_back((val >> 7) & 1);
 	m_muxsel.push_back((val >> 6) & 1);
 	m_muxsel.push_back((val >> 5) & 1);
