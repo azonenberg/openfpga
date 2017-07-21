@@ -108,6 +108,22 @@ vector<string> Greenpak4Flipflop::GetOutputPorts() const
 	return r;
 }
 
+/**
+	@brief Q and nQ go to the same route and we can only use one at a time, so filter them
+ */
+vector<string> Greenpak4Flipflop::GetOutputPortsFiltered(bool* bitstream) const
+{
+	//Read the bitstream to see if we should be filtering.
+	//Do not call Load() as we're const
+
+	vector<string> r;
+	if(bitstream[m_configBase + 1])
+		r.push_back("nQ");
+	else
+		r.push_back("Q");
+	return r;
+}
+
 unsigned int Greenpak4Flipflop::GetOutputNetNumber(string port)
 {
 	if( (port == "Q") || (port == "nQ") )

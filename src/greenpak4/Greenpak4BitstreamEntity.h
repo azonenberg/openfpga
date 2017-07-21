@@ -123,6 +123,9 @@ public:
 	//Get a list of output ports on this node that connect to general fabric routing (may be empty)
 	virtual std::vector<std::string> GetOutputPorts() const =0;
 
+	//Calls GetOutputPorts() then filters the output to only include ports valid in the current configuration
+	virtual std::vector<std::string> GetOutputPortsFiltered(bool* bitstream) const;
+
 	//Commit changes from the assigned PAR graph node to us
 	virtual bool CommitChanges() =0;
 

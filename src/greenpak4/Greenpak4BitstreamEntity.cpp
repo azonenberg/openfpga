@@ -124,6 +124,11 @@ bool Greenpak4BitstreamEntity::IsGeneralFabricInput(string port) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Load/save helpers
 
+vector<string> Greenpak4BitstreamEntity::GetOutputPortsFiltered(bool* /*bitstream*/) const
+{
+	return GetOutputPorts();
+}
+
 Greenpak4BitstreamEntity* Greenpak4BitstreamEntity::GetRealEntity()
 {
 	if(m_dual && !m_dualMaster)
@@ -223,7 +228,7 @@ void Greenpak4BitstreamEntity::ReadMatrixSelector(
 	for(size_t i=0; i<m_device->GetEntityCount(); i++)
 	{
 		auto entity = m_device->GetEntity(i);
-		auto outputs = entity->GetOutputPorts();
+		auto outputs = entity->GetOutputPortsFiltered(bitstream);
 		for(auto pname : outputs)
 		{
 			//Skip mismatched net numbers
