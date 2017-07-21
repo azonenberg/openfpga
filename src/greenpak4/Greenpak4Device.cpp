@@ -999,6 +999,7 @@ bool Greenpak4Device::ReadFromFile(string fname)
 	if(!fp)
 	{
 		LogError("Couldn't open %s for reading\n", fname.c_str());
+		delete[] bitstream;
 		return false;
 	}
 
