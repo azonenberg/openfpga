@@ -136,11 +136,19 @@ bool Greenpak4Delay::CommitChanges()
 	return true;
 }
 
-bool Greenpak4Delay::Load(bool* /*bitstream*/)
+bool Greenpak4Delay::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
-	LogError("Unimplemented\n");
-	return false;
+	ReadMatrixSelector(bitstream, m_inputBaseWord, m_matrix, m_input);
+
+	int imode = (bitstream[m_configBase + 1] << 1) | bitstream[m_configBase + 0];
+	modes xmodes[] = {RISING_EDGE, FALLING_EDGE, BOTH_EDGE, DELAY};
+	m_mode = xmodes[imode];
+
+	m_delayTap = ( (bitstream[m_configBase + 3] << 1) | bitstream[m_configBase + 2]) + 1;
+
+	m_glitchFilter = bitstream[m_configBase + 4];
+
+	return true;
 }
 
 bool Greenpak4Delay::Save(bool* bitstream)

@@ -142,11 +142,29 @@ bool Greenpak4ShiftRegister::CommitChanges()
 	return true;
 }
 
-bool Greenpak4ShiftRegister::Load(bool* /*bitstream*/)
+bool Greenpak4ShiftRegister::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
-	LogError("Unimplemented\n");
-	return false;
+	ReadMatrixSelector(bitstream, m_inputBaseWord + 0, m_matrix, m_clock);
+	ReadMatrixSelector(bitstream, m_inputBaseWord + 1, m_matrix, m_input);
+	ReadMatrixSelector(bitstream, m_inputBaseWord + 2, m_matrix, m_reset);
+
+	m_delayB = (
+		(bitstream[m_configBase + 3] << 3) |
+		(bitstream[m_configBase + 2] << 2) |
+		(bitstream[m_configBase + 1] << 1) |
+		(bitstream[m_configBase + 0])
+		) + 1;
+
+	m_delayA = (
+		(bitstream[m_configBase + 7] << 3) |
+		(bitstream[m_configBase + 6] << 2) |
+		(bitstream[m_configBase + 5] << 1) |
+		(bitstream[m_configBase + 4])
+		) + 1;
+
+	m_invertA = bitstream[m_configBase + 8];
+
+	return true;
 }
 
 bool Greenpak4ShiftRegister::Save(bool* bitstream)
