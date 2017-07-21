@@ -46,7 +46,9 @@ PAREngine::~PAREngine()
 //This particular piece of code was stolen from the "simple C implementation."
 //See http://www.pcg-random.org for more information
 //Unsigned integer overflow here is intentional, so tell ubsan to ignore it
+#ifdef __clang__
 __attribute__((no_sanitize("integer")))
+#endif
 uint32_t PAREngine::RandomNumber()
 {
 	uint64_t oldstate = m_randomState;
