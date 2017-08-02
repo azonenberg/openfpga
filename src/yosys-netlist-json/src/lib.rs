@@ -78,7 +78,7 @@ pub enum AttributeVal {
 }
 
 /// Represents an entire .json file used by Yosys
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Netlist {
     /// The program that created this file.
     #[serde(default)]
@@ -89,7 +89,7 @@ pub struct Netlist {
 }
 
 /// Represents one module in the Yosys hierarchy
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Module {
     /// Module attributes
     #[serde(default)]
@@ -149,8 +149,11 @@ pub struct Netname {
     pub attributes: HashMap<String, AttributeVal>,
 }
 
-pub fn read_yosys_netlist(input: &[u8]) -> Result<Netlist, serde_json::Error> {
-    serde_json::from_slice(input)
+impl Netlist {
+    /// Read netlist data from a slice containing the bytes from a Yosys .json file
+    pub fn from_slice(input: &[u8]) -> Result<Netlist, serde_json::Error> {
+        serde_json::from_slice(input)
+    }
 }
 
 #[cfg(test)]
@@ -159,7 +162,7 @@ mod tests {
 
     #[test]
     fn super_empty_json() {
-        let result = read_yosys_netlist(br#"
+        let result = Netlist::from_slice(br#"
             {}"#).unwrap();
         assert_eq!(result.creator, "");
         assert_eq!(result.modules.len(), 0);
@@ -167,7 +170,7 @@ mod tests {
 
     #[test]
     fn empty_json() {
-        let result = read_yosys_netlist(br#"
+        let result = Netlist::from_slice(br#"
             {
               "creator": "this is a test",
               "modules": {
@@ -179,7 +182,7 @@ mod tests {
 
     #[test]
     fn empty_json_2() {
-        let result = read_yosys_netlist(br#"
+        let result = Netlist::from_slice(br#"
             {
               "modules": {
               }
@@ -190,7 +193,7 @@ mod tests {
 
     #[test]
     fn bit_values_test() {
-        let result = read_yosys_netlist(br#"
+        let result = Netlist::from_slice(br#"
             {
               "modules": {
                 "mymodule": {
@@ -213,7 +216,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn invalid_bit_value_test() {
-        read_yosys_netlist(br#"
+        Netlist::from_slice(br#"
             {
               "modules": {
                 "mymodule": {
@@ -232,7 +235,7 @@ mod tests {
 
     #[test]
     fn attribute_value_test() {
-        let result = read_yosys_netlist(br#"
+        let result = Netlist::from_slice(br#"
             {
               "modules": {
                 "mymodule": {
@@ -255,7 +258,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn invalid_attribute_value_test() {
-        read_yosys_netlist(br#"
+        Netlist::from_slice(br#"
             {
               "modules": {
                 "mymodule": {
