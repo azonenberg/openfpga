@@ -31,6 +31,7 @@ extern crate serde_json;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YosysNetlist {
+    #[serde(default)]
     pub creator: String,
     pub modules: HashMap<String, YosysNetlistModule>,
 }
@@ -73,7 +74,28 @@ pub fn read_yosys_netlist(input: &[u8]) -> Result<YosysNetlist, serde_json::Erro
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
-    fn it_works() {
+    fn empty_json() {
+        let result = read_yosys_netlist(br#"
+            {
+              "creator": "this is a test",
+              "modules": {
+              }
+            }"#).unwrap();
+        assert_eq!(result.creator, "this is a test");
+        assert_eq!(result.modules.len(), 0);
+    }
+
+    #[test]
+    fn empty_json_2() {
+        let result = read_yosys_netlist(br#"
+            {
+              "modules": {
+              }
+            }"#).unwrap();
+        assert_eq!(result.creator, "");
+        assert_eq!(result.modules.len(), 0);
     }
 }
