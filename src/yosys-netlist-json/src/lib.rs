@@ -33,7 +33,27 @@ extern crate serde_json;
 pub struct YosysNetlist {
     #[serde(default)]
     pub creator: String,
+    #[serde(default)]
     pub modules: HashMap<String, YosysNetlistModule>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+pub enum YosysBitSpecial {
+    #[serde(rename = "0")]
+    _0,
+    #[serde(rename = "1")]
+    _1,
+    #[serde(rename = "x")]
+    X,
+    #[serde(rename = "z")]
+    Z,
+}
+
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[serde(untagged)]
+pub enum YosysBit {
+    N(usize),
+    S(YosysBitSpecial)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -58,7 +78,7 @@ pub struct YosysNetlistCell {
     pub parameters: HashMap<String, serde_json::Value>,
     pub attributes: HashMap<String, serde_json::Value>,
     pub port_directions: HashMap<String, String>,
-    pub connections: HashMap<String, Vec<serde_json::Value>>,
+    pub connections: HashMap<String, Vec<YosysBit>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -75,6 +95,14 @@ pub fn read_yosys_netlist(input: &[u8]) -> Result<YosysNetlist, serde_json::Erro
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn super_empty_json() {
+        let result = read_yosys_netlist(br#"
+            {}"#).unwrap();
+        assert_eq!(result.creator, "");
+        assert_eq!(result.modules.len(), 0);
+    }
 
     #[test]
     fn empty_json() {
@@ -97,5 +125,34 @@ mod tests {
             }"#).unwrap();
         assert_eq!(result.creator, "");
         assert_eq!(result.modules.len(), 0);
+    }
+
+    #[test]
+    fn bit_values_test() {
+        let result = read_yosys_netlist(br#"
+            {
+              "modules": {
+                "mymodule": {
+                  "attributes": {},
+                  "ports": {},
+                  "cells": {
+                    "mycell": {
+                      "hide_name": 0,
+                      "type": "celltype",
+                      "parameters": {},
+                      "attributes": {},
+                      "port_directions": {},
+                      "connections": {
+                        "IN": [ "x", 0, "z", 234, "1", "0" ]
+                      }
+                    }
+                  },
+                  "netnames": {}
+                }
+              }
+            }"#).unwrap();
+        assert_eq!(result.modules.get("mymodule").unwrap().cells.get("mycell").unwrap().connections.get("IN").unwrap(),
+            &vec![YosysBit::S(YosysBitSpecial::X), YosysBit::N(0), YosysBit::S(YosysBitSpecial::Z), YosysBit::N(234),
+                YosysBit::S(YosysBitSpecial::_1), YosysBit::S(YosysBitSpecial::_0)]);
     }
 }
