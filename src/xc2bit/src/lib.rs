@@ -81,6 +81,9 @@ pub use partdb::{XC2Device, XC2Speed, XC2Package};
 mod pla;
 pub use pla::{XC2PLAAndTerm, XC2PLAOrTerm};
 
+mod structure;
+pub use structure::{get_gck, get_gts, get_gsr, get_cdrst, get_dge};
+
 mod zia;
 pub use zia::{XC2ZIARowPiece, XC2ZIAInput, ZIA_MAP_32, ZIA_MAP_64, ZIA_MAP_128, ZIA_MAP_256, ZIA_MAP_384, ZIA_MAP_512};
 
