@@ -209,4 +209,67 @@ mod tests {
             &vec![BitVal::S(SpecialBit::X), BitVal::N(0), BitVal::S(SpecialBit::Z), BitVal::N(234),
                 BitVal::S(SpecialBit::_1), BitVal::S(SpecialBit::_0)]);
     }
+
+    #[test]
+    #[should_panic]
+    fn invalid_bit_value_test() {
+        read_yosys_netlist(br#"
+            {
+              "modules": {
+                "mymodule": {
+                  "cells": {
+                    "mycell": {
+                      "type": "celltype",
+                      "connections": {
+                        "IN": [ "w" ]
+                      }
+                    }
+                  }
+                }
+              }
+            }"#).unwrap();
+    }
+
+    #[test]
+    fn attribute_value_test() {
+        let result = read_yosys_netlist(br#"
+            {
+              "modules": {
+                "mymodule": {
+                  "cells": {
+                    "mycell": {
+                      "type": "celltype",
+                      "parameters": {
+                        "testparam": 123
+                      },
+                      "connections": {}
+                    }
+                  }
+                }
+              }
+            }"#).unwrap();
+        assert_eq!(result.modules.get("mymodule").unwrap().cells.get("mycell").unwrap()
+            .parameters.get("testparam").unwrap(), &AttributeVal::N(123));
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_attribute_value_test() {
+        read_yosys_netlist(br#"
+            {
+              "modules": {
+                "mymodule": {
+                  "cells": {
+                    "mycell": {
+                      "type": "celltype",
+                      "parameters": {
+                        "testparam": [123]
+                      },
+                      "connections": {}
+                    }
+                  }
+                }
+              }
+            }"#).unwrap();
+    }
 }
