@@ -29,28 +29,9 @@ use std::collections::HashMap;
 extern crate serde_derive;
 extern crate serde_json;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct YosysNetlist {
-    #[serde(default)]
-    pub creator: String,
-    #[serde(default)]
-    pub modules: HashMap<String, YosysNetlistModule>,
-}
-
+/// Legal values for the direction of a port on a module
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
-pub enum YosysBitSpecial {
-    #[serde(rename = "0")]
-    _0,
-    #[serde(rename = "1")]
-    _1,
-    #[serde(rename = "x")]
-    X,
-    #[serde(rename = "z")]
-    Z,
-}
-
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
-pub enum YosysPortDirection {
+pub enum PortDirection {
     #[serde(rename = "input")]
     Input,
     #[serde(rename = "output")]
@@ -59,63 +40,116 @@ pub enum YosysPortDirection {
     InOut,
 }
 
+/// Special constant bit values
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
-#[serde(untagged)]
-pub enum YosysBit {
-    N(usize),
-    S(YosysBitSpecial)
+pub enum SpecialBit {
+    /// Constant 0
+    #[serde(rename = "0")]
+    _0,
+    /// Constant 1
+    #[serde(rename = "1")]
+    _1,
+    /// Constant X (invalid)
+    #[serde(rename = "x")]
+    X,
+    /// Constant Z (tri-state)
+    #[serde(rename = "z")]
+    Z,
 }
 
+/// A number representing a single bit of a wire
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[serde(untagged)]
-pub enum YosysAttribute {
+pub enum BitVal {
+    /// An actual signal number
     N(usize),
+    /// A special constant value
+    S(SpecialBit)
+}
+
+/// The value of an attribute/parameter
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[serde(untagged)]
+pub enum AttributeVal {
+    /// Numeric attribute value
+    N(usize),
+    /// String attribute value
     S(String),
 }
 
+/// Represents an entire .json file used by Yosys
 #[derive(Serialize, Deserialize, Debug)]
-pub struct YosysNetlistModule {
+pub struct Netlist {
+    /// The program that created this file.
     #[serde(default)]
-    pub attributes: HashMap<String, YosysAttribute>,
+    pub creator: String,
+    /// A map from module names to module objects contained in this .json file
     #[serde(default)]
-    pub ports: HashMap<String, YosysNetlistPort>,
-    #[serde(default)]
-    pub cells: HashMap<String, YosysNetlistCell>,
-    #[serde(default)]
-    pub netnames: HashMap<String, YosysNetlistNetname>,
+    pub modules: HashMap<String, Module>,
 }
 
+/// Represents one module in the Yosys hierarchy
 #[derive(Serialize, Deserialize, Debug)]
-pub struct YosysNetlistPort {
-    pub direction: YosysPortDirection,
-    pub bits: Vec<YosysBit>,
+pub struct Module {
+    /// Module attributes
+    #[serde(default)]
+    pub attributes: HashMap<String, AttributeVal>,
+    /// Module ports (interfaces to other modules)
+    #[serde(default)]
+    pub ports: HashMap<String, Port>,
+    /// Module cells (objects inside this module)
+    #[serde(default)]
+    pub cells: HashMap<String, Cell>,
+    /// Module netnames (names of wires in this module)
+    #[serde(default)]
+    pub netnames: HashMap<String, Netname>,
 }
 
+/// Represents a port on a module
 #[derive(Serialize, Deserialize, Debug)]
-pub struct YosysNetlistCell {
+pub struct Port {
+    /// Port direction
+    pub direction: PortDirection,
+    /// Bit value(s) representing the wire(s) connected to this port
+    pub bits: Vec<BitVal>,
+}
+
+/// Represents a cell in a module
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Cell {
+    /// Indicates an internal/auto-generated name that starts with `$`
     #[serde(default)]
     pub hide_name: usize,
+    /// Name of the type of this cell
     #[serde(rename="type")]
     pub cell_type: String,
+    /// Parameters specified on this cell
     #[serde(default)]
-    pub parameters: HashMap<String, YosysAttribute>,
+    pub parameters: HashMap<String, AttributeVal>,
+    /// Attributes specified on this cell
     #[serde(default)]
-    pub attributes: HashMap<String, YosysAttribute>,
+    pub attributes: HashMap<String, AttributeVal>,
+    /// The direction of the ports on this cell
     #[serde(default)]
     pub port_directions: HashMap<String, String>,
-    pub connections: HashMap<String, Vec<YosysBit>>,
+    /// Bit value(s) representing the wire(s) connected to the inputs/outputs of this cell
+    pub connections: HashMap<String, Vec<BitVal>>,
 }
 
+/// Represents the name of a net in a module
 #[derive(Serialize, Deserialize, Debug)]
-pub struct YosysNetlistNetname {
+pub struct Netname {
+    /// Indicates an internal/auto-generated name that starts with `$`
     #[serde(default)]
     pub hide_name: usize,
-    pub bits: Vec<YosysBit>,
+    /// Bit value(s) that should be given this name
+    pub bits: Vec<BitVal>,
+    /// Attributes for this netname
     #[serde(default)]
-    pub attributes: HashMap<String, YosysAttribute>,
+    pub attributes: HashMap<String, AttributeVal>,
 }
 
-pub fn read_yosys_netlist(input: &[u8]) -> Result<YosysNetlist, serde_json::Error> {
+pub fn read_yosys_netlist(input: &[u8]) -> Result<Netlist, serde_json::Error> {
     serde_json::from_slice(input)
 }
 
@@ -172,7 +206,7 @@ mod tests {
               }
             }"#).unwrap();
         assert_eq!(result.modules.get("mymodule").unwrap().cells.get("mycell").unwrap().connections.get("IN").unwrap(),
-            &vec![YosysBit::S(YosysBitSpecial::X), YosysBit::N(0), YosysBit::S(YosysBitSpecial::Z), YosysBit::N(234),
-                YosysBit::S(YosysBitSpecial::_1), YosysBit::S(YosysBitSpecial::_0)]);
+            &vec![BitVal::S(SpecialBit::X), BitVal::N(0), BitVal::S(SpecialBit::Z), BitVal::N(234),
+                BitVal::S(SpecialBit::_1), BitVal::S(SpecialBit::_0)]);
     }
 }
