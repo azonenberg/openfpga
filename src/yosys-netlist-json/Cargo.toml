@@ -1,0 +1,21 @@
+[package]
+name = "yosys-netlist-json"
+version = "0.0.1"
+authors = ["Robert Ou <rqou@robertou.com>"]
+license = "BSD-2-Clause"
+description = "A library for working with Yosys netlists in JSON format"
+repository = "https://github.com/azonenberg/openfpga/tree/master/src/yosys-netlist-json"
+keywords = ["json", "netlist", "yosys", "eda"]
+categories = ["parser-implementations"]
+
+[dependencies]
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+
+[profile.release]
+lto = true
+
+[lib]
+name = "yosys_netlist_json"
+crate-type = ["rlib"]
