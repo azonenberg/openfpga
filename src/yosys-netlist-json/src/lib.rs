@@ -50,42 +50,69 @@ pub enum YosysBitSpecial {
 }
 
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+pub enum YosysPortDirection {
+    #[serde(rename = "input")]
+    Input,
+    #[serde(rename = "output")]
+    Output,
+    #[serde(rename = "inout")]
+    InOut,
+}
+
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[serde(untagged)]
 pub enum YosysBit {
     N(usize),
     S(YosysBitSpecial)
 }
 
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[serde(untagged)]
+pub enum YosysAttribute {
+    N(usize),
+    S(String),
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YosysNetlistModule {
-    pub attributes: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub attributes: HashMap<String, YosysAttribute>,
+    #[serde(default)]
     pub ports: HashMap<String, YosysNetlistPort>,
+    #[serde(default)]
     pub cells: HashMap<String, YosysNetlistCell>,
+    #[serde(default)]
     pub netnames: HashMap<String, YosysNetlistNetname>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YosysNetlistPort {
-    pub direction: String,
-    pub bits: Vec<usize>,
+    pub direction: YosysPortDirection,
+    pub bits: Vec<YosysBit>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YosysNetlistCell {
+    #[serde(default)]
     pub hide_name: usize,
     #[serde(rename="type")]
     pub cell_type: String,
-    pub parameters: HashMap<String, serde_json::Value>,
-    pub attributes: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub parameters: HashMap<String, YosysAttribute>,
+    #[serde(default)]
+    pub attributes: HashMap<String, YosysAttribute>,
+    #[serde(default)]
     pub port_directions: HashMap<String, String>,
     pub connections: HashMap<String, Vec<YosysBit>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct YosysNetlistNetname {
+    #[serde(default)]
     pub hide_name: usize,
-    pub bits: Vec<usize>,
-    pub attributes: HashMap<String, serde_json::Value>,
+    pub bits: Vec<YosysBit>,
+    #[serde(default)]
+    pub attributes: HashMap<String, YosysAttribute>,
 }
 
 pub fn read_yosys_netlist(input: &[u8]) -> Result<YosysNetlist, serde_json::Error> {
@@ -133,21 +160,14 @@ mod tests {
             {
               "modules": {
                 "mymodule": {
-                  "attributes": {},
-                  "ports": {},
                   "cells": {
                     "mycell": {
-                      "hide_name": 0,
                       "type": "celltype",
-                      "parameters": {},
-                      "attributes": {},
-                      "port_directions": {},
                       "connections": {
                         "IN": [ "x", 0, "z", 234, "1", "0" ]
                       }
                     }
-                  },
-                  "netnames": {}
+                  }
                 }
               }
             }"#).unwrap();
