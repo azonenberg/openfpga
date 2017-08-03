@@ -119,6 +119,17 @@ pub fn get_dge(device: XC2Device) -> Option<(u32, u32)> {
     }
 }
 
+fn zia_table_lookup(device: XC2Device, row: usize) -> &'static [XC2ZIAInput] {
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => &ZIA_MAP_32[row],
+        XC2Device::XC2C64 | XC2Device::XC2C64A => &ZIA_MAP_64[row],
+        XC2Device::XC2C128 => &ZIA_MAP_128[row],
+        XC2Device::XC2C256 => &ZIA_MAP_256[row],
+        XC2Device::XC2C384 => &ZIA_MAP_384[row],
+        XC2Device::XC2C512 => &ZIA_MAP_512[row],   
+    }
+}
+
 /// This function calls the passed-in callbacks to provide information about the structure of the CPLD. `node_callback`
 /// is called to "create" a new node, `wire_callback` is called to "create" a new wire, and `connection_callback` is
 /// called to connect one port on a node to a wire. The arguments to the callbacks are:
@@ -177,7 +188,11 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         for i in 0..MCS_PER_FB {
             wire_callback(&format!("fb{}_xor{}", fb, i));
         }
-        
+        // Register output
+        for i in 0..MCS_PER_FB {
+            wire_callback(&format!("fb{}_regout{}", fb, i));
+        }
+
         // AND gates
         for i in 0..ANDTERMS_PER_FB as u32 {
             node_callback(&format!("fb{}_andgate{}", fb, i), "ANDTERM", fb, i);
@@ -197,12 +212,12 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
                     &format!("fb{}_pterm{}", fb, j), "IN", j);
             }
         }
-        
+
         // XOR gates
         for i in 0..MCS_PER_FB as u32 {
             node_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i);
             connection_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i,
-                &format!("fb{}_xor{}", fb, i), "OUT", 0);
+                &format!("fb{}_regout{}", fb, i), "Q", 0);
 
             // Inputs
             connection_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i,
@@ -214,6 +229,10 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         // Registers
         for i in 0..MCS_PER_FB as u32 {
             node_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i);
+
+            // Output
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                &format!("fb{}_xor{}", fb, i), "D/T", 0);
 
             // D/T input
             connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
@@ -296,7 +315,7 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
             &format!("from_iob_{}", iob_idx), "O", 0);
 
         // The output enables
-        let (iob_ff, iob_mc) = iob_num_to_fb_mc_num(device, iob_idx).unwrap();
+        let (iob_fb, iob_mc) = iob_num_to_fb_mc_num(device, iob_idx).unwrap();
         // GTS
         for i in 0..4 {
             connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
@@ -304,10 +323,10 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         }
         // CTE
         connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
-            &format!("fb{}_pterm{}", iob_ff, CTE), "E", 0);
+            &format!("fb{}_pterm{}", iob_fb, CTE), "E", 0);
         // PTB
         connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
-            &format!("fb{}_pterm{}", iob_ff, get_ptb(iob_mc)), "E", 0);
+            &format!("fb{}_pterm{}", iob_fb, get_ptb(iob_mc)), "E", 0);
     }
 
     // Input-only pad
@@ -347,5 +366,40 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         let iob_idx = fb_mc_num_to_iob_num(device, fb, mc).unwrap();
         connection_callback("bufg_gsr", "BUFGSR", 0, 0,
             &format!("from_iob_{}", iob_idx), "I", 0);
+    }
+
+    // The ZIA
+    for zia_row_i in 0..INPUTS_PER_ANDTERM as u32 {
+        for zia_choice in zia_table_lookup(device, zia_row_i as usize) {
+            for and_fb in 0..device.num_fbs() as u32 {
+                for and_i in 0..ANDTERMS_PER_FB as u32 {
+                    match zia_choice {
+                        &XC2ZIAInput::Macrocell{fb: zia_fb, mc: zia_mc} => {
+                            // From the XOR gate
+                            connection_callback(&format!("fb{}_andgate{}", and_fb, and_i), "ANDTERM", and_fb, and_i,
+                                &format!("fb{}_xor{}", zia_fb, zia_mc), "IN", zia_row_i);
+                            // From the register
+                            connection_callback(&format!("fb{}_andgate{}", and_fb, and_i), "ANDTERM", and_fb, and_i,
+                                &format!("fb{}_regout{}", zia_fb, zia_mc), "IN", zia_row_i);
+                        },
+                        &XC2ZIAInput::IBuf{ibuf: zia_iob} => {
+                            let (iob_fb, iob_mc) = iob_num_to_fb_mc_num(device, zia_iob).unwrap();
+                            // From the pad
+                            connection_callback(&format!("fb{}_andgate{}", and_fb, and_i), "ANDTERM", and_fb, and_i,
+                                &format!("from_iob_{}", zia_iob), "IN", zia_row_i);
+                            // From the register
+                            connection_callback(&format!("fb{}_andgate{}", and_fb, and_i), "ANDTERM", and_fb, and_i,
+                                &format!("fb{}_regout{}", iob_fb, iob_mc), "IN", zia_row_i);
+                        },
+                        &XC2ZIAInput::DedicatedInput => {
+                            connection_callback(&format!("fb{}_andgate{}", and_fb, and_i), "ANDTERM", and_fb, and_i,
+                                "from_ipad", "IN", zia_row_i);
+                        },
+                        // These cannot be in the choices table; they are special cases
+                        _ => unreachable!(),
+                    }
+                }
+            }
+        }
     }
 }
