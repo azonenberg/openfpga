@@ -76,13 +76,13 @@ pub use mc::{XC2Macrocell, XC2MCRegClkSrc, XC2MCRegResetSrc, XC2MCRegSetSrc, XC2
              XC2MCXorMode};
 
 mod partdb;
-pub use partdb::{XC2Device, XC2Speed, XC2Package};
+pub use partdb::{XC2Device, XC2Speed, XC2Package, parse_part_name_string};
 
 mod pla;
 pub use pla::{XC2PLAAndTerm, XC2PLAOrTerm};
 
 mod structure;
-pub use structure::{get_gck, get_gts, get_gsr, get_cdrst, get_dge};
+pub use structure::{get_gck, get_gts, get_gsr, get_cdrst, get_dge, get_device_structure};
 
 mod zia;
 pub use zia::{XC2ZIARowPiece, XC2ZIAInput, ZIA_MAP_32, ZIA_MAP_64, ZIA_MAP_128, ZIA_MAP_256, ZIA_MAP_384, ZIA_MAP_512};

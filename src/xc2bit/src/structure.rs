@@ -23,6 +23,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+//! Contains routines that provide the CPLD structure to other programs.
+
 use *;
 
 /// Returns the function block and macrocell index of the global clock signal GCKn for the given device
@@ -114,5 +116,83 @@ pub fn get_dge(device: XC2Device) -> Option<(u32, u32)> {
         XC2Device::XC2C256 => Some((5, 11)),
         XC2Device::XC2C384 => Some((7, 4)),
         XC2Device::XC2C512 => Some((9, 13)),
+    }
+}
+
+/// This function calls the passed-in callbacks to provide information about the structure of the CPLD. `node_callback`
+/// is called to "create" a new node, `wire_callback` is called to "create" a new wire, and `connection_callback` is
+/// called to connect one port on a node to a wire. The arguments to the callbacks are:
+///
+/// * `node_callback`: node unique name, node type, function block index, index within function block
+/// * `wire_callback`: wire unique name
+/// * `connection_callback`: node unique name, node type, function block index, index within function block,
+///    wire name, port name, index within port
+///
+/// This interface was designed specifically for the place-and-route tool to build up a model of the device. However,
+/// it is sufficiently generic to be useful for other programs as well. The interface is designed around callbacks
+/// so that it does not dictate the data structures that the calling program will use, and so that it does not
+/// needlessly build up a graph data structure that the calling program will quickly discard. Nodes and wires are
+/// identified with strings (rather than numbers) as a compromise between performance and convenience to the caller.
+///
+/// Note that mux sites are not represented here. They just appear as multiple drivers onto the same wire.
+pub fn get_device_structure<N, W, C>(device: XC2Device,
+    mut node_callback: N, mut wire_callback: W, mut connection_callback: C)
+    where N: FnMut(&str, &str, u32, u32) -> (),
+          W: FnMut(&str) -> (),
+          C: FnMut(&str, &str, u32, u32, &str, &str, u32) -> () {
+
+    // IO buffers
+    for iob_idx in 0..device.num_iobs() as u32 {
+        // Wire that will go into the ZIA
+        wire_callback(&format!("to_zia_from_iob_{}", iob_idx));
+
+        // Wire that will go into the FF direct input path
+        wire_callback(&format!("to_ff_direct_from_iob_{}", iob_idx));
+
+        // Wire that goes into the IOB from various sources
+        wire_callback(&format!("to_iob_from_mc_{}", iob_idx));
+
+        // The node
+        node_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx);
+
+        // The input to the IOB (from the macrocell, to the outside world)
+        connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
+            &format!("to_iob_from_mc_{}", iob_idx), "I", 0);
+
+        // The output from the IOB (from the outside world, into the circuitry)
+        connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
+            &format!("to_zia_from_iob_{}", iob_idx), "O", 0);
+        connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
+            &format!("to_ff_direct_from_iob_{}", iob_idx), "O", 0);
+
+        // The output enables
+        let (iob_ff, iob_mc) = iob_num_to_fb_mc_num(device, iob_idx).unwrap();
+        // GTS
+        for i in 0..4 {
+            connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
+                &format!("gts_{}", i), "E", 0);
+        }
+        // CTE
+        connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
+            &format!("fb{}_pterm{}", iob_ff, CTE), "E", 0);
+        // PTB
+        connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
+            &format!("fb{}_pterm{}", iob_ff, get_ptb(iob_mc)), "E", 0);
+    }
+
+    // Input-only pad
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => {
+            // Wire that will go into the ZIA
+            wire_callback("to_zia_from_ipad");
+
+            // The node
+            node_callback("ipad", "IBUF", 0, 0);
+
+            // The output from the IOB (from the outside world, into the circuitry)
+            connection_callback("ipad", "IBUF", 0, 0,
+                "to_zia_from_ipad", "O", 0);
+        },
+        _ => {}
     }
 }
