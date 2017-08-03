@@ -141,29 +141,46 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
           W: FnMut(&str) -> (),
           C: FnMut(&str, &str, u32, u32, &str, &str, u32) -> () {
 
+    // Global buffers and the output wires
+    // Cannot create the input wires until after IO stuff is created
+    // GCK
+    for i in 0..3 {
+        wire_callback(&format!("gck_{}", i));
+        node_callback(&format!("bufg_gck_{}", i), "BUFG", 0, i);
+        connection_callback(&format!("bufg_gck_{}", i), "BUFG", 0, i,
+            &format!("gck_{}", i), "O", 0);
+    }
+    // GTS
+    for i in 0..4 {
+        wire_callback(&format!("gts_{}", i));
+        node_callback(&format!("bufg_gts_{}", i), "BUFGTS", 0, i);
+        connection_callback(&format!("bufg_gts_{}", i), "BUFGTS", 0, i,
+            &format!("gts_{}", i), "O", 0);
+    }
+    // GSR
+    wire_callback("gsr");
+    node_callback("bufg_gsr_{}", "BUFGSR", 0, 0);
+    connection_callback("bufg_gsr", "BUFGSR", 0, 0,
+        "gsr", "O", 0);
+
     // IO buffers
     for iob_idx in 0..device.num_iobs() as u32 {
         // Wire that will go into the ZIA
-        wire_callback(&format!("to_zia_from_iob_{}", iob_idx));
-
-        // Wire that will go into the FF direct input path
-        wire_callback(&format!("to_ff_direct_from_iob_{}", iob_idx));
+        wire_callback(&format!("from_iob_{}", iob_idx));
 
         // Wire that goes into the IOB from various sources
-        wire_callback(&format!("to_iob_from_mc_{}", iob_idx));
+        wire_callback(&format!("to_iob_{}", iob_idx));
 
         // The node
         node_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx);
 
         // The input to the IOB (from the macrocell, to the outside world)
         connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
-            &format!("to_iob_from_mc_{}", iob_idx), "I", 0);
+            &format!("to_iob_{}", iob_idx), "I", 0);
 
         // The output from the IOB (from the outside world, into the circuitry)
         connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
-            &format!("to_zia_from_iob_{}", iob_idx), "O", 0);
-        connection_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx,
-            &format!("to_ff_direct_from_iob_{}", iob_idx), "O", 0);
+            &format!("from_iob_{}", iob_idx), "O", 0);
 
         // The output enables
         let (iob_ff, iob_mc) = iob_num_to_fb_mc_num(device, iob_idx).unwrap();
@@ -184,15 +201,38 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
     match device {
         XC2Device::XC2C32 | XC2Device::XC2C32A => {
             // Wire that will go into the ZIA
-            wire_callback("to_zia_from_ipad");
+            wire_callback("from_ipad");
 
             // The node
             node_callback("ipad", "IBUF", 0, 0);
 
             // The output from the IOB (from the outside world, into the circuitry)
             connection_callback("ipad", "IBUF", 0, 0,
-                "to_zia_from_ipad", "O", 0);
+                "from_ipad", "O", 0);
         },
         _ => {}
+    }
+
+    // Inputs into the global buffers
+    // GCK
+    for i in 0..3 {
+        let (fb, mc) = get_gck(device, i as usize).unwrap();
+        let iob_idx = fb_mc_num_to_iob_num(device, fb, mc).unwrap();
+        connection_callback(&format!("bufg_gck_{}", i), "BUFG", 0, i,
+            &format!("from_iob_{}", iob_idx), "I", 0);
+    }
+    // GTS
+    for i in 0..4 {
+        let (fb, mc) = get_gts(device, i as usize).unwrap();
+        let iob_idx = fb_mc_num_to_iob_num(device, fb, mc).unwrap();
+        connection_callback(&format!("bufg_gts_{}", i), "BUFGTS", 0, i,
+            &format!("from_iob_{}", iob_idx), "I", 0);
+    }
+    // GSR
+    {
+        let (fb, mc) = get_gsr(device);
+        let iob_idx = fb_mc_num_to_iob_num(device, fb, mc).unwrap();
+        connection_callback("bufg_gsr", "BUFGSR", 0, 0,
+            &format!("from_iob_{}", iob_idx), "I", 0);
     }
 }
