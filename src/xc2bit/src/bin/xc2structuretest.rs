@@ -28,6 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern crate xc2bit;
 use xc2bit::*;
 
+use std::cell::RefCell;
+
 fn main() {
     let args = ::std::env::args().collect::<Vec<_>>();
 
@@ -38,15 +40,42 @@ fn main() {
 
     let device_combination = &args[1];
     let (device, _, _) = parse_part_name_string(device_combination).expect("invalid device name");
+
+    let node_vec = RefCell::new(Vec::new());
+    let wire_vec = RefCell::new(Vec::new());
+
     get_device_structure(device,
         |node_name: &str, node_type: &str, fb: u32, idx: u32| {
+            let mut node_vec = node_vec.borrow_mut();
+
             println!("Node: {} {} {} {}", node_name, node_type, fb, idx);
+            let i = node_vec.len();
+            node_vec.push((node_name.to_owned(), node_type.to_owned(), fb, idx));
+            i
         },
         |wire_name: &str| {
+            let mut wire_vec = wire_vec.borrow_mut();
+
             println!("Wire: {}", wire_name);
+            let i = wire_vec.len();
+            wire_vec.push(wire_name.to_owned());
+            i + 1000000
         },
-        |node_name: &str, node_type: &str, fb: u32, idx: u32, wire_name: &str, port_name: &str, port_idx: u32| {
-            println!("Node connection: {} {} {} {} {} {} {}", node_name, node_type, fb, idx,
-                wire_name, port_name, port_idx);
+        |node_ref: usize, wire_ref: usize, port_name: &str, port_idx: u32| {
+            if node_ref >= 1000000 {
+                panic!("wire instead of node");
+            }
+
+            if wire_ref < 1000000 {
+                panic!("node instead of wire");
+            }
+            let wire_ref = wire_ref - 1000000;
+
+            let node_vec = node_vec.borrow();
+            let wire_vec = wire_vec.borrow();
+
+            println!("Node connection: {} {} {} {} {} {} {}",
+                node_vec[node_ref].0, node_vec[node_ref].1, node_vec[node_ref].2, node_vec[node_ref].3,
+                wire_vec[wire_ref], port_name, port_idx);
         });
 }
