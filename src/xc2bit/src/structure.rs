@@ -163,6 +163,55 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
     connection_callback("bufg_gsr", "BUFGSR", 0, 0,
         "gsr", "O", 0);
 
+    // Function blocks
+    for fb in 0..device.num_fbs() as u32 {
+        // AND terms
+        for i in 0..ANDTERMS_PER_FB {
+            wire_callback(&format!("fb{}_pterm{}", fb, i));
+        }
+        // OR terms
+        for i in 0..MCS_PER_FB {
+            wire_callback(&format!("fb{}_or{}", fb, i));
+        }
+        // XOR terms
+        for i in 0..MCS_PER_FB {
+            wire_callback(&format!("fb{}_xor{}", fb, i));
+        }
+        
+        // AND gates
+        for i in 0..ANDTERMS_PER_FB as u32 {
+            node_callback(&format!("fb{}_andgate{}", fb, i), "ANDTERM", fb, i);
+            connection_callback(&format!("fb{}_andgate{}", fb, i), "ANDTERM", fb, i,
+                &format!("fb{}_pterm{}", fb, i), "OUT", 0);
+        }
+        
+        // OR gates
+        for i in 0..MCS_PER_FB as u32 {
+            node_callback(&format!("fb{}_orgate{}", fb, i), "ORTERM", fb, i);
+            connection_callback(&format!("fb{}_orgate{}", fb, i), "ORTERM", fb, i,
+                &format!("fb{}_or{}", fb, i), "OUT", 0);
+
+            // Inputs
+            for j in 0..ANDTERMS_PER_FB as u32 {
+                connection_callback(&format!("fb{}_orgate{}", fb, i), "ORTERM", fb, i,
+                    &format!("fb{}_pterm{}", fb, j), "IN", j);
+            }
+        }
+        
+        // XOR gates
+        for i in 0..MCS_PER_FB as u32 {
+            node_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i);
+            connection_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i,
+                &format!("fb{}_xor{}", fb, i), "OUT", 0);
+
+            // Inputs
+            connection_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i,
+                &format!("fb{}_or{}", fb, i), "IN_ORTERM", 0);
+            connection_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i,
+                &format!("fb{}_pterm{}", fb, get_ptc(i)), "IN_PTC", 0);
+        }
+    }
+
     // IO buffers
     for iob_idx in 0..device.num_iobs() as u32 {
         // Wire that will go into the ZIA
