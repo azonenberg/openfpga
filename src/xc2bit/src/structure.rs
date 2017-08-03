@@ -210,15 +210,79 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
             connection_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i,
                 &format!("fb{}_pterm{}", fb, get_ptc(i)), "IN_PTC", 0);
         }
+
+        // Registers
+        for i in 0..MCS_PER_FB as u32 {
+            node_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i);
+
+            // D/T input
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                &format!("fb{}_xor{}", fb, i), "D/T", 0);
+            if let Some(iob_idx) = fb_mc_num_to_iob_num(device, fb, i) {
+                connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                    &format!("from_iob_{}", iob_idx), "D/T", 0);
+            }
+
+            // CE input
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                &format!("fb{}_pterm{}", fb, get_ptc(i)), "CE", 0);
+
+            // Clock sources
+            // GCK
+            for j in 0..3 {
+                connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                    &format!("gck_{}", j), "CLK", 0);
+            }
+            // CTC
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                &format!("fb{}_pterm{}", fb, CTC), "CLK", 0);
+            // PTC
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                &format!("fb{}_pterm{}", fb, get_ptc(i)), "CLK", 0);
+
+            // Set
+            // GSR
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                "gsr", "S", 0);
+            // CTS
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                &format!("fb{}_pterm{}", fb, CTS), "S", 0);
+            // PTA
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                &format!("fb{}_pterm{}", fb, get_pta(i)), "S", 0);
+
+            // Reset
+            // GSR
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                "gsr", "R", 0);
+            // CTR
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                &format!("fb{}_pterm{}", fb, CTR), "R", 0);
+            // PTA
+            connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                &format!("fb{}_pterm{}", fb, get_pta(i)), "R", 0);
+        }
+
+        // Output to IOB
+        for i in 0..MCS_PER_FB as u32 {
+            if let Some(iob_idx) = fb_mc_num_to_iob_num(device, fb, i) {
+                // Wire that goes into the IOB
+                wire_callback(&format!("to_iob_{}", iob_idx));
+
+                // From the XOR
+                connection_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i,
+                    &format!("to_iob_{}", iob_idx), "OUT", 0);
+                // From the register
+                connection_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i,
+                    &format!("to_iob_{}", iob_idx), "Q", 0);
+            }
+        }
     }
 
     // IO buffers
     for iob_idx in 0..device.num_iobs() as u32 {
         // Wire that will go into the ZIA
         wire_callback(&format!("from_iob_{}", iob_idx));
-
-        // Wire that goes into the IOB from various sources
-        wire_callback(&format!("to_iob_{}", iob_idx));
 
         // The node
         node_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx);
