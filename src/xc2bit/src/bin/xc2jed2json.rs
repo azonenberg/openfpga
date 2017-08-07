@@ -75,6 +75,13 @@ fn main() {
             AttributeVal::S(format!("{}", bitstream.speed_grade)));
         module.attributes.insert(String::from("PART_PKG"),
             AttributeVal::S(format!("{}", bitstream.package)));
+        if bitstream.bits.get_global_nets().global_pu {
+            module.attributes.insert(String::from("GLOBAL_TERM"),
+                AttributeVal::S(String::from("PULLUP")));
+        } else {
+            module.attributes.insert(String::from("GLOBAL_TERM"),
+                AttributeVal::S(String::from("KEEPER")));
+        }
 
         output_netlist_mut.modules.insert(String::from("top"), module);
     }
@@ -86,7 +93,7 @@ fn main() {
             let cell;
 
             match node_type {
-                "BUFG" | "BUFGSR" | "BUFGTS" => {
+                "BUFG" => {
                     let mut connections = HashMap::new();
                     connections.insert(String::from("I"), Vec::new());
                     connections.insert(String::from("O"), Vec::new());
@@ -96,7 +103,39 @@ fn main() {
                         parameters: HashMap::new(),
                         attributes: HashMap::new(),
                         port_directions: HashMap::new(),
-                        connections: connections,
+                        connections,
+                    }
+                },
+                "BUFGSR" => {
+                    let mut parameters = HashMap::new();
+                    parameters.insert(String::from("INVERT"),
+                        AttributeVal::N(bitstream.bits.get_global_nets().gsr_invert as usize));
+                    let mut connections = HashMap::new();
+                    connections.insert(String::from("I"), Vec::new());
+                    connections.insert(String::from("O"), Vec::new());
+                    cell = Cell {
+                        hide_name: 0,
+                        cell_type: node_type.to_owned(),
+                        parameters,
+                        attributes: HashMap::new(),
+                        port_directions: HashMap::new(),
+                        connections,
+                    }
+                },
+                "BUFGTS" => {
+                    let mut parameters = HashMap::new();
+                    parameters.insert(String::from("INVERT"),
+                        AttributeVal::N(bitstream.bits.get_global_nets().gts_invert[idx as usize] as usize));
+                    let mut connections = HashMap::new();
+                    connections.insert(String::from("I"), Vec::new());
+                    connections.insert(String::from("O"), Vec::new());
+                    cell = Cell {
+                        hide_name: 0,
+                        cell_type: node_type.to_owned(),
+                        parameters,
+                        attributes: HashMap::new(),
+                        port_directions: HashMap::new(),
+                        connections,
                     }
                 },
                 "IOBUFE" => {
@@ -430,6 +469,126 @@ fn main() {
             orig_wire_idx
         },
         |node_ref: usize, wire_ref: usize, port_name: &str, port_idx: u32| {
+            let (ref node_name, ref node_type, fb, idx) = node_vec.borrow()[node_ref];
+            let mut output_netlist_mut = output_netlist.borrow_mut();
+            let mut cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
+
+            match node_type.as_ref() {
+                "BUFG" => {
+                    if port_name == "I" {
+                        if bitstream.bits.get_global_nets().gck_enable[idx as usize] {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        } else {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::S(SpecialBit::_0));
+                        }
+                    } else if port_name == "O" {
+                        cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                            .push(BitVal::N(wire_ref));
+                    } else {
+                        unreachable!();
+                    }
+                },
+                "BUFGSR" => {
+                    // FIXME: Test the interaction with the invert bit
+                    if port_name == "I" {
+                        if bitstream.bits.get_global_nets().gsr_enable {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        } else {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::S(SpecialBit::_0));
+                        }
+                    } else if port_name == "O" {
+                        cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                            .push(BitVal::N(wire_ref));
+                    } else {
+                        unreachable!();
+                    }
+                },
+                "BUFGTS" => {
+                    // FIXME: Test the interaction with the invert bit
+                    if port_name == "I" {
+                        if bitstream.bits.get_global_nets().gts_enable[idx as usize] {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        } else {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::S(SpecialBit::_0));
+                        }
+                    } else if port_name == "O" {
+                        cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                            .push(BitVal::N(wire_ref));
+                    } else {
+                        unreachable!();
+                    }
+                },
+                "IOBUFE" => {
+                    if port_name == "I" {
+                        // FIXME: Verify the CGND behavior on hardware
+                        let mut obuf_mode = None;
+                        if let Some(iobs) = bitstream.bits.get_small_iobs() {
+                            obuf_mode = Some(iobs[idx as usize].obuf_mode);
+                        }
+                        if let Some(iobs) = bitstream.bits.get_large_iobs() {
+                            obuf_mode = Some(iobs[idx as usize].obuf_mode);
+                        }
+
+                        if obuf_mode.unwrap() == XC2IOBOBufMode::CGND ||
+                           obuf_mode.unwrap() == XC2IOBOBufMode::OpenDrain {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::S(SpecialBit::_0));
+                        } else {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        }
+                    } else if port_name == "E" {
+                        let mut obuf_mode = None;
+                        if let Some(iobs) = bitstream.bits.get_small_iobs() {
+                            obuf_mode = Some(iobs[idx as usize].obuf_mode);
+                        }
+                        if let Some(iobs) = bitstream.bits.get_large_iobs() {
+                            obuf_mode = Some(iobs[idx as usize].obuf_mode);
+                        }
+
+                        // FIXME: This idx == 0 is a hack
+                        if obuf_mode.unwrap() == XC2IOBOBufMode::Disabled && port_idx == 0 {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::S(SpecialBit::_0));
+                        } else if obuf_mode.unwrap() == XC2IOBOBufMode::PushPull && port_idx == 0 {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::S(SpecialBit::_1));
+                        } else if obuf_mode.unwrap() == XC2IOBOBufMode::CGND && port_idx == 0 {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::S(SpecialBit::_1));
+                        } else if (obuf_mode.unwrap() == XC2IOBOBufMode::OpenDrain && port_idx == 4) ||
+                                  (obuf_mode.unwrap() == XC2IOBOBufMode::TriStateGTS0 && port_idx == 0) ||
+                                  (obuf_mode.unwrap() == XC2IOBOBufMode::TriStateGTS1 && port_idx == 1) ||
+                                  (obuf_mode.unwrap() == XC2IOBOBufMode::TriStateGTS2 && port_idx == 2) ||
+                                  (obuf_mode.unwrap() == XC2IOBOBufMode::TriStateGTS3 && port_idx == 3) ||
+                                  (obuf_mode.unwrap() == XC2IOBOBufMode::TriStateCTE && port_idx == 5) ||
+                                  (obuf_mode.unwrap() == XC2IOBOBufMode::TriStatePTB && port_idx == 6) {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        }
+                    } else if port_name == "O" {
+                        // This is always driven
+                        cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                            .push(BitVal::N(wire_ref));
+                    } else {
+                        unreachable!();
+                    }
+                },
+                _ => {
+                    // println!("FIXME {}", node_type);
+                }
+            };
+
+            // cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap().push(wire_ref);
+            // if let Some(port) = cells.get_mut(node_name).unwrap().connections.get_mut(port_name) {
+            //     port.push(wire_ref);
+            // }
         }
     );
 

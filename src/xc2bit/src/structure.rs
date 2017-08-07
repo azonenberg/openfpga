@@ -303,12 +303,14 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         let (iob_fb, iob_mc) = iob_num_to_fb_mc_num(device, iob_idx as u32).unwrap();
         // GTS
         for i in 0..4 {
-            connection_callback(n, gts[i].0, "E", 0);
+            connection_callback(n, gts[i].0, "E", i as u32);
         }
+        // Open-drain mode
+        connection_callback(n, to_from_iob_wires[iob_idx].0, "E", 4);
         // CTE
-        connection_callback(n, fb_things[iob_fb as usize].2[CTE as usize], "E", 0);
+        connection_callback(n, fb_things[iob_fb as usize].2[CTE as usize], "E", 5);
         // PTB
-        connection_callback(n, fb_things[iob_fb as usize].2[get_ptb(iob_mc) as usize], "E", 0);
+        connection_callback(n, fb_things[iob_fb as usize].2[get_ptb(iob_mc) as usize], "E", 6);
     }
 
     // Input-only pad

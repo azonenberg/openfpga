@@ -31,7 +31,7 @@ extern crate serde_derive;
 extern crate serde_json;
 
 /// Legal values for the direction of a port on a module
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub enum PortDirection {
     #[serde(rename = "input")]
     Input,
@@ -42,7 +42,7 @@ pub enum PortDirection {
 }
 
 /// Special constant bit values
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub enum SpecialBit {
     /// Constant 0
     #[serde(rename = "0")]
@@ -59,7 +59,7 @@ pub enum SpecialBit {
 }
 
 /// A number representing a single bit of a wire
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[serde(untagged)]
 pub enum BitVal {
     /// An actual signal number
@@ -69,7 +69,7 @@ pub enum BitVal {
 }
 
 /// The value of an attribute/parameter
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[serde(untagged)]
 pub enum AttributeVal {
     /// Numeric attribute value
