@@ -375,16 +375,16 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
                             // From the pad
                             connection_callback(fb_things[and_fb as usize].3[and_i as usize],
                                 to_from_iob_wires[zia_iob as usize].1, "IN", zia_row_i,
-                                (zia_choice_i as u32, 2));
+                                (zia_choice_i as u32, 0));
                             // From the register
                             connection_callback(fb_things[and_fb as usize].3[and_i as usize],
                                 fb_things[iob_fb as usize].4[iob_mc as usize], "IN", zia_row_i,
-                                (zia_choice_i as u32, 3));
+                                (zia_choice_i as u32, 1));
                         },
                         &XC2ZIAInput::DedicatedInput => {
                             connection_callback(fb_things[and_fb as usize].3[and_i as usize],
                                 from_ipad_w.unwrap(), "IN", zia_row_i,
-                                (zia_choice_i as u32, 4));
+                                (zia_choice_i as u32, 0));
                         },
                         // These cannot be in the choices table; they are special cases
                         _ => unreachable!(),
