@@ -137,7 +137,7 @@ fn zia_table_lookup(device: XC2Device, row: usize) -> &'static [XC2ZIAInput] {
 /// * `node_callback`: node unique name, node type, function block index, index within function block
 /// * `wire_callback`: wire unique name
 /// * `connection_callback`: value returned from `node_callback`, value returned from `wire_callback`,
-///    port name, index within port
+///    port name, index within port, extra data
 ///
 /// This interface was designed specifically for the place-and-route tool to build up a model of the device. However,
 /// it is sufficiently generic to be useful for other programs as well. The interface is designed around callbacks
@@ -146,11 +146,13 @@ fn zia_table_lookup(device: XC2Device, row: usize) -> &'static [XC2ZIAInput] {
 /// identified with strings (rather than numbers) as a compromise between performance and convenience to the caller.
 ///
 /// Note that mux sites are not represented here. They just appear as multiple drivers onto the same wire.
+///
+/// FIXME: Explain what the extra data is for (it's a hack fo the ZIA)
 pub fn get_device_structure<N, W, C>(device: XC2Device,
     mut node_callback: N, mut wire_callback: W, mut connection_callback: C)
     where N: FnMut(&str, &str, u32, u32) -> usize,
           W: FnMut(&str) -> usize,
-          C: FnMut(usize, usize, &str, u32) -> () {
+          C: FnMut(usize, usize, &str, u32, (u32, u32)) -> () {
 
     // Global buffers and the output wires
     // Cannot create the input wires until after IO stuff is created
@@ -158,20 +160,20 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
     let gck = (0..3).map(|i| {
         let w = wire_callback(&format!("gck_{}", i));
         let n = node_callback(&format!("bufg_gck_{}", i), "BUFG", 0, i);
-        connection_callback(n, w, "O", 0);
+        connection_callback(n, w, "O", 0, (0, 0));
         (w, n)
     }).collect::<Vec<_>>();
     // GTS
     let gts = (0..4).map(|i| {
         let w = wire_callback(&format!("gts_{}", i));
         let n = node_callback(&format!("bufg_gts_{}", i), "BUFGTS", 0, i);
-        connection_callback(n, w, "O", 0);
+        connection_callback(n, w, "O", 0, (0, 0));
         (w, n)
     }).collect::<Vec<_>>();
     // GSR
     let gsr_wire = wire_callback("gsr");
     let gsr_node = node_callback("bufg_gsr", "BUFGSR", 0, 0);
-    connection_callback(gsr_node, gsr_wire, "O", 0);
+    connection_callback(gsr_node, gsr_wire, "O", 0, (0, 0));
 
     // Function blocks
     let fb_things = (0..device.num_fbs() as u32).map(|fb| {
@@ -195,7 +197,7 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         // AND gates
         let and_nodes = (0..ANDTERMS_PER_FB).map(|i| {
             let n = node_callback(&format!("fb{}_andgate{}", fb, i), "ANDTERM", fb, i as u32);
-            connection_callback(n, pterm_wires[i], "OUT", 0);
+            connection_callback(n, pterm_wires[i], "OUT", 0, (0, 0));
 
             n
         }).collect::<Vec<_>>();
@@ -203,22 +205,22 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         // OR gates
         for i in 0..MCS_PER_FB {
             let n = node_callback(&format!("fb{}_orgate{}", fb, i), "ORTERM", fb, i as u32);
-            connection_callback(n, orterm_wires[i], "OUT", 0);
+            connection_callback(n, orterm_wires[i], "OUT", 0, (0, 0));
 
             // Inputs
             for j in 0..ANDTERMS_PER_FB {
-                connection_callback(n, pterm_wires[j], "IN", j as u32);
+                connection_callback(n, pterm_wires[j], "IN", j as u32, (0, 0));
             }
         }
 
         // XOR gates
         let xor_nodes = (0..MCS_PER_FB).map(|i| {
             let n = node_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i as u32);
-            connection_callback(n, xorterm_wires[i], "OUT", 0);
+            connection_callback(n, xorterm_wires[i], "OUT", 0, (0, 0));
 
             // Inputs
-            connection_callback(n, orterm_wires[i], "IN_ORTERM", 0);
-            connection_callback(n, pterm_wires[get_ptc(i as u32) as usize], "IN_PTC", 0);
+            connection_callback(n, orterm_wires[i], "IN_ORTERM", 0, (0, 0));
+            connection_callback(n, pterm_wires[get_ptc(i as u32) as usize], "IN_PTC", 0, (0, 0));
 
             n
         }).collect::<Vec<_>>();
@@ -228,39 +230,39 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
             let n = node_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i as u32);
 
             // Output
-            connection_callback(n, regout_wires[i], "Q", 0);
+            connection_callback(n, regout_wires[i], "Q", 0, (0, 0));
 
             // D/T input
-            connection_callback(n, xorterm_wires[i], "D/T", 0);
+            connection_callback(n, xorterm_wires[i], "D/T", 0, (0, 0));
 
             // CE input
-            connection_callback(n, pterm_wires[get_ptc(i as u32) as usize], "CE", 0);
+            connection_callback(n, pterm_wires[get_ptc(i as u32) as usize], "CE", 0, (0, 0));
 
             // Clock sources
             // GCK
             for j in 0..3 {
-                connection_callback(n, gck[j].0, "CLK", j as u32);
+                connection_callback(n, gck[j].0, "CLK", j as u32, (0, 0));
             }
             // CTC
-            connection_callback(n, pterm_wires[CTC as usize], "CLK", 3);
+            connection_callback(n, pterm_wires[CTC as usize], "CLK", 3, (0, 0));
             // PTC
-            connection_callback(n, pterm_wires[get_ptc(i as u32) as usize], "CLK", 4);
+            connection_callback(n, pterm_wires[get_ptc(i as u32) as usize], "CLK", 4, (0, 0));
 
             // Set
             // GSR
-            connection_callback(n, gsr_wire, "S", 0);
+            connection_callback(n, gsr_wire, "S", 0, (0, 0));
             // CTS
-            connection_callback(n, pterm_wires[CTS as usize], "S", 1);
+            connection_callback(n, pterm_wires[CTS as usize], "S", 1, (0, 0));
             // PTA
-            connection_callback(n, pterm_wires[get_pta(i as u32) as usize], "S", 2);
+            connection_callback(n, pterm_wires[get_pta(i as u32) as usize], "S", 2, (0, 0));
 
             // Reset
             // GSR
-            connection_callback(n, gsr_wire, "R", 0);
+            connection_callback(n, gsr_wire, "R", 0, (0, 0));
             // CTR
-            connection_callback(n, pterm_wires[CTR as usize], "R", 1);
+            connection_callback(n, pterm_wires[CTR as usize], "R", 1, (0, 0));
             // PTA
-            connection_callback(n, pterm_wires[get_pta(i as u32) as usize], "R", 2);
+            connection_callback(n, pterm_wires[get_pta(i as u32) as usize], "R", 2, (0, 0));
 
             n
         }).collect::<Vec<_>>();
@@ -278,12 +280,12 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         let from_w = wire_callback(&format!("from_iob_{}", iob_idx));
 
         // To the ZIA
-        connection_callback(fb_things[fb as usize].0[i as usize], from_w, "D/T", 1);
+        connection_callback(fb_things[fb as usize].0[i as usize], from_w, "D/T", 1, (0, 0));
 
         // From the XOR
-        connection_callback(fb_things[fb as usize].1[i as usize], to_w, "OUT", 1);
+        connection_callback(fb_things[fb as usize].1[i as usize], to_w, "OUT", 1, (0, 0));
         // From the register
-        connection_callback(fb_things[fb as usize].0[i as usize], to_w, "Q", 1);
+        connection_callback(fb_things[fb as usize].0[i as usize], to_w, "Q", 1, (0, 0));
 
         (to_w, from_w)
     }).collect::<Vec<_>>();
@@ -294,23 +296,23 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         let n = node_callback(&format!("iob_{}", iob_idx), "IOBUFE", 0, iob_idx as u32);
 
         // The input to the IOB (from the macrocell, to the outside world)
-        connection_callback(n, to_from_iob_wires[iob_idx].0, "I", 0);
+        connection_callback(n, to_from_iob_wires[iob_idx].0, "I", 0, (0, 0));
 
         // The output from the IOB (from the outside world, into the circuitry)
-        connection_callback(n, to_from_iob_wires[iob_idx].1, "O", 0);
+        connection_callback(n, to_from_iob_wires[iob_idx].1, "O", 0, (0, 0));
 
         // The output enables
         let (iob_fb, iob_mc) = iob_num_to_fb_mc_num(device, iob_idx as u32).unwrap();
         // GTS
         for i in 0..4 {
-            connection_callback(n, gts[i].0, "E", i as u32);
+            connection_callback(n, gts[i].0, "E", i as u32, (0, 0));
         }
         // Open-drain mode
-        connection_callback(n, to_from_iob_wires[iob_idx].0, "E", 4);
+        connection_callback(n, to_from_iob_wires[iob_idx].0, "E", 4, (0, 0));
         // CTE
-        connection_callback(n, fb_things[iob_fb as usize].2[CTE as usize], "E", 5);
+        connection_callback(n, fb_things[iob_fb as usize].2[CTE as usize], "E", 5, (0, 0));
         // PTB
-        connection_callback(n, fb_things[iob_fb as usize].2[get_ptb(iob_mc) as usize], "E", 6);
+        connection_callback(n, fb_things[iob_fb as usize].2[get_ptb(iob_mc) as usize], "E", 6, (0, 0));
     }
 
     // Input-only pad
@@ -325,7 +327,7 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
             let n = node_callback("ipad", "IBUF", 0, 0);
 
             // The output from the IOB (from the outside world, into the circuitry)
-            connection_callback(n, w, "O", 0);
+            connection_callback(n, w, "O", 0, (0, 0));
         },
         _ => {
             from_ipad_w = None;
@@ -337,47 +339,52 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
     for i in 0..3 {
         let (fb, mc) = get_gck(device, i as usize).unwrap();
         let iob_idx = fb_mc_num_to_iob_num(device, fb, mc).unwrap();
-        connection_callback(gck[i].1, to_from_iob_wires[iob_idx as usize].1, "I", 0);
+        connection_callback(gck[i].1, to_from_iob_wires[iob_idx as usize].1, "I", 0, (0, 0));
     }
     // GTS
     for i in 0..4 {
         let (fb, mc) = get_gts(device, i as usize).unwrap();
         let iob_idx = fb_mc_num_to_iob_num(device, fb, mc).unwrap();
-        connection_callback(gts[i].1, to_from_iob_wires[iob_idx as usize].1, "I", 0);
+        connection_callback(gts[i].1, to_from_iob_wires[iob_idx as usize].1, "I", 0, (0, 0));
     }
     // GSR
     {
         let (fb, mc) = get_gsr(device);
         let iob_idx = fb_mc_num_to_iob_num(device, fb, mc).unwrap();
-        connection_callback(gsr_node, to_from_iob_wires[iob_idx as usize].1, "I", 0);
+        connection_callback(gsr_node, to_from_iob_wires[iob_idx as usize].1, "I", 0, (0, 0));
     }
 
     // The ZIA
     for zia_row_i in 0..INPUTS_PER_ANDTERM as u32 {
-        for zia_choice in zia_table_lookup(device, zia_row_i as usize) {
+        for (zia_choice_i, zia_choice) in zia_table_lookup(device, zia_row_i as usize).iter().enumerate() {
             for and_fb in 0..device.num_fbs() as u32 {
                 for and_i in 0..ANDTERMS_PER_FB as u32 {
                     match zia_choice {
                         &XC2ZIAInput::Macrocell{fb: zia_fb, mc: zia_mc} => {
                             // From the XOR gate
                             connection_callback(fb_things[and_fb as usize].3[and_i as usize],
-                                fb_things[zia_fb as usize].5[zia_mc as usize], "IN", zia_row_i);
+                                fb_things[zia_fb as usize].5[zia_mc as usize], "IN", zia_row_i,
+                                (zia_choice_i as u32, 0));
                             // From the register
                             connection_callback(fb_things[and_fb as usize].3[and_i as usize],
-                                fb_things[zia_fb as usize].4[zia_mc as usize], "IN", zia_row_i);
+                                fb_things[zia_fb as usize].4[zia_mc as usize], "IN", zia_row_i,
+                                (zia_choice_i as u32, 1));
                         },
                         &XC2ZIAInput::IBuf{ibuf: zia_iob} => {
                             let (iob_fb, iob_mc) = iob_num_to_fb_mc_num(device, zia_iob).unwrap();
                             // From the pad
                             connection_callback(fb_things[and_fb as usize].3[and_i as usize],
-                                to_from_iob_wires[zia_iob as usize].1, "IN", zia_row_i);
+                                to_from_iob_wires[zia_iob as usize].1, "IN", zia_row_i,
+                                (zia_choice_i as u32, 2));
                             // From the register
                             connection_callback(fb_things[and_fb as usize].3[and_i as usize],
-                                fb_things[iob_fb as usize].4[iob_mc as usize], "IN", zia_row_i);
+                                fb_things[iob_fb as usize].4[iob_mc as usize], "IN", zia_row_i,
+                                (zia_choice_i as u32, 3));
                         },
                         &XC2ZIAInput::DedicatedInput => {
                             connection_callback(fb_things[and_fb as usize].3[and_i as usize],
-                                from_ipad_w.unwrap(), "IN", zia_row_i);
+                                from_ipad_w.unwrap(), "IN", zia_row_i,
+                                (zia_choice_i as u32, 4));
                         },
                         // These cannot be in the choices table; they are special cases
                         _ => unreachable!(),

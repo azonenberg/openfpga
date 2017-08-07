@@ -61,7 +61,7 @@ fn main() {
             wire_vec.push(wire_name.to_owned());
             i + 1000000
         },
-        |node_ref: usize, wire_ref: usize, port_name: &str, port_idx: u32| {
+        |node_ref: usize, wire_ref: usize, port_name: &str, port_idx: u32, extra_data: (u32, u32)| {
             if node_ref >= 1000000 {
                 panic!("wire instead of node");
             }
@@ -74,8 +74,8 @@ fn main() {
             let node_vec = node_vec.borrow();
             let wire_vec = wire_vec.borrow();
 
-            println!("Node connection: {} {} {} {} {} {} {}",
+            println!("Node connection: {} {} {} {} {} {} {} {} {}",
                 node_vec[node_ref].0, node_vec[node_ref].1, node_vec[node_ref].2, node_vec[node_ref].3,
-                wire_vec[wire_ref], port_name, port_idx);
+                wire_vec[wire_ref], port_name, port_idx, extra_data.0, extra_data.1);
         });
 }

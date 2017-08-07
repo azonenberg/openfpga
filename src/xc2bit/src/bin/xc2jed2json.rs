@@ -36,6 +36,18 @@ use xc2bit::*;
 extern crate yosys_netlist_json;
 use yosys_netlist_json::*;
 
+// FIXME: Un-copypasta
+fn zia_table_lookup(device: XC2Device, row: usize) -> &'static [XC2ZIAInput] {
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => &ZIA_MAP_32[row],
+        XC2Device::XC2C64 | XC2Device::XC2C64A => &ZIA_MAP_64[row],
+        XC2Device::XC2C128 => &ZIA_MAP_128[row],
+        XC2Device::XC2C256 => &ZIA_MAP_256[row],
+        XC2Device::XC2C384 => &ZIA_MAP_384[row],
+        XC2Device::XC2C512 => &ZIA_MAP_512[row],   
+    }
+}
+
 fn main() {
     let args = ::std::env::args().collect::<Vec<_>>();
 
@@ -468,7 +480,7 @@ fn main() {
             *wire_idx.borrow_mut() += 1;
             orig_wire_idx
         },
-        |node_ref: usize, wire_ref: usize, port_name: &str, port_idx: u32| {
+        |node_ref: usize, wire_ref: usize, port_name: &str, port_idx: u32, extra_data: (u32, u32)| {
             let (ref node_name, ref node_type, fb, idx) = node_vec.borrow()[node_ref];
             let mut output_netlist_mut = output_netlist.borrow_mut();
             let mut cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
@@ -594,6 +606,116 @@ fn main() {
                             .push(BitVal::N(wire_ref));
                     } else if port_name == "IN" {
                         // Whee, ZIA goes here
+
+                        let zia_row = zia_table_lookup(bitstream.bits.device_type(), port_idx as usize);
+                        // FIXME: port_idx is a hack
+                        if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize].selected ==
+                            XC2ZIAInput::One && port_idx == 0{
+
+                            if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
+                                .input[port_idx as usize] {
+
+                                cells.get_mut(node_name).unwrap().connections.get_mut("IN").unwrap()
+                                    .push(BitVal::S(SpecialBit::_1));
+                            }
+                            if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
+                                .input_b[port_idx as usize] {
+
+                                cells.get_mut(node_name).unwrap().connections.get_mut("IN_B").unwrap()
+                                    .push(BitVal::S(SpecialBit::_1));
+                            }
+                        } else if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize].selected ==
+                            XC2ZIAInput::Zero && port_idx == 0 {
+
+                            if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
+                                .input[port_idx as usize] {
+
+                                cells.get_mut(node_name).unwrap().connections.get_mut("IN").unwrap()
+                                    .push(BitVal::S(SpecialBit::_1));
+                            }
+                            if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
+                                .input_b[port_idx as usize] {
+
+                                cells.get_mut(node_name).unwrap().connections.get_mut("IN_B").unwrap()
+                                    .push(BitVal::S(SpecialBit::_1));
+                            }
+                        } else if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize].selected ==
+                            zia_row[extra_data.0 as usize] {
+
+                            let zia_choice = zia_row[extra_data.0 as usize];
+                            let is_connected = match &zia_choice {
+                                &XC2ZIAInput::Macrocell{fb: zia_fb, mc: zia_mc} => {
+                                    // FIXME Hack
+                                    if bitstream.bits.get_fb()[zia_fb as usize].mcs[zia_mc as usize].fb_mode ==
+                                        XC2MCFeedbackMode::Disabled && extra_data.1 == 0 {
+
+                                        if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
+                                            .input[port_idx as usize] {
+
+                                            cells.get_mut(node_name).unwrap().connections.get_mut("IN").unwrap()
+                                                .push(BitVal::S(SpecialBit::_0));
+                                        }
+                                        if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
+                                            .input_b[port_idx as usize] {
+
+                                            cells.get_mut(node_name).unwrap().connections.get_mut("IN_B").unwrap()
+                                                .push(BitVal::S(SpecialBit::_0));
+                                        }
+                                    }
+
+                                    (bitstream.bits.get_fb()[zia_fb as usize].mcs[zia_mc as usize].fb_mode ==
+                                        XC2MCFeedbackMode::COMB && extra_data.1 == 0) ||
+                                        (bitstream.bits.get_fb()[zia_fb as usize].mcs[zia_mc as usize].fb_mode ==
+                                            XC2MCFeedbackMode::REG && extra_data.1 == 1)
+                                },
+                                &XC2ZIAInput::IBuf{ibuf: zia_iob} => {
+                                    let mut zia_mode = None;
+                                    if let Some(iobs) = bitstream.bits.get_small_iobs() {
+                                        zia_mode = Some(iobs[zia_iob as usize].zia_mode);
+                                    }
+                                    if let Some(iobs) = bitstream.bits.get_large_iobs() {
+                                        zia_mode = Some(iobs[zia_iob as usize].zia_mode);
+                                    }
+
+                                    // FIXME: Hack
+                                    if zia_mode.unwrap() == XC2IOBZIAMode::Disabled && extra_data.1 == 0 {
+                                        if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
+                                            .input[port_idx as usize] {
+
+                                            cells.get_mut(node_name).unwrap().connections.get_mut("IN").unwrap()
+                                                .push(BitVal::S(SpecialBit::_0));
+                                        }
+                                        if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
+                                            .input_b[port_idx as usize] {
+
+                                            cells.get_mut(node_name).unwrap().connections.get_mut("IN_B").unwrap()
+                                                .push(BitVal::S(SpecialBit::_0));
+                                        }
+                                    }
+
+                                    (zia_mode.unwrap() == XC2IOBZIAMode::PAD && extra_data.1 == 0) ||
+                                        (zia_mode.unwrap() == XC2IOBZIAMode::REG && extra_data.1 == 1)
+                                },
+                                &XC2ZIAInput::DedicatedInput => true,
+                                // These cannot be in the choices table; they are special cases
+                                _ => unreachable!(),
+                            };
+
+                            if is_connected {
+                                if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
+                                    .input[port_idx as usize] {
+
+                                    cells.get_mut(node_name).unwrap().connections.get_mut("IN").unwrap()
+                                        .push(BitVal::N(wire_ref));
+                                }
+                                if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
+                                    .input_b[port_idx as usize] {
+
+                                    cells.get_mut(node_name).unwrap().connections.get_mut("IN_B").unwrap()
+                                        .push(BitVal::N(wire_ref));
+                                }
+                            }
+                        }
                     } else {
                         unreachable!();
                     }
