@@ -214,7 +214,7 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         // XOR gates
         let xor_nodes = (0..MCS_PER_FB).map(|i| {
             let n = node_callback(&format!("fb{}_xorgate{}", fb, i), "MACROCELL_XOR", fb, i as u32);
-            connection_callback(n, regout_wires[i], "Q", 0);
+            connection_callback(n, xorterm_wires[i], "OUT", 0);
 
             // Inputs
             connection_callback(n, orterm_wires[i], "IN_ORTERM", 0);
@@ -228,7 +228,7 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
             let n = node_callback(&format!("fb{}_reg{}", fb, i), "REG", fb, i as u32);
 
             // Output
-            connection_callback(n, regout_wires[i], "D/T", 0);
+            connection_callback(n, regout_wires[i], "Q", 0);
 
             // D/T input
             connection_callback(n, xorterm_wires[i], "D/T", 0);

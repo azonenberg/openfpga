@@ -600,7 +600,16 @@ fn main() {
                     } else {
                         unreachable!();
                     }
-                }
+                },
+                "MACROCELL_XOR" => {
+                    // The ports on this are always connected
+                    if port_name == "OUT" || port_name == "IN_PTC" || port_name == "IN_ORTERM" {
+                        cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                            .push(BitVal::N(wire_ref));
+                    } else {
+                        unreachable!();
+                    }
+                },
                 _ => {
                     // println!("FIXME {}", node_type);
                 }
