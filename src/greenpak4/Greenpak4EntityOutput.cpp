@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -24,37 +24,37 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Greenpak4EntityOutput
 
-Greenpak4EntityOutput Greenpak4EntityOutput::GetDual()
+Greenpak4EntityOutput Greenpak4EntityOutput::GetDual() const
 {
 	return m_src->GetDual()->GetOutput(m_port);
 }
 
-bool Greenpak4EntityOutput::IsPowerRail()
+bool Greenpak4EntityOutput::IsPowerRail() const
 {
 	return dynamic_cast<Greenpak4PowerRail*>(m_src) != NULL;
 }
 
-bool Greenpak4EntityOutput::IsVoltageReference()
+bool Greenpak4EntityOutput::IsVoltageReference() const
 {
 	return dynamic_cast<Greenpak4VoltageReference*>(m_src) != NULL;
 }
 
-bool Greenpak4EntityOutput::IsIOB()
+bool Greenpak4EntityOutput::IsIOB() const
 {
 	return dynamic_cast<Greenpak4IOB*>(m_src) != NULL;
 }
 
-bool Greenpak4EntityOutput::IsPGA()
+bool Greenpak4EntityOutput::IsPGA() const
 {
 	return dynamic_cast<Greenpak4PGA*>(m_src) != NULL;
 }
 
-bool Greenpak4EntityOutput::IsDAC()
+bool Greenpak4EntityOutput::IsDAC() const
 {
 	return dynamic_cast<Greenpak4DAC*>(m_src) != NULL;
 }
 
-bool Greenpak4EntityOutput::GetPowerRailValue()
+bool Greenpak4EntityOutput::GetPowerRailValue() const
 {
 	if(!IsPowerRail())
 		return false;

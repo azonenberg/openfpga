@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * Copyright (C) 2016 Andrew Zonenberg and contributors                                                                *
+ * Copyright (C) 2016-2017 Andrew Zonenberg and contributors                                                           *
  *                                                                                                                     *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General   *
  * Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) *
@@ -48,7 +48,7 @@ public:
 	std::string GetPortName() const
 	{ return m_port; }
 
-	Greenpak4EntityOutput GetDual();
+	Greenpak4EntityOutput GetDual() const;
 
 	const Greenpak4BitstreamEntity* GetRealEntity() const
 	{ return m_src->GetRealEntity(); }
@@ -56,12 +56,12 @@ public:
 	Greenpak4BitstreamEntity* GetRealEntity()
 	{ return m_src->GetRealEntity(); }
 
-	bool IsPGA();
-	bool IsVoltageReference();
-	bool IsPowerRail();
-	bool IsDAC();
-	bool IsIOB();
-	bool GetPowerRailValue();
+	bool IsPGA() const;
+	bool IsVoltageReference() const;
+	bool IsPowerRail() const;
+	bool IsDAC() const;
+	bool IsIOB() const;
+	bool GetPowerRailValue() const;
 
 	bool HasDual()
 	{ return m_src->GetDual() != NULL; }
