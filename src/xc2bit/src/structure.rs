@@ -239,28 +239,28 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
             // Clock sources
             // GCK
             for j in 0..3 {
-                connection_callback(n, gck[j].0, "CLK", 0);
+                connection_callback(n, gck[j].0, "CLK", j as u32);
             }
             // CTC
-            connection_callback(n, pterm_wires[CTC as usize], "CLK", 0);
+            connection_callback(n, pterm_wires[CTC as usize], "CLK", 3);
             // PTC
-            connection_callback(n, pterm_wires[get_ptc(i as u32) as usize], "CLK", 0);
+            connection_callback(n, pterm_wires[get_ptc(i as u32) as usize], "CLK", 4);
 
             // Set
             // GSR
             connection_callback(n, gsr_wire, "S", 0);
             // CTS
-            connection_callback(n, pterm_wires[CTS as usize], "S", 0);
+            connection_callback(n, pterm_wires[CTS as usize], "S", 1);
             // PTA
-            connection_callback(n, pterm_wires[get_pta(i as u32) as usize], "S", 0);
+            connection_callback(n, pterm_wires[get_pta(i as u32) as usize], "S", 2);
 
             // Reset
             // GSR
             connection_callback(n, gsr_wire, "R", 0);
             // CTR
-            connection_callback(n, pterm_wires[CTR as usize], "R", 0);
+            connection_callback(n, pterm_wires[CTR as usize], "R", 1);
             // PTA
-            connection_callback(n, pterm_wires[get_pta(i as u32) as usize], "R", 0);
+            connection_callback(n, pterm_wires[get_pta(i as u32) as usize], "R", 2);
 
             n
         }).collect::<Vec<_>>();
@@ -278,12 +278,12 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
         let from_w = wire_callback(&format!("from_iob_{}", iob_idx));
 
         // To the ZIA
-        connection_callback(fb_things[fb as usize].0[i as usize], from_w, "D/T", 0);
+        connection_callback(fb_things[fb as usize].0[i as usize], from_w, "D/T", 1);
 
         // From the XOR
-        connection_callback(fb_things[fb as usize].1[i as usize], to_w, "OUT", 0);
+        connection_callback(fb_things[fb as usize].1[i as usize], to_w, "OUT", 1);
         // From the register
-        connection_callback(fb_things[fb as usize].0[i as usize], to_w, "Q", 0);
+        connection_callback(fb_things[fb as usize].0[i as usize], to_w, "Q", 1);
 
         (to_w, from_w)
     }).collect::<Vec<_>>();

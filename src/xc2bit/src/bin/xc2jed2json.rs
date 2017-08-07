@@ -602,14 +602,128 @@ fn main() {
                     }
                 },
                 "MACROCELL_XOR" => {
-                    // The ports on this are always connected
-                    if port_name == "OUT" || port_name == "IN_PTC" || port_name == "IN_ORTERM" {
+                    if port_name == "IN_PTC" || port_name == "IN_ORTERM" {
                         cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
                             .push(BitVal::N(wire_ref));
+                    } else if port_name == "OUT" {
+                        // This wire is always driven
+                        if port_idx == 0 {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        } else {
+                            if let Some(iob_idx) = fb_mc_num_to_iob_num(bitstream.bits.device_type(), fb, idx) {
+                                let mut obuf_uses_ff = false;
+                                if let Some(iobs) = bitstream.bits.get_small_iobs() {
+                                    obuf_uses_ff = iobs[iob_idx as usize].obuf_uses_ff;
+                                }
+                                if let Some(iobs) = bitstream.bits.get_large_iobs() {
+                                    obuf_uses_ff = iobs[iob_idx as usize].obuf_uses_ff;
+                                }
+
+                                if !obuf_uses_ff {
+                                    cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                        .push(BitVal::N(wire_ref));
+                                }
+                            }
+                        }
                     } else {
                         unreachable!();
                     }
                 },
+                "REG" => {
+                    if port_name == "Q" {
+                        // This is always driven
+                        if port_idx == 0 {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        } else {
+                            if let Some(iob_idx) = fb_mc_num_to_iob_num(bitstream.bits.device_type(), fb, idx) {
+                                let mut obuf_uses_ff = false;
+                                if let Some(iobs) = bitstream.bits.get_small_iobs() {
+                                    obuf_uses_ff = iobs[iob_idx as usize].obuf_uses_ff;
+                                }
+                                if let Some(iobs) = bitstream.bits.get_large_iobs() {
+                                    obuf_uses_ff = iobs[iob_idx as usize].obuf_uses_ff;
+                                }
+
+                                if obuf_uses_ff {
+                                    cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                        .push(BitVal::N(wire_ref));
+                                }
+                            }
+                        }
+                    } else if port_name == "CE" {
+                        if bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].reg_mode == XC2MCRegMode::DFFCE {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        }
+                    } else if port_name == "CLK" {
+                        let clk_src = bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].clk_src;
+                        if (clk_src == XC2MCRegClkSrc::GCK0 && port_idx == 0) ||
+                           (clk_src == XC2MCRegClkSrc::GCK1 && port_idx == 1) ||
+                           (clk_src == XC2MCRegClkSrc::GCK2 && port_idx == 2) ||
+                           (clk_src == XC2MCRegClkSrc::CTC && port_idx == 3) ||
+                           (clk_src == XC2MCRegClkSrc::PTC && port_idx == 4) {
+
+                            let port_name = if bitstream.bits.get_fb()[fb as usize]
+                                .mcs[idx as usize].reg_mode == XC2MCRegMode::LATCH {
+
+                                "G"
+                            } else {
+                                "C"
+                            };
+
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        }
+                    } else if port_name == "S" {
+                        let s_src = bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].s_src;
+                        if (s_src == XC2MCRegSetSrc::GSR && port_idx == 0) ||
+                           (s_src == XC2MCRegSetSrc::CTS && port_idx == 1) ||
+                           (s_src == XC2MCRegSetSrc::PTA && port_idx == 2) {
+
+                            cells.get_mut(node_name).unwrap().connections.get_mut("PRE").unwrap()
+                                .push(BitVal::N(wire_ref));
+                        } else if s_src == XC2MCRegSetSrc::Disabled && port_idx == 0 {
+                            cells.get_mut(node_name).unwrap().connections.get_mut("PRE").unwrap()
+                                .push(BitVal::S(SpecialBit::_0));
+                        }
+                    } else if port_name == "R" {
+                        let r_src = bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].r_src;
+                        if (r_src == XC2MCRegResetSrc::GSR && port_idx == 0) ||
+                           (r_src == XC2MCRegResetSrc::CTR && port_idx == 1) ||
+                           (r_src == XC2MCRegResetSrc::PTA && port_idx == 2) {
+
+                            cells.get_mut(node_name).unwrap().connections.get_mut("CLR").unwrap()
+                                .push(BitVal::N(wire_ref));
+                        } else if r_src == XC2MCRegResetSrc::Disabled && port_idx == 0 {
+                            cells.get_mut(node_name).unwrap().connections.get_mut("CLR").unwrap()
+                                .push(BitVal::S(SpecialBit::_0));
+                        }
+                    } else if port_name == "D/T" {
+                            let port_name = if bitstream.bits.get_fb()[fb as usize]
+                                .mcs[idx as usize].reg_mode == XC2MCRegMode::TFF {
+
+                                "T"
+                            } else {
+                                "D"
+                            };
+
+                        if bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].ff_in_ibuf {
+                            if port_idx == 1 {
+                                cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                    .push(BitVal::N(wire_ref));
+                            }
+                        } else {
+                            if port_idx == 0 {
+                                cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                    .push(BitVal::N(wire_ref));
+                            }
+                        }
+                    } else {
+                        unreachable!();
+                    }
+                }
                 _ => {
                     // println!("FIXME {}", node_type);
                 }
