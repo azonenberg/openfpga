@@ -1286,32 +1286,134 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 	fprintf(fp, "        \"top\": 1\n");
 	fprintf(fp, "      },\n");
 
+	//Create mapping of cell outputs to net numbers in the JSON
+	int nextNetnum = 2;
+	map<Greenpak4EntityOutput, int> netnums;
+	netnums[GetGround()] = 0;
+	netnums[GetPower()] = 1;
+
+	//Map of top level pad numbers to net numbers.
+	//Note, these net numbers are
+	map<int, int> padToNet;
+
+	//Set of named cell types we used
+	set<string> used_cells;
+
 	//Write ports
-	//For now, name one pin for each IOB that's used
-	//vector<string> portnames;
+	//For now, name one pin for each IOB that's used.
+	//We can group pins into buses later on during higher level analysis.
+	fprintf(fp, "      \"ports\": {\n");
+	bool first = true;
 	for(auto it : m_iobs)
 	{
 		auto iob = it.second;
 
 		auto oe = iob->GetOutputEnable();
 
-		//Input or unused
-		if(oe.IsPowerRail() && oe.GetPowerRailValue() == 0)
+		//Add comma if we're not the first one
+		if(first)
+			first = false;
+		else
+			fprintf(fp, ",\n");
+
+		fprintf(fp, "        \"io_%d\": {\n",
+			iob->GetPinNumber());
+
+		//Allocate a new net number for everything
+		int netnum = nextNetnum ++;
+		padToNet[iob->GetPinNumber()] = netnum;
+
+		//Figure out direction
+		if(oe.IsPowerRail())
 		{
+			if(oe.GetPowerRailValue() == 0)
+			{
+				//LogNotice("Pin %s is input or unused\n", iob->GetDescription().c_str());
+				fprintf(fp, "          \"direction\": \"input\",\n");
+			}
+
+			else
+			{
+				//LogNotice("Pin %s is output\n", iob->GetDescription().c_str());
+				fprintf(fp, "          \"direction\": \"output\",\n");
+			}
 		}
 
-		//Output or bidir
 		else
 		{
-			LogNotice("Pin %s is output or bidir\n", iob->GetDescription().c_str());
+			//LogNotice("Pin %s is bidir\n", iob->GetDescription().c_str());
+			fprintf(fp, "          \"direction\": \"inout\",\n");
 		}
+
+		fprintf(fp, "          \"bits\": [ %d ],\n", netnum);
+
+		fprintf(fp, "        }");
 	}
+	fprintf(fp, "\n      },\n");
+
+	//Write cell instances.
+	//Don't worry about optimizing out unused cells!
+	//We can take care of this in Yosys once the raw netlist is generated.
+	fprintf(fp, "      \"cells\": {\n");
+	first = true;
+	for(auto cell : m_bitstuff)
+	{
+		//Skip cross-connections and power rails, these get turned into wires
+		if(dynamic_cast<Greenpak4CrossConnection*>(cell) != NULL)
+			continue;
+		if(dynamic_cast<Greenpak4PowerRail*>(cell) != NULL)
+			continue;
+
+		//Add comma if we're not the first one
+		if(first)
+			first = false;
+		else
+			fprintf(fp, ",\n");
+
+		//TODO
+		string type = "FIXME";
+
+		fprintf(fp, "        \"%s\": {\n", cell->GetDescription().c_str());
+		fprintf(fp, "          \"hide_name\": 0,\n");
+		fprintf(fp, "          \"type\": \"%s\",\n", type.c_str());
+		fprintf(fp, "          \"parameters\": {\n");
+		fprintf(fp, "          },\n");
+		fprintf(fp, "          \"attributes\": {\n");
+		fprintf(fp, "          },\n");
+		fprintf(fp, "          \"port_directions\": {\n");
+		fprintf(fp, "          },\n");
+		fprintf(fp, "          \"connections\": {\n");
+		fprintf(fp, "          }\n");
+		fprintf(fp, "        }");
+	}
+	fprintf(fp, "\n      },\n");
+
+	//Assign default auto-generated names to each net
+	fprintf(fp, "      \"netnames\": {\n");
+	fprintf(fp, "      },\n");
 
 	//Done with module
-	fprintf(fp, "    }\n");
+	fprintf(fp, "    },\n");
 
-	//TODO: Spit out generic cell library stuff so Yosys can import it correctly?
-	//Alternatively, don't have those cells at all and rely on Yosys to import cells_greenpak4 first?
+	//Spit out generic cell library stuff so Yosys can import it correctly.
+	//TODO: Alternatively, don't have those cells at all and rely on Yosys to import cells_greenpak4 first?
+	//TODO: figure out proper relative path for the data file
+	//TODO: figure out way to automatically generate this somehow
+	FILE* fa = fopen("../data/greenpak4/gpkjson-cell-dump.json", "r");
+	if(!fa)
+	{
+		LogError("Couldn't open gpkjson-cell-dump.json");
+		return false;
+	}
+	char tmp[1024];
+	while(true)
+	{
+		auto len = fread(tmp, 1, sizeof(tmp), fa);
+		if(len <= 0)
+			break;
+		fwrite(tmp, 1, len, fp);
+	}
+	fclose(fa);
 
 	//Done
 	fprintf(fp, "  }\n");
