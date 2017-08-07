@@ -55,11 +55,100 @@ string Greenpak4IOBTypeA::GetDescription() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4IOBTypeA::Load(bool* /*bitstream*/)
+bool Greenpak4IOBTypeA::Load(bool* bitstream)
 {
-	//TODO
-	LogError("Unimplemented\n");
-	return false;
+	//If we have no output pad driver, skip the driver inputs
+	if(m_flags & IOB_FLAG_INPUTONLY)
+	{
+		m_outputEnable = m_device->GetGround();
+		m_outputSignal = m_device->GetGround();
+	}
+
+	//We have an output driver, read the signals feeding it
+	else
+	{
+		ReadMatrixSelector(bitstream, m_inputBaseWord + 0, m_matrix, m_outputSignal);
+		ReadMatrixSelector(bitstream, m_inputBaseWord + 1, m_matrix, m_outputEnable);
+	}
+
+	int thresh = (bitstream[m_configBase + 1] << 1) | bitstream[m_configBase + 0];
+	switch(thresh)
+	{
+		case 3:
+			m_inputThreshold = THRESHOLD_ANALOG;
+			m_schmittTrigger = false;
+			break;
+
+		case 2:
+			m_inputThreshold = THRESHOLD_LOW;
+			m_schmittTrigger = false;
+			break;
+
+		case 1:
+			m_inputThreshold = THRESHOLD_NORMAL;
+			m_schmittTrigger = true;
+			break;
+
+		case 0:
+			m_inputThreshold = THRESHOLD_NORMAL;
+			m_schmittTrigger = false;
+			break;
+	}
+
+	//Base address for upcoming stuff, skipping output driver if not implemented
+	unsigned int base = m_configBase + 2;
+
+	//Load OBUF config if we're not input-only
+	if(! (m_flags & IOB_FLAG_INPUTONLY) )
+	{
+		//If second driver is off, we're x1 for sure
+		if(!bitstream[m_configBase + 2])
+			m_driveStrength = DRIVE_1X;
+
+		//Second driver is on. Do we have a quad?
+		else
+		{
+			if( (m_flags & IOB_FLAG_X4DRIVE) && bitstream[m_configBase + 7] )
+				m_driveStrength = DRIVE_4X;
+
+			else
+				m_driveStrength = DRIVE_2X;
+		}
+
+		if(bitstream[m_configBase + 3])
+			m_driveType = DRIVE_NMOS_OPENDRAIN;
+		else
+			m_driveType = DRIVE_PUSHPULL;
+
+		base += 2;
+	}
+
+	//Load pull direction (just up or down, float comes in the next block)
+	if(bitstream[base + 2])
+		m_pullDirection = PULL_UP;
+	else
+		m_pullDirection = PULL_DOWN;
+
+	//Load pull value and float flag
+	int pullVal = (bitstream[base+1] << 1) | bitstream[base];
+	switch(pullVal)
+	{
+		case 0:
+			m_pullDirection = PULL_NONE;
+			m_pullStrength = PULL_1M;
+			break;
+
+		case 1:
+			m_pullStrength = PULL_10K;
+
+		case 2:
+			m_pullStrength = PULL_100K;
+
+		case 3:
+			m_pullStrength = PULL_1M;
+	}
+
+	return true;
 }
 
 bool Greenpak4IOBTypeA::Save(bool* bitstream)

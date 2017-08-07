@@ -141,11 +141,52 @@ bool Greenpak4Comparator::CommitChanges()
 	return true;
 }
 
-bool Greenpak4Comparator::Load(bool* /*bitstream*/)
+bool Greenpak4Comparator::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
-	LogError("Unimplemented\n");
-	return false;
+	ReadMatrixSelector(bitstream, m_inputBaseWord, m_matrix, m_pwren);
+
+	//Optional features (not all devices have these)
+	if(m_cbaseIsrc > 0)
+		m_isrcEn = bitstream[m_cbaseIsrc];
+	if(m_cbaseBw > 0)
+		m_bandwidthHigh = !bitstream[m_cbaseBw];
+
+	//Gain selectors
+	if(m_cbaseGain > 0)
+	{
+		int gain = (bitstream[m_cbaseGain + 1] << 1) | bitstream[m_cbaseGain];
+		m_vinAtten = gain + 1;
+	}
+
+	//Hysteresis
+	if(m_cbaseHyst > 0)
+	{
+		int hyst = (bitstream[m_cbaseHyst + 1] << 1) | bitstream[m_cbaseHyst];
+		int hysts[4] = {0, 25, 50, 200};
+		m_hysteresis = hysts[hyst];
+	}
+
+	//Mux selector.
+	//Load second bit if we have one
+	unsigned int sel = bitstream[m_cbaseVin];
+	if(m_muxsels.size() > 2)
+		sel |= (bitstream[m_cbaseVin + 1] << 1);
+	for(auto it : m_muxsels)
+	{
+		if(it.second == sel)
+			m_vin = it.first;
+	}
+
+	//Find our reference. It's always the corresponding VREF for our number
+	m_vref = m_device->GetVref(m_cmpNum);
+
+	//Read the voltage reference
+	int muxsel = 0;
+	for(int i=0; i<5; i++)
+		muxsel |= (bitstream[m_cbaseVref + i] << i);
+	dynamic_cast<Greenpak4VoltageReference*>(m_vref.GetRealEntity())->SetMuxSel(muxsel);
+
+	return true;
 }
 
 bool Greenpak4Comparator::Save(bool* bitstream)

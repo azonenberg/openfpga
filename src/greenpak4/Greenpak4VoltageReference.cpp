@@ -110,8 +110,7 @@ bool Greenpak4VoltageReference::CommitChanges()
 
 bool Greenpak4VoltageReference::Load(bool* /*bitstream*/)
 {
-	//TODO: how do we do this? Vref is attached to the comparator, so we have to steal config from that...
-	LogWarning("Greenpak4VoltageReference::Load needs to be figured out\n");
+	//We're configured in slave mode by the attached ACMP, so nothing to do here
 	return true;
 }
 

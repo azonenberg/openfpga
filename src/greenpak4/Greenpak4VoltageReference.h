@@ -52,6 +52,9 @@ public:
 	unsigned int GetMuxSel()
 	{ return m_voutMuxsel; }
 
+	void SetMuxSel(unsigned int i)
+	{ m_voutMuxsel = i; }
+
 	//mux selector for ACMP voltage inputs
 	unsigned int GetACMPMuxSel();
 
