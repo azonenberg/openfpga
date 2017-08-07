@@ -50,6 +50,9 @@ public:
 
 	Greenpak4EntityOutput GetDual();
 
+	const Greenpak4BitstreamEntity* GetRealEntity() const
+	{ return m_src->GetRealEntity(); }
+
 	Greenpak4BitstreamEntity* GetRealEntity()
 	{ return m_src->GetRealEntity(); }
 

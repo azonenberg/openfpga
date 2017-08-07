@@ -112,6 +112,7 @@ public:
 		@brief Returns the real entity if we are a dual, or us if we're not
 	 */
 	Greenpak4BitstreamEntity* GetRealEntity();
+	const Greenpak4BitstreamEntity* GetRealEntity() const;
 
 	//Return our dual, or NULL if we don't have one
 	Greenpak4BitstreamEntity* GetDual()

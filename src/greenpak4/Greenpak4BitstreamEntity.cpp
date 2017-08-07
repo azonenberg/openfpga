@@ -137,6 +137,14 @@ Greenpak4BitstreamEntity* Greenpak4BitstreamEntity::GetRealEntity()
 	return this;
 }
 
+const Greenpak4BitstreamEntity* Greenpak4BitstreamEntity::GetRealEntity() const
+{
+	if(m_dual && !m_dualMaster)
+		return m_dual;
+
+	return this;
+}
+
 bool Greenpak4BitstreamEntity::WriteMatrixSelector(
 	bool* bitstream,
 	unsigned int wordpos,
