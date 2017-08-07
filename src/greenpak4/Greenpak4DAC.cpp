@@ -144,8 +144,52 @@ bool Greenpak4DAC::CommitChanges()
 	return true;
 }
 
-bool Greenpak4DAC::Load(bool* /*bitstream*/)
+bool Greenpak4DAC::Load(bool* bitstream)
 {
+	//TODO: VREF
+	LogWarning("TODO: VREF configuration for Greenpak4DAC\n");
+
+	//If DAC is disabled, set VREF to ground (we're not used)
+	if(!bitstream[m_cbasePwr])
+	{
+		m_vref = m_device->GetGround();
+		return true;
+	}
+
+	//ignore cbaseAon for now
+
+	if(m_device->GetPart() == Greenpak4Device::GREENPAK4_SLG46140)
+		LogError("Greenpak4DAC: not implemented for 46140 yet\n");
+
+	//Input selector
+
+	/*
+	//WTF, the config is flipped from DAC0 to DAC1??? (see SLG46620V table 40)
+	//This also applies to the SLG46140 (see SLG46140 table 28).
+	bool dinPower = (m_din[0].IsPowerRail());
+	if(m_dacnum == 0)
+		bitstream[m_cbaseInsel] = !dinPower;
+	else
+		bitstream[m_cbaseInsel] = dinPower;
+
+	//Constant input voltage
+	if(dinPower)
+	{
+		for(unsigned int i=0; i<8; i++)
+			bitstream[m_cbaseReg + i] = m_din[i].GetPowerRailValue();
+	}
+
+	//Input is coming from DCMP.
+	//Rely on the DCMP input mux for this, nothing for us to do.
+	//Set the input voltage to zero just so the bitstream is deterministic.
+	else
+	{
+		for(unsigned int i=0; i<8; i++)
+			bitstream[m_cbaseReg + i] = false;
+	}
+
+	*/
+
 	//TODO: Do our inputs
 	LogError("Unimplemented\n");
 	return false;
