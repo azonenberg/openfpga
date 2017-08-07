@@ -556,10 +556,8 @@ fn main() {
                         if obuf_mode.unwrap() == XC2IOBOBufMode::Disabled && port_idx == 0 {
                             cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
                                 .push(BitVal::S(SpecialBit::_0));
-                        } else if obuf_mode.unwrap() == XC2IOBOBufMode::PushPull && port_idx == 0 {
-                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
-                                .push(BitVal::S(SpecialBit::_1));
-                        } else if obuf_mode.unwrap() == XC2IOBOBufMode::CGND && port_idx == 0 {
+                        } else if (obuf_mode.unwrap() == XC2IOBOBufMode::PushPull && port_idx == 0) ||
+                                  (obuf_mode.unwrap() == XC2IOBOBufMode::CGND && port_idx == 0) {
                             cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
                                 .push(BitVal::S(SpecialBit::_1));
                         } else if (obuf_mode.unwrap() == XC2IOBOBufMode::OpenDrain && port_idx == 4) ||
@@ -580,6 +578,29 @@ fn main() {
                         unreachable!();
                     }
                 },
+                "IBUF" => {
+                    if port_name == "O" {
+                        // This is always driven
+                        cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                            .push(BitVal::N(wire_ref));
+                    } else {
+                        unreachable!();
+                    }
+                },
+                "ORTERM" => {
+                    if port_name == "OUT" {
+                        // This is always driven
+                        cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                            .push(BitVal::N(wire_ref));
+                    } else if port_name == "IN" {
+                        if bitstream.bits.get_fb()[fb as usize].or_terms[idx as usize].input[port_idx as usize] {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        }
+                    } else {
+                        unreachable!();
+                    }
+                }
                 _ => {
                     // println!("FIXME {}", node_type);
                 }
