@@ -186,10 +186,249 @@ unsigned int Greenpak4Counter::GetOutputNetNumber(string port)
 		return -1;
 }
 
-bool Greenpak4Counter::Load(bool* /*bitstream*/)
+bool Greenpak4Counter::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+
+	//COUNTER MODE
+	if(true)
+	{
+		ReadMatrixSelector(bitstream, m_inputBaseWord + 0, m_matrix, m_reset);
+
+		if(m_hasFSM)
+		{
+			ReadMatrixSelector(bitstream, m_inputBaseWord + 1, m_matrix, m_keep);
+			ReadMatrixSelector(bitstream, m_inputBaseWord + 2, m_matrix, m_up);
+		}
+
+		//TODO: dedicated input clock matrix stuff
+	}
+
+	//TODO: other modes
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Configuration
+
+	//Count value (the same in all modes, just varies with depth)
+	m_countVal = 0;
+	for(unsigned int i = 0; i<m_depth; i++)
+		m_countVal |= (bitstream[m_configBase + i] << i);
+
+	//Base for remaining configuration data
+	uint32_t nbase = m_configBase + m_depth;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Input clock
+
+	//FSM/PWM have 4-bit clock selector
+	if(m_hasFSM || m_hasPWM)
+	{
+		unsigned int clksel = 0;
+		for(unsigned int i = 0; i<4; i++)
+			clksel |= (bitstream[nbase + i] << i);
+
+		switch(clksel)
+		{
+			case 0:
+				m_preDivide = 1;
+				m_clock = m_device->GetRCOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
+
+			case 1:
+				m_preDivide = 4;
+				m_clock = m_device->GetRCOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
+
+			case 2:
+				m_preDivide = 12;
+				m_clock = m_device->GetRCOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
+
+			case 3:
+				m_preDivide = 24;
+				m_clock = m_device->GetRCOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
+
+			case 4:
+				m_preDivide = 64;
+				m_clock = m_device->GetRCOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
+
+			case 8:
+				m_preDivide = 1;
+				m_clock = m_device->GetRingOscillator()->GetOutput("CLKOUT_HARDIP");
+
+			case 10:
+				m_preDivide = 1;
+				m_clock = m_device->GetLFOscillator()->GetOutput("CLKOUT");
+				break;
+
+			//TODO: SPI clock
+			//TODO: FSM clock
+			//TODO: PWM clock
+			default:
+				LogError("Unimplemented counter clock source %d (in %s)\n", clksel, GetDescription().c_str());
+				return false;
+		}
+
+		nbase += 4;
+	}
+
+	//others have 3-bit selector
+	else
+	{
+		unsigned int clksel = 0;
+		for(unsigned int i = 0; i<3; i++)
+			clksel |= (bitstream[nbase + i] << i);
+
+		switch(clksel)
+		{
+			case 0:
+				m_preDivide = 1;
+				m_clock = m_device->GetRCOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
+
+			case 1:
+				m_preDivide = 4;
+				m_clock = m_device->GetRCOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
+
+			case 2:
+				m_preDivide = 24;
+				m_clock = m_device->GetRCOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
+
+			case 3:
+				m_preDivide = 64;
+				m_clock = m_device->GetRCOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
+
+			case 4:
+				m_preDivide = 1;
+				m_clock = m_device->GetLFOscillator()->GetOutput("CLKOUT");
+				break;
+
+			case 6:
+				m_preDivide = 1;
+				m_clock = m_device->GetRingOscillator()->GetOutput("CLKOUT_HARDIP");
+
+			//TODO: cascading
+			//TODO: Matrix outputs
+			default:
+				LogError("Unimplemented counter clock source %d (in %s)\n", clksel, GetDescription().c_str());
+				return false;
+		}
+
+		nbase += 3;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Reset stuff
+
+	int mode = (bitstream[nbase + 1] << 1) | bitstream[nbase + 0];
+	ResetMode modes[4] = {BOTH_EDGE, FALLING_EDGE, RISING_EDGE, HIGH_LEVEL};
+	m_resetMode = modes[mode];
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Main counter logic
+
+	//FSM capable (see CNT/DLY4)
+	if(m_hasFSM)
+	{
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Block function
+
+		nbase += 2;
+
+		if(m_hasEdgeDetect)
+		{
+			int mode = (bitstream[nbase + 1] << 1) | bitstream[nbase + 0];
+
+			if(mode != 1)
+			{
+				LogWarning("Counter %s requested non-counter mode, which is not yet implemented. "
+					"This can be safely ignored if the counter isn't being used.\n",
+					GetDescription().c_str());
+			}
+
+			nbase += 2;
+		}
+
+		else
+		{
+			if(!bitstream[nbase])
+			{
+				LogWarning("Counter %s requested non-counter mode, which is not yet implemented. "
+					"This can be safely ignored if the counter isn't being used.\n",
+					GetDescription().c_str());
+			}
+
+			nbase ++;
+		}
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// FSM input data source
+
+		//NVM data (FSM data = max count)
+		//WARNING: on SLG4662x, FSM0 and FSM1 encoding for this register are not the same!
+		//This one case uses the same encoding for both so we're OK until we support the other modes
+		if(bitstream[nbase + 0] || bitstream[nbase + 1])
+		{
+			LogError("FSM input values other than COUNT_TO not implemented\n");
+			return false;
+		}
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Value control
+
+		if(bitstream[nbase + 2])
+			m_resetValue = COUNT_TO;
+		else
+			m_resetValue = ZERO;
+	}
+
+	//Not FSM capable (see CNT/DLY0)
+	else
+	{
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Block function
+
+		//PWM mode is only 1 bit (see CNT/DLY8)
+		if(m_hasPWM)
+		{
+			if(!bitstream[nbase])
+			{
+				LogWarning("Counter %s requested non-counter mode, which is not yet implemented. "
+					"This can be safely ignored if the counter isn't being used.\n",
+					GetDescription().c_str());
+			}
+		}
+
+		//Not PWM capable (see CNT/DLY0)
+		else
+		{
+			int mode = (bitstream[nbase + 1] << 1) | bitstream[nbase + 0];
+
+			if(mode != 1)
+			{
+				LogWarning("Counter %s requested non-counter mode, which is not yet implemented. "
+					"This can be safely ignored if the counter isn't being used.\n",
+					GetDescription().c_str());
+			}
+		}
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// Wake/sleep power down
+
+		//For now, always run normally
+		//if(m_hasWakeSleepPowerDown && !unused)
+		//	bitstream[nbase + 4] = true;
+		if(m_hasWakeSleepPowerDown && !bitstream[nbase + 4])
+			LogWarning("Ignoring wake-sleep powerdown mode (not yet implemented)\n");
+	}
+
+	return true;
 }
 
 bool Greenpak4Counter::Save(bool* bitstream)
@@ -551,7 +790,7 @@ bool Greenpak4Counter::Save(bool* bitstream)
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Block function
 
-		//PWM mode is only 1 bit (see CNT/DLY80
+		//PWM mode is only 1 bit (see CNT/DLY8)
 		if(m_hasPWM)
 		{
 			//if unused, 1'b0 = delay
