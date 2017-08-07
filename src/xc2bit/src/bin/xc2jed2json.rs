@@ -587,6 +587,17 @@ fn main() {
                         unreachable!();
                     }
                 },
+                "ANDTERM" => {
+                    if port_name == "OUT" {
+                        // This is always driven
+                        cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                            .push(BitVal::N(wire_ref));
+                    } else if port_name == "IN" {
+                        // Whee, ZIA goes here
+                    } else {
+                        unreachable!();
+                    }
+                },
                 "ORTERM" => {
                     if port_name == "OUT" {
                         // This is always driven
@@ -602,7 +613,17 @@ fn main() {
                     }
                 },
                 "MACROCELL_XOR" => {
-                    if port_name == "IN_PTC" || port_name == "IN_ORTERM" {
+                    if port_name == "IN_PTC" {
+                        if (bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].xor_mode == XC2MCXorMode::PTC) ||
+                           (bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].xor_mode == XC2MCXorMode::PTCB) {
+
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::N(wire_ref));
+                        } else {
+                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
+                                .push(BitVal::S(SpecialBit::_0));
+                        }
+                    } else if port_name == "IN_ORTERM" {
                         cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
                             .push(BitVal::N(wire_ref));
                     } else if port_name == "OUT" {
@@ -723,16 +744,11 @@ fn main() {
                     } else {
                         unreachable!();
                     }
-                }
+                },
                 _ => {
-                    // println!("FIXME {}", node_type);
+                    unreachable!();
                 }
             };
-
-            // cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap().push(wire_ref);
-            // if let Some(port) = cells.get_mut(node_name).unwrap().connections.get_mut(port_name) {
-            //     port.push(wire_ref);
-            // }
         }
     );
 
