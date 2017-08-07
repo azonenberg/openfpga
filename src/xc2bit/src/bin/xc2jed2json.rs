@@ -130,6 +130,70 @@ fn main() {
 
                     let mut attributes = HashMap::new();
                     attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, mc + 1)));
+                    // Grab attributes
+                    if let Some(iobs) = bitstream.bits.get_small_iobs() {
+                        if iobs[idx as usize].slew_is_fast {
+                            attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("FAST")));
+                        } else {
+                            attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("SLOW")));
+                        }
+
+                        if iobs[idx as usize].slew_is_fast {
+                            attributes.insert(String::from("TERM"), AttributeVal::S(String::from("TRUE")));
+                        } else {
+                            attributes.insert(String::from("TERM"), AttributeVal::S(String::from("FALSE")));
+                        }
+
+                        if iobs[idx as usize].obuf_mode == XC2IOBOBufMode::CGND {
+                            attributes.insert(String::from("CGND"), AttributeVal::N(1));
+                        }
+
+                        if iobs[idx as usize].schmitt_trigger {
+                            attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("TRUE")));
+                        } else {
+                            attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("FALSE")));
+                        }
+                    }
+                    if let Some(iobs) = bitstream.bits.get_large_iobs() {
+                        if iobs[idx as usize].slew_is_fast {
+                            attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("FAST")));
+                        } else {
+                            attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("SLOW")));
+                        }
+
+                        if iobs[idx as usize].slew_is_fast {
+                            attributes.insert(String::from("TERM"), AttributeVal::S(String::from("TRUE")));
+                        } else {
+                            attributes.insert(String::from("TERM"), AttributeVal::S(String::from("FALSE")));
+                        }
+
+                        if iobs[idx as usize].obuf_mode == XC2IOBOBufMode::CGND {
+                            attributes.insert(String::from("CGND"), AttributeVal::N(1));
+                        }
+
+                        match iobs[idx as usize].ibuf_mode {
+                            XC2IOBIbufMode::NoVrefNoSt => {
+                                attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("FALSE")));
+                            },
+                            XC2IOBIbufMode::NoVrefSt => {
+                                attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("TRUE")));
+                            },
+                            XC2IOBIbufMode::UsesVref => {
+                                // FIXME
+                                unimplemented!();
+                            },
+                            XC2IOBIbufMode::IsVref => {
+                                // FIXME
+                                unimplemented!();
+                            }
+                        }
+
+                        if iobs[idx as usize].uses_data_gate {
+                            // FIXME
+                            unimplemented!();
+                        }
+                    }
+
                     let mut connections = HashMap::new();
                     connections.insert(String::from("I"), Vec::new());
                     connections.insert(String::from("E"), Vec::new());
