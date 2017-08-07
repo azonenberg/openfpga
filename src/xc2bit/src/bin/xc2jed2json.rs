@@ -874,6 +874,65 @@ fn main() {
         }
     );
 
+    // We need to fill in some widths here
+    {
+        let mut output_netlist_mut = output_netlist.borrow_mut();
+        let mut cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
+        for (_, cell) in cells.iter_mut() {
+            if cell.cell_type == "ANDTERM" {
+                cell.parameters.insert(String::from("TRUE_INP"),
+                    AttributeVal::N(cell.connections.get("IN").unwrap().len()));
+                cell.parameters.insert(String::from("COMP_INP"),
+                    AttributeVal::N(cell.connections.get("IN_B").unwrap().len()));
+            }
+
+            if cell.cell_type == "ORTERM" {
+                cell.parameters.insert(String::from("WIDTH"),
+                    AttributeVal::N(cell.connections.get("IN").unwrap().len()));
+            }
+        }
+    }
+
+    // Fix up driving multiple nets (none of our cells have outputs with width > 1)
+    {
+        let mut output_netlist_mut = output_netlist.borrow_mut();
+        let mut cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
+        let mut cells_to_add = HashMap::new();
+        for (cell_name, cell) in cells.iter_mut() {
+            let out = match cell.cell_type.as_ref() {
+                "IBUF" | "IOBUFE" | "BUFG" | "BUFGSR" | "BUFGTS" => cell.connections.get_mut("O").unwrap(),
+                "ANDTERM" | "ORTERM" | "MACROCELL_XOR" => cell.connections.get_mut("OUT").unwrap(),
+                "FDCP" | "FDCP_N" | "LDCP" | "LDCP_N" | "FDDCP" | "FTCP" | "FTCP_N" | "FTDCP" |
+                    "FDCPE" | "FDCPE_N" | "FDDCPE" => cell.connections.get_mut("Q").unwrap(),
+                _ => unreachable!(),
+            };
+
+            if out.len() > 1 {
+                let other_outs = out[1..].to_vec();
+                out.truncate(1);
+
+                for other_out in other_outs {
+                    let mut connections = HashMap::new();
+                    connections.insert(String::from("A"), vec![out[0].clone()]);
+                    connections.insert(String::from("Y"), vec![other_out]);
+
+                    cells_to_add.insert(format!("autobuf_{}", cell_name), Cell {
+                        hide_name: 0,
+                        cell_type: String::from("$_BUF_"),
+                        parameters: HashMap::new(),
+                        attributes: HashMap::new(),
+                        port_directions: HashMap::new(),
+                        connections
+                    });
+                }
+            }
+        }
+
+        for (cell_name, cell) in cells_to_add {
+            cells.insert(cell_name, cell);
+        }
+    }
+
     // Write the final output
     output_netlist.borrow().to_writer(&mut ::std::io::stdout()).expect("failed to write json");
 }
