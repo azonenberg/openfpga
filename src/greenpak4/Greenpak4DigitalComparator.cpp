@@ -180,10 +180,79 @@ bool Greenpak4DigitalComparator::CommitChanges()
 	return true;
 }
 
-bool Greenpak4DigitalComparator::Load(bool* /*bitstream*/)
+bool Greenpak4DigitalComparator::Load(bool* bitstream)
 {
-	LogError("Unimplemented\n");
-	return false;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+
+	ReadMatrixSelector(bitstream, m_inputBaseWord, m_matrix, m_powerDown);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CONFIGURATION
+
+	int deadtime = (bitstream[m_configBase + 2] << 2) | (bitstream[m_configBase + 1] << 1) | bitstream[m_configBase];
+	m_pwmDeadband = (deadtime + 1) * 10;
+
+	//Geq/eq mode
+	m_compareGreaterEqual = bitstream[m_configBase + 3];
+
+	//Function select (DCMP vs PWM)
+	m_dcmpMode = bitstream[m_configBase + 4];
+
+	//Negative input
+	unsigned int insel = (bitstream[m_configBase + 4] << 1) | bitstream[m_configBase + 3];
+	for(auto it : m_innsels)
+	{
+		if(it.second != insel)
+			continue;
+		auto from = it.first;
+
+		for(int i=0; i<8; i++)
+			m_inn[i] = from;
+	}
+
+	//Clock source
+	if(bitstream[m_configBase + 5])
+		m_clock = m_device->GetClockBuffer(2)->GetOutput("OUT");
+	else
+		m_clock = m_device->GetClockBuffer(5)->GetOutput("OUT");
+
+	//Clock inversion
+	m_clockInvert = bitstream[m_configBase + 6];
+
+	//insert powerdown sync bit here for DCMP0, others don't have it
+	unsigned int cbase = m_configBase + 7;
+	if(m_cmpNum == 0)
+	{
+		m_pdSync = bitstream[m_configBase + 7];
+		cbase ++;
+	}
+	else
+		m_pdSync = false;
+
+	//Positive input
+	insel = (bitstream[cbase + 2] << 1) | bitstream[cbase + 1];
+	for(auto it : m_inpsels)
+	{
+		if(it.second != insel)
+			continue;
+		auto from = it.first;
+
+		for(int i=0; i<8; i++)
+			m_inp[i] = from;
+	}
+
+	//Enable bit (if cleared, tie off all inputs to zero)
+	if(!bitstream[cbase + 0])
+	{
+		for(int i=0; i<8; i++)
+		{
+			m_inp[i] = m_device->GetGround();
+			m_inn[i] = m_device->GetGround();
+		}
+	}
+
+	return true;
 }
 
 bool Greenpak4DigitalComparator::IsUsed()
