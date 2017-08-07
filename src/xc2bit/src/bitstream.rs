@@ -824,6 +824,28 @@ impl XC2BitstreamBits {
         }
     }
 
+    /// Helper to extract only the I/O data without having to perform an explicit `match`
+    pub fn get_small_iobs(&self) -> Option<&[XC2MCSmallIOB]> {
+        match self {
+            &XC2BitstreamBits::XC2C32{ref iobs, ..} => Some(iobs),
+            &XC2BitstreamBits::XC2C32A{ref iobs, ..} => Some(iobs),
+            &XC2BitstreamBits::XC2C64{ref iobs, ..} => Some(iobs),
+            &XC2BitstreamBits::XC2C64A{ref iobs, ..} => Some(iobs),
+            _ => None,
+        }
+    }
+
+    /// Helper to extract only the I/O data without having to perform an explicit `match`
+    pub fn get_large_iobs(&self) -> Option<&[XC2MCLargeIOB]> {
+        match self {
+            &XC2BitstreamBits::XC2C128{ref iobs, ..} => Some(iobs),
+            &XC2BitstreamBits::XC2C256{ref iobs, ..} => Some(iobs),
+            &XC2BitstreamBits::XC2C384{ref iobs, ..} => Some(iobs),
+            &XC2BitstreamBits::XC2C512{ref iobs, ..} => Some(iobs),
+            _ => None,
+        }
+    }
+
     /// Helper to extract only the global net data without having to perform an explicit `match`
     pub fn get_global_nets(&self) -> &XC2GlobalNets {
         match self {
