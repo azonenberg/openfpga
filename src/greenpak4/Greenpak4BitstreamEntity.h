@@ -67,7 +67,7 @@ public:
 	virtual void SetInput(std::string port, Greenpak4EntityOutput src) =0;
 
 	/**
-		@brief Gets the input with the given name.
+		@brief Gets the signal driving the specified input
 	 */
 	virtual Greenpak4EntityOutput GetInput(std::string port) const =0;
 
@@ -131,6 +131,12 @@ public:
 
 	//Calls GetOutputPorts() then filters the output to only include ports valid in the current configuration
 	virtual std::vector<std::string> GetOutputPortsFiltered(bool* bitstream) const;
+
+	//Get a list of all input ports on this node, including those which do not go to general fabric routing
+	virtual std::vector<std::string> GetAllInputPorts() const;
+
+	//Get a list of all output ports on this node, including those which do not go to general fabric routing
+	virtual std::vector<std::string> GetAllOutputPorts() const;
 
 	//Commit changes from the assigned PAR graph node to us
 	virtual bool CommitChanges() =0;

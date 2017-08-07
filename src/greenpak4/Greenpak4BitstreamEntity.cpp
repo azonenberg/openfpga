@@ -124,6 +124,18 @@ bool Greenpak4BitstreamEntity::IsGeneralFabricInput(string port) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Load/save helpers
 
+vector<string> Greenpak4BitstreamEntity::GetAllInputPorts() const
+{
+	//default to just getting the fabric ports
+	return GetInputPorts();
+}
+
+vector<string> Greenpak4BitstreamEntity::GetAllOutputPorts() const
+{
+	//default to just getting the fabric ports
+	return GetOutputPorts();
+}
+
 vector<string> Greenpak4BitstreamEntity::GetOutputPortsFiltered(bool* /*bitstream*/) const
 {
 	return GetOutputPorts();

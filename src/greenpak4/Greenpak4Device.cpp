@@ -1370,17 +1370,165 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 		else
 			fprintf(fp, ",\n");
 
-		//TODO
+		vector<string> inputs = cell->GetAllInputPorts();
+		vector<string> outputs = cell->GetAllOutputPorts();
+		vector<string> inouts;
+
+		//The only primitive with an inout port is GP_IOBUF.
+		//All other ports are unidirectional.
+		string type = cell->GetPrimitiveName();
+		if(type == "GP_IOBUF")
+			inouts.push_back("IO");
+
+		//TODO: parameters and attributes
 		fprintf(fp, "        \"%s\": {\n", cell->GetDescription().c_str());
 		fprintf(fp, "          \"hide_name\": 0,\n");
-		fprintf(fp, "          \"type\": \"%s\",\n", cell->GetPrimitiveName().c_str());
+		fprintf(fp, "          \"type\": \"%s\",\n", type.c_str());
 		fprintf(fp, "          \"parameters\": {\n");
 		fprintf(fp, "          },\n");
 		fprintf(fp, "          \"attributes\": {\n");
 		fprintf(fp, "          },\n");
+
+		//Port directions based on which list we're in
+		bool pfirst = true;
 		fprintf(fp, "          \"port_directions\": {\n");
-		fprintf(fp, "          },\n");
+		for(auto i : inputs)
+		{
+			//Add comma if we're not the first one
+			if(pfirst)
+				pfirst = false;
+			else
+				fprintf(fp, ",\n");
+
+			fprintf(fp, "            \"%s\": \"input\"", i.c_str());
+		}
+		for(auto o : outputs)
+		{
+			//Add comma if we're not the first one
+			if(pfirst)
+				pfirst = false;
+			else
+				fprintf(fp, ",\n");
+
+			fprintf(fp, "            \"%s\": \"output\"", o.c_str());
+		}
+		for(auto io : inouts)
+		{
+			//Add comma if we're not the first one
+			if(pfirst)
+				pfirst = false;
+			else
+				fprintf(fp, ",\n");
+
+			fprintf(fp, "            \"%s\": \"inout\"", io.c_str());
+		}
+		fprintf(fp, "\n          },\n");
+
+
+		//Port connections for inputs
+		pfirst = true;
 		fprintf(fp, "          \"connections\": {\n");
+
+		//Inputs
+		for(auto i : inputs)
+		{
+			//Skip this port if nothing's hooked up
+			auto source = cell->GetInput(i);
+			if(source.IsNull())
+				continue;
+
+			//Add comma if we're not the first one
+			if(pfirst)
+				pfirst = false;
+			else
+				fprintf(fp, ",\n");
+
+			//Look up the net number, allocate a new one if needed
+			int netnum;
+			if(netnums.find(source) != netnums.end())
+				netnum = netnums[source];
+			else
+			{
+				netnum = nextNetnum ++;
+				netnums[source] = netnum;
+			}
+
+			//TODO: Get width of the signal and handle vectors properly!!
+
+			//Done, save it
+			//Special case for 0/1 constant nets!
+			if( (netnum == 0) || (netnum == 1) )
+				fprintf(fp, "            \"%s\": [ \"%d\" ]", i.c_str(), netnum);
+			else
+				fprintf(fp, "            \"%s\": [ %d ]", i.c_str(), netnum);
+		}
+
+		//Outputs
+		for(auto o : outputs)
+		{
+			//Skip this port if nothing's hooked up
+			auto dest = cell->GetOutput(o);
+			if(dest.IsNull())
+				continue;
+
+			//Add comma if we're not the first one
+			if(pfirst)
+				pfirst = false;
+			else
+				fprintf(fp, ",\n");
+
+			//Look up the net number, allocate a new one if needed
+			int netnum;
+			if(netnums.find(dest) != netnums.end())
+				netnum = netnums[dest];
+			else
+			{
+				netnum = nextNetnum ++;
+				netnums[dest] = netnum;
+			}
+
+			//TODO: Get width of the signal and handle vectors properly!!
+
+			//Done, save it
+			fprintf(fp, "            \"%s\": [ %d ]",
+				o.c_str(),
+				netnum);
+		}
+
+		//Hook up top level ports
+		if(type == "GP_IBUF")
+		{
+			if(pfirst)
+				pfirst = false;
+			else
+				fprintf(fp, ",\n");
+
+			auto iob = dynamic_cast<Greenpak4IOB*>(cell);
+			fprintf(fp, "            \"IN\": [ %d ]\n", padToNet[iob->GetPinNumber()]);
+		}
+		else if(type == "GP_OBUF")
+		{
+			if(pfirst)
+				pfirst = false;
+			else
+				fprintf(fp, ",\n");
+
+			auto iob = dynamic_cast<Greenpak4IOB*>(cell);
+			fprintf(fp, "            \"OUT\": [ %d ]\n", padToNet[iob->GetPinNumber()]);
+		}
+		else if(type == "GP_IOBUF")
+		{
+			if(pfirst)
+				pfirst = false;
+			else
+				fprintf(fp, ",\n");
+
+			auto iob = dynamic_cast<Greenpak4IOB*>(cell);
+			fprintf(fp, "            \"IO\": [ %d ]\n", padToNet[iob->GetPinNumber()]);
+		}
+
+		//TODO: other connections to top level ports
+
 		fprintf(fp, "          }\n");
 		fprintf(fp, "        }");
 	}

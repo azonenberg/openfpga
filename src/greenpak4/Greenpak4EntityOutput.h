@@ -74,7 +74,18 @@ public:
 
 	//comparison operator for std::map
 	bool operator<(const Greenpak4EntityOutput& rhs) const
-	{ return GetOutputName() < rhs.GetOutputName(); }
+	{
+		//Null is always less than anything
+		if(IsNull())
+			return true;
+		if(rhs.IsNull())
+			return false;
+
+		return GetOutputName() < rhs.GetOutputName();
+	}
+
+	bool IsNull() const
+	{ return (m_src == NULL); }
 
 public:
 	Greenpak4BitstreamEntity* m_src;
