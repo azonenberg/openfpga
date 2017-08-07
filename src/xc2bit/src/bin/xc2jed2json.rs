@@ -100,12 +100,14 @@ fn main() {
                     }
                 },
                 "IOBUFE" => {
+                    let (fb, mc) = iob_num_to_fb_mc_num(bitstream.bits.device_type(), idx).unwrap();
+
                     // Construct the wire for the toplevel port
                     let toplevel_wire = {
                         let orig_wire_idx = {*wire_idx.borrow()};
                         let mut output_netlist_mut = output_netlist.borrow_mut();
                         let mut netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
-                        netnames.insert(format!("PAD_{}", idx), Netname {
+                        netnames.insert(format!("PAD_FB{}_{}", fb + 1, mc + 1), Netname {
                             hide_name: 0,
                             bits: vec![BitVal::N(orig_wire_idx)],
                             attributes: HashMap::new(),
@@ -120,12 +122,14 @@ fn main() {
                     {
                         let mut output_netlist_mut = output_netlist.borrow_mut();
                         let mut ports = &mut output_netlist_mut.modules.get_mut("top").unwrap().ports;
-                        ports.insert(format!("PAD_{}", idx), Port {
+                        ports.insert(format!("PAD_FB{}_{}", fb + 1, mc + 1), Port {
                             direction: PortDirection::InOut,
                             bits: vec![BitVal::N(toplevel_wire)],
                         });
                     }
 
+                    let mut attributes = HashMap::new();
+                    attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, mc + 1)));
                     let mut connections = HashMap::new();
                     connections.insert(String::from("I"), Vec::new());
                     connections.insert(String::from("E"), Vec::new());
@@ -135,12 +139,12 @@ fn main() {
                         hide_name: 0,
                         cell_type: node_type.to_owned(),
                         parameters: HashMap::new(),
-                        attributes: HashMap::new(),
+                        attributes,
                         port_directions: HashMap::new(),
-                        connections: connections,
+                        connections,
                     }
                 },
-                // FIXME: Boilerplate
+                // FIXME: Boilerplate, copy-pasta
                 "IBUF" => {
                     // Construct the wire for the toplevel port
                     let toplevel_wire = {
@@ -168,6 +172,8 @@ fn main() {
                         });
                     }
 
+                    let mut attributes = HashMap::new();
+                    attributes.insert(String::from("LOC"), AttributeVal::S(String::from("INPAD")));
                     let mut connections = HashMap::new();
                     connections.insert(String::from("O"), Vec::new());
                     connections.insert(String::from("I"), vec![BitVal::N(toplevel_wire)]);
@@ -175,23 +181,134 @@ fn main() {
                         hide_name: 0,
                         cell_type: node_type.to_owned(),
                         parameters: HashMap::new(),
-                        attributes: HashMap::new(),
+                        attributes,
                         port_directions: HashMap::new(),
-                        connections: connections,
+                        connections,
                     }
                 },
-                _ => {
-                    // FIXME
-                    println!("{} is not implemented!", node_type);
+                "ANDTERM" => {
+                    let mut attributes = HashMap::new();
+                    attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_P{}", fb + 1, idx)));
+                    let mut connections = HashMap::new();
+                    connections.insert(String::from("IN"), Vec::new());
+                    connections.insert(String::from("IN_B"), Vec::new());
+                    connections.insert(String::from("OUT"), Vec::new());
                     cell = Cell {
                         hide_name: 0,
-                        cell_type: String::from("FIXME FIXME FIXME"),
+                        cell_type: node_type.to_owned(),
                         parameters: HashMap::new(),
-                        attributes: HashMap::new(),
+                        attributes,
                         port_directions: HashMap::new(),
-                        connections: HashMap::new(),
+                        connections,
                     }
                 },
+                "ORTERM" => {
+                    let mut attributes = HashMap::new();
+                    attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, idx + 1)));
+                    let mut connections = HashMap::new();
+                    connections.insert(String::from("IN"), Vec::new());
+                    connections.insert(String::from("OUT"), Vec::new());
+                    cell = Cell {
+                        hide_name: 0,
+                        cell_type: node_type.to_owned(),
+                        parameters: HashMap::new(),
+                        attributes,
+                        port_directions: HashMap::new(),
+                        connections,
+                    }
+                },
+                "MACROCELL_XOR" => {
+                    let mut attributes = HashMap::new();
+                    attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, idx + 1)));
+                    let mut connections = HashMap::new();
+                    connections.insert(String::from("IN_PTC"), Vec::new());
+                    connections.insert(String::from("IN_ORTERM"), Vec::new());
+                    connections.insert(String::from("OUT"), Vec::new());
+                    cell = Cell {
+                        hide_name: 0,
+                        cell_type: node_type.to_owned(),
+                        parameters: HashMap::new(),
+                        attributes,
+                        port_directions: HashMap::new(),
+                        connections,
+                    }
+                },
+                "REG" => {
+                    let mut attributes = HashMap::new();
+                    attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, idx + 1)));
+                    let mut connections = HashMap::new();
+                    connections.insert(String::from("Q"), Vec::new());
+                    connections.insert(String::from("PRE"), Vec::new());
+                    connections.insert(String::from("CLR"), Vec::new());
+
+                    let cell_type;
+                    let mc = &bitstream.bits.get_fb()[fb as usize].mcs[idx as usize];
+                    match mc.reg_mode {
+                        XC2MCRegMode::DFF => {
+                            connections.insert(String::from("C"), Vec::new());
+                            connections.insert(String::from("D"), Vec::new());
+
+                            if mc.is_ddr {
+                                cell_type = String::from("FDDCP");
+                            } else {
+                                if !mc.clk_invert_pol {
+                                    cell_type = String::from("FDCP");
+                                } else {
+                                    cell_type = String::from("FDCP_N");
+                                }
+                            }
+                        },
+                        XC2MCRegMode::LATCH => {
+                            connections.insert(String::from("G"), Vec::new());
+                            connections.insert(String::from("D"), Vec::new());
+
+                            if !mc.clk_invert_pol {
+                                cell_type = String::from("LDCP");
+                            } else {
+                                cell_type = String::from("LDCP_N");
+                            }
+                        },
+                        XC2MCRegMode::TFF => {
+                            connections.insert(String::from("C"), Vec::new());
+                            connections.insert(String::from("T"), Vec::new());
+
+                            if mc.is_ddr {
+                                cell_type = String::from("FTDCP");
+                            } else {
+                                if !mc.clk_invert_pol {
+                                    cell_type = String::from("FTCP");
+                                } else {
+                                    cell_type = String::from("FTCP_N");
+                                }
+                            }
+                        },
+                        XC2MCRegMode::DFFCE => {
+                            connections.insert(String::from("C"), Vec::new());
+                            connections.insert(String::from("D"), Vec::new());
+                            connections.insert(String::from("CE"), Vec::new());
+
+                            if mc.is_ddr {
+                                cell_type = String::from("FDDCPE");
+                            } else {
+                                if !mc.clk_invert_pol {
+                                    cell_type = String::from("FDCPE");
+                                } else {
+                                    cell_type = String::from("FDCPE_N");
+                                }
+                            }
+                        }
+                    }
+
+                    cell = Cell {
+                        hide_name: 0,
+                        cell_type,
+                        parameters: HashMap::new(),
+                        attributes,
+                        port_directions: HashMap::new(),
+                        connections,
+                    }
+                },
+                _ => unreachable!()
             }
 
             // Create the cell in the output module
