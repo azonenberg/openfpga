@@ -606,11 +606,10 @@ fn main() {
                             .push(BitVal::N(wire_ref));
                     } else if port_name == "IN" {
                         // Whee, ZIA goes here
-
                         let zia_row = zia_table_lookup(bitstream.bits.device_type(), port_idx as usize);
-                        // FIXME: port_idx is a hack
+                        // FIXME: extra_data checking is a hack
                         if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize].selected ==
-                            XC2ZIAInput::One && port_idx == 0{
+                            XC2ZIAInput::One && extra_data == (0, 0) {
 
                             if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
                                 .input[port_idx as usize] {
@@ -625,7 +624,7 @@ fn main() {
                                     .push(BitVal::S(SpecialBit::_1));
                             }
                         } else if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize].selected ==
-                            XC2ZIAInput::Zero && port_idx == 0 {
+                            XC2ZIAInput::Zero && extra_data == (0, 0) {
 
                             if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize]
                                 .input[port_idx as usize] {
@@ -911,12 +910,12 @@ fn main() {
                 let other_outs = out[1..].to_vec();
                 out.truncate(1);
 
-                for other_out in other_outs {
+                for (i, other_out) in other_outs.into_iter().enumerate() {
                     let mut connections = HashMap::new();
                     connections.insert(String::from("A"), vec![out[0].clone()]);
                     connections.insert(String::from("Y"), vec![other_out]);
 
-                    cells_to_add.insert(format!("autobuf_{}", cell_name), Cell {
+                    cells_to_add.insert(format!("autobuf{}_{}", i, cell_name), Cell {
                         hide_name: 0,
                         cell_type: String::from("$_BUF_"),
                         parameters: HashMap::new(),
