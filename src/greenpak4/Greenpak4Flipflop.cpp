@@ -139,6 +139,27 @@ string Greenpak4Flipflop::GetDescription() const
 	return string(buf);
 }
 
+string Greenpak4Flipflop::GetPrimitiveName() const
+{
+	string base = "GP_D";
+	if(m_latchMode)
+		base += "LATCH";
+	else
+		base += "FF";
+
+	if(m_hasSR && !m_nsr.IsPowerRail())
+	{
+		if(m_srmode)
+			base += "S";
+		else
+			base += "R";
+	}
+
+	if(m_outputInvert)
+		base += "I";
+	return base;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

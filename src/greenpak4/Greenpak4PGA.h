@@ -65,6 +65,8 @@ public:
 	InputModes GetInputMode()
 	{ return m_inputMode; }
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 	Greenpak4EntityOutput m_vinp;
 	Greenpak4EntityOutput m_vinn;

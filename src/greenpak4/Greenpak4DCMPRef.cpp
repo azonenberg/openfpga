@@ -80,6 +80,11 @@ unsigned int Greenpak4DCMPRef::GetOutputNetNumber(string /*port*/)
 	return -1;
 }
 
+string Greenpak4DCMPRef::GetPrimitiveName() const
+{
+	return "GP_DMCPREF";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

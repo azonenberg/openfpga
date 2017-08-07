@@ -71,6 +71,8 @@ public:
 	void SetPowerEn(Greenpak4EntityOutput pwren)
 	{ m_pwren = pwren; }
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 	Greenpak4EntityOutput m_pwren;
 	Greenpak4EntityOutput m_vin;

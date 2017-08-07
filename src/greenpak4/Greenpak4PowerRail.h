@@ -51,6 +51,8 @@ public:
 	virtual std::vector<std::string> GetOutputPorts() const;
 	virtual bool CommitChanges();
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 };
 

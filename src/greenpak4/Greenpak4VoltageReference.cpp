@@ -89,6 +89,11 @@ unsigned int Greenpak4VoltageReference::GetOutputNetNumber(string /*port*/)
 	return -1;
 }
 
+string Greenpak4VoltageReference::GetPrimitiveName() const
+{
+	return "GP_VREF";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

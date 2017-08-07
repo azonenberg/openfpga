@@ -52,6 +52,8 @@ public:
 
 	virtual bool CommitChanges();
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 
 	///Auto power-down

@@ -91,6 +91,14 @@ unsigned int Greenpak4Delay::GetOutputNetNumber(string port)
 		return -1;
 }
 
+string Greenpak4Delay::GetPrimitiveName() const
+{
+	if(m_mode == DELAY)
+		return "GP_DELAY";
+	else
+		return "GP_EDGEDET";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

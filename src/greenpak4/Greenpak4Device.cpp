@@ -1371,11 +1371,9 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 			fprintf(fp, ",\n");
 
 		//TODO
-		string type = "FIXME";
-
 		fprintf(fp, "        \"%s\": {\n", cell->GetDescription().c_str());
 		fprintf(fp, "          \"hide_name\": 0,\n");
-		fprintf(fp, "          \"type\": \"%s\",\n", type.c_str());
+		fprintf(fp, "          \"type\": \"%s\",\n", cell->GetPrimitiveName().c_str());
 		fprintf(fp, "          \"parameters\": {\n");
 		fprintf(fp, "          },\n");
 		fprintf(fp, "          \"attributes\": {\n");

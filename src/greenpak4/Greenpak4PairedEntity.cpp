@@ -104,6 +104,11 @@ unsigned int Greenpak4PairedEntity::GetOutputNetNumber(string port)
 	return GetActiveEntity()->GetOutputNetNumber(port);
 }
 
+string Greenpak4PairedEntity::GetPrimitiveName() const
+{
+	return GetActiveEntity()->GetPrimitiveName();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Module selection
 

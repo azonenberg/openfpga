@@ -61,6 +61,8 @@ public:
 
 	virtual bool CommitChanges();
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 
 	///Index of our flipflop

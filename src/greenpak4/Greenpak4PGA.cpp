@@ -94,6 +94,11 @@ unsigned int Greenpak4PGA::GetOutputNetNumber(string /*port*/)
 	return -1;
 }
 
+string Greenpak4PGA::GetPrimitiveName() const
+{
+	return "GP_PGA";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

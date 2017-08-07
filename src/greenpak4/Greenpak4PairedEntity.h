@@ -59,6 +59,8 @@ public:
 	void AddType(std::string type, bool entity);
 	bool SetEntityType(std::string type);
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 
 	//Address of the select bit

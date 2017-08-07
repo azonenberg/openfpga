@@ -79,6 +79,11 @@ unsigned int Greenpak4Abuf::GetOutputNetNumber(string /*port*/)
 	return -1;
 }
 
+string Greenpak4Abuf::GetPrimitiveName() const
+{
+	return "GP_ABUF";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

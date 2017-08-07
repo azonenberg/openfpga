@@ -63,6 +63,8 @@ public:
 
 	virtual bool CommitChanges();
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 
 	///Power-down input (if implemented)

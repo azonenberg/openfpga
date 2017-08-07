@@ -61,6 +61,8 @@ public:
 	void MakeXOR();
 	void MakeNOT();
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 
 	///Index of our LUT

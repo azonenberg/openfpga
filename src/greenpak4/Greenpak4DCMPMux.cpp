@@ -88,6 +88,11 @@ unsigned int Greenpak4DCMPMux::GetOutputNetNumber(string /*port*/)
 	return -1;
 }
 
+string Greenpak4DCMPMux::GetPrimitiveName() const
+{
+	return "GP_DCMPMUX";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

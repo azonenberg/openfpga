@@ -87,6 +87,11 @@ Greenpak4EntityOutput Greenpak4SystemReset::GetInput(string port) const
 		return Greenpak4EntityOutput(NULL);
 }
 
+string Greenpak4SystemReset::GetPrimitiveName() const
+{
+	return "GP_SYSRST";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

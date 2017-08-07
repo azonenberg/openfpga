@@ -50,6 +50,8 @@ public:
 
 	virtual bool CommitChanges();
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 	Greenpak4EntityOutput m_csn;
 	//all other inputs are dedicated routing

@@ -88,6 +88,11 @@ unsigned int Greenpak4Bandgap::GetOutputNetNumber(string port)
 		return -1;
 }
 
+string Greenpak4Bandgap::GetPrimitiveName() const
+{
+	return "GP_BANDGAP";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

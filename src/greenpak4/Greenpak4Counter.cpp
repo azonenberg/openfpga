@@ -73,6 +73,18 @@ string Greenpak4Counter::GetDescription() const
 	return string(buf);
 }
 
+string Greenpak4Counter::GetPrimitiveName() const
+{
+	string base = "GP_COUNT";
+	if(m_depth == 8)
+		base += "8";
+	else
+		base += "14";
+	if(m_hasFSM)
+		base += "_ADV";
+	return base;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

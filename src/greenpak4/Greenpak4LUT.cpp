@@ -87,6 +87,20 @@ bool Greenpak4LUT::Save(bool* bitstream)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
+string Greenpak4LUT::GetPrimitiveName() const
+{
+	switch(m_order)
+	{
+		case 2:
+			return "GP_2LUT";
+		case 3:
+			return "GP_3LUT";
+		case 4:
+		default:
+			return "GP_4LUT";
+	}
+}
+
 bool Greenpak4LUT::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned

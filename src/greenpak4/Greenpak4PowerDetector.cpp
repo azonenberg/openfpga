@@ -78,6 +78,11 @@ unsigned int Greenpak4PowerDetector::GetOutputNetNumber(string port)
 		return -1;
 }
 
+string Greenpak4PowerDetector::GetPrimitiveName() const
+{
+	return "GP_PWRDET";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

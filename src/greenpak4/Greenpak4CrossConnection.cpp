@@ -106,6 +106,11 @@ unsigned int Greenpak4CrossConnection::GetOutputNetNumber(string /*port*/)
 	return m_outputBaseWord;
 }
 
+string Greenpak4CrossConnection::GetPrimitiveName() const
+{
+	return "GP_XCONN";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Load/save logic
 

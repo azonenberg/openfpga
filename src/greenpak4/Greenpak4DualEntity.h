@@ -47,6 +47,8 @@ public:
 	virtual Greenpak4EntityOutput GetOutput(std::string port);
 
 	virtual bool CommitChanges();
+
+	virtual std::string GetPrimitiveName() const;
 };
 
 #endif

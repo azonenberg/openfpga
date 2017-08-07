@@ -78,6 +78,11 @@ unsigned int Greenpak4DualEntity::GetOutputNetNumber(string port)
 	return m_dual->GetOutputNetNumber(port);
 }
 
+string Greenpak4DualEntity::GetPrimitiveName() const
+{
+	return m_dual->GetPrimitiveName();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

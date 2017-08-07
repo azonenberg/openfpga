@@ -86,6 +86,11 @@ unsigned int Greenpak4ClockBuffer::GetOutputNetNumber(string /*port*/)
 	return -1;
 }
 
+string Greenpak4ClockBuffer::GetPrimitiveName() const
+{
+	return "GP_CLKBUF";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

@@ -63,6 +63,11 @@ string Greenpak4DigitalComparator::GetDescription() const
 	return string(buf);
 }
 
+string Greenpak4DigitalComparator::GetPrimitiveName() const
+{
+	return "GP_DCMP";
+}
+
 vector<string> Greenpak4DigitalComparator::GetInputPorts() const
 {
 	vector<string> r;

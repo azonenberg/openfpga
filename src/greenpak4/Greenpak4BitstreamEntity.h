@@ -72,6 +72,11 @@ public:
 	virtual Greenpak4EntityOutput GetInput(std::string port) const =0;
 
 	/**
+		@brief Gets the HDL primitive name of this object.
+	 */
+	virtual std::string GetPrimitiveName() const =0;
+
+	/**
 		@brief Gets the net number for the given output
 	 */
 	virtual unsigned int GetOutputNetNumber(std::string port) =0;

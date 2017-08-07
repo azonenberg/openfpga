@@ -135,6 +135,11 @@ unsigned int Greenpak4DAC::GetOutputNetNumber(string /*port*/)
 	return -1;
 }
 
+string Greenpak4DAC::GetPrimitiveName() const
+{
+	return "GP_DAC";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

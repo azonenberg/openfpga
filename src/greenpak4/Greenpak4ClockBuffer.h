@@ -51,6 +51,8 @@ public:
 	unsigned int GetBufferNumber()
 	{ return m_bufferNum; }
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 	Greenpak4EntityOutput m_input;
 	unsigned int m_bufferNum;

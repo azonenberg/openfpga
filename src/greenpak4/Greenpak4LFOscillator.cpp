@@ -97,6 +97,11 @@ string Greenpak4LFOscillator::GetDescription() const
 	return "LFOSC0";
 }
 
+string Greenpak4LFOscillator::GetPrimitiveName() const
+{
+	return "GP_LFOSC";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

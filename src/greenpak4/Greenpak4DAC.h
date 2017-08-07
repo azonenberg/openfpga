@@ -56,6 +56,8 @@ public:
 
 	bool IsUsed();
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 	Greenpak4EntityOutput m_vref;
 	Greenpak4EntityOutput m_din[8];

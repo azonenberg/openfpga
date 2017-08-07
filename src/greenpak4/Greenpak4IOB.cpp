@@ -252,6 +252,19 @@ vector<string> Greenpak4IOB::GetOutputPorts() const
 	return r;
 }
 
+string Greenpak4IOB::GetPrimitiveName() const
+{
+	if(m_outputEnable.IsPowerRail())
+	{
+		if(m_outputEnable.GetPowerRailValue())
+			return "GP_OBUF";
+		else
+			return "GP_IBUF";
+	}
+	else
+		return "GP_IOBUF";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Timing analysis
 

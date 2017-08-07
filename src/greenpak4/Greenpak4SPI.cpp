@@ -97,6 +97,11 @@ unsigned int Greenpak4SPI::GetOutputNetNumber(string port)
 		return -1;
 }
 
+string Greenpak4SPI::GetPrimitiveName() const
+{
+	return "GP_SPI";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

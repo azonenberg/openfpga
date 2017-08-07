@@ -62,6 +62,8 @@ public:
 	Greenpak4EntityOutput GetPowerDown()
 	{ return m_powerDown; }
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 	Greenpak4EntityOutput m_powerDown;
 	Greenpak4EntityOutput m_inp[8];

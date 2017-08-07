@@ -87,6 +87,11 @@ unsigned int Greenpak4Inverter::GetOutputNetNumber(string port)
 		return -1;
 }
 
+string Greenpak4Inverter::GetPrimitiveName() const
+{
+	return "GP_INV";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

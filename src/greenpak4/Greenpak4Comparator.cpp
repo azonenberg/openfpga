@@ -116,6 +116,11 @@ unsigned int Greenpak4Comparator::GetOutputNetNumber(string port)
 		return -1;
 }
 
+string Greenpak4Comparator::GetPrimitiveName() const
+{
+	return "GP_ACMP";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

@@ -48,6 +48,8 @@ public:
 	Greenpak4EntityOutput GetInput()
 	{ return m_input; }
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 	Greenpak4EntityOutput m_input;
 

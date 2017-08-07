@@ -106,6 +106,11 @@ unsigned int Greenpak4ShiftRegister::GetOutputNetNumber(string port)
 		return -1;
 }
 
+string Greenpak4ShiftRegister::GetPrimitiveName() const
+{
+	return "GP_SHREG";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

@@ -50,6 +50,8 @@ public:
 
 	virtual bool CommitChanges();
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 	unsigned int m_resetDelay;
 };

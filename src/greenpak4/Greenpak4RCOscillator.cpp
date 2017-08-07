@@ -97,6 +97,11 @@ string Greenpak4RCOscillator::GetDescription() const
 	return "RCOSC0";
 }
 
+string Greenpak4RCOscillator::GetPrimitiveName() const
+{
+	return "GP_RCOSC";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

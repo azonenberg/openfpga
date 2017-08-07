@@ -82,6 +82,11 @@ unsigned int Greenpak4PowerOnReset::GetOutputNetNumber(string port)
 		return -1;
 }
 
+string Greenpak4PowerOnReset::GetPrimitiveName() const
+{
+	return "GP_POR";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

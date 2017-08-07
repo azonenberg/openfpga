@@ -66,6 +66,8 @@ public:
 	unsigned int GetOutputVoltage()
 	{ return m_vref; }
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 	Greenpak4EntityOutput m_vin;
 

@@ -57,6 +57,11 @@ unsigned int Greenpak4PatternGenerator::GetOutputNetNumber(string port)
 		return -1;
 }
 
+string Greenpak4PatternGenerator::GetPrimitiveName() const
+{
+	return "GP_PGEN";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Pattern generator specific logic
 

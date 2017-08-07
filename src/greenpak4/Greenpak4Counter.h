@@ -82,6 +82,8 @@ public:
 
 	virtual bool CommitChanges();
 
+	virtual std::string GetPrimitiveName() const;
+
 protected:
 
 	///Bit depth of this counter

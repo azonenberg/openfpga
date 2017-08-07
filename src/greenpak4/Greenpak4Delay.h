@@ -64,6 +64,8 @@ public:
 	void SetFilteredDelay(int ntap, PTVCorner c, CombinatorialDelay d)
 	{ m_filteredDelays[TimingCondition(ntap, c)] = d; }
 
+	virtual std::string GetPrimitiveName() const;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Timing stuff
 

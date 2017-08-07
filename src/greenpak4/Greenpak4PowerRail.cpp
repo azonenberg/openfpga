@@ -58,6 +58,14 @@ bool Greenpak4PowerRail::Save(bool* /*bitstream*/)
 	return true;
 }
 
+string Greenpak4PowerRail::GetPrimitiveName() const
+{
+	if(GetDigitalValue())
+		return "GP_VDD";
+	else
+		return "GP_VSS";
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
