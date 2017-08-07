@@ -138,7 +138,7 @@ fn main() {
                             attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("SLOW")));
                         }
 
-                        if iobs[idx as usize].slew_is_fast {
+                        if iobs[idx as usize].termination_enabled {
                             attributes.insert(String::from("TERM"), AttributeVal::S(String::from("TRUE")));
                         } else {
                             attributes.insert(String::from("TERM"), AttributeVal::S(String::from("FALSE")));
@@ -161,7 +161,7 @@ fn main() {
                             attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("SLOW")));
                         }
 
-                        if iobs[idx as usize].slew_is_fast {
+                        if iobs[idx as usize].termination_enabled {
                             attributes.insert(String::from("TERM"), AttributeVal::S(String::from("TRUE")));
                         } else {
                             attributes.insert(String::from("TERM"), AttributeVal::S(String::from("FALSE")));
@@ -238,6 +238,26 @@ fn main() {
 
                     let mut attributes = HashMap::new();
                     attributes.insert(String::from("LOC"), AttributeVal::S(String::from("INPAD")));
+                    match bitstream.bits {
+                        XC2BitstreamBits::XC2C32{ref inpin, ..} | XC2BitstreamBits::XC2C32A{ref inpin, ..} => {
+                            if inpin.termination_enabled {
+                                attributes.insert(String::from("TERM"), AttributeVal::S(String::from("TRUE")));
+                            } else {
+                                attributes.insert(String::from("TERM"), AttributeVal::S(String::from("FALSE")));
+                            }
+
+                            if inpin.schmitt_trigger {
+                                attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("TRUE")));
+                            } else {
+                                attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("FALSE")));
+                            }
+                        },
+                        _ => {
+                            // Cannot happen
+                            unreachable!();
+                        }
+                    }
+
                     let mut connections = HashMap::new();
                     connections.insert(String::from("O"), Vec::new());
                     connections.insert(String::from("I"), vec![BitVal::N(toplevel_wire)]);
@@ -282,6 +302,13 @@ fn main() {
                     }
                 },
                 "MACROCELL_XOR" => {
+                    let mc = &bitstream.bits.get_fb()[fb as usize].mcs[idx as usize];
+                    let mut parameters = HashMap::new();
+                    if mc.xor_mode == XC2MCXorMode::ZERO || mc.xor_mode == XC2MCXorMode::PTC {
+                        parameters.insert(String::from("INVERT_OUT"), AttributeVal::N(0));
+                    } else {
+                        parameters.insert(String::from("INVERT_OUT"), AttributeVal::N(1));
+                    }
                     let mut attributes = HashMap::new();
                     attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, idx + 1)));
                     let mut connections = HashMap::new();
@@ -291,13 +318,16 @@ fn main() {
                     cell = Cell {
                         hide_name: 0,
                         cell_type: node_type.to_owned(),
-                        parameters: HashMap::new(),
+                        parameters,
                         attributes,
                         port_directions: HashMap::new(),
                         connections,
                     }
                 },
                 "REG" => {
+                    let mc = &bitstream.bits.get_fb()[fb as usize].mcs[idx as usize];
+                    let mut parameters = HashMap::new();
+                    parameters.insert(String::from("INIT"), AttributeVal::N(mc.init_state as usize));
                     let mut attributes = HashMap::new();
                     attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, idx + 1)));
                     let mut connections = HashMap::new();
@@ -306,7 +336,6 @@ fn main() {
                     connections.insert(String::from("CLR"), Vec::new());
 
                     let cell_type;
-                    let mc = &bitstream.bits.get_fb()[fb as usize].mcs[idx as usize];
                     match mc.reg_mode {
                         XC2MCRegMode::DFF => {
                             connections.insert(String::from("C"), Vec::new());
@@ -366,7 +395,7 @@ fn main() {
                     cell = Cell {
                         hide_name: 0,
                         cell_type,
-                        parameters: HashMap::new(),
+                        parameters,
                         attributes,
                         port_directions: HashMap::new(),
                         connections,
