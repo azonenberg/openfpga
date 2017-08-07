@@ -59,7 +59,8 @@ fn main() {
     // Because of how the closures work, we unfortunately need to use a RefCell here
     let output_netlist = RefCell::new(Netlist::default());
     let node_vec = RefCell::new(Vec::new());
-    let wire_vec = RefCell::new(Vec::new());
+    // Skip 0 and 1 just like yosys does
+    let wire_idx = RefCell::new(2);
 
     // Create common/global stuff ahead of time
     {
@@ -81,28 +82,142 @@ fn main() {
     // Call the giant structure callback
     get_device_structure(bitstream.bits.device_type(),
         |node_name: &str, node_type: &str, fb: u32, idx: u32| {
-            // Memoization needed for the interface
+            // Start constructing the cell object
+            let cell;
+
+            match node_type {
+                "BUFG" | "BUFGSR" | "BUFGTS" => {
+                    let mut connections = HashMap::new();
+                    connections.insert(String::from("I"), Vec::new());
+                    connections.insert(String::from("O"), Vec::new());
+                    cell = Cell {
+                        hide_name: 0,
+                        cell_type: node_type.to_owned(),
+                        parameters: HashMap::new(),
+                        attributes: HashMap::new(),
+                        port_directions: HashMap::new(),
+                        connections: connections,
+                    }
+                },
+                "IOBUFE" => {
+                    // Construct the wire for the toplevel port
+                    let toplevel_wire = {
+                        let orig_wire_idx = {*wire_idx.borrow()};
+                        let mut output_netlist_mut = output_netlist.borrow_mut();
+                        let mut netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
+                        netnames.insert(format!("PAD_{}", idx), Netname {
+                            hide_name: 0,
+                            bits: vec![BitVal::N(orig_wire_idx)],
+                            attributes: HashMap::new(),
+                        });
+
+                        // Return the current wire index
+                        *wire_idx.borrow_mut() += 1;
+                        orig_wire_idx
+                    };
+
+                    // Construct the toplevel port
+                    {
+                        let mut output_netlist_mut = output_netlist.borrow_mut();
+                        let mut ports = &mut output_netlist_mut.modules.get_mut("top").unwrap().ports;
+                        ports.insert(format!("PAD_{}", idx), Port {
+                            direction: PortDirection::InOut,
+                            bits: vec![BitVal::N(toplevel_wire)],
+                        });
+                    }
+
+                    let mut connections = HashMap::new();
+                    connections.insert(String::from("I"), Vec::new());
+                    connections.insert(String::from("E"), Vec::new());
+                    connections.insert(String::from("O"), Vec::new());
+                    connections.insert(String::from("IO"), vec![BitVal::N(toplevel_wire)]);
+                    cell = Cell {
+                        hide_name: 0,
+                        cell_type: node_type.to_owned(),
+                        parameters: HashMap::new(),
+                        attributes: HashMap::new(),
+                        port_directions: HashMap::new(),
+                        connections: connections,
+                    }
+                },
+                // FIXME: Boilerplate
+                "IBUF" => {
+                    // Construct the wire for the toplevel port
+                    let toplevel_wire = {
+                        let orig_wire_idx = {*wire_idx.borrow()};
+                        let mut output_netlist_mut = output_netlist.borrow_mut();
+                        let mut netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
+                        netnames.insert(String::from("INPAD"), Netname {
+                            hide_name: 0,
+                            bits: vec![BitVal::N(orig_wire_idx)],
+                            attributes: HashMap::new(),
+                        });
+
+                        // Return the current wire index
+                        *wire_idx.borrow_mut() += 1;
+                        orig_wire_idx
+                    };
+
+                    // Construct the toplevel port
+                    {
+                        let mut output_netlist_mut = output_netlist.borrow_mut();
+                        let mut ports = &mut output_netlist_mut.modules.get_mut("top").unwrap().ports;
+                        ports.insert(String::from("INPAD"), Port {
+                            direction: PortDirection::Input,
+                            bits: vec![BitVal::N(toplevel_wire)],
+                        });
+                    }
+
+                    let mut connections = HashMap::new();
+                    connections.insert(String::from("O"), Vec::new());
+                    connections.insert(String::from("I"), vec![BitVal::N(toplevel_wire)]);
+                    cell = Cell {
+                        hide_name: 0,
+                        cell_type: node_type.to_owned(),
+                        parameters: HashMap::new(),
+                        attributes: HashMap::new(),
+                        port_directions: HashMap::new(),
+                        connections: connections,
+                    }
+                },
+                _ => {
+                    // FIXME
+                    println!("{} is not implemented!", node_type);
+                    cell = Cell {
+                        hide_name: 0,
+                        cell_type: String::from("FIXME FIXME FIXME"),
+                        parameters: HashMap::new(),
+                        attributes: HashMap::new(),
+                        port_directions: HashMap::new(),
+                        connections: HashMap::new(),
+                    }
+                },
+            }
+
+            // Create the cell in the output module
+            let mut output_netlist_mut = output_netlist.borrow_mut();
+            let mut cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
+            cells.insert(node_name.to_owned(), cell);
+
+            // Memoization needed for the callback interface
             let mut node_vec = node_vec.borrow_mut();
-            let i = node_vec.len();
             node_vec.push((node_name.to_owned(), node_type.to_owned(), fb, idx));
-            i
+            node_vec.len() - 1
         },
         |wire_name: &str| {
-            // Memoization needed to convert wire names to numbers
-            let mut wire_vec = wire_vec.borrow_mut();
-            let i = wire_vec.len();
-            wire_vec.push(wire_name.to_owned());
-
             // Create the net in the output module
+            let orig_wire_idx = {*wire_idx.borrow()};
             let mut output_netlist_mut = output_netlist.borrow_mut();
             let mut netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
             netnames.insert(wire_name.to_owned(), Netname {
                 hide_name: 0,
-                bits: vec![BitVal::N(i + 2)],
-                attributes: HashMap::default(),
+                bits: vec![BitVal::N(orig_wire_idx)],
+                attributes: HashMap::new(),
             });
 
-            i
+            // Return the current wire index
+            *wire_idx.borrow_mut() += 1;
+            orig_wire_idx
         },
         |node_ref: usize, wire_ref: usize, port_name: &str, port_idx: u32| {
         }
