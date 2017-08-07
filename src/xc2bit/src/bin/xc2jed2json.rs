@@ -153,31 +153,7 @@ fn main() {
                 "IOBUFE" => {
                     let (fb, mc) = iob_num_to_fb_mc_num(bitstream.bits.device_type(), idx).unwrap();
 
-                    // Construct the wire for the toplevel port
-                    let toplevel_wire = {
-                        let orig_wire_idx = {*wire_idx.borrow()};
-                        let mut output_netlist_mut = output_netlist.borrow_mut();
-                        let mut netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
-                        netnames.insert(format!("PAD_FB{}_{}", fb + 1, mc + 1), Netname {
-                            hide_name: 0,
-                            bits: vec![BitVal::N(orig_wire_idx)],
-                            attributes: HashMap::new(),
-                        });
-
-                        // Return the current wire index
-                        *wire_idx.borrow_mut() += 1;
-                        orig_wire_idx
-                    };
-
-                    // Construct the toplevel port
-                    {
-                        let mut output_netlist_mut = output_netlist.borrow_mut();
-                        let mut ports = &mut output_netlist_mut.modules.get_mut("top").unwrap().ports;
-                        ports.insert(format!("PAD_FB{}_{}", fb + 1, mc + 1), Port {
-                            direction: PortDirection::InOut,
-                            bits: vec![BitVal::N(toplevel_wire)],
-                        });
-                    }
+                    let mut has_output = true;
 
                     let mut attributes = HashMap::new();
                     attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, mc + 1)));
@@ -204,6 +180,8 @@ fn main() {
                         } else {
                             attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("FALSE")));
                         }
+
+                        has_output = iobs[idx as usize].obuf_mode != XC2IOBOBufMode::Disabled;
                     }
                     if let Some(iobs) = bitstream.bits.get_large_iobs() {
                         if iobs[idx as usize].slew_is_fast {
@@ -243,16 +221,54 @@ fn main() {
                             // FIXME
                             unimplemented!();
                         }
+
+                        has_output = iobs[idx as usize].obuf_mode != XC2IOBOBufMode::Disabled;
+                    }
+
+                    // Construct the wire for the toplevel port
+                    let toplevel_wire = {
+                        let orig_wire_idx = {*wire_idx.borrow()};
+                        let mut output_netlist_mut = output_netlist.borrow_mut();
+                        let mut netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
+                        netnames.insert(format!("PAD_FB{}_{}", fb + 1, mc + 1), Netname {
+                            hide_name: 0,
+                            bits: vec![BitVal::N(orig_wire_idx)],
+                            attributes: HashMap::new(),
+                        });
+
+                        // Return the current wire index
+                        *wire_idx.borrow_mut() += 1;
+                        orig_wire_idx
+                    };
+
+                    // Construct the toplevel port
+                    {
+                        let mut output_netlist_mut = output_netlist.borrow_mut();
+                        let mut ports = &mut output_netlist_mut.modules.get_mut("top").unwrap().ports;
+                        ports.insert(format!("PAD_FB{}_{}", fb + 1, mc + 1), Port {
+                            direction: if has_output {PortDirection::InOut} else {PortDirection::Input},
+                            bits: vec![BitVal::N(toplevel_wire)],
+                        });
                     }
 
                     let mut connections = HashMap::new();
-                    connections.insert(String::from("I"), Vec::new());
-                    connections.insert(String::from("E"), Vec::new());
-                    connections.insert(String::from("O"), Vec::new());
-                    connections.insert(String::from("IO"), vec![BitVal::N(toplevel_wire)]);
+                    let cell_type;
+                    if has_output {
+                        connections.insert(String::from("I"), Vec::new());
+                        connections.insert(String::from("E"), Vec::new());
+                        connections.insert(String::from("O"), Vec::new());
+                        connections.insert(String::from("IO"), vec![BitVal::N(toplevel_wire)]);
+                        cell_type = String::from("IOBUFE");
+                    } else {
+                        connections.insert(String::from("O"), Vec::new());
+                        connections.insert(String::from("I"), vec![BitVal::N(toplevel_wire)]);
+                        cell_type = String::from("IBUF");
+                    }
+
+                    // Construct the actual cell
                     cell = Cell {
                         hide_name: 0,
-                        cell_type: node_type.to_owned(),
+                        cell_type,
                         parameters: HashMap::new(),
                         attributes,
                         port_directions: HashMap::new(),
@@ -551,7 +567,7 @@ fn main() {
                            obuf_mode.unwrap() == XC2IOBOBufMode::OpenDrain {
                             cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
                                 .push(BitVal::S(SpecialBit::_0));
-                        } else {
+                        } else if obuf_mode.unwrap() != XC2IOBOBufMode::Disabled {
                             cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
                                 .push(BitVal::N(wire_ref));
                         }
@@ -565,11 +581,9 @@ fn main() {
                         }
 
                         // FIXME: This idx == 0 is a hack
-                        if obuf_mode.unwrap() == XC2IOBOBufMode::Disabled && port_idx == 0 {
-                            cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
-                                .push(BitVal::S(SpecialBit::_0));
-                        } else if (obuf_mode.unwrap() == XC2IOBOBufMode::PushPull && port_idx == 0) ||
-                                  (obuf_mode.unwrap() == XC2IOBOBufMode::CGND && port_idx == 0) {
+                        if (obuf_mode.unwrap() == XC2IOBOBufMode::PushPull && port_idx == 0) ||
+                           (obuf_mode.unwrap() == XC2IOBOBufMode::CGND && port_idx == 0) {
+                            
                             cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap()
                                 .push(BitVal::S(SpecialBit::_1));
                         } else if (obuf_mode.unwrap() == XC2IOBOBufMode::OpenDrain && port_idx == 4) ||
