@@ -96,6 +96,27 @@ string Greenpak4Bandgap::GetPrimitiveName() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+map<string, string> Greenpak4Bandgap::GetParameters() const
+{
+	map<string, string> params;
+
+	if(m_autoPowerDown)
+		params["AUTO_PWRDN"] = "1";
+	else
+		params["AUTO_PWRDN"] = "0";
+
+	if(m_chopperEn)
+		params["CHOPPER_EN"] = "1";
+	else
+		params["CHOPPER_EN"] = "0";
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%d", m_outDelay);
+	params["OUT_DELAY"] = tmp;
+
+	return params;
+}
+
 bool Greenpak4Bandgap::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned

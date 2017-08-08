@@ -57,11 +57,13 @@ public:
 
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
+	virtual std::vector<std::string> GetAllOutputPorts() const;
 	virtual std::vector<std::string> GetOutputPortsFiltered(bool* bitstream) const;
 
 	virtual bool CommitChanges();
 
 	virtual std::string GetPrimitiveName() const;
+	virtual std::map<std::string, std::string> GetParameters() const;
 
 protected:
 

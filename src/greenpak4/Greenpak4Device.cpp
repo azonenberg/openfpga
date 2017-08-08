@@ -1380,17 +1380,45 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 		if(type == "GP_IOBUF")
 			inouts.push_back("IO");
 
-		//TODO: parameters and attributes
+		//Cell header
 		fprintf(fp, "        \"%s\": {\n", cell->GetDescription().c_str());
 		fprintf(fp, "          \"hide_name\": 0,\n");
 		fprintf(fp, "          \"type\": \"%s\",\n", type.c_str());
+
+		//Parameters
+		bool pfirst = true;
 		fprintf(fp, "          \"parameters\": {\n");
+		auto params = cell->GetParameters();
+		for(auto it : params)
+		{
+			//Add comma if we're not the first one
+			if(pfirst)
+				pfirst = false;
+			else
+				fprintf(fp, ",\n");
+
+			fprintf(fp, "            \"%s\": %s", it.first.c_str(), it.second.c_str());
+		}
 		fprintf(fp, "          },\n");
+
+		//Attributes
+		pfirst = true;
 		fprintf(fp, "          \"attributes\": {\n");
+		auto attribs = cell->GetAttributes();
+		for(auto it : attribs)
+		{
+			//Add comma if we're not the first one
+			if(pfirst)
+				pfirst = false;
+			else
+				fprintf(fp, ",\n");
+
+			fprintf(fp, "            \"%s\": \"%s\"", it.first.c_str(), it.second.c_str());
+		}
 		fprintf(fp, "          },\n");
 
 		//Port directions based on which list we're in
-		bool pfirst = true;
+		pfirst = true;
 		fprintf(fp, "          \"port_directions\": {\n");
 		for(auto i : inputs)
 		{
@@ -1442,6 +1470,12 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 				pfirst = false;
 			else
 				fprintf(fp, ",\n");
+
+			//Handle cross-connections
+			auto entity = source.GetRealEntity();
+			auto xc = dynamic_cast<Greenpak4CrossConnection*>(entity);
+			if(xc)
+				source = entity->GetInput("I");
 
 			//Look up the net number, allocate a new one if needed
 			int netnum;

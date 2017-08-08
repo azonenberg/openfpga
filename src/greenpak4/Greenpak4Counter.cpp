@@ -85,6 +85,57 @@ string Greenpak4Counter::GetPrimitiveName() const
 	return base;
 }
 
+map<string, string> Greenpak4Counter::GetParameters() const
+{
+	map<string, string> params;
+
+	switch(m_resetMode)
+	{
+		case RISING_EDGE:
+			params["RESET_MODE"] = "\"RISING\"";
+			break;
+		case FALLING_EDGE:
+			params["RESET_MODE"] = "\"FALLING\"";
+			break;
+		case BOTH_EDGE:
+			params["RESET_MODE"] = "\"BOTH\"";
+			break;
+		case HIGH_LEVEL:
+			params["RESET_MODE"] = "\"LEVEL\"";
+			break;
+
+		default:
+			LogError("bad reset mode\n");
+	}
+
+	//We only have RESET_VALUE on COUNT_ADV
+	if(m_hasFSM)
+	{
+		switch(m_resetValue)
+		{
+			case ZERO:
+				params["RESET_VALUE"] = "\"ZERO\"";
+				break;
+
+			case COUNT_TO:
+				params["RESET_VALUE"] = "\"COUNT_TO\"";
+				break;
+
+			default:
+				LogError("bad reset value\n");
+		}
+	}
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "\"%d\"", m_countVal);
+	params["COUNT_TO"] = tmp;
+
+	snprintf(tmp, sizeof(tmp), "\"%d\"", m_preDivide);
+	params["CLKIN_DIVIDE"] = tmp;
+
+	return params;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

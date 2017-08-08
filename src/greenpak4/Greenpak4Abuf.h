@@ -42,6 +42,7 @@ public:
 
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
+	virtual std::map<std::string, std::string> GetParameters() const;
 
 	virtual bool CommitChanges();
 

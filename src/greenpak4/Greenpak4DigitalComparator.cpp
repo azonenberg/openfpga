@@ -155,6 +155,28 @@ unsigned int Greenpak4DigitalComparator::GetOutputNetNumber(string port)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+map<string, string> Greenpak4DigitalComparator::GetParameters() const
+{
+	map<string, string> params;
+
+	if(m_clockInvert)
+		params["CLK_EDGE"] = "\"FALLING\"";
+	else
+		params["CLK_EDGE"] = "\"RISING\"";
+
+	if(m_pdSync)
+		params["PWRDN_SYNC"] = "1";
+	else
+		params["PWRDN_SYNC"] = "0";
+
+	if(m_compareGreaterEqual)
+		params["GREATER_OR_EQUAL"] = "1";
+	else
+		params["GREATER_OR_EQUAL"] = "0";
+
+	return params;
+}
+
 bool Greenpak4DigitalComparator::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned

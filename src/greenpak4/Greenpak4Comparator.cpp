@@ -121,6 +121,30 @@ string Greenpak4Comparator::GetPrimitiveName() const
 	return "GP_ACMP";
 }
 
+map<string, string> Greenpak4Comparator::GetParameters() const
+{
+	map<string, string> params;
+
+	if(m_bandwidthHigh)
+		params["BANDWIDTH"] = "\"HIGH\"";
+	else
+		params["BANDWIDTH"] = "\"LOW\"";
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%d", m_vinAtten);
+	params["VIN_ATTEN"] = tmp;
+
+	if(m_isrcEn)
+		params["VIN_ISRC_EN"] = "1";
+	else
+		params["VIN_ISRC_EN"] = "0";
+
+	snprintf(tmp, sizeof(tmp), "%d", m_hysteresis);
+	params["HYSTERESIS"] = tmp;
+
+	return params;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

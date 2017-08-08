@@ -133,10 +133,18 @@ public:
 	virtual std::vector<std::string> GetOutputPortsFiltered(bool* bitstream) const;
 
 	//Get a list of all input ports on this node, including those which do not go to general fabric routing
+	//The list is filtered to only include valid ones for our current configuration.
 	virtual std::vector<std::string> GetAllInputPorts() const;
 
-	//Get a list of all output ports on this node, including those which do not go to general fabric routing
+	//Get a list of all output ports on this node, including those which do not go to general fabric routing.
+	//The list is filtered to only include valid ones for our current configuration.
 	virtual std::vector<std::string> GetAllOutputPorts() const;
+
+	//Export parameters from our internal data model
+	virtual std::map<std::string, std::string> GetParameters() const;
+
+	//Export attributes from our internal data model
+	virtual std::map<std::string, std::string> GetAttributes() const;
 
 	//Commit changes from the assigned PAR graph node to us
 	virtual bool CommitChanges() =0;

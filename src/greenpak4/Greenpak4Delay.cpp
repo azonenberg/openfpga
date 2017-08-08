@@ -102,6 +102,41 @@ string Greenpak4Delay::GetPrimitiveName() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+map<string, string> Greenpak4Delay::GetParameters() const
+{
+	map<string, string> params;
+
+	if(m_glitchFilter)
+		params["GLITCH_FILTER"] = "1";
+	else
+		params["GLITCH_FILTER"] = "0";
+
+	if(m_mode != DELAY)
+	{
+		//Edge detector config
+		switch(m_mode)
+		{
+			case RISING_EDGE:
+				params["EDGE_DIRECTION"] = "RISING";
+				break;
+
+			case FALLING_EDGE:
+				params["EDGE_DIRECTION"] = "FALLING";
+				break;
+
+			case BOTH_EDGE:
+				params["EDGE_DIRECTION"] = "BOTH";
+				break;
+		}
+	}
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "\"%d\"", m_delayTap);
+	params["DELAY_STEPS"] = tmp;
+
+	return params;
+}
+
 bool Greenpak4Delay::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned

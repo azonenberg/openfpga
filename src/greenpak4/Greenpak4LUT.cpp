@@ -53,7 +53,8 @@ Greenpak4LUT::~Greenpak4LUT()
 
 bool Greenpak4LUT::Load(bool* bitstream)
 {
-	//TODO: Do our inputs
+	for(unsigned int i=0; i<m_order; i++)
+		ReadMatrixSelector(bitstream, m_inputBaseWord + i, m_matrix, m_inputs[i]);
 
 	//Do the LUT
 	unsigned int nmax = 1 << m_order;
@@ -86,6 +87,20 @@ bool Greenpak4LUT::Save(bool* bitstream)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
+
+map<string, string> Greenpak4LUT::GetParameters() const
+{
+	int table = 0;
+	for(int i=0; i<16; i++)
+		table |= (m_truthtable[i] << i);
+
+	char init[128];
+	snprintf(init, sizeof(init), "%d", table);
+
+	map<string, string> params;
+	params["INIT"] = init;
+	return params;
+}
 
 string Greenpak4LUT::GetPrimitiveName() const
 {
@@ -164,6 +179,21 @@ vector<string> Greenpak4LUT::GetInputPorts() const
 		case 1: r.push_back("IN0");
 		default:
 			r.push_back("IN");	//used for up-mapping GP_INV to GP_LUTx
+			break;
+	}
+	return r;
+}
+
+vector<string> Greenpak4LUT::GetAllInputPorts() const
+{
+	vector<string> r;
+	switch(m_order)
+	{
+		case 4: r.push_back("IN3");
+		case 3: r.push_back("IN2");
+		case 2: r.push_back("IN1");
+		case 1: r.push_back("IN0");
+		default:
 			break;
 	}
 	return r;

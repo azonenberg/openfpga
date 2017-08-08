@@ -84,6 +84,17 @@ string Greenpak4Abuf::GetPrimitiveName() const
 	return "GP_ABUF";
 }
 
+map<string, string> Greenpak4Abuf::GetParameters() const
+{
+	map<string, string> params;
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "\"%d\"", m_bufferBandwidth);
+	params["BANDWIDTH_KHZ"] = tmp;
+
+	return params;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

@@ -124,6 +124,16 @@ vector<string> Greenpak4Flipflop::GetOutputPortsFiltered(bool* bitstream) const
 	return r;
 }
 
+vector<string> Greenpak4Flipflop::GetAllOutputPorts() const
+{
+	vector<string> r;
+	if(m_outputInvert)
+		r.push_back("nQ");
+	else
+		r.push_back("Q");
+	return r;
+}
+
 unsigned int Greenpak4Flipflop::GetOutputNetNumber(string port)
 {
 	if( (port == "Q") || (port == "nQ") )
@@ -162,6 +172,19 @@ string Greenpak4Flipflop::GetPrimitiveName() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
+
+
+map<string, string> Greenpak4Flipflop::GetParameters() const
+{
+	map<string, string> params;
+
+	if(m_initValue)
+		params["INIT"] = "1";
+	else
+		params["INIT"] = "0";
+
+	return params;
+}
 
 bool Greenpak4Flipflop::CommitChanges()
 {

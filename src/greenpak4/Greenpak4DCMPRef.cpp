@@ -85,6 +85,17 @@ string Greenpak4DCMPRef::GetPrimitiveName() const
 	return "GP_DMCPREF";
 }
 
+map<string, string> Greenpak4DCMPRef::GetParameters() const
+{
+	map<string, string> params;
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "\"%d\"", m_referenceValue);
+	params["REF_VAL"] = tmp;
+
+	return params;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
