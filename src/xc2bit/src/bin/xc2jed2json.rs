@@ -165,10 +165,12 @@ fn main() {
 
                         match iobs[idx as usize].ibuf_mode {
                             XC2IOBIbufMode::NoVrefNoSt => {
-                                attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("FALSE")));
+                                attributes.insert(String::from("SCHMITT_TRIGGER"),
+                                    AttributeVal::S(String::from("FALSE")));
                             },
                             XC2IOBIbufMode::NoVrefSt => {
-                                attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("TRUE")));
+                                attributes.insert(String::from("SCHMITT_TRIGGER"),
+                                    AttributeVal::S(String::from("TRUE")));
                             },
                             XC2IOBIbufMode::UsesVref => {
                                 // FIXME
@@ -264,9 +266,11 @@ fn main() {
                             }
 
                             if inpin.schmitt_trigger {
-                                attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("TRUE")));
+                                attributes.insert(String::from("SCHMITT_TRIGGER"),
+                                    AttributeVal::S(String::from("TRUE")));
                             } else {
-                                attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("FALSE")));
+                                attributes.insert(String::from("SCHMITT_TRIGGER"),
+                                    AttributeVal::S(String::from("FALSE")));
                             }
                         },
                         _ => {
