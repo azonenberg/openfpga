@@ -119,17 +119,6 @@ pub fn get_dge(device: XC2Device) -> Option<(u32, u32)> {
     }
 }
 
-fn zia_table_lookup(device: XC2Device, row: usize) -> &'static [XC2ZIAInput] {
-    match device {
-        XC2Device::XC2C32 | XC2Device::XC2C32A => &ZIA_MAP_32[row],
-        XC2Device::XC2C64 | XC2Device::XC2C64A => &ZIA_MAP_64[row],
-        XC2Device::XC2C128 => &ZIA_MAP_128[row],
-        XC2Device::XC2C256 => &ZIA_MAP_256[row],
-        XC2Device::XC2C384 => &ZIA_MAP_384[row],
-        XC2Device::XC2C512 => &ZIA_MAP_512[row],   
-    }
-}
-
 /// This function calls the passed-in callbacks to provide information about the structure of the CPLD. `node_callback`
 /// is called to "create" a new node, `wire_callback` is called to "create" a new wire, and `connection_callback` is
 /// called to connect one port on a node to a wire. The arguments to the callbacks are:
@@ -356,7 +345,7 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
 
     // The ZIA
     for zia_row_i in 0..INPUTS_PER_ANDTERM as u32 {
-        for (zia_choice_i, zia_choice) in zia_table_lookup(device, zia_row_i as usize).iter().enumerate() {
+        for (zia_choice_i, zia_choice) in zia_table_get_row(device, zia_row_i as usize).iter().enumerate() {
             for and_fb in 0..device.num_fbs() as u32 {
                 for and_i in 0..ANDTERMS_PER_FB as u32 {
                     match zia_choice {

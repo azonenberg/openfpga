@@ -36,18 +36,6 @@ use xc2bit::*;
 extern crate yosys_netlist_json;
 use yosys_netlist_json::*;
 
-// FIXME: Un-copypasta
-fn zia_table_lookup(device: XC2Device, row: usize) -> &'static [XC2ZIAInput] {
-    match device {
-        XC2Device::XC2C32 | XC2Device::XC2C32A => &ZIA_MAP_32[row],
-        XC2Device::XC2C64 | XC2Device::XC2C64A => &ZIA_MAP_64[row],
-        XC2Device::XC2C128 => &ZIA_MAP_128[row],
-        XC2Device::XC2C256 => &ZIA_MAP_256[row],
-        XC2Device::XC2C384 => &ZIA_MAP_384[row],
-        XC2Device::XC2C512 => &ZIA_MAP_512[row],   
-    }
-}
-
 fn main() {
     let args = ::std::env::args().collect::<Vec<_>>();
 
@@ -544,7 +532,7 @@ fn main() {
                             .push(BitVal::N(wire_ref));
                     } else if port_name == "IN" {
                         // Whee, ZIA goes here
-                        let zia_row = zia_table_lookup(bitstream.bits.device_type(), port_idx as usize);
+                        let zia_row = zia_table_get_row(bitstream.bits.device_type(), port_idx as usize);
                         // FIXME: extra_data checking is a hack
                         if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize].selected ==
                             XC2ZIAInput::One && extra_data == (0, 0) {

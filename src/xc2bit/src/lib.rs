@@ -85,7 +85,8 @@ mod structure;
 pub use structure::{get_gck, get_gts, get_gsr, get_cdrst, get_dge, get_device_structure};
 
 mod zia;
-pub use zia::{XC2ZIARowPiece, XC2ZIAInput, ZIA_MAP_32, ZIA_MAP_64, ZIA_MAP_128, ZIA_MAP_256, ZIA_MAP_384, ZIA_MAP_512};
+pub use zia::{XC2ZIARowPiece, XC2ZIAInput, zia_table_get_row, ZIA_MAP_32, ZIA_MAP_64, ZIA_MAP_128, ZIA_MAP_256,
+              ZIA_MAP_384, ZIA_MAP_512};
 
 mod jed;
 pub use jed::{read_jed};

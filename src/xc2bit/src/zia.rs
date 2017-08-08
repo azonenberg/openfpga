@@ -55,6 +55,18 @@ impl Default for XC2ZIAInput {
     fn default() -> Self { XC2ZIAInput::One }
 }
 
+/// Helper function that returns a reference to one row of the ZIA map.
+pub fn zia_table_get_row(device: XC2Device, row: usize) -> &'static [XC2ZIAInput] {
+    match device {
+        XC2Device::XC2C32 | XC2Device::XC2C32A => &ZIA_MAP_32[row],
+        XC2Device::XC2C64 | XC2Device::XC2C64A => &ZIA_MAP_64[row],
+        XC2Device::XC2C128 => &ZIA_MAP_128[row],
+        XC2Device::XC2C256 => &ZIA_MAP_256[row],
+        XC2Device::XC2C384 => &ZIA_MAP_384[row],
+        XC2Device::XC2C512 => &ZIA_MAP_512[row],   
+    }
+}
+
 /// A map of the connections that exist within the ZIA for 32-macrocell parts
 pub static ZIA_MAP_32: [[XC2ZIAInput; 6]; INPUTS_PER_ANDTERM] = [
     // Row 0
