@@ -413,24 +413,21 @@ fn main() {
 
             let mut should_add_wire = false;
             let mut port_name = port_name;
-            let mut wire_bitval = BitVal::S(SpecialBit::X);
+            let mut wire_bitval = BitVal::N(wire_ref);
             // This is kinda hacky but is used for the P-terms where two wires can be generated in one call
             let mut should_add_wire_2 = false;
             let mut port_name_2 = "";
-            let mut wire_bitval_2 = BitVal::S(SpecialBit::X);
+            let mut wire_bitval_2 = BitVal::N(wire_ref);
 
             match node_type.as_ref() {
                 "BUFG" => {
                     if port_name == "I" {
                         should_add_wire = true;
-                        if bitstream.bits.get_global_nets().gck_enable[idx as usize] {
-                            wire_bitval = BitVal::N(wire_ref);
-                        } else {
+                        if !bitstream.bits.get_global_nets().gck_enable[idx as usize] {
                             wire_bitval = BitVal::S(SpecialBit::_0);
                         }
                     } else if port_name == "O" {
                         should_add_wire = true;
-                        wire_bitval = BitVal::N(wire_ref);
                     } else {
                         unreachable!();
                     }
@@ -439,14 +436,11 @@ fn main() {
                     // FIXME: Test the interaction with the invert bit
                     if port_name == "I" {
                         should_add_wire = true;
-                        if bitstream.bits.get_global_nets().gsr_enable {
-                            wire_bitval = BitVal::N(wire_ref);
-                        } else {
+                        if !bitstream.bits.get_global_nets().gsr_enable {
                             wire_bitval = BitVal::S(SpecialBit::_0);
                         }
                     } else if port_name == "O" {
                         should_add_wire = true;
-                        wire_bitval = BitVal::N(wire_ref);
                     } else {
                         unreachable!();
                     }
@@ -455,14 +449,11 @@ fn main() {
                     // FIXME: Test the interaction with the invert bit
                     if port_name == "I" {
                         should_add_wire = true;
-                        if bitstream.bits.get_global_nets().gts_enable[idx as usize] {
-                            wire_bitval = BitVal::N(wire_ref);
-                        } else {
+                        if !bitstream.bits.get_global_nets().gts_enable[idx as usize] {
                             wire_bitval = BitVal::S(SpecialBit::_0);
                         }
                     } else if port_name == "O" {
                         should_add_wire = true;
-                        wire_bitval = BitVal::N(wire_ref);
                     } else {
                         unreachable!();
                     }
@@ -485,7 +476,6 @@ fn main() {
                             wire_bitval = BitVal::S(SpecialBit::_0);
                         } else if obuf_mode.unwrap() != XC2IOBOBufMode::Disabled {
                             should_add_wire = true;
-                            wire_bitval = BitVal::N(wire_ref);
                         }
                     } else if port_name == "E" {
                         let mut obuf_mode = None;
@@ -510,12 +500,10 @@ fn main() {
                                   (obuf_mode.unwrap() == XC2IOBOBufMode::TriStateCTE && port_idx == 5) ||
                                   (obuf_mode.unwrap() == XC2IOBOBufMode::TriStatePTB && port_idx == 6) {
                             should_add_wire = true;
-                            wire_bitval = BitVal::N(wire_ref);
                         }
                     } else if port_name == "O" {
                         // This is always driven
                         should_add_wire = true;
-                        wire_bitval = BitVal::N(wire_ref);
                     } else {
                         unreachable!();
                     }
@@ -524,7 +512,6 @@ fn main() {
                     if port_name == "O" {
                         // This is always driven
                         should_add_wire = true;
-                        wire_bitval = BitVal::N(wire_ref);
                     } else {
                         unreachable!();
                     }
@@ -533,7 +520,6 @@ fn main() {
                     if port_name == "OUT" {
                         // This is always driven
                         should_add_wire = true;
-                        wire_bitval = BitVal::N(wire_ref);
                     } else if port_name == "IN" {
                         // Whee, ZIA goes here
 
@@ -569,7 +555,6 @@ fn main() {
                                         XC2MCFeedbackMode::REG && extra_data.1 == 1) {
 
                                         should_add_andterm_wire = true;
-                                        wire_bitval = BitVal::N(wire_ref);
                                     }
                                 },
                                 &XC2ZIAInput::IBuf{ibuf: zia_iob} => {
@@ -589,12 +574,10 @@ fn main() {
                                         (zia_mode.unwrap() == XC2IOBZIAMode::REG && extra_data.1 == 1) {
 
                                         should_add_andterm_wire = true;
-                                        wire_bitval = BitVal::N(wire_ref);
                                     }
                                 },
                                 &XC2ZIAInput::DedicatedInput => {
                                     should_add_andterm_wire = true;
-                                    wire_bitval = BitVal::N(wire_ref);
                                 },
                                 // These cannot be in the choices table; they are special cases
                                 _ => unreachable!(),
@@ -620,11 +603,9 @@ fn main() {
                     if port_name == "OUT" {
                         // This is always driven
                         should_add_wire = true;
-                        wire_bitval = BitVal::N(wire_ref);
                     } else if port_name == "IN" {
                         if bitstream.bits.get_fb()[fb as usize].or_terms[idx as usize].input[port_idx as usize] {
                             should_add_wire = true;
-                            wire_bitval = BitVal::N(wire_ref);
                         }
                     } else {
                         unreachable!();
@@ -633,21 +614,17 @@ fn main() {
                 "MACROCELL_XOR" => {
                     if port_name == "IN_PTC" {
                         should_add_wire = true;
-                        if (bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].xor_mode == XC2MCXorMode::PTC) ||
-                           (bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].xor_mode == XC2MCXorMode::PTCB) {
+                        if (bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].xor_mode == XC2MCXorMode::ZERO) ||
+                           (bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].xor_mode == XC2MCXorMode::ONE) {
 
-                            wire_bitval = BitVal::N(wire_ref);
-                        } else {
                             wire_bitval = BitVal::S(SpecialBit::_0);
                         }
                     } else if port_name == "IN_ORTERM" {
                         should_add_wire = true;
-                        wire_bitval = BitVal::N(wire_ref);
                     } else if port_name == "OUT" {
                         // This wire is always driven
                         if port_idx == 0 {
                             should_add_wire = true;
-                            wire_bitval = BitVal::N(wire_ref);
                         } else {
                             if let Some(iob_idx) = fb_mc_num_to_iob_num(bitstream.bits.device_type(), fb, idx) {
                                 let mut obuf_uses_ff = false;
@@ -660,7 +637,6 @@ fn main() {
 
                                 if !obuf_uses_ff {
                                     should_add_wire = true;
-                                    wire_bitval = BitVal::N(wire_ref);
                                 }
                             }
                         }
@@ -673,7 +649,6 @@ fn main() {
                         // This is always driven
                         if port_idx == 0 {
                             should_add_wire = true;
-                            wire_bitval = BitVal::N(wire_ref);
                         } else {
                             if let Some(iob_idx) = fb_mc_num_to_iob_num(bitstream.bits.device_type(), fb, idx) {
                                 let mut obuf_uses_ff = false;
@@ -686,14 +661,12 @@ fn main() {
 
                                 if obuf_uses_ff {
                                     should_add_wire = true;
-                                    wire_bitval = BitVal::N(wire_ref);
                                 }
                             }
                         }
                     } else if port_name == "CE" {
                         if bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].reg_mode == XC2MCRegMode::DFFCE {
                             should_add_wire = true;
-                            wire_bitval = BitVal::N(wire_ref);
                         }
                     } else if port_name == "CLK" {
                         let clk_src = bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].clk_src;
@@ -711,54 +684,47 @@ fn main() {
                             } else {
                                 "C"
                             };
-                            wire_bitval = BitVal::N(wire_ref);
                         }
                     } else if port_name == "S" {
+                        port_name = "PRE";
                         let s_src = bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].s_src;
                         if (s_src == XC2MCRegSetSrc::GSR && port_idx == 0) ||
                            (s_src == XC2MCRegSetSrc::CTS && port_idx == 1) ||
                            (s_src == XC2MCRegSetSrc::PTA && port_idx == 2) {
 
                             should_add_wire = true;
-                            port_name = "PRE";
-                            wire_bitval = BitVal::N(wire_ref);
                         } else if s_src == XC2MCRegSetSrc::Disabled && port_idx == 0 {
                             should_add_wire = true;
-                            port_name = "PRE";
                             wire_bitval = BitVal::S(SpecialBit::_0);
                         }
                     } else if port_name == "R" {
+                        port_name = "CLR";
                         let r_src = bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].r_src;
                         if (r_src == XC2MCRegResetSrc::GSR && port_idx == 0) ||
                            (r_src == XC2MCRegResetSrc::CTR && port_idx == 1) ||
                            (r_src == XC2MCRegResetSrc::PTA && port_idx == 2) {
 
                             should_add_wire = true;
-                            port_name = "CLR";
-                            wire_bitval = BitVal::N(wire_ref);
                         } else if r_src == XC2MCRegResetSrc::Disabled && port_idx == 0 {
                             should_add_wire = true;
-                            port_name = "CLR";
                             wire_bitval = BitVal::S(SpecialBit::_0);
                         }
                     } else if port_name == "D/T" {
-                            port_name = if bitstream.bits.get_fb()[fb as usize]
-                                .mcs[idx as usize].reg_mode == XC2MCRegMode::TFF {
+                        port_name = if bitstream.bits.get_fb()[fb as usize]
+                            .mcs[idx as usize].reg_mode == XC2MCRegMode::TFF {
 
-                                "T"
-                            } else {
-                                "D"
-                            };
+                            "T"
+                        } else {
+                            "D"
+                        };
 
                         if bitstream.bits.get_fb()[fb as usize].mcs[idx as usize].ff_in_ibuf {
                             if port_idx == 1 {
                                 should_add_wire = true;
-                                wire_bitval = BitVal::N(wire_ref);
                             }
                         } else {
                             if port_idx == 0 {
                                 should_add_wire = true;
-                                wire_bitval = BitVal::N(wire_ref);
                             }
                         }
                     } else {
