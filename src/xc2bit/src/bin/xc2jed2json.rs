@@ -102,62 +102,37 @@ fn main() {
     get_device_structure(bitstream.bits.device_type(),
         |node_name: &str, node_type: &str, fb: u32, idx: u32| {
             // Start constructing the cell object
-            let cell;
+            let mut cell_type = node_type.to_owned();
+            let mut parameters = HashMap::new();
+            let mut attributes = HashMap::new();
+            let mut connections = HashMap::new();
 
             match node_type {
                 "BUFG" => {
-                    let mut connections = HashMap::new();
                     connections.insert(String::from("I"), Vec::new());
                     connections.insert(String::from("O"), Vec::new());
-                    cell = Cell {
-                        hide_name: 0,
-                        cell_type: node_type.to_owned(),
-                        parameters: HashMap::new(),
-                        attributes: HashMap::new(),
-                        port_directions: HashMap::new(),
-                        connections,
-                    }
                 },
                 "BUFGSR" => {
-                    let mut parameters = HashMap::new();
                     parameters.insert(String::from("INVERT"),
                         AttributeVal::N(bitstream.bits.get_global_nets().gsr_invert as usize));
-                    let mut connections = HashMap::new();
+
                     connections.insert(String::from("I"), Vec::new());
                     connections.insert(String::from("O"), Vec::new());
-                    cell = Cell {
-                        hide_name: 0,
-                        cell_type: node_type.to_owned(),
-                        parameters,
-                        attributes: HashMap::new(),
-                        port_directions: HashMap::new(),
-                        connections,
-                    }
                 },
                 "BUFGTS" => {
-                    let mut parameters = HashMap::new();
                     parameters.insert(String::from("INVERT"),
                         AttributeVal::N(bitstream.bits.get_global_nets().gts_invert[idx as usize] as usize));
-                    let mut connections = HashMap::new();
+
                     connections.insert(String::from("I"), Vec::new());
                     connections.insert(String::from("O"), Vec::new());
-                    cell = Cell {
-                        hide_name: 0,
-                        cell_type: node_type.to_owned(),
-                        parameters,
-                        attributes: HashMap::new(),
-                        port_directions: HashMap::new(),
-                        connections,
-                    }
                 },
                 "IOBUFE" => {
                     let (fb, mc) = iob_num_to_fb_mc_num(bitstream.bits.device_type(), idx).unwrap();
 
                     let mut has_output = true;
 
-                    let mut attributes = HashMap::new();
                     attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, mc + 1)));
-                    // Grab attributes
+                    // Grab attributes from the bitstream
                     if let Some(iobs) = bitstream.bits.get_small_iobs() {
                         if iobs[idx as usize].slew_is_fast {
                             attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("FAST")));
@@ -251,8 +226,6 @@ fn main() {
                         });
                     }
 
-                    let mut connections = HashMap::new();
-                    let cell_type;
                     if has_output {
                         connections.insert(String::from("I"), Vec::new());
                         connections.insert(String::from("E"), Vec::new());
@@ -263,16 +236,6 @@ fn main() {
                         connections.insert(String::from("O"), Vec::new());
                         connections.insert(String::from("I"), vec![BitVal::N(toplevel_wire)]);
                         cell_type = String::from("IBUF");
-                    }
-
-                    // Construct the actual cell
-                    cell = Cell {
-                        hide_name: 0,
-                        cell_type,
-                        parameters: HashMap::new(),
-                        attributes,
-                        port_directions: HashMap::new(),
-                        connections,
                     }
                 },
                 // FIXME: Boilerplate, copy-pasta
@@ -303,7 +266,6 @@ fn main() {
                         });
                     }
 
-                    let mut attributes = HashMap::new();
                     attributes.insert(String::from("LOC"), AttributeVal::S(String::from("INPAD")));
                     match bitstream.bits {
                         XC2BitstreamBits::XC2C32{ref inpin, ..} | XC2BitstreamBits::XC2C32A{ref inpin, ..} => {
@@ -325,84 +287,48 @@ fn main() {
                         }
                     }
 
-                    let mut connections = HashMap::new();
                     connections.insert(String::from("O"), Vec::new());
                     connections.insert(String::from("I"), vec![BitVal::N(toplevel_wire)]);
-                    cell = Cell {
-                        hide_name: 0,
-                        cell_type: node_type.to_owned(),
-                        parameters: HashMap::new(),
-                        attributes,
-                        port_directions: HashMap::new(),
-                        connections,
-                    }
                 },
                 "ANDTERM" => {
-                    let mut attributes = HashMap::new();
                     attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_P{}", fb + 1, idx)));
-                    let mut connections = HashMap::new();
+
                     connections.insert(String::from("IN"), Vec::new());
                     connections.insert(String::from("IN_B"), Vec::new());
                     connections.insert(String::from("OUT"), Vec::new());
-                    cell = Cell {
-                        hide_name: 0,
-                        cell_type: node_type.to_owned(),
-                        parameters: HashMap::new(),
-                        attributes,
-                        port_directions: HashMap::new(),
-                        connections,
-                    }
                 },
                 "ORTERM" => {
-                    let mut attributes = HashMap::new();
                     attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, idx + 1)));
-                    let mut connections = HashMap::new();
+
                     connections.insert(String::from("IN"), Vec::new());
                     connections.insert(String::from("OUT"), Vec::new());
-                    cell = Cell {
-                        hide_name: 0,
-                        cell_type: node_type.to_owned(),
-                        parameters: HashMap::new(),
-                        attributes,
-                        port_directions: HashMap::new(),
-                        connections,
-                    }
                 },
                 "MACROCELL_XOR" => {
                     let mc = &bitstream.bits.get_fb()[fb as usize].mcs[idx as usize];
-                    let mut parameters = HashMap::new();
+
                     if mc.xor_mode == XC2MCXorMode::ZERO || mc.xor_mode == XC2MCXorMode::PTC {
                         parameters.insert(String::from("INVERT_OUT"), AttributeVal::N(0));
                     } else {
                         parameters.insert(String::from("INVERT_OUT"), AttributeVal::N(1));
                     }
-                    let mut attributes = HashMap::new();
+
                     attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, idx + 1)));
-                    let mut connections = HashMap::new();
+
                     connections.insert(String::from("IN_PTC"), Vec::new());
                     connections.insert(String::from("IN_ORTERM"), Vec::new());
                     connections.insert(String::from("OUT"), Vec::new());
-                    cell = Cell {
-                        hide_name: 0,
-                        cell_type: node_type.to_owned(),
-                        parameters,
-                        attributes,
-                        port_directions: HashMap::new(),
-                        connections,
-                    }
                 },
                 "REG" => {
                     let mc = &bitstream.bits.get_fb()[fb as usize].mcs[idx as usize];
-                    let mut parameters = HashMap::new();
+
                     parameters.insert(String::from("INIT"), AttributeVal::N(mc.init_state as usize));
-                    let mut attributes = HashMap::new();
+
                     attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, idx + 1)));
-                    let mut connections = HashMap::new();
+
                     connections.insert(String::from("Q"), Vec::new());
                     connections.insert(String::from("PRE"), Vec::new());
                     connections.insert(String::from("CLR"), Vec::new());
 
-                    let cell_type;
                     match mc.reg_mode {
                         XC2MCRegMode::DFF => {
                             connections.insert(String::from("C"), Vec::new());
@@ -458,15 +384,6 @@ fn main() {
                             }
                         }
                     }
-
-                    cell = Cell {
-                        hide_name: 0,
-                        cell_type,
-                        parameters,
-                        attributes,
-                        port_directions: HashMap::new(),
-                        connections,
-                    }
                 },
                 _ => unreachable!()
             }
@@ -474,7 +391,14 @@ fn main() {
             // Create the cell in the output module
             let mut output_netlist_mut = output_netlist.borrow_mut();
             let mut cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
-            cells.insert(node_name.to_owned(), cell);
+            cells.insert(node_name.to_owned(), Cell {
+                hide_name: 0,
+                cell_type,
+                parameters,
+                attributes,
+                port_directions: HashMap::new(),
+                connections,
+            });
 
             // Memoization needed for the callback interface
             let mut node_vec = node_vec.borrow_mut();
