@@ -90,6 +90,24 @@ string Greenpak4PowerOnReset::GetPrimitiveName() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+map<string, string> Greenpak4PowerOnReset::GetAttributes() const
+{
+	map<string, string> attribs;
+	attribs["KEEP"] = "1";
+	return attribs;
+}
+
+map<string, string> Greenpak4PowerOnReset::GetParameters() const
+{
+	map<string, string> params;
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%d", m_resetDelay);
+	params["POR_TIME"] = tmp;
+
+	return params;
+}
+
 bool Greenpak4PowerOnReset::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned

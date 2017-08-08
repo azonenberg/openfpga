@@ -140,12 +140,15 @@ bool Greenpak4IOBTypeA::Load(bool* bitstream)
 
 		case 1:
 			m_pullStrength = PULL_10K;
+			break;
 
 		case 2:
 			m_pullStrength = PULL_100K;
+			break;
 
 		case 3:
 			m_pullStrength = PULL_1M;
+			break;
 	}
 
 	return true;

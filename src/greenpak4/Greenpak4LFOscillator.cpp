@@ -102,6 +102,28 @@ string Greenpak4LFOscillator::GetPrimitiveName() const
 	return "GP_LFOSC";
 }
 
+map<string, string> Greenpak4LFOscillator::GetParameters() const
+{
+	map<string, string> params;
+
+	if(m_powerDownEn)
+		params["PWRDN_EN"] = "1";
+	else
+		params["PWRDN_EN"] = "0";
+
+	if(m_autoPowerDown)
+		params["AUTO_PWRDN"] = "1";
+	else
+		params["AUTO_PWRDN"] = "0";
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%d", m_outDiv);
+	params["OUT_DIV"] = tmp;
+
+	return params;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

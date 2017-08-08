@@ -102,6 +102,33 @@ string Greenpak4SPI::GetPrimitiveName() const
 	return "GP_SPI";
 }
 
+map<string, string> Greenpak4SPI::GetParameters() const
+{
+	map<string, string> params;
+
+	if(m_width8Bits)
+		params["DATA_WIDTH"] = "8";
+	else
+		params["DATA_WIDTH"] = "16";
+
+	if(m_cpha)
+		params["SPI_CPHA"] = "1";
+	else
+		params["SPI_CPHA"] = "0";
+
+	if(m_cpol)
+		params["SPI_CPOL"] = "1";
+	else
+		params["SPI_CPOL"] = "0";
+
+	if(m_dirIsOutput)
+		params["DIRECTION"] = "\"OUTPUT\"";
+	else
+		params["DIRECTION"] = "\"INPUT\"";
+
+	return params;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

@@ -84,6 +84,14 @@ vector<string> Greenpak4RCOscillator::GetOutputPorts() const
 	return r;
 }
 
+vector<string> Greenpak4RCOscillator::GetAllOutputPorts() const
+{
+	vector<string> r;
+	r.push_back("CLKOUT_HARDIP");
+	r.push_back("CLKOUT_FABRIC");
+	return r;
+}
+
 unsigned int Greenpak4RCOscillator::GetOutputNetNumber(string port)
 {
 	if(port == "CLKOUT_FABRIC")
@@ -100,6 +108,35 @@ string Greenpak4RCOscillator::GetDescription() const
 string Greenpak4RCOscillator::GetPrimitiveName() const
 {
 	return "GP_RCOSC";
+}
+
+map<string, string> Greenpak4RCOscillator::GetParameters() const
+{
+	map<string, string> params;
+
+	if(m_powerDownEn)
+		params["PWRDN_EN"] = "1";
+	else
+		params["PWRDN_EN"] = "0";
+
+	if(m_autoPowerDown)
+		params["AUTO_PWRDN"] = "1";
+	else
+		params["AUTO_PWRDN"] = "0";
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%d", m_preDiv);
+	params["HARDIP_DIV"] = tmp;
+
+	snprintf(tmp, sizeof(tmp), "%d", m_postDiv);
+	params["FABRIC_DIV"] = tmp;
+
+	if(m_fastClock)
+		params["OSC_FREQ"] = "\"2M\"";
+	else
+		params["OSC_FREQ"] = "\"25k\"";
+
+	return params;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

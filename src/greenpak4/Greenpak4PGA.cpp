@@ -99,6 +99,33 @@ string Greenpak4PGA::GetPrimitiveName() const
 	return "GP_PGA";
 }
 
+map<string, string> Greenpak4PGA::GetParameters() const
+{
+	map<string, string> params;
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%.2f", m_gain * 0.01f);
+	//params["GAIN"] = tmp;
+	LogWarning("PGA not saving gain parameter due to Yosys bug\n");
+
+	switch(m_inputMode)
+	{
+		case MODE_SINGLE:
+			params["INPUT_MODE"] = "\"SINGLE\"";
+			break;
+
+		case MODE_DIFF:
+			params["INPUT_MODE"] = "\"DIFF\"";
+			break;
+
+		case MODE_PDIFF:
+			params["INPUT_MODE"] = "\"PDIFF\"";
+			break;
+	}
+
+	return params;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

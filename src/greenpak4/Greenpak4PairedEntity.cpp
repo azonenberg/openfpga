@@ -53,6 +53,11 @@ string Greenpak4PairedEntity::GetDescription() const
 	return GetActiveEntity()->GetDescription();
 }
 
+vector<string> Greenpak4PairedEntity::GetAllInputPorts() const
+{
+	return GetActiveEntity()->GetAllInputPorts();
+}
+
 vector<string> Greenpak4PairedEntity::GetInputPorts() const
 {
 	auto pa = m_entities[0]->GetInputPorts();

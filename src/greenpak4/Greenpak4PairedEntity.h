@@ -45,6 +45,7 @@ public:
 	virtual Greenpak4EntityOutput GetInput(std::string port) const;
 	virtual unsigned int GetOutputNetNumber(std::string port);
 
+	virtual std::vector<std::string> GetAllInputPorts() const;
 	virtual std::vector<std::string> GetInputPorts() const;
 	virtual std::vector<std::string> GetOutputPorts() const;
 

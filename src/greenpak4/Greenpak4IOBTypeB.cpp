@@ -105,10 +105,12 @@ bool Greenpak4IOBTypeB::Load(bool* bitstream)
 			case 0:
 				m_inputThreshold = THRESHOLD_NORMAL;
 				m_schmittTrigger = false;
+				break;
 
 			case 1:
 				m_inputThreshold = THRESHOLD_NORMAL;
 				m_schmittTrigger = true;
+				break;
 
 			case 2:
 				m_inputThreshold = THRESHOLD_LOW;

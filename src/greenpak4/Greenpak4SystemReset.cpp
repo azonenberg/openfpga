@@ -95,6 +95,35 @@ string Greenpak4SystemReset::GetPrimitiveName() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+map<string, string> Greenpak4SystemReset::GetAttributes() const
+{
+	map<string, string> attribs;
+	attribs["KEEP"] = "1";
+	return attribs;
+}
+
+map<string, string> Greenpak4SystemReset::GetParameters() const
+{
+	map<string, string> params;
+
+	switch(m_resetMode)
+	{
+		case RISING_EDGE:
+			params["RESET_MODE"] = "\"RISING\"";
+			break;
+
+		case HIGH_LEVEL:
+			params["RESET_MODE"] = "\"LEVEL\"";
+			break;
+	}
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%d", m_resetDelay);
+	params["EDGE_SPEED"] = tmp;
+
+	return params;
+}
+
 bool Greenpak4SystemReset::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned

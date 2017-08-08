@@ -97,6 +97,20 @@ string Greenpak4VoltageReference::GetPrimitiveName() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
+map<string, string> Greenpak4VoltageReference::GetParameters() const
+{
+	map<string, string> params;
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%d", m_vinDiv);
+	params["VIN_DIV"] = tmp;
+
+	snprintf(tmp, sizeof(tmp), "%d", m_vref);
+	params["VREF"] = tmp;
+
+	return params;
+}
+
 bool Greenpak4VoltageReference::CommitChanges()
 {
 	//Get our cell, or bail if we're unassigned

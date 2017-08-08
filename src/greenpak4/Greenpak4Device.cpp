@@ -1345,7 +1345,7 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 			fprintf(fp, "          \"direction\": \"inout\",\n");
 		}
 
-		fprintf(fp, "          \"bits\": [ %d ],\n", netnum);
+		fprintf(fp, "          \"bits\": [ %d ]\n", netnum);
 
 		fprintf(fp, "        }");
 	}
@@ -1399,7 +1399,7 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 
 			fprintf(fp, "            \"%s\": %s", it.first.c_str(), it.second.c_str());
 		}
-		fprintf(fp, "          },\n");
+		fprintf(fp, "\n          },\n");
 
 		//Attributes
 		pfirst = true;
@@ -1413,9 +1413,9 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 			else
 				fprintf(fp, ",\n");
 
-			fprintf(fp, "            \"%s\": \"%s\"", it.first.c_str(), it.second.c_str());
+			fprintf(fp, "            \"%s\": %s", it.first.c_str(), it.second.c_str());
 		}
-		fprintf(fp, "          },\n");
+		fprintf(fp, "\n          },\n");
 
 		//Port directions based on which list we're in
 		pfirst = true;
@@ -1451,7 +1451,6 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 			fprintf(fp, "            \"%s\": \"inout\"", io.c_str());
 		}
 		fprintf(fp, "\n          },\n");
-
 
 		//Port connections for inputs
 		pfirst = true;
@@ -1563,7 +1562,7 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 
 		//TODO: other connections to top level ports
 
-		fprintf(fp, "          }\n");
+		fprintf(fp, "\n          }\n");
 		fprintf(fp, "        }");
 	}
 	fprintf(fp, "\n      },\n");
@@ -1573,27 +1572,7 @@ bool Greenpak4Device::WriteToJSON(string fname, string top)
 	fprintf(fp, "      },\n");
 
 	//Done with module
-	fprintf(fp, "    },\n");
-
-	//Spit out generic cell library stuff so Yosys can import it correctly.
-	//TODO: Alternatively, don't have those cells at all and rely on Yosys to import cells_greenpak4 first?
-	//TODO: figure out proper relative path for the data file
-	//TODO: figure out way to automatically generate this somehow
-	FILE* fa = fopen("../data/greenpak4/gpkjson-cell-dump.json", "r");
-	if(!fa)
-	{
-		LogError("Couldn't open gpkjson-cell-dump.json");
-		return false;
-	}
-	char tmp[1024];
-	while(true)
-	{
-		auto len = fread(tmp, 1, sizeof(tmp), fa);
-		if(len <= 0)
-			break;
-		fwrite(tmp, 1, len, fp);
-	}
-	fclose(fa);
+	fprintf(fp, "    }\n");
 
 	//Done
 	fprintf(fp, "  }\n");

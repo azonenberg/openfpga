@@ -56,6 +56,94 @@ Greenpak4IOB::~Greenpak4IOB()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Accessors
 
+map<string, string> Greenpak4IOB::GetAttributes() const
+{
+	map<string, string> attribs;
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "\"P%d\"", m_pinNumber);
+	attribs["LOC"] = tmp;
+
+	if(m_schmittTrigger)
+		attribs["SCHMITT_TRIGGER"] = "\"1\"";
+
+	//Pulls
+	if(m_pullDirection != PULL_NONE)
+	{
+		string dir = "PULLDOWN";
+		if(m_pullDirection == PULL_UP)
+			dir = "PULLUP";
+
+		switch(m_pullStrength)
+		{
+			case PULL_10K:
+				attribs[dir] = "\"10K\"";
+				break;
+
+			case PULL_100K:
+				attribs[dir] = "\"100K\"";
+				break;
+
+			case PULL_1M:
+				attribs[dir] = "\"1M\"";
+				break;
+		}
+	}
+
+	//Drive strength
+	switch(m_driveStrength)
+	{
+		case DRIVE_1X:
+			attribs["DRIVE_STRENGTH"] = "\"1\"";
+			break;
+
+		case DRIVE_2X:
+			attribs["DRIVE_STRENGTH"] = "\"2\"";
+			break;
+
+		case DRIVE_4X:
+			attribs["DRIVE_STRENGTH"] = "\"4\"";
+			break;
+	}
+
+	//Drive type
+	if(!m_outputEnable.IsPowerRail() || m_outputEnable.GetPowerRailValue())
+	{
+		switch(m_driveType)
+		{
+			case DRIVE_PUSHPULL:
+				attribs["DRIVE_TYPE"] = "\"PUSHPULL\"";
+				break;
+
+			case DRIVE_NMOS_OPENDRAIN:
+				attribs["DRIVE_TYPE"] = "\"NMOS_OD\"";
+				break;
+
+			case DRIVE_PMOS_OPENDRAIN:
+				attribs["DRIVE_TYPE"] = "\"PMOS_OD\"";
+				break;
+		}
+	}
+
+	//Ibuf type
+	switch(m_inputThreshold)
+	{
+		case THRESHOLD_NORMAL:
+			attribs["IBUF_TYPE"] = "\"NORMAL\"";
+			break;
+
+		case THRESHOLD_LOW:
+			attribs["IBUF_TYPE"] = "\"LOW_VOLTAGE\"";
+			break;
+
+		case THRESHOLD_ANALOG:
+			attribs["IBUF_TYPE"] = "\"ANALOG\"";
+			break;
+	}
+
+	return attribs;
+}
+
 bool Greenpak4IOB::CommitChanges()
 {
 	//Get our IOB cell
@@ -235,6 +323,15 @@ unsigned int Greenpak4IOB::GetOutputNetNumber(string port)
 		return m_outputBaseWord;
 	else
 		return -1;
+}
+
+vector<string> Greenpak4IOB::GetAllInputPorts() const
+{
+	vector<string> r;
+	r.push_back("IN");
+	if(GetPrimitiveName() == "GP_IOBUF")
+		r.push_back("OE");
+	return r;
 }
 
 vector<string> Greenpak4IOB::GetInputPorts() const

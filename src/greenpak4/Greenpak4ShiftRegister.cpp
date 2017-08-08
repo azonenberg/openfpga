@@ -111,6 +111,25 @@ string Greenpak4ShiftRegister::GetPrimitiveName() const
 	return "GP_SHREG";
 }
 
+map<string, string> Greenpak4ShiftRegister::GetParameters() const
+{
+	map<string, string> params;
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%d", m_delayA);
+	params["OUTA_TAP"] = tmp;
+
+	snprintf(tmp, sizeof(tmp), "%d", m_delayB);
+	params["OUTB_TAP"] = tmp;
+
+	if(m_invertA)
+		params["OUTA_INVERT"] = "1";
+	else
+		params["OUTA_INVERT"] = "0";
+
+	return params;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 

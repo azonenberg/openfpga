@@ -62,6 +62,24 @@ string Greenpak4PatternGenerator::GetPrimitiveName() const
 	return "GP_PGEN";
 }
 
+map<string, string> Greenpak4PatternGenerator::GetParameters() const
+{
+	map<string, string> params;
+
+	int table = 0;
+	for(int i=0; i<16; i++)
+		table |= (m_truthtable[i] << i);
+
+	char tmp[128];
+	snprintf(tmp, sizeof(tmp), "%d", table);
+	params["PATTERN_DATA"] = tmp;
+
+	snprintf(tmp, sizeof(tmp), "%d", m_patternLen);
+	params["PATTERN_LEN"] = tmp;
+
+	return params;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Pattern generator specific logic
 

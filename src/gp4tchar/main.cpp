@@ -121,6 +121,9 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	//Read board temperature
+	
+
 	//Load timing data from disk
 	LogNotice("Loading timing data...\n");
 	string tfname = "timing.json";
@@ -128,6 +131,7 @@ int main(int argc, char* argv[])
 		LogWarning("Couldn't load existing timing data file\n");
 
 	//Measure delay through each element
+	/*
 	if(!MeasurePinToPinDelays(sock, hdev))
 		return 1;
 	if(!MeasureCrossConnectionDelays(sock, hdev))
@@ -138,6 +142,7 @@ int main(int argc, char* argv[])
 		return 1;
 	if(!MeasureDelayLineDelays(sock, hdev))
 		return 1;
+	*/
 
 	//Save to disk
 	LogNotice("Saving timing data to file %s\n", tfname.c_str());
@@ -147,7 +152,7 @@ int main(int argc, char* argv[])
 	LogNotice("Dumping timing data...\n");
 	{
 		LogIndenter li;
-		g_calDevice.PrintTimingData();
+		//g_calDevice.PrintTimingData();
 	}
 
 	//Done

@@ -124,6 +124,25 @@ vector<string> Greenpak4Flipflop::GetOutputPortsFiltered(bool* bitstream) const
 	return r;
 }
 
+vector<string> Greenpak4Flipflop::GetAllInputPorts() const
+{
+	vector<string> r;
+	r.push_back("D");
+	r.push_back("R");
+	if(m_hasSR && !m_nsr.IsPowerRail())
+	{
+		if(m_srmode)
+			r.push_back("nSET");
+		else
+			r.push_back("nRST");
+	}
+	if(m_latchMode)
+		r.push_back("nCLK");
+	else
+		r.push_back("CLK");
+	return r;
+}
+
 vector<string> Greenpak4Flipflop::GetAllOutputPorts() const
 {
 	vector<string> r;

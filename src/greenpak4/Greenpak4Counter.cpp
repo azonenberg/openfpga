@@ -127,10 +127,10 @@ map<string, string> Greenpak4Counter::GetParameters() const
 	}
 
 	char tmp[128];
-	snprintf(tmp, sizeof(tmp), "\"%d\"", m_countVal);
+	snprintf(tmp, sizeof(tmp), "%d", m_countVal);
 	params["COUNT_TO"] = tmp;
 
-	snprintf(tmp, sizeof(tmp), "\"%d\"", m_preDivide);
+	snprintf(tmp, sizeof(tmp), "%d", m_preDivide);
 	params["CLKIN_DIVIDE"] = tmp;
 
 	return params;
@@ -195,11 +195,19 @@ bool Greenpak4Counter::CommitChanges()
 	return true;
 }
 
+vector<string> Greenpak4Counter::GetAllInputPorts() const
+{
+	vector<string> r = GetInputPorts();
+	r.push_back("CLK");
+	return r;
+}
+
 vector<string> Greenpak4Counter::GetInputPorts() const
 {
 	vector<string> r;
 	r.push_back("RST");
-	if(m_hasFSM) {
+	if(m_hasFSM)
+	{
 		r.push_back("UP");
 		r.push_back("KEEP");
 	}

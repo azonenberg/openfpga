@@ -127,6 +127,11 @@ map<string, string> Greenpak4Delay::GetParameters() const
 			case BOTH_EDGE:
 				params["EDGE_DIRECTION"] = "BOTH";
 				break;
+
+			//Empty case to shut up GCC warning
+			//Apparently it can't statically see that the if statement above means this will never be hit
+			case DELAY:
+				break;
 		}
 	}
 
