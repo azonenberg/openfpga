@@ -114,6 +114,16 @@ string Greenpak4PairedEntity::GetPrimitiveName() const
 	return GetActiveEntity()->GetPrimitiveName();
 }
 
+map<string, string> Greenpak4PairedEntity::GetParameters() const
+{
+	return GetActiveEntity()->GetParameters();
+}
+
+map<string, string> Greenpak4PairedEntity::GetAttributes() const
+{
+	return GetActiveEntity()->GetAttributes();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Module selection
 
