@@ -90,11 +90,13 @@ module UART(txd, rxd);
 	// Pattern generator for the actual message we're sending
 
 	//Start bit is in LSB since that's what we output during reset.
-	//High 7 bits of PGEN ignored, then bit-reversed payload
+	//High 6 bits of PGEN ignored, then bit-reversed payload
+	//We need an extra stop bit so we don't glitch for one clock when the counter wraps
+	//(before we know the byte is over).
 	wire	txd_raw;
 	GP_PGEN #(
-		.PATTERN_LEN(5'd10),
-		.PATTERN_DATA({7'h0, 8'h82, 1'h1})
+		.PATTERN_LEN(5'd11),
+		.PATTERN_DATA({6'h0, 8'h82, 1'h1, 1'h1})
 	) tx_pgen (
 		.nRST(!message_edge),
 		.CLK(baud_edge),
@@ -141,11 +143,14 @@ module UART(txd, rxd);
 			sending		<= 0;
 		end
 
-		if(sending)
-			txd			<= txd_raw;
-		else
-			txd			<= 1;
+	end
 
+	always @(*) begin
+
+		if(!sending || byte_done)
+			txd			<= 1;
+		else
+			txd			<= txd_raw;
 	end
 
 endmodule
