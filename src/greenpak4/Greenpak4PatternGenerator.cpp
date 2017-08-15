@@ -164,10 +164,31 @@ Greenpak4EntityOutput Greenpak4PatternGenerator::GetInput(string port) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Serialization
 
-bool Greenpak4PatternGenerator::Load(bool* /*bitstream*/)
+bool Greenpak4PatternGenerator::Load(bool* bitstream)
 {
-	LogError("unimplemented\n");
-	return false;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// INPUT BUS
+
+	ReadMatrixSelector(bitstream, 2, m_matrix, m_clk);
+	ReadMatrixSelector(bitstream, 3, m_matrix, m_reset);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// CONFIGURATION
+
+	//The pattern we generate
+	for(unsigned int i=0; i<16; i++)
+		m_truthtable[i] = bitstream[m_configBase + i];
+
+	//4-bit counter data
+	m_patternLen =
+		(
+			bitstream[m_configBase + 16] |
+			(bitstream[m_configBase + 17] << 1) |
+			(bitstream[m_configBase + 18] << 2) |
+			(bitstream[m_configBase + 19] << 3)
+		) + 1;
+
+	return true;
 }
 
 bool Greenpak4PatternGenerator::Save(bool* bitstream)
