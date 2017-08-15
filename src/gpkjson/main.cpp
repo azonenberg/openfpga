@@ -131,9 +131,7 @@ int main(int argc, char* argv[])
 	//Initialize the device
 	Greenpak4Device device(part);
 	if(!device.ReadFromFile(fname))
-	{
-		//return 1;
-	}
+		return 1;
 
 	//Print configuration
 	LogNotice("\nDevice configuration:\n");
