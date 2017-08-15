@@ -169,8 +169,8 @@ bool Greenpak4PatternGenerator::Load(bool* bitstream)
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// INPUT BUS
 
-	ReadMatrixSelector(bitstream, 2, m_matrix, m_clk);
-	ReadMatrixSelector(bitstream, 3, m_matrix, m_reset);
+	ReadMatrixSelector(bitstream, m_inputBaseWord + 2, m_matrix, m_clk);
+	ReadMatrixSelector(bitstream, m_inputBaseWord + 3, m_matrix, m_reset);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// CONFIGURATION
