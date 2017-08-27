@@ -157,8 +157,8 @@ impl NetlistGraph {
         // Keep track of module ports
         let mut module_ports = HashSet::new();
         for (_, port) in &top_module.ports {
-            for ref yosys_edge_idx in &port.bits {
-                if let &&yosys_netlist_json::BitVal::N(n) = yosys_edge_idx {
+            for yosys_edge_idx in &port.bits {
+                if let &yosys_netlist_json::BitVal::N(n) = yosys_edge_idx {
                     module_ports.insert(n);
                 }
             }
@@ -168,9 +168,7 @@ impl NetlistGraph {
         for (_, cell) in &top_module.cells {
             for (_, connection_vec) in &cell.connections {
                 for connection in connection_vec.iter() {
-                    if let &yosys_netlist_json::BitVal::N(n) = connection {
-                        let yosys_edge_idx = n;
-
+                    if let &yosys_netlist_json::BitVal::N(yosys_edge_idx) = connection {
                         // Don't create nets for the pad side of io buffers
                         if module_ports.contains(&yosys_edge_idx) {
                             continue;
@@ -193,10 +191,8 @@ impl NetlistGraph {
         // Now we want to loop through netnames and *) insert any new names (dangling?) and *) assign human-readable
         // net names
         for (netname_name, netname_obj) in &top_module.netnames {
-            for ref yosys_edge_idx in &netname_obj.bits {
-                if let &&yosys_netlist_json::BitVal::N(n) = yosys_edge_idx {
-                    let yosys_edge_idx = n;
-
+            for yosys_edge_idx in &netname_obj.bits {
+                if let &yosys_netlist_json::BitVal::N(yosys_edge_idx) = yosys_edge_idx {
                     // Don't create nets for the pad side of io buffers
                     if module_ports.contains(&yosys_edge_idx) {
                         continue;
@@ -229,10 +225,11 @@ impl NetlistGraph {
 
         let bitval_to_net = |bitval| {
             match bitval {
-                yosys_netlist_json::BitVal::N(n) => net_map.get(&n).unwrap(),
-                yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_0) => &vdd_net,
-                yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_1) => &vss_net,
-                _ => panic!("Illegal bit value in JSON"),
+                yosys_netlist_json::BitVal::N(n) => Ok(*net_map.get(&n).unwrap()),
+                yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_0) => Ok(vdd_net),
+                yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_1) => Ok(vss_net),
+                // We should never see an x/z in our processing
+                _ => Err("Illegal bit value in JSON"),
             }
         };
 
@@ -252,15 +249,15 @@ impl NetlistGraph {
                 let node_variant = NetlistGraphNodeVariant::IOBuf {
                     input: match conn_i {
                         None => None,
-                        Some(net) => Some(*bitval_to_net(net[0].clone())),
+                        Some(net) => Some(bitval_to_net(net[0].clone())?),
                     },
                     oe: match conn_e {
                         None => None,
-                        Some(net) => Some(*bitval_to_net(net[0].clone())),
+                        Some(net) => Some(bitval_to_net(net[0].clone())?),
                     },
                     output: match conn_o {
                         None => None,
-                        Some(net) => Some(*bitval_to_net(net[0].clone())),
+                        Some(net) => Some(bitval_to_net(net[0].clone())?),
                     },
                 };
 
@@ -279,7 +276,7 @@ impl NetlistGraph {
                 let node_variant = NetlistGraphNodeVariant::InBuf {
                     output: match conn_o {
                         None => return Err("IBUF cell is missing O output"),
-                        Some(net) => *bitval_to_net(net[0].clone()),
+                        Some(net) => bitval_to_net(net[0].clone())?,
                     },
                 };
 
@@ -315,12 +312,12 @@ impl NetlistGraph {
                 for input_i in 0..num_true_inputs {
                     let input_vec_obj = cell_obj.connections.get("IN");
                     if input_vec_obj.is_none() {
-                        return Err("$sop cell is missing IN input");
+                        return Err("ANDTERM cell is missing IN input");
                     }
                     let input_vec_obj = input_vec_obj.unwrap();
 
                     let input_used_value_obj = &input_vec_obj[input_i as usize];
-                    let input_used_net_idx = bitval_to_net(input_used_value_obj.clone());
+                    let input_used_net_idx = bitval_to_net(input_used_value_obj.clone())?;
 
                     inputs_true.push(input_used_net_idx);
                 }
@@ -328,19 +325,19 @@ impl NetlistGraph {
                 for input_i in 0..num_comp_inputs {
                     let input_vec_obj = cell_obj.connections.get("IN_B");
                     if input_vec_obj.is_none() {
-                        return Err("$sop cell is missing IN_B input");
+                        return Err("ANDTERM cell is missing IN_B input");
                     }
                     let input_vec_obj = input_vec_obj.unwrap();
 
                     let input_used_value_obj = &input_vec_obj[input_i as usize];
-                    let input_used_net_idx = bitval_to_net(input_used_value_obj.clone());
+                    let input_used_net_idx = bitval_to_net(input_used_value_obj.clone())?;
 
                     inputs_comp.push(input_used_net_idx);
                 }
 
                 let output_y_obj = cell_obj.connections.get("OUT");
                 if output_y_obj.is_none() {
-                    return Err("$sop cell is missing OUT output");
+                    return Err("ANDTERM cell is missing OUT output");
                 }
                 let output_y_obj = output_y_obj.unwrap();
                 if output_y_obj.len() != 1 {
@@ -348,7 +345,7 @@ impl NetlistGraph {
                 }
                 let output_y_obj = &output_y_obj[0];
 
-                let output_y_net_idx = bitval_to_net(output_y_obj.clone());
+                let output_y_net_idx = bitval_to_net(output_y_obj.clone())?;
 
                 // Create dummy buffer nodes for all inputs
                 // TODO: What about redundant ones?
@@ -362,7 +359,7 @@ impl NetlistGraph {
                     let node_idx_ziabuf = nodes.insert(NetlistGraphNode {
                         name: format!("__ziabuf_{}", cell_name),
                         variant: NetlistGraphNodeVariant::ZIADummyBuf {
-                            input: *before_ziabuf_net,
+                            input: before_ziabuf_net,
                             output: after_ziabuf_net,
                         },
                         par_idx: None,
@@ -381,7 +378,7 @@ impl NetlistGraph {
                     let node_idx_ziabuf = nodes.insert(NetlistGraphNode {
                         name: format!("__ziabuf_{}", cell_name),
                         variant: NetlistGraphNodeVariant::ZIADummyBuf {
-                            input: *before_ziabuf_net,
+                            input: before_ziabuf_net,
                             output: after_ziabuf_net,
                         },
                         par_idx: None,
@@ -396,7 +393,7 @@ impl NetlistGraph {
                     variant: NetlistGraphNodeVariant::AndTerm {
                         inputs_true,
                         inputs_comp,
-                        output: *output_y_net_idx,
+                        output: output_y_net_idx,
                     },
                     par_idx: None,
                 });
@@ -417,19 +414,19 @@ impl NetlistGraph {
                 for input_i in 0..num_inputs {
                     let input_vec_obj = cell_obj.connections.get("IN");
                     if input_vec_obj.is_none() {
-                        return Err("$sop cell is missing IN input");
+                        return Err("ORTERM cell is missing IN input");
                     }
                     let input_vec_obj = input_vec_obj.unwrap();
 
                     let input_used_value_obj = &input_vec_obj[input_i as usize];
-                    let input_used_net_idx = bitval_to_net(input_used_value_obj.clone());
+                    let input_used_net_idx = bitval_to_net(input_used_value_obj.clone())?;
 
-                    inputs.push(*input_used_net_idx);
+                    inputs.push(input_used_net_idx);
                 }
 
                 let output_y_obj = cell_obj.connections.get("OUT");
                 if output_y_obj.is_none() {
-                    return Err("$sop cell is missing OUT output");
+                    return Err("ORTERM cell is missing OUT output");
                 }
                 let output_y_obj = output_y_obj.unwrap();
                 if output_y_obj.len() != 1 {
@@ -437,13 +434,13 @@ impl NetlistGraph {
                 }
                 let output_y_obj = &output_y_obj[0];
 
-                let output_y_net_idx = bitval_to_net(output_y_obj.clone());
+                let output_y_net_idx = bitval_to_net(output_y_obj.clone())?;
 
                 let node_idx_and = nodes.insert(NetlistGraphNode {
                     name: cell_name.to_owned(),
                     variant: NetlistGraphNodeVariant::OrTerm {
                         inputs,
-                        output: *output_y_net_idx,
+                        output: output_y_net_idx,
                     },
                     par_idx: None,
                 });
@@ -465,11 +462,11 @@ impl NetlistGraph {
                 if !input_ptc_obj.is_none() {
                     let input_ptc_obj = input_ptc_obj.unwrap();
                     if input_ptc_obj.len() != 1 {
-                        return Err("cell IN_PTC output has too many nets")
+                        return Err("cell IN_PTC input has too many nets")
                     }
                     let input_ptc_obj = &input_ptc_obj[0];
 
-                    input_ptc_net_idx = Some(*bitval_to_net(input_ptc_obj.clone()));
+                    input_ptc_net_idx = Some(bitval_to_net(input_ptc_obj.clone())?);
                 }
 
                 let input_orterm_obj = cell_obj.connections.get("IN_ORTERM");
@@ -477,16 +474,16 @@ impl NetlistGraph {
                 if !input_orterm_obj.is_none() {
                     let input_orterm_obj = input_orterm_obj.unwrap();
                     if input_orterm_obj.len() != 1 {
-                        return Err("cell IN_ORTERM output has too many nets")
+                        return Err("cell IN_ORTERM input has too many nets")
                     }
                     let input_orterm_obj = &input_orterm_obj[0];
 
-                    input_orterm_net_idx = Some(*bitval_to_net(input_orterm_obj.clone()));
+                    input_orterm_net_idx = Some(bitval_to_net(input_orterm_obj.clone())?);
                 }
 
                 let output_obj = cell_obj.connections.get("OUT");
                 if output_obj.is_none() {
-                    return Err("$sop cell is missing OUT output");
+                    return Err("MACROCELL_XOR cell is missing OUT output");
                 }
                 let output_obj = output_obj.unwrap();
                 if output_obj.len() != 1 {
@@ -494,7 +491,7 @@ impl NetlistGraph {
                 }
                 let output_obj = &output_obj[0];
 
-                let output_net_idx = bitval_to_net(output_obj.clone());
+                let output_net_idx = bitval_to_net(output_obj.clone())?;
 
                 let node_idx_xor = nodes.insert(NetlistGraphNode {
                     name: cell_name.to_owned(),
@@ -502,7 +499,7 @@ impl NetlistGraph {
                         andterm_input: input_ptc_net_idx,
                         orterm_input: input_orterm_net_idx,
                         invert_out: invert_out != 0,
-                        output: *output_net_idx,
+                        output: output_net_idx,
                     },
                     par_idx: None,
                 });
