@@ -32,8 +32,7 @@ use self::xbpar_rs::*;
 extern crate xc2bit;
 use self::xc2bit::*;
 
-extern crate serde_json;
-use self::serde_json::Value;
+extern crate yosys_netlist_json;
 
 use *;
 use objpool::*;
@@ -114,13 +113,13 @@ pub struct NetlistGraph {
 }
 
 impl NetlistGraph {
-    pub fn from_yosys_netlist(yosys_net: &YosysNetlist) -> Result<NetlistGraph, &'static str> {
+    pub fn from_yosys_netlist(yosys_net: &yosys_netlist_json::Netlist) -> Result<NetlistGraph, &'static str> {
         let mut top_module_name = "";
         let mut top_module_found = false;
         for (module_name, module) in &yosys_net.modules {
             if let Some(top_attr) = module.attributes.get("top") {
-                if let &Value::Number(ref n) = top_attr {
-                    if n.is_u64() && n.as_u64().unwrap() != 0 {
+                if let &yosys_netlist_json::AttributeVal::N(n) = top_attr {
+                    if n != 0 {
                         // Claims to be a top-level module
                         if top_module_found {
                             return Err("Multiple top-level modules found in netlist");
@@ -158,8 +157,10 @@ impl NetlistGraph {
         // Keep track of module ports
         let mut module_ports = HashSet::new();
         for (_, port) in &top_module.ports {
-            for &yosys_edge_idx in &port.bits {
-                module_ports.insert(yosys_edge_idx);
+            for ref yosys_edge_idx in &port.bits {
+                if let &&yosys_netlist_json::BitVal::N(n) = yosys_edge_idx {
+                    module_ports.insert(n);
+                }
             }
         }
 
@@ -167,33 +168,22 @@ impl NetlistGraph {
         for (_, cell) in &top_module.cells {
             for (_, connection_vec) in &cell.connections {
                 for connection in connection_vec.iter() {
-                    match connection {
-                        &Value::Number(ref n) => {
-                            if !n.is_u64() {
-                                return Err("invalid number in cell connection");
-                            }
+                    if let &yosys_netlist_json::BitVal::N(n) = connection {
+                        let yosys_edge_idx = n;
 
-                            let yosys_edge_idx = n.as_u64().unwrap() as usize;
-
-                            // Don't create nets for the pad side of io buffers
-                            if module_ports.contains(&yosys_edge_idx) {
-                                continue;
-                            }
-
-                            if net_map.get(&yosys_edge_idx).is_none() {
-                                // Need to add a new one
-                                let our_edge_idx = nets.insert(NetlistGraphNet {
-                                    name: None,
-                                    source: None,
-                                    sinks: Vec::new(),
-                                });
-                                net_map.insert(yosys_edge_idx, our_edge_idx);
-                            }
+                        // Don't create nets for the pad side of io buffers
+                        if module_ports.contains(&yosys_edge_idx) {
+                            continue;
                         }
-                        // This will be either a constant 0 or 1. We don't actually care about this at this point
-                        &Value::String(..) => {},
-                        _ => {
-                            return Err("invalid JSON type in cell connection");
+
+                        if net_map.get(&yosys_edge_idx).is_none() {
+                            // Need to add a new one
+                            let our_edge_idx = nets.insert(NetlistGraphNet {
+                                name: None,
+                                source: None,
+                                sinks: Vec::new(),
+                            });
+                            net_map.insert(yosys_edge_idx, our_edge_idx);
                         }
                     }
                 }
@@ -203,25 +193,29 @@ impl NetlistGraph {
         // Now we want to loop through netnames and *) insert any new names (dangling?) and *) assign human-readable
         // net names
         for (netname_name, netname_obj) in &top_module.netnames {
-            for &yosys_edge_idx in &netname_obj.bits {
-                // Don't create nets for the pad side of io buffers
-                if module_ports.contains(&yosys_edge_idx) {
-                    continue;
-                }
+            for ref yosys_edge_idx in &netname_obj.bits {
+                if let &&yosys_netlist_json::BitVal::N(n) = yosys_edge_idx {
+                    let yosys_edge_idx = n;
 
-                if net_map.get(&yosys_edge_idx).is_none() {
-                    // Need to add a new one
-                    let our_edge_idx = nets.insert(NetlistGraphNet {
-                        name: Some(netname_name.to_owned()),
-                        source: None,
-                        sinks: Vec::new(),
-                    });
-                    net_map.insert(yosys_edge_idx, our_edge_idx);
-                } else {
-                    // Naming an existing one
-                    let existing_net_our_idx = net_map.get(&yosys_edge_idx).unwrap();
-                    let existing_net = nets.get_mut(*existing_net_our_idx);
-                    existing_net.name = Some(netname_name.to_owned());
+                    // Don't create nets for the pad side of io buffers
+                    if module_ports.contains(&yosys_edge_idx) {
+                        continue;
+                    }
+
+                    if net_map.get(&yosys_edge_idx).is_none() {
+                        // Need to add a new one
+                        let our_edge_idx = nets.insert(NetlistGraphNet {
+                            name: Some(netname_name.to_owned()),
+                            source: None,
+                            sinks: Vec::new(),
+                        });
+                        net_map.insert(yosys_edge_idx, our_edge_idx);
+                    } else {
+                        // Naming an existing one
+                        let existing_net_our_idx = net_map.get(&yosys_edge_idx).unwrap();
+                        let existing_net = nets.get_mut(*existing_net_our_idx);
+                        existing_net.name = Some(netname_name.to_owned());
+                    }
                 }
             }
         }
@@ -232,6 +226,15 @@ impl NetlistGraph {
         // This maps from a Yosys cell/port name to an internal node number
         // FIXME: Use of owned strings is inefficient
         let mut cell_map: HashMap<String, ObjPoolIndex<NetlistGraphNode>> = HashMap::new();
+
+        let bitval_to_net = |bitval| {
+            match bitval {
+                yosys_netlist_json::BitVal::N(n) => net_map.get(&n).unwrap(),
+                yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_0) => &vdd_net,
+                yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_1) => &vss_net,
+                _ => panic!("Illegal bit value in JSON"),
+            }
+        };
 
         // and finally process cells
         for (cell_name, cell_obj) in &top_module.cells {
@@ -249,15 +252,15 @@ impl NetlistGraph {
                 let node_variant = NetlistGraphNodeVariant::IOBuf {
                     input: match conn_i {
                         None => None,
-                        Some(net) => Some(*net_map.get(&(net[0].as_u64().unwrap() as usize)).unwrap())
+                        Some(net) => Some(*bitval_to_net(net[0].clone())),
                     },
                     oe: match conn_e {
                         None => None,
-                        Some(net) => Some(*net_map.get(&(net[0].as_u64().unwrap() as usize)).unwrap())
+                        Some(net) => Some(*bitval_to_net(net[0].clone())),
                     },
                     output: match conn_o {
                         None => None,
-                        Some(net) => Some(*net_map.get(&(net[0].as_u64().unwrap() as usize)).unwrap())
+                        Some(net) => Some(*bitval_to_net(net[0].clone())),
                     },
                 };
 
@@ -276,7 +279,7 @@ impl NetlistGraph {
                 let node_variant = NetlistGraphNodeVariant::InBuf {
                     output: match conn_o {
                         None => return Err("IBUF cell is missing O output"),
-                        Some(net) => *net_map.get(&(net[0].as_u64().unwrap() as usize)).unwrap()
+                        Some(net) => *bitval_to_net(net[0].clone()),
                     },
                 };
 
@@ -292,12 +295,8 @@ impl NetlistGraph {
                 if num_true_inputs.is_none() {
                     return Err("required parameter TRUE_INP missing");
                 }
-                let num_true_inputs = if let &Value::Number(ref n) = num_true_inputs.unwrap() {
-                    if !n.is_u64() {
-                        return Err("parameter TRUE_INP is not a number")
-                    }
-
-                    n.as_u64().unwrap()
+                let num_true_inputs = if let &yosys_netlist_json::AttributeVal::N(n) = num_true_inputs.unwrap() {
+                    n
                 } else {
                     return Err("parameter TRUE_INP is not a number")
                 };
@@ -306,12 +305,8 @@ impl NetlistGraph {
                 if num_comp_inputs.is_none() {
                     return Err("required parameter COMP_INP missing");
                 }
-                let num_comp_inputs = if let &Value::Number(ref n) = num_comp_inputs.unwrap() {
-                    if !n.is_u64() {
-                        return Err("parameter COMP_INP is not a number")
-                    }
-
-                    n.as_u64().unwrap()
+                let num_comp_inputs = if let &yosys_netlist_json::AttributeVal::N(n) = num_comp_inputs.unwrap() {
+                    n
                 } else {
                     return Err("parameter COMP_INP is not a number")
                 };
@@ -325,20 +320,7 @@ impl NetlistGraph {
                     let input_vec_obj = input_vec_obj.unwrap();
 
                     let input_used_value_obj = &input_vec_obj[input_i as usize];
-                    let input_used_net_idx = if let &Value::Number(ref n) = input_used_value_obj {
-                        *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
-                    } else if let &Value::String(ref s) = input_used_value_obj {
-                        if s == "1" {
-                            vdd_net
-                        } else if s == "0" {
-                            vss_net
-                        } else {
-                            return Err("invalid connection in cell");
-                        }
-                    } else {
-                        // We already checked for this earlier
-                        unreachable!();
-                    };
+                    let input_used_net_idx = bitval_to_net(input_used_value_obj.clone());
 
                     inputs_true.push(input_used_net_idx);
                 }
@@ -351,20 +333,7 @@ impl NetlistGraph {
                     let input_vec_obj = input_vec_obj.unwrap();
 
                     let input_used_value_obj = &input_vec_obj[input_i as usize];
-                    let input_used_net_idx = if let &Value::Number(ref n) = input_used_value_obj {
-                        *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
-                    } else if let &Value::String(ref s) = input_used_value_obj {
-                        if s == "1" {
-                            vdd_net
-                        } else if s == "0" {
-                            vss_net
-                        } else {
-                            return Err("invalid connection in cell");
-                        }
-                    } else {
-                        // We already checked for this earlier
-                        unreachable!();
-                    };
+                    let input_used_net_idx = bitval_to_net(input_used_value_obj.clone());
 
                     inputs_comp.push(input_used_net_idx);
                 }
@@ -379,14 +348,7 @@ impl NetlistGraph {
                 }
                 let output_y_obj = &output_y_obj[0];
 
-                let output_y_net_idx = if let &Value::Number(ref n) = output_y_obj {
-                    *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
-                } else if let &Value::String(..) = output_y_obj {
-                    return Err("invalid connection in cell");
-                } else {
-                    // We already checked for this earlier
-                    unreachable!();
-                };
+                let output_y_net_idx = bitval_to_net(output_y_obj.clone());
 
                 // Create dummy buffer nodes for all inputs
                 // TODO: What about redundant ones?
@@ -400,7 +362,7 @@ impl NetlistGraph {
                     let node_idx_ziabuf = nodes.insert(NetlistGraphNode {
                         name: format!("__ziabuf_{}", cell_name),
                         variant: NetlistGraphNodeVariant::ZIADummyBuf {
-                            input: before_ziabuf_net,
+                            input: *before_ziabuf_net,
                             output: after_ziabuf_net,
                         },
                         par_idx: None,
@@ -419,7 +381,7 @@ impl NetlistGraph {
                     let node_idx_ziabuf = nodes.insert(NetlistGraphNode {
                         name: format!("__ziabuf_{}", cell_name),
                         variant: NetlistGraphNodeVariant::ZIADummyBuf {
-                            input: before_ziabuf_net,
+                            input: *before_ziabuf_net,
                             output: after_ziabuf_net,
                         },
                         par_idx: None,
@@ -434,7 +396,7 @@ impl NetlistGraph {
                     variant: NetlistGraphNodeVariant::AndTerm {
                         inputs_true,
                         inputs_comp,
-                        output: output_y_net_idx,
+                        output: *output_y_net_idx,
                     },
                     par_idx: None,
                 });
@@ -445,12 +407,8 @@ impl NetlistGraph {
                 if num_inputs.is_none() {
                     return Err("required parameter WIDTH missing");
                 }
-                let num_inputs = if let &Value::Number(ref n) = num_inputs.unwrap() {
-                    if !n.is_u64() {
-                        return Err("parameter WIDTH is not a number")
-                    }
-
-                    n.as_u64().unwrap()
+                let num_inputs = if let &yosys_netlist_json::AttributeVal::N(n) = num_inputs.unwrap() {
+                    n
                 } else {
                     return Err("parameter WIDTH is not a number")
                 };
@@ -464,22 +422,9 @@ impl NetlistGraph {
                     let input_vec_obj = input_vec_obj.unwrap();
 
                     let input_used_value_obj = &input_vec_obj[input_i as usize];
-                    let input_used_net_idx = if let &Value::Number(ref n) = input_used_value_obj {
-                        *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
-                    } else if let &Value::String(ref s) = input_used_value_obj {
-                        if s == "1" {
-                            vdd_net
-                        } else if s == "0" {
-                            vss_net
-                        } else {
-                            return Err("invalid connection in cell");
-                        }
-                    } else {
-                        // We already checked for this earlier
-                        unreachable!();
-                    };
+                    let input_used_net_idx = bitval_to_net(input_used_value_obj.clone());
 
-                    inputs.push(input_used_net_idx);
+                    inputs.push(*input_used_net_idx);
                 }
 
                 let output_y_obj = cell_obj.connections.get("OUT");
@@ -492,20 +437,13 @@ impl NetlistGraph {
                 }
                 let output_y_obj = &output_y_obj[0];
 
-                let output_y_net_idx = if let &Value::Number(ref n) = output_y_obj {
-                    *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
-                } else if let &Value::String(..) = output_y_obj {
-                    return Err("invalid connection in cell");
-                } else {
-                    // We already checked for this earlier
-                    unreachable!();
-                };
+                let output_y_net_idx = bitval_to_net(output_y_obj.clone());
 
                 let node_idx_and = nodes.insert(NetlistGraphNode {
                     name: cell_name.to_owned(),
                     variant: NetlistGraphNodeVariant::OrTerm {
                         inputs,
-                        output: output_y_net_idx,
+                        output: *output_y_net_idx,
                     },
                     par_idx: None,
                 });
@@ -516,12 +454,8 @@ impl NetlistGraph {
                 if invert_out.is_none() {
                     return Err("required parameter INVERT_OUT missing");
                 }
-                let invert_out = if let &Value::Number(ref n) = invert_out.unwrap() {
-                    if !n.is_u64() {
-                        return Err("parameter INVERT_OUT is not a number")
-                    }
-
-                    n.as_u64().unwrap()
+                let invert_out = if let &yosys_netlist_json::AttributeVal::N(n) = invert_out.unwrap() {
+                    n
                 } else {
                     return Err("parameter INVERT_OUT is not a number")
                 };
@@ -535,14 +469,7 @@ impl NetlistGraph {
                     }
                     let input_ptc_obj = &input_ptc_obj[0];
 
-                    input_ptc_net_idx = if let &Value::Number(ref n) = input_ptc_obj {
-                        Some(*net_map.get(&(n.as_u64().unwrap() as usize)).unwrap())
-                    } else if let &Value::String(..) = input_ptc_obj {
-                        return Err("invalid connection in cell");
-                    } else {
-                        // We already checked for this earlier
-                        unreachable!();
-                    };
+                    input_ptc_net_idx = Some(*bitval_to_net(input_ptc_obj.clone()));
                 }
 
                 let input_orterm_obj = cell_obj.connections.get("IN_ORTERM");
@@ -554,14 +481,7 @@ impl NetlistGraph {
                     }
                     let input_orterm_obj = &input_orterm_obj[0];
 
-                    input_orterm_net_idx = if let &Value::Number(ref n) = input_orterm_obj {
-                        Some(*net_map.get(&(n.as_u64().unwrap() as usize)).unwrap())
-                    } else if let &Value::String(..) = input_orterm_obj {
-                        return Err("invalid connection in cell");
-                    } else {
-                        // We already checked for this earlier
-                        unreachable!();
-                    };
+                    input_orterm_net_idx = Some(*bitval_to_net(input_orterm_obj.clone()));
                 }
 
                 let output_obj = cell_obj.connections.get("OUT");
@@ -574,14 +494,7 @@ impl NetlistGraph {
                 }
                 let output_obj = &output_obj[0];
 
-                let output_net_idx = if let &Value::Number(ref n) = output_obj {
-                    *net_map.get(&(n.as_u64().unwrap() as usize)).unwrap()
-                } else if let &Value::String(..) = output_obj {
-                    return Err("invalid connection in cell");
-                } else {
-                    // We already checked for this earlier
-                    unreachable!();
-                };
+                let output_net_idx = bitval_to_net(output_obj.clone());
 
                 let node_idx_xor = nodes.insert(NetlistGraphNode {
                     name: cell_name.to_owned(),
@@ -589,7 +502,7 @@ impl NetlistGraph {
                         andterm_input: input_ptc_net_idx,
                         orterm_input: input_orterm_net_idx,
                         invert_out: invert_out != 0,
-                        output: output_net_idx,
+                        output: *output_net_idx,
                     },
                     par_idx: None,
                 });

@@ -32,6 +32,8 @@ use xbpar_rs::*;
 extern crate xc2par;
 use xc2par::*;
 
+extern crate yosys_netlist_json;
+
 fn main() {
     let args = ::std::env::args().collect::<Vec<_>>();
 
@@ -46,7 +48,7 @@ fn main() {
     f.read_to_end(&mut data).expect("failed to read data");
 
     // de-serialize the yosys netlist
-    let yosys_netlist = read_yosys_netlist(&data).unwrap();
+    let yosys_netlist = yosys_netlist_json::Netlist::from_slice(&data).unwrap();
     println!("{:?}", yosys_netlist);
 
     // The graphs for the PAR engine

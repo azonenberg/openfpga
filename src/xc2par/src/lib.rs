@@ -23,9 +23,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#[macro_use]
-extern crate serde_derive;
-
 mod device;
 pub use device::{DeviceGraphNode, DeviceGraph};
 
@@ -39,6 +36,3 @@ mod objpool;
 
 mod output;
 pub use output::{produce_bitstream};
-
-mod yosysnet;
-pub use yosysnet::{YosysNetlist, read_yosys_netlist};
