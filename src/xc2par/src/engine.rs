@@ -122,17 +122,24 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for XC2PAREngine
         println!("find_suboptimal_placements");
         let base_engine = self.base_engine.as_mut().unwrap();
 
-        let mut nodes = HashSet::new();
+        let mut nodes_set = HashSet::new();
+        let mut nodes_vec = Vec::new();
 
         // Find all nodes that are on one end of an unroutable edge
         let (_, unroutes) = base_engine.compute_unroutable_cost();
         for edge in unroutes
         {
-            nodes.insert(edge.sourcenode());
-            nodes.insert(edge.destnode());
+            if !nodes_set.contains(edge.sourcenode()) {
+                nodes_set.insert(edge.sourcenode());
+                nodes_vec.push(edge.sourcenode());
+            }
+            if !nodes_set.contains(edge.destnode()) {
+                nodes_set.insert(edge.destnode());
+                nodes_vec.push(edge.destnode());
+            }
         }
 
-        nodes.into_iter().collect()
+        nodes_vec
 
     }
 

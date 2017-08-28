@@ -164,9 +164,17 @@ impl NetlistGraph {
             }
         }
 
+        // Process in order so that the results do not differ across runs
+        let mut cell_names = top_module.cells.keys().collect::<Vec<_>>();
+        cell_names.sort();
+
         // Cells can refer to a net, so loop through these as well
-        for (_, cell) in &top_module.cells {
-            for (_, connection_vec) in &cell.connections {
+        for &cell_name in &cell_names {
+            let cell = &top_module.cells[cell_name];
+            let mut connection_names = cell.connections.keys().collect::<Vec<_>>();
+            connection_names.sort();
+            for connection_name in connection_names {
+                let connection_vec = &cell.connections[connection_name];
                 for connection in connection_vec.iter() {
                     if let &yosys_netlist_json::BitVal::N(yosys_edge_idx) = connection {
                         // Don't create nets for the pad side of io buffers
@@ -190,7 +198,10 @@ impl NetlistGraph {
 
         // Now we want to loop through netnames and *) insert any new names (dangling?) and *) assign human-readable
         // net names
-        for (netname_name, netname_obj) in &top_module.netnames {
+        let mut netname_names = top_module.netnames.keys().collect::<Vec<_>>();
+        netname_names.sort();
+        for netname_name in netname_names {
+            let netname_obj = &top_module.netnames[netname_name];
             for yosys_edge_idx in &netname_obj.bits {
                 if let &yosys_netlist_json::BitVal::N(yosys_edge_idx) = yosys_edge_idx {
                     // Don't create nets for the pad side of io buffers
@@ -234,7 +245,9 @@ impl NetlistGraph {
         };
 
         // and finally process cells
-        for (cell_name, cell_obj) in &top_module.cells {
+        for &cell_name in &cell_names {
+            let cell_obj = &top_module.cells[cell_name];
+
             if cell_map.get(cell_name).is_some() {
                 return Err("duplicate cell/port name");
             }
