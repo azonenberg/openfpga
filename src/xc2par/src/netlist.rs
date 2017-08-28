@@ -57,6 +57,8 @@ pub enum NetlistGraphNodeVariant {
     Reg {
         mode: XC2MCRegMode,
         clkinv: bool,
+        clkddr: bool,
+        init_state: bool,
         set_input: Option<ObjPoolIndex<NetlistGraphNet>>,
         reset_input: Option<ObjPoolIndex<NetlistGraphNet>>,
         ce_input: Option<ObjPoolIndex<NetlistGraphNet>>,
@@ -71,18 +73,29 @@ pub enum NetlistGraphNodeVariant {
     BufgGTS {
         input: ObjPoolIndex<NetlistGraphNet>,
         output: ObjPoolIndex<NetlistGraphNet>,
+        invert: bool,
     },
     BufgGSR {
         input: ObjPoolIndex<NetlistGraphNet>,
         output: ObjPoolIndex<NetlistGraphNet>,
+        invert: bool,
     },
     IOBuf {
         input: Option<ObjPoolIndex<NetlistGraphNet>>,
         oe: Option<ObjPoolIndex<NetlistGraphNet>>,
         output: Option<ObjPoolIndex<NetlistGraphNet>>,
+        schmitt_trigger: bool,
+        termination_enabled: bool,
+        slew_is_fast: bool,
+        uses_data_gate: bool,
+        is_vref: bool,
     },
     InBuf {
         output: ObjPoolIndex<NetlistGraphNet>,
+        schmitt_trigger: bool,
+        termination_enabled: bool,
+        uses_data_gate: bool,
+        is_vref: bool,
     },
     ZIADummyBuf {
         input: ObjPoolIndex<NetlistGraphNet>,
@@ -305,6 +318,12 @@ impl NetlistGraph {
                         input: single_optional_connection("I")?,
                         oe: single_optional_connection("E")?,
                         output: single_optional_connection("O")?,
+                        // TODO
+                        schmitt_trigger: false,
+                        termination_enabled: false,
+                        slew_is_fast: false,
+                        uses_data_gate: false,
+                        is_vref: false,
                     },
                     par_idx: None,
                 });
@@ -315,6 +334,11 @@ impl NetlistGraph {
                     name: cell_name.to_owned(),
                     variant: NetlistGraphNodeVariant::InBuf {
                         output: single_required_connection("O")?,
+                        // TODO
+                        schmitt_trigger: false,
+                        termination_enabled: false,
+                        uses_data_gate: false,
+                        is_vref: false,
                     },
                     par_idx: None,
                 });
@@ -469,7 +493,7 @@ impl NetlistGraph {
                     nets.get_mut(input).sinks.push((node_idx, "I"));
                     set_net_source(&mut nets, output, (node_idx, "O"))?;
                 },
-                NetlistGraphNodeVariant::IOBuf{input, oe, output} => {
+                NetlistGraphNodeVariant::IOBuf{input, oe, output, ..} => {
                     if input.is_some() {
                         nets.get_mut(input.unwrap()).sinks.push((node_idx, "I"));
                     }
@@ -480,7 +504,7 @@ impl NetlistGraph {
                         set_net_source(&mut nets, output.unwrap(), (node_idx, "O"))?;
                     }
                 },
-                NetlistGraphNodeVariant::InBuf{output} => {
+                NetlistGraphNodeVariant::InBuf{output, ..} => {
                     set_net_source(&mut nets, output, (node_idx, "O"))?;
                 },
                 NetlistGraphNodeVariant::ZIADummyBuf{input, output} => {
@@ -528,6 +552,8 @@ impl NetlistGraph {
         let orterm_l = *ilmap.get("ORTERM").unwrap();
         let andterm_l = *ilmap.get("ANDTERM").unwrap();
         let bufg_l = *ilmap.get("BUFG").unwrap();
+        let bufgsr_l = *ilmap.get("BUFGSR").unwrap();
+        let bufgts_l = *ilmap.get("BUFGTS").unwrap();
         let ziabuf_l = *ilmap.get("ZIA dummy buffer").unwrap();
 
         // Create corresponding nodes
@@ -541,8 +567,8 @@ impl NetlistGraph {
                 NetlistGraphNodeVariant::Xor{..} => xor_l,
                 NetlistGraphNodeVariant::Reg{..} => reg_l,
                 NetlistGraphNodeVariant::BufgClk{..} => bufg_l,
-                NetlistGraphNodeVariant::BufgGTS{..} => bufg_l,
-                NetlistGraphNodeVariant::BufgGSR{..} => bufg_l,
+                NetlistGraphNodeVariant::BufgGTS{..} => bufgts_l,
+                NetlistGraphNodeVariant::BufgGSR{..} => bufgsr_l,
                 NetlistGraphNodeVariant::IOBuf{..} => iopad_l,
                 NetlistGraphNodeVariant::InBuf{..} => inpad_l,
                 NetlistGraphNodeVariant::ZIADummyBuf{..} => ziabuf_l,

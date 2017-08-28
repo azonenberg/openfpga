@@ -108,6 +108,8 @@ impl DeviceGraph {
         let orterm_l = alloc_label(par_graphs, &mut lmap, "ORTERM");
         let andterm_l = alloc_label(par_graphs, &mut lmap, "ANDTERM");
         let bufg_l = alloc_label(par_graphs, &mut lmap, "BUFG");
+        let bufgsr_l = alloc_label(par_graphs, &mut lmap, "BUFGSR");
+        let bufgts_l = alloc_label(par_graphs, &mut lmap, "BUFGTS");
         let ziabuf_l = alloc_label(par_graphs, &mut lmap, "ZIA dummy buffer");
 
         let wire_map = RefCell::new(Vec::new());
@@ -133,11 +135,11 @@ impl DeviceGraph {
                     },
                     "BUFGSR" => {
                         let pool_idx = graph.nodes.insert(DeviceGraphNode::BufgGSR);
-                        (pool_idx, bufg_l)
+                        (pool_idx, bufgsr_l)
                     },
                     "BUFGTS" => {
                         let pool_idx = graph.nodes.insert(DeviceGraphNode::BufgGTS{i: idx as u32});
-                        (pool_idx, bufg_l)
+                        (pool_idx, bufgts_l)
                     },
                     "IOBUFE" => {
                         let pool_idx = graph.nodes.insert(DeviceGraphNode::IOBuf{i: idx as u32});
