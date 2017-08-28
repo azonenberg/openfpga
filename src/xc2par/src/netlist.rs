@@ -486,26 +486,26 @@ impl NetlistGraph {
                 NetlistGraphNodeVariant::BufgClk{input, output, ..} |
                 NetlistGraphNodeVariant::BufgGTS{input, output, ..} |
                 NetlistGraphNodeVariant::BufgGSR{input, output, ..} => {
-                    nets.get_mut(input).sinks.push((node_idx, "IN"));
+                    nets.get_mut(input).sinks.push((node_idx, "I"));
                     let output_net = nets.get_mut(output);
                     if output_net.source.is_some() {
                         return Err("multiple drivers for net");
                     }
-                    output_net.source = Some((node_idx, "OUT"));
+                    output_net.source = Some((node_idx, "O"));
                 },
                 NetlistGraphNodeVariant::IOBuf{input, oe, output} => {
                     if input.is_some() {
-                        nets.get_mut(input.unwrap()).sinks.push((node_idx, "IN"));
+                        nets.get_mut(input.unwrap()).sinks.push((node_idx, "I"));
                     }
                     if oe.is_some() {
-                        nets.get_mut(oe.unwrap()).sinks.push((node_idx, "OE"));
+                        nets.get_mut(oe.unwrap()).sinks.push((node_idx, "E"));
                     }
                     if output.is_some() {
                         let output_net = nets.get_mut(output.unwrap());
                         if output_net.source.is_some() {
                             return Err("multiple drivers for net");
                         }
-                        output_net.source = Some((node_idx, "OUT"));
+                        output_net.source = Some((node_idx, "O"));
                     }
                 },
                 NetlistGraphNodeVariant::InBuf{output} => {
@@ -513,7 +513,7 @@ impl NetlistGraph {
                     if output_net.source.is_some() {
                         return Err("multiple drivers for net");
                     }
-                    output_net.source = Some((node_idx, "OUT"));
+                    output_net.source = Some((node_idx, "O"));
                 },
                 NetlistGraphNodeVariant::ZIADummyBuf{input, output} => {
                     nets.get_mut(input).sinks.push((node_idx, "IN"));

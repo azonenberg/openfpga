@@ -31,6 +31,7 @@ use self::xc2bit::*;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 use *;
 use objpool::*;
@@ -174,7 +175,6 @@ impl DeviceGraph {
                     // Connect the ZIA buffers to this AND term
                     for i in 0..INPUTS_PER_ANDTERM {
                         par_graphs.borrow_mut_d().add_edge(zia_dummy_bufs[fb as usize][i], "OUT", par_idx, "IN");
-                        par_graphs.borrow_mut_d().add_edge(zia_dummy_bufs[fb as usize][i], "OUT", par_idx, "IN_B");
                     }
 
                     0x8000000000000000 | ((fb as usize) << 32) | (par_idx as usize)
@@ -188,7 +188,7 @@ impl DeviceGraph {
                 wire_map.borrow_mut().insert(orig_wire_idx, (Vec::new(), Vec::new()));
                 orig_wire_idx
             },
-            |node_ref: usize, wire_ref: usize, port_name: &'static str, port_idx: u32, _: (u32, u32)| {
+            |node_ref: usize, wire_ref: usize, port_name: &'static str, port_idx: u32, extra_data: (u32, u32)| {
                 let mut wire_map = wire_map.borrow_mut();
                 let wire_vecs = wire_map.get_mut(&wire_ref).unwrap();
 
@@ -199,17 +199,18 @@ impl DeviceGraph {
                 };
 
                 if is_source {
-                    wire_vecs.0.push((node_ref, port_name, port_idx));
+                    wire_vecs.0.push((node_ref, port_name, port_idx, extra_data));
                 } else {
-                    wire_vecs.1.push((node_ref, port_name, port_idx));
+                    wire_vecs.1.push((node_ref, port_name, port_idx, extra_data));
                 }
             },
         );
 
         // Create the edges that were buffered up
+        let mut zia_term_used_already_hack = HashSet::new();
         for (_, (sources, sinks)) in wire_map.into_inner().into_iter() {
-            for &(source_node_ref, source_port_name, _) in &sources {
-                for &(sink_node_ref, sink_port_name, sink_port_idx) in &sinks {
+            for &(source_node_ref, source_port_name, _, _) in &sources {
+                for &(sink_node_ref, sink_port_name, sink_port_idx, sink_extra_data) in &sinks {
                     if sink_node_ref & 0x8000000000000000 == 0 {
                         // Not going into the AND terms
 
@@ -223,8 +224,19 @@ impl DeviceGraph {
                     } else {
                         // AND terms are special as usual
                         let sink_node_fb = (sink_node_ref & !0x8000000000000000) >> 32;
-                        par_graphs.borrow_mut_d().add_edge(source_node_ref as u32, source_port_name,
-                            zia_dummy_bufs[sink_node_fb][sink_port_idx as usize], sink_port_name);
+                        let sink_node_ref = zia_dummy_bufs[sink_node_fb][sink_port_idx as usize];
+
+                        // "Intercept" wires going from ZIA to P-terms and only put one set.
+                        // The actual fanning out is done with the ZIA dummy buffers.
+                        if !zia_term_used_already_hack.contains(
+                            &(sink_node_ref, sink_port_name, sink_port_idx, sink_extra_data)) {
+
+                            zia_term_used_already_hack.insert(
+                                (sink_node_ref, sink_port_name, sink_port_idx, sink_extra_data));
+
+                            par_graphs.borrow_mut_d().add_edge(source_node_ref as u32, source_port_name,
+                                sink_node_ref, sink_port_name);
+                        }
                     }
                 }
             }
