@@ -110,7 +110,7 @@ impl DeviceGraph {
         let bufg_l = alloc_label(par_graphs, &mut lmap, "BUFG");
         let ziabuf_l = alloc_label(par_graphs, &mut lmap, "ZIA dummy buffer");
 
-        let wire_map = RefCell::new(HashMap::new());
+        let wire_map = RefCell::new(Vec::new());
         let wire_idx = RefCell::new(0);
 
         let (device_type, _, _) = parse_part_name_string(device_name).expect("invalid device name");
@@ -185,12 +185,12 @@ impl DeviceGraph {
             |_: &str| {
                 let orig_wire_idx = {*wire_idx.borrow()};
                 *wire_idx.borrow_mut() += 1;
-                wire_map.borrow_mut().insert(orig_wire_idx, (Vec::new(), Vec::new()));
+                wire_map.borrow_mut().push((Vec::new(), Vec::new()));
                 orig_wire_idx
             },
             |node_ref: usize, wire_ref: usize, port_name: &'static str, port_idx: u32, extra_data: (u32, u32)| {
                 let mut wire_map = wire_map.borrow_mut();
-                let wire_vecs = wire_map.get_mut(&wire_ref).unwrap();
+                let wire_vecs = &mut wire_map[wire_ref];
 
                 let is_source = match port_name {
                     "O" | "OUT" | "Q" => true,
@@ -208,7 +208,7 @@ impl DeviceGraph {
 
         // Create the edges that were buffered up
         let mut zia_term_used_already_hack = HashSet::new();
-        for (_, (sources, sinks)) in wire_map.into_inner().into_iter() {
+        for (sources, sinks) in wire_map.into_inner().into_iter() {
             for &(source_node_ref, source_port_name, _, _) in &sources {
                 for &(sink_node_ref, sink_port_name, sink_port_idx, sink_extra_data) in &sinks {
                     if sink_node_ref & 0x8000000000000000 == 0 {
