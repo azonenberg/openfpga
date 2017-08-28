@@ -117,15 +117,15 @@ map<string, string> Greenpak4Delay::GetParameters() const
 		switch(m_mode)
 		{
 			case RISING_EDGE:
-				params["EDGE_DIRECTION"] = "RISING";
+				params["EDGE_DIRECTION"] = "\"RISING\"";
 				break;
 
 			case FALLING_EDGE:
-				params["EDGE_DIRECTION"] = "FALLING";
+				params["EDGE_DIRECTION"] = "\"FALLING\"";
 				break;
 
 			case BOTH_EDGE:
-				params["EDGE_DIRECTION"] = "BOTH";
+				params["EDGE_DIRECTION"] = "\"BOTH\"";
 				break;
 
 			//Empty case to shut up GCC warning
