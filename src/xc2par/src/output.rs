@@ -198,6 +198,9 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
                     panic!("mismatched graph node types");
                 }
             },
+            &DeviceGraphNode::InBuf => {
+                // TODO???
+            },
             &DeviceGraphNode::ZIADummyBuf{fb: fb_zia, row: zia_row} => {
                 if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = ngraph_node_rs.variant {
                     let in_net = ngraph_rs.nets.get(input);
@@ -209,6 +212,10 @@ pub fn produce_bitstream(par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>
                     if let &DeviceGraphNode::IOBuf{i: i_iob} = source_node_dgraph {
                         fb_bits[fb_zia as usize].zia_bits[zia_row as usize] = XC2ZIARowPiece {
                             selected: XC2ZIAInput::IBuf{ibuf: i_iob},
+                        };
+                    } else if let &DeviceGraphNode::InBuf = source_node_dgraph {
+                        fb_bits[fb_zia as usize].zia_bits[zia_row as usize] = XC2ZIARowPiece {
+                            selected: XC2ZIAInput::DedicatedInput,
                         };
                     } else {
                         unimplemented!();
