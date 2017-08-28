@@ -29,7 +29,7 @@ use self::xbpar_rs::*;
 extern crate xc2bit;
 use self::xc2bit::*;
 
-use std::ascii::AsciiExt;
+use std::cell::RefCell;
 use std::collections::HashMap;
 
 use *;
@@ -108,227 +108,117 @@ impl DeviceGraph {
         let andterm_l = alloc_label(par_graphs, &mut lmap, "ANDTERM");
         let bufg_l = alloc_label(par_graphs, &mut lmap, "BUFG");
         let ziabuf_l = alloc_label(par_graphs, &mut lmap, "ZIA dummy buffer");
-        // FIXME HACK
-        let hackhack_l = alloc_label(par_graphs, &mut lmap, "INPAD HACK HACK NOT IMPLEMENTED");
 
-        let (num_fbs, num_iobs, has_inpad, iob_to_fb_ff, zia_table) = if device_name.eq_ignore_ascii_case("XC2C32A") {
-            (2, 32, true, iob_num_to_fb_mc_num, ZIA_MAP_32)
-        } else {
-            panic!("Unsupported device name!");
-        };
+        let wire_map = RefCell::new(HashMap::new());
+        let wire_idx = RefCell::new(0);
 
-        // Create the GCK buffer nodes
-        let mut bufg_clk_par_idxs = [0u32; 3];
-        for i in 0..bufg_clk_par_idxs.len() {
-            let pool_idx = graph.nodes.insert(DeviceGraphNode::BufgClk{i: i as u32});
-            bufg_clk_par_idxs[i] = par_graphs.borrow_mut_d().add_new_node(bufg_l, pool_idx);
-        }
+        let (device_type, _, _) = parse_part_name_string(device_name).expect("invalid device name");
 
-        // Create the GTS buffer nodes
-        let mut bufg_gts_par_idxs = [0u32; 4];
-        for i in 0..bufg_gts_par_idxs.len() {
-            let pool_idx = graph.nodes.insert(DeviceGraphNode::BufgGTS{i: i as u32});
-            bufg_gts_par_idxs[i] = par_graphs.borrow_mut_d().add_new_node(bufg_l, pool_idx);
-        }
-
-        // Create the GSR buffer nodes
-        let bufg_gsr_par_idx = {
-            let pool_idx = graph.nodes.insert(DeviceGraphNode::BufgGSR);
-            par_graphs.borrow_mut_d().add_new_node(bufg_l, pool_idx)
-        };
-
-        // FIXME: The Vec(s) aren't the most efficient thing possible, but meh
-        // Function Block stuff
-        let fb_related_par_idxs = (0..num_fbs).map(|fb| {
-            // Create nodes
-
-            // 56 AND term sites
-            let mut andterm_par_idxs = [0u32; 56];
-            for andterm_i in 0..andterm_par_idxs.len() {
-                let andterm_pool_idx = graph.nodes.insert(DeviceGraphNode::AndTerm{fb: fb, i: andterm_i as u32});
-                andterm_par_idxs[andterm_i] = par_graphs.borrow_mut_d().add_new_node(andterm_l, andterm_pool_idx);
-            }
-
-            // 16 OR term sites
-            let mut orterm_par_idxs = [0u32; 16];
-            for orterm_i in 0..orterm_par_idxs.len() {
-                let orterm_pool_idx = graph.nodes.insert(DeviceGraphNode::OrTerm{fb: fb, i: orterm_i as u32});
-                orterm_par_idxs[orterm_i] = par_graphs.borrow_mut_d().add_new_node(orterm_l, orterm_pool_idx);
-            }
-
-            // 16 XOR sites
-            let mut xor_par_idxs = [0u32; 16];
-            for xor_i in 0..xor_par_idxs.len() {
-                let xor_pool_idx = graph.nodes.insert(DeviceGraphNode::Xor{fb: fb, i: xor_i as u32});
-                xor_par_idxs[xor_i] = par_graphs.borrow_mut_d().add_new_node(xor_l, xor_pool_idx);
-            }
-
-            // 16 register sites
-            let mut reg_par_idxs = [0u32; 16];
-            for reg_i in 0..reg_par_idxs.len() {
-                let reg_pool_idx = graph.nodes.insert(DeviceGraphNode::Reg{fb: fb, i: reg_i as u32});
-                reg_par_idxs[reg_i] = par_graphs.borrow_mut_d().add_new_node(reg_l, reg_pool_idx);
-            }
-
-            // 40 ZIA row outputs
-            let mut zia_par_idxs = [0u32; 40];
-            for zia_i in 0..zia_par_idxs.len() {
-                let zia_pool_idx = graph.nodes.insert(DeviceGraphNode::ZIADummyBuf{fb: fb, row: zia_i as u32});
-                zia_par_idxs[zia_i] = par_graphs.borrow_mut_d().add_new_node(ziabuf_l, zia_pool_idx);
-            }
-
-            // Create edges that exist within the FB
-
-            // ZIA to AND term
-            for zia_row_i in 0..zia_par_idxs.len() {
-                for andterm_i in 0..andterm_par_idxs.len() {
-                    par_graphs.borrow_mut_d().add_edge(zia_par_idxs[zia_row_i], "OUT",
-                        andterm_par_idxs[andterm_i], "IN");
-                }
-            }
-
-            // AND term to OR term
-            for orterm_i in 0..orterm_par_idxs.len() {
-                // one edge from each AND term
-                for andterm_i in 0..andterm_par_idxs.len() {
-                    par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[andterm_i], "OUT",
-                        orterm_par_idxs[orterm_i], "IN");
-                }
-            }
-
-            // OR term and PTC to XOR
-            for i in 0..16 {
-                par_graphs.borrow_mut_d().add_edge(orterm_par_idxs[i], "OUT", xor_par_idxs[i], "IN_ORTERM");
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_ptc(i as u32) as usize], "OUT",
-                    xor_par_idxs[i], "IN_PTC");
-            }
-
-            // XOR to register (only, not the direct input)
-            for i in 0..16 {
-                par_graphs.borrow_mut_d().add_edge(xor_par_idxs[i], "OUT", reg_par_idxs[i], "D/T");
-            }
-
-            // The other register control signals
-            for i in 0..16 {
-                // CE
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_ptc(i as u32) as usize], "OUT",
-                    reg_par_idxs[i], "CE");
-
-                // Clocks
-                // GCK
-                for j in 0..bufg_clk_par_idxs.len() {
-                    par_graphs.borrow_mut_d().add_edge(bufg_clk_par_idxs[j], "OUT", reg_par_idxs[i], "CLK");
-                }
-                // CTC
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[CTC as usize], "OUT",
-                    reg_par_idxs[i], "CLK");
-                // PTC
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_ptc(i as u32) as usize], "OUT",
-                    reg_par_idxs[i], "CLK");
-
-                // Set
-                // GSR
-                par_graphs.borrow_mut_d().add_edge(bufg_gsr_par_idx, "OUT", reg_par_idxs[i], "S");
-                // CTS
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[CTS as usize], "OUT",
-                    reg_par_idxs[i], "CLK");
-                // PTA
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_pta(i as u32) as usize], "OUT",
-                    reg_par_idxs[i], "CLK");
-
-                // Reset
-                // GSR
-                par_graphs.borrow_mut_d().add_edge(bufg_gsr_par_idx, "OUT", reg_par_idxs[i], "S");
-                // CTR
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[CTR as usize], "OUT",
-                    reg_par_idxs[i], "CLK");
-                // PTA
-                par_graphs.borrow_mut_d().add_edge(andterm_par_idxs[get_pta(i as u32) as usize], "OUT",
-                    reg_par_idxs[i], "CLK");
-            }
-
-            (andterm_par_idxs, xor_par_idxs, reg_par_idxs, zia_par_idxs)
+        // Need to create ZIA dummy buffers
+        let zia_dummy_bufs = (0..device_type.num_fbs()).map(|fb| {
+            (0..INPUTS_PER_ANDTERM).map(|zia_row_i| {
+                let pool_idx = graph.nodes.insert(DeviceGraphNode::ZIADummyBuf{fb: fb as u32, row: zia_row_i as u32});
+                par_graphs.borrow_mut_d().add_new_node(ziabuf_l, pool_idx)
+            }).collect::<Vec<_>>()
         }).collect::<Vec<_>>();
 
-        // IO buffer stuff
-        let iob_par_idxs = (0..num_iobs).map(|iob| {
-            // Create node
-            let iob_pool_idx = graph.nodes.insert(DeviceGraphNode::IOBuf{i: iob as u32});
-            let iob_par_idx = par_graphs.borrow_mut_d().add_new_node(iopad_l, iob_pool_idx);
-            par_graphs.borrow_mut_d().get_node_by_index_mut(iob_par_idx).add_alternate_label(inpad_l);
+        // Call the giant callback structure obtainer
+        get_device_structure(device_type,
+            |_: &str, node_type: &str, fb: u32, idx: u32| {
+                let (pool_idx, label) = match node_type {
+                    "BUFG" => {
+                        let pool_idx = graph.nodes.insert(DeviceGraphNode::BufgClk{i: idx as u32});
+                        (pool_idx, bufg_l)
+                    },
+                    "BUFGSR" => {
+                        let pool_idx = graph.nodes.insert(DeviceGraphNode::BufgGSR);
+                        (pool_idx, bufg_l)
+                    },
+                    "BUFGTS" => {
+                        let pool_idx = graph.nodes.insert(DeviceGraphNode::BufgGTS{i: idx as u32});
+                        (pool_idx, bufg_l)
+                    },
+                    "IOBUFE" => {
+                        let pool_idx = graph.nodes.insert(DeviceGraphNode::IOBuf{i: idx as u32});
+                        (pool_idx, iopad_l)
+                    },
+                    "IBUF" => {
+                        let pool_idx = graph.nodes.insert(DeviceGraphNode::InBuf);
+                        (pool_idx, inpad_l)
+                    },
+                    "ANDTERM" => {
+                        let pool_idx = graph.nodes.insert(DeviceGraphNode::AndTerm{fb: fb as u32, i: idx as u32});
+                        (pool_idx, andterm_l)
+                    },
+                    "ORTERM" => {
+                        let pool_idx = graph.nodes.insert(DeviceGraphNode::OrTerm{fb: fb as u32, i: idx as u32});
+                        (pool_idx, orterm_l)
+                    },
+                    "MACROCELL_XOR" => {
+                        let pool_idx = graph.nodes.insert(DeviceGraphNode::Xor{fb: fb as u32, i: idx as u32});
+                        (pool_idx, xor_l)
+                    },
+                    "REG" => {
+                        let pool_idx = graph.nodes.insert(DeviceGraphNode::Reg{fb: fb as u32, i: idx as u32});
+                        (pool_idx, reg_l)
+                    },
+                    _ => unreachable!(),
+                };
+                let par_idx = par_graphs.borrow_mut_d().add_new_node(label, pool_idx);
+                if node_type == "IOBUFE" {
+                    par_graphs.borrow_mut_d().get_node_by_index_mut(par_idx).add_alternate_label(inpad_l);
+                }
 
-            // Create the edges that don't need ZIA-related knowledge (OE, direct input, output data)
-            let (fb, ff) = iob_to_fb_ff(XC2Device::XC2C32A, iob).unwrap();
+                // FIXME: As usual, there is a hack for the ZIA
+                if node_type == "ANDTERM" {
+                    // Connect the ZIA buffers to this AND term
+                    for i in 0..INPUTS_PER_ANDTERM {
+                        par_graphs.borrow_mut_d().add_edge(zia_dummy_bufs[fb as usize][i], "OUT", par_idx, "IN");
+                        par_graphs.borrow_mut_d().add_edge(zia_dummy_bufs[fb as usize][i], "OUT", par_idx, "IN_B");
+                    }
 
-            // GTS
-            for j in 0..bufg_gts_par_idxs.len() {
-                par_graphs.borrow_mut_d().add_edge(bufg_gts_par_idxs[j], "OUT", iob_par_idx, "OE");
-            }
-            // CTE
-            par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].0[CTE as usize], "OUT",
-                iob_par_idx, "OE");
-            // PTB
-            par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].0[get_ptb(ff as u32) as usize], "OUT",
-                iob_par_idx, "OE");
+                    0x8000000000000000 | (fb as usize)
+                } else {
+                    par_idx as usize
+                }
+            },
+            |_: &str| {
+                let orig_wire_idx = {*wire_idx.borrow()};
+                *wire_idx.borrow_mut() += 1;
+                wire_map.borrow_mut().insert(orig_wire_idx, (Vec::new(), Vec::new()));
+                orig_wire_idx
+            },
+            |node_ref: usize, wire_ref: usize, port_name: &'static str, port_idx: u32, _: (u32, u32)| {
+                let mut wire_map = wire_map.borrow_mut();
+                let wire_vecs = wire_map.get_mut(&wire_ref).unwrap();
 
-            // output data
-            par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].1[ff as usize], "OUT",
-                iob_par_idx, "IN");
-            par_graphs.borrow_mut_d().add_edge(fb_related_par_idxs[fb as usize].2[ff as usize], "Q",
-                iob_par_idx, "IN");
+                let is_source = match port_name {
+                    "O" | "OUT" | "Q" => true,
+                    "I" | "E" | "IN" | "IN_PTC" | "IN_ORTERM" | "D/T" | "CE" | "CLK" | "S" | "R" => false,
+                    _ => unreachable!(),
+                };
 
-            // direct input
-            par_graphs.borrow_mut_d().add_edge(iob_par_idx, "OUT",
-                fb_related_par_idxs[fb as usize].2[ff as usize], "D/T");
+                if is_source {
+                    wire_vecs.0.push((node_ref, port_name, port_idx));
+                } else {
+                    wire_vecs.1.push((node_ref, port_name, port_idx));
+                }
+            },
+        );
 
-            iob_par_idx
-        }).collect::<Vec<_>>();
-
-        // Input-only pads (in reality only one)
-        let inpad_par_idx = if has_inpad {
-            // Create node
-            let inpad_pool_idx = graph.nodes.insert(DeviceGraphNode::InBuf);
-            Some(par_graphs.borrow_mut_d().add_new_node(hackhack_l, inpad_pool_idx))
-        } else {
-            None
-        };
-
-        // Now create all of the wonderful ZIA interconnects
-        for zia_row_i in 0..zia_table.len() {
-            let zia_row = &zia_table[zia_row_i];
-
-            // Into each FB from ZIA
-            for fb in 0..num_fbs {
-                for zia_choice in zia_row {
-                    match zia_choice {
-                        &XC2ZIAInput::Macrocell{fb, mc} => {
-                            // From the XOR gate
-                            par_graphs.borrow_mut_d().add_edge(
-                                fb_related_par_idxs[fb as usize].1[mc as usize], "OUT",
-                                fb_related_par_idxs[fb as usize].3[zia_row_i], "IN");
-                            // From the register
-                            par_graphs.borrow_mut_d().add_edge(
-                                fb_related_par_idxs[fb as usize].2[mc as usize], "Q",
-                                fb_related_par_idxs[fb as usize].3[zia_row_i], "IN");
-                        },
-                        &XC2ZIAInput::IBuf{ibuf} => {
-                            let (fb, ff) = iob_to_fb_ff(XC2Device::XC2C32A, ibuf).unwrap();
-                            // From the pad
-                            par_graphs.borrow_mut_d().add_edge(
-                                iob_par_idxs[ibuf as usize], "OUT",
-                                fb_related_par_idxs[fb as usize].3[zia_row_i], "IN");
-                            // From the register
-                            par_graphs.borrow_mut_d().add_edge(
-                                fb_related_par_idxs[fb as usize].2[ff as usize], "Q",
-                                fb_related_par_idxs[fb as usize].3[zia_row_i], "IN");
-                        },
-                        &XC2ZIAInput::DedicatedInput => {
-                            par_graphs.borrow_mut_d().add_edge(
-                                inpad_par_idx.unwrap(), "OUT",
-                                fb_related_par_idxs[fb as usize].3[zia_row_i], "IN");
-                        },
-                        // These cannot be in the choices table; they are special cases
-                        _ => unreachable!(),
+        // Create the edges that were buffered up
+        for (_, (sources, sinks)) in wire_map.into_inner().into_iter() {
+            for &(source_node_ref, source_port_name, _) in &sources {
+                for &(sink_node_ref, sink_port_name, sink_port_idx) in &sinks {
+                    if sink_node_ref & 0x8000000000000000 == 0 {
+                        // Not going into the AND terms
+                        par_graphs.borrow_mut_d().add_edge(source_node_ref as u32, source_port_name,
+                            sink_node_ref as u32, sink_port_name);
+                    } else {
+                        // AND terms are special as usual
+                        let sink_node_fb = sink_node_ref & !0x8000000000000000;
+                        par_graphs.borrow_mut_d().add_edge(source_node_ref as u32, source_port_name,
+                            zia_dummy_bufs[sink_node_fb][sink_port_idx as usize], sink_port_name);
                     }
                 }
             }

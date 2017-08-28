@@ -55,7 +55,7 @@ fn main() {
     let mut par_graphs = PARGraphPair::<_, _>::new_pair();
 
     // Device graph
-    let (dgraph_rs, lmap) = DeviceGraph::new("xc2c32a", &mut par_graphs);
+    let (dgraph_rs, lmap) = DeviceGraph::new("xc2c32a-4-vq44", &mut par_graphs);
     println!("{:?}", lmap);
     println!("{:?}", dgraph_rs);
 
