@@ -24,7 +24,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::collections::{HashMap, HashSet};
-use std::ops::DerefMut;
 
 extern crate xbpar_rs;
 use self::xbpar_rs::*;
@@ -67,7 +66,7 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for XC2PAREngine
         -> Option<&'g PARGraphNode<DeviceData, NetlistData>> {
 
         println!("get_new_placement_for_node");
-        let base_engine = self.base_engine.take().unwrap();
+        let base_engine = self.base_engine.as_mut().unwrap();
         let m_device = base_engine.get_graphs().d;
 
         let label = pivot.get_label();
@@ -76,21 +75,47 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for XC2PAREngine
         let mut has_zero_score = false;
         for i in 0..m_device.get_num_nodes_with_label(label) {
             let c = m_device.get_node_by_label_and_index(label, i);
-            let score = base_engine.compute_node_unroutable_cost(pivot, c);
+            let score = unsafe {
+                // FIXME WTF IS HAPPENING HERE?
+                let ptr = base_engine as *mut &mut BasePAREngine<DeviceData, NetlistData>;
+                (&mut *ptr).compute_node_unroutable_cost(pivot, c)
+            };
             candidates.push((c, score));
             if score == 0 {
                 has_zero_score = true;
             }
         }
 
-        let ncandidates = candidates.len() as u32;
-        if ncandidates == 0 {
-            return None;
-        }
+        if has_zero_score {
+            let mut filtered_candidates = Vec::new();
+            for i in 0..candidates.len() {
+                if candidates[i].1 == 0 {
+                    filtered_candidates.push(candidates[i].0);
+                }
+            }
 
-        // Pick one at random
-        None
-        //Some(candidates[(base_engine.random_number() % ncandidates) as usize].0)
+            // Pick one uniformly at random
+            println!("  uniformly at random!");
+            return Some(filtered_candidates[(base_engine.random_number() % filtered_candidates.len() as u32) as usize])
+        } else {
+            let mut score_total = 0;
+            for c in &candidates {
+                score_total += c.1;
+            }
+
+            // Pick one weighted by scores
+            println!("  weighted badness!");
+            let mut rand_num = (base_engine.random_number() % score_total) as isize;
+            let mut ret = Some(candidates[0].0);
+            let mut i = 0;
+            while rand_num >= 0 {
+                ret = Some(candidates[i].0);
+                rand_num -= candidates[i].1 as isize;
+                i += 1;
+            }
+
+            return ret;
+        }
     }
 
     fn find_suboptimal_placements(&'e mut self) -> Vec<&'g PARGraphNode<NetlistData, DeviceData>> {
