@@ -177,7 +177,7 @@ impl DeviceGraph {
                         par_graphs.borrow_mut_d().add_edge(zia_dummy_bufs[fb as usize][i], "OUT", par_idx, "IN_B");
                     }
 
-                    0x8000000000000000 | (fb as usize)
+                    0x8000000000000000 | ((fb as usize) << 32) | (par_idx as usize)
                 } else {
                     par_idx as usize
                 }
@@ -212,11 +212,17 @@ impl DeviceGraph {
                 for &(sink_node_ref, sink_port_name, sink_port_idx) in &sinks {
                     if sink_node_ref & 0x8000000000000000 == 0 {
                         // Not going into the AND terms
+
+                        // However, it might be coming from the AND terms
+                        let source_node_ref = if source_node_ref & 0x8000000000000000 != 0 {
+                            source_node_ref & 0xFFFFFFFF
+                        } else { source_node_ref };
+
                         par_graphs.borrow_mut_d().add_edge(source_node_ref as u32, source_port_name,
                             sink_node_ref as u32, sink_port_name);
                     } else {
                         // AND terms are special as usual
-                        let sink_node_fb = sink_node_ref & !0x8000000000000000;
+                        let sink_node_fb = (sink_node_ref & !0x8000000000000000) >> 32;
                         par_graphs.borrow_mut_d().add_edge(source_node_ref as u32, source_port_name,
                             zia_dummy_bufs[sink_node_fb][sink_port_idx as usize], sink_port_name);
                     }

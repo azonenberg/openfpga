@@ -247,6 +247,8 @@ public:
 		this->f_ComputeNodeUnroutableCost = f_ComputeNodeUnroutableCost;
 		this->f_free_edgevec = f_free_edgevec;
 		this->f_free_nodevec = f_free_nodevec;
+
+		device->DumpAsDot();
 	}
 
 	~FFIPAREngine() {}
