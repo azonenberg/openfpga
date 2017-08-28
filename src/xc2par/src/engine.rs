@@ -24,6 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::collections::{HashMap, HashSet};
+use std::ops::DerefMut;
 
 extern crate xbpar_rs;
 use self::xbpar_rs::*;
@@ -66,14 +67,20 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for XC2PAREngine
         -> Option<&'g PARGraphNode<DeviceData, NetlistData>> {
 
         println!("get_new_placement_for_node");
-        let base_engine = self.base_engine.as_mut().unwrap();
+        let base_engine = self.base_engine.take().unwrap();
         let m_device = base_engine.get_graphs().d;
 
         let label = pivot.get_label();
 
         let mut candidates = Vec::new();
+        let mut has_zero_score = false;
         for i in 0..m_device.get_num_nodes_with_label(label) {
-            candidates.push(m_device.get_node_by_label_and_index(label, i));
+            let c = m_device.get_node_by_label_and_index(label, i);
+            let score = base_engine.compute_node_unroutable_cost(pivot, c);
+            candidates.push((c, score));
+            if score == 0 {
+                has_zero_score = true;
+            }
         }
 
         let ncandidates = candidates.len() as u32;
@@ -82,7 +89,8 @@ impl<'e, 'g: 'e> PAREngineImpl<'e, 'g, DeviceData, NetlistData> for XC2PAREngine
         }
 
         // Pick one at random
-        Some(candidates[(base_engine.random_number() % ncandidates) as usize])
+        None
+        //Some(candidates[(base_engine.random_number() % ncandidates) as usize].0)
     }
 
     fn find_suboptimal_placements(&'e mut self) -> Vec<&'g PARGraphNode<NetlistData, DeviceData>> {
