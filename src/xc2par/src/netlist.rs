@@ -230,10 +230,6 @@ impl NetlistGraph {
         // Now we can actually process objects
         let mut nodes = ObjPool::new();
 
-        // This maps from a Yosys cell/port name to an internal node number
-        // FIXME: Use of owned strings is inefficient
-        let mut cell_map: HashMap<String, ObjPoolIndex<NetlistGraphNode>> = HashMap::new();
-
         let bitval_to_net = |bitval| {
             match bitval {
                 yosys_netlist_json::BitVal::N(n) => Ok(*net_map.get(&n).unwrap()),
@@ -247,10 +243,6 @@ impl NetlistGraph {
         // and finally process cells
         for &cell_name in &cell_names {
             let cell_obj = &top_module.cells[cell_name];
-
-            if cell_map.get(cell_name).is_some() {
-                return Err("duplicate cell/port name");
-            }
 
             // Helper to retrieve a parameter
             let numeric_param = |name: &str| {
@@ -307,33 +299,25 @@ impl NetlistGraph {
             if cell_obj.cell_type == "IOBUFE" {
                 // FIXME: Check that IO goes to a module port
 
-                let node_variant = NetlistGraphNodeVariant::IOBuf {
-                    input: single_optional_connection("I")?,
-                    oe: single_optional_connection("E")?,
-                    output: single_optional_connection("O")?,
-                };
-
-                let node_idx = nodes.insert(NetlistGraphNode {
+                nodes.insert(NetlistGraphNode {
                     name: cell_name.to_owned(),
-                    variant: node_variant,
+                    variant: NetlistGraphNodeVariant::IOBuf {
+                        input: single_optional_connection("I")?,
+                        oe: single_optional_connection("E")?,
+                        output: single_optional_connection("O")?,
+                    },
                     par_idx: None,
                 });
-
-                cell_map.insert(cell_name.to_owned(), node_idx);
             } else if cell_obj.cell_type == "IBUF" {
                 // FIXME: Check that IO goes to a module port
 
-                let node_variant = NetlistGraphNodeVariant::InBuf {
-                    output: single_required_connection("O")?,
-                };
-
-                let node_idx = nodes.insert(NetlistGraphNode {
+                nodes.insert(NetlistGraphNode {
                     name: cell_name.to_owned(),
-                    variant: node_variant,
+                    variant: NetlistGraphNodeVariant::InBuf {
+                        output: single_required_connection("O")?,
+                    },
                     par_idx: None,
                 });
-
-                cell_map.insert(cell_name.to_owned(), node_idx);
             } else if cell_obj.cell_type == "ANDTERM" {
                 let num_true_inputs = numeric_param("TRUE_INP")?;
                 let num_comp_inputs = numeric_param("COMP_INP")?;
@@ -345,8 +329,6 @@ impl NetlistGraph {
                     return Err("ANDTERM cell has a mismatched number of inputs");
                 }
 
-                let output_y_net_idx = single_required_connection("OUT")?;
-
                 // Create dummy buffer nodes for all inputs
                 // TODO: What about redundant ones?
                 let inputs_true = inputs_true.into_iter().map(|before_ziabuf_net| {
@@ -356,7 +338,7 @@ impl NetlistGraph {
                         sinks: Vec::new(),
                     });
 
-                    let node_idx_ziabuf = nodes.insert(NetlistGraphNode {
+                    nodes.insert(NetlistGraphNode {
                         name: format!("__ziabuf_{}", cell_name),
                         variant: NetlistGraphNodeVariant::ZIADummyBuf {
                             input: before_ziabuf_net,
@@ -364,7 +346,6 @@ impl NetlistGraph {
                         },
                         par_idx: None,
                     });
-                    cell_map.insert(format!("__ziabuf_{}", cell_name), node_idx_ziabuf);
 
                     after_ziabuf_net
                 }).collect::<Vec<_>>();
@@ -375,7 +356,7 @@ impl NetlistGraph {
                         sinks: Vec::new(),
                     });
 
-                    let node_idx_ziabuf = nodes.insert(NetlistGraphNode {
+                    nodes.insert(NetlistGraphNode {
                         name: format!("__ziabuf_{}", cell_name),
                         variant: NetlistGraphNodeVariant::ZIADummyBuf {
                             input: before_ziabuf_net,
@@ -383,22 +364,19 @@ impl NetlistGraph {
                         },
                         par_idx: None,
                     });
-                    cell_map.insert(format!("__ziabuf_{}", cell_name), node_idx_ziabuf);
 
                     after_ziabuf_net
                 }).collect::<Vec<_>>();
 
-                let node_idx_and = nodes.insert(NetlistGraphNode {
+                nodes.insert(NetlistGraphNode {
                     name: cell_name.to_owned(),
                     variant: NetlistGraphNodeVariant::AndTerm {
                         inputs_true,
                         inputs_comp,
-                        output: output_y_net_idx,
+                        output: single_required_connection("OUT")?,
                     },
                     par_idx: None,
                 });
-                // FIXME: Copypasta
-                cell_map.insert(cell_name.to_owned(), node_idx_and);
             } else if cell_obj.cell_type == "ORTERM" {
                 let num_inputs = numeric_param("WIDTH")?;
 
@@ -408,20 +386,16 @@ impl NetlistGraph {
                     return Err("ORTERM cell has a mismatched number of inputs");
                 }
 
-                let output_y_net_idx = single_required_connection("OUT")?;
-
-                let node_idx_and = nodes.insert(NetlistGraphNode {
+                nodes.insert(NetlistGraphNode {
                     name: cell_name.to_owned(),
                     variant: NetlistGraphNodeVariant::OrTerm {
                         inputs,
-                        output: output_y_net_idx,
+                        output: single_required_connection("OUT")?,
                     },
                     par_idx: None,
                 });
-                // FIXME: Copypasta
-                cell_map.insert(cell_name.to_owned(), node_idx_and);
             } else if cell_obj.cell_type == "MACROCELL_XOR" {
-                let node_idx_xor = nodes.insert(NetlistGraphNode {
+                nodes.insert(NetlistGraphNode {
                     name: cell_name.to_owned(),
                     variant: NetlistGraphNodeVariant::Xor {
                         andterm_input: single_optional_connection("IN_PTC")?,
@@ -431,14 +405,23 @@ impl NetlistGraph {
                     },
                     par_idx: None,
                 });
-                // FIXME: Copypasta
-                cell_map.insert(cell_name.to_owned(), node_idx_xor);
             } else {
                 return Err("unsupported cell type");
             }
         }
 
         // Now that we are done processing, hook up sources/sinks in the edges
+
+        // This helper is used to check if a net already has a source and raise an error if it does
+        let set_net_source = |nets: &mut ObjPool<NetlistGraphNet>, output, x| {
+            let output_net = nets.get_mut(output);
+            if output_net.source.is_some() {
+                return Err("multiple drivers for net");
+            }
+            output_net.source = Some(x);
+            Ok(())
+        };
+
         for node_idx in nodes.iter() {
             let node = nodes.get(node_idx);
             match node.variant {
@@ -449,21 +432,13 @@ impl NetlistGraph {
                     for &input in inputs_comp {
                         nets.get_mut(input).sinks.push((node_idx, "IN"));
                     }
-                    let output_net = nets.get_mut(output);
-                    if output_net.source.is_some() {
-                        return Err("multiple drivers for net");
-                    }
-                    output_net.source = Some((node_idx, "OUT"));
+                    set_net_source(&mut nets, output, (node_idx, "OUT"))?;
                 },
                 NetlistGraphNodeVariant::OrTerm{ref inputs, output} => {
                     for &input in inputs {
                         nets.get_mut(input).sinks.push((node_idx, "IN"));
                     }
-                    let output_net = nets.get_mut(output);
-                    if output_net.source.is_some() {
-                        return Err("multiple drivers for net");
-                    }
-                    output_net.source = Some((node_idx, "OUT"));
+                    set_net_source(&mut nets, output, (node_idx, "OUT"))?;
                 },
                 NetlistGraphNodeVariant::Xor{orterm_input, andterm_input, output, ..} => {
                     if orterm_input.is_some() {
@@ -472,11 +447,7 @@ impl NetlistGraph {
                     if andterm_input.is_some() {
                         nets.get_mut(andterm_input.unwrap()).sinks.push((node_idx, "IN_PTC"));
                     }
-                    let output_net = nets.get_mut(output);
-                    if output_net.source.is_some() {
-                        return Err("multiple drivers for net");
-                    }
-                    output_net.source = Some((node_idx, "OUT"));
+                    set_net_source(&mut nets, output, (node_idx, "OUT"))?;
                 },
                 NetlistGraphNodeVariant::Reg{set_input, reset_input, ce_input, dt_input, clk_input, output, ..} => {
                     if set_input.is_some() {
@@ -490,21 +461,13 @@ impl NetlistGraph {
                     }
                     nets.get_mut(dt_input).sinks.push((node_idx, "D/T"));
                     nets.get_mut(clk_input).sinks.push((node_idx, "CLK"));
-                    let output_net = nets.get_mut(output);
-                    if output_net.source.is_some() {
-                        return Err("multiple drivers for net");
-                    }
-                    output_net.source = Some((node_idx, "Q"));
+                    set_net_source(&mut nets, output, (node_idx, "Q"))?;
                 },
                 NetlistGraphNodeVariant::BufgClk{input, output, ..} |
                 NetlistGraphNodeVariant::BufgGTS{input, output, ..} |
                 NetlistGraphNodeVariant::BufgGSR{input, output, ..} => {
                     nets.get_mut(input).sinks.push((node_idx, "I"));
-                    let output_net = nets.get_mut(output);
-                    if output_net.source.is_some() {
-                        return Err("multiple drivers for net");
-                    }
-                    output_net.source = Some((node_idx, "O"));
+                    set_net_source(&mut nets, output, (node_idx, "O"))?;
                 },
                 NetlistGraphNodeVariant::IOBuf{input, oe, output} => {
                     if input.is_some() {
@@ -514,27 +477,15 @@ impl NetlistGraph {
                         nets.get_mut(oe.unwrap()).sinks.push((node_idx, "E"));
                     }
                     if output.is_some() {
-                        let output_net = nets.get_mut(output.unwrap());
-                        if output_net.source.is_some() {
-                            return Err("multiple drivers for net");
-                        }
-                        output_net.source = Some((node_idx, "O"));
+                        set_net_source(&mut nets, output.unwrap(), (node_idx, "O"))?;
                     }
                 },
                 NetlistGraphNodeVariant::InBuf{output} => {
-                    let output_net = nets.get_mut(output);
-                    if output_net.source.is_some() {
-                        return Err("multiple drivers for net");
-                    }
-                    output_net.source = Some((node_idx, "O"));
+                    set_net_source(&mut nets, output, (node_idx, "O"))?;
                 },
                 NetlistGraphNodeVariant::ZIADummyBuf{input, output} => {
                     nets.get_mut(input).sinks.push((node_idx, "IN"));
-                    let output_net = nets.get_mut(output);
-                    if output_net.source.is_some() {
-                        return Err("multiple drivers for net");
-                    }
-                    output_net.source = Some((node_idx, "OUT"));
+                    set_net_source(&mut nets, output, (node_idx, "OUT"))?;
                 },
             }
         }
@@ -552,10 +503,10 @@ impl NetlistGraph {
         }
 
         Ok(NetlistGraph {
-            nodes: nodes,
-            nets: nets,
-            vdd_net: vdd_net,
-            vss_net: vss_net,
+            nodes,
+            nets,
+            vdd_net,
+            vss_net,
         })
     }
 
