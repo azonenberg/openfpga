@@ -132,7 +132,7 @@ pub struct Cell {
     pub attributes: HashMap<String, AttributeVal>,
     /// The direction of the ports on this cell
     #[serde(default)]
-    pub port_directions: HashMap<String, String>,
+    pub port_directions: HashMap<String, PortDirection>,
     /// Bit value(s) representing the wire(s) connected to the inputs/outputs of this cell
     pub connections: HashMap<String, Vec<BitVal>>,
 }
