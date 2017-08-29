@@ -19,66 +19,43 @@
 `default_nettype none
 
 /**
-	OUTPUTS:
-		TODO
-
-	TEST PROCEDURE:
-		TODO
+	A counter that includes redundant flipflops (the high 4 FFs never go high)
  */
-module Counter(rst, dout);
+module RedundantFF(clear, underflow);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 
-	(* LOC = "P20" *)
-	output wire dout;
+	(* LOC = "P19" *)
+	input wire clear;
 
-	(* LOC = "P18" *)
-	input wire rst;
+	(* LOC = "P20" *)
+	output wire underflow;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Oscillators
+	// Clock source
 
-	//The 25 kHz RC oscillator
-	wire clk_6khz_cnt;			//dedicated output to hard IP only
-	wire clk_6khz;				//general fabric output
-	GP_RCOSC #(
+	wire clk_108hz;
+	GP_LFOSC #(
 		.PWRDN_EN(0),
 		.AUTO_PWRDN(0),
-		.OSC_FREQ("25k"),
-		.HARDIP_DIV(4),
-		.FABRIC_DIV(1)
-	) rcosc (
+		.OUT_DIV(16)
+	) lfosc (
 		.PWRDN(1'b0),
-		.CLKOUT_HARDIP(clk_6khz_cnt),
-		.CLKOUT_FABRIC(clk_6khz)
+		.CLKOUT(clk_108hz)
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// A counter
+	// The counter
 
-	localparam COUNT_MAX = 31;
+	reg[7:0] count = 15;
 
-	//Fabric post-divider
-	reg[7:0] count = COUNT_MAX;
-	always @(posedge clk_6khz_cnt, posedge rst) begin
-
-		//level triggered reset
-		if(rst)
-			count			<= 0;
-
-		//counter
-		else begin
-
-			if(count == 0)
-				count		<= COUNT_MAX;
-			else
-				count		<= count - 1'd1;
-
-		end
-
+	always @(posedge clk_108hz) begin
+		count <= count - 1'h1;
+		if(count == 0)
+			count <= 15;
 	end
 
-	assign dout = (count == 0);
+	assign underflow = (count == 0);
 
 endmodule
