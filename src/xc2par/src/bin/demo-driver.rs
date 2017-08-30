@@ -29,6 +29,9 @@ use std::io::Read;
 extern crate xbpar_rs;
 use xbpar_rs::*;
 
+extern crate xc2bit;
+use xc2bit::*;
+
 extern crate xc2par;
 use xc2par::*;
 
@@ -54,8 +57,11 @@ fn main() {
     // The graphs for the PAR engine
     let mut par_graphs = PARGraphPair::<_, _>::new_pair();
 
+    // TODO
+    let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
+
     // Device graph
-    let (dgraph_rs, lmap) = DeviceGraph::new("xc2c32a-4-vq44", &mut par_graphs);
+    let (dgraph_rs, lmap) = DeviceGraph::new(device_type, &mut par_graphs);
     println!("{:?}", lmap);
     println!("{:?}", dgraph_rs);
 
@@ -74,7 +80,7 @@ fn main() {
     }
 
     // Get a bitstream result
-    let bitstream = produce_bitstream(&par_graphs, &dgraph_rs, &ngraph_rs);
+    let bitstream = produce_bitstream(device_type, &par_graphs, &dgraph_rs, &ngraph_rs);
     println!("********************************************************************************");
     bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
 }

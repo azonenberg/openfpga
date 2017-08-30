@@ -90,7 +90,7 @@ fn alloc_label(par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ObjP
 impl DeviceGraph {
     // Somewhat strange API - mutates an already created PAR engine graph but returns a new native graph as well as
     // the label map.
-    pub fn new(device_name: &str,
+    pub fn new(device_type: XC2Device,
         par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ObjPoolIndex<NetlistGraphNode>>)
         -> (DeviceGraph, HashMap<u32, &'static str>) {
 
@@ -114,8 +114,6 @@ impl DeviceGraph {
 
         let wire_map = RefCell::new(Vec::new());
         let wire_idx = RefCell::new(0);
-
-        let (device_type, _, _) = parse_part_name_string(device_name).expect("invalid device name");
 
         // Need to create ZIA dummy buffers
         let zia_dummy_bufs = (0..device_type.num_fbs()).map(|fb| {
