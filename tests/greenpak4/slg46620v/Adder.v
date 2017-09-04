@@ -26,19 +26,19 @@ module Adder(din_a, din_b, dout, xorin, xorout);
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 
-	(* LOC = "P20 P19 P18 P17" *)
+	(* LOC = "P20 P2 P7 P14" *)
 	input wire[3:0] din_a;
 
-	(* LOC = "P16 P15 P14 P13" *)
+	(* LOC = "P3 P19 P6 P15" *)
 	input wire[3:0] din_b;
 
-	(* LOC = "P3 P4 P5 P6" *)
+	(* LOC = "P9 P4 P5 P12" *)
 	output wire[3:0] dout;
 
-	(* LOC = "P7 P8" *)
+	(* LOC = "P13 P8" *)
 	input wire[1:0] xorin;
 
-	(* LOC = "P9" *)
+	(* LOC = "P10" *)
 	output wire xorout;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
