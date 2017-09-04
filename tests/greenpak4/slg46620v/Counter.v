@@ -25,13 +25,16 @@
 	TEST PROCEDURE:
 		TODO
  */
-module Counter(rst, dout);
+module Counter(rst, dout, dout_fabric);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
 
 	(* LOC = "P20" *)
 	output wire dout;
+
+	(* LOC = "P19" *)
+	output wire dout_fabric;
 
 	(* LOC = "P18" *)
 	input wire rst;
@@ -55,11 +58,10 @@ module Counter(rst, dout);
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// A counter
+	// A hard IP counter
 
 	localparam COUNT_MAX = 31;
 
-	//Fabric post-divider
 	reg[7:0] count = COUNT_MAX;
 	always @(posedge clk_6khz_cnt, posedge rst) begin
 
@@ -80,5 +82,30 @@ module Counter(rst, dout);
 	end
 
 	assign dout = (count == 0);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// A fabric counter
+
+	(* COUNT_EXTRACT = "NO" *)
+	reg[5:0] count_fabric = COUNT_MAX;					//TODO: run count_extract so we can do 7:0 and optimize
+	always @(posedge clk_6khz, posedge rst) begin
+
+		//level triggered reset
+		if(rst)
+			count_fabric		<= 0;
+
+		//counter
+		else begin
+
+			if(count_fabric == 0)
+				count_fabric	<= COUNT_MAX;
+			else
+				count_fabric	<= count_fabric - 1'd1;
+
+		end
+
+	end
+
+	assign dout_fabric = (count_fabric == 0);
 
 endmodule
