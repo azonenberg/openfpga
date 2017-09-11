@@ -21,7 +21,7 @@
 /**
 	TODO
  */
-module Adder(din_a, din_b, dout, xorin, xorout);
+module Adder(din_a, din_b, din_c, dout/*, xorin, xorout*/);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// I/O declarations
@@ -32,19 +32,24 @@ module Adder(din_a, din_b, dout, xorin, xorout);
 	(* LOC = "P3 P19 P6 P15" *)
 	input wire[3:0] din_b;
 
+	(* LOC = "P13 P8 P10 P16" *)
+	input wire[3:0] din_c;
+
 	(* LOC = "P9 P4 P5 P12" *)
 	output wire[3:0] dout;
 
+	/*
 	(* LOC = "P13 P8" *)
 	input wire[1:0] xorin;
 
 	(* LOC = "P10" *)
 	output wire xorout;
+	*/
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// The adder
 
-	assign dout = din_a + din_b;
-	assign xorout = ^xorin;
+	assign dout = din_a + din_b/* + din_c*/;
+	//assign xorout = ^xorin;
 
 endmodule
