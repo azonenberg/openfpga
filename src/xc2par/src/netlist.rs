@@ -309,128 +309,212 @@ impl NetlistGraph {
                 return Ok(result);
             };
 
-            if cell_obj.cell_type == "IOBUFE" {
-                // FIXME: Check that IO goes to a module port
-
-                nodes.insert(NetlistGraphNode {
-                    name: cell_name.to_owned(),
-                    variant: NetlistGraphNodeVariant::IOBuf {
-                        input: single_optional_connection("I")?,
-                        oe: single_optional_connection("E")?,
-                        output: single_optional_connection("O")?,
-                        // TODO
-                        schmitt_trigger: false,
-                        termination_enabled: false,
-                        slew_is_fast: false,
-                        uses_data_gate: false,
-                        is_vref: false,
-                    },
-                    par_idx: None,
-                });
-            } else if cell_obj.cell_type == "IBUF" {
-                // FIXME: Check that IO goes to a module port
-
-                nodes.insert(NetlistGraphNode {
-                    name: cell_name.to_owned(),
-                    variant: NetlistGraphNodeVariant::InBuf {
-                        output: single_required_connection("O")?,
-                        // TODO
-                        schmitt_trigger: false,
-                        termination_enabled: false,
-                        uses_data_gate: false,
-                        is_vref: false,
-                    },
-                    par_idx: None,
-                });
-            } else if cell_obj.cell_type == "ANDTERM" {
-                let num_true_inputs = numeric_param("TRUE_INP")?;
-                let num_comp_inputs = numeric_param("COMP_INP")?;
-
-                let inputs_true = multiple_required_connection("IN")?;
-                let inputs_comp = multiple_required_connection("IN_B")?;
-
-                if num_true_inputs != inputs_true.len() || num_comp_inputs != inputs_comp.len() {
-                    return Err("ANDTERM cell has a mismatched number of inputs");
-                }
-
-                // Create dummy buffer nodes for all inputs
-                // TODO: What about redundant ones?
-                let inputs_true = inputs_true.into_iter().map(|before_ziabuf_net| {
-                    let after_ziabuf_net = nets.insert(NetlistGraphNet {
-                        name: None,
-                        source: None,
-                        sinks: Vec::new(),
-                    });
+            match cell_obj.cell_type.as_ref() {
+                "IOBUFE"  => {
+                    // FIXME: Check that IO goes to a module port
 
                     nodes.insert(NetlistGraphNode {
-                        name: format!("__ziabuf_{}", cell_name),
-                        variant: NetlistGraphNodeVariant::ZIADummyBuf {
-                            input: before_ziabuf_net,
-                            output: after_ziabuf_net,
+                        name: cell_name.to_owned(),
+                        variant: NetlistGraphNodeVariant::IOBuf {
+                            input: single_optional_connection("I")?,
+                            oe: single_optional_connection("E")?,
+                            output: single_optional_connection("O")?,
+                            // TODO
+                            schmitt_trigger: false,
+                            termination_enabled: false,
+                            slew_is_fast: false,
+                            uses_data_gate: false,
+                            is_vref: false,
                         },
                         par_idx: None,
                     });
-
-                    after_ziabuf_net
-                }).collect::<Vec<_>>();
-                let inputs_comp = inputs_comp.into_iter().map(|before_ziabuf_net| {
-                    let after_ziabuf_net = nets.insert(NetlistGraphNet {
-                        name: None,
-                        source: None,
-                        sinks: Vec::new(),
-                    });
+                },
+                "IBUF" => {
+                    // FIXME: Check that IO goes to a module port
 
                     nodes.insert(NetlistGraphNode {
-                        name: format!("__ziabuf_{}", cell_name),
-                        variant: NetlistGraphNodeVariant::ZIADummyBuf {
-                            input: before_ziabuf_net,
-                            output: after_ziabuf_net,
+                        name: cell_name.to_owned(),
+                        variant: NetlistGraphNodeVariant::InBuf {
+                            output: single_required_connection("O")?,
+                            // TODO
+                            schmitt_trigger: false,
+                            termination_enabled: false,
+                            uses_data_gate: false,
+                            is_vref: false,
                         },
                         par_idx: None,
                     });
+                },
+                "ANDTERM" => {
+                    let num_true_inputs = numeric_param("TRUE_INP")?;
+                    let num_comp_inputs = numeric_param("COMP_INP")?;
 
-                    after_ziabuf_net
-                }).collect::<Vec<_>>();
+                    let inputs_true = multiple_required_connection("IN")?;
+                    let inputs_comp = multiple_required_connection("IN_B")?;
 
-                nodes.insert(NetlistGraphNode {
-                    name: cell_name.to_owned(),
-                    variant: NetlistGraphNodeVariant::AndTerm {
-                        inputs_true,
-                        inputs_comp,
-                        output: single_required_connection("OUT")?,
-                    },
-                    par_idx: None,
-                });
-            } else if cell_obj.cell_type == "ORTERM" {
-                let num_inputs = numeric_param("WIDTH")?;
+                    if num_true_inputs != inputs_true.len() || num_comp_inputs != inputs_comp.len() {
+                        return Err("ANDTERM cell has a mismatched number of inputs");
+                    }
 
-                let inputs = multiple_required_connection("IN")?;
+                    // Create dummy buffer nodes for all inputs
+                    // TODO: What about redundant ones?
+                    let inputs_true = inputs_true.into_iter().map(|before_ziabuf_net| {
+                        let after_ziabuf_net = nets.insert(NetlistGraphNet {
+                            name: None,
+                            source: None,
+                            sinks: Vec::new(),
+                        });
 
-                if num_inputs != inputs.len() {
-                    return Err("ORTERM cell has a mismatched number of inputs");
+                        nodes.insert(NetlistGraphNode {
+                            name: format!("__ziabuf_{}", cell_name),
+                            variant: NetlistGraphNodeVariant::ZIADummyBuf {
+                                input: before_ziabuf_net,
+                                output: after_ziabuf_net,
+                            },
+                            par_idx: None,
+                        });
+
+                        after_ziabuf_net
+                    }).collect::<Vec<_>>();
+                    let inputs_comp = inputs_comp.into_iter().map(|before_ziabuf_net| {
+                        let after_ziabuf_net = nets.insert(NetlistGraphNet {
+                            name: None,
+                            source: None,
+                            sinks: Vec::new(),
+                        });
+
+                        nodes.insert(NetlistGraphNode {
+                            name: format!("__ziabuf_{}", cell_name),
+                            variant: NetlistGraphNodeVariant::ZIADummyBuf {
+                                input: before_ziabuf_net,
+                                output: after_ziabuf_net,
+                            },
+                            par_idx: None,
+                        });
+
+                        after_ziabuf_net
+                    }).collect::<Vec<_>>();
+
+                    nodes.insert(NetlistGraphNode {
+                        name: cell_name.to_owned(),
+                        variant: NetlistGraphNodeVariant::AndTerm {
+                            inputs_true,
+                            inputs_comp,
+                            output: single_required_connection("OUT")?,
+                        },
+                        par_idx: None,
+                    });
+                },
+                "ORTERM" => {
+                    let num_inputs = numeric_param("WIDTH")?;
+
+                    let inputs = multiple_required_connection("IN")?;
+
+                    if num_inputs != inputs.len() {
+                        return Err("ORTERM cell has a mismatched number of inputs");
+                    }
+
+                    nodes.insert(NetlistGraphNode {
+                        name: cell_name.to_owned(),
+                        variant: NetlistGraphNodeVariant::OrTerm {
+                            inputs,
+                            output: single_required_connection("OUT")?,
+                        },
+                        par_idx: None,
+                    });
+                },
+                "MACROCELL_XOR" => {
+                    nodes.insert(NetlistGraphNode {
+                        name: cell_name.to_owned(),
+                        variant: NetlistGraphNodeVariant::Xor {
+                            andterm_input: single_optional_connection("IN_PTC")?,
+                            orterm_input: single_optional_connection("IN_ORTERM")?,
+                            invert_out: numeric_param("INVERT_OUT")? != 0,
+                            output: single_required_connection("OUT")?,
+                        },
+                        par_idx: None,
+                    });
+                },
+                "BUFG" => {
+                    nodes.insert(NetlistGraphNode {
+                        name: cell_name.to_owned(),
+                        variant: NetlistGraphNodeVariant::BufgClk {
+                            input: single_required_connection("I")?,
+                            output: single_required_connection("O")?,
+                        },
+                        par_idx: None,
+                    });
+                },
+                "BUFGTS" => {
+                    nodes.insert(NetlistGraphNode {
+                        name: cell_name.to_owned(),
+                        variant: NetlistGraphNodeVariant::BufgGTS {
+                            input: single_required_connection("I")?,
+                            output: single_required_connection("O")?,
+                            invert: numeric_param("INVERT")? != 0,
+                        },
+                        par_idx: None,
+                    });
+                },
+                "BUFGSR" => {
+                    nodes.insert(NetlistGraphNode {
+                        name: cell_name.to_owned(),
+                        variant: NetlistGraphNodeVariant::BufgGSR {
+                            input: single_required_connection("I")?,
+                            output: single_required_connection("O")?,
+                            invert: numeric_param("INVERT")? != 0,
+                        },
+                        par_idx: None,
+                    });
+                },
+                "FDCP" | "FDCP_N" | "FDDCP" |
+                "LDCP" | "LDCP_N" |
+                "FTCP" | "FTCP_N" | "FTDCP" |
+                "FDCPE" | "FDCPE_N" | "FDDCPE" => {
+                    let mode = match cell_obj.cell_type.as_ref() {
+                        "FDCP" | "FDCP_N" | "FDDCP"     => XC2MCRegMode::DFF,
+                        "LDCP" | "LDCP_N"               => XC2MCRegMode::LATCH,
+                        "FTCP" | "FTCP_N" | "FTDCP"     => XC2MCRegMode::TFF,
+                        "FDCPE" | "FDCPE_N" | "FDDCPE"  => XC2MCRegMode::DFFCE,
+                        _ => unreachable!()
+                    };
+
+                    let clkinv = match cell_obj.cell_type.as_ref() {
+                        "FDCP_N" | "LDCP_N" | "FTCP_N" | "FDCPE_N" => true,
+                        _ => false,
+                    };
+
+                    let clkddr = match cell_obj.cell_type.as_ref() {
+                        "FDDCP" | "FTDCP" | "FDDCPE" => true,
+                        _ => false,
+                    };
+
+                    let mut ce_input = None;
+                    if mode == XC2MCRegMode::DFFCE {
+                        ce_input = Some(single_required_connection("CE")?);
+                    }
+
+                    let dt_name = if mode == XC2MCRegMode::TFF {"T"} else {"D"};
+                    let clk_name = if mode == XC2MCRegMode::LATCH {"G"} else {"C"};
+
+                    nodes.insert(NetlistGraphNode {
+                        name: cell_name.to_owned(),
+                        variant: NetlistGraphNodeVariant::Reg {
+                            mode,
+                            clkinv,
+                            clkddr,
+                            init_state: numeric_param("INIT")? != 0,
+                            set_input: single_optional_connection("PRE")?,
+                            reset_input: single_optional_connection("CLR")?,
+                            ce_input,
+                            dt_input: single_required_connection(dt_name)?,
+                            clk_input: single_required_connection(clk_name)?,
+                            output: single_required_connection("Q")?,
+                        },
+                        par_idx: None,
+                    });
                 }
-
-                nodes.insert(NetlistGraphNode {
-                    name: cell_name.to_owned(),
-                    variant: NetlistGraphNodeVariant::OrTerm {
-                        inputs,
-                        output: single_required_connection("OUT")?,
-                    },
-                    par_idx: None,
-                });
-            } else if cell_obj.cell_type == "MACROCELL_XOR" {
-                nodes.insert(NetlistGraphNode {
-                    name: cell_name.to_owned(),
-                    variant: NetlistGraphNodeVariant::Xor {
-                        andterm_input: single_optional_connection("IN_PTC")?,
-                        orterm_input: single_optional_connection("IN_ORTERM")?,
-                        invert_out: numeric_param("INVERT_OUT")? != 0,
-                        output: single_required_connection("OUT")?,
-                    },
-                    par_idx: None,
-                });
-            } else {
-                return Err("unsupported cell type");
+                _ => return Err("unsupported cell type")
             }
         }
 
