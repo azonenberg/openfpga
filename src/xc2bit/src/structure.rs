@@ -141,7 +141,7 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
     mut node_callback: N, mut wire_callback: W, mut connection_callback: C)
     where N: FnMut(&str, &str, u32, u32) -> usize,
           W: FnMut(&str) -> usize,
-          C: FnMut(usize, usize, &str, u32, (u32, u32)) -> () {
+          C: FnMut(usize, usize, &'static str, u32, (u32, u32)) -> () {
 
     // Global buffers and the output wires
     // Cannot create the input wires until after IO stuff is created
