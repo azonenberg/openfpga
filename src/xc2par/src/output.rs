@@ -266,12 +266,48 @@ pub fn produce_bitstream(device_type: XC2Device,
                     fb_bits[fb_reg as usize].mcs[i_reg as usize].is_ddr = clkddr;
                     fb_bits[fb_reg as usize].mcs[i_reg as usize].init_state = init_state;
 
+                    // What is feeding the set?
                     if set_input.is_some() && set_input.unwrap() != ngraph_rs.vss_net {
-                        unimplemented!();
+                        let s_input_dg = get_source_dgraph(set_input.unwrap());
+                        let s_src_mux = if let &DeviceGraphNode::BufgGSR = s_input_dg {
+                            XC2MCRegSetSrc::GSR
+                        } else if let &DeviceGraphNode::AndTerm{fb: fb_and, i: i_and} = s_input_dg {
+                            if fb_and != fb_reg {
+                                panic!("mismatched FBs");
+                            }
+                            if i_and == CTS {
+                                XC2MCRegSetSrc::CTS
+                            } else if i_and == get_pta(i_reg) {
+                                XC2MCRegSetSrc::PTA
+                            } else {
+                                panic!("mismatched FFs");
+                            }
+                        } else {
+                            panic!("mismatched graph node types");
+                        };
+                        fb_bits[fb_reg as usize].mcs[i_reg as usize].s_src = s_src_mux;
                     }
 
+                    // What is feeding the reset?
                     if reset_input.is_some() && reset_input.unwrap() != ngraph_rs.vss_net {
-                        unimplemented!();
+                        let r_input_dg = get_source_dgraph(reset_input.unwrap());
+                        let r_src_mux = if let &DeviceGraphNode::BufgGSR = r_input_dg {
+                            XC2MCRegResetSrc::GSR
+                        } else if let &DeviceGraphNode::AndTerm{fb: fb_and, i: i_and} = r_input_dg {
+                            if fb_and != fb_reg {
+                                panic!("mismatched FBs");
+                            }
+                            if i_and == CTR {
+                                XC2MCRegResetSrc::CTR
+                            } else if i_and == get_pta(i_reg) {
+                                XC2MCRegResetSrc::PTA
+                            } else {
+                                panic!("mismatched FFs");
+                            }
+                        } else {
+                            panic!("mismatched graph node types");
+                        };
+                        fb_bits[fb_reg as usize].mcs[i_reg as usize].r_src = r_src_mux;
                     }
 
                     // What is feeding the clock?
