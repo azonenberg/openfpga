@@ -194,7 +194,7 @@ pub fn produce_bitstream(device_type: XC2Device,
                     }
 
                     if oe.is_some() {
-                        panic!("not implemented");
+                        unimplemented!();
                     }
                 } else if let NetlistGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, ..} = ngraph_node_rs.variant {
                     iob_bits[i_iob as usize].schmitt_trigger = schmitt_trigger;
@@ -226,8 +226,18 @@ pub fn produce_bitstream(device_type: XC2Device,
                         fb_bits[fb_zia as usize].zia_bits[zia_row as usize] = XC2ZIARowPiece {
                             selected: XC2ZIAInput::DedicatedInput,
                         };
+                    } else if let &DeviceGraphNode::Xor{fb: fb_xor, i: i_xor} = source_node_dgraph {
+                        fb_bits[fb_xor as usize].mcs[i_xor as usize].fb_mode = XC2MCFeedbackMode::COMB;
+                        fb_bits[fb_zia as usize].zia_bits[zia_row as usize] = XC2ZIARowPiece {
+                            selected: XC2ZIAInput::Macrocell{fb: fb_xor, mc: i_xor},
+                        };
+                    } else if let &DeviceGraphNode::Reg{fb: fb_reg, i: i_reg} = source_node_dgraph {
+                        fb_bits[fb_reg as usize].mcs[i_reg as usize].fb_mode = XC2MCFeedbackMode::REG;
+                        fb_bits[fb_zia as usize].zia_bits[zia_row as usize] = XC2ZIARowPiece {
+                            selected: XC2ZIAInput::Macrocell{fb: fb_reg, mc: i_reg},
+                        };
                     } else {
-                        unimplemented!();
+                        panic!("illegal state");
                     }
                 } else {
                     panic!("mismatched graph node types");
