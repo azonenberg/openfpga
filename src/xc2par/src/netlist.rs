@@ -244,8 +244,8 @@ impl NetlistGraph {
         let bitval_to_net = |bitval| {
             match bitval {
                 yosys_netlist_json::BitVal::N(n) => Ok(*net_map.get(&n).unwrap()),
-                yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_0) => Ok(vdd_net),
-                yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_1) => Ok(vss_net),
+                yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_0) => Ok(vss_net),
+                yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_1) => Ok(vdd_net),
                 // We should never see an x/z in our processing
                 _ => Err("Illegal bit value in JSON"),
             }

@@ -43,6 +43,8 @@ pub fn produce_bitstream(device_type: XC2Device,
     let mut fb_bits = [XC2BitstreamFB::default(); 2];
     let mut iob_bits = [XC2MCSmallIOB::default(); 32];
 
+    let mut global_nets = XC2GlobalNets::default();
+
     let mut extra_inpin = XC2ExtraIBuf::default();
 
     // Walk all netlist graph nodes
@@ -231,7 +233,88 @@ pub fn produce_bitstream(device_type: XC2Device,
                     panic!("mismatched graph node types");
                 }
             },
-            _ => unreachable!(),
+            &DeviceGraphNode::BufgClk{i} => {
+                if let NetlistGraphNodeVariant::BufgClk{..} = ngraph_node_rs.variant {
+                    global_nets.gck_enable[i as usize] = true;
+                } else {
+                    panic!("mismatched graph node types");
+                }
+            },
+            &DeviceGraphNode::BufgGTS{i} => {
+                if let NetlistGraphNodeVariant::BufgGTS{invert, ..} = ngraph_node_rs.variant {
+                    global_nets.gts_enable[i as usize] = true;
+                    global_nets.gts_invert[i as usize] = invert;
+                } else {
+                    panic!("mismatched graph node types");
+                }
+            },
+            &DeviceGraphNode::BufgGSR => {
+                if let NetlistGraphNodeVariant::BufgGSR{invert, ..} = ngraph_node_rs.variant {
+                    global_nets.gsr_enable = true;
+                    global_nets.gsr_invert = invert;
+                } else {
+                    panic!("mismatched graph node types");
+                }
+            },
+            &DeviceGraphNode::Reg{fb: fb_reg, i: i_reg} => {
+                if let NetlistGraphNodeVariant::Reg{mode, clkinv, clkddr, init_state, set_input, reset_input,
+                    dt_input, clk_input, ..} = ngraph_node_rs.variant {
+                    // TODO: Validate??
+
+                    fb_bits[fb_reg as usize].mcs[i_reg as usize].reg_mode = mode;
+                    fb_bits[fb_reg as usize].mcs[i_reg as usize].clk_invert_pol = clkinv;
+                    fb_bits[fb_reg as usize].mcs[i_reg as usize].is_ddr = clkddr;
+                    fb_bits[fb_reg as usize].mcs[i_reg as usize].init_state = init_state;
+
+                    if set_input.is_some() && set_input.unwrap() != ngraph_rs.vss_net {
+                        unimplemented!();
+                    }
+
+                    if reset_input.is_some() && reset_input.unwrap() != ngraph_rs.vss_net {
+                        unimplemented!();
+                    }
+
+                    // What is feeding the clock?
+                    let clk_input_dg = get_source_dgraph(clk_input);
+                    let clk_src_mux = if let &DeviceGraphNode::BufgClk{i: i_clk} = clk_input_dg {
+                        match i_clk {
+                            0 => XC2MCRegClkSrc::GCK0,
+                            1 => XC2MCRegClkSrc::GCK1,
+                            2 => XC2MCRegClkSrc::GCK2,
+                            _ => panic!("illegal state"),
+                        }
+                    } else if let &DeviceGraphNode::AndTerm{fb: fb_and, i: i_and} = clk_input_dg {
+                        if fb_and != fb_reg {
+                            panic!("mismatched FBs");
+                        }
+                        if i_and == CTC {
+                            XC2MCRegClkSrc::CTC
+                        } else if i_and == get_ptc(i_reg) {
+                            XC2MCRegClkSrc::PTC
+                        } else {
+                            panic!("mismatched FFs");
+                        }
+                    } else {
+                        panic!("mismatched graph node types");
+                    };
+                    fb_bits[fb_reg as usize].mcs[i_reg as usize].clk_src = clk_src_mux;
+
+                    // What is feeding the input?
+                    let dt_input_dg = get_source_dgraph(dt_input);
+                    let dt_mux = if let &DeviceGraphNode::IOBuf{..} = dt_input_dg {
+                        true
+                    } else if let &DeviceGraphNode::Xor{..} = dt_input_dg {
+                        false
+                    } else {
+                        panic!("mismatched graph node types");
+                    };
+                    fb_bits[fb_reg as usize].mcs[i_reg as usize].ff_in_ibuf = dt_mux;
+
+                    // TODO: Feedback?
+                } else {
+                    panic!("mismatched graph node types");
+                }
+            }
         }
     }
 
@@ -242,7 +325,7 @@ pub fn produce_bitstream(device_type: XC2Device,
             fb: fb_bits,
             iobs: iob_bits,
             inpin: extra_inpin,
-            global_nets: XC2GlobalNets::default(),
+            global_nets,
             legacy_ivoltage: false,
             legacy_ovoltage: false,
             ivoltage: [false, false],
