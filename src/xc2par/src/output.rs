@@ -179,22 +179,53 @@ pub fn produce_bitstream(device_type: XC2Device,
                     if input.is_some() {
                         // The output side of the IOB is being used.
 
-                        // TODO: OE
+                        // For now, assume it's push-pull and override it later.
                         iob_bits[i_iob as usize].obuf_mode = XC2IOBOBufMode::PushPull;
 
                         // What is feeding the output?
-                        let input_src = get_source_ngraph(input.unwrap());
-                        if let NetlistGraphNodeVariant::Xor{..} = input_src.variant {
-                            iob_bits[i_iob as usize].obuf_uses_ff = false;
-                        } else if let NetlistGraphNodeVariant::Reg{..} = input_src.variant {
-                            iob_bits[i_iob as usize].obuf_uses_ff = true;
-                        } else {
-                            panic!("mismatched graph node types");
+                        if input.unwrap() != ngraph_rs.vss_net {
+                            let input_src = get_source_ngraph(input.unwrap());
+                            if let NetlistGraphNodeVariant::Xor{..} = input_src.variant {
+                                iob_bits[i_iob as usize].obuf_uses_ff = false;
+                            } else if let NetlistGraphNodeVariant::Reg{..} = input_src.variant {
+                                iob_bits[i_iob as usize].obuf_uses_ff = true;
+                            } else {
+                                panic!("mismatched graph node types");
+                            }
                         }
                     }
 
                     if oe.is_some() {
-                        unimplemented!();
+                        if input.unwrap() == ngraph_rs.vss_net {
+                            iob_bits[i_iob as usize].obuf_mode = XC2IOBOBufMode::OpenDrain;
+                        } else {
+                            let (fb_iob, mc_iob) = iob_num_to_fb_mc_num(device_type, i_iob).unwrap();
+
+                            let oe_input_dg = get_source_dgraph(oe.unwrap());
+                            let obuf_mode = if let &DeviceGraphNode::BufgGTS{i} = oe_input_dg {
+                                match i {
+                                    0 => XC2IOBOBufMode::TriStateGTS0,
+                                    1 => XC2IOBOBufMode::TriStateGTS1,
+                                    2 => XC2IOBOBufMode::TriStateGTS2,
+                                    3 => XC2IOBOBufMode::TriStateGTS3,
+                                    _ => panic!("illegal state"),
+                                }
+                            } else if let &DeviceGraphNode::AndTerm{fb: fb_and, i: i_and} = oe_input_dg {
+                                if fb_and != fb_iob {
+                                    panic!("mismatched FBs");
+                                }
+                                if i_and == CTE {
+                                    XC2IOBOBufMode::TriStateCTE
+                                } else if i_and == get_ptb(mc_iob) {
+                                    XC2IOBOBufMode::TriStatePTB
+                                } else {
+                                    panic!("mismatched FFs");
+                                }
+                            } else {
+                                panic!("mismatched graph node types");
+                            };
+                            iob_bits[i_iob as usize].obuf_mode = obuf_mode;
+                        }
                     }
                 } else if let NetlistGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, ..} = ngraph_node_rs.variant {
                     iob_bits[i_iob as usize].schmitt_trigger = schmitt_trigger;
@@ -236,6 +267,8 @@ pub fn produce_bitstream(device_type: XC2Device,
                         fb_bits[fb_zia as usize].zia_bits[zia_row as usize] = XC2ZIARowPiece {
                             selected: XC2ZIAInput::Macrocell{fb: fb_reg, mc: i_reg},
                         };
+
+                        // FIXME XXX What happened to the feedback via the "pad" path?
                     } else {
                         panic!("illegal state");
                     }
