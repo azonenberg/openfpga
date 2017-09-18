@@ -43,6 +43,8 @@ pub fn produce_bitstream(device_type: XC2Device,
     let mut fb_bits = [XC2BitstreamFB::default(); 2];
     let mut iob_bits = [XC2MCSmallIOB::default(); 32];
 
+    let mut extra_inpin = XC2ExtraIBuf::default();
+
     // Walk all netlist graph nodes
     for i in 0..ngraph.get_num_nodes() {
         let ngraph_node = ngraph.get_node_by_index(i);
@@ -52,6 +54,11 @@ pub fn produce_bitstream(device_type: XC2Device,
         let dgraph_node_rs = dgraph_rs.nodes.get(*ngraph_node.get_mate().unwrap().get_associated_data());
         println!("{:?}", dgraph_node_rs);
 
+
+        let get_source_ngraph = |net_idx| {
+            let net_obj = ngraph_rs.nets.get(net_idx);
+            ngraph_rs.nodes.get(net_obj.source.unwrap().0)
+        };
 
         let get_source_dgraph = |net_idx| {
             let net_obj = ngraph_rs.nets.get(net_idx);
@@ -154,27 +161,56 @@ pub fn produce_bitstream(device_type: XC2Device,
                 }
             },
             &DeviceGraphNode::IOBuf{i: i_iob} => {
-                if let NetlistGraphNodeVariant::IOBuf{oe, input, ..} = ngraph_node_rs.variant {
+                if let NetlistGraphNodeVariant::IOBuf{oe, input, output,
+                        schmitt_trigger, termination_enabled, slew_is_fast, ..} = ngraph_node_rs.variant {
+
+                    iob_bits[i_iob as usize].schmitt_trigger = schmitt_trigger;
+                    iob_bits[i_iob as usize].termination_enabled = termination_enabled;
+                    iob_bits[i_iob as usize].slew_is_fast = slew_is_fast;
+
+                    if output.is_some() {
+                        // If the input side of the IOB is being used, we need to set the ZIA mode to use the IO pad.
+                        // The structure of the device graph should prevent any conflicts.
+                        iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
+                    }
+
                     if input.is_some() {
-                        // pin is used as an OUTPUT
-                        // TODO
-                        iob_bits[i_iob as usize].obuf_uses_ff = false;
-                        iob_bits[i_iob as usize].termination_enabled = false;
+                        // The output side of the IOB is being used.
+
+                        // TODO: OE
                         iob_bits[i_iob as usize].obuf_mode = XC2IOBOBufMode::PushPull;
+
+                        // What is feeding the output?
+                        let input_src = get_source_ngraph(input.unwrap());
+                        if let NetlistGraphNodeVariant::Xor{..} = input_src.variant {
+                            iob_bits[i_iob as usize].obuf_uses_ff = false;
+                        } else if let NetlistGraphNodeVariant::Reg{..} = input_src.variant {
+                            iob_bits[i_iob as usize].obuf_uses_ff = true;
+                        } else {
+                            panic!("mismatched graph node types");
+                        }
                     }
 
                     if oe.is_some() {
                         panic!("not implemented");
                     }
-                } else if let NetlistGraphNodeVariant::InBuf{..} = ngraph_node_rs.variant {
-                    // TODO???
-                    iob_bits[i_iob as usize].termination_enabled = false;
+                } else if let NetlistGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, ..} = ngraph_node_rs.variant {
+                    iob_bits[i_iob as usize].schmitt_trigger = schmitt_trigger;
+                    iob_bits[i_iob as usize].termination_enabled = termination_enabled;
+
+                    // We need to set the ZIA mode to use the IO pad.
+                    iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
                 } else {
                     panic!("mismatched graph node types");
                 }
             },
             &DeviceGraphNode::InBuf => {
-                // TODO???
+                if let NetlistGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, ..} = ngraph_node_rs.variant {
+                    extra_inpin.schmitt_trigger = schmitt_trigger;
+                    extra_inpin.termination_enabled = termination_enabled;
+                } else {
+                    panic!("mismatched graph node types");
+                }
             },
             &DeviceGraphNode::ZIADummyBuf{fb: fb_zia, row: zia_row} => {
                 if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = ngraph_node_rs.variant {
@@ -205,7 +241,7 @@ pub fn produce_bitstream(device_type: XC2Device,
         bits: XC2BitstreamBits::XC2C32A {
             fb: fb_bits,
             iobs: iob_bits,
-            inpin: XC2ExtraIBuf::default(),
+            inpin: extra_inpin,
             global_nets: XC2GlobalNets::default(),
             legacy_ivoltage: false,
             legacy_ovoltage: false,
