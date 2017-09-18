@@ -88,14 +88,12 @@ pub enum NetlistGraphNodeVariant {
         termination_enabled: bool,
         slew_is_fast: bool,
         uses_data_gate: bool,
-        is_vref: bool,
     },
     InBuf {
         output: ObjPoolIndex<NetlistGraphNet>,
         schmitt_trigger: bool,
         termination_enabled: bool,
         uses_data_gate: bool,
-        is_vref: bool,
     },
     ZIADummyBuf {
         input: ObjPoolIndex<NetlistGraphNet>,
@@ -324,7 +322,6 @@ impl NetlistGraph {
                             termination_enabled: false,
                             slew_is_fast: false,
                             uses_data_gate: false,
-                            is_vref: false,
                         },
                         par_idx: None,
                     });
@@ -340,7 +337,6 @@ impl NetlistGraph {
                             schmitt_trigger: false,
                             termination_enabled: false,
                             uses_data_gate: false,
-                            is_vref: false,
                         },
                         par_idx: None,
                     });
