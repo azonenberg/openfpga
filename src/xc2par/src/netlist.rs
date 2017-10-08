@@ -159,49 +159,32 @@ pub struct NetlistGraph {
 }
 
 #[derive(Debug)]
-pub enum NetlistMacrocellType {
-    PinOutputComb {
+pub enum NetlistMacrocell {
+    PinOutput {
         // Index of the IOBUFE
-        i: usize,
-    },
-    PinOutputReg {
-        // Index of the IOBUFE
-        i: usize,
-        has_comb_fb: bool,
-        has_reg_fb: bool,
+        i: ObjPoolIndex<NetlistGraphNode>,
     },
     PinInputUnreg {
         // Index of the IBUF
-        i: usize,
+        i: ObjPoolIndex<NetlistGraphNode>,
     },
     PinInputReg {
         // Index of the IBUF
-        i: usize,
+        i: ObjPoolIndex<NetlistGraphNode>,
     },
     BuriedComb {
         // Index of the XOR
-        i: usize,
+        i: ObjPoolIndex<NetlistGraphNode>,
     },
     BuriedReg {
         // Index of the XOR
-        i: usize,
+        i: ObjPoolIndex<NetlistGraphNode>,
         has_comb_fb: bool,
     }
 }
 
-impl NetlistMacrocellType {
-    pub fn compatible(&self, b: &NetlistMacrocellType) -> bool {
-        // A must be output or buried; B must be input
-
-        match (self, b) {
-            (&NetlistMacrocellType::PinOutputComb{..}, &NetlistMacrocellType::PinInputUnreg{..}) => true,
-            (&NetlistMacrocellType::PinOutputComb{..}, &NetlistMacrocellType::PinInputReg{..}) => true,
-            (&NetlistMacrocellType::PinOutputReg{has_comb_fb, has_reg_fb,..},
-                &NetlistMacrocellType::PinInputUnreg{..}) => (!(has_comb_fb && has_reg_fb)),
-            _ => false,
-        }
-    }
-}
+// BuriedComb is compatible with PinInputUnreg and PinInputReg.
+// BuriedReg is compatible with PinInputUnreg as long as has_comb_fb is false.
 
 impl NetlistGraph {
     pub fn from_yosys_netlist(yosys_net: &yosys_netlist_json::Netlist) -> Result<NetlistGraph, &'static str> {
@@ -707,8 +690,99 @@ impl NetlistGraph {
         })
     }
 
-    pub fn gather_macrocells(&self) -> Vec<NetlistMacrocellType> {
+    pub fn gather_macrocells(&self) -> Vec<NetlistMacrocell> {
         let mut ret = Vec::new();
+        let mut encountered_xors = HashSet::new();
+
+        // First iteration: Find IOBUFE
+        for node_idx in self.nodes.iter() {
+            let node = self.nodes.get(node_idx);
+
+            if let NetlistGraphNodeVariant::IOBuf{input, ..} = node.variant {
+                ret.push(NetlistMacrocell::PinOutput{i: node_idx});
+
+                if input.is_some() {
+                    let input = input.unwrap();
+
+                    let source_node_idx = self.nets.get(input).source.unwrap().0;
+                    let source_node = self.nodes.get(source_node_idx);
+                    if let NetlistGraphNodeVariant::Xor{..} = source_node.variant {
+                        // Combinatorial output
+                        encountered_xors.insert(source_node_idx);
+                    } else if let NetlistGraphNodeVariant::Reg{dt_input, ..} = source_node.variant {
+                        // Registered output, look at the input into the register
+                        let source_node_idx = self.nets.get(dt_input).source.unwrap().0;
+                        let source_node = self.nodes.get(source_node_idx);
+                        if let NetlistGraphNodeVariant::Xor{..} = source_node.variant {
+                            encountered_xors.insert(source_node_idx);
+                        } else if let NetlistGraphNodeVariant::IOBuf{..} = source_node.variant {
+                            if node_idx != source_node_idx {
+                                // Trying to go from a different pin into the direct input path of this pin
+                                panic!("mismatched graph node types");
+                            }
+                            // Otherwise ignore this for now. This is a bit strange, but possible.
+                        } else {
+                            panic!("mismatched graph node types");
+                        }
+                    } else {
+                        panic!("mismatched graph node types");
+                    }
+                }
+            }
+        }
+
+        // Second iteration: Find IBUF
+        for node_idx in self.nodes.iter() {
+            let node = self.nodes.get(node_idx);
+
+            if let NetlistGraphNodeVariant::InBuf{output, ..} = node.variant {
+                let mut maybe_reg_index = None;
+                for &(sink_node_idx, _) in &self.nets.get(output).sinks {
+                    let sink_node = self.nodes.get(sink_node_idx);
+
+                    if let NetlistGraphNodeVariant::Reg{..} = sink_node.variant {
+                        maybe_reg_index = Some(sink_node_idx);
+                    }
+                }
+
+                if maybe_reg_index.is_none() {
+                    ret.push(NetlistMacrocell::PinInputUnreg{i: node_idx});
+                } else {
+                    ret.push(NetlistMacrocell::PinInputReg{i: node_idx});
+                }
+            }
+        }
+
+        // Third iteration: Find buried macrocells
+        for node_idx in self.nodes.iter() {
+            let node = self.nodes.get(node_idx);
+
+            if let NetlistGraphNodeVariant::Xor{output, ..} = node.variant {
+                if encountered_xors.contains(&node_idx) {
+                    continue;
+                }
+
+                let mut maybe_reg_index = None;
+                for &(sink_node_idx, _) in &self.nets.get(output).sinks {
+                    let sink_node = self.nodes.get(sink_node_idx);
+
+                    if let NetlistGraphNodeVariant::Reg{..} = sink_node.variant {
+                        maybe_reg_index = Some(sink_node_idx);
+                    }
+                }
+
+                if maybe_reg_index.is_none() {
+                    // Buried combinatorial
+                    ret.push(NetlistMacrocell::BuriedComb{i: node_idx});
+                } else {
+                    // Buried register
+                    ret.push(NetlistMacrocell::BuriedReg{
+                        i: node_idx,
+                        has_comb_fb: self.nets.get(output).sinks.len() > 1
+                    });
+                }
+            }
+        }
 
         ret
     }
