@@ -31,7 +31,6 @@ use self::xc2bit::*;
 
 extern crate yosys_netlist_json;
 
-use *;
 use objpool::*;
 
 #[derive(Debug)]
@@ -786,77 +785,4 @@ impl NetlistGraph {
 
         ret
     }
-
-    // pub fn insert_into_par_graph(&mut self,
-    //     par_graphs: &mut PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ObjPoolIndex<NetlistGraphNode>>,
-    //     lmap: &HashMap<u32, &'static str>) {
-
-    //     // We first need an inverse label map
-    //     let mut ilmap = HashMap::new();
-    //     for (l, &name) in lmap {
-    //         ilmap.insert(name, *l);
-    //     }
-
-    //     // Now fetch the appropriate labels
-    //     let iopad_l = *ilmap.get("IOPAD").unwrap();
-    //     let inpad_l = *ilmap.get("INPAD").unwrap();
-    //     let reg_l = *ilmap.get("REG").unwrap();
-    //     let xor_l = *ilmap.get("XOR").unwrap();
-    //     let orterm_l = *ilmap.get("ORTERM").unwrap();
-    //     let andterm_l = *ilmap.get("ANDTERM").unwrap();
-    //     let bufg_l = *ilmap.get("BUFG").unwrap();
-    //     let bufgsr_l = *ilmap.get("BUFGSR").unwrap();
-    //     let bufgts_l = *ilmap.get("BUFGTS").unwrap();
-    //     let ziabuf_l = *ilmap.get("ZIA dummy buffer").unwrap();
-
-    //     // Create corresponding nodes
-    //     let mut node_par_idx_map = HashMap::new();
-    //     for node_idx_ours in self.nodes.iter() {
-    //         let node = self.nodes.get(node_idx_ours);
-
-    //         let lbl = match node.variant {
-    //             NetlistGraphNodeVariant::AndTerm{..} => andterm_l,
-    //             NetlistGraphNodeVariant::OrTerm{..} => orterm_l,
-    //             NetlistGraphNodeVariant::Xor{..} => xor_l,
-    //             NetlistGraphNodeVariant::Reg{..} => reg_l,
-    //             NetlistGraphNodeVariant::BufgClk{..} => bufg_l,
-    //             NetlistGraphNodeVariant::BufgGTS{..} => bufgts_l,
-    //             NetlistGraphNodeVariant::BufgGSR{..} => bufgsr_l,
-    //             NetlistGraphNodeVariant::IOBuf{..} => iopad_l,
-    //             NetlistGraphNodeVariant::InBuf{..} => inpad_l,
-    //             NetlistGraphNodeVariant::ZIADummyBuf{..} => ziabuf_l,
-    //         };
-
-    //         let node_idx_par = par_graphs.borrow_mut_n().add_new_node(lbl, node_idx_ours);
-
-    //         node_par_idx_map.insert(node_idx_ours, node_idx_par);
-    //     }
-
-    //     for (&node_idx_ours, &node_idx_par) in &node_par_idx_map {
-    //         // Stash the PAR index
-    //         let node_mut = self.nodes.get_mut(node_idx_ours);
-    //         node_mut.par_idx = Some(node_idx_par);
-    //     }
-
-    //     // Add all the edges
-    //     for net_idx in self.nets.iter() {
-    //         if net_idx == self.vdd_net || net_idx == self.vss_net {
-    //             continue;
-    //         }
-
-    //         let net = self.nets.get(net_idx);
-
-    //         let source_node_our_tup = net.source.unwrap();
-    //         let source_node_par_idx = *node_par_idx_map.get(&source_node_our_tup.0).unwrap();
-    //         let source_node_out_port = source_node_our_tup.1;
-            
-    //         for sink_node_our_tup in &net.sinks {
-    //             let sink_node_par_idx = *node_par_idx_map.get(&sink_node_our_tup.0).unwrap();
-    //             let sink_node_in_port = sink_node_our_tup.1;
-
-    //             par_graphs.borrow_mut_n().add_edge(source_node_par_idx, source_node_out_port,
-    //                 sink_node_par_idx, sink_node_in_port);
-    //         }
-    //     }
-    // }
 }
