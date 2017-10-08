@@ -120,11 +120,19 @@ impl NetlistLocation {
                     i: None,
                 }))
             } else if loc_fb_i.len() == 2 {
-                // FBn_i
-                Ok(Some(NetlistLocation {
-                    fb: loc_fb_i[0][2..].parse::<u32>().unwrap(),
-                    i: Some(loc_fb_i[1].parse::<u32>().unwrap()),
-                }))
+                if !loc_fb_i[1].starts_with("P") {
+                    // FBn_i
+                    Ok(Some(NetlistLocation {
+                        fb: loc_fb_i[0][2..].parse::<u32>().unwrap(),
+                        i: Some(loc_fb_i[1].parse::<u32>().unwrap()),
+                    }))
+                } else {
+                    // FBn_Pi
+                    Ok(Some(NetlistLocation {
+                        fb: loc_fb_i[0][2..].parse::<u32>().unwrap(),
+                        i: Some(loc_fb_i[1][1..].parse::<u32>().unwrap()),
+                    }))
+                }
             } else {
                 Err("Malformed LOC constraint")
             }
