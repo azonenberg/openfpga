@@ -104,7 +104,6 @@ struct input_report {
 
 struct hid_device_ {
 	IOHIDDeviceRef device_handle;
-	int blocking;
 	int uses_numbered_reports;
 	int disconnected;
 	CFStringRef run_loop_mode;
@@ -126,7 +125,7 @@ static hid_device *new_hid_device(void)
 {
 	hid_device *dev = calloc(1, sizeof(hid_device));
 	dev->device_handle = NULL;
-	dev->blocking = 1;
+
 	dev->uses_numbered_reports = 0;
 	dev->disconnected = 0;
 	dev->run_loop_mode = NULL;
@@ -252,11 +251,6 @@ static int get_string_property(IOHIDDeviceRef device, CFStringRef prop, wchar_t 
 
 }
 
-static int get_serial_number(IOHIDDeviceRef device, wchar_t *buf, size_t len)
-{
-	return get_string_property(device, CFSTR(kIOHIDSerialNumberKey), buf, len);
-}
-
 static int get_manufacturer_string(IOHIDDeviceRef device, wchar_t *buf, size_t len)
 {
 	return get_string_property(device, CFSTR(kIOHIDManufacturerKey), buf, len);
@@ -265,74 +259,6 @@ static int get_manufacturer_string(IOHIDDeviceRef device, wchar_t *buf, size_t l
 static int get_product_string(IOHIDDeviceRef device, wchar_t *buf, size_t len)
 {
 	return get_string_property(device, CFSTR(kIOHIDProductKey), buf, len);
-}
-
-
-/* Implementation of wcsdup() for Mac. */
-static wchar_t *dup_wcs(const wchar_t *s)
-{
-	size_t len = wcslen(s);
-	wchar_t *ret = malloc((len+1)*sizeof(wchar_t));
-	wcscpy(ret, s);
-
-	return ret;
-}
-
-/* hidapi_IOHIDDeviceGetService()
- *
- * Return the io_service_t corresponding to a given IOHIDDeviceRef, either by:
- * - on OS X 10.6 and above, calling IOHIDDeviceGetService()
- * - on OS X 10.5, extract it from the IOHIDDevice struct
- */
-static io_service_t hidapi_IOHIDDeviceGetService(IOHIDDeviceRef device)
-{
-	static void *iokit_framework = NULL;
-	static io_service_t (*dynamic_IOHIDDeviceGetService)(IOHIDDeviceRef device) = NULL;
-
-	/* Use dlopen()/dlsym() to get a pointer to IOHIDDeviceGetService() if it exists.
-	 * If any of these steps fail, dynamic_IOHIDDeviceGetService will be left NULL
-	 * and the fallback method will be used.
-	 */
-	if (iokit_framework == NULL) {
-		iokit_framework = dlopen("/System/Library/IOKit.framework/IOKit", RTLD_LAZY);
-
-		if (iokit_framework != NULL)
-			dynamic_IOHIDDeviceGetService = dlsym(iokit_framework, "IOHIDDeviceGetService");
-	}
-
-	if (dynamic_IOHIDDeviceGetService != NULL) {
-		/* Running on OS X 10.6 and above: IOHIDDeviceGetService() exists */
-		return dynamic_IOHIDDeviceGetService(device);
-	}
-	else
-	{
-		/* Running on OS X 10.5: IOHIDDeviceGetService() doesn't exist.
-		 *
-		 * Be naughty and pull the service out of the IOHIDDevice.
-		 * IOHIDDevice is an opaque struct not exposed to applications, but its
-		 * layout is stable through all available versions of OS X.
-		 * Tested and working on OS X 10.5.8 i386, x86_64, and ppc.
-		 */
-		struct IOHIDDevice_internal {
-			/* The first field of the IOHIDDevice struct is a
-			 * CFRuntimeBase (which is a private CF struct).
-			 *
-			 * a, b, and c are the 3 fields that make up a CFRuntimeBase.
-			 * See http://opensource.apple.com/source/CF/CF-476.18/CFRuntime.h
-			 *
-			 * The second field of the IOHIDDevice is the io_service_t we're looking for.
-			 */
-			uintptr_t a;
-			uint8_t b[4];
-#if __LP64__
-			uint32_t c;
-#endif
-			io_service_t service;
-		};
-		struct IOHIDDevice_internal *tmp = (struct IOHIDDevice_internal *)device;
-
-		return tmp->service;
-	}
 }
 
 /* Initialize the IOHIDManager. Return 0 for success and -1 for failure. */
@@ -408,8 +334,6 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 	for (i = 0; i < num_devices; i++) {
 		unsigned short dev_vid;
 		unsigned short dev_pid;
-		#define BUF_LEN 256
-		wchar_t buf[BUF_LEN];
 
 		IOHIDDeviceRef dev = device_array[i];
 
@@ -437,40 +361,16 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 			}
 			cur_dev = tmp;
 
-			/* Get the Usage Page and Usage for this device. */
-			cur_dev->usage_page = get_int_property(dev, CFSTR(kIOHIDPrimaryUsagePageKey));
-			cur_dev->usage = get_int_property(dev, CFSTR(kIOHIDPrimaryUsageKey));
-
 			/* Fill out the record */
 			cur_dev->next = NULL;
 
 			/* Fill in the path (IOService plane) */
-			iokit_dev = hidapi_IOHIDDeviceGetService(dev);
+			iokit_dev = IOHIDDeviceGetService(dev);
 			res = IORegistryEntryGetPath(iokit_dev, kIOServicePlane, path);
 			if (res == KERN_SUCCESS)
 				cur_dev->path = strdup(path);
 			else
 				cur_dev->path = strdup("");
-
-			/* Serial Number */
-			get_serial_number(dev, buf, BUF_LEN);
-			cur_dev->serial_number = dup_wcs(buf);
-
-			/* Manufacturer and Product strings */
-			get_manufacturer_string(dev, buf, BUF_LEN);
-			cur_dev->manufacturer_string = dup_wcs(buf);
-			get_product_string(dev, buf, BUF_LEN);
-			cur_dev->product_string = dup_wcs(buf);
-
-			/* VID/PID */
-			cur_dev->vendor_id = dev_vid;
-			cur_dev->product_id = dev_pid;
-
-			/* Release Number */
-			cur_dev->release_number = get_int_property(dev, CFSTR(kIOHIDVersionNumberKey));
-
-			/* Interface Number (Unsupported on Mac)*/
-			cur_dev->interface_number = -1;
 		}
 	}
 
@@ -487,9 +387,6 @@ void  HID_API_EXPORT hid_free_enumeration(struct hid_device_info *devs)
 	while (d) {
 		struct hid_device_info *next = d->next;
 		free(d->path);
-		free(d->serial_number);
-		free(d->manufacturer_string);
-		free(d->product_string);
 		free(d);
 		d = next;
 	}

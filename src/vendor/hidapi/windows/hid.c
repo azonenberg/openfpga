@@ -126,7 +126,6 @@ static BOOLEAN initialized = FALSE;
 
 struct hid_device_ {
 		HANDLE device_handle;
-		BOOL blocking;
 		USHORT output_report_length;
 		size_t input_report_length;
 		void *last_error_str;
@@ -140,7 +139,6 @@ static hid_device *new_hid_device()
 {
 	hid_device *dev = (hid_device*) calloc(1, sizeof(hid_device));
 	dev->device_handle = INVALID_HANDLE_VALUE;
-	dev->blocking = TRUE;
 	dev->output_report_length = 0;
 	dev->input_report_length = 0;
 	dev->last_error_str = NULL;
@@ -354,8 +352,6 @@ struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned shor
 			}
 		}
 
-		//wprintf(L"HandleName: %s\n", device_interface_detail_data->DevicePath);
-
 		/* Open a handle to the device */
 		write_handle = open_device(device_interface_detail_data->DevicePath, TRUE);
 
@@ -370,7 +366,6 @@ struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned shor
 		/* Get the Vendor ID and Product ID for this device. */
 		attrib.Size = sizeof(HIDD_ATTRIBUTES);
 		HidD_GetAttributes(write_handle, &attrib);
-		//wprintf(L"Product/Vendor: %x %x\n", attrib.ProductID, attrib.VendorID);
 
 		/* Check the VID/PID to see if we should add this
 		   device to the enumeration list. */
@@ -380,11 +375,6 @@ struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned shor
 			#define WSTR_LEN 512
 			const char *str;
 			struct hid_device_info *tmp;
-			PHIDP_PREPARSED_DATA pp_data = NULL;
-			HIDP_CAPS caps;
-			BOOLEAN res;
-			NTSTATUS nt_res;
-			wchar_t wstr[WSTR_LEN]; /* TODO: Determine Size */
 			size_t len;
 
 			/* VID/PID match. Create the record. */
@@ -396,18 +386,6 @@ struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned shor
 				root = tmp;
 			}
 			cur_dev = tmp;
-
-			/* Get the Usage Page and Usage for this device. */
-			res = HidD_GetPreparsedData(write_handle, &pp_data);
-			if (res) {
-				nt_res = HidP_GetCaps(pp_data, &caps);
-				if (nt_res == HIDP_STATUS_SUCCESS) {
-					cur_dev->usage_page = caps.UsagePage;
-					cur_dev->usage = caps.Usage;
-				}
-
-				HidD_FreePreparsedData(pp_data);
-			}
 			
 			/* Fill out the record */
 			cur_dev->next = NULL;
@@ -420,53 +398,6 @@ struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned shor
 			}
 			else
 				cur_dev->path = NULL;
-
-			/* Serial Number */
-			res = HidD_GetSerialNumberString(write_handle, wstr, sizeof(wstr));
-			wstr[WSTR_LEN-1] = 0x0000;
-			if (res) {
-				cur_dev->serial_number = _wcsdup(wstr);
-			}
-
-			/* Manufacturer String */
-			res = HidD_GetManufacturerString(write_handle, wstr, sizeof(wstr));
-			wstr[WSTR_LEN-1] = 0x0000;
-			if (res) {
-				cur_dev->manufacturer_string = _wcsdup(wstr);
-			}
-
-			/* Product String */
-			res = HidD_GetProductString(write_handle, wstr, sizeof(wstr));
-			wstr[WSTR_LEN-1] = 0x0000;
-			if (res) {
-				cur_dev->product_string = _wcsdup(wstr);
-			}
-
-			/* VID/PID */
-			cur_dev->vendor_id = attrib.VendorID;
-			cur_dev->product_id = attrib.ProductID;
-
-			/* Release Number */
-			cur_dev->release_number = attrib.VersionNumber;
-
-			/* Interface Number. It can sometimes be parsed out of the path
-			   on Windows if a device has multiple interfaces. See
-			   http://msdn.microsoft.com/en-us/windows/hardware/gg487473 or
-			   search for "Hardware IDs for HID Devices" at MSDN. If it's not
-			   in the path, it's set to -1. */
-			cur_dev->interface_number = -1;
-			if (cur_dev->path) {
-				char *interface_component = strstr(cur_dev->path, "&mi_");
-				if (interface_component) {
-					char *hex_str = interface_component + 4;
-					char *endptr = NULL;
-					cur_dev->interface_number = strtol(hex_str, &endptr, 16);
-					if (endptr == hex_str) {
-						/* The parsing failed. Set interface_number to -1. */
-						cur_dev->interface_number = -1;
-					}
-				}
-			}
 		}
 
 cont_close:
@@ -493,9 +424,6 @@ void  HID_API_EXPORT HID_API_CALL hid_free_enumeration(struct hid_device_info *d
 	while (d) {
 		struct hid_device_info *next = d->next;
 		free(d->path);
-		free(d->serial_number);
-		free(d->manufacturer_string);
-		free(d->product_string);
 		free(d);
 		d = next;
 	}

@@ -22,18 +22,21 @@
 ********************************************************/
 
 /* C */
+/* For asnprintf */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
+#undef _GNU_SOURCE
 #include <stdlib.h>
-#include <locale.h>
 #include <errno.h>
 
 /* Unix */
+#include <dirent.h>
 #include <unistd.h>
+#include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/utsname.h>
 #include <fcntl.h>
 #include <poll.h>
 
@@ -41,184 +44,55 @@
 #include <linux/hidraw.h>
 #include <linux/version.h>
 #include <linux/input.h>
-#include <libudev.h>
 
 #include "hidapi.h"
 
-/* Definitions from linux/hidraw.h. Since these are new, some distros
-   may not have header files which contain them. */
-#ifndef HIDIOCSFEATURE
-#define HIDIOCSFEATURE(len)    _IOC(_IOC_WRITE|_IOC_READ, 'H', 0x06, len)
-#endif
-#ifndef HIDIOCGFEATURE
-#define HIDIOCGFEATURE(len)    _IOC(_IOC_WRITE|_IOC_READ, 'H', 0x07, len)
-#endif
-
-
-/* USB HID device property names */
-const char *device_string_names[] = {
-	"manufacturer",
-	"product",
-	"serial",
-};
-
-/* Symbolic names for the properties above */
-enum device_string_id {
-	DEVICE_STRING_MANUFACTURER,
-	DEVICE_STRING_PRODUCT,
-	DEVICE_STRING_SERIAL,
-
-	DEVICE_STRING_COUNT,
-};
-
 struct hid_device_ {
 	int device_handle;
-	int blocking;
-	int uses_numbered_reports;
 };
-
-
-static __u32 kernel_version = 0;
-
-static __u32 detect_kernel_version(void)
-{
-	struct utsname name;
-	int major, minor, release;
-	int ret;
-
-	uname(&name);
-	ret = sscanf(name.release, "%d.%d.%d", &major, &minor, &release);
-	if (ret == 3) {
-		return KERNEL_VERSION(major, minor, release);
-	}
-
-	ret = sscanf(name.release, "%d.%d", &major, &minor);
-	if (ret == 2) {
-		return KERNEL_VERSION(major, minor, 0);
-	}
-
-	printf("Couldn't determine kernel version from version string \"%s\"\n", name.release);
-	return 0;
-}
 
 static hid_device *new_hid_device(void)
 {
 	hid_device *dev = calloc(1, sizeof(hid_device));
 	dev->device_handle = -1;
-	dev->blocking = 1;
-	dev->uses_numbered_reports = 0;
 
 	return dev;
 }
 
+// Result needs to be free()d
+static char *read_entire_sysfs_file(int fd) {
+	struct stat s;
+	char *buf;
 
-/* The caller must free the returned string with free(). */
-static wchar_t *utf8_to_wchar_t(const char *utf8)
-{
-	wchar_t *ret = NULL;
-
-	if (utf8) {
-		size_t wlen = mbstowcs(NULL, utf8, 0);
-		if ((size_t) -1 == wlen) {
-			return wcsdup(L"");
-		}
-		ret = calloc(wlen+1, sizeof(wchar_t));
-		mbstowcs(ret, utf8, wlen+1);
-		ret[wlen] = 0x0000;
+	if (fstat(fd, &s) == -1)
+		return NULL;
+	buf = malloc(s.st_size + 1);
+	if (!buf)
+		return NULL;
+	size_t sysfs_size = read(fd, buf, s.st_size);
+	if ((size_t)-1 == sysfs_size) {
+		free(buf);
+		return NULL;
 	}
 
-	return ret;
+	// Need to add a NULL termination
+	buf[sysfs_size] = 0;
+
+	// Deliberately remove a potential \n at the end
+	if (buf[sysfs_size - 1] == '\n')
+		buf[sysfs_size - 1] = 0;
+
+	return buf;
 }
 
-/* Get an attribute value from a udev_device and return it as a whar_t
-   string. The returned string must be freed with free() when done.*/
-static wchar_t *copy_udev_string(struct udev_device *dev, const char *udev_name)
-{
-	return utf8_to_wchar_t(udev_device_get_sysattr_value(dev, udev_name));
-}
-
-/* uses_numbered_reports() returns 1 if report_descriptor describes a device
-   which contains numbered reports. */
-static int uses_numbered_reports(__u8 *report_descriptor, __u32 size) {
-	unsigned int i = 0;
-	int size_code;
-	int data_len, key_size;
-
-	while (i < size) {
-		int key = report_descriptor[i];
-
-		/* Check for the Report ID key */
-		if (key == 0x85/*Report ID*/) {
-			/* This device has a Report ID, which means it uses
-			   numbered reports. */
-			return 1;
-		}
-
-		//printf("key: %02hhx\n", key);
-
-		if ((key & 0xf0) == 0xf0) {
-			/* This is a Long Item. The next byte contains the
-			   length of the data section (value) for this key.
-			   See the HID specification, version 1.11, section
-			   6.2.2.3, titled "Long Items." */
-			if (i+1 < size)
-				data_len = report_descriptor[i+1];
-			else
-				data_len = 0; /* malformed report */
-			key_size = 3;
-		}
-		else {
-			/* This is a Short Item. The bottom two bits of the
-			   key contain the size code for the data section
-			   (value) for this key.  Refer to the HID
-			   specification, version 1.11, section 6.2.2.2,
-			   titled "Short Items." */
-			size_code = key & 0x3;
-			switch (size_code) {
-			case 0:
-			case 1:
-			case 2:
-				data_len = size_code;
-				break;
-			case 3:
-				data_len = 4;
-				break;
-			default:
-				/* Can't ever happen since size_code is & 0x3 */
-				data_len = 0;
-				break;
-			};
-			key_size = 1;
-		}
-
-		/* Skip over this key and it's associated data */
-		i += data_len + key_size;
-	}
-
-	/* Didn't find a Report ID key. Device doesn't use numbered reports. */
-	return 0;
-}
-
-/*
- * The caller is responsible for free()ing the (newly-allocated) character
- * strings pointed to by serial_number_utf8 and product_name_utf8 after use.
- */
-static int
-parse_uevent_info(const char *uevent, int *bus_type,
-	unsigned short *vendor_id, unsigned short *product_id,
-	char **serial_number_utf8, char **product_name_utf8)
-{
-	char *tmp = strdup(uevent);
+// Result needs to be free()d
+static char *uevent_find_line(char *haystack, const char *needle) {
 	char *saveptr = NULL;
 	char *line;
 	char *key;
 	char *value;
 
-	int found_id = 0;
-	int found_serial = 0;
-	int found_name = 0;
-
-	line = strtok_r(tmp, "\n", &saveptr);
+	line = strtok_r(haystack, "\n", &saveptr);
 	while (line != NULL) {
 		/* line: "KEY=value" */
 		key = line;
@@ -229,147 +103,19 @@ parse_uevent_info(const char *uevent, int *bus_type,
 		*value = '\0';
 		value++;
 
-		if (strcmp(key, "HID_ID") == 0) {
-			/**
-			 *        type vendor   product
-			 * HID_ID=0003:000005AC:00008242
-			 **/
-			int ret = sscanf(value, "%x:%hx:%hx", bus_type, vendor_id, product_id);
-			if (ret == 3) {
-				found_id = 1;
-			}
-		} else if (strcmp(key, "HID_NAME") == 0) {
-			/* The caller has to free the product name */
-			*product_name_utf8 = strdup(value);
-			found_name = 1;
-		} else if (strcmp(key, "HID_UNIQ") == 0) {
-			/* The caller has to free the serial number */
-			*serial_number_utf8 = strdup(value);
-			found_serial = 1;
+		if (strcmp(key, needle) == 0) {
+			return strdup(value);
 		}
 
 next_line:
 		line = strtok_r(NULL, "\n", &saveptr);
 	}
 
-	free(tmp);
-	return (found_id && found_name && found_serial);
-}
-
-
-static int get_device_string(hid_device *dev, enum device_string_id key, wchar_t *string, size_t maxlen)
-{
-	struct udev *udev;
-	struct udev_device *udev_dev, *parent, *hid_dev;
-	struct stat s;
-	int ret = -1;
-        char *serial_number_utf8 = NULL;
-        char *product_name_utf8 = NULL;
-
-	/* Create the udev object */
-	udev = udev_new();
-	if (!udev) {
-		printf("Can't create udev\n");
-		return -1;
-	}
-
-	/* Get the dev_t (major/minor numbers) from the file handle. */
-	ret = fstat(dev->device_handle, &s);
-	if (-1 == ret)
-		return ret;
-	/* Open a udev device from the dev_t. 'c' means character device. */
-	udev_dev = udev_device_new_from_devnum(udev, 'c', s.st_rdev);
-	if (udev_dev) {
-		hid_dev = udev_device_get_parent_with_subsystem_devtype(
-			udev_dev,
-			"hid",
-			NULL);
-		if (hid_dev) {
-			unsigned short dev_vid;
-			unsigned short dev_pid;
-			int bus_type;
-			size_t retm;
-
-			ret = parse_uevent_info(
-			           udev_device_get_sysattr_value(hid_dev, "uevent"),
-			           &bus_type,
-			           &dev_vid,
-			           &dev_pid,
-			           &serial_number_utf8,
-			           &product_name_utf8);
-
-			if (bus_type == BUS_BLUETOOTH) {
-				switch (key) {
-					case DEVICE_STRING_MANUFACTURER:
-						wcsncpy(string, L"", maxlen);
-						ret = 0;
-						break;
-					case DEVICE_STRING_PRODUCT:
-						retm = mbstowcs(string, product_name_utf8, maxlen);
-						ret = (retm == (size_t)-1)? -1: 0;
-						break;
-					case DEVICE_STRING_SERIAL:
-						retm = mbstowcs(string, serial_number_utf8, maxlen);
-						ret = (retm == (size_t)-1)? -1: 0;
-						break;
-					case DEVICE_STRING_COUNT:
-					default:
-						ret = -1;
-						break;
-				}
-			}
-			else {
-				/* This is a USB device. Find its parent USB Device node. */
-				parent = udev_device_get_parent_with_subsystem_devtype(
-					   udev_dev,
-					   "usb",
-					   "usb_device");
-				if (parent) {
-					const char *str;
-					const char *key_str = NULL;
-
-					if (key >= 0 && key < DEVICE_STRING_COUNT) {
-						key_str = device_string_names[key];
-					} else {
-						ret = -1;
-						goto end;
-					}
-
-					str = udev_device_get_sysattr_value(parent, key_str);
-					if (str) {
-						/* Convert the string from UTF-8 to wchar_t */
-						retm = mbstowcs(string, str, maxlen);
-						ret = (retm == (size_t)-1)? -1: 0;
-						goto end;
-					}
-				}
-			}
-		}
-	}
-
-end:
-        free(serial_number_utf8);
-        free(product_name_utf8);
-
-	udev_device_unref(udev_dev);
-	/* parent and hid_dev don't need to be (and can't be) unref'd.
-	   I'm not sure why, but they'll throw double-free() errors. */
-	udev_unref(udev);
-
-	return ret;
+	return NULL;
 }
 
 int HID_API_EXPORT hid_init(void)
 {
-	const char *locale;
-
-	/* Set the locale if it's not set. */
-	locale = setlocale(LC_CTYPE, NULL);
-	if (!locale)
-		setlocale(LC_CTYPE, "");
-
-	kernel_version = detect_kernel_version();
-
 	return 0;
 }
 
@@ -379,79 +125,72 @@ int HID_API_EXPORT hid_exit(void)
 	return 0;
 }
 
-
 struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, unsigned short product_id)
 {
-	struct udev *udev;
-	struct udev_enumerate *enumerate;
-	struct udev_list_entry *devices, *dev_list_entry;
-
 	struct hid_device_info *root = NULL; /* return object */
 	struct hid_device_info *cur_dev = NULL;
-	struct hid_device_info *prev_dev = NULL; /* previous device */
 
 	hid_init();
 
-	/* Create the udev object */
-	udev = udev_new();
-	if (!udev) {
-		printf("Can't create udev\n");
+	DIR *hidraw_class_dir = opendir("/sys/class/hidraw");
+	if (!hidraw_class_dir) {
 		return NULL;
 	}
 
-	/* Create a list of the devices in the 'hidraw' subsystem. */
-	enumerate = udev_enumerate_new(udev);
-	udev_enumerate_add_match_subsystem(enumerate, "hidraw");
-	udev_enumerate_scan_devices(enumerate);
-	devices = udev_enumerate_get_list_entry(enumerate);
-	/* For each item, see if it matches the vid/pid, and if so
-	   create a udev_device record for it */
-	udev_list_entry_foreach(dev_list_entry, devices) {
-		const char *sysfs_path;
-		const char *dev_path;
-		const char *str;
-		struct udev_device *raw_dev; /* The device's hidraw udev node. */
-		struct udev_device *hid_dev; /* The device's HID udev node. */
-		struct udev_device *usb_dev; /* The device's USB udev node. */
-		struct udev_device *intf_dev; /* The device's interface (in the USB sense). */
+	struct dirent *hidraw_entry_dirent;
+
+	/* For each item, see if it matches the vid/pid */
+	while ((hidraw_entry_dirent = readdir(hidraw_class_dir))) {
+		if (strcmp(hidraw_entry_dirent->d_name, ".") == 0)
+			continue;
+		if (strcmp(hidraw_entry_dirent->d_name, "..") == 0)
+			continue;
+
+		char *hidraw_uevent_filename = NULL;
+		char *hid_uevent_filename = NULL;
+		int hidraw_uevent_fd = -1;
+		int hid_uevent_fd = -1;
+		char *hidraw_uevent_buf = NULL;
+		char *hid_uevent_buf = NULL;
+		char *hid_id = NULL;
+		char *dev_name = NULL;
+
+		if (asprintf(&hidraw_uevent_filename, "/sys/class/hidraw/%s/uevent", hidraw_entry_dirent->d_name) == -1)
+			goto next;
+		if (asprintf(&hid_uevent_filename, "/sys/class/hidraw/%s/device/uevent", hidraw_entry_dirent->d_name) == -1)
+			goto next;
+
+		if ((hidraw_uevent_fd = open(hidraw_uevent_filename, O_RDONLY)) == -1)
+			goto next;
+		if ((hid_uevent_fd = open(hid_uevent_filename, O_RDONLY)) == -1)
+			goto next;
+
+		if (!(hidraw_uevent_buf = read_entire_sysfs_file(hidraw_uevent_fd)))
+			goto next;
+		if (!(hid_uevent_buf = read_entire_sysfs_file(hid_uevent_fd)))
+			goto next;
+
 		unsigned short dev_vid;
 		unsigned short dev_pid;
-		char *serial_number_utf8 = NULL;
-		char *product_name_utf8 = NULL;
 		int bus_type;
-		int result;
 
-		/* Get the filename of the /sys entry for the device
-		   and create a udev_device object (dev) representing it */
-		sysfs_path = udev_list_entry_get_name(dev_list_entry);
-		raw_dev = udev_device_new_from_syspath(udev, sysfs_path);
-		dev_path = udev_device_get_devnode(raw_dev);
-
-		hid_dev = udev_device_get_parent_with_subsystem_devtype(
-			raw_dev,
-			"hid",
-			NULL);
-
-		if (!hid_dev) {
-			/* Unable to find parent hid device. */
+		if (!(hid_id = uevent_find_line(hid_uevent_buf, "HID_ID")))
 			goto next;
-		}
+		if (!(dev_name = uevent_find_line(hidraw_uevent_buf, "DEVNAME")))
+			goto next;
 
-		result = parse_uevent_info(
-			udev_device_get_sysattr_value(hid_dev, "uevent"),
-			&bus_type,
-			&dev_vid,
-			&dev_pid,
-			&serial_number_utf8,
-			&product_name_utf8);
-
-		if (!result) {
+		/**
+		 *        type vendor   product
+		 * HID_ID=0003:000005AC:00008242
+		 **/
+		int ret = sscanf(hid_id, "%x:%hx:%hx", &bus_type, &dev_vid, &dev_pid);
+		if (ret != 3) {
 			/* parse_uevent_info() failed for at least one field. */
 			goto next;
 		}
 
-		if (bus_type != BUS_USB && bus_type != BUS_BLUETOOTH) {
-			/* We only know how to handle USB and BT devices. */
+		if (bus_type != BUS_USB) {
+			/* We only know how to handle USB devices. */
 			goto next;
 		}
 
@@ -468,102 +207,29 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 			else {
 				root = tmp;
 			}
-			prev_dev = cur_dev;
 			cur_dev = tmp;
 
 			/* Fill out the record */
 			cur_dev->next = NULL;
-			cur_dev->path = dev_path? strdup(dev_path): NULL;
-
-			/* VID/PID */
-			cur_dev->vendor_id = dev_vid;
-			cur_dev->product_id = dev_pid;
-
-			/* Serial Number */
-			cur_dev->serial_number = utf8_to_wchar_t(serial_number_utf8);
-
-			/* Release Number */
-			cur_dev->release_number = 0x0;
-
-			/* Interface Number */
-			cur_dev->interface_number = -1;
-
-			switch (bus_type) {
-				case BUS_USB:
-					/* The device pointed to by raw_dev contains information about
-					   the hidraw device. In order to get information about the
-					   USB device, get the parent device with the
-					   subsystem/devtype pair of "usb"/"usb_device". This will
-					   be several levels up the tree, but the function will find
-					   it. */
-					usb_dev = udev_device_get_parent_with_subsystem_devtype(
-							raw_dev,
-							"usb",
-							"usb_device");
-
-					if (!usb_dev) {
-						/* Free this device */
-						free(cur_dev->serial_number);
-						free(cur_dev->path);
-						free(cur_dev);
-
-						/* Take it off the device list. */
-						if (prev_dev) {
-							prev_dev->next = NULL;
-							cur_dev = prev_dev;
-						}
-						else {
-							cur_dev = root = NULL;
-						}
-
-						goto next;
-					}
-
-					/* Manufacturer and Product strings */
-					cur_dev->manufacturer_string = copy_udev_string(usb_dev, device_string_names[DEVICE_STRING_MANUFACTURER]);
-					cur_dev->product_string = copy_udev_string(usb_dev, device_string_names[DEVICE_STRING_PRODUCT]);
-
-					/* Release Number */
-					str = udev_device_get_sysattr_value(usb_dev, "bcdDevice");
-					cur_dev->release_number = (str)? strtol(str, NULL, 16): 0x0;
-
-					/* Get a handle to the interface's udev node. */
-					intf_dev = udev_device_get_parent_with_subsystem_devtype(
-							raw_dev,
-							"usb",
-							"usb_interface");
-					if (intf_dev) {
-						str = udev_device_get_sysattr_value(intf_dev, "bInterfaceNumber");
-						cur_dev->interface_number = (str)? strtol(str, NULL, 16): -1;
-					}
-
-					break;
-
-				case BUS_BLUETOOTH:
-					/* Manufacturer and Product strings */
-					cur_dev->manufacturer_string = wcsdup(L"");
-					cur_dev->product_string = utf8_to_wchar_t(product_name_utf8);
-
-					break;
-
-				default:
-					/* Unknown device type - this should never happen, as we
-					 * check for USB and Bluetooth devices above */
-					break;
+			if (asprintf(&(cur_dev->path), "/dev/%s", dev_name) == -1) {
+				// FIXME: Why is this considered fallible?
+				cur_dev->path = NULL;
 			}
 		}
 
 	next:
-		free(serial_number_utf8);
-		free(product_name_utf8);
-		udev_device_unref(raw_dev);
-		/* hid_dev, usb_dev and intf_dev don't need to be (and can't be)
-		   unref()d.  It will cause a double-free() error.  I'm not
-		   sure why.  */
+		free(hid_id);
+		free(dev_name);
+		free(hidraw_uevent_buf);
+		free(hid_uevent_buf);
+		if (hidraw_uevent_fd != -1)
+			close(hidraw_uevent_fd);
+		if (hid_uevent_fd != -1)
+			close(hid_uevent_fd);
+		free(hidraw_uevent_filename);
+		free(hid_uevent_filename);
 	}
-	/* Free the enumerator and udev objects. */
-	udev_enumerate_unref(enumerate);
-	udev_unref(udev);
+	closedir(hidraw_class_dir);
 
 	return root;
 }
@@ -574,9 +240,6 @@ void  HID_API_EXPORT hid_free_enumeration(struct hid_device_info *devs)
 	while (d) {
 		struct hid_device_info *next = d->next;
 		free(d->path);
-		free(d->serial_number);
-		free(d->manufacturer_string);
-		free(d->product_string);
 		free(d);
 		d = next;
 	}
@@ -595,31 +258,6 @@ hid_device * HID_API_EXPORT hid_open_path(const char *path)
 
 	/* If we have a good handle, return it. */
 	if (dev->device_handle > 0) {
-
-		/* Get the report descriptor */
-		int res, desc_size = 0;
-		struct hidraw_report_descriptor rpt_desc;
-
-		memset(&rpt_desc, 0x0, sizeof(rpt_desc));
-
-		/* Get Report Descriptor Size */
-		res = ioctl(dev->device_handle, HIDIOCGRDESCSIZE, &desc_size);
-		if (res < 0)
-			perror("HIDIOCGRDESCSIZE");
-
-
-		/* Get Report Descriptor */
-		rpt_desc.size = desc_size;
-		res = ioctl(dev->device_handle, HIDIOCGRDESC, &rpt_desc);
-		if (res < 0) {
-			perror("HIDIOCGRDESC");
-		} else {
-			/* Determine if this device uses numbered reports. */
-			dev->uses_numbered_reports =
-				uses_numbered_reports(rpt_desc.value,
-				                      rpt_desc.size);
-		}
-
 		return dev;
 	}
 	else {
@@ -674,15 +312,6 @@ int HID_API_EXPORT hid_read_timeout(hid_device *dev, unsigned char *data, size_t
 	if (bytes_read < 0 && (errno == EAGAIN || errno == EINPROGRESS))
 		bytes_read = 0;
 
-	if (bytes_read >= 0 &&
-	    kernel_version != 0 &&
-	    kernel_version < KERNEL_VERSION(2,6,34) &&
-	    dev->uses_numbered_reports) {
-		/* Work around a kernel bug. Chop off the first byte. */
-		memmove(data, data+1, bytes_read);
-		bytes_read--;
-	}
-
 	return bytes_read;
 }
 
@@ -694,15 +323,63 @@ void HID_API_EXPORT hid_close(hid_device *dev)
 	free(dev);
 }
 
+static int get_device_string(hid_device *dev, const char *key_str, wchar_t *string, size_t maxlen)
+{
+	char *usb_device_sysfs_filename;
+	int usb_device_sysfs_fd = 0;
+	char *usb_device_sysfs_buf = NULL;
+	struct stat s;
+	int ret = -1;
+
+	/* Get the dev_t (major/minor numbers) from the file handle. */
+	ret = fstat(dev->device_handle, &s);
+	if (-1 == ret)
+		return ret;
+
+	/* Assume that we get the hidraw node, the device/ link is the hid bus node, its parent is the USB interface,
+	   and its parent is the USB device. This isn't the most resilient against future sysfs ABI changes, but
+	   *) based on poking around the kernel source, changes here are unlikely
+	   *) this is much simpler than traversing up and trying to find which node (if any) is the USB device */
+	ret = asprintf(&usb_device_sysfs_filename, "/sys/dev/char/%d:%d/device/../../%s",
+		major(s.st_rdev), minor(s.st_rdev), key_str);
+	if (-1 == ret) {
+		goto end;
+	}
+	usb_device_sysfs_fd = open(usb_device_sysfs_filename, O_RDONLY);
+	if (usb_device_sysfs_fd == -1) {
+		ret = -1;
+		goto end;
+	}
+
+	// Read the contents
+	usb_device_sysfs_buf = read_entire_sysfs_file(usb_device_sysfs_fd);
+	if (!usb_device_sysfs_buf) {
+		ret = -1;
+		goto end;
+	}
+
+	/* Convert the string from UTF-8 to wchar_t */
+	size_t retm;
+	retm = mbstowcs(string, usb_device_sysfs_buf, maxlen);
+	ret = (retm == (size_t)-1)? -1: 0;
+
+end:
+	free(usb_device_sysfs_buf);
+	free(usb_device_sysfs_filename);
+	if (usb_device_sysfs_fd != -1)
+		close(usb_device_sysfs_fd);
+
+	return ret;
+}
 
 int HID_API_EXPORT_CALL hid_get_manufacturer_string(hid_device *dev, wchar_t *string, size_t maxlen)
 {
-	return get_device_string(dev, DEVICE_STRING_MANUFACTURER, string, maxlen);
+	return get_device_string(dev, "manufacturer", string, maxlen);
 }
 
 int HID_API_EXPORT_CALL hid_get_product_string(hid_device *dev, wchar_t *string, size_t maxlen)
 {
-	return get_device_string(dev, DEVICE_STRING_PRODUCT, string, maxlen);
+	return get_device_string(dev, "product", string, maxlen);
 }
 
 HID_API_EXPORT const wchar_t * HID_API_CALL  hid_error(hid_device *dev)

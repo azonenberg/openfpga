@@ -49,30 +49,6 @@ extern "C" {
 		struct hid_device_info {
 			/** Platform-specific device path */
 			char *path;
-			/** Device Vendor ID */
-			unsigned short vendor_id;
-			/** Device Product ID */
-			unsigned short product_id;
-			/** Serial Number */
-			wchar_t *serial_number;
-			/** Device Release Number in binary-coded decimal,
-			    also known as Device Version Number */
-			unsigned short release_number;
-			/** Manufacturer String */
-			wchar_t *manufacturer_string;
-			/** Product string */
-			wchar_t *product_string;
-			/** Usage Page for this Device/Interface
-			    (Windows/Mac only). */
-			unsigned short usage_page;
-			/** Usage for this Device/Interface
-			    (Windows/Mac only).*/
-			unsigned short usage;
-			/** The USB interface which this logical device
-			    represents. Valid on both Linux implementations
-			    in all cases, and valid on the Windows implementation
-			    only if the device contains more than one interface. */
-			int interface_number;
 
 			/** Pointer to the next device */
 			struct hid_device_info *next;

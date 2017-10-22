@@ -333,6 +333,7 @@ int main(int argc, char* argv[])
 	{
 		LogNotice("No actions requested, exiting (use --help for help)\n");
 		SetStatusLED(hdev, 0);
+		USBCleanup(hdev);
 		return 0;
 	}
 
