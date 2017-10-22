@@ -17,6 +17,8 @@
  **********************************************************************************************************************/
 
 #include <xbpar.h>
+#include <unordered_map>
+#include <unordered_set>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
@@ -122,4 +124,106 @@ void PARGraph::IndexNodesByLabel()
 PARGraphNode* PARGraph::GetNodeByLabelAndIndex(uint32_t label, uint32_t index) const
 {
 	return m_labeledNodes[label][index];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Debugging
+
+#include <cstdio>
+
+std::string PARGraph::DumpAsDot() const
+{
+	std::string ret;
+
+	// Need to collect all inbound edges because these are harder to obtain
+	std::unordered_map<PARGraphNode*, std::unordered_set<std::string>> inbound_edge_map;
+	for(auto n : m_nodes)
+	{
+		for(uint32_t i = 0; i < n->GetEdgeCount(); i++)
+		{
+			auto e = n->GetEdgeByIndex(i);
+			inbound_edge_map[e->m_destnode].insert(e->m_destport);
+		}
+	}
+
+	ret += "digraph pargraph {\n";
+	ret += "node [shape=record];\n";
+
+	// Write out nodes
+	for(auto n : m_nodes)
+	{
+		ret += "n" + std::to_string((uintptr_t)n) + " [label=\"";
+
+		// Inbound
+		if (inbound_edge_map[n].size())
+		{
+			ret += "{";
+			size_t count = 0;
+			for(auto i = inbound_edge_map[n].begin(); i != inbound_edge_map[n].end(); i++, count++)
+			{
+				ret += "<" + *i + "> ";
+				ret += *i;
+				if (count != inbound_edge_map[n].size() - 1)
+					ret += "|";
+			}
+			ret += "}|";
+		}
+
+		// Labels
+		ret += std::to_string(n->GetLabel());
+		if (n->GetAlternateLabelCount())
+		{
+			ret += " (";
+			for(size_t i = 0; i < n->GetAlternateLabelCount(); i++)
+			{
+				ret += std::to_string(n->GetAlternateLabel(i));
+				if (i != n->GetAlternateLabelCount() - 1)
+					ret += ", ";
+			}
+			ret += ")";
+		}
+
+		// Outbound
+		if (n->GetEdgeCount())
+		{
+			std::unordered_set<std::string> used_outbound_ports;
+
+			for(size_t i = 0; i < n->GetEdgeCount(); i++)
+				used_outbound_ports.insert(n->GetEdgeByIndex(i)->m_sourceport);
+			
+			ret += "|{";
+			size_t count = 0;
+			for(auto i = used_outbound_ports.begin(); i != used_outbound_ports.end(); i++, count++)
+			{
+				ret += "<" + *i + "> ";
+				ret += *i;
+				if (count != used_outbound_ports.size() - 1)
+					ret += "|";
+			}
+			ret += "}";
+		}
+
+		ret += "\"];\n";
+	}
+
+	// Write out edges
+	for(auto n : m_nodes)
+	{
+		for(uint32_t i = 0; i < n->GetEdgeCount(); i++)
+		{
+			auto e = n->GetEdgeByIndex(i);
+
+			ret += "n" + std::to_string((uintptr_t)e->m_sourcenode) + ":\"" + e->m_sourceport;
+			ret += "\" -> ";
+			ret += "n" + std::to_string((uintptr_t)e->m_destnode) + ":\"" + e->m_destport;
+			ret += "\";\n";
+		}
+	}
+
+	ret += "}\n";
+
+	printf("%s", ret.c_str());
+	fflush(stdout);
+
+	return ret;
 }

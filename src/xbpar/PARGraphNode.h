@@ -71,7 +71,7 @@ public:
 	{ return m_mate; }
 
 	uint32_t GetEdgeCount() const;
-	const PARGraphEdge* GetEdgeByIndex(uint32_t index);
+	const PARGraphEdge* GetEdgeByIndex(uint32_t index) const;
 
 	void AddEdge(std::string srcport, PARGraphNode* sink, std::string dstport = "")
 	{ m_edges.push_back(new PARGraphEdge(this, srcport, sink, dstport)); }

@@ -1,0 +1,33 @@
+read_verilog test.v
+read_verilog -lib cells_sim.v
+
+# begin
+hierarchy -check -top top
+
+# flatten
+proc
+flatten
+tribuf -logic
+deminout
+
+# coarse
+synth -run coarse
+
+# fine
+# why?
+opt -fast -full
+techmap
+abc -sop -I 40 -P 56
+# why?
+opt -fast
+
+iopadmap -bits -inpad IBUF O:I -outpad IOBUFE I:IO -inoutpad IOBUFE O:IO -toutpad IOBUFE E:I:IO -tinoutpad IOBUFE E:O:I:IO
+# techmap -map cells_map.v
+
+# check
+hierarchy -check
+stat
+check -noinit
+
+show
+write_json test.json
