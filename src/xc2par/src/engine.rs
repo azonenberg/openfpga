@@ -24,6 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::collections::{HashSet};
+use std::iter::FromIterator;
 
 extern crate xc2bit;
 use self::xc2bit::*;
@@ -74,4 +75,92 @@ pub fn greedy_initial_placement(mcs: &[NetlistMacrocell]) -> Vec<[isize; MCS_PER
     }
 
     ret
+}
+
+fn compare_andterms(g: &NetlistGraph, a: ObjPoolIndex<NetlistGraphNode>, b: ObjPoolIndex<NetlistGraphNode>) -> bool {
+    let a_ = g.nodes.get(a);
+    let b_ = g.nodes.get(b);
+    if let NetlistGraphNodeVariant::AndTerm{
+        inputs_true: ref a_inp_true, inputs_comp: ref a_inp_comp, ..} = a_.variant {
+
+        if let NetlistGraphNodeVariant::AndTerm{
+            inputs_true: ref b_inp_true, inputs_comp: ref b_inp_comp, ..} = b_.variant {
+
+            let mut a_inp_true_h: HashSet<ObjPoolIndex<NetlistGraphNode>> = HashSet::new();
+            let mut a_inp_comp_h: HashSet<ObjPoolIndex<NetlistGraphNode>> = HashSet::new();
+            let mut b_inp_true_h: HashSet<ObjPoolIndex<NetlistGraphNode>> = HashSet::new();
+            let mut b_inp_comp_h: HashSet<ObjPoolIndex<NetlistGraphNode>> = HashSet::new();
+
+            for &x in a_inp_true {
+                let inp_net = g.nets.get(x);
+                let src_node_idx = inp_net.source.unwrap().0;
+                let src_node = g.nodes.get(src_node_idx);
+                if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
+                    let zia_inp_net = g.nets.get(input);
+                    let zia_src_node_idx = zia_inp_net.source.unwrap().0;
+                    a_inp_true_h.insert(zia_src_node_idx);
+                } else {
+                    panic!("mismatched node types");
+                }
+            }
+
+            for &x in a_inp_comp {
+                let inp_net = g.nets.get(x);
+                let src_node_idx = inp_net.source.unwrap().0;
+                let src_node = g.nodes.get(src_node_idx);
+                if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
+                    let zia_inp_net = g.nets.get(input);
+                    let zia_src_node_idx = zia_inp_net.source.unwrap().0;
+                    a_inp_comp_h.insert(zia_src_node_idx);
+                } else {
+                    panic!("mismatched node types");
+                }
+            }
+
+            for &x in b_inp_true {
+                let inp_net = g.nets.get(x);
+                let src_node_idx = inp_net.source.unwrap().0;
+                let src_node = g.nodes.get(src_node_idx);
+                if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
+                    let zia_inp_net = g.nets.get(input);
+                    let zia_src_node_idx = zia_inp_net.source.unwrap().0;
+                    b_inp_true_h.insert(zia_src_node_idx);
+                } else {
+                    panic!("mismatched node types");
+                }
+            }
+
+            for &x in b_inp_comp {
+                let inp_net = g.nets.get(x);
+                let src_node_idx = inp_net.source.unwrap().0;
+                let src_node = g.nodes.get(src_node_idx);
+                if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
+                    let zia_inp_net = g.nets.get(input);
+                    let zia_src_node_idx = zia_inp_net.source.unwrap().0;
+                    b_inp_comp_h.insert(zia_src_node_idx);
+                } else {
+                    panic!("mismatched node types");
+                }
+            }
+
+            a_inp_true_h == b_inp_true_h && a_inp_comp_h == b_inp_comp_h
+        } else {
+            panic!("not an and term");
+        }
+    } else {
+        panic!("not an and term");
+    }
+}
+
+pub enum AndTermAssignmentResult {
+    Success([Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB]),
+    Failure(Vec<(usize, u32)>),
+}
+
+pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignment: &[[isize; MCS_PER_FB]])
+    -> AndTermAssignmentResult {
+
+    let mut ret = [None; ANDTERMS_PER_FB];
+
+    AndTermAssignmentResult::Success(ret)
 }
