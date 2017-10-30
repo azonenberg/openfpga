@@ -184,7 +184,7 @@ pub enum NetlistMacrocell {
         i: ObjPoolIndex<NetlistGraphNode>,
     },
     BuriedReg {
-        // Index of the XOR
+        // Index of the register
         i: ObjPoolIndex<NetlistGraphNode>,
         has_comb_fb: bool,
     }
@@ -765,7 +765,7 @@ impl NetlistGraph {
                 } else {
                     // Buried register
                     ret.push(NetlistMacrocell::BuriedReg{
-                        i: node_idx,
+                        i: maybe_reg_index.unwrap(),
                         has_comb_fb: self.nets.get(output).sinks.len() > 1
                     });
                 }

@@ -374,10 +374,124 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
                 }
             },
             NetlistMacrocell::BuriedComb{i} => {
-
+                let xornode = g.nodes.get(i);
+                if let NetlistGraphNodeVariant::Xor{andterm_input, ..} = xornode.variant {
+                    if andterm_input.is_some() {
+                        let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
+                        // This goes into PTC
+                        let ptc_idx = get_ptc(mc_i as u32) as usize;
+                        if ret[ptc_idx].is_none() {
+                            ret[ptc_idx] = Some(ptc_node_idx);
+                        } else {
+                            // This should be impossible. We assign all the special product terms first. Nothing else
+                            // can get assigned to this site
+                            panic!("unexpected p-term in use")
+                        }
+                    }
+                } else {
+                    panic!("not an xor");
+                }
             },
             NetlistMacrocell::BuriedReg{i, ..} => {
+                let regnode = g.nodes.get(i);
 
+                if let NetlistGraphNodeVariant::Reg{
+                    set_input, reset_input, ce_input, clk_input, dt_input, ..} = regnode.variant {
+
+                    let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
+                    if let NetlistGraphNodeVariant::Xor{andterm_input, ..} = dt_input_node.variant {
+                        // XOR feeding register
+                        if andterm_input.is_some() {
+                            let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
+                            // This goes into PTC
+                            let ptc_idx = get_ptc(mc_i as u32) as usize;
+                            if ret[ptc_idx].is_none() {
+                                ret[ptc_idx] = Some(ptc_node_idx);
+                            } else {
+                                if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
+                                    pterm_conflicts += 1;
+                                }
+                            }
+
+                            // Extra check for unsatisfiable PTC usage
+                            if ce_input.is_some() {
+                                let ce_input_node = g.nets.get(ce_input.unwrap()).source.unwrap().0;
+
+                                // If a node is using both the PTC fast path into the XOR gate as well as
+                                // clock enables, these must be identical. Both of these do not have any
+                                // choices for using global or control terms.
+                                if !compare_andterms(g, ptc_node_idx, ce_input_node) {
+                                    return AndTermAssignmentResult::FailurePTCNeverSatisfiable;
+                                }
+                            }
+                        }
+                    } else {
+                        // For a buried node, this must be an xor. The other choice is a direct input which is
+                        // not possible.
+                        panic!("not an xor")
+                    }
+
+                    if ce_input.is_some() {
+                        let ptc_node_idx = g.nets.get(ce_input.unwrap()).source.unwrap().0;
+                        // This goes into PTC
+                        let ptc_idx = get_ptc(mc_i as u32) as usize;
+                        if ret[ptc_idx].is_none() {
+                            ret[ptc_idx] = Some(ptc_node_idx);
+                        } else {
+                            if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
+                                pterm_conflicts += 1;
+                            }
+                        }
+                    }
+
+                    let clk_node_idx = g.nets.get(clk_input).source.unwrap().0;
+                    let clk_node = g.nodes.get(clk_node_idx);
+                    if let NetlistGraphNodeVariant::AndTerm{..} = clk_node.variant {
+                        // This goes into PTC
+                        let ptc_idx = get_ptc(mc_i as u32) as usize;
+                        if ret[ptc_idx].is_none() {
+                            ret[ptc_idx] = Some(clk_node_idx);
+                        } else {
+                            if !compare_andterms(g, ret[ptc_idx].unwrap(), clk_node_idx) {
+                                pterm_conflicts += 1;
+                            }
+                        }
+                    }
+
+                    if set_input.is_some() {
+                        let set_node_idx = g.nets.get(set_input.unwrap()).source.unwrap().0;
+                        let set_node = g.nodes.get(set_node_idx);
+                        if let NetlistGraphNodeVariant::AndTerm{..} = set_node.variant {
+                            // This goes into PTA
+                            let pta_idx = get_pta(mc_i as u32) as usize;
+                            if ret[pta_idx].is_none() {
+                                ret[pta_idx] = Some(set_node_idx);
+                            } else {
+                                if !compare_andterms(g, ret[pta_idx].unwrap(), set_node_idx) {
+                                    pterm_conflicts += 1;
+                                }
+                            }
+                        }
+                    }
+
+                    if reset_input.is_some() {
+                        let rst_node_idx = g.nets.get(reset_input.unwrap()).source.unwrap().0;
+                        let rst_node = g.nodes.get(rst_node_idx);
+                        if let NetlistGraphNodeVariant::AndTerm{..} = rst_node.variant {
+                            // This goes into PTA
+                            let pta_idx = get_pta(mc_i as u32) as usize;
+                            if ret[pta_idx].is_none() {
+                                ret[pta_idx] = Some(rst_node_idx);
+                            } else {
+                                if !compare_andterms(g, ret[pta_idx].unwrap(), rst_node_idx) {
+                                    pterm_conflicts += 1;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    panic!("not a reg");
+                }
             },
             // These must use the second index, not the first index
             NetlistMacrocell::PinInputUnreg{..} | NetlistMacrocell::PinInputReg{..} => unreachable!(),
