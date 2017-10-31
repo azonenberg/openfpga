@@ -502,5 +502,113 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
         return AndTermAssignmentResult::FailurePtermConflict(pterm_conflicts);
     }
 
+    // Finally, place all of the remaining p-terms
+    let mut unfitted_pterms = 0;
+    for mc_i in 0..MCS_PER_FB {
+        if mc_assignment[mc_i].0 < 0 {
+            continue;
+        }
+
+        let mut orterm_node = None;
+        let this_mc = &mcs[mc_assignment[mc_i].0 as usize];
+        match *this_mc {
+            NetlistMacrocell::PinOutput{i} => {
+                let iobufe = g.nodes.get(i);
+                if let NetlistGraphNodeVariant::IOBuf{input, ..} = iobufe.variant {
+                    if input.is_some() {
+                        let input_node = g.nodes.get(g.nets.get(input.unwrap()).source.unwrap().0);
+                        if let NetlistGraphNodeVariant::Xor{orterm_input, ..} = input_node.variant {
+                            if orterm_input.is_some() {
+                                orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
+                            }
+                        } else if let NetlistGraphNodeVariant::Reg{dt_input, ..} = input_node.variant {
+                            let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
+                            if let NetlistGraphNodeVariant::Xor{orterm_input, ..} = dt_input_node.variant {
+                                if orterm_input.is_some() {
+                                    orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
+                                }
+                            }
+                        } else {
+                            panic!("not an xor or reg");
+                        }
+                    }
+                } else {
+                    panic!("not an iobufe");
+                }
+            },
+            NetlistMacrocell::BuriedComb{i} => {
+                let xornode = g.nodes.get(i);
+                if let NetlistGraphNodeVariant::Xor{orterm_input, ..} = xornode.variant {
+                    if orterm_input.is_some() {
+                        orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
+                    }
+                } else {
+                    panic!("not an xor");
+                }
+            },
+            NetlistMacrocell::BuriedReg{i, ..} => {
+                let regnode = g.nodes.get(i);
+
+                if let NetlistGraphNodeVariant::Reg{dt_input, ..} = regnode.variant {
+                    let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
+                    if let NetlistGraphNodeVariant::Xor{orterm_input, ..} = dt_input_node.variant {
+                        if orterm_input.is_some() {
+                            orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
+                        }
+                    } else {
+                        // For a buried node, this must be an xor. The other choice is a direct input which is
+                        // not possible.
+                        panic!("not an xor")
+                    }
+                } else {
+                    panic!("not a reg");
+                }
+            },
+            // These must use the second index, not the first index
+            NetlistMacrocell::PinInputUnreg{..} | NetlistMacrocell::PinInputReg{..} => unreachable!(),
+        }
+
+        if orterm_node.is_some() {
+            let orterm_obj = g.nodes.get(orterm_node.unwrap());
+            if let NetlistGraphNodeVariant::OrTerm{ref inputs, ..} = orterm_obj.variant {
+                for andterm_net_idx in inputs {
+                    let andterm_node_idx = g.nets.get(*andterm_net_idx).source.unwrap().0;
+                    let mut idx = None;
+                    // FIXME: This code is super inefficient
+                    // Is it equal to anything already assigned?
+                    for pterm_i in 0..ANDTERMS_PER_FB {
+                        if ret[pterm_i].is_some() && compare_andterms(g, ret[pterm_i].unwrap(), andterm_node_idx) {
+                            idx = Some(pterm_i);
+                            break;
+                        }
+                    }
+
+                    if idx.is_none() {
+                        // Need to find an unused spot
+                        for pterm_i in 0..ANDTERMS_PER_FB {
+                            if ret[pterm_i].is_none() {
+                                idx = Some(pterm_i);
+                                break;
+                            }
+                        }
+                    }
+
+                    if idx.is_none() {
+                        unfitted_pterms += 1;
+                    } else {
+                        // Put it here
+                        ret[idx.unwrap()] = Some(andterm_node_idx);
+                    }
+                }
+            } else {
+                panic!("not an or");
+            }
+        }
+    }
+
+    if unfitted_pterms > 0 {
+        return AndTermAssignmentResult::FailurePtermExceeded(unfitted_pterms);
+    }
+
     AndTermAssignmentResult::Success(ret)
 }
