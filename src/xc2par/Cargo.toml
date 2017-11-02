@@ -10,5 +10,6 @@ name = "xc2par"
 crate-type = ["rlib", "staticlib"]
 
 [dependencies]
+rand = "0.3"
 yosys-netlist-json = { path = "../yosys-netlist-json" }
 xc2bit = { path = "../xc2bit" }

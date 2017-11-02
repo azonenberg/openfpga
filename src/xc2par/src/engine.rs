@@ -26,6 +26,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::collections::{HashSet};
 use std::iter::FromIterator;
 
+extern crate rand;
+use self::rand::{Rng, SeedableRng, XorShiftRng};
+
 extern crate xc2bit;
 use self::xc2bit::*;
 
@@ -853,10 +856,165 @@ pub fn try_assign_fb(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments:
                 panic!("scores are borked");
             }
 
-            failure_scores.push((mc_i as u32, (base_failing_score - new_failing_score) as u32));
-            mc_assignments[fb_i as usize][mc_i].0 = old_assign;
+            if base_failing_score - new_failing_score > 0 {
+                failure_scores.push((mc_i as u32, (base_failing_score - new_failing_score) as u32));
+                mc_assignments[fb_i as usize][mc_i].0 = old_assign;
+            } else {
+                // XXX
+            }
         }
     }
 
     FBAssignmentResult::Failure(failure_scores)
+}
+
+pub enum PARResult {
+    Success(Vec<([(isize, isize); MCS_PER_FB],
+        [Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB],
+        [XC2ZIAInput; INPUTS_PER_ANDTERM])>),
+    FailurePTCNeverSatisfiable,
+    FailureIterationsExceeded,
+}
+
+pub fn do_par(g: &NetlistGraph) -> PARResult {
+    let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
+
+    let ngraph_collected_mc = g.gather_macrocells();
+    println!("{:?}", ngraph_collected_mc);
+
+    let mut macrocell_placement = greedy_initial_placement(&ngraph_collected_mc);
+    println!("{:?}", macrocell_placement);
+
+    let mut par_results_per_fb = Vec::with_capacity(2);
+    for fb_i in 0..2 {
+        par_results_per_fb.push(None);
+    }
+
+    for i in 0..1000 {
+        let mut bad_candidates = Vec::new();
+        let mut bad_score_sum = 0;
+        for fb_i in 0..2 {
+            let fb_assign_result = try_assign_fb(g, &ngraph_collected_mc, &mut macrocell_placement, fb_i as u32);
+            match fb_assign_result {
+                FBAssignmentResult::Success((pterm, zia)) => {
+                    par_results_per_fb[fb_i] = Some((pterm, zia));
+                },
+                FBAssignmentResult::FailurePTCNeverSatisfiable =>
+                    return PARResult::FailurePTCNeverSatisfiable,
+                FBAssignmentResult::Failure(fail_vec) => {
+                    for (mc, score) in fail_vec {
+                        bad_score_sum += bad_score_sum;
+                        bad_candidates.push((fb_i as u32, mc, score));
+                    }
+                }
+            }
+        }
+
+        if bad_candidates.len() == 0 {
+            // It worked!
+            let mut ret = Vec::new();
+            for i in 0..2 {
+                ret.push((macrocell_placement[i], par_results_per_fb[i].unwrap().0, par_results_per_fb[i].unwrap().1));
+            }
+
+            return PARResult::Success(ret);
+        }
+
+        // Here, we need to swap some stuff around
+        let mut move_cand_rand = prng.gen_range(0, bad_score_sum);
+        let mut move_cand_idx = 0;
+        while move_cand_rand >= bad_candidates[move_cand_idx].2 {
+            move_cand_rand -= bad_candidates[move_cand_idx].2;
+            move_cand_idx += 1;
+        }
+        let (move_fb, move_mc, _) = bad_candidates[move_cand_idx];
+
+        // Find min-conflicts site
+        let mut move_to_badness_vec = Vec::new();
+        let mut best_badness = None;
+        for cand_fb_i in 0..2 {
+            for cand_mc_i in 0..MCS_PER_FB {
+                // This site is not usable
+                if macrocell_placement[cand_fb_i][cand_mc_i].0 < -1 {
+                    continue;
+                }
+
+                let mut new_badness = 0;
+                // Does this violate a pairing constraint?
+                if macrocell_placement[cand_fb_i][cand_mc_i].1 >= 0 {
+                    match ngraph_collected_mc[macrocell_placement[move_fb as usize][move_mc as usize].0 as usize] {
+                        NetlistMacrocell::PinOutput{..} => {
+                            new_badness = 1;
+                        },
+                        NetlistMacrocell::BuriedComb{..} => {
+                            // Ok, do nothing
+                        },
+                        NetlistMacrocell::BuriedReg{has_comb_fb, ..} => {
+                            match ngraph_collected_mc[macrocell_placement[cand_fb_i][cand_mc_i].1 as usize] {
+                                NetlistMacrocell::PinInputReg{..} => {
+                                    new_badness = 1;
+                                },
+                                NetlistMacrocell::PinInputUnreg{..} => {
+                                    if has_comb_fb {
+                                        new_badness = 1;
+                                    }
+                                },
+                                _ => unreachable!(),
+                            }
+                        }
+                        _ => unreachable!(),
+                    }
+                }
+
+                // The new site is possibly ok, so let's swap it there for now
+                let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].0;
+                let orig_cand_assignment = macrocell_placement[cand_fb_i][cand_mc_i].0;
+                macrocell_placement[cand_fb_i][cand_mc_i].0 = orig_move_assignment;
+                macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
+
+                // Now score
+                match try_assign_fb(g, &ngraph_collected_mc, &mut macrocell_placement, cand_fb_i as u32) {
+                    FBAssignmentResult::Success(..) => {
+                        // Do nothing, don't need to change badness (will be 0 if was 0)
+                    },
+                    FBAssignmentResult::FailurePTCNeverSatisfiable => unreachable!(),
+                    FBAssignmentResult::Failure(fail_vec) => {
+                        for (mc, score) in fail_vec {
+                            if mc == cand_mc_i as u32 {
+                                new_badness += score;
+                            }
+                            // XXX what happens if this condition never triggers?
+                        }
+                    }
+                }
+
+                // Remember it
+                move_to_badness_vec.push((cand_fb_i, cand_mc_i, new_badness));
+                if best_badness.is_none() || best_badness.unwrap() > new_badness {
+                    best_badness = Some(new_badness);
+                }
+
+                macrocell_placement[cand_fb_i][cand_mc_i].0 = orig_cand_assignment;
+                macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_move_assignment;
+            }
+        }
+
+        // Now we need to get the candidates matching the lowest score
+        let mut move_final_candidates = Vec::new();
+        for x in move_to_badness_vec {
+            if x.2 == best_badness.unwrap() {
+                move_final_candidates.push((x.0, x.1));
+            }
+        }
+
+        // Do the actual swap now
+        let move_final_candidates_rand_idx = prng.gen_range(0, move_final_candidates.len());
+        let (move_final_fb, move_final_mc) = move_final_candidates[move_final_candidates_rand_idx];
+        let final_orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].0;
+        let final_orig_cand_assignment = macrocell_placement[move_final_fb][move_final_mc].0;
+        macrocell_placement[move_final_fb][move_final_mc].0 = final_orig_move_assignment;
+        macrocell_placement[move_fb as usize][move_mc as usize].0 = final_orig_cand_assignment;
+    }
+
+    PARResult::FailureIterationsExceeded
 }

@@ -56,17 +56,9 @@ fn main() {
     let mut ngraph_rs = NetlistGraph::from_yosys_netlist(&yosys_netlist).unwrap();
     // ngraph_rs.insert_into_par_graph(&mut par_graphs, &lmap);
     println!("{:?}", ngraph_rs);
-    let ngraph_collected_mc = ngraph_rs.gather_macrocells();
-    println!("{:?}", ngraph_collected_mc);
 
-    let mut macrocell_placement = greedy_initial_placement(&ngraph_collected_mc);
-    println!("{:?}", macrocell_placement);
-
-    let test1 = try_assign_fb(&ngraph_rs, &ngraph_collected_mc, &mut macrocell_placement, 0);
-    let test2 = try_assign_fb(&ngraph_rs, &ngraph_collected_mc, &mut macrocell_placement, 1);
-
-    if let FBAssignmentResult::Success(..) = test1 {} else {panic!("test1")}
-    if let FBAssignmentResult::Success(..) = test2 {} else {panic!("test2")}
+    let par_result = do_par(&ngraph_rs);
+    if let PARResult::Success(..) = par_result {} else {panic!("asdf")}
 
     // // The graphs for the PAR engine
     // let mut par_graphs = PARGraphPair::<_, _>::new_pair();
