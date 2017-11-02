@@ -63,6 +63,11 @@ fn main() {
     println!("{:?}", macrocell_placement);
 
     let test1 = try_assign_andterms(&ngraph_rs, &ngraph_collected_mc, &macrocell_placement[0]);
+    if let AndTermAssignmentResult::Success(x) = test1 {
+        let test2 = try_assign_zia(&ngraph_rs, &ngraph_collected_mc, &macrocell_placement, &x);
+    } else {
+        unreachable!();
+    }
 
     // // The graphs for the PAR engine
     // let mut par_graphs = PARGraphPair::<_, _>::new_pair();

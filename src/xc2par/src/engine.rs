@@ -612,3 +612,165 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
 
     AndTermAssignmentResult::Success(ret)
 }
+
+pub enum ZIAAssignmentResult {
+    Success([XC2ZIAInput; INPUTS_PER_ANDTERM]),
+    FailureTooManyInputs(u32),
+    FailureUnroutable(u32),
+}
+
+pub fn try_assign_zia(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments: &[[(isize, isize); MCS_PER_FB]],
+    pterm_assignment: &[Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB])
+    -> ZIAAssignmentResult {
+
+    let mut ret = [XC2ZIAInput::One; INPUTS_PER_ANDTERM];
+
+    // Collect the inputs that need to go into this FB
+    let mut collected_inputs_vec = Vec::new();
+    let mut collected_inputs_set = HashSet::new();
+    for pt_i in 0..ANDTERMS_PER_FB {
+        if pterm_assignment[pt_i].is_some() {
+            let andterm_node = g.nodes.get(pterm_assignment[pt_i].unwrap());
+            if let NetlistGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, ..} = andterm_node.variant {
+                for &input_net in inputs_true {
+                    let input_node = g.nodes.get(g.nets.get(input_net).source.unwrap().0);
+                    if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
+                        let input_real_node_idx = g.nets.get(input).source.unwrap().0;
+                        if !collected_inputs_set.contains(&input_real_node_idx) {
+                            collected_inputs_set.insert(input_real_node_idx);
+                            collected_inputs_vec.push(input_real_node_idx);
+                        }
+                    } else {
+                        panic!("not a zia buf");
+                    }
+                }
+                for &input_net in inputs_comp {
+                    let input_node = g.nodes.get(g.nets.get(input_net).source.unwrap().0);
+                    if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
+                        let input_real_node_idx = g.nets.get(input).source.unwrap().0;
+                        if !collected_inputs_set.contains(&input_real_node_idx) {
+                            collected_inputs_set.insert(input_real_node_idx);
+                            collected_inputs_vec.push(input_real_node_idx);
+                        }
+                    } else {
+                        panic!("not a zia buf");
+                    }
+                }
+            } else {
+                panic!("not an and");
+            }
+        }
+    }
+
+    // Must have few enough results
+    if collected_inputs_vec.len() > 40 {
+        return ZIAAssignmentResult::FailureTooManyInputs(collected_inputs_vec.len() as u32 - 40)
+    }
+
+    // Find candidate sites
+    let candidate_sites = collected_inputs_vec.iter().map(|input| {
+        // XXX FIXME
+        let mut fbmc = None;
+        for fb_i in 0..mc_assignments.len() {
+            for mc_i in 0..MCS_PER_FB {
+                if mc_assignments[fb_i][mc_i].0 >= 0 {
+                    let netlist_mc = &mcs[mc_assignments[fb_i][mc_i].0 as usize];
+                    let (i, need_to_use_ibuf_zia_path) = match netlist_mc {
+                        &NetlistMacrocell::PinOutput{i} => (i, false),
+                        &NetlistMacrocell::BuriedComb{i} => (i, false),
+                        &NetlistMacrocell::BuriedReg{i, has_comb_fb} => (i, has_comb_fb),
+                        _ => unreachable!(),
+                    };
+                    if i == (*input) {
+                        fbmc = Some((fb_i, mc_i, need_to_use_ibuf_zia_path));
+                        break;
+                    }
+                }
+                if mc_assignments[fb_i][mc_i].1 >= 0 {
+                    let netlist_mc = &mcs[mc_assignments[fb_i][mc_i].1 as usize];
+                    let i = match netlist_mc {
+                        &NetlistMacrocell::PinInputUnreg{i} => i,
+                        &NetlistMacrocell::PinInputReg{i} => i,
+                        _ => unreachable!(),
+                    };
+                    if i == (*input) {
+                        fbmc = Some((fb_i, mc_i, false));
+                        break;
+                    }
+                }
+            }
+        }
+        let (fb, mc, need_to_use_ibuf_zia_path) = fbmc.expect("macrocell not assigned");
+
+        // What input do we actually want?
+        let input_obj = g.nodes.get(*input);
+        let choice = match input_obj.variant {
+            NetlistGraphNodeVariant::InBuf{..} => {
+                // FIXME: Hack
+                if true && fb == 2 && mc == 0 {
+                    XC2ZIAInput::DedicatedInput
+                } else {
+                    XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
+                }
+            },
+            NetlistGraphNodeVariant::IOBuf{..} => {
+                XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
+            },
+            NetlistGraphNodeVariant::Xor{..} => {
+                XC2ZIAInput::Macrocell{fb: fb as u32, mc: mc as u32}
+            },
+            NetlistGraphNodeVariant::Reg{..} => {
+                if need_to_use_ibuf_zia_path {
+                    XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
+                } else {
+                    XC2ZIAInput::Macrocell{fb: fb as u32, mc: mc as u32}
+                }
+            }
+            _ => panic!("not a valid input"),
+        };
+
+        // Actually search the ZIA table for it
+        let mut candidate_sites_for_this_input = Vec::new();
+        for zia_i in 0..INPUTS_PER_ANDTERM {
+            let row = zia_table_get_row(XC2Device::XC2C32A, zia_i);
+            for &x in row {
+                if x == choice {
+                    candidate_sites_for_this_input.push(zia_i);
+                }
+            }
+        }
+
+        (choice, candidate_sites_for_this_input)
+    }).collect::<Vec<_>>();
+
+    // Actually do the search to assign ZIA rows
+    let mut most_routed = 0;
+    fn backtrack_inner(most_routed: &mut u32, ret: &mut [XC2ZIAInput; INPUTS_PER_ANDTERM],
+        candidate_sites: &[(XC2ZIAInput, Vec<usize>)],
+        working_on_idx: usize) -> bool {
+
+        if working_on_idx == candidate_sites.len() {
+            // Complete assignment, we are done
+            return true;
+        }
+        let (choice, ref candidate_sites_for_this_input) = candidate_sites[working_on_idx];
+        for &candidate_zia_row in candidate_sites_for_this_input {
+            if ret[candidate_zia_row] == XC2ZIAInput::One {
+                // It is possible to assign to this site
+                ret[candidate_zia_row] = choice;
+                *most_routed = working_on_idx as u32 + 1;
+                if backtrack_inner(most_routed, ret, candidate_sites, working_on_idx + 1) {
+                    return true;
+                }
+                ret[candidate_zia_row] = XC2ZIAInput::One;
+            }
+        }
+        return false;
+    };
+
+    if !backtrack_inner(&mut most_routed, &mut ret, &candidate_sites, 0) {
+        return ZIAAssignmentResult::FailureUnroutable(candidate_sites.len() as u32 - most_routed);
+    }
+
+    ZIAAssignmentResult::Success(ret)
+}
