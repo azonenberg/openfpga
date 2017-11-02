@@ -774,3 +774,89 @@ pub fn try_assign_zia(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments
 
     ZIAAssignmentResult::Success(ret)
 }
+
+pub enum FBAssignmentResult {
+    Success(([Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB], [XC2ZIAInput; INPUTS_PER_ANDTERM])),
+    // macrocell assignment mc, score
+    Failure(Vec<(u32, u32)>),
+    // FIXME: This should report which one?
+    FailurePTCNeverSatisfiable,
+}
+
+// FIXME: mutable assignments is a hack
+pub fn try_assign_fb(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments: &mut [[(isize, isize); MCS_PER_FB]],
+    fb_i: u32) -> FBAssignmentResult {
+
+    let mut base_failing_score = 0;
+    // TODO: Weight factors?
+
+    // Can we even assign p-terms?
+    let pterm_assign_result = try_assign_andterms(g, mcs, &mc_assignments[fb_i as usize]);
+    match pterm_assign_result {
+        AndTermAssignmentResult::Success(andterm_assignment) => {
+            // Can we assign the ZIA?
+            let zia_assign_result = try_assign_zia(g, mcs, mc_assignments, &andterm_assignment);
+            match zia_assign_result {
+                ZIAAssignmentResult::Success(zia_assignment) =>
+                    return FBAssignmentResult::Success((andterm_assignment, zia_assignment)),
+                ZIAAssignmentResult::FailureTooManyInputs(x) => {
+                    base_failing_score = x;
+                },
+                ZIAAssignmentResult::FailureUnroutable(x) => {
+                    base_failing_score = x;
+                },
+            }
+        },
+        AndTermAssignmentResult::FailurePTCNeverSatisfiable =>
+            return FBAssignmentResult::FailurePTCNeverSatisfiable,
+        AndTermAssignmentResult::FailurePtermConflict(x) => {
+            base_failing_score = x;
+        },
+        AndTermAssignmentResult::FailurePtermExceeded(x) => {
+            base_failing_score = x;
+        },
+    }
+
+    // If we got here, there was a failure. Delete one macrocell at a time and see what happens.
+    let mut failure_scores = Vec::new();
+    for mc_i in 0..MCS_PER_FB {
+        let old_assign = mc_assignments[fb_i as usize][mc_i].0;
+        if old_assign >= 0 {
+            mc_assignments[fb_i as usize][mc_i].0 = -3;
+            let mut new_failing_score = 0;
+            match try_assign_andterms(g, mcs, &mc_assignments[fb_i as usize]) {
+                AndTermAssignmentResult::Success(andterm_assignment) => {
+                    // Can we assign the ZIA?
+                    match try_assign_zia(g, mcs, mc_assignments, &andterm_assignment) {
+                        ZIAAssignmentResult::Success(zia_assignment) => {
+                            new_failing_score = 0;
+                        },
+                        ZIAAssignmentResult::FailureTooManyInputs(x) => {
+                            new_failing_score = x;
+                        },
+                        ZIAAssignmentResult::FailureUnroutable(x) => {
+                            new_failing_score = x;
+                        },
+                    }
+                },
+                // This cannot happen here because it must have bombed out earlier in the initial attempt
+                AndTermAssignmentResult::FailurePTCNeverSatisfiable => unreachable!(),
+                AndTermAssignmentResult::FailurePtermConflict(x) => {
+                    new_failing_score = x;
+                },
+                AndTermAssignmentResult::FailurePtermExceeded(x) => {
+                    new_failing_score = x;
+                },
+            }
+
+            if new_failing_score > base_failing_score {
+                panic!("scores are borked");
+            }
+
+            failure_scores.push((mc_i as u32, (base_failing_score - new_failing_score) as u32));
+            mc_assignments[fb_i as usize][mc_i].0 = old_assign;
+        }
+    }
+
+    FBAssignmentResult::Failure(failure_scores)
+}

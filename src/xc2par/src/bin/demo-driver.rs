@@ -59,15 +59,14 @@ fn main() {
     let ngraph_collected_mc = ngraph_rs.gather_macrocells();
     println!("{:?}", ngraph_collected_mc);
 
-    let macrocell_placement = greedy_initial_placement(&ngraph_collected_mc);
+    let mut macrocell_placement = greedy_initial_placement(&ngraph_collected_mc);
     println!("{:?}", macrocell_placement);
 
-    let test1 = try_assign_andterms(&ngraph_rs, &ngraph_collected_mc, &macrocell_placement[0]);
-    if let AndTermAssignmentResult::Success(x) = test1 {
-        let test2 = try_assign_zia(&ngraph_rs, &ngraph_collected_mc, &macrocell_placement, &x);
-    } else {
-        unreachable!();
-    }
+    let test1 = try_assign_fb(&ngraph_rs, &ngraph_collected_mc, &mut macrocell_placement, 0);
+    let test2 = try_assign_fb(&ngraph_rs, &ngraph_collected_mc, &mut macrocell_placement, 1);
+
+    if let FBAssignmentResult::Success(..) = test1 {} else {panic!("test1")}
+    if let FBAssignmentResult::Success(..) = test2 {} else {panic!("test2")}
 
     // // The graphs for the PAR engine
     // let mut par_graphs = PARGraphPair::<_, _>::new_pair();
