@@ -24,7 +24,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::collections::{HashSet};
-use std::iter::FromIterator;
 
 extern crate rand;
 use self::rand::{Rng, SeedableRng, XorShiftRng};
@@ -831,7 +830,7 @@ pub fn try_assign_fb(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments:
                 AndTermAssignmentResult::Success(andterm_assignment) => {
                     // Can we assign the ZIA?
                     match try_assign_zia(g, mcs, mc_assignments, &andterm_assignment) {
-                        ZIAAssignmentResult::Success(zia_assignment) => {
+                        ZIAAssignmentResult::Success(..) => {
                             new_failing_score = 0;
                         },
                         ZIAAssignmentResult::FailureTooManyInputs(x) => {
