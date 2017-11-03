@@ -868,9 +868,9 @@ pub fn try_assign_fb(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments:
 }
 
 pub enum PARResult {
-    Success(Vec<([(isize, isize); MCS_PER_FB],
+    Success((Vec<([(isize, isize); MCS_PER_FB],
         [Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB],
-        [XC2ZIAInput; INPUTS_PER_ANDTERM])>),
+        [XC2ZIAInput; INPUTS_PER_ANDTERM])>, Vec<NetlistMacrocell>)),
     FailurePTCNeverSatisfiable,
     FailureIterationsExceeded,
 }
@@ -916,7 +916,7 @@ pub fn do_par(g: &NetlistGraph) -> PARResult {
                 ret.push((macrocell_placement[i], par_results_per_fb[i].unwrap().0, par_results_per_fb[i].unwrap().1));
             }
 
-            return PARResult::Success(ret);
+            return PARResult::Success((ret, ngraph_collected_mc));
         }
 
         // Here, we need to swap some stuff around
