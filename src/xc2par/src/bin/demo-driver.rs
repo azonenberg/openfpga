@@ -53,35 +53,20 @@ fn main() {
     println!("{:?}", yosys_netlist);
 
     // Netlist graph (native part)
-    let mut ngraph_rs = NetlistGraph::from_yosys_netlist(&yosys_netlist).unwrap();
+    let ngraph_rs = NetlistGraph::from_yosys_netlist(&yosys_netlist).unwrap();
     // ngraph_rs.insert_into_par_graph(&mut par_graphs, &lmap);
     println!("{:?}", ngraph_rs);
 
+    // TODO
+    let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
+
     let par_result = do_par(&ngraph_rs);
-    if let PARResult::Success(..) = par_result {} else {panic!("asdf")}
-
-    // // The graphs for the PAR engine
-    // let mut par_graphs = PARGraphPair::<_, _>::new_pair();
-
-    // // TODO
-    // let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
-
-    // // Device graph
-    // let (dgraph_rs, lmap) = DeviceGraph::new(device_type, &mut par_graphs);
-    // println!("{:?}", lmap);
-    // println!("{:?}", dgraph_rs);
-
-    // // Do the PAR!
-    // {
-    //     let engine_impl = XC2PAREngine::new(lmap);
-    //     let mut engine_obj = PAREngine::new(engine_impl, &mut par_graphs);
-    //     if !engine_obj.place_and_route(0) {
-    //         panic!("PAR failed!");
-    //     }
-    // }
-
-    // // Get a bitstream result
-    // let bitstream = produce_bitstream(device_type, &par_graphs, &dgraph_rs, &ngraph_rs);
-    // println!("********************************************************************************");
-    // bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
+    if let PARResult::Success(x) = par_result {
+        // Get a bitstream result
+        let bitstream = produce_bitstream(device_type, &ngraph_rs, &x);
+        println!("********************************************************************************");
+        bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
+    } else {
+        panic!("par failed!")
+    }
 }

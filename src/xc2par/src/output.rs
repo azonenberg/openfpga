@@ -29,6 +29,36 @@ use self::xc2bit::*;
 use *;
 use objpool::*;
 
+pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph,
+    placements: &[([(isize, isize); MCS_PER_FB], [Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB],
+        [XC2ZIAInput; INPUTS_PER_ANDTERM])]) -> XC2Bitstream {
+
+    // FIXME: Don't hardcode
+    let mut fb_bits = [XC2BitstreamFB::default(); 2];
+    let mut iob_bits = [XC2MCSmallIOB::default(); 32];
+
+    let mut global_nets = XC2GlobalNets::default();
+
+    let mut extra_inpin = XC2ExtraIBuf::default();
+
+
+
+    XC2Bitstream {
+        speed_grade: XC2Speed::Speed6,
+        package: XC2Package::VQ44,
+        bits: XC2BitstreamBits::XC2C32A {
+            fb: fb_bits,
+            iobs: iob_bits,
+            inpin: extra_inpin,
+            global_nets,
+            legacy_ivoltage: false,
+            legacy_ovoltage: false,
+            ivoltage: [false, false],
+            ovoltage: [false, false],
+        }
+    }
+}
+
 // pub fn produce_bitstream(device_type: XC2Device,
 //     par_graphs: &PARGraphPair<ObjPoolIndex<DeviceGraphNode>, ObjPoolIndex<NetlistGraphNode>>,
 //     dgraph_rs: &DeviceGraph, ngraph_rs: &NetlistGraph) -> XC2Bitstream {
