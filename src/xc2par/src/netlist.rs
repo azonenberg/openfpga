@@ -701,6 +701,9 @@ impl NetlistGraph {
         let mut ret = Vec::new();
         let mut encountered_xors = HashSet::new();
 
+        // XXX note: The types of macrocells _must_ be searched in this order (or at least unregistered IBUFs must be
+        // last). This property is relied on by the greedy initial placement algorithm.
+
         // First iteration: Find IOBUFE
         for node_idx in self.nodes.iter() {
             let node = self.nodes.get(node_idx);
@@ -738,29 +741,7 @@ impl NetlistGraph {
             }
         }
 
-        // Second iteration: Find IBUF
-        for node_idx in self.nodes.iter() {
-            let node = self.nodes.get(node_idx);
-
-            if let NetlistGraphNodeVariant::InBuf{output, ..} = node.variant {
-                let mut maybe_reg_index = None;
-                for &(sink_node_idx, _) in &self.nets.get(output).sinks {
-                    let sink_node = self.nodes.get(sink_node_idx);
-
-                    if let NetlistGraphNodeVariant::Reg{..} = sink_node.variant {
-                        maybe_reg_index = Some(sink_node_idx);
-                    }
-                }
-
-                if maybe_reg_index.is_none() {
-                    ret.push(NetlistMacrocell::PinInputUnreg{i: node_idx});
-                } else {
-                    ret.push(NetlistMacrocell::PinInputReg{i: node_idx});
-                }
-            }
-        }
-
-        // Third iteration: Find buried macrocells
+        // Second iteration: Find buried macrocells
         for node_idx in self.nodes.iter() {
             let node = self.nodes.get(node_idx);
 
@@ -787,6 +768,46 @@ impl NetlistGraph {
                         i: node_idx,
                         has_comb_fb: self.nets.get(output).sinks.len() > 1
                     });
+                }
+            }
+        }
+
+        // Third iteration: Find registered IBUF
+        for node_idx in self.nodes.iter() {
+            let node = self.nodes.get(node_idx);
+
+            if let NetlistGraphNodeVariant::InBuf{output, ..} = node.variant {
+                let mut maybe_reg_index = None;
+                for &(sink_node_idx, _) in &self.nets.get(output).sinks {
+                    let sink_node = self.nodes.get(sink_node_idx);
+
+                    if let NetlistGraphNodeVariant::Reg{..} = sink_node.variant {
+                        maybe_reg_index = Some(sink_node_idx);
+                    }
+                }
+
+                if maybe_reg_index.is_some() {
+                    ret.push(NetlistMacrocell::PinInputReg{i: node_idx});
+                }
+            }
+        }
+
+        // Fourth iteration: Find unregistered IBUF
+        for node_idx in self.nodes.iter() {
+            let node = self.nodes.get(node_idx);
+
+            if let NetlistGraphNodeVariant::InBuf{output, ..} = node.variant {
+                let mut maybe_reg_index = None;
+                for &(sink_node_idx, _) in &self.nets.get(output).sinks {
+                    let sink_node = self.nodes.get(sink_node_idx);
+
+                    if let NetlistGraphNodeVariant::Reg{..} = sink_node.variant {
+                        maybe_reg_index = Some(sink_node_idx);
+                    }
+                }
+
+                if maybe_reg_index.is_none() {
+                    ret.push(NetlistMacrocell::PinInputUnreg{i: node_idx});
                 }
             }
         }
