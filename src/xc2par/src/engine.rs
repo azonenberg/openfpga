@@ -23,13 +23,55 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-mod engine;
-pub use engine::*;
+use std::collections::{HashSet};
 
-mod netlist;
-pub use netlist::*;
+extern crate xc2bit;
+use self::xc2bit::*;
 
-mod objpool;
+use *;
+use objpool::*;
 
-mod output;
-// pub use output::{produce_bitstream};
+pub fn greedy_initial_placement(mcs: &[NetlistMacrocell]) -> Vec<[isize; MCS_PER_FB]> {
+    let mut ret = Vec::new();
+
+    // TODO: Number of FBs
+    // FIXME: Hack for dedicated input
+    for _ in 0..2 {
+        ret.push([-1; MCS_PER_FB]);
+    }
+    if true {
+        let x = ret.len();
+        ret.push([-2; MCS_PER_FB]);
+        ret[x][0] = -1;
+    }
+
+    // TODO: Handle LOCs
+    let mut candidate_sites = Vec::new();
+    if true {
+        candidate_sites.push((2, 0));
+    }
+    for i in (0..2).rev() {
+        for j in (0..MCS_PER_FB).rev() {
+            candidate_sites.push((i, j));
+        }
+    }
+
+    // Do the actual greedy assignment
+    for i in 0..mcs.len() {
+        if candidate_sites.len() == 0 {
+            panic!("no more sites");
+        }
+
+        if let NetlistMacrocell::PinInputUnreg{..} = mcs[i] {} else {
+            // Not an unregistered pin input. Special-case check for dedicated input
+            if true && candidate_sites.len() == 1 {
+                panic!("no more sites!");
+            }
+        }
+
+        let (fb, mc) = candidate_sites.pop().unwrap();
+        ret[fb][mc] = i as isize;
+    }
+
+    ret
+}

@@ -59,6 +59,9 @@ fn main() {
     let ngraph_collected_mc = ngraph_rs.gather_macrocells();
     println!("{:?}", ngraph_collected_mc);
 
+    let macrocell_placement = greedy_initial_placement(&ngraph_collected_mc);
+    println!("{:?}", macrocell_placement);
+
     // // The graphs for the PAR engine
     // let mut par_graphs = PARGraphPair::<_, _>::new_pair();
 
