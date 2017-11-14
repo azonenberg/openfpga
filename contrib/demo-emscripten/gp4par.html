@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>gp4par!</title>
+        <script src="gp4par-html-main.js"></script>
+    </head>
+    <body>
+            <div>
+                Input json: <input id="jsoninput" type="file">
+            </div>
+            <div>
+                Output bitstream: <textarea id="bitoutput" autocomplete="off" readonly></textarea>
+            </div>
+            <div>
+                stdout: <textarea id="stdout" autocomplete="off" readonly></textarea>
+            </div>
+            <div>
+                stderr: <textarea id="stderr" autocomplete="off" readonly></textarea>
+            </div>
+            <div>
+                Command line: <input id="cmdline" type="text" value="-p SLG46620">
+            </div>
+            <div>
+                <button id="runbutton">Run</button>
+            </div>
+    </body>
+</html>
