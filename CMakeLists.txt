@@ -111,9 +111,15 @@ endif()
 # FORCE is required for the "asked for but missing tool" case
 set(BUILD_RUST ${BUILD_RUST} CACHE BOOL "Build and run Rust code" FORCE)
 
+set(ENABLE_HARDWARE_TOOLS TRUE)
+if (EMSCRIPTEN)
+  message(STATUS "Disabling hardware-related tools under emscripten")
+  set(ENABLE_HARDWARE_TOOLS FALSE)
+endif()
+
 # Subdirectories
 add_subdirectory(src)
-if(BUILD_TESTS)
+if(BUILD_TESTS AND ENABLE_HARDWARE_TOOLS)
   add_subdirectory(tests)
 endif()
 if(BUILD_DOC)

@@ -18,10 +18,23 @@
 
 #include "gp4par.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 using namespace std;
 
 int main(int argc, char* argv[])
 {
+#ifdef __EMSCRIPTEN__
+	EM_ASM(
+		if (ENVIRONMENT_IS_NODE) {
+			FS.mkdir('/x');
+			FS.mount(NODEFS, { root: '.' }, '/x');
+		}
+	);
+#endif
+
 	Severity console_verbosity = Severity::NOTICE;
 
 	//Netlist file
