@@ -435,45 +435,6 @@ impl IntermediateGraph {
                         return Err("ANDTERM cell has a mismatched number of inputs");
                     }
 
-                    // Create dummy buffer nodes for all inputs
-                    // TODO: What about redundant ones?
-                    let inputs_true = inputs_true.into_iter().map(|before_ziabuf_net| {
-                        let after_ziabuf_net = nets.insert(IntermediateGraphNet {
-                            name: None,
-                            source: None,
-                            sinks: Vec::new(),
-                        });
-
-                        nodes.insert(IntermediateGraphNode {
-                            name: format!("__ziabuf_{}", cell_name),
-                            variant: IntermediateGraphNodeVariant::ZIADummyBuf {
-                                input: before_ziabuf_net,
-                                output: after_ziabuf_net,
-                            },
-                            location: None,
-                        });
-
-                        after_ziabuf_net
-                    }).collect::<Vec<_>>();
-                    let inputs_comp = inputs_comp.into_iter().map(|before_ziabuf_net| {
-                        let after_ziabuf_net = nets.insert(IntermediateGraphNet {
-                            name: None,
-                            source: None,
-                            sinks: Vec::new(),
-                        });
-
-                        nodes.insert(IntermediateGraphNode {
-                            name: format!("__ziabuf_{}", cell_name),
-                            variant: IntermediateGraphNodeVariant::ZIADummyBuf {
-                                input: before_ziabuf_net,
-                                output: after_ziabuf_net,
-                            },
-                            location: None,
-                        });
-
-                        after_ziabuf_net
-                    }).collect::<Vec<_>>();
-
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::AndTerm {
@@ -1042,6 +1003,7 @@ impl InputGraph {
             g: &'a IntermediateGraph,
 
             mcs: &'a mut ObjPool<InputGraphMacrocell>,
+            pterms: &'a mut ObjPool<InputGraphPTerm>,
 
             mcs_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphMacrocell>>,
             pterms_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphPTerm>>,
@@ -1199,8 +1161,58 @@ impl InputGraph {
                     Ok(InputGraphAnyPoolIdx::Macrocell(newg_idx))
                 },
                 IntermediateGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, ..} => {
-                    println!("todo todo todo");
-                    panic!();
+                    // Unlike the above cases, this always inserts a new item
+
+                    let mut inputs_true_new = Vec::new();
+                    for x in inputs_true {
+                        let input_n = s.g.nets.get(*x).source.unwrap().0;
+                        let input_type = match s.g.nodes.get(input_n).variant {
+                            IntermediateGraphNodeVariant::Xor{..} => InputGraphPTermInputType::Xor,
+                            IntermediateGraphNodeVariant::Reg{..} => InputGraphPTermInputType::Reg,
+                            IntermediateGraphNodeVariant::IOBuf{..} |
+                            IntermediateGraphNodeVariant::InBuf{..} => InputGraphPTermInputType::Pin,
+                            _ => return Err("mis-connected nodes"),
+                        };
+
+                        // We need to recursively process this
+                        let input_newg_any = process_one_intermed_node(s, input_n)?;
+                        let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
+                            panic!("Internal error - not a macrocell?");
+                        };
+
+                        inputs_true_new.push((input_type, input_newg));
+                    }
+
+                    let mut inputs_comp_new = Vec::new();
+                    for x in inputs_comp {
+                        let input_n = s.g.nets.get(*x).source.unwrap().0;
+                        let input_type = match s.g.nodes.get(input_n).variant {
+                            IntermediateGraphNodeVariant::Xor{..} => InputGraphPTermInputType::Xor,
+                            IntermediateGraphNodeVariant::Reg{..} => InputGraphPTermInputType::Reg,
+                            IntermediateGraphNodeVariant::IOBuf{..} |
+                            IntermediateGraphNodeVariant::InBuf{..} => InputGraphPTermInputType::Pin,
+                            _ => return Err("mis-connected nodes"),
+                        };
+
+                        // We need to recursively process this
+                        let input_newg_any = process_one_intermed_node(s, input_n)?;
+                        let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
+                            panic!("Internal error - not a macrocell?");
+                        };
+
+                        inputs_comp_new.push((input_type, input_newg));
+                    }
+
+                    let newg_n = InputGraphPTerm {
+                        loc: None,
+                        name: n.name.clone(),
+                        requested_loc: n.location,
+                        inputs_true: inputs_true_new,
+                        inputs_comp: inputs_comp_new,
+                    };
+
+                    let newg_idx = s.pterms.insert(newg_n);
+                    Ok(InputGraphAnyPoolIdx::PTerm(newg_idx))
                 },
                 _ => unimplemented!(),
             }
@@ -1211,6 +1223,7 @@ impl InputGraph {
             let mut s = process_one_intermed_node_state {
                 g,
                 mcs: &mut mcs,
+                pterms: &mut pterms,
                 mcs_map: &mut mcs_map,
                 pterms_map: &mut pterms_map,
                 bufg_clks_map: &mut bufg_clks_map,
