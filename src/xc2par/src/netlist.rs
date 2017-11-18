@@ -1298,6 +1298,55 @@ impl InputGraph {
                         }
                     };
 
+                    // Visit PTC
+                    let ce_input = {
+                        if ce_input.is_some() {
+                            let ce_n = s.g.nets.get(ce_input.unwrap()).source.unwrap().0;
+                            let ce_newg_n = process_one_intermed_node(s, ce_n)?;
+                            if let InputGraphAnyPoolIdx::PTerm(x) = ce_newg_n {
+                                Some(x)
+                            } else {
+                                return Err("mis-connected nodes");
+                            }
+                        } else {
+                            None
+                        }
+                    };
+
+                    // Visit set
+                    let set_input = {
+                        if set_input.is_some() {
+                            let set_n = s.g.nets.get(set_input.unwrap()).source.unwrap().0;
+                            let set_newg_n = process_one_intermed_node(s, set_n)?;
+                            if let InputGraphAnyPoolIdx::PTerm(x) = set_newg_n {
+                                Some(InputGraphRegRSType::PTerm(x))
+                            } else if let InputGraphAnyPoolIdx::BufgGSR(x) = set_newg_n {
+                                Some(InputGraphRegRSType::GSR(x))
+                            } else {
+                                return Err("mis-connected nodes");
+                            }
+                        } else {
+                            None
+                        }
+                    };
+
+                    // Visit reset
+                    let reset_input = {
+                        if reset_input.is_some() {
+                            let reset_n = s.g.nets.get(reset_input.unwrap()).source.unwrap().0;
+                            let reset_newg_n = process_one_intermed_node(s, reset_n)?;
+                            if let InputGraphAnyPoolIdx::PTerm(x) = reset_newg_n {
+                                Some(InputGraphRegRSType::PTerm(x))
+                            } else if let InputGraphAnyPoolIdx::BufgGSR(x) = reset_newg_n {
+                                Some(InputGraphRegRSType::GSR(x))
+                            } else {
+                                return Err("mis-connected nodes");
+                            }
+                        } else {
+                            None
+                        }
+                    };
+
                     {
                         let mut newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.reg_bits.is_none());
@@ -1308,9 +1357,9 @@ impl InputGraph {
                             clkinv,
                             clkddr,
                             init_state,
-                            set_input: None, // TODO
-                            reset_input: None, // TODO
-                            ce_input: None, // TODO
+                            set_input,
+                            reset_input,
+                            ce_input,
                             dt_input,
                             clk_input,
                         });
