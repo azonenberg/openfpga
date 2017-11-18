@@ -912,7 +912,6 @@ pub struct InputGraph {
 
 #[derive(Debug)]
 enum InputGraphAnyPoolIdx {
-    None,
     Macrocell(ObjPoolIndex<InputGraphMacrocell>),
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     BufgClk(ObjPoolIndex<InputGraphBufgClk>),
@@ -954,10 +953,10 @@ impl InputGraph {
 
         // These are used to map nodes in the intermediate graph to nodes in the new graph
         let mut mcs_map = HashMap::new();
-        let mut pterms_map: HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphPTerm>> = HashMap::new();
-        let mut bufg_clks_map: HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgClk>> = HashMap::new();
-        let mut bufg_gts_map: HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgGTS>> = HashMap::new();
-        let mut bufg_gsr_map: HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgGSR>> = HashMap::new();
+        let mut pterms_map = HashMap::new();
+        let mut bufg_clks_map = HashMap::new();
+        let mut bufg_gts_map = HashMap::new();
+        let mut bufg_gsr_map = HashMap::new();
 
         // This is for sanity checking to make sure the entire input gets consumed
         // FIXME: HashSets are not necessarily the most efficient data structure here
@@ -999,6 +998,9 @@ impl InputGraph {
 
             mcs: &'a mut ObjPool<InputGraphMacrocell>,
             pterms: &'a mut ObjPool<InputGraphPTerm>,
+            bufg_clks: &'a mut ObjPool<InputGraphBufgClk>,
+            bufg_gts: &'a mut ObjPool<InputGraphBufgGTS>,
+            bufg_gsr: &'a mut ObjPool<InputGraphBufgGSR>,
 
             mcs_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphMacrocell>>,
             pterms_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphPTerm>>,
@@ -1148,6 +1150,11 @@ impl InputGraph {
                         if let IntermediateGraphNodeVariant::OrTerm{ref inputs, ..} = s.g.nodes.get(or_n).variant {
                             for x in inputs {
                                 let input_n = s.g.nets.get(*x).source.unwrap().0;
+                                if let IntermediateGraphNodeVariant::AndTerm{..} =
+                                    s.g.nodes.get(input_n).variant {} else {
+
+                                    return Err("mis-connected nodes");
+                                }
                                 // We need to recursively process this
                                 let input_newg_any = process_one_intermed_node(s, input_n)?;
                                 let input_newg = if let InputGraphAnyPoolIdx::PTerm(x) = input_newg_any { x } else {
@@ -1262,6 +1269,7 @@ impl InputGraph {
                     };
 
                     let newg_idx = s.pterms.insert(newg_n);
+                    s.pterms_map.insert(n_idx, newg_idx);
                     Ok(InputGraphAnyPoolIdx::PTerm(newg_idx))
                 },
                 IntermediateGraphNodeVariant::OrTerm{..} => {
@@ -1270,6 +1278,7 @@ impl InputGraph {
                 IntermediateGraphNodeVariant::Reg{mode, clkinv, clkddr, init_state, set_input, reset_input,
                     ce_input, dt_input, clk_input, ..} => {
 
+                    // This one once again expects the item to already be present
                     let newg_idx = *s.mcs_map.get(&n_idx).unwrap();
 
                     // Visit data input
@@ -1391,7 +1400,85 @@ impl InputGraph {
 
                     Ok(InputGraphAnyPoolIdx::Macrocell(newg_idx))
                 },
-                _ => unimplemented!(),
+                IntermediateGraphNodeVariant::BufgClk{input, ..} => {
+                    // This always inserts a new item again
+
+                    let input_n = s.g.nets.get(input).source.unwrap().0;
+                    match s.g.nodes.get(input_n).variant {
+                        IntermediateGraphNodeVariant::IOBuf{..} |
+                        IntermediateGraphNodeVariant::InBuf{..} => {},
+                        _ => return Err("mis-connected nodes"),
+                    };
+
+                    // We need to recursively process this
+                    let input_newg_any = process_one_intermed_node(s, input_n)?;
+                    let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
+                        panic!("Internal error - not a macrocell?");
+                    };
+
+                    let newg_n = InputGraphBufgClk {
+                        loc: None,
+                        name: n.name.clone(),
+                        requested_loc: n.location,
+                        input: input_newg,
+                    };
+
+                    let newg_idx = s.bufg_clks.insert(newg_n);
+                    s.bufg_clks_map.insert(n_idx, newg_idx);
+                    Ok(InputGraphAnyPoolIdx::BufgClk(newg_idx))
+                },
+                IntermediateGraphNodeVariant::BufgGTS{input, invert, ..} => {
+                    let input_n = s.g.nets.get(input).source.unwrap().0;
+                    match s.g.nodes.get(input_n).variant {
+                        IntermediateGraphNodeVariant::IOBuf{..} |
+                        IntermediateGraphNodeVariant::InBuf{..} => {},
+                        _ => return Err("mis-connected nodes"),
+                    };
+
+                    // We need to recursively process this
+                    let input_newg_any = process_one_intermed_node(s, input_n)?;
+                    let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
+                        panic!("Internal error - not a macrocell?");
+                    };
+
+                    let newg_n = InputGraphBufgGTS {
+                        loc: None,
+                        name: n.name.clone(),
+                        requested_loc: n.location,
+                        input: input_newg,
+                        invert,
+                    };
+
+                    let newg_idx = s.bufg_gts.insert(newg_n);
+                    s.bufg_gts_map.insert(n_idx, newg_idx);
+                    Ok(InputGraphAnyPoolIdx::BufgGTS(newg_idx))
+                },
+                IntermediateGraphNodeVariant::BufgGSR{input, invert, ..} => {
+                    let input_n = s.g.nets.get(input).source.unwrap().0;
+                    match s.g.nodes.get(input_n).variant {
+                        IntermediateGraphNodeVariant::IOBuf{..} |
+                        IntermediateGraphNodeVariant::InBuf{..} => {},
+                        _ => return Err("mis-connected nodes"),
+                    };
+
+                    // We need to recursively process this
+                    let input_newg_any = process_one_intermed_node(s, input_n)?;
+                    let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
+                        panic!("Internal error - not a macrocell?");
+                    };
+
+                    let newg_n = InputGraphBufgGSR {
+                        loc: None,
+                        name: n.name.clone(),
+                        requested_loc: n.location,
+                        input: input_newg,
+                        invert,
+                    };
+
+                    let newg_idx = s.bufg_gsr.insert(newg_n);
+                    s.bufg_gsr_map.insert(n_idx, newg_idx);
+                    Ok(InputGraphAnyPoolIdx::BufgGSR(newg_idx))
+                },
             }
         }
 
@@ -1401,6 +1488,9 @@ impl InputGraph {
                 g,
                 mcs: &mut mcs,
                 pterms: &mut pterms,
+                bufg_clks: &mut bufg_clks,
+                bufg_gts: &mut bufg_gts,
+                bufg_gsr: &mut bufg_gsr,
                 mcs_map: &mut mcs_map,
                 pterms_map: &mut pterms_map,
                 bufg_clks_map: &mut bufg_clks_map,
