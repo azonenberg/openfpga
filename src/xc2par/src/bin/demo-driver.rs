@@ -57,6 +57,10 @@ fn main() {
     // ngraph_rs.insert_into_par_graph(&mut par_graphs, &lmap);
     println!("{:?}", ngraph_rs);
 
+    // New data structure
+    let input_graph = InputGraph::from_intermed_graph(&ngraph_rs);
+    println!("{:?}", input_graph);
+
     // TODO
     let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
 

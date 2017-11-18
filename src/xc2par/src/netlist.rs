@@ -890,6 +890,8 @@ pub struct InputGraphXor {
 #[derive(Debug)]
 pub struct InputGraphMacrocell {
     pub loc: AssignedLocation,
+    pub name: String,
+    pub requested_loc: Option<RequestedLocation>,
     pub io_bits: Option<InputGraphIOBuf>,
     pub reg_bits: Option<InputGraphReg>,
     pub xor_bits: Option<InputGraphXor>,
@@ -914,6 +916,8 @@ pub enum InputGraphPTermInputType {
 #[derive(Debug)]
 pub struct InputGraphPTerm {
     pub loc: AssignedLocation,
+    pub name: String,
+    pub requested_loc: Option<RequestedLocation>,
     pub inputs_true: Vec<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)>,
     pub inputs_comp: Vec<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)>,
 }
@@ -921,12 +925,16 @@ pub struct InputGraphPTerm {
 #[derive(Debug)]
 pub struct InputGraphBufgClk {
     pub loc: AssignedLocation,
+    pub name: String,
+    pub requested_loc: Option<RequestedLocation>,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
 }
 
 #[derive(Debug)]
 pub struct InputGraphBufgGTS {
     pub loc: AssignedLocation,
+    pub name: String,
+    pub requested_loc: Option<RequestedLocation>,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
     pub invert: bool,
 }
@@ -934,6 +942,8 @@ pub struct InputGraphBufgGTS {
 #[derive(Debug)]
 pub struct InputGraphBufgGSR {
     pub loc: AssignedLocation,
+    pub name: String,
+    pub requested_loc: Option<RequestedLocation>,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
     pub invert: bool,
 }
@@ -945,6 +955,16 @@ pub struct InputGraph {
     pub bufg_clks: ObjPool<InputGraphBufgClk>,
     pub bufg_gts: ObjPool<InputGraphBufgGTS>,
     pub bufg_gsr: ObjPool<InputGraphBufgGSR>,
+}
+
+#[derive(Debug)]
+enum InputGraphAnyPoolIdx {
+    None,
+    Macrocell(ObjPoolIndex<InputGraphMacrocell>),
+    PTerm(ObjPoolIndex<InputGraphPTerm>),
+    BufgClk(ObjPoolIndex<InputGraphBufgClk>),
+    BufgGTS(ObjPoolIndex<InputGraphBufgGTS>),
+    BufgGSR(ObjPoolIndex<InputGraphBufgGSR>),
 }
 
 impl InputGraphMacrocell {
@@ -970,19 +990,189 @@ impl InputGraphMacrocell {
 }
 
 impl InputGraph {
-    pub fn from_intermed_graph(g: &IntermediateGraph) -> Self {
-        let mcs = ObjPool::new();
-        let pterms = ObjPool::new();
-        let bufg_clks = ObjPool::new();
-        let bufg_gts = ObjPool::new();
-        let bufg_gsr = ObjPool::new();
+    pub fn from_intermed_graph(g: &IntermediateGraph) -> Result<Self, &'static str> {
+        // TODO: Implement location checking
 
-        Self {
+        let mut mcs = ObjPool::new();
+        let mut pterms = ObjPool::new();
+        let mut bufg_clks = ObjPool::new();
+        let mut bufg_gts = ObjPool::new();
+        let mut bufg_gsr = ObjPool::new();
+
+        // These are used to map nodes in the intermediate graph to nodes in the new graph
+        let mut mcs_map = HashMap::new();
+        let mut pterms_map: HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphPTerm>> = HashMap::new();
+        let mut bufg_clks_map: HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgClk>> = HashMap::new();
+        let mut bufg_gts_map: HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgGTS>> = HashMap::new();
+        let mut bufg_gsr_map: HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgGSR>> = HashMap::new();
+
+        // This is for sanity checking to make sure the entire input gets consumed
+        // FIXME: HashSets are not necessarily the most efficient data structure here
+        let mut consumed_inputs = HashSet::new();
+
+        // The first step is to invoke the "old" macrocell-gathering function so that:
+        // * we can generate our macrocells in the "correct" order
+        // * we can create all the needed macrocell objects ahead of time to break the cycle of references
+        let gathered_mcs = g.gather_macrocells();
+
+        // Now we pre-create all the macrocell objects
+        for i in 0..gathered_mcs.len() {
+            let dummy_mc = InputGraphMacrocell {
+                loc: None,
+                name: String::from(""),
+                requested_loc: None,
+                io_bits: None,
+                reg_bits: None,
+                xor_bits: None,
+            };
+
+            let newg_idx = mcs.insert(dummy_mc);
+            let oldg_idx = match gathered_mcs[i] {
+                NetlistMacrocell::PinOutput{i} => i,
+                NetlistMacrocell::PinInputUnreg{i} => i,
+                NetlistMacrocell::PinInputReg{i} => i,
+                NetlistMacrocell::BuriedComb{i} => i,
+                NetlistMacrocell::BuriedReg{i, ..} => i,
+            };
+            mcs_map.insert(oldg_idx, newg_idx);
+        }
+
+        #[allow(non_camel_case_types)]
+        struct process_one_intermed_node_state<'a> {
+            g: &'a IntermediateGraph,
+
+            mcs: &'a mut ObjPool<InputGraphMacrocell>,
+
+            mcs_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphMacrocell>>,
+            pterms_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphPTerm>>,
+            bufg_clks_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgClk>>,
+            bufg_gts_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgGTS>>,
+            bufg_gsr_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgGSR>>,
+
+            consumed_inputs: &'a mut HashSet<ObjPoolIndex<IntermediateGraphNode>>,
+        }
+
+        fn process_one_intermed_node<'a>(s: &mut process_one_intermed_node_state<'a>,
+            n_idx: ObjPoolIndex<IntermediateGraphNode>) -> Result<InputGraphAnyPoolIdx, &'static str> {
+
+            let n = s.g.nodes.get(n_idx);
+
+            if s.consumed_inputs.contains(&n_idx) {
+                // We're already here, but what are we?
+                return Ok(match n.variant {
+                    IntermediateGraphNodeVariant::IOBuf{..} |
+                    IntermediateGraphNodeVariant::InBuf{..} |
+                    IntermediateGraphNodeVariant::Reg{..} |
+                    IntermediateGraphNodeVariant::Xor{..} |
+                    IntermediateGraphNodeVariant::OrTerm{..} =>
+                        InputGraphAnyPoolIdx::Macrocell(*s.mcs_map.get(&n_idx).unwrap()),
+                    IntermediateGraphNodeVariant::AndTerm{..} =>
+                        InputGraphAnyPoolIdx::PTerm(*s.pterms_map.get(&n_idx).unwrap()),
+                    IntermediateGraphNodeVariant::BufgClk{..} =>
+                        InputGraphAnyPoolIdx::BufgClk(*s.bufg_clks_map.get(&n_idx).unwrap()),
+                    IntermediateGraphNodeVariant::BufgGTS{..} =>
+                        InputGraphAnyPoolIdx::BufgGTS(*s.bufg_gts_map.get(&n_idx).unwrap()),
+                    IntermediateGraphNodeVariant::BufgGSR{..} =>
+                        InputGraphAnyPoolIdx::BufgGSR(*s.bufg_gsr_map.get(&n_idx).unwrap()),
+                    IntermediateGraphNodeVariant::ZIADummyBuf{..} =>
+                        InputGraphAnyPoolIdx::PTerm(*s.pterms_map.get(&n_idx).unwrap()),  // FIXME: This is going away
+                })
+            }
+            s.consumed_inputs.insert(n_idx);
+
+            match n.variant {
+                IntermediateGraphNodeVariant::IOBuf{oe, input, schmitt_trigger, termination_enabled,
+                    slew_is_fast, uses_data_gate, ..} => {
+
+                    let newg_idx = *s.mcs_map.get(&n_idx).unwrap();
+
+                    // Visit OE
+                    let newg_oe;
+                    if oe.is_some() {
+                        let oe_n = s.g.nets.get(oe.unwrap()).source.unwrap().0;
+                        let oe_newg_n = process_one_intermed_node(s, oe_n)?;
+                        newg_oe = Some(match oe_newg_n {
+                            InputGraphAnyPoolIdx::PTerm(x) => InputGraphIOOEType::PTerm(x),
+                            InputGraphAnyPoolIdx::BufgGTS(x) => InputGraphIOOEType::GTS(x),
+                            _ => return Err("mis-connected nodes"),
+                        });
+                    } else {
+                        newg_oe = None;
+                    }
+
+                    // Handle input
+                    let newg_input;
+                    if input.is_some() {
+                        if input.unwrap() == s.g.vss_net {
+                            newg_input = Some(InputGraphIOInputType::OpenDrain0);
+                        } else {
+                            let input_n = s.g.nets.get(input.unwrap()).source.unwrap().0;
+                            match s.g.nodes.get(input_n).variant {
+                                IntermediateGraphNodeVariant::Xor{..} => {
+                                    newg_input = Some(InputGraphIOInputType::Xor);
+                                },
+                                IntermediateGraphNodeVariant::Reg{..} => {
+                                    newg_input = Some(InputGraphIOInputType::Reg);
+                                },
+                                _ => return Err("mis-connected nodes"),
+                            }
+                        }
+                    } else {
+                        newg_input = None;
+                    }
+
+                    {
+                        let mut newg_n = s.mcs.get_mut(newg_idx);
+                        assert!(newg_n.io_bits.is_none());
+                        newg_n.io_bits = Some(InputGraphIOBuf {
+                            input: newg_input,
+                            oe: newg_oe,
+                            schmitt_trigger,
+                            termination_enabled,
+                            slew_is_fast,
+                            uses_data_gate,
+                            feedback_used: false,
+                        });
+                    }
+
+                    println!("{:?}", s.mcs);
+
+                    Ok(InputGraphAnyPoolIdx::Macrocell(newg_idx))
+                },
+                _ => unimplemented!(),
+            }
+        }
+
+        // Now we actually run through the list and process everything
+        {
+            let mut s = process_one_intermed_node_state {
+                g,
+                mcs: &mut mcs,
+                mcs_map: &mut mcs_map,
+                pterms_map: &mut pterms_map,
+                bufg_clks_map: &mut bufg_clks_map,
+                bufg_gts_map: &mut bufg_gts_map,
+                bufg_gsr_map: &mut bufg_gsr_map,
+                consumed_inputs: &mut consumed_inputs,
+            };
+            for oldg_mc in gathered_mcs {
+                let oldg_idx = match oldg_mc {
+                    NetlistMacrocell::PinOutput{i} => i,
+                    NetlistMacrocell::PinInputUnreg{i} => i,
+                    NetlistMacrocell::PinInputReg{i} => i,
+                    NetlistMacrocell::BuriedComb{i} => i,
+                    NetlistMacrocell::BuriedReg{i, ..} => i,
+                };
+                process_one_intermed_node(&mut s, oldg_idx)?;
+            }
+        }
+
+        Ok(Self {
             mcs,
             pterms,
             bufg_clks,
             bufg_gts,
             bufg_gsr,
-        }
+        })
     }
 }
