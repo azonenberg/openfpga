@@ -566,7 +566,7 @@ impl IntermediateGraph {
             Ok(())
         };
 
-        for node_idx in nodes.iter() {
+        for node_idx in nodes.iter_idx() {
             let node = nodes.get(node_idx);
             match node.variant {
                 IntermediateGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, output} => {
@@ -631,7 +631,7 @@ impl IntermediateGraph {
         }
 
         // Check for undriven nets
-        for net_idx in nets.iter() {
+        for net_idx in nets.iter_idx() {
             if net_idx == vdd_net || net_idx == vss_net {
                 continue;
             }
@@ -658,7 +658,7 @@ impl IntermediateGraph {
         // last). This property is relied on by the greedy initial placement algorithm.
 
         // First iteration: Find IOBUFE
-        for node_idx in self.nodes.iter() {
+        for node_idx in self.nodes.iter_idx() {
             let node = self.nodes.get(node_idx);
 
             if let IntermediateGraphNodeVariant::IOBuf{input, ..} = node.variant {
@@ -695,7 +695,7 @@ impl IntermediateGraph {
         }
 
         // Second iteration: Find buried macrocells
-        for node_idx in self.nodes.iter() {
+        for node_idx in self.nodes.iter_idx() {
             let node = self.nodes.get(node_idx);
 
             if let IntermediateGraphNodeVariant::Xor{output, ..} = node.variant {
@@ -726,7 +726,7 @@ impl IntermediateGraph {
         }
 
         // Third iteration: Find registered IBUF
-        for node_idx in self.nodes.iter() {
+        for node_idx in self.nodes.iter_idx() {
             let node = self.nodes.get(node_idx);
 
             if let IntermediateGraphNodeVariant::InBuf{output, ..} = node.variant {
@@ -746,7 +746,7 @@ impl IntermediateGraph {
         }
 
         // Fourth iteration: Find unregistered IBUF
-        for node_idx in self.nodes.iter() {
+        for node_idx in self.nodes.iter_idx() {
             let node = self.nodes.get(node_idx);
 
             if let IntermediateGraphNodeVariant::InBuf{output, ..} = node.variant {
@@ -789,7 +789,7 @@ pub enum InputGraphIOOEType {
     OpenDrain,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InputGraphIOBuf {
     pub input: Option<InputGraphIOInputType>,
     pub oe: Option<InputGraphIOOEType>,
@@ -817,7 +817,7 @@ pub enum InputGraphRegClockType {
     GCK(ObjPoolIndex<InputGraphBufgClk>),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InputGraphReg {
     pub mode: XC2MCRegMode,
     pub clkinv: bool,
@@ -830,14 +830,14 @@ pub struct InputGraphReg {
     pub clk_input: InputGraphRegClockType,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InputGraphXor {
     pub orterm_inputs: Vec<ObjPoolIndex<InputGraphPTerm>>,
     pub andterm_input: Option<ObjPoolIndex<InputGraphPTerm>>,
     pub invert_out: bool,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InputGraphMacrocell {
     pub loc: AssignedLocation,
     pub name: String,
@@ -866,7 +866,7 @@ pub enum InputGraphPTermInputType {
     Pin,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InputGraphPTerm {
     pub loc: AssignedLocation,
     pub name: String,
@@ -875,7 +875,7 @@ pub struct InputGraphPTerm {
     pub inputs_comp: Vec<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InputGraphBufgClk {
     pub loc: AssignedLocation,
     pub name: String,
@@ -883,7 +883,7 @@ pub struct InputGraphBufgClk {
     pub input: ObjPoolIndex<InputGraphMacrocell>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InputGraphBufgGTS {
     pub loc: AssignedLocation,
     pub name: String,
@@ -892,7 +892,7 @@ pub struct InputGraphBufgGTS {
     pub invert: bool,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InputGraphBufgGSR {
     pub loc: AssignedLocation,
     pub name: String,
@@ -910,7 +910,7 @@ pub struct InputGraph {
     pub bufg_gsr: ObjPool<InputGraphBufgGSR>,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 enum InputGraphAnyPoolIdx {
     Macrocell(ObjPoolIndex<InputGraphMacrocell>),
     PTerm(ObjPoolIndex<InputGraphPTerm>),
@@ -1561,9 +1561,7 @@ impl InputGraph {
     }
 
     fn sanity_check(&self) -> Result<(), &'static str> {
-        for x_idx in self.mcs.iter() {
-            let x = self.mcs.get(x_idx);
-
+        for x in self.mcs.iter() {
             if x.io_feedback_used && x.io_bits.is_none() {
                 return Err("Used IO input but there is no IO data?");
             }
@@ -1581,6 +1579,22 @@ impl InputGraph {
     }
 
     fn unfuse_pterms(&mut self) {
+        let mut used_pterms = HashSet::new();
 
+        for mc in self.mcs.iter_mut() {
+            if mc.xor_bits.is_some() {
+                let mut xor = mc.xor_bits.as_mut().unwrap();
+
+                if xor.andterm_input.is_some() {
+                    let pterm = xor.andterm_input.unwrap();
+                    if used_pterms.contains(&pterm) {
+                        let cloned_pterm = self.pterms.get(pterm).clone();
+                        let new_pterm = self.pterms.insert(cloned_pterm);
+                        xor.andterm_input = Some(new_pterm);
+                    }
+                    used_pterms.insert(pterm);
+                }
+            }
+        }
     }
 }
