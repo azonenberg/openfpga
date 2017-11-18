@@ -1041,46 +1041,57 @@ impl InputGraph {
 
                     let newg_idx = *s.mcs_map.get(&n_idx).unwrap();
 
-                    // Visit OE
-                    let newg_oe;
-                    if oe.is_some() {
-                        let oe_n = s.g.nets.get(oe.unwrap()).source.unwrap().0;
-                        let oe_newg_n = process_one_intermed_node(s, oe_n)?;
-                        newg_oe = Some(match oe_newg_n {
-                            InputGraphAnyPoolIdx::PTerm(x) => InputGraphIOOEType::PTerm(x),
-                            InputGraphAnyPoolIdx::BufgGTS(x) => InputGraphIOOEType::GTS(x),
-                            _ => return Err("mis-connected nodes"),
-                        });
-                    } else {
-                        newg_oe = None;
-                    }
-
                     // Visit input
-                    let newg_input;
-                    if input.is_some() {
-                        if input.unwrap() == s.g.vss_net {
-                            newg_input = Some(InputGraphIOInputType::OpenDrain0);
-                        } else {
-                            let input_n = s.g.nets.get(input.unwrap()).source.unwrap().0;
-                            match s.g.nodes.get(input_n).variant {
-                                IntermediateGraphNodeVariant::Xor{..} => {
-                                    newg_input = Some(InputGraphIOInputType::Xor);
-                                },
-                                IntermediateGraphNodeVariant::Reg{..} => {
-                                    newg_input = Some(InputGraphIOInputType::Reg);
-                                },
-                                _ => return Err("mis-connected nodes"),
-                            }
+                    let input = {
+                        if oe.is_some() && oe.unwrap() == s.g.vss_net {
+                            // The output enable is permanently off, so force this to not be used
+                            None
+                        } else if input.is_some() {
+                            if input.unwrap() == s.g.vss_net {
+                                Some(InputGraphIOInputType::OpenDrain0)
+                            } else {
+                                let input_n = s.g.nets.get(input.unwrap()).source.unwrap().0;
+                                let input_type = match s.g.nodes.get(input_n).variant {
+                                    IntermediateGraphNodeVariant::Xor{..} => {
+                                        Some(InputGraphIOInputType::Xor)
+                                    },
+                                    IntermediateGraphNodeVariant::Reg{..} => {
+                                        Some(InputGraphIOInputType::Reg)
+                                    },
+                                    _ => return Err("mis-connected nodes"),
+                                };
 
-                            // We need to recursively process this. Update the relevant map as well to make sure we
-                            // don't mess up along the way.
-                            assert!(!s.mcs_map.contains_key(&input_n));
-                            s.mcs_map.insert(input_n, newg_idx);
-                            process_one_intermed_node(s, input_n)?;
+                                // We need to recursively process this. Update the relevant map as well to make sure we
+                                // don't mess up along the way.
+                                assert!(!s.mcs_map.contains_key(&input_n));
+                                s.mcs_map.insert(input_n, newg_idx);
+                                process_one_intermed_node(s, input_n)?;
+
+                                input_type
+                            }
+                        } else {
+                            None
                         }
-                    } else {
-                        newg_input = None;
-                    }
+                    };
+
+                    // Visit OE
+                    let oe = {
+                        if oe.is_some() {
+                            if oe.unwrap() == s.g.vdd_net || oe.unwrap() == s.g.vss_net {
+                                None
+                            } else {
+                                let oe_n = s.g.nets.get(oe.unwrap()).source.unwrap().0;
+                                let oe_newg_n = process_one_intermed_node(s, oe_n)?;
+                                Some(match oe_newg_n {
+                                    InputGraphAnyPoolIdx::PTerm(x) => InputGraphIOOEType::PTerm(x),
+                                    InputGraphAnyPoolIdx::BufgGTS(x) => InputGraphIOOEType::GTS(x),
+                                    _ => return Err("mis-connected nodes"),
+                                })
+                            }
+                        } else {
+                            None
+                        }
+                    };
 
                     {
                         let mut newg_n = s.mcs.get_mut(newg_idx);
@@ -1088,8 +1099,8 @@ impl InputGraph {
                         newg_n.name = n.name.clone();
                         newg_n.requested_loc = n.location;
                         newg_n.io_bits = Some(InputGraphIOBuf {
-                            input: newg_input,
-                            oe: newg_oe,
+                            input: input,
+                            oe: oe,
                             schmitt_trigger,
                             termination_enabled,
                             slew_is_fast,
@@ -1151,18 +1162,19 @@ impl InputGraph {
                     }
 
                     // Visit PTC
-                    let ptc_input;
-                    if andterm_input.is_some() {
-                        let ptc_n = s.g.nets.get(andterm_input.unwrap()).source.unwrap().0;
-                        let ptc_newg_n = process_one_intermed_node(s, ptc_n)?;
-                        if let InputGraphAnyPoolIdx::PTerm(x) = ptc_newg_n {
-                            ptc_input = Some(x);
+                    let ptc_input = {
+                        if andterm_input.is_some() {
+                            let ptc_n = s.g.nets.get(andterm_input.unwrap()).source.unwrap().0;
+                            let ptc_newg_n = process_one_intermed_node(s, ptc_n)?;
+                            if let InputGraphAnyPoolIdx::PTerm(x) = ptc_newg_n {
+                                Some(x)
+                            } else {
+                                return Err("mis-connected nodes");
+                            }
                         } else {
-                            return Err("mis-connected nodes");
+                            None
                         }
-                    } else {
-                        ptc_input = None;
-                    }
+                    };
 
                     {
                         let mut newg_n = s.mcs.get_mut(newg_idx);
@@ -1298,7 +1310,7 @@ impl InputGraph {
                         }
                     };
 
-                    // Visit PTC
+                    // Visit CE
                     let ce_input = {
                         if ce_input.is_some() {
                             let ce_n = s.g.nets.get(ce_input.unwrap()).source.unwrap().0;
@@ -1316,14 +1328,20 @@ impl InputGraph {
                     // Visit set
                     let set_input = {
                         if set_input.is_some() {
-                            let set_n = s.g.nets.get(set_input.unwrap()).source.unwrap().0;
-                            let set_newg_n = process_one_intermed_node(s, set_n)?;
-                            if let InputGraphAnyPoolIdx::PTerm(x) = set_newg_n {
-                                Some(InputGraphRegRSType::PTerm(x))
-                            } else if let InputGraphAnyPoolIdx::BufgGSR(x) = set_newg_n {
-                                Some(InputGraphRegRSType::GSR(x))
+                            if set_input.unwrap() == s.g.vss_net {
+                                None
+                            } else if set_input.unwrap() == s.g.vdd_net {
+                                return Err("cannot tie set input high");
                             } else {
-                                return Err("mis-connected nodes");
+                                let set_n = s.g.nets.get(set_input.unwrap()).source.unwrap().0;
+                                let set_newg_n = process_one_intermed_node(s, set_n)?;
+                                if let InputGraphAnyPoolIdx::PTerm(x) = set_newg_n {
+                                    Some(InputGraphRegRSType::PTerm(x))
+                                } else if let InputGraphAnyPoolIdx::BufgGSR(x) = set_newg_n {
+                                    Some(InputGraphRegRSType::GSR(x))
+                                } else {
+                                    return Err("mis-connected nodes");
+                                }
                             }
                         } else {
                             None
@@ -1333,14 +1351,20 @@ impl InputGraph {
                     // Visit reset
                     let reset_input = {
                         if reset_input.is_some() {
-                            let reset_n = s.g.nets.get(reset_input.unwrap()).source.unwrap().0;
-                            let reset_newg_n = process_one_intermed_node(s, reset_n)?;
-                            if let InputGraphAnyPoolIdx::PTerm(x) = reset_newg_n {
-                                Some(InputGraphRegRSType::PTerm(x))
-                            } else if let InputGraphAnyPoolIdx::BufgGSR(x) = reset_newg_n {
-                                Some(InputGraphRegRSType::GSR(x))
+                            if reset_input.unwrap() == s.g.vss_net {
+                                None
+                            } else if reset_input.unwrap() == s.g.vdd_net {
+                                return Err("cannot tie reset input high");
                             } else {
-                                return Err("mis-connected nodes");
+                                let reset_n = s.g.nets.get(reset_input.unwrap()).source.unwrap().0;
+                                let reset_newg_n = process_one_intermed_node(s, reset_n)?;
+                                if let InputGraphAnyPoolIdx::PTerm(x) = reset_newg_n {
+                                    Some(InputGraphRegRSType::PTerm(x))
+                                } else if let InputGraphAnyPoolIdx::BufgGSR(x) = reset_newg_n {
+                                    Some(InputGraphRegRSType::GSR(x))
+                                } else {
+                                    return Err("mis-connected nodes");
+                                }
                             }
                         } else {
                             None
