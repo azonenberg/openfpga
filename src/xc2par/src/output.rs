@@ -29,8 +29,8 @@ use self::xc2bit::*;
 use *;
 use objpool::*;
 
-pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[NetlistMacrocell],
-    placements: &[([(isize, isize); MCS_PER_FB], [Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB],
+pub fn produce_bitstream(device_type: XC2Device, g: &IntermediateGraph, mcs: &[NetlistMacrocell],
+    placements: &[([(isize, isize); MCS_PER_FB], [Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB],
         [XC2ZIAInput; INPUTS_PER_ANDTERM])]) -> XC2Bitstream {
 
     // FIXME: Don't hardcode
@@ -57,14 +57,14 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                 let andterm_node = g.nodes.get(andterm_idx);
 
                 // FIXME: Code duplication
-                if let NetlistGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, ..} = andterm_node.variant {
+                if let IntermediateGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, ..} = andterm_node.variant {
                     // Collect the inputs that need to go into this FB
                     let mut collected_inputs_true_vec = Vec::new();
                     let mut collected_inputs_comp_vec = Vec::new();
 
                     for &input_net in inputs_true {
                         let input_node = g.nodes.get(g.nets.get(input_net).source.unwrap().0);
-                        if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
+                        if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
                             let input_real_node_idx = g.nets.get(input).source.unwrap().0;
                             collected_inputs_true_vec.push(input_real_node_idx);
                         } else {
@@ -73,7 +73,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                     }
                     for &input_net in inputs_comp {
                         let input_node = g.nodes.get(g.nets.get(input_net).source.unwrap().0);
-                        if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
+                        if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
                             let input_real_node_idx = g.nets.get(input).source.unwrap().0;
                             collected_inputs_comp_vec.push(input_real_node_idx);
                         } else {
@@ -119,7 +119,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                         // What input do we actually want?
                         let input_obj = g.nodes.get(*input);
                         let choice = match input_obj.variant {
-                            NetlistGraphNodeVariant::InBuf{..} => {
+                            IntermediateGraphNodeVariant::InBuf{..} => {
                                 // FIXME: Hack
                                 if true && fb == 2 && mc == 0 {
                                     XC2ZIAInput::DedicatedInput
@@ -128,14 +128,14 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                                         XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
                                 }
                             },
-                            NetlistGraphNodeVariant::IOBuf{..} => {
+                            IntermediateGraphNodeVariant::IOBuf{..} => {
                                 XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(
                                     XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
                             },
-                            NetlistGraphNodeVariant::Xor{..} => {
+                            IntermediateGraphNodeVariant::Xor{..} => {
                                 XC2ZIAInput::Macrocell{fb: fb as u32, mc: mc as u32}
                             },
-                            NetlistGraphNodeVariant::Reg{..} => {
+                            IntermediateGraphNodeVariant::Reg{..} => {
                                 if need_to_use_ibuf_zia_path {
                                     XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(
                                         XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
@@ -185,7 +185,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                         // What input do we actually want?
                         let input_obj = g.nodes.get(*input);
                         let choice = match input_obj.variant {
-                            NetlistGraphNodeVariant::InBuf{..} => {
+                            IntermediateGraphNodeVariant::InBuf{..} => {
                                 // FIXME: Hack
                                 if true && fb == 2 && mc == 0 {
                                     XC2ZIAInput::DedicatedInput
@@ -194,14 +194,14 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                                         XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
                                 }
                             },
-                            NetlistGraphNodeVariant::IOBuf{..} => {
+                            IntermediateGraphNodeVariant::IOBuf{..} => {
                                 XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(
                                     XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
                             },
-                            NetlistGraphNodeVariant::Xor{..} => {
+                            IntermediateGraphNodeVariant::Xor{..} => {
                                 XC2ZIAInput::Macrocell{fb: fb as u32, mc: mc as u32}
                             },
-                            NetlistGraphNodeVariant::Reg{..} => {
+                            IntermediateGraphNodeVariant::Reg{..} => {
                                 if need_to_use_ibuf_zia_path {
                                     XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(
                                         XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
@@ -258,7 +258,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                 match mcs[gathered_mc_idx as usize] {
                     NetlistMacrocell::PinInputUnreg{i} => {
                         let ibuf_node = g.nodes.get(i);
-                        if let NetlistGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, ..} = ibuf_node.variant {
+                        if let IntermediateGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, ..} = ibuf_node.variant {
                             iob_bits[i_iob as usize].schmitt_trigger = schmitt_trigger;
                             iob_bits[i_iob as usize].termination_enabled = termination_enabled;
 
@@ -270,7 +270,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                     },
                     NetlistMacrocell::PinInputReg{i} => {
                         let ibuf_node = g.nodes.get(i);
-                        if let NetlistGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, output, ..} = ibuf_node.variant {
+                        if let IntermediateGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, output, ..} = ibuf_node.variant {
                             iob_bits[i_iob as usize].schmitt_trigger = schmitt_trigger;
                             iob_bits[i_iob as usize].termination_enabled = termination_enabled;
 
@@ -278,7 +278,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                             iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
 
                             let reg_node = g.nodes.get(g.nets.get(output).source.unwrap().0);
-                            if let NetlistGraphNodeVariant::Reg{mode, clkinv, clkddr, init_state, set_input, reset_input,
+                            if let IntermediateGraphNodeVariant::Reg{mode, clkinv, clkddr, init_state, set_input, reset_input,
                                 dt_input, clk_input, ..} = reg_node.variant {
 
                                 // TODO
@@ -305,7 +305,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                     NetlistMacrocell::PinOutput{i} => {
                         let iobufe = g.nodes.get(i);
                         let i_iob = fb_mc_num_to_iob_num(device_type, fb_i as u32, mc_i as u32).unwrap();
-                        if let NetlistGraphNodeVariant::IOBuf{oe, input, output,
+                        if let IntermediateGraphNodeVariant::IOBuf{oe, input, output,
                                 schmitt_trigger, termination_enabled, slew_is_fast, ..} = iobufe.variant {
 
                             iob_bits[i_iob as usize].schmitt_trigger = schmitt_trigger;
@@ -327,9 +327,9 @@ pub fn produce_bitstream(device_type: XC2Device, g: &NetlistGraph, mcs: &[Netlis
                                 // What is feeding the output?
                                 if input.unwrap() != g.vss_net {
                                     let input_src = g.nodes.get(g.nets.get(input.unwrap()).source.unwrap().0);
-                                    if let NetlistGraphNodeVariant::Xor{..} = input_src.variant {
+                                    if let IntermediateGraphNodeVariant::Xor{..} = input_src.variant {
                                         iob_bits[i_iob as usize].obuf_uses_ff = false;
-                                    } else if let NetlistGraphNodeVariant::Reg{..} = input_src.variant {
+                                    } else if let IntermediateGraphNodeVariant::Reg{..} = input_src.variant {
                                         iob_bits[i_iob as usize].obuf_uses_ff = true;
                                     } else {
                                         panic!("mismatched graph node types");

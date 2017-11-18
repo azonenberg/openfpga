@@ -142,25 +142,25 @@ pub fn greedy_initial_placement(mcs: &[NetlistMacrocell]) -> Vec<[(isize, isize)
     ret
 }
 
-fn compare_andterms(g: &NetlistGraph, a: ObjPoolIndex<NetlistGraphNode>, b: ObjPoolIndex<NetlistGraphNode>) -> bool {
+fn compare_andterms(g: &IntermediateGraph, a: ObjPoolIndex<IntermediateGraphNode>, b: ObjPoolIndex<IntermediateGraphNode>) -> bool {
     let a_ = g.nodes.get(a);
     let b_ = g.nodes.get(b);
-    if let NetlistGraphNodeVariant::AndTerm{
+    if let IntermediateGraphNodeVariant::AndTerm{
         inputs_true: ref a_inp_true, inputs_comp: ref a_inp_comp, ..} = a_.variant {
 
-        if let NetlistGraphNodeVariant::AndTerm{
+        if let IntermediateGraphNodeVariant::AndTerm{
             inputs_true: ref b_inp_true, inputs_comp: ref b_inp_comp, ..} = b_.variant {
 
-            let mut a_inp_true_h: HashSet<ObjPoolIndex<NetlistGraphNode>> = HashSet::new();
-            let mut a_inp_comp_h: HashSet<ObjPoolIndex<NetlistGraphNode>> = HashSet::new();
-            let mut b_inp_true_h: HashSet<ObjPoolIndex<NetlistGraphNode>> = HashSet::new();
-            let mut b_inp_comp_h: HashSet<ObjPoolIndex<NetlistGraphNode>> = HashSet::new();
+            let mut a_inp_true_h: HashSet<ObjPoolIndex<IntermediateGraphNode>> = HashSet::new();
+            let mut a_inp_comp_h: HashSet<ObjPoolIndex<IntermediateGraphNode>> = HashSet::new();
+            let mut b_inp_true_h: HashSet<ObjPoolIndex<IntermediateGraphNode>> = HashSet::new();
+            let mut b_inp_comp_h: HashSet<ObjPoolIndex<IntermediateGraphNode>> = HashSet::new();
 
             for &x in a_inp_true {
                 let inp_net = g.nets.get(x);
                 let src_node_idx = inp_net.source.unwrap().0;
                 let src_node = g.nodes.get(src_node_idx);
-                if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
+                if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
                     let zia_inp_net = g.nets.get(input);
                     let zia_src_node_idx = zia_inp_net.source.unwrap().0;
                     a_inp_true_h.insert(zia_src_node_idx);
@@ -173,7 +173,7 @@ fn compare_andterms(g: &NetlistGraph, a: ObjPoolIndex<NetlistGraphNode>, b: ObjP
                 let inp_net = g.nets.get(x);
                 let src_node_idx = inp_net.source.unwrap().0;
                 let src_node = g.nodes.get(src_node_idx);
-                if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
+                if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
                     let zia_inp_net = g.nets.get(input);
                     let zia_src_node_idx = zia_inp_net.source.unwrap().0;
                     a_inp_comp_h.insert(zia_src_node_idx);
@@ -186,7 +186,7 @@ fn compare_andterms(g: &NetlistGraph, a: ObjPoolIndex<NetlistGraphNode>, b: ObjP
                 let inp_net = g.nets.get(x);
                 let src_node_idx = inp_net.source.unwrap().0;
                 let src_node = g.nodes.get(src_node_idx);
-                if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
+                if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
                     let zia_inp_net = g.nets.get(input);
                     let zia_src_node_idx = zia_inp_net.source.unwrap().0;
                     b_inp_true_h.insert(zia_src_node_idx);
@@ -199,7 +199,7 @@ fn compare_andterms(g: &NetlistGraph, a: ObjPoolIndex<NetlistGraphNode>, b: ObjP
                 let inp_net = g.nets.get(x);
                 let src_node_idx = inp_net.source.unwrap().0;
                 let src_node = g.nodes.get(src_node_idx);
-                if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
+                if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
                     let zia_inp_net = g.nets.get(input);
                     let zia_src_node_idx = zia_inp_net.source.unwrap().0;
                     b_inp_comp_h.insert(zia_src_node_idx);
@@ -218,13 +218,13 @@ fn compare_andterms(g: &NetlistGraph, a: ObjPoolIndex<NetlistGraphNode>, b: ObjP
 }
 
 pub enum AndTermAssignmentResult {
-    Success([Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB]),
+    Success([Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB]),
     FailurePTCNeverSatisfiable,
     FailurePtermConflict(u32),
     FailurePtermExceeded(u32),
 }
 
-pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignment: &[(isize, isize); MCS_PER_FB])
+pub fn try_assign_andterms(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_assignment: &[(isize, isize); MCS_PER_FB])
     -> AndTermAssignmentResult {
 
     let mut ret = [None; ANDTERMS_PER_FB];
@@ -242,7 +242,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
         match *this_mc {
             NetlistMacrocell::PinOutput{i} => {
                 let iobufe = g.nodes.get(i);
-                if let NetlistGraphNodeVariant::IOBuf{input, oe, ..} = iobufe.variant {
+                if let IntermediateGraphNodeVariant::IOBuf{input, oe, ..} = iobufe.variant {
                     if oe.is_some() {
                         // The output enable is being used
 
@@ -264,7 +264,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
                     // Now need to look at input to this
                     if input.is_some() {
                         let input_node = g.nodes.get(g.nets.get(input.unwrap()).source.unwrap().0);
-                        if let NetlistGraphNodeVariant::Xor{andterm_input, ..} = input_node.variant {
+                        if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = input_node.variant {
                             if andterm_input.is_some() {
                                 let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
                                 // This goes into PTC
@@ -277,11 +277,11 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
                                     }
                                 }
                             }
-                        } else if let NetlistGraphNodeVariant::Reg{
+                        } else if let IntermediateGraphNodeVariant::Reg{
                             set_input, reset_input, ce_input, clk_input, dt_input, ..} = input_node.variant {
 
                             let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
-                            if let NetlistGraphNodeVariant::Xor{andterm_input, ..} = dt_input_node.variant {
+                            if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = dt_input_node.variant {
                                 // XOR feeding register
                                 if andterm_input.is_some() {
                                     let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
@@ -324,7 +324,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
 
                             let clk_node_idx = g.nets.get(clk_input).source.unwrap().0;
                             let clk_node = g.nodes.get(clk_node_idx);
-                            if let NetlistGraphNodeVariant::AndTerm{..} = clk_node.variant {
+                            if let IntermediateGraphNodeVariant::AndTerm{..} = clk_node.variant {
                                 // This goes into PTC
                                 let ptc_idx = get_ptc(mc_i as u32) as usize;
                                 if ret[ptc_idx].is_none() {
@@ -339,7 +339,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
                             if set_input.is_some() {
                                 let set_node_idx = g.nets.get(set_input.unwrap()).source.unwrap().0;
                                 let set_node = g.nodes.get(set_node_idx);
-                                if let NetlistGraphNodeVariant::AndTerm{..} = set_node.variant {
+                                if let IntermediateGraphNodeVariant::AndTerm{..} = set_node.variant {
                                     // This goes into PTA
                                     let pta_idx = get_pta(mc_i as u32) as usize;
                                     if ret[pta_idx].is_none() {
@@ -355,7 +355,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
                             if reset_input.is_some() {
                                 let rst_node_idx = g.nets.get(reset_input.unwrap()).source.unwrap().0;
                                 let rst_node = g.nodes.get(rst_node_idx);
-                                if let NetlistGraphNodeVariant::AndTerm{..} = rst_node.variant {
+                                if let IntermediateGraphNodeVariant::AndTerm{..} = rst_node.variant {
                                     // This goes into PTA
                                     let pta_idx = get_pta(mc_i as u32) as usize;
                                     if ret[pta_idx].is_none() {
@@ -377,7 +377,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
             },
             NetlistMacrocell::BuriedComb{i} => {
                 let xornode = g.nodes.get(i);
-                if let NetlistGraphNodeVariant::Xor{andterm_input, ..} = xornode.variant {
+                if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = xornode.variant {
                     if andterm_input.is_some() {
                         let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
                         // This goes into PTC
@@ -397,11 +397,11 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
             NetlistMacrocell::BuriedReg{i, ..} => {
                 let regnode = g.nodes.get(i);
 
-                if let NetlistGraphNodeVariant::Reg{
+                if let IntermediateGraphNodeVariant::Reg{
                     set_input, reset_input, ce_input, clk_input, dt_input, ..} = regnode.variant {
 
                     let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
-                    if let NetlistGraphNodeVariant::Xor{andterm_input, ..} = dt_input_node.variant {
+                    if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = dt_input_node.variant {
                         // XOR feeding register
                         if andterm_input.is_some() {
                             let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
@@ -448,7 +448,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
 
                     let clk_node_idx = g.nets.get(clk_input).source.unwrap().0;
                     let clk_node = g.nodes.get(clk_node_idx);
-                    if let NetlistGraphNodeVariant::AndTerm{..} = clk_node.variant {
+                    if let IntermediateGraphNodeVariant::AndTerm{..} = clk_node.variant {
                         // This goes into PTC
                         let ptc_idx = get_ptc(mc_i as u32) as usize;
                         if ret[ptc_idx].is_none() {
@@ -463,7 +463,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
                     if set_input.is_some() {
                         let set_node_idx = g.nets.get(set_input.unwrap()).source.unwrap().0;
                         let set_node = g.nodes.get(set_node_idx);
-                        if let NetlistGraphNodeVariant::AndTerm{..} = set_node.variant {
+                        if let IntermediateGraphNodeVariant::AndTerm{..} = set_node.variant {
                             // This goes into PTA
                             let pta_idx = get_pta(mc_i as u32) as usize;
                             if ret[pta_idx].is_none() {
@@ -479,7 +479,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
                     if reset_input.is_some() {
                         let rst_node_idx = g.nets.get(reset_input.unwrap()).source.unwrap().0;
                         let rst_node = g.nodes.get(rst_node_idx);
-                        if let NetlistGraphNodeVariant::AndTerm{..} = rst_node.variant {
+                        if let IntermediateGraphNodeVariant::AndTerm{..} = rst_node.variant {
                             // This goes into PTA
                             let pta_idx = get_pta(mc_i as u32) as usize;
                             if ret[pta_idx].is_none() {
@@ -516,16 +516,16 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
         match *this_mc {
             NetlistMacrocell::PinOutput{i} => {
                 let iobufe = g.nodes.get(i);
-                if let NetlistGraphNodeVariant::IOBuf{input, ..} = iobufe.variant {
+                if let IntermediateGraphNodeVariant::IOBuf{input, ..} = iobufe.variant {
                     if input.is_some() {
                         let input_node = g.nodes.get(g.nets.get(input.unwrap()).source.unwrap().0);
-                        if let NetlistGraphNodeVariant::Xor{orterm_input, ..} = input_node.variant {
+                        if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = input_node.variant {
                             if orterm_input.is_some() {
                                 orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
                             }
-                        } else if let NetlistGraphNodeVariant::Reg{dt_input, ..} = input_node.variant {
+                        } else if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = input_node.variant {
                             let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
-                            if let NetlistGraphNodeVariant::Xor{orterm_input, ..} = dt_input_node.variant {
+                            if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = dt_input_node.variant {
                                 if orterm_input.is_some() {
                                     orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
                                 }
@@ -540,7 +540,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
             },
             NetlistMacrocell::BuriedComb{i} => {
                 let xornode = g.nodes.get(i);
-                if let NetlistGraphNodeVariant::Xor{orterm_input, ..} = xornode.variant {
+                if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = xornode.variant {
                     if orterm_input.is_some() {
                         orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
                     }
@@ -551,9 +551,9 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
             NetlistMacrocell::BuriedReg{i, ..} => {
                 let regnode = g.nodes.get(i);
 
-                if let NetlistGraphNodeVariant::Reg{dt_input, ..} = regnode.variant {
+                if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = regnode.variant {
                     let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
-                    if let NetlistGraphNodeVariant::Xor{orterm_input, ..} = dt_input_node.variant {
+                    if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = dt_input_node.variant {
                         if orterm_input.is_some() {
                             orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
                         }
@@ -572,7 +572,7 @@ pub fn try_assign_andterms(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assign
 
         if orterm_node.is_some() {
             let orterm_obj = g.nodes.get(orterm_node.unwrap());
-            if let NetlistGraphNodeVariant::OrTerm{ref inputs, ..} = orterm_obj.variant {
+            if let IntermediateGraphNodeVariant::OrTerm{ref inputs, ..} = orterm_obj.variant {
                 for andterm_net_idx in inputs {
                     let andterm_node_idx = g.nets.get(*andterm_net_idx).source.unwrap().0;
                     let mut idx = None;
@@ -621,8 +621,8 @@ pub enum ZIAAssignmentResult {
     FailureUnroutable(u32),
 }
 
-pub fn try_assign_zia(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments: &[[(isize, isize); MCS_PER_FB]],
-    pterm_assignment: &[Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB])
+pub fn try_assign_zia(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_assignments: &[[(isize, isize); MCS_PER_FB]],
+    pterm_assignment: &[Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB])
     -> ZIAAssignmentResult {
 
     let mut ret = [XC2ZIAInput::One; INPUTS_PER_ANDTERM];
@@ -633,10 +633,10 @@ pub fn try_assign_zia(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments
     for pt_i in 0..ANDTERMS_PER_FB {
         if pterm_assignment[pt_i].is_some() {
             let andterm_node = g.nodes.get(pterm_assignment[pt_i].unwrap());
-            if let NetlistGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, ..} = andterm_node.variant {
+            if let IntermediateGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, ..} = andterm_node.variant {
                 for &input_net in inputs_true {
                     let input_node = g.nodes.get(g.nets.get(input_net).source.unwrap().0);
-                    if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
+                    if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
                         let input_real_node_idx = g.nets.get(input).source.unwrap().0;
                         if !collected_inputs_set.contains(&input_real_node_idx) {
                             collected_inputs_set.insert(input_real_node_idx);
@@ -648,7 +648,7 @@ pub fn try_assign_zia(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments
                 }
                 for &input_net in inputs_comp {
                     let input_node = g.nodes.get(g.nets.get(input_net).source.unwrap().0);
-                    if let NetlistGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
+                    if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
                         let input_real_node_idx = g.nets.get(input).source.unwrap().0;
                         if !collected_inputs_set.contains(&input_real_node_idx) {
                             collected_inputs_set.insert(input_real_node_idx);
@@ -707,7 +707,7 @@ pub fn try_assign_zia(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments
         // What input do we actually want?
         let input_obj = g.nodes.get(*input);
         let choice = match input_obj.variant {
-            NetlistGraphNodeVariant::InBuf{..} => {
+            IntermediateGraphNodeVariant::InBuf{..} => {
                 // FIXME: Hack
                 if true && fb == 2 && mc == 0 {
                     XC2ZIAInput::DedicatedInput
@@ -715,13 +715,13 @@ pub fn try_assign_zia(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments
                     XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
                 }
             },
-            NetlistGraphNodeVariant::IOBuf{..} => {
+            IntermediateGraphNodeVariant::IOBuf{..} => {
                 XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
             },
-            NetlistGraphNodeVariant::Xor{..} => {
+            IntermediateGraphNodeVariant::Xor{..} => {
                 XC2ZIAInput::Macrocell{fb: fb as u32, mc: mc as u32}
             },
-            NetlistGraphNodeVariant::Reg{..} => {
+            IntermediateGraphNodeVariant::Reg{..} => {
                 if need_to_use_ibuf_zia_path {
                     XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
                 } else {
@@ -778,7 +778,7 @@ pub fn try_assign_zia(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments
 }
 
 pub enum FBAssignmentResult {
-    Success(([Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB], [XC2ZIAInput; INPUTS_PER_ANDTERM])),
+    Success(([Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB], [XC2ZIAInput; INPUTS_PER_ANDTERM])),
     // macrocell assignment mc, score
     Failure(Vec<(u32, u32)>),
     // FIXME: This should report which one?
@@ -786,7 +786,7 @@ pub enum FBAssignmentResult {
 }
 
 // FIXME: mutable assignments is a hack
-pub fn try_assign_fb(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments: &mut [[(isize, isize); MCS_PER_FB]],
+pub fn try_assign_fb(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_assignments: &mut [[(isize, isize); MCS_PER_FB]],
     fb_i: u32) -> FBAssignmentResult {
 
     let mut base_failing_score = 0;
@@ -869,13 +869,13 @@ pub fn try_assign_fb(g: &NetlistGraph, mcs: &[NetlistMacrocell], mc_assignments:
 
 pub enum PARResult {
     Success((Vec<([(isize, isize); MCS_PER_FB],
-        [Option<ObjPoolIndex<NetlistGraphNode>>; ANDTERMS_PER_FB],
+        [Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB],
         [XC2ZIAInput; INPUTS_PER_ANDTERM])>, Vec<NetlistMacrocell>)),
     FailurePTCNeverSatisfiable,
     FailureIterationsExceeded,
 }
 
-pub fn do_par(g: &NetlistGraph) -> PARResult {
+pub fn do_par(g: &IntermediateGraph) -> PARResult {
     let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
 
     let ngraph_collected_mc = g.gather_macrocells();
