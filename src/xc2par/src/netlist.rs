@@ -1100,7 +1100,7 @@ impl InputGraph {
                         newg_oe = None;
                     }
 
-                    // Handle input
+                    // Visit input
                     let newg_input;
                     if input.is_some() {
                         if input.unwrap() == s.g.vss_net {
@@ -1116,6 +1116,12 @@ impl InputGraph {
                                 },
                                 _ => return Err("mis-connected nodes"),
                             }
+
+                            // We need to recursively process this. Update the relevant map as well to make sure we
+                            // don't mess up along the way.
+                            assert!(!s.mcs_map.contains_key(&input_n));
+                            s.mcs_map.insert(input_n, newg_idx);
+                            process_one_intermed_node(s, input_n)?;
                         }
                     } else {
                         newg_input = None;
@@ -1136,8 +1142,6 @@ impl InputGraph {
                             feedback_used: false,
                         });
                     }
-
-                    println!("{:?}", s.mcs);
 
                     Ok(InputGraphAnyPoolIdx::Macrocell(newg_idx))
                 },
@@ -1160,9 +1164,43 @@ impl InputGraph {
                         });
                     }
 
-                    println!("{:?}", s.mcs);
+                    Ok(InputGraphAnyPoolIdx::Macrocell(newg_idx))
+                },
+                IntermediateGraphNodeVariant::Xor{orterm_input, andterm_input, invert_out, ..} => {
+                    let newg_idx = *s.mcs_map.get(&n_idx).unwrap();
+
+                    // Visit PTC
+                    let ptc_input;
+                    if andterm_input.is_some() {
+                        let ptc_n = s.g.nets.get(andterm_input.unwrap()).source.unwrap().0;
+                        let ptc_newg_n = process_one_intermed_node(s, ptc_n)?;
+                        if let InputGraphAnyPoolIdx::PTerm(x) = ptc_newg_n {
+                            ptc_input = Some(x);
+                        } else {
+                            return Err("mis-connected nodes");
+                        }
+                    } else {
+                        ptc_input = None;
+                    }
+
+                    {
+                        let mut newg_n = s.mcs.get_mut(newg_idx);
+                        assert!(newg_n.xor_bits.is_none());
+                        newg_n.name = n.name.clone();
+                        newg_n.requested_loc = n.location;
+                        newg_n.xor_bits = Some(InputGraphXor {
+                            orterm_inputs: Vec::new(), // TODO
+                            andterm_input: ptc_input,
+                            invert_out,
+                            feedback_used: false,
+                        });
+                    }
 
                     Ok(InputGraphAnyPoolIdx::Macrocell(newg_idx))
+                },
+                IntermediateGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, ..} => {
+                    println!("todo todo todo");
+                    panic!();
                 },
                 _ => unimplemented!(),
             }
