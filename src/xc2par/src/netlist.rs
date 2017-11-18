@@ -97,7 +97,7 @@ pub enum IntermediateGraphNodeVariant {
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct RequestedLocation {
     pub fb: u32,
     pub i: Option<u32>,
@@ -1124,12 +1124,37 @@ impl InputGraph {
                     {
                         let mut newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.io_bits.is_none());
+                        newg_n.name = n.name.clone();
+                        newg_n.requested_loc = n.location;
                         newg_n.io_bits = Some(InputGraphIOBuf {
                             input: newg_input,
                             oe: newg_oe,
                             schmitt_trigger,
                             termination_enabled,
                             slew_is_fast,
+                            uses_data_gate,
+                            feedback_used: false,
+                        });
+                    }
+
+                    println!("{:?}", s.mcs);
+
+                    Ok(InputGraphAnyPoolIdx::Macrocell(newg_idx))
+                },
+                IntermediateGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, uses_data_gate, ..} => {
+                    let newg_idx = *s.mcs_map.get(&n_idx).unwrap();
+
+                    {
+                        let mut newg_n = s.mcs.get_mut(newg_idx);
+                        assert!(newg_n.io_bits.is_none());
+                        newg_n.name = n.name.clone();
+                        newg_n.requested_loc = n.location;
+                        newg_n.io_bits = Some(InputGraphIOBuf {
+                            input: None,
+                            oe: None,
+                            schmitt_trigger,
+                            termination_enabled,
+                            slew_is_fast: true,
                             uses_data_gate,
                             feedback_used: false,
                         });
