@@ -91,10 +91,6 @@ pub enum IntermediateGraphNodeVariant {
         termination_enabled: bool,
         uses_data_gate: bool,
     },
-    ZIADummyBuf {
-        input: ObjPoolIndex<IntermediateGraphNet>,
-        output: ObjPoolIndex<IntermediateGraphNet>,
-    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -631,10 +627,6 @@ impl IntermediateGraph {
                 IntermediateGraphNodeVariant::InBuf{output, ..} => {
                     set_net_source(&mut nets, output, (node_idx, "O"))?;
                 },
-                IntermediateGraphNodeVariant::ZIADummyBuf{input, output} => {
-                    nets.get_mut(input).sinks.push((node_idx, "IN"));
-                    set_net_source(&mut nets, output, (node_idx, "OUT"))?;
-                },
             }
         }
 
@@ -1036,8 +1028,6 @@ impl InputGraph {
                         InputGraphAnyPoolIdx::BufgGTS(*s.bufg_gts_map.get(&n_idx).unwrap()),
                     IntermediateGraphNodeVariant::BufgGSR{..} =>
                         InputGraphAnyPoolIdx::BufgGSR(*s.bufg_gsr_map.get(&n_idx).unwrap()),
-                    IntermediateGraphNodeVariant::ZIADummyBuf{..} =>
-                        InputGraphAnyPoolIdx::PTerm(*s.pterms_map.get(&n_idx).unwrap()),  // FIXME: This is going away
                 })
             }
             s.consumed_inputs.insert(n_idx);

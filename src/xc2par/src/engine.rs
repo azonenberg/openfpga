@@ -159,53 +159,25 @@ fn compare_andterms(g: &IntermediateGraph, a: ObjPoolIndex<IntermediateGraphNode
             for &x in a_inp_true {
                 let inp_net = g.nets.get(x);
                 let src_node_idx = inp_net.source.unwrap().0;
-                let src_node = g.nodes.get(src_node_idx);
-                if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
-                    let zia_inp_net = g.nets.get(input);
-                    let zia_src_node_idx = zia_inp_net.source.unwrap().0;
-                    a_inp_true_h.insert(zia_src_node_idx);
-                } else {
-                    panic!("mismatched node types");
-                }
+                a_inp_true_h.insert(src_node_idx);
             }
 
             for &x in a_inp_comp {
                 let inp_net = g.nets.get(x);
                 let src_node_idx = inp_net.source.unwrap().0;
-                let src_node = g.nodes.get(src_node_idx);
-                if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
-                    let zia_inp_net = g.nets.get(input);
-                    let zia_src_node_idx = zia_inp_net.source.unwrap().0;
-                    a_inp_comp_h.insert(zia_src_node_idx);
-                } else {
-                    panic!("mismatched node types");
-                }
+                a_inp_comp_h.insert(src_node_idx);
             }
 
             for &x in b_inp_true {
                 let inp_net = g.nets.get(x);
                 let src_node_idx = inp_net.source.unwrap().0;
-                let src_node = g.nodes.get(src_node_idx);
-                if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
-                    let zia_inp_net = g.nets.get(input);
-                    let zia_src_node_idx = zia_inp_net.source.unwrap().0;
-                    b_inp_true_h.insert(zia_src_node_idx);
-                } else {
-                    panic!("mismatched node types");
-                }
+                b_inp_true_h.insert(src_node_idx);
             }
 
             for &x in b_inp_comp {
                 let inp_net = g.nets.get(x);
                 let src_node_idx = inp_net.source.unwrap().0;
-                let src_node = g.nodes.get(src_node_idx);
-                if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = src_node.variant {
-                    let zia_inp_net = g.nets.get(input);
-                    let zia_src_node_idx = zia_inp_net.source.unwrap().0;
-                    b_inp_comp_h.insert(zia_src_node_idx);
-                } else {
-                    panic!("mismatched node types");
-                }
+                b_inp_comp_h.insert(src_node_idx);
             }
 
             a_inp_true_h == b_inp_true_h && a_inp_comp_h == b_inp_comp_h
@@ -635,27 +607,17 @@ pub fn try_assign_zia(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_assign
             let andterm_node = g.nodes.get(pterm_assignment[pt_i].unwrap());
             if let IntermediateGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, ..} = andterm_node.variant {
                 for &input_net in inputs_true {
-                    let input_node = g.nodes.get(g.nets.get(input_net).source.unwrap().0);
-                    if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
-                        let input_real_node_idx = g.nets.get(input).source.unwrap().0;
-                        if !collected_inputs_set.contains(&input_real_node_idx) {
-                            collected_inputs_set.insert(input_real_node_idx);
-                            collected_inputs_vec.push(input_real_node_idx);
-                        }
-                    } else {
-                        panic!("not a zia buf");
+                    let input_node_idx = g.nets.get(input_net).source.unwrap().0;
+                    if !collected_inputs_set.contains(&input_node_idx) {
+                        collected_inputs_set.insert(input_node_idx);
+                        collected_inputs_vec.push(input_node_idx);
                     }
                 }
                 for &input_net in inputs_comp {
-                    let input_node = g.nodes.get(g.nets.get(input_net).source.unwrap().0);
-                    if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
-                        let input_real_node_idx = g.nets.get(input).source.unwrap().0;
-                        if !collected_inputs_set.contains(&input_real_node_idx) {
-                            collected_inputs_set.insert(input_real_node_idx);
-                            collected_inputs_vec.push(input_real_node_idx);
-                        }
-                    } else {
-                        panic!("not a zia buf");
+                    let input_node_idx = g.nets.get(input_net).source.unwrap().0;
+                    if !collected_inputs_set.contains(&input_node_idx) {
+                        collected_inputs_set.insert(input_node_idx);
+                        collected_inputs_vec.push(input_node_idx);
                     }
                 }
             } else {

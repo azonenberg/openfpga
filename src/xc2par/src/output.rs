@@ -63,22 +63,12 @@ pub fn produce_bitstream(device_type: XC2Device, g: &IntermediateGraph, mcs: &[N
                     let mut collected_inputs_comp_vec = Vec::new();
 
                     for &input_net in inputs_true {
-                        let input_node = g.nodes.get(g.nets.get(input_net).source.unwrap().0);
-                        if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
-                            let input_real_node_idx = g.nets.get(input).source.unwrap().0;
-                            collected_inputs_true_vec.push(input_real_node_idx);
-                        } else {
-                            panic!("not a zia buf");
-                        }
+                        let input_node_idx = g.nets.get(input_net).source.unwrap().0;
+                        collected_inputs_true_vec.push(input_node_idx);
                     }
                     for &input_net in inputs_comp {
-                        let input_node = g.nodes.get(g.nets.get(input_net).source.unwrap().0);
-                        if let IntermediateGraphNodeVariant::ZIADummyBuf{input, ..} = input_node.variant {
-                            let input_real_node_idx = g.nets.get(input).source.unwrap().0;
-                            collected_inputs_comp_vec.push(input_real_node_idx);
-                        } else {
-                            panic!("not a zia buf");
-                        }
+                        let input_node_idx = g.nets.get(input_net).source.unwrap().0;
+                        collected_inputs_comp_vec.push(input_node_idx);
                     }
 
                     // Find correct setting
