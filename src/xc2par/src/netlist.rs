@@ -1254,7 +1254,70 @@ impl InputGraph {
                 },
                 IntermediateGraphNodeVariant::OrTerm{..} => {
                     panic!("Internal error - unexpected OR gate here");
-                }
+                },
+                IntermediateGraphNodeVariant::Reg{mode, clkinv, clkddr, init_state, set_input, reset_input,
+                    ce_input, dt_input, clk_input, ..} => {
+
+                    let newg_idx = *s.mcs_map.get(&n_idx).unwrap();
+
+                    // Visit data input
+                    let dt_input = {
+                        let input_n = s.g.nets.get(dt_input).source.unwrap().0;
+                        let input_type = match s.g.nodes.get(input_n).variant {
+                            IntermediateGraphNodeVariant::Xor{..} => {
+                                InputGraphRegInputType::Xor
+                            },
+                            IntermediateGraphNodeVariant::IOBuf{..} |
+                            IntermediateGraphNodeVariant::InBuf{..} => {
+                                InputGraphRegInputType::Pin
+                            },
+                            _ => return Err("mis-connected nodes"),
+                        };
+
+                        // We need to recursively process this. Update the relevant map as well to make sure we
+                        // don't mess up along the way, but only if it's an XOR.
+                        if input_type == InputGraphRegInputType::Xor {
+                            assert!(!s.mcs_map.contains_key(&input_n));
+                            s.mcs_map.insert(input_n, newg_idx);
+                            process_one_intermed_node(s, input_n)?;
+                        }
+
+                        input_type
+                    };
+
+                    // Visit clock input
+                    let clk_input = {
+                        let clk_n = s.g.nets.get(clk_input).source.unwrap().0;
+                        let clk_newg_n = process_one_intermed_node(s, clk_n)?;
+                        if let InputGraphAnyPoolIdx::PTerm(x) = clk_newg_n {
+                            InputGraphRegClockType::PTerm(x)
+                        } else if let InputGraphAnyPoolIdx::BufgClk(x) = clk_newg_n {
+                            InputGraphRegClockType::GCK(x)
+                        } else {
+                            return Err("mis-connected nodes");
+                        }
+                    };
+
+                    {
+                        let mut newg_n = s.mcs.get_mut(newg_idx);
+                        assert!(newg_n.reg_bits.is_none());
+                        newg_n.name = n.name.clone();
+                        newg_n.requested_loc = n.location;
+                        newg_n.reg_bits = Some(InputGraphReg {
+                            mode,
+                            clkinv,
+                            clkddr,
+                            init_state,
+                            set_input: None, // TODO
+                            reset_input: None, // TODO
+                            ce_input: None, // TODO
+                            dt_input,
+                            clk_input,
+                        });
+                    }
+
+                    Ok(InputGraphAnyPoolIdx::Macrocell(newg_idx))
+                },
                 _ => unimplemented!(),
             }
         }
