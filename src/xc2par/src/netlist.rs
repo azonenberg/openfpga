@@ -797,7 +797,6 @@ pub struct InputGraphIOBuf {
     pub termination_enabled: bool,
     pub slew_is_fast: bool,
     pub uses_data_gate: bool,
-    pub feedback_used: bool,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -829,7 +828,6 @@ pub struct InputGraphReg {
     pub ce_input: Option<ObjPoolIndex<InputGraphPTerm>>,
     pub dt_input: InputGraphRegInputType,
     pub clk_input: InputGraphRegClockType,
-    pub feedback_used: bool,
 }
 
 #[derive(Debug)]
@@ -837,7 +835,6 @@ pub struct InputGraphXor {
     pub orterm_inputs: Vec<ObjPoolIndex<InputGraphPTerm>>,
     pub andterm_input: Option<ObjPoolIndex<InputGraphPTerm>>,
     pub invert_out: bool,
-    pub feedback_used: bool,
 }
 
 #[derive(Debug)]
@@ -848,6 +845,9 @@ pub struct InputGraphMacrocell {
     pub io_bits: Option<InputGraphIOBuf>,
     pub reg_bits: Option<InputGraphReg>,
     pub xor_bits: Option<InputGraphXor>,
+    pub io_feedback_used: bool,
+    pub reg_feedback_used: bool,
+    pub xor_feedback_used: bool,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -977,6 +977,9 @@ impl InputGraph {
                 io_bits: None,
                 reg_bits: None,
                 xor_bits: None,
+                io_feedback_used: false,
+                reg_feedback_used: false,
+                xor_feedback_used: false,
             };
 
             let newg_idx = mcs.insert(dummy_mc);
@@ -1091,7 +1094,6 @@ impl InputGraph {
                             termination_enabled,
                             slew_is_fast,
                             uses_data_gate,
-                            feedback_used: false,
                         });
                     }
 
@@ -1112,7 +1114,6 @@ impl InputGraph {
                             termination_enabled,
                             slew_is_fast: true,
                             uses_data_gate,
-                            feedback_used: false,
                         });
                     }
 
@@ -1172,7 +1173,6 @@ impl InputGraph {
                             orterm_inputs,
                             andterm_input: ptc_input,
                             invert_out,
-                            feedback_used: false,
                         });
                     }
 
@@ -1198,6 +1198,16 @@ impl InputGraph {
                             panic!("Internal error - not a macrocell?");
                         };
 
+                        // Flag the appropriate bits as used
+                        {
+                            let mut input_newg_n = s.mcs.get_mut(input_newg);
+                            match input_type {
+                                InputGraphPTermInputType::Pin => input_newg_n.io_feedback_used = true,
+                                InputGraphPTermInputType::Xor => input_newg_n.xor_feedback_used = true,
+                                InputGraphPTermInputType::Reg => input_newg_n.reg_feedback_used = true,
+                            }
+                        }
+
                         inputs_true_new.push((input_type, input_newg));
                     }
 
@@ -1217,6 +1227,16 @@ impl InputGraph {
                         let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
                             panic!("Internal error - not a macrocell?");
                         };
+
+                        // Flag the appropriate bits as used
+                        {
+                            let mut input_newg_n = s.mcs.get_mut(input_newg);
+                            match input_type {
+                                InputGraphPTermInputType::Pin => input_newg_n.io_feedback_used = true,
+                                InputGraphPTermInputType::Xor => input_newg_n.xor_feedback_used = true,
+                                InputGraphPTermInputType::Reg => input_newg_n.reg_feedback_used = true,
+                            }
+                        }
 
                         inputs_comp_new.push((input_type, input_newg));
                     }
