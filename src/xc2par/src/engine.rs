@@ -837,7 +837,7 @@ pub enum PARResult {
     FailureIterationsExceeded,
 }
 
-pub fn do_par(g: &IntermediateGraph) -> PARResult {
+pub fn do_par(g: &IntermediateGraph, g2: &InputGraph) -> PARResult {
     let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
 
     let ngraph_collected_mc = g.gather_macrocells();

@@ -58,13 +58,13 @@ fn main() {
     println!("{:?}", ngraph_rs);
 
     // New data structure
-    let input_graph = InputGraph::from_intermed_graph(&ngraph_rs);
+    let input_graph = InputGraph::from_intermed_graph(&ngraph_rs).unwrap();
     println!("{:?}", input_graph);
 
     // TODO
     let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
 
-    let par_result = do_par(&ngraph_rs);
+    let par_result = do_par(&ngraph_rs, &input_graph);
     if let PARResult::Success((x, mcs)) = par_result {
         // Get a bitstream result
         let bitstream = produce_bitstream(device_type, &ngraph_rs, &mcs, &x);

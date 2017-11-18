@@ -1008,7 +1008,7 @@ impl InputGraph {
             bufg_gts_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgGTS>>,
             bufg_gsr_map: &'a mut HashMap<ObjPoolIndex<IntermediateGraphNode>, ObjPoolIndex<InputGraphBufgGSR>>,
 
-            consumed_inputs: &'a mut HashSet<ObjPoolIndex<IntermediateGraphNode>>,
+            consumed_inputs: &'a mut HashSet<usize>,
         }
 
         fn process_one_intermed_node<'a>(s: &mut process_one_intermed_node_state<'a>,
@@ -1016,7 +1016,7 @@ impl InputGraph {
 
             let n = s.g.nodes.get(n_idx);
 
-            if s.consumed_inputs.contains(&n_idx) {
+            if s.consumed_inputs.contains(&n_idx.get_raw_i()) {
                 // We're already here, but what are we?
                 return Ok(match n.variant {
                     IntermediateGraphNodeVariant::IOBuf{..} |
@@ -1035,7 +1035,7 @@ impl InputGraph {
                         InputGraphAnyPoolIdx::BufgGSR(*s.bufg_gsr_map.get(&n_idx).unwrap()),
                 })
             }
-            s.consumed_inputs.insert(n_idx);
+            s.consumed_inputs.insert(n_idx.get_raw_i());
 
             match n.variant {
                 IntermediateGraphNodeVariant::IOBuf{oe, input, schmitt_trigger, termination_enabled,
@@ -1171,7 +1171,7 @@ impl InputGraph {
 
                         // This is manually inlined so that we don't need to add hacky extra logic to return the
                         // desired array of actual Pterms.
-                        s.consumed_inputs.insert(or_n);
+                        s.consumed_inputs.insert(or_n.get_raw_i());
                         // Update the map even though this shouldn't actually be needed.
                         assert!(!s.mcs_map.contains_key(&or_n));
                         s.mcs_map.insert(or_n, newg_idx);
@@ -1539,12 +1539,48 @@ impl InputGraph {
             }
         }
 
-        Ok(Self {
+        // Check to make sure we visited all the nodes
+        for i in 0..g.nodes.len() {
+            if !consumed_inputs.contains(&i) {
+                panic!("Internal error - did not consume all intermediate inputs");
+            }
+        }
+
+        let mut ret = Self {
             mcs,
             pterms,
             bufg_clks,
             bufg_gts,
             bufg_gsr,
-        })
+        };
+
+        ret.unfuse_pterms();
+        ret.sanity_check()?;
+
+        Ok(ret)
+    }
+
+    fn sanity_check(&self) -> Result<(), &'static str> {
+        for x_idx in self.mcs.iter() {
+            let x = self.mcs.get(x_idx);
+
+            if x.io_feedback_used && x.io_bits.is_none() {
+                return Err("Used IO input but there is no IO data?");
+            }
+
+            if x.reg_feedback_used && x.reg_bits.is_none() {
+                return Err("Used register input but there is no register data?");
+            }
+
+            if x.xor_feedback_used && x.xor_bits.is_none() {
+                return Err("Used XOR input but there is no XOR data?");
+            }
+        }
+
+        Ok(())
+    }
+
+    fn unfuse_pterms(&mut self) {
+
     }
 }
