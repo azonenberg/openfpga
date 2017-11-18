@@ -780,13 +780,13 @@ pub type AssignedLocation = Option<AssignedLocationInner>;
 pub enum InputGraphIOInputType {
     Reg,
     Xor,
-    OpenDrain0,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InputGraphIOOEType {
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     GTS(ObjPoolIndex<InputGraphBufgGTS>),
+    OpenDrain,
 }
 
 #[derive(Debug)]
@@ -1044,13 +1044,38 @@ impl InputGraph {
                     let newg_idx = *s.mcs_map.get(&n_idx).unwrap();
 
                     // Visit input
+                    let old_input = input;
                     let input = {
                         if oe.is_some() && oe.unwrap() == s.g.vss_net {
                             // The output enable is permanently off, so force this to not be used
                             None
                         } else if input.is_some() {
                             if input.unwrap() == s.g.vss_net {
-                                Some(InputGraphIOInputType::OpenDrain0)
+                                // Open-drain mode
+                                if oe.is_none() || oe.unwrap() == s.g.vdd_net || oe.unwrap() == s.g.vss_net {
+                                    return Err("broken open-drain connection");
+                                }
+                                // FIXME: Copypasta
+                                let input_n = s.g.nets.get(oe.unwrap()).source.unwrap().0;
+                                let input_type = match s.g.nodes.get(input_n).variant {
+                                    IntermediateGraphNodeVariant::Xor{..} => {
+                                        Some(InputGraphIOInputType::Xor)
+                                    },
+                                    IntermediateGraphNodeVariant::Reg{..} => {
+                                        Some(InputGraphIOInputType::Reg)
+                                    },
+                                    _ => return Err("mis-connected nodes"),
+                                };
+
+                                // We need to recursively process this. Update the relevant map as well to make sure we
+                                // don't mess up along the way.
+                                assert!(!s.mcs_map.contains_key(&input_n));
+                                s.mcs_map.insert(input_n, newg_idx);
+                                process_one_intermed_node(s, input_n)?;
+
+                                input_type
+                            } else if input.unwrap() == s.g.vdd_net {
+                                return Err("broken constant-1 IO");
                             } else {
                                 let input_n = s.g.nets.get(input.unwrap()).source.unwrap().0;
                                 let input_type = match s.g.nodes.get(input_n).variant {
@@ -1082,13 +1107,17 @@ impl InputGraph {
                             if oe.unwrap() == s.g.vdd_net || oe.unwrap() == s.g.vss_net {
                                 None
                             } else {
-                                let oe_n = s.g.nets.get(oe.unwrap()).source.unwrap().0;
-                                let oe_newg_n = process_one_intermed_node(s, oe_n)?;
-                                Some(match oe_newg_n {
-                                    InputGraphAnyPoolIdx::PTerm(x) => InputGraphIOOEType::PTerm(x),
-                                    InputGraphAnyPoolIdx::BufgGTS(x) => InputGraphIOOEType::GTS(x),
-                                    _ => return Err("mis-connected nodes"),
-                                })
+                                if old_input.is_some() && old_input.unwrap() == s.g.vss_net {
+                                    Some(InputGraphIOOEType::OpenDrain)
+                                } else {
+                                    let oe_n = s.g.nets.get(oe.unwrap()).source.unwrap().0;
+                                    let oe_newg_n = process_one_intermed_node(s, oe_n)?;
+                                    Some(match oe_newg_n {
+                                        InputGraphAnyPoolIdx::PTerm(x) => InputGraphIOOEType::PTerm(x),
+                                        InputGraphAnyPoolIdx::BufgGTS(x) => InputGraphIOOEType::GTS(x),
+                                        _ => return Err("mis-connected nodes"),
+                                    })
+                                }
                             }
                         } else {
                             None
