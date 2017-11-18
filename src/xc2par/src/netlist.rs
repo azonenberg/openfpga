@@ -689,7 +689,7 @@ impl IntermediateGraph {
             }
         }
 
-        Ok(IntermediateGraph {
+        Ok(Self {
             nodes,
             nets,
             vdd_net,
@@ -813,5 +813,159 @@ impl IntermediateGraph {
         }
 
         ret
+    }
+}
+
+pub struct AssignedLocationInner {
+    pub fb: u32,
+    pub i: u32,
+}
+pub type AssignedLocation = Option<AssignedLocationInner>;
+
+pub enum InputGraphIOInputType {
+    Reg,
+    Xor,
+    OpenDrain0,
+}
+
+pub enum InputGraphIOOEType {
+    PTerm(ObjPoolIndex<InputGraphPTerm>),
+    GTS(ObjPoolIndex<InputGraphBufgGTS>),
+}
+
+pub struct InputGraphIOBuf {
+    pub input: Option<InputGraphIOInputType>,
+    pub oe: Option<InputGraphIOOEType>,
+    pub schmitt_trigger: bool,
+    pub termination_enabled: bool,
+    pub slew_is_fast: bool,
+    pub uses_data_gate: bool,
+    pub feedback_used: bool,
+}
+
+pub enum InputGraphRegRSType {
+    PTerm(ObjPoolIndex<InputGraphPTerm>),
+    GSR(ObjPoolIndex<InputGraphBufgGSR>),
+}
+
+pub enum InputGraphRegInputType {
+    Pin,
+    Xor,
+}
+
+pub enum InputGraphRegClockType {
+    PTerm(ObjPoolIndex<InputGraphPTerm>),
+    GCK(ObjPoolIndex<InputGraphBufgClk>),
+}
+
+pub struct InputGraphReg {
+    pub mode: XC2MCRegMode,
+    pub clkinv: bool,
+    pub clkddr: bool,
+    pub init_state: bool,
+    pub set_input: Option<InputGraphRegRSType>,
+    pub reset_input: Option<InputGraphRegRSType>,
+    pub ce_input: Option<ObjPoolIndex<InputGraphPTerm>>,
+    pub dt_input: InputGraphRegInputType,
+    pub clk_input: InputGraphRegClockType,
+    pub feedback_used: bool,
+}
+
+pub struct InputGraphXor {
+    pub orterm_inputs: Vec<ObjPoolIndex<InputGraphPTerm>>,
+    pub andterm_input: Option<ObjPoolIndex<InputGraphPTerm>>,
+    pub invert_out: bool,
+    pub feedback_used: bool,
+}
+
+pub struct InputGraphMacrocell {
+    pub loc: AssignedLocation,
+    pub io_bits: Option<InputGraphIOBuf>,
+    pub reg_bits: Option<InputGraphReg>,
+    pub xor_bits: Option<InputGraphXor>,
+}
+
+pub enum InputGraphMacrocellType {
+    PinOutput,
+    PinInputUnreg,
+    PinInputReg,
+    BuriedComb,
+    BuriedReg,
+}
+
+pub enum InputGraphPTermInputType {
+    Reg,
+    Xor,
+    Pin,
+}
+
+pub struct InputGraphPTerm {
+    pub loc: AssignedLocation,
+    pub inputs_true: Vec<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)>,
+    pub inputs_comp: Vec<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)>,
+}
+
+pub struct InputGraphBufgClk {
+    pub loc: AssignedLocation,
+    pub input: ObjPoolIndex<InputGraphMacrocell>,
+}
+
+pub struct InputGraphBufgGTS {
+    pub loc: AssignedLocation,
+    pub input: ObjPoolIndex<InputGraphMacrocell>,
+    pub invert: bool,
+}
+
+pub struct InputGraphBufgGSR {
+    pub loc: AssignedLocation,
+    pub input: ObjPoolIndex<InputGraphMacrocell>,
+    pub invert: bool,
+}
+
+pub struct InputGraph {
+    pub mcs: ObjPool<InputGraphMacrocell>,
+    pub pterms: ObjPool<InputGraphPTerm>,
+    pub bufg_clks: ObjPool<InputGraphBufgClk>,
+    pub bufg_gts: ObjPool<InputGraphBufgGTS>,
+    pub bufg_gsr: ObjPool<InputGraphBufgGSR>,
+}
+
+impl InputGraphMacrocell {
+    pub fn get_type(&self) -> InputGraphMacrocellType {
+        if self.io_bits.is_some() {
+            if self.io_bits.as_ref().unwrap().input.is_some() {
+                InputGraphMacrocellType::PinOutput
+            } else {
+                if self.reg_bits.is_some() {
+                    InputGraphMacrocellType::PinInputReg
+                } else {
+                    InputGraphMacrocellType::PinInputUnreg
+                }
+            }
+        } else {
+            if self.reg_bits.is_some() {
+                InputGraphMacrocellType::BuriedReg
+            } else {
+                InputGraphMacrocellType::BuriedComb
+            }
+        }
+    }
+}
+
+impl InputGraph {
+    pub fn from_intermed_graph(g: &IntermediateGraph) -> Self {
+        let mcs = ObjPool::new();
+        let pterms = ObjPool::new();
+        let bufg_clks = ObjPool::new();
+        let bufg_gts = ObjPool::new();
+        let bufg_gsr = ObjPool::new();
+
+        Self {
+            mcs,
+            pterms,
+            bufg_clks,
+            bufg_gts,
+            bufg_gsr,
+        }
     }
 }
