@@ -24,6 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::collections::{HashSet};
+use std::iter::FromIterator;
 
 extern crate rand;
 use self::rand::{Rng, SeedableRng, XorShiftRng};
@@ -34,19 +35,35 @@ use self::xc2bit::*;
 use *;
 use objpool::*;
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum PARMCAssignment {
+    MC(ObjPoolIndex<InputGraphMacrocell>),
+    None,
+    Banned,
+}
+
+impl PARMCAssignment {
+    pub fn used(&self) -> bool {
+        match self {
+            &PARMCAssignment::MC(_) => true,
+            _ => false,
+        }
+    }
+}
+
 // First element of tuple is anything, second element can only be pin input
-pub fn greedy_initial_placement(mcs: &[NetlistMacrocell]) -> Vec<[(isize, isize); MCS_PER_FB]> {
+pub fn greedy_initial_placement(g: &InputGraph) -> Vec<[(PARMCAssignment, PARMCAssignment); MCS_PER_FB]> {
     let mut ret = Vec::new();
 
     // TODO: Number of FBs
     // FIXME: Hack for dedicated input
     for _ in 0..2 {
-        ret.push([(-1, -1); MCS_PER_FB]);
+        ret.push([(PARMCAssignment::None, PARMCAssignment::None); MCS_PER_FB]);
     }
     if true {
         let x = ret.len();
-        ret.push([(-2, -2); MCS_PER_FB]);
-        ret[x][0] = (-2, -1);
+        ret.push([(PARMCAssignment::Banned, PARMCAssignment::Banned); MCS_PER_FB]);
+        ret[x][0] = (PARMCAssignment::Banned, PARMCAssignment::None);
     }
 
     // TODO: Handle LOCs
@@ -67,9 +84,11 @@ pub fn greedy_initial_placement(mcs: &[NetlistMacrocell]) -> Vec<[(isize, isize)
     }
 
     // Do the actual greedy assignment
-    for i in 0..mcs.len() {
-        match mcs[i] {
-            NetlistMacrocell::PinOutput{..} => {
+    for i_ in g.mcs.iter_idx() {
+        let i = i_.get_raw_i();
+        let mc = g.mcs.get(i_);
+        match mc.get_type() {
+            InputGraphMacrocellType::PinOutput => {
                 if candidate_sites_anything.len() == 0 {
                     panic!("no more sites");
                 }
@@ -77,18 +96,20 @@ pub fn greedy_initial_placement(mcs: &[NetlistMacrocell]) -> Vec<[(isize, isize)
                 let (fb, mc) = candidate_sites_anything.pop().unwrap();
                 // Remove from the pininput candidates as well. This requires that all PinOutput entries come first.
                 candidate_sites_pininput_conservative.pop().unwrap();
-                ret[fb][mc].0 = i as isize;
+                ret[fb][mc].0 = PARMCAssignment::MC(i_);
             },
-            NetlistMacrocell::BuriedComb{..} => {
+            InputGraphMacrocellType::BuriedComb => {
                 if candidate_sites_anything.len() == 0 {
                     panic!("no more sites");
                 }
 
                 let (fb, mc) = candidate_sites_anything.pop().unwrap();
                 // This is compatible with all input pin types
-                ret[fb][mc].0 = i as isize;
+                ret[fb][mc].0 = PARMCAssignment::MC(i_);
             },
-            NetlistMacrocell::BuriedReg{has_comb_fb, ..} => {
+            InputGraphMacrocellType::BuriedReg => {
+                let has_comb_fb = mc.xor_feedback_used;
+
                 if candidate_sites_anything.len() == 0 {
                     panic!("no more sites");
                 }
@@ -100,9 +121,9 @@ pub fn greedy_initial_placement(mcs: &[NetlistMacrocell]) -> Vec<[(isize, isize)
                     // Not available to be shared at all
                     not_available_for_pininput_unreg.insert((fb, mc));
                 }
-                ret[fb][mc].0 = i as isize;
+                ret[fb][mc].0 = PARMCAssignment::MC(i_);
             },
-            NetlistMacrocell::PinInputReg{..} => {
+            InputGraphMacrocellType::PinInputReg => {
                 // XXX This is not particularly efficient
                 let mut idx = None;
                 for j in (0..candidate_sites_pininput_conservative.len()).rev() {
@@ -117,9 +138,9 @@ pub fn greedy_initial_placement(mcs: &[NetlistMacrocell]) -> Vec<[(isize, isize)
                 }
 
                 let (fb, mc) = candidate_sites_pininput_conservative.remove(idx.unwrap());
-                ret[fb][mc].1 = i as isize;
+                ret[fb][mc].1 = PARMCAssignment::MC(i_);
             },
-            NetlistMacrocell::PinInputUnreg{..} => {
+            InputGraphMacrocellType::PinInputUnreg => {
                 // XXX This is not particularly efficient
                 let mut idx = None;
                 for j in (0..candidate_sites_pininput_conservative.len()).rev() {
@@ -134,7 +155,7 @@ pub fn greedy_initial_placement(mcs: &[NetlistMacrocell]) -> Vec<[(isize, isize)
                 }
 
                 let (fb, mc) = candidate_sites_pininput_conservative.remove(idx.unwrap());
-                ret[fb][mc].1 = i as isize;
+                ret[fb][mc].1 = PARMCAssignment::MC(i_);
             }
         }
     }
@@ -189,6 +210,22 @@ fn compare_andterms(g: &IntermediateGraph, a: ObjPoolIndex<IntermediateGraphNode
     }
 }
 
+fn compare_andterms2(g: &InputGraph, a: ObjPoolIndex<InputGraphPTerm>, b: ObjPoolIndex<InputGraphPTerm>) -> bool {
+    let a_ = g.pterms.get(a);
+    let b_ = g.pterms.get(b);
+
+    let mut a_inp_true_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+        HashSet::from_iter(a_.inputs_true.iter().cloned());
+    let mut a_inp_comp_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+        HashSet::from_iter(a_.inputs_comp.iter().cloned());
+    let mut b_inp_true_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+        HashSet::from_iter(b_.inputs_true.iter().cloned());
+    let mut b_inp_comp_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+        HashSet::from_iter(b_.inputs_comp.iter().cloned());
+
+    a_inp_true_h == b_inp_true_h && a_inp_comp_h == b_inp_comp_h
+}
+
 pub enum AndTermAssignmentResult {
     Success([Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB]),
     FailurePTCNeverSatisfiable,
@@ -196,7 +233,7 @@ pub enum AndTermAssignmentResult {
     FailurePtermExceeded(u32),
 }
 
-pub fn try_assign_andterms(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_assignment: &[(isize, isize); MCS_PER_FB])
+pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacrocell], mc_assignment: &[(PARMCAssignment, PARMCAssignment); MCS_PER_FB])
     -> AndTermAssignmentResult {
 
     let mut ret = [None; ANDTERMS_PER_FB];
@@ -205,56 +242,36 @@ pub fn try_assign_andterms(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_a
     let mut pterm_conflicts = 0;
     // TODO: Implement using special product terms
     for mc_i in 0..MCS_PER_FB {
-        if mc_assignment[mc_i].0 < 0 {
-            continue;
-        }
+        if let PARMCAssignment::MC(mc_g_idx) = mc_assignment[mc_i].0 {
+            // FIXME: Ugly code duplication
+            let this_mc = &g2.mcs.get(mc_g_idx);
+            match this_mc.get_type() {
+                InputGraphMacrocellType::PinOutput => {
+                    let i = unsafe {std::mem::transmute(mc_g_idx)}; // FIXME
+                    let iobufe = g.nodes.get(i);
+                    if let IntermediateGraphNodeVariant::IOBuf{input, oe, ..} = iobufe.variant {
+                        if oe.is_some() {
+                            // The output enable is being used
 
-        // FIXME: Ugly code duplication
-        let this_mc = &mcs[mc_assignment[mc_i].0 as usize];
-        match *this_mc {
-            NetlistMacrocell::PinOutput{i} => {
-                let iobufe = g.nodes.get(i);
-                if let IntermediateGraphNodeVariant::IOBuf{input, oe, ..} = iobufe.variant {
-                    if oe.is_some() {
-                        // The output enable is being used
-
-                        // but if the output pin is a constant zero, it isn't "really" being used
-                        if input.unwrap() != g.vss_net {
-                            let oe_idx = g.nets.get(input.unwrap()).source.unwrap().0;
-                            // This goes into PTB
-                            let ptb_idx = get_ptb(mc_i as u32) as usize;
-                            if ret[ptb_idx].is_none() {
-                                ret[ptb_idx] = Some(oe_idx);
-                            } else {
-                                if !compare_andterms(g, ret[ptb_idx].unwrap(), oe_idx) {
-                                    pterm_conflicts += 1;
-                                }
-                            }
-                        }
-                    }
-
-                    // Now need to look at input to this
-                    if input.is_some() {
-                        let input_node = g.nodes.get(g.nets.get(input.unwrap()).source.unwrap().0);
-                        if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = input_node.variant {
-                            if andterm_input.is_some() {
-                                let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
-                                // This goes into PTC
-                                let ptc_idx = get_ptc(mc_i as u32) as usize;
-                                if ret[ptc_idx].is_none() {
-                                    ret[ptc_idx] = Some(ptc_node_idx);
+                            // but if the output pin is a constant zero, it isn't "really" being used
+                            if input.unwrap() != g.vss_net {
+                                let oe_idx = g.nets.get(input.unwrap()).source.unwrap().0;
+                                // This goes into PTB
+                                let ptb_idx = get_ptb(mc_i as u32) as usize;
+                                if ret[ptb_idx].is_none() {
+                                    ret[ptb_idx] = Some(oe_idx);
                                 } else {
-                                    if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
+                                    if !compare_andterms(g, ret[ptb_idx].unwrap(), oe_idx) {
                                         pterm_conflicts += 1;
                                     }
                                 }
                             }
-                        } else if let IntermediateGraphNodeVariant::Reg{
-                            set_input, reset_input, ce_input, clk_input, dt_input, ..} = input_node.variant {
+                        }
 
-                            let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
-                            if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = dt_input_node.variant {
-                                // XOR feeding register
+                        // Now need to look at input to this
+                        if input.is_some() {
+                            let input_node = g.nodes.get(g.nets.get(input.unwrap()).source.unwrap().0);
+                            if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = input_node.variant {
                                 if andterm_input.is_some() {
                                     let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
                                     // This goes into PTC
@@ -266,23 +283,137 @@ pub fn try_assign_andterms(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_a
                                             pterm_conflicts += 1;
                                         }
                                     }
+                                }
+                            } else if let IntermediateGraphNodeVariant::Reg{
+                                set_input, reset_input, ce_input, clk_input, dt_input, ..} = input_node.variant {
 
-                                    // Extra check for unsatisfiable PTC usage
-                                    if ce_input.is_some() {
-                                        let ce_input_node = g.nets.get(ce_input.unwrap()).source.unwrap().0;
+                                let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
+                                if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = dt_input_node.variant {
+                                    // XOR feeding register
+                                    if andterm_input.is_some() {
+                                        let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
+                                        // This goes into PTC
+                                        let ptc_idx = get_ptc(mc_i as u32) as usize;
+                                        if ret[ptc_idx].is_none() {
+                                            ret[ptc_idx] = Some(ptc_node_idx);
+                                        } else {
+                                            if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
+                                                pterm_conflicts += 1;
+                                            }
+                                        }
 
-                                        // If a node is using both the PTC fast path into the XOR gate as well as
-                                        // clock enables, these must be identical. Both of these do not have any
-                                        // choices for using global or control terms.
-                                        if !compare_andterms(g, ptc_node_idx, ce_input_node) {
-                                            return AndTermAssignmentResult::FailurePTCNeverSatisfiable;
+                                        // Extra check for unsatisfiable PTC usage
+                                        if ce_input.is_some() {
+                                            let ce_input_node = g.nets.get(ce_input.unwrap()).source.unwrap().0;
+
+                                            // If a node is using both the PTC fast path into the XOR gate as well as
+                                            // clock enables, these must be identical. Both of these do not have any
+                                            // choices for using global or control terms.
+                                            if !compare_andterms(g, ptc_node_idx, ce_input_node) {
+                                                return AndTermAssignmentResult::FailurePTCNeverSatisfiable;
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            if ce_input.is_some() {
-                                let ptc_node_idx = g.nets.get(ce_input.unwrap()).source.unwrap().0;
+                                if ce_input.is_some() {
+                                    let ptc_node_idx = g.nets.get(ce_input.unwrap()).source.unwrap().0;
+                                    // This goes into PTC
+                                    let ptc_idx = get_ptc(mc_i as u32) as usize;
+                                    if ret[ptc_idx].is_none() {
+                                        ret[ptc_idx] = Some(ptc_node_idx);
+                                    } else {
+                                        if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
+                                            pterm_conflicts += 1;
+                                        }
+                                    }
+                                }
+
+                                let clk_node_idx = g.nets.get(clk_input).source.unwrap().0;
+                                let clk_node = g.nodes.get(clk_node_idx);
+                                if let IntermediateGraphNodeVariant::AndTerm{..} = clk_node.variant {
+                                    // This goes into PTC
+                                    let ptc_idx = get_ptc(mc_i as u32) as usize;
+                                    if ret[ptc_idx].is_none() {
+                                        ret[ptc_idx] = Some(clk_node_idx);
+                                    } else {
+                                        if !compare_andterms(g, ret[ptc_idx].unwrap(), clk_node_idx) {
+                                            pterm_conflicts += 1;
+                                        }
+                                    }
+                                }
+
+                                if set_input.is_some() {
+                                    let set_node_idx = g.nets.get(set_input.unwrap()).source.unwrap().0;
+                                    let set_node = g.nodes.get(set_node_idx);
+                                    if let IntermediateGraphNodeVariant::AndTerm{..} = set_node.variant {
+                                        // This goes into PTA
+                                        let pta_idx = get_pta(mc_i as u32) as usize;
+                                        if ret[pta_idx].is_none() {
+                                            ret[pta_idx] = Some(set_node_idx);
+                                        } else {
+                                            if !compare_andterms(g, ret[pta_idx].unwrap(), set_node_idx) {
+                                                pterm_conflicts += 1;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if reset_input.is_some() {
+                                    let rst_node_idx = g.nets.get(reset_input.unwrap()).source.unwrap().0;
+                                    let rst_node = g.nodes.get(rst_node_idx);
+                                    if let IntermediateGraphNodeVariant::AndTerm{..} = rst_node.variant {
+                                        // This goes into PTA
+                                        let pta_idx = get_pta(mc_i as u32) as usize;
+                                        if ret[pta_idx].is_none() {
+                                            ret[pta_idx] = Some(rst_node_idx);
+                                        } else {
+                                            if !compare_andterms(g, ret[pta_idx].unwrap(), rst_node_idx) {
+                                                pterm_conflicts += 1;
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                panic!("not an xor or reg");
+                            }
+                        }
+                    } else {
+                        panic!("not an iobufe");
+                    }
+                },
+                InputGraphMacrocellType::BuriedComb => {
+                    let i = unsafe {std::mem::transmute(mc_g_idx)}; // FIXME
+                    let xornode = g.nodes.get(i);
+                    if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = xornode.variant {
+                        if andterm_input.is_some() {
+                            let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
+                            // This goes into PTC
+                            let ptc_idx = get_ptc(mc_i as u32) as usize;
+                            if ret[ptc_idx].is_none() {
+                                ret[ptc_idx] = Some(ptc_node_idx);
+                            } else {
+                                // This should be impossible. We assign all the special product terms first. Nothing else
+                                // can get assigned to this site
+                                panic!("unexpected p-term in use")
+                            }
+                        }
+                    } else {
+                        panic!("not an xor");
+                    }
+                },
+                InputGraphMacrocellType::BuriedReg => {
+                    let i = unsafe {std::mem::transmute(mc_g_idx)}; // FIXME
+                    let regnode = g.nodes.get(i);
+
+                    if let IntermediateGraphNodeVariant::Reg{
+                        set_input, reset_input, ce_input, clk_input, dt_input, ..} = regnode.variant {
+
+                        let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
+                        if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = dt_input_node.variant {
+                            // XOR feeding register
+                            if andterm_input.is_some() {
+                                let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
                                 // This goes into PTC
                                 let ptc_idx = get_ptc(mc_i as u32) as usize;
                                 if ret[ptc_idx].is_none() {
@@ -292,91 +423,27 @@ pub fn try_assign_andterms(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_a
                                         pterm_conflicts += 1;
                                     }
                                 }
-                            }
 
-                            let clk_node_idx = g.nets.get(clk_input).source.unwrap().0;
-                            let clk_node = g.nodes.get(clk_node_idx);
-                            if let IntermediateGraphNodeVariant::AndTerm{..} = clk_node.variant {
-                                // This goes into PTC
-                                let ptc_idx = get_ptc(mc_i as u32) as usize;
-                                if ret[ptc_idx].is_none() {
-                                    ret[ptc_idx] = Some(clk_node_idx);
-                                } else {
-                                    if !compare_andterms(g, ret[ptc_idx].unwrap(), clk_node_idx) {
-                                        pterm_conflicts += 1;
-                                    }
-                                }
-                            }
+                                // Extra check for unsatisfiable PTC usage
+                                if ce_input.is_some() {
+                                    let ce_input_node = g.nets.get(ce_input.unwrap()).source.unwrap().0;
 
-                            if set_input.is_some() {
-                                let set_node_idx = g.nets.get(set_input.unwrap()).source.unwrap().0;
-                                let set_node = g.nodes.get(set_node_idx);
-                                if let IntermediateGraphNodeVariant::AndTerm{..} = set_node.variant {
-                                    // This goes into PTA
-                                    let pta_idx = get_pta(mc_i as u32) as usize;
-                                    if ret[pta_idx].is_none() {
-                                        ret[pta_idx] = Some(set_node_idx);
-                                    } else {
-                                        if !compare_andterms(g, ret[pta_idx].unwrap(), set_node_idx) {
-                                            pterm_conflicts += 1;
-                                        }
-                                    }
-                                }
-                            }
-
-                            if reset_input.is_some() {
-                                let rst_node_idx = g.nets.get(reset_input.unwrap()).source.unwrap().0;
-                                let rst_node = g.nodes.get(rst_node_idx);
-                                if let IntermediateGraphNodeVariant::AndTerm{..} = rst_node.variant {
-                                    // This goes into PTA
-                                    let pta_idx = get_pta(mc_i as u32) as usize;
-                                    if ret[pta_idx].is_none() {
-                                        ret[pta_idx] = Some(rst_node_idx);
-                                    } else {
-                                        if !compare_andterms(g, ret[pta_idx].unwrap(), rst_node_idx) {
-                                            pterm_conflicts += 1;
-                                        }
+                                    // If a node is using both the PTC fast path into the XOR gate as well as
+                                    // clock enables, these must be identical. Both of these do not have any
+                                    // choices for using global or control terms.
+                                    if !compare_andterms(g, ptc_node_idx, ce_input_node) {
+                                        return AndTermAssignmentResult::FailurePTCNeverSatisfiable;
                                     }
                                 }
                             }
                         } else {
-                            panic!("not an xor or reg");
+                            // For a buried node, this must be an xor. The other choice is a direct input which is
+                            // not possible.
+                            panic!("not an xor")
                         }
-                    }
-                } else {
-                    panic!("not an iobufe");
-                }
-            },
-            NetlistMacrocell::BuriedComb{i} => {
-                let xornode = g.nodes.get(i);
-                if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = xornode.variant {
-                    if andterm_input.is_some() {
-                        let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
-                        // This goes into PTC
-                        let ptc_idx = get_ptc(mc_i as u32) as usize;
-                        if ret[ptc_idx].is_none() {
-                            ret[ptc_idx] = Some(ptc_node_idx);
-                        } else {
-                            // This should be impossible. We assign all the special product terms first. Nothing else
-                            // can get assigned to this site
-                            panic!("unexpected p-term in use")
-                        }
-                    }
-                } else {
-                    panic!("not an xor");
-                }
-            },
-            NetlistMacrocell::BuriedReg{i, ..} => {
-                let regnode = g.nodes.get(i);
 
-                if let IntermediateGraphNodeVariant::Reg{
-                    set_input, reset_input, ce_input, clk_input, dt_input, ..} = regnode.variant {
-
-                    let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
-                    if let IntermediateGraphNodeVariant::Xor{andterm_input, ..} = dt_input_node.variant {
-                        // XOR feeding register
-                        if andterm_input.is_some() {
-                            let ptc_node_idx = g.nets.get(andterm_input.unwrap()).source.unwrap().0;
+                        if ce_input.is_some() {
+                            let ptc_node_idx = g.nets.get(ce_input.unwrap()).source.unwrap().0;
                             // This goes into PTC
                             let ptc_idx = get_ptc(mc_i as u32) as usize;
                             if ret[ptc_idx].is_none() {
@@ -386,89 +453,60 @@ pub fn try_assign_andterms(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_a
                                     pterm_conflicts += 1;
                                 }
                             }
+                        }
 
-                            // Extra check for unsatisfiable PTC usage
-                            if ce_input.is_some() {
-                                let ce_input_node = g.nets.get(ce_input.unwrap()).source.unwrap().0;
+                        let clk_node_idx = g.nets.get(clk_input).source.unwrap().0;
+                        let clk_node = g.nodes.get(clk_node_idx);
+                        if let IntermediateGraphNodeVariant::AndTerm{..} = clk_node.variant {
+                            // This goes into PTC
+                            let ptc_idx = get_ptc(mc_i as u32) as usize;
+                            if ret[ptc_idx].is_none() {
+                                ret[ptc_idx] = Some(clk_node_idx);
+                            } else {
+                                if !compare_andterms(g, ret[ptc_idx].unwrap(), clk_node_idx) {
+                                    pterm_conflicts += 1;
+                                }
+                            }
+                        }
 
-                                // If a node is using both the PTC fast path into the XOR gate as well as
-                                // clock enables, these must be identical. Both of these do not have any
-                                // choices for using global or control terms.
-                                if !compare_andterms(g, ptc_node_idx, ce_input_node) {
-                                    return AndTermAssignmentResult::FailurePTCNeverSatisfiable;
+                        if set_input.is_some() {
+                            let set_node_idx = g.nets.get(set_input.unwrap()).source.unwrap().0;
+                            let set_node = g.nodes.get(set_node_idx);
+                            if let IntermediateGraphNodeVariant::AndTerm{..} = set_node.variant {
+                                // This goes into PTA
+                                let pta_idx = get_pta(mc_i as u32) as usize;
+                                if ret[pta_idx].is_none() {
+                                    ret[pta_idx] = Some(set_node_idx);
+                                } else {
+                                    if !compare_andterms(g, ret[pta_idx].unwrap(), set_node_idx) {
+                                        pterm_conflicts += 1;
+                                    }
+                                }
+                            }
+                        }
+
+                        if reset_input.is_some() {
+                            let rst_node_idx = g.nets.get(reset_input.unwrap()).source.unwrap().0;
+                            let rst_node = g.nodes.get(rst_node_idx);
+                            if let IntermediateGraphNodeVariant::AndTerm{..} = rst_node.variant {
+                                // This goes into PTA
+                                let pta_idx = get_pta(mc_i as u32) as usize;
+                                if ret[pta_idx].is_none() {
+                                    ret[pta_idx] = Some(rst_node_idx);
+                                } else {
+                                    if !compare_andterms(g, ret[pta_idx].unwrap(), rst_node_idx) {
+                                        pterm_conflicts += 1;
+                                    }
                                 }
                             }
                         }
                     } else {
-                        // For a buried node, this must be an xor. The other choice is a direct input which is
-                        // not possible.
-                        panic!("not an xor")
+                        panic!("not a reg");
                     }
-
-                    if ce_input.is_some() {
-                        let ptc_node_idx = g.nets.get(ce_input.unwrap()).source.unwrap().0;
-                        // This goes into PTC
-                        let ptc_idx = get_ptc(mc_i as u32) as usize;
-                        if ret[ptc_idx].is_none() {
-                            ret[ptc_idx] = Some(ptc_node_idx);
-                        } else {
-                            if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
-                                pterm_conflicts += 1;
-                            }
-                        }
-                    }
-
-                    let clk_node_idx = g.nets.get(clk_input).source.unwrap().0;
-                    let clk_node = g.nodes.get(clk_node_idx);
-                    if let IntermediateGraphNodeVariant::AndTerm{..} = clk_node.variant {
-                        // This goes into PTC
-                        let ptc_idx = get_ptc(mc_i as u32) as usize;
-                        if ret[ptc_idx].is_none() {
-                            ret[ptc_idx] = Some(clk_node_idx);
-                        } else {
-                            if !compare_andterms(g, ret[ptc_idx].unwrap(), clk_node_idx) {
-                                pterm_conflicts += 1;
-                            }
-                        }
-                    }
-
-                    if set_input.is_some() {
-                        let set_node_idx = g.nets.get(set_input.unwrap()).source.unwrap().0;
-                        let set_node = g.nodes.get(set_node_idx);
-                        if let IntermediateGraphNodeVariant::AndTerm{..} = set_node.variant {
-                            // This goes into PTA
-                            let pta_idx = get_pta(mc_i as u32) as usize;
-                            if ret[pta_idx].is_none() {
-                                ret[pta_idx] = Some(set_node_idx);
-                            } else {
-                                if !compare_andterms(g, ret[pta_idx].unwrap(), set_node_idx) {
-                                    pterm_conflicts += 1;
-                                }
-                            }
-                        }
-                    }
-
-                    if reset_input.is_some() {
-                        let rst_node_idx = g.nets.get(reset_input.unwrap()).source.unwrap().0;
-                        let rst_node = g.nodes.get(rst_node_idx);
-                        if let IntermediateGraphNodeVariant::AndTerm{..} = rst_node.variant {
-                            // This goes into PTA
-                            let pta_idx = get_pta(mc_i as u32) as usize;
-                            if ret[pta_idx].is_none() {
-                                ret[pta_idx] = Some(rst_node_idx);
-                            } else {
-                                if !compare_andterms(g, ret[pta_idx].unwrap(), rst_node_idx) {
-                                    pterm_conflicts += 1;
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    panic!("not a reg");
-                }
-            },
-            // These must use the second index, not the first index
-            NetlistMacrocell::PinInputUnreg{..} | NetlistMacrocell::PinInputReg{..} => unreachable!(),
+                },
+                // These must use the second index, not the first index
+                InputGraphMacrocellType::PinInputUnreg{..} | InputGraphMacrocellType::PinInputReg{..} => unreachable!(),
+            }
         }
     }
 
@@ -479,103 +517,104 @@ pub fn try_assign_andterms(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_a
     // Finally, place all of the remaining p-terms
     let mut unfitted_pterms = 0;
     for mc_i in 0..MCS_PER_FB {
-        if mc_assignment[mc_i].0 < 0 {
-            continue;
-        }
-
-        let mut orterm_node = None;
-        let this_mc = &mcs[mc_assignment[mc_i].0 as usize];
-        match *this_mc {
-            NetlistMacrocell::PinOutput{i} => {
-                let iobufe = g.nodes.get(i);
-                if let IntermediateGraphNodeVariant::IOBuf{input, ..} = iobufe.variant {
-                    if input.is_some() {
-                        let input_node = g.nodes.get(g.nets.get(input.unwrap()).source.unwrap().0);
-                        if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = input_node.variant {
-                            if orterm_input.is_some() {
-                                orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
-                            }
-                        } else if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = input_node.variant {
-                            let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
-                            if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = dt_input_node.variant {
+        if let PARMCAssignment::MC(mc_g_idx) = mc_assignment[mc_i].0 {
+            let mut orterm_node = None;
+            let this_mc = &g2.mcs.get(mc_g_idx);
+            match this_mc.get_type() {
+                InputGraphMacrocellType::PinOutput => {
+                    let i = unsafe {std::mem::transmute(mc_g_idx)}; // FIXME
+                    let iobufe = g.nodes.get(i);
+                    if let IntermediateGraphNodeVariant::IOBuf{input, ..} = iobufe.variant {
+                        if input.is_some() {
+                            let input_node = g.nodes.get(g.nets.get(input.unwrap()).source.unwrap().0);
+                            if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = input_node.variant {
                                 if orterm_input.is_some() {
                                     orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
                                 }
+                            } else if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = input_node.variant {
+                                let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
+                                if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = dt_input_node.variant {
+                                    if orterm_input.is_some() {
+                                        orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
+                                    }
+                                }
+                            } else {
+                                panic!("not an xor or reg");
                             }
-                        } else {
-                            panic!("not an xor or reg");
                         }
+                    } else {
+                        panic!("not an iobufe");
                     }
-                } else {
-                    panic!("not an iobufe");
-                }
-            },
-            NetlistMacrocell::BuriedComb{i} => {
-                let xornode = g.nodes.get(i);
-                if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = xornode.variant {
-                    if orterm_input.is_some() {
-                        orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
-                    }
-                } else {
-                    panic!("not an xor");
-                }
-            },
-            NetlistMacrocell::BuriedReg{i, ..} => {
-                let regnode = g.nodes.get(i);
-
-                if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = regnode.variant {
-                    let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
-                    if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = dt_input_node.variant {
+                },
+                InputGraphMacrocellType::BuriedComb => {
+                    let i = unsafe {std::mem::transmute(mc_g_idx)}; // FIXME
+                    let xornode = g.nodes.get(i);
+                    if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = xornode.variant {
                         if orterm_input.is_some() {
                             orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
                         }
                     } else {
-                        // For a buried node, this must be an xor. The other choice is a direct input which is
-                        // not possible.
-                        panic!("not an xor")
+                        panic!("not an xor");
                     }
-                } else {
-                    panic!("not a reg");
-                }
-            },
-            // These must use the second index, not the first index
-            NetlistMacrocell::PinInputUnreg{..} | NetlistMacrocell::PinInputReg{..} => unreachable!(),
-        }
+                },
+                InputGraphMacrocellType::BuriedReg => {
+                    let i = unsafe {std::mem::transmute(mc_g_idx)}; // FIXME
+                    let regnode = g.nodes.get(i);
 
-        if orterm_node.is_some() {
-            let orterm_obj = g.nodes.get(orterm_node.unwrap());
-            if let IntermediateGraphNodeVariant::OrTerm{ref inputs, ..} = orterm_obj.variant {
-                for andterm_net_idx in inputs {
-                    let andterm_node_idx = g.nets.get(*andterm_net_idx).source.unwrap().0;
-                    let mut idx = None;
-                    // FIXME: This code is super inefficient
-                    // Is it equal to anything already assigned?
-                    for pterm_i in 0..ANDTERMS_PER_FB {
-                        if ret[pterm_i].is_some() && compare_andterms(g, ret[pterm_i].unwrap(), andterm_node_idx) {
-                            idx = Some(pterm_i);
-                            break;
+                    if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = regnode.variant {
+                        let dt_input_node = g.nodes.get(g.nets.get(dt_input).source.unwrap().0);
+                        if let IntermediateGraphNodeVariant::Xor{orterm_input, ..} = dt_input_node.variant {
+                            if orterm_input.is_some() {
+                                orterm_node = Some(g.nets.get(orterm_input.unwrap()).source.unwrap().0);
+                            }
+                        } else {
+                            // For a buried node, this must be an xor. The other choice is a direct input which is
+                            // not possible.
+                            panic!("not an xor")
                         }
+                    } else {
+                        panic!("not a reg");
                     }
+                },
+                // These must use the second index, not the first index
+                InputGraphMacrocellType::PinInputUnreg{..} | InputGraphMacrocellType::PinInputReg{..} => unreachable!(),
+            }
 
-                    if idx.is_none() {
-                        // Need to find an unused spot
+            if orterm_node.is_some() {
+                let orterm_obj = g.nodes.get(orterm_node.unwrap());
+                if let IntermediateGraphNodeVariant::OrTerm{ref inputs, ..} = orterm_obj.variant {
+                    for andterm_net_idx in inputs {
+                        let andterm_node_idx = g.nets.get(*andterm_net_idx).source.unwrap().0;
+                        let mut idx = None;
+                        // FIXME: This code is super inefficient
+                        // Is it equal to anything already assigned?
                         for pterm_i in 0..ANDTERMS_PER_FB {
-                            if ret[pterm_i].is_none() {
+                            if ret[pterm_i].is_some() && compare_andterms(g, ret[pterm_i].unwrap(), andterm_node_idx) {
                                 idx = Some(pterm_i);
                                 break;
                             }
                         }
-                    }
 
-                    if idx.is_none() {
-                        unfitted_pterms += 1;
-                    } else {
-                        // Put it here
-                        ret[idx.unwrap()] = Some(andterm_node_idx);
+                        if idx.is_none() {
+                            // Need to find an unused spot
+                            for pterm_i in 0..ANDTERMS_PER_FB {
+                                if ret[pterm_i].is_none() {
+                                    idx = Some(pterm_i);
+                                    break;
+                                }
+                            }
+                        }
+
+                        if idx.is_none() {
+                            unfitted_pterms += 1;
+                        } else {
+                            // Put it here
+                            ret[idx.unwrap()] = Some(andterm_node_idx);
+                        }
                     }
+                } else {
+                    panic!("not an or");
                 }
-            } else {
-                panic!("not an or");
             }
         }
     }
@@ -593,7 +632,7 @@ pub enum ZIAAssignmentResult {
     FailureUnroutable(u32),
 }
 
-pub fn try_assign_zia(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_assignments: &[[(isize, isize); MCS_PER_FB]],
+pub fn try_assign_zia(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacrocell], mc_assignments: &[[(PARMCAssignment, PARMCAssignment); MCS_PER_FB]],
     pterm_assignment: &[Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB])
     -> ZIAAssignmentResult {
 
@@ -748,18 +787,18 @@ pub enum FBAssignmentResult {
 }
 
 // FIXME: mutable assignments is a hack
-pub fn try_assign_fb(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_assignments: &mut [[(isize, isize); MCS_PER_FB]],
+pub fn try_assign_fb(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacrocell], mc_assignments: &mut [[(PARMCAssignment, PARMCAssignment); MCS_PER_FB]],
     fb_i: u32) -> FBAssignmentResult {
 
     let mut base_failing_score = 0;
     // TODO: Weight factors?
 
     // Can we even assign p-terms?
-    let pterm_assign_result = try_assign_andterms(g, mcs, &mc_assignments[fb_i as usize]);
+    let pterm_assign_result = try_assign_andterms(g, g2, mcs, &mc_assignments[fb_i as usize]);
     match pterm_assign_result {
         AndTermAssignmentResult::Success(andterm_assignment) => {
             // Can we assign the ZIA?
-            let zia_assign_result = try_assign_zia(g, mcs, mc_assignments, &andterm_assignment);
+            let zia_assign_result = try_assign_zia(g, g2, mcs, mc_assignments, &andterm_assignment);
             match zia_assign_result {
                 ZIAAssignmentResult::Success(zia_assignment) =>
                     return FBAssignmentResult::Success((andterm_assignment, zia_assignment)),
@@ -788,10 +827,10 @@ pub fn try_assign_fb(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_assignm
         if old_assign >= 0 {
             mc_assignments[fb_i as usize][mc_i].0 = -3;
             let mut new_failing_score = 0;
-            match try_assign_andterms(g, mcs, &mc_assignments[fb_i as usize]) {
+            match try_assign_andterms(g, g2, mcs, &mc_assignments[fb_i as usize]) {
                 AndTermAssignmentResult::Success(andterm_assignment) => {
                     // Can we assign the ZIA?
-                    match try_assign_zia(g, mcs, mc_assignments, &andterm_assignment) {
+                    match try_assign_zia(g, g2, mcs, mc_assignments, &andterm_assignment) {
                         ZIAAssignmentResult::Success(..) => {
                             new_failing_score = 0;
                         },
@@ -830,7 +869,7 @@ pub fn try_assign_fb(g: &IntermediateGraph, mcs: &[NetlistMacrocell], mc_assignm
 }
 
 pub enum PARResult {
-    Success((Vec<([(isize, isize); MCS_PER_FB],
+    Success((Vec<([(PARMCAssignment, PARMCAssignment); MCS_PER_FB],
         [Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB],
         [XC2ZIAInput; INPUTS_PER_ANDTERM])>, Vec<NetlistMacrocell>)),
     FailurePTCNeverSatisfiable,
@@ -843,7 +882,7 @@ pub fn do_par(g: &IntermediateGraph, g2: &InputGraph) -> PARResult {
     let ngraph_collected_mc = g.gather_macrocells();
     println!("{:?}", ngraph_collected_mc);
 
-    let mut macrocell_placement = greedy_initial_placement(&ngraph_collected_mc);
+    let mut macrocell_placement = greedy_initial_placement(g2);
     println!("{:?}", macrocell_placement);
 
     let mut par_results_per_fb = Vec::with_capacity(2);
@@ -855,7 +894,7 @@ pub fn do_par(g: &IntermediateGraph, g2: &InputGraph) -> PARResult {
         let mut bad_candidates = Vec::new();
         let mut bad_score_sum = 0;
         for fb_i in 0..2 {
-            let fb_assign_result = try_assign_fb(g, &ngraph_collected_mc, &mut macrocell_placement, fb_i as u32);
+            let fb_assign_result = try_assign_fb(g, g2, &ngraph_collected_mc, &mut macrocell_placement, fb_i as u32);
             match fb_assign_result {
                 FBAssignmentResult::Success((pterm, zia)) => {
                     par_results_per_fb[fb_i] = Some((pterm, zia));
@@ -934,7 +973,7 @@ pub fn do_par(g: &IntermediateGraph, g2: &InputGraph) -> PARResult {
                 macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
 
                 // Now score
-                match try_assign_fb(g, &ngraph_collected_mc, &mut macrocell_placement, cand_fb_i as u32) {
+                match try_assign_fb(g, g2, &ngraph_collected_mc, &mut macrocell_placement, cand_fb_i as u32) {
                     FBAssignmentResult::Success(..) => {
                         // Do nothing, don't need to change badness (will be 0 if was 0)
                     },

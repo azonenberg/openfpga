@@ -769,20 +769,20 @@ impl IntermediateGraph {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct AssignedLocationInner {
     pub fb: u32,
     pub i: u32,
 }
 pub type AssignedLocation = Option<AssignedLocationInner>;
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum InputGraphIOInputType {
     Reg,
     Xor,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum InputGraphIOOEType {
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     GTS(ObjPoolIndex<InputGraphBufgGTS>),
@@ -799,19 +799,19 @@ pub struct InputGraphIOBuf {
     pub uses_data_gate: bool,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum InputGraphRegRSType {
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     GSR(ObjPoolIndex<InputGraphBufgGSR>),
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum InputGraphRegInputType {
     Pin,
     Xor,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum InputGraphRegClockType {
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     GCK(ObjPoolIndex<InputGraphBufgClk>),
@@ -850,7 +850,7 @@ pub struct InputGraphMacrocell {
     pub xor_feedback_used: bool,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum InputGraphMacrocellType {
     PinOutput,
     PinInputUnreg,
@@ -859,7 +859,7 @@ pub enum InputGraphMacrocellType {
     BuriedReg,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum InputGraphPTermInputType {
     Reg,
     Xor,
@@ -910,7 +910,7 @@ pub struct InputGraph {
     pub bufg_gsr: ObjPool<InputGraphBufgGSR>,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 enum InputGraphAnyPoolIdx {
     Macrocell(ObjPoolIndex<InputGraphMacrocell>),
     PTerm(ObjPoolIndex<InputGraphPTerm>),
