@@ -1131,6 +1131,34 @@ impl InputGraph {
                 IntermediateGraphNodeVariant::Xor{orterm_input, andterm_input, invert_out, ..} => {
                     let newg_idx = *s.mcs_map.get(&n_idx).unwrap();
 
+                    // Visit OR gate
+                    let mut orterm_inputs = Vec::new();
+                    if orterm_input.is_some() {
+                        let or_n = s.g.nets.get(orterm_input.unwrap()).source.unwrap().0;
+
+                        // This is manually inlined so that we don't need to add hacky extra logic to return the
+                        // desired array of actual Pterms.
+                        s.consumed_inputs.insert(or_n);
+                        // Update the map even though this shouldn't actually be needed.
+                        assert!(!s.mcs_map.contains_key(&or_n));
+                        s.mcs_map.insert(or_n, newg_idx);
+
+                        if let IntermediateGraphNodeVariant::OrTerm{ref inputs, ..} = s.g.nodes.get(or_n).variant {
+                            for x in inputs {
+                                let input_n = s.g.nets.get(*x).source.unwrap().0;
+                                // We need to recursively process this
+                                let input_newg_any = process_one_intermed_node(s, input_n)?;
+                                let input_newg = if let InputGraphAnyPoolIdx::PTerm(x) = input_newg_any { x } else {
+                                    panic!("Internal error - not a product term?");
+                                };
+
+                                orterm_inputs.push(input_newg);
+                            }
+                        } else {
+                            return Err("mis-connected nodes");
+                        }
+                    }
+
                     // Visit PTC
                     let ptc_input;
                     if andterm_input.is_some() {
@@ -1151,7 +1179,7 @@ impl InputGraph {
                         newg_n.name = n.name.clone();
                         newg_n.requested_loc = n.location;
                         newg_n.xor_bits = Some(InputGraphXor {
-                            orterm_inputs: Vec::new(), // TODO
+                            orterm_inputs,
                             andterm_input: ptc_input,
                             invert_out,
                             feedback_used: false,
@@ -1214,6 +1242,9 @@ impl InputGraph {
                     let newg_idx = s.pterms.insert(newg_n);
                     Ok(InputGraphAnyPoolIdx::PTerm(newg_idx))
                 },
+                IntermediateGraphNodeVariant::OrTerm{..} => {
+                    panic!("Internal error - unexpected OR gate here");
+                }
                 _ => unimplemented!(),
             }
         }
