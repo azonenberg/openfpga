@@ -816,23 +816,27 @@ impl IntermediateGraph {
     }
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct AssignedLocationInner {
     pub fb: u32,
     pub i: u32,
 }
 pub type AssignedLocation = Option<AssignedLocationInner>;
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InputGraphIOInputType {
     Reg,
     Xor,
     OpenDrain0,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InputGraphIOOEType {
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     GTS(ObjPoolIndex<InputGraphBufgGTS>),
 }
 
+#[derive(Debug)]
 pub struct InputGraphIOBuf {
     pub input: Option<InputGraphIOInputType>,
     pub oe: Option<InputGraphIOOEType>,
@@ -843,21 +847,25 @@ pub struct InputGraphIOBuf {
     pub feedback_used: bool,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InputGraphRegRSType {
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     GSR(ObjPoolIndex<InputGraphBufgGSR>),
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InputGraphRegInputType {
     Pin,
     Xor,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InputGraphRegClockType {
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     GCK(ObjPoolIndex<InputGraphBufgClk>),
 }
 
+#[derive(Debug)]
 pub struct InputGraphReg {
     pub mode: XC2MCRegMode,
     pub clkinv: bool,
@@ -871,6 +879,7 @@ pub struct InputGraphReg {
     pub feedback_used: bool,
 }
 
+#[derive(Debug)]
 pub struct InputGraphXor {
     pub orterm_inputs: Vec<ObjPoolIndex<InputGraphPTerm>>,
     pub andterm_input: Option<ObjPoolIndex<InputGraphPTerm>>,
@@ -878,6 +887,7 @@ pub struct InputGraphXor {
     pub feedback_used: bool,
 }
 
+#[derive(Debug)]
 pub struct InputGraphMacrocell {
     pub loc: AssignedLocation,
     pub io_bits: Option<InputGraphIOBuf>,
@@ -885,6 +895,7 @@ pub struct InputGraphMacrocell {
     pub xor_bits: Option<InputGraphXor>,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InputGraphMacrocellType {
     PinOutput,
     PinInputUnreg,
@@ -893,35 +904,41 @@ pub enum InputGraphMacrocellType {
     BuriedReg,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum InputGraphPTermInputType {
     Reg,
     Xor,
     Pin,
 }
 
+#[derive(Debug)]
 pub struct InputGraphPTerm {
     pub loc: AssignedLocation,
     pub inputs_true: Vec<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)>,
     pub inputs_comp: Vec<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)>,
 }
 
+#[derive(Debug)]
 pub struct InputGraphBufgClk {
     pub loc: AssignedLocation,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
 }
 
+#[derive(Debug)]
 pub struct InputGraphBufgGTS {
     pub loc: AssignedLocation,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
     pub invert: bool,
 }
 
+#[derive(Debug)]
 pub struct InputGraphBufgGSR {
     pub loc: AssignedLocation,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
     pub invert: bool,
 }
 
+#[derive(Debug)]
 pub struct InputGraph {
     pub mcs: ObjPool<InputGraphMacrocell>,
     pub pterms: ObjPool<InputGraphPTerm>,
