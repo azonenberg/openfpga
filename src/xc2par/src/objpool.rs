@@ -25,6 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
+use std::slice::{Iter, IterMut};
 
 #[derive(Debug)]
 pub struct ObjPoolIndex<T> {
@@ -93,18 +94,12 @@ impl<T> ObjPool<T> {
         }
     }
 
-    pub fn iter(&self) -> ObjPoolItemIterator<T> {
-        ObjPoolItemIterator {
-            pool: self,
-            current_idx: 0,
-        }
+    pub fn iter(&self) -> Iter<T> {
+        self.storage.iter()
     }
 
-    pub fn iter_mut(&mut self) -> ObjPoolMutItemIterator<T> {
-        ObjPoolMutItemIterator {
-            pool: self,
-            current_idx: 0,
-        }
+    pub fn iter_mut(&mut self) -> IterMut<T> {
+        self.storage.iter_mut()
     }
 
     pub fn len(&self) -> usize {
@@ -136,48 +131,6 @@ impl<'a, T> Iterator for ObjPoolIdxIterator<'a, T> {
             None
         } else {
             let ret = ObjPoolIndex::<T> {i: self.current_idx, type_marker: PhantomData};
-            self.current_idx += 1;
-            Some(ret)
-        }
-    }
-}
-
-pub struct ObjPoolItemIterator<'a, T: 'a> {
-    pool: &'a ObjPool<T>,
-    current_idx: usize,
-}
-
-impl<'a, T> Iterator for ObjPoolItemIterator<'a, T> {
-    type Item = &'a T;
-
-    fn next(&mut self) -> Option<&'a T> {
-        if self.current_idx == self.pool.storage.len() {
-            None
-        } else {
-            let ret = self.pool.get(ObjPoolIndex::<T> {i: self.current_idx, type_marker: PhantomData});
-            self.current_idx += 1;
-            Some(ret)
-        }
-    }
-}
-
-pub struct ObjPoolMutItemIterator<'a, T: 'a> {
-    pool: &'a mut ObjPool<T>,
-    current_idx: usize,
-}
-
-impl<'a, T> Iterator for ObjPoolMutItemIterator<'a, T> {
-    type Item = &'a mut T;
-
-    fn next(&mut self) -> Option<&'a mut T> {
-        if self.current_idx == self.pool.storage.len() {
-            None
-        } else {
-            // This is necessary because Rust can't otherwise check that we didn't end up with two overlapping elements
-            // available at once.
-            let ret = unsafe {
-                &mut *self.pool.storage.as_mut_ptr().offset(self.current_idx as isize)
-            };
             self.current_idx += 1;
             Some(ret)
         }
