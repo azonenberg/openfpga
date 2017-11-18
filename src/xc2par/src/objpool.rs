@@ -25,7 +25,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
-use std::slice;
 
 #[derive(Debug)]
 pub struct ObjPoolIndex<T> {
@@ -52,6 +51,12 @@ impl<T> Eq for ObjPoolIndex<T> { }
 impl<T> Hash for ObjPoolIndex<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.i.hash(state);
+    }
+}
+
+impl<T> ObjPoolIndex<T> {
+    pub fn get_raw_i(&self) -> usize {
+        self.i
     }
 }
 
@@ -86,6 +91,10 @@ impl<T> ObjPool<T> {
             pool: self,
             current_idx: 0,
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.storage.len()
     }
 }
 
