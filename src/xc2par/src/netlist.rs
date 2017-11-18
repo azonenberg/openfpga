@@ -1585,12 +1585,74 @@ impl InputGraph {
             if mc.xor_bits.is_some() {
                 let mut xor = mc.xor_bits.as_mut().unwrap();
 
-                if xor.andterm_input.is_some() {
-                    let pterm = xor.andterm_input.unwrap();
+                if let Some(pterm) = xor.andterm_input {
                     if used_pterms.contains(&pterm) {
                         let cloned_pterm = self.pterms.get(pterm).clone();
                         let new_pterm = self.pterms.insert(cloned_pterm);
                         xor.andterm_input = Some(new_pterm);
+                    }
+                    used_pterms.insert(pterm);
+                }
+
+                for i in 0..xor.orterm_inputs.len() {
+                    let pterm = xor.orterm_inputs[i];
+                    if used_pterms.contains(&pterm) {
+                        let cloned_pterm = self.pterms.get(pterm).clone();
+                        let new_pterm = self.pterms.insert(cloned_pterm);
+                        xor.orterm_inputs[i] = new_pterm;
+                    }
+                    used_pterms.insert(pterm);
+                }
+            }
+
+            if mc.reg_bits.is_some() {
+                let mut reg = mc.reg_bits.as_mut().unwrap();
+
+                if let Some(pterm) = reg.ce_input {
+                    if used_pterms.contains(&pterm) {
+                        let cloned_pterm = self.pterms.get(pterm).clone();
+                        let new_pterm = self.pterms.insert(cloned_pterm);
+                        reg.ce_input = Some(new_pterm);
+                    }
+                    used_pterms.insert(pterm);
+                }
+
+                if let InputGraphRegClockType::PTerm(pterm) = reg.clk_input {
+                    if used_pterms.contains(&pterm) {
+                        let cloned_pterm = self.pterms.get(pterm).clone();
+                        let new_pterm = self.pterms.insert(cloned_pterm);
+                        reg.clk_input = InputGraphRegClockType::PTerm(new_pterm);
+                    }
+                    used_pterms.insert(pterm);
+                }
+
+                if let Some(InputGraphRegRSType::PTerm(pterm)) = reg.set_input {
+                    if used_pterms.contains(&pterm) {
+                        let cloned_pterm = self.pterms.get(pterm).clone();
+                        let new_pterm = self.pterms.insert(cloned_pterm);
+                        reg.set_input = Some(InputGraphRegRSType::PTerm(new_pterm));
+                    }
+                    used_pterms.insert(pterm);
+                }
+
+                if let Some(InputGraphRegRSType::PTerm(pterm)) = reg.reset_input {
+                    if used_pterms.contains(&pterm) {
+                        let cloned_pterm = self.pterms.get(pterm).clone();
+                        let new_pterm = self.pterms.insert(cloned_pterm);
+                        reg.reset_input = Some(InputGraphRegRSType::PTerm(new_pterm));
+                    }
+                    used_pterms.insert(pterm);
+                }
+            }
+
+            if mc.io_bits.is_some() {
+                let mut io = mc.io_bits.as_mut().unwrap();
+
+                if let Some(InputGraphIOOEType::PTerm(pterm)) = io.oe {
+                    if used_pterms.contains(&pterm) {
+                        let cloned_pterm = self.pterms.get(pterm).clone();
+                        let new_pterm = self.pterms.insert(cloned_pterm);
+                        io.oe = Some(InputGraphIOOEType::PTerm(new_pterm));
                     }
                     used_pterms.insert(pterm);
                 }
