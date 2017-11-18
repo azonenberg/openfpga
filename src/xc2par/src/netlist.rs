@@ -98,12 +98,12 @@ pub enum IntermediateGraphNodeVariant {
 }
 
 #[derive(Debug)]
-pub struct NetlistLocation {
+pub struct RequestedLocation {
     pub fb: u32,
     pub i: Option<u32>,
 }
 
-impl NetlistLocation {
+impl RequestedLocation {
     fn parse_location(loc: Option<&str>) -> Result<Option<Self>, &'static str> {
         if loc.is_none() {
             return Ok(None);
@@ -115,20 +115,20 @@ impl NetlistLocation {
             let loc_fb_i = loc.split("_").collect::<Vec<_>>();
             if loc_fb_i.len() == 1 {
                 // FBn
-                Ok(Some(NetlistLocation {
+                Ok(Some(RequestedLocation {
                     fb: loc_fb_i[0][2..].parse::<u32>().unwrap(),
                     i: None,
                 }))
             } else if loc_fb_i.len() == 2 {
                 if !loc_fb_i[1].starts_with("P") {
                     // FBn_i
-                    Ok(Some(NetlistLocation {
+                    Ok(Some(RequestedLocation {
                         fb: loc_fb_i[0][2..].parse::<u32>().unwrap(),
                         i: Some(loc_fb_i[1].parse::<u32>().unwrap()),
                     }))
                 } else {
                     // FBn_Pi
-                    Ok(Some(NetlistLocation {
+                    Ok(Some(RequestedLocation {
                         fb: loc_fb_i[0][2..].parse::<u32>().unwrap(),
                         i: Some(loc_fb_i[1][1..].parse::<u32>().unwrap()),
                     }))
@@ -147,7 +147,7 @@ impl NetlistLocation {
 pub struct IntermediateGraphNode {
     pub variant: IntermediateGraphNodeVariant,
     pub name: String,
-    pub location: Option<NetlistLocation>,
+    pub location: Option<RequestedLocation>,
 }
 
 #[derive(Debug)]
@@ -406,7 +406,7 @@ impl IntermediateGraph {
                             slew_is_fast: false,
                             uses_data_gate: false,
                         },
-                        location: NetlistLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
                     });
                 },
                 "IBUF" => {
@@ -421,7 +421,7 @@ impl IntermediateGraph {
                             termination_enabled: false,
                             uses_data_gate: false,
                         },
-                        location: NetlistLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
                     });
                 },
                 "ANDTERM" => {
@@ -481,7 +481,7 @@ impl IntermediateGraph {
                             inputs_comp,
                             output: single_required_connection("OUT")?,
                         },
-                        location: NetlistLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
                     });
                 },
                 "ORTERM" => {
@@ -499,7 +499,7 @@ impl IntermediateGraph {
                             inputs,
                             output: single_required_connection("OUT")?,
                         },
-                        location: NetlistLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
                     });
                 },
                 "MACROCELL_XOR" => {
@@ -511,7 +511,7 @@ impl IntermediateGraph {
                             invert_out: numeric_param("INVERT_OUT")? != 0,
                             output: single_required_connection("OUT")?,
                         },
-                        location: NetlistLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
                     });
                 },
                 "BUFG" => {
@@ -521,7 +521,7 @@ impl IntermediateGraph {
                             input: single_required_connection("I")?,
                             output: single_required_connection("O")?,
                         },
-                        location: NetlistLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
                     });
                 },
                 "BUFGTS" => {
@@ -532,7 +532,7 @@ impl IntermediateGraph {
                             output: single_required_connection("O")?,
                             invert: numeric_param("INVERT")? != 0,
                         },
-                        location: NetlistLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
                     });
                 },
                 "BUFGSR" => {
@@ -543,7 +543,7 @@ impl IntermediateGraph {
                             output: single_required_connection("O")?,
                             invert: numeric_param("INVERT")? != 0,
                         },
-                        location: NetlistLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
                     });
                 },
                 "FDCP" | "FDCP_N" | "FDDCP" |
@@ -590,7 +590,7 @@ impl IntermediateGraph {
                             clk_input: single_required_connection(clk_name)?,
                             output: single_required_connection("Q")?,
                         },
-                        location: NetlistLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
                     });
                 }
                 _ => return Err("unsupported cell type")
