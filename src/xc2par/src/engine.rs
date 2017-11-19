@@ -390,7 +390,7 @@ pub enum ZIAAssignmentResult {
 }
 
 pub fn try_assign_zia(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacrocell], mc_assignments: &[[(PARMCAssignment, PARMCAssignment); MCS_PER_FB]],
-    pterm_assignment: &[Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB])
+    pterm_assignment: &[Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB])
     -> ZIAAssignmentResult {
 
     let mut ret = [XC2ZIAInput::One; INPUTS_PER_ANDTERM];
@@ -400,24 +400,18 @@ pub fn try_assign_zia(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacr
     let mut collected_inputs_set = HashSet::new();
     for pt_i in 0..ANDTERMS_PER_FB {
         if pterm_assignment[pt_i].is_some() {
-            let andterm_node = g.nodes.get(pterm_assignment[pt_i].unwrap());
-            if let IntermediateGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, ..} = andterm_node.variant {
-                for &input_net in inputs_true {
-                    let input_node_idx = g.nets.get(input_net).source.unwrap().0;
-                    if !collected_inputs_set.contains(&input_node_idx) {
-                        collected_inputs_set.insert(input_node_idx);
-                        collected_inputs_vec.push(input_node_idx);
-                    }
+            let andterm_node = g2.pterms.get(pterm_assignment[pt_i].unwrap());
+            for input_net in andterm_node.inputs_true {
+                if !collected_inputs_set.contains(&input_net) {
+                    collected_inputs_set.insert(input_net);
+                    collected_inputs_vec.push(input_net);
                 }
-                for &input_net in inputs_comp {
-                    let input_node_idx = g.nets.get(input_net).source.unwrap().0;
-                    if !collected_inputs_set.contains(&input_node_idx) {
-                        collected_inputs_set.insert(input_node_idx);
-                        collected_inputs_vec.push(input_node_idx);
-                    }
+            }
+            for input_net in andterm_node.inputs_comp {
+                if !collected_inputs_set.contains(&input_net) {
+                    collected_inputs_set.insert(input_net);
+                    collected_inputs_vec.push(input_net);
                 }
-            } else {
-                panic!("not an and");
             }
         }
     }
@@ -429,43 +423,14 @@ pub fn try_assign_zia(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacr
 
     // Find candidate sites
     let candidate_sites = collected_inputs_vec.iter().map(|input| {
-        // XXX FIXME
-        let mut fbmc = None;
-        for fb_i in 0..mc_assignments.len() {
-            for mc_i in 0..MCS_PER_FB {
-                if mc_assignments[fb_i][mc_i].0 >= 0 {
-                    let netlist_mc = &mcs[mc_assignments[fb_i][mc_i].0 as usize];
-                    let (i, need_to_use_ibuf_zia_path) = match netlist_mc {
-                        &NetlistMacrocell::PinOutput{i} => (i, false),
-                        &NetlistMacrocell::BuriedComb{i} => (i, false),
-                        &NetlistMacrocell::BuriedReg{i, has_comb_fb} => (i, has_comb_fb),
-                        _ => unreachable!(),
-                    };
-                    if i == (*input) {
-                        fbmc = Some((fb_i, mc_i, need_to_use_ibuf_zia_path));
-                        break;
-                    }
-                }
-                if mc_assignments[fb_i][mc_i].1 >= 0 {
-                    let netlist_mc = &mcs[mc_assignments[fb_i][mc_i].1 as usize];
-                    let i = match netlist_mc {
-                        &NetlistMacrocell::PinInputUnreg{i} => i,
-                        &NetlistMacrocell::PinInputReg{i} => i,
-                        _ => unreachable!(),
-                    };
-                    if i == (*input) {
-                        fbmc = Some((fb_i, mc_i, false));
-                        break;
-                    }
-                }
-            }
-        }
-        let (fb, mc, need_to_use_ibuf_zia_path) = fbmc.expect("macrocell not assigned");
+        let input_obj = g2.mcs.get(input.1);
+        let fb = input_obj.loc.unwrap().fb;
+        let mc = input_obj.loc.unwrap().i;
+        let need_to_use_ibuf_zia_path = input.0 == InputGraphPTermInputType::Reg && input_obj.xor_feedback_used;
 
         // What input do we actually want?
-        let input_obj = g.nodes.get(*input);
-        let choice = match input_obj.variant {
-            IntermediateGraphNodeVariant::InBuf{..} => {
+        let choice = match input.0 {
+            InputGraphPTermInputType::Pin => {
                 // FIXME: Hack
                 if true && fb == 2 && mc == 0 {
                     XC2ZIAInput::DedicatedInput
@@ -473,20 +438,16 @@ pub fn try_assign_zia(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacr
                     XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
                 }
             },
-            IntermediateGraphNodeVariant::IOBuf{..} => {
-                XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
-            },
-            IntermediateGraphNodeVariant::Xor{..} => {
+            InputGraphPTermInputType::Xor => {
                 XC2ZIAInput::Macrocell{fb: fb as u32, mc: mc as u32}
             },
-            IntermediateGraphNodeVariant::Reg{..} => {
+            InputGraphPTermInputType::Reg => {
                 if need_to_use_ibuf_zia_path {
                     XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
                 } else {
                     XC2ZIAInput::Macrocell{fb: fb as u32, mc: mc as u32}
                 }
-            }
-            _ => panic!("not a valid input"),
+            },
         };
 
         // Actually search the ZIA table for it
@@ -536,7 +497,7 @@ pub fn try_assign_zia(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacr
 }
 
 pub enum FBAssignmentResult {
-    Success(([Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB], [XC2ZIAInput; INPUTS_PER_ANDTERM])),
+    Success(([Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB], [XC2ZIAInput; INPUTS_PER_ANDTERM])),
     // macrocell assignment mc, score
     Failure(Vec<(u32, u32)>),
     // FIXME: This should report which one?
@@ -627,7 +588,7 @@ pub fn try_assign_fb(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacro
 
 pub enum PARResult {
     Success((Vec<([(PARMCAssignment, PARMCAssignment); MCS_PER_FB],
-        [Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB],
+        [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB],
         [XC2ZIAInput; INPUTS_PER_ANDTERM])>, Vec<NetlistMacrocell>)),
     FailurePTCNeverSatisfiable,
     FailureIterationsExceeded,
@@ -692,26 +653,35 @@ pub fn do_par(g: &IntermediateGraph, g2: &InputGraph) -> PARResult {
         for cand_fb_i in 0..2 {
             for cand_mc_i in 0..MCS_PER_FB {
                 // This site is not usable
-                if macrocell_placement[cand_fb_i][cand_mc_i].0 < -1 {
+                if macrocell_placement[cand_fb_i][cand_mc_i].0 == PARMCAssignment::Banned {
                     continue;
                 }
 
                 let mut new_badness = 0;
                 // Does this violate a pairing constraint?
-                if macrocell_placement[cand_fb_i][cand_mc_i].1 >= 0 {
-                    match ngraph_collected_mc[macrocell_placement[move_fb as usize][move_mc as usize].0 as usize] {
-                        NetlistMacrocell::PinOutput{..} => {
+                if let PARMCAssignment::MC(mc_cand_idx) = macrocell_placement[cand_fb_i][cand_mc_i].1 {
+                    let mc_cand = g2.mcs.get(mc_cand_idx);
+                    let mc_move =
+                        if let PARMCAssignment::MC(x) = macrocell_placement[move_fb as usize][move_mc as usize].0 {
+                            g2.mcs.get(x)
+                        } else {
+                            unreachable!();
+                        };
+
+                    match mc_move.get_type() {
+                        InputGraphMacrocellType::PinOutput => {
                             new_badness = 1;
                         },
-                        NetlistMacrocell::BuriedComb{..} => {
+                        InputGraphMacrocellType::BuriedComb => {
                             // Ok, do nothing
                         },
-                        NetlistMacrocell::BuriedReg{has_comb_fb, ..} => {
-                            match ngraph_collected_mc[macrocell_placement[cand_fb_i][cand_mc_i].1 as usize] {
-                                NetlistMacrocell::PinInputReg{..} => {
+                        InputGraphMacrocellType::BuriedReg => {
+                            let has_comb_fb = mc_move.xor_feedback_used;
+                            match mc_cand.get_type() {
+                                InputGraphMacrocellType::PinInputReg => {
                                     new_badness = 1;
                                 },
-                                NetlistMacrocell::PinInputUnreg{..} => {
+                                InputGraphMacrocellType::PinInputUnreg => {
                                     if has_comb_fb {
                                         new_badness = 1;
                                     }
