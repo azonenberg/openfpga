@@ -527,10 +527,8 @@ pub enum FBAssignmentResult {
 }
 
 // FIXME: mutable assignments is a hack
-pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
-    fb_i: u32) -> FBAssignmentResult {
-
-    let mut base_failing_score = 0;
+pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment], fb_i: u32) -> FBAssignmentResult {
+    let base_failing_score;
     // TODO: Weight factors?
 
     // Can we even assign p-terms?
@@ -562,9 +560,9 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
     let mut failure_scores = Vec::new();
     for mc_i in 0..MCS_PER_FB {
         let old_assign = mc_assignments[fb_i as usize][mc_i].0;
-        if let PARMCAssignment::MC(old_assign_idx) = old_assign {
+        if let PARMCAssignment::MC(_) = old_assign {
             mc_assignments[fb_i as usize][mc_i].0 = PARMCAssignment::None;
-            let mut new_failing_score = 0;
+            let new_failing_score;
             match try_assign_andterms(g, &mc_assignments[fb_i as usize], fb_i) {
                 AndTermAssignmentResult::Success(andterm_assignment) => {
                     // Can we assign the ZIA?
@@ -593,11 +591,10 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
             }
 
             if base_failing_score - new_failing_score > 0 {
+                // Deleting this thing made the score better
                 failure_scores.push((mc_i as u32, (base_failing_score - new_failing_score) as u32));
-                mc_assignments[fb_i as usize][mc_i].0 = old_assign;
-            } else {
-                // XXX
             }
+            mc_assignments[fb_i as usize][mc_i].0 = old_assign;
         }
     }
 
@@ -682,11 +679,11 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
     let mut macrocell_placement = macrocell_placement.unwrap();
 
     let mut par_results_per_fb = Vec::with_capacity(2);
-    for fb_i in 0..2 {
+    for _ in 0..2 {
         par_results_per_fb.push(None);
     }
 
-    for i in 0..1000 {
+    for iter_count in 0..1000 {
         let mut bad_candidates = Vec::new();
         let mut bad_score_sum = 0;
         for fb_i in 0..2 {
@@ -697,7 +694,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 },
                 FBAssignmentResult::Failure(fail_vec) => {
                     for (mc, score) in fail_vec {
-                        bad_score_sum += bad_score_sum;
+                        bad_score_sum += score;
                         bad_candidates.push((fb_i as u32, mc, score));
                     }
                 }
