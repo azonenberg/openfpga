@@ -57,6 +57,38 @@ pub type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
 pub fn greedy_initial_placement(g: &mut InputGraph) -> Vec<PARFBAssignment> {
     let mut ret = Vec::new();
 
+    // TODO: Errors?
+    {
+        let mut i = 0;
+        for gck in g.bufg_clks.iter_mut() {
+            gck.loc = Some(AssignedLocationInner {
+                fb: 0,
+                i
+            });
+            i += 1;
+        }
+    }
+    {
+        let mut i = 0;
+        for gts in g.bufg_gts.iter_mut() {
+            gts.loc = Some(AssignedLocationInner {
+                fb: 0,
+                i
+            });
+            i += 1;
+        }
+    }
+    {
+        let mut i = 0;
+        for gsr in g.bufg_gsr.iter_mut() {
+            gsr.loc = Some(AssignedLocationInner {
+                fb: 0,
+                i
+            });
+            i += 1;
+        }
+    }
+
     // TODO: Number of FBs
     // FIXME: Hack for dedicated input
     for _ in 0..2 {

@@ -143,7 +143,17 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                             None => XC2IOBOBufMode::PushPull,
                             Some(InputGraphIOOEType::OpenDrain) => XC2IOBOBufMode::OpenDrain,
                             Some(InputGraphIOOEType::PTerm(pterm)) => unimplemented!(),
-                            Some(InputGraphIOOEType::GTS(gts)) => unimplemented!(),
+                            Some(InputGraphIOOEType::GTS(gts)) => {
+                                let gts = g.bufg_gts.get(gts);
+                                let which = gts.loc.unwrap().i;
+                                match which {
+                                    0 => XC2IOBOBufMode::TriStateGTS0,
+                                    1 => XC2IOBOBufMode::TriStateGTS1,
+                                    2 => XC2IOBOBufMode::TriStateGTS2,
+                                    3 => XC2IOBOBufMode::TriStateGTS3,
+                                    _ => unreachable!(),
+                                }
+                            },
                         }
                     }
                 }
@@ -183,6 +193,69 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                 }
             }
         }
+    }
+
+    // Register bits
+    for fb_i in 0..placements.len() {
+        for mc_i in 0..MCS_PER_FB {
+            if let PARMCAssignment::MC(mc_idx) = placements[fb_i].0[mc_i].0 {
+                let mc = g.mcs.get(mc_idx);
+
+                if let Some(ref reg_bits) = mc.reg_bits {
+                    fb_bits[fb_i].mcs[mc_i].reg_mode = reg_bits.mode;
+                    fb_bits[fb_i].mcs[mc_i].clk_invert_pol = reg_bits.clkinv;
+                    fb_bits[fb_i].mcs[mc_i].is_ddr = reg_bits.clkddr;
+                    fb_bits[fb_i].mcs[mc_i].init_state = reg_bits.init_state;
+
+                    // Set
+                    fb_bits[fb_i].mcs[mc_i].s_src = match reg_bits.set_input {
+                        None => XC2MCRegSetSrc::Disabled,
+                        Some(InputGraphRegRSType::GSR(_)) => XC2MCRegSetSrc::GSR,
+                        Some(InputGraphRegRSType::PTerm(pterm)) => unimplemented!(),
+                    };
+
+                    // Reset
+                    fb_bits[fb_i].mcs[mc_i].r_src = match reg_bits.reset_input {
+                        None => XC2MCRegResetSrc::Disabled,
+                        Some(InputGraphRegRSType::GSR(_)) => XC2MCRegResetSrc::GSR,
+                        Some(InputGraphRegRSType::PTerm(pterm)) => unimplemented!(),
+                    };
+
+                    // D/T input
+                    fb_bits[fb_i].mcs[mc_i].ff_in_ibuf = reg_bits.dt_input == InputGraphRegInputType::Pin;
+
+                    // Clock input
+                    fb_bits[fb_i].mcs[mc_i].clk_src = match reg_bits.clk_input {
+                        InputGraphRegClockType::PTerm(pterm) => unimplemented!(),
+                        InputGraphRegClockType::GCK(gck) => {
+                            let gck = g.bufg_clks.get(gck);
+                            let which = gck.loc.unwrap().i;
+                            match which {
+                                0 => XC2MCRegClkSrc::GCK0,
+                                1 => XC2MCRegClkSrc::GCK1,
+                                2 => XC2MCRegClkSrc::GCK2,
+                                _ => unreachable!(),
+                            }
+                        },
+                    }
+                }
+            }
+        }
+    }
+
+    // Global buffers
+    for gck in g.bufg_clks.iter() {
+        let which = gck.loc.unwrap().i;
+        global_nets.gck_enable[which as usize] = true;
+    }
+    for gts in g.bufg_gts.iter() {
+        let which = gts.loc.unwrap().i;
+        global_nets.gts_enable[which as usize] = true;
+        global_nets.gts_invert[which as usize] = gts.invert;
+    }
+    for gsr in g.bufg_gsr.iter() {
+        global_nets.gsr_enable = true;
+        global_nets.gsr_invert = gsr.invert;
     }
 
     // XXX TODO other bits
