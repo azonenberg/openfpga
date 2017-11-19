@@ -308,9 +308,9 @@ impl IntermediateGraph {
                 };
             };
 
-            // Helper to retrieve an optional string parameter
-            let optional_string_param = |name: &str| -> Result<Option<&str>, &'static str> {
-                let param_option = cell_obj.parameters.get(name);
+            // Helper to retrieve an optional string attribute
+            let optional_string_attrib = |name: &str| -> Result<Option<&str>, &'static str> {
+                let param_option = cell_obj.attributes.get(name);
                 if param_option.is_none() {
                     return Ok(None);
                 }
@@ -376,7 +376,7 @@ impl IntermediateGraph {
                             slew_is_fast: false,
                             uses_data_gate: false,
                         },
-                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
                 },
                 "IBUF" => {
@@ -391,7 +391,7 @@ impl IntermediateGraph {
                             termination_enabled: false,
                             uses_data_gate: false,
                         },
-                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
                 },
                 "ANDTERM" => {
@@ -412,7 +412,7 @@ impl IntermediateGraph {
                             inputs_comp,
                             output: single_required_connection("OUT")?,
                         },
-                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
                 },
                 "ORTERM" => {
@@ -430,7 +430,7 @@ impl IntermediateGraph {
                             inputs,
                             output: single_required_connection("OUT")?,
                         },
-                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
                 },
                 "MACROCELL_XOR" => {
@@ -442,7 +442,7 @@ impl IntermediateGraph {
                             invert_out: numeric_param("INVERT_OUT")? != 0,
                             output: single_required_connection("OUT")?,
                         },
-                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
                 },
                 "BUFG" => {
@@ -452,7 +452,7 @@ impl IntermediateGraph {
                             input: single_required_connection("I")?,
                             output: single_required_connection("O")?,
                         },
-                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
                 },
                 "BUFGTS" => {
@@ -463,7 +463,7 @@ impl IntermediateGraph {
                             output: single_required_connection("O")?,
                             invert: numeric_param("INVERT")? != 0,
                         },
-                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
                 },
                 "BUFGSR" => {
@@ -474,7 +474,7 @@ impl IntermediateGraph {
                             output: single_required_connection("O")?,
                             invert: numeric_param("INVERT")? != 0,
                         },
-                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
                 },
                 "FDCP" | "FDCP_N" | "FDDCP" |
@@ -521,7 +521,7 @@ impl IntermediateGraph {
                             clk_input: single_required_connection(clk_name)?,
                             output: single_required_connection("Q")?,
                         },
-                        location: RequestedLocation::parse_location(optional_string_param("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
                 }
                 _ => return Err("unsupported cell type")
@@ -945,6 +945,46 @@ impl Hash for InputGraphPTerm {
     }
 }
 
+fn combine_names(old: &str, additional: &str) -> String {
+    if old == "" {
+        additional.to_owned()
+    } else {
+        format!("{}_{}", old, additional)
+    }
+}
+
+fn combine_locs(old: Option<RequestedLocation>, additional: Option<RequestedLocation>)
+    -> Result<Option<RequestedLocation>, &'static str> {
+
+    if old.is_none() {
+        Ok(additional)
+    } else if additional.is_none() {
+        Ok(old)
+    } else {
+        let old_ = old.unwrap();
+        let new = additional.unwrap();
+
+        if old_.fb != new.fb {
+            Err("Mismatched FBs in LOC constraint")
+        } else {
+            if old_.i.is_none() {
+                Ok(additional)
+            } else if new.i.is_none() {
+                Ok(old)
+            } else {
+                let old_i = old_.i.unwrap();
+                let new_i = new.i.unwrap();
+
+                if old_i != new_i {
+                    Err("Mismatched macrocell in LOC constraint")
+                } else {
+                    Ok(old)
+                }
+            }
+        }
+    }
+}
+
 impl InputGraph {
     pub fn from_intermed_graph(g: &IntermediateGraph) -> Result<Self, &'static str> {
         // TODO: Implement location checking
@@ -1125,8 +1165,8 @@ impl InputGraph {
                     {
                         let mut newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.io_bits.is_none());
-                        newg_n.name = n.name.clone();
-                        newg_n.requested_loc = n.location;
+                        newg_n.name = combine_names(&newg_n.name, &n.name);
+                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
                         newg_n.io_bits = Some(InputGraphIOBuf {
                             input: input,
                             oe: oe,
@@ -1145,8 +1185,8 @@ impl InputGraph {
                     {
                         let mut newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.io_bits.is_none());
-                        newg_n.name = n.name.clone();
-                        newg_n.requested_loc = n.location;
+                        newg_n.name = combine_names(&newg_n.name, &n.name);
+                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
                         newg_n.io_bits = Some(InputGraphIOBuf {
                             input: None,
                             oe: None,
@@ -1213,8 +1253,8 @@ impl InputGraph {
                     {
                         let mut newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.xor_bits.is_none());
-                        newg_n.name = n.name.clone();
-                        newg_n.requested_loc = n.location;
+                        newg_n.name = combine_names(&newg_n.name, &n.name);
+                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
                         newg_n.xor_bits = Some(InputGraphXor {
                             orterm_inputs,
                             andterm_input: ptc_input,
@@ -1410,8 +1450,8 @@ impl InputGraph {
                     {
                         let mut newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.reg_bits.is_none());
-                        newg_n.name = n.name.clone();
-                        newg_n.requested_loc = n.location;
+                        newg_n.name = combine_names(&newg_n.name, &n.name);
+                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
                         newg_n.reg_bits = Some(InputGraphReg {
                             mode,
                             clkinv,
