@@ -24,6 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::collections::{HashSet, HashMap};
+use std::iter::FromIterator;
 
 extern crate rand;
 use self::rand::{Rng, SeedableRng, XorShiftRng};
@@ -53,10 +54,10 @@ impl PARMCAssignment {
 pub type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
 
 // First element of tuple is anything, second element can only be pin input
-pub fn greedy_initial_placement(g: &mut InputGraph) -> Vec<PARFBAssignment> {
+pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignment>> {
     let mut ret = Vec::new();
 
-    // TODO: Errors?
+    // Note that we checked ahead of time that there aren't too many of these.
     {
         let mut i = 0;
         for gck in g.bufg_clks.iter_mut() {
@@ -117,33 +118,33 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Vec<PARFBAssignment> {
     }
 
     // Do the actual greedy assignment
-    for i_ in g.mcs.iter_idx() {
-        let mc = g.mcs.get(i_);
+    for i in g.mcs.iter_idx() {
+        let mc = g.mcs.get(i);
         match mc.get_type() {
             InputGraphMacrocellType::PinOutput => {
                 if candidate_sites_anything.len() == 0 {
-                    panic!("no more sites");
+                    return None;
                 }
 
                 let (fb, mc) = candidate_sites_anything.pop().unwrap();
                 // Remove from the pininput candidates as well. This requires that all PinOutput entries come first.
                 candidate_sites_pininput_conservative.pop().unwrap();
-                ret[fb][mc].0 = PARMCAssignment::MC(i_);
+                ret[fb][mc].0 = PARMCAssignment::MC(i);
             },
             InputGraphMacrocellType::BuriedComb => {
                 if candidate_sites_anything.len() == 0 {
-                    panic!("no more sites");
+                    return None;
                 }
 
                 let (fb, mc) = candidate_sites_anything.pop().unwrap();
                 // This is compatible with all input pin types
-                ret[fb][mc].0 = PARMCAssignment::MC(i_);
+                ret[fb][mc].0 = PARMCAssignment::MC(i);
             },
             InputGraphMacrocellType::BuriedReg => {
                 let has_comb_fb = mc.xor_feedback_used;
 
                 if candidate_sites_anything.len() == 0 {
-                    panic!("no more sites");
+                    return None;
                 }
 
                 let (fb, mc) = candidate_sites_anything.pop().unwrap();
@@ -153,7 +154,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Vec<PARFBAssignment> {
                     // Not available to be shared at all
                     not_available_for_pininput_unreg.insert((fb, mc));
                 }
-                ret[fb][mc].0 = PARMCAssignment::MC(i_);
+                ret[fb][mc].0 = PARMCAssignment::MC(i);
             },
             InputGraphMacrocellType::PinInputReg => {
                 // XXX This is not particularly efficient
@@ -166,11 +167,11 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Vec<PARFBAssignment> {
                 }
 
                 if idx.is_none() {
-                    panic!("no more sites");
+                    return None;
                 }
 
                 let (fb, mc) = candidate_sites_pininput_conservative.remove(idx.unwrap());
-                ret[fb][mc].1 = PARMCAssignment::MC(i_);
+                ret[fb][mc].1 = PARMCAssignment::MC(i);
             },
             InputGraphMacrocellType::PinInputUnreg => {
                 // XXX This is not particularly efficient
@@ -183,11 +184,11 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Vec<PARFBAssignment> {
                 }
 
                 if idx.is_none() {
-                    panic!("no more sites");
+                    return None;
                 }
 
                 let (fb, mc) = candidate_sites_pininput_conservative.remove(idx.unwrap());
-                ret[fb][mc].1 = PARMCAssignment::MC(i_);
+                ret[fb][mc].1 = PARMCAssignment::MC(i);
             }
         }
     }
@@ -212,7 +213,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Vec<PARFBAssignment> {
         }
     }
 
-    ret
+    Some(ret)
 }
 
 fn compare_andterms(g: &InputGraph, a: ObjPoolIndex<InputGraphPTerm>, b: ObjPoolIndex<InputGraphPTerm>) -> bool {
@@ -224,7 +225,6 @@ fn compare_andterms(g: &InputGraph, a: ObjPoolIndex<InputGraphPTerm>, b: ObjPool
 
 pub enum AndTermAssignmentResult {
     Success([Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB]),
-    FailurePTCNeverSatisfiable,
     FailurePtermConflict(u32),
     FailurePtermExceeded(u32),
 }
@@ -279,15 +279,6 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
                     } else {
                         if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
                             pterm_conflicts += 1;
-                        }
-                    }
-
-                    // Extra check for unsatisfiable PTC usage
-                    if this_mc.xor_bits.is_some() && this_mc.xor_bits.as_ref().unwrap().andterm_input.is_some() {
-                        if !compare_andterms(g, ptc_node_idx,
-                            this_mc.xor_bits.as_ref().unwrap().andterm_input.unwrap()) {
-
-                            return AndTermAssignmentResult::FailurePTCNeverSatisfiable;
                         }
                     }
                 }
@@ -540,8 +531,6 @@ pub enum FBAssignmentResult {
     Success(([Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB], [XC2ZIAInput; INPUTS_PER_ANDTERM], [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB])),
     // macrocell assignment mc, score
     Failure(Vec<(u32, u32)>),
-    // FIXME: This should report which one?
-    FailurePTCNeverSatisfiable,
 }
 
 // FIXME: mutable assignments is a hack
@@ -568,8 +557,6 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
                 },
             }
         },
-        AndTermAssignmentResult::FailurePTCNeverSatisfiable =>
-            return FBAssignmentResult::FailurePTCNeverSatisfiable,
         AndTermAssignmentResult::FailurePtermConflict(x) => {
             base_failing_score = x;
         },
@@ -600,8 +587,6 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
                         },
                     }
                 },
-                // This cannot happen here because it must have bombed out earlier in the initial attempt
-                AndTermAssignmentResult::FailurePTCNeverSatisfiable => unreachable!(),
                 AndTermAssignmentResult::FailurePtermConflict(x) => {
                     new_failing_score = x;
                 },
@@ -626,6 +611,7 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
     FBAssignmentResult::Failure(failure_scores)
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum PARSanityResult {
     Ok,
     FailurePTCNeverSatisfiable,
@@ -636,20 +622,71 @@ pub enum PARSanityResult {
     FailureTooManyBufgGSR,
 }
 
+pub fn do_par_sanity_check(g: &InputGraph) -> PARSanityResult {
+    // Check if everything fits in the device
+    if g.mcs.len() > 2 * (2 * MCS_PER_FB) {
+        // Note that this is a conservative fail-early check. It is incomplete because it doesn't account for
+        // which macrocells can actually be paired together or which buried sites (in larger devices) can be used.
+        return PARSanityResult::FailureTooManyMCs;
+    }
+
+    let pterms_set: HashSet<InputGraphPTerm> = HashSet::from_iter(g.pterms.iter().cloned());
+    if pterms_set.len() > 2 * ANDTERMS_PER_FB {
+        return PARSanityResult::FailureTooManyPTerms;
+    }
+
+    if g.bufg_clks.len() > NUM_BUFG_CLK {
+        return PARSanityResult::FailureTooManyBufgClk;
+    }
+    if g.bufg_gts.len() > NUM_BUFG_GTS{
+        return PARSanityResult::FailureTooManyBufgGTS;
+    }
+    if g.bufg_gsr.len() > NUM_BUFG_GSR {
+        return PARSanityResult::FailureTooManyBufgGSR;
+    }
+
+    // Check for impossible-to-satisfy PTC usage
+    for mc in g.mcs.iter() {
+        if let Some(ref reg_bits) = mc.reg_bits {
+            if let Some(oe_node_idx) = reg_bits.ce_input {
+                if let Some(ref xor_bits) = mc.xor_bits {
+                    if let Some(xor_ptc_node_idx) = xor_bits.andterm_input {
+                        if !compare_andterms(g, oe_node_idx, xor_ptc_node_idx) {
+                            return PARSanityResult::FailurePTCNeverSatisfiable;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    PARSanityResult::Ok
+}
+
 pub enum PARResult {
     Success(Vec<(PARFBAssignment,
         [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB],
         [XC2ZIAInput; INPUTS_PER_ANDTERM],
         [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB])>),
-    FailurePTCNeverSatisfiable,
+    FailureSanity(PARSanityResult),
     FailureIterationsExceeded,
 }
 
 pub fn do_par(g: &mut InputGraph) -> PARResult {
+    let sanity_check = do_par_sanity_check(g);
+    if sanity_check != PARSanityResult::Ok {
+        return PARResult::FailureSanity(sanity_check);
+    }
+
     let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
 
-    let mut macrocell_placement = greedy_initial_placement(g);
+    let macrocell_placement = greedy_initial_placement(g);
     println!("{:?}", macrocell_placement);
+    if macrocell_placement.is_none() {
+        // XXX this is ugly
+        return PARResult::FailureSanity(PARSanityResult::FailureTooManyMCs);
+    }
+    let mut macrocell_placement = macrocell_placement.unwrap();
 
     let mut par_results_per_fb = Vec::with_capacity(2);
     for fb_i in 0..2 {
@@ -665,8 +702,6 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 FBAssignmentResult::Success((pterm, zia, zia_pterm)) => {
                     par_results_per_fb[fb_i] = Some((pterm, zia, zia_pterm));
                 },
-                FBAssignmentResult::FailurePTCNeverSatisfiable =>
-                    return PARResult::FailurePTCNeverSatisfiable,
                 FBAssignmentResult::Failure(fail_vec) => {
                     for (mc, score) in fail_vec {
                         bad_score_sum += bad_score_sum;
@@ -754,7 +789,6 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                     FBAssignmentResult::Success(..) => {
                         // Do nothing, don't need to change badness (will be 0 if was 0)
                     },
-                    FBAssignmentResult::FailurePTCNeverSatisfiable => unreachable!(),
                     FBAssignmentResult::Failure(fail_vec) => {
                         for (mc, score) in fail_vec {
                             if mc == cand_mc_i as u32 {

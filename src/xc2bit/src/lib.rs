@@ -52,6 +52,16 @@ pub const ANDTERMS_PER_FB: usize = 56;
 /// This is an unchangeable property of the architecture of the CPLD.
 pub const MCS_PER_FB: usize = 16;
 
+/// The number of BUFG sites for clock signals in the device.
+/// This is an unchangeable property of the architecture of the CPLD.
+pub const NUM_BUFG_CLK: usize = 3;
+/// The number of BUFG sites for tristate signals in the device.
+/// This is an unchangeable property of the architecture of the CPLD.
+pub const NUM_BUFG_GTS: usize = 4;
+/// The number of BUFG sites for set/reset signals in the device.
+/// This is an unchangeable property of the architecture of the CPLD.
+pub const NUM_BUFG_GSR: usize = 1;
+
 mod bitstream;
 pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets, XC2ClockDivRatio, XC2ClockDiv};
 
