@@ -161,9 +161,6 @@ pub struct IntermediateGraph {
     pub vss_net: ObjPoolIndex<IntermediateGraphNet>,
 }
 
-// BuriedComb is compatible with PinInputUnreg and PinInputReg.
-// BuriedReg is compatible with PinInputUnreg as long as has_comb_fb is false.
-
 impl IntermediateGraph {
     pub fn from_yosys_netlist(yosys_net: &yosys_netlist_json::Netlist) -> Result<Self, &'static str> {
         let mut top_module_name = "";
@@ -822,6 +819,8 @@ pub struct InputGraphMacrocell {
     pub xor_feedback_used: bool,
 }
 
+// BuriedComb is compatible with PinInputUnreg and PinInputReg.
+// BuriedReg is compatible with PinInputUnreg as long as has_comb_fb is false.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum InputGraphMacrocellType {
     PinOutput,

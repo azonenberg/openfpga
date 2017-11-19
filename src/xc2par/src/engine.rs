@@ -51,8 +51,10 @@ impl PARMCAssignment {
     }
 }
 
+type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
+
 // First element of tuple is anything, second element can only be pin input
-pub fn greedy_initial_placement(g: &InputGraph) -> Vec<[(PARMCAssignment, PARMCAssignment); MCS_PER_FB]> {
+pub fn greedy_initial_placement(g: &mut InputGraph) -> Vec<PARFBAssignment> {
     let mut ret = Vec::new();
 
     // TODO: Number of FBs
@@ -159,6 +161,26 @@ pub fn greedy_initial_placement(g: &InputGraph) -> Vec<[(PARMCAssignment, PARMCA
         }
     }
 
+    // Update the "reverse" pointers
+    for fb_i in 0..3 {
+        for mc_i in 0..MCS_PER_FB {
+            if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].0 {
+                let mc = g.mcs.get_mut(mc_idx);
+                mc.loc = Some(AssignedLocationInner{
+                    fb: fb_i,
+                    i: mc_i as u32,
+                });
+            }
+            if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].1 {
+                let mc = g.mcs.get_mut(mc_idx);
+                mc.loc = Some(AssignedLocationInner{
+                    fb: fb_i,
+                    i: mc_i as u32,
+                });
+            }
+        }
+    }
+
     ret
 }
 
@@ -185,7 +207,7 @@ pub enum AndTermAssignmentResult {
     FailurePtermExceeded(u32),
 }
 
-pub fn try_assign_andterms(g: &InputGraph, mc_assignment: &[(PARMCAssignment, PARMCAssignment); MCS_PER_FB])
+pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, fb_i: u32)
     -> AndTermAssignmentResult {
 
     let mut ret = [None; ANDTERMS_PER_FB];
@@ -334,6 +356,17 @@ pub fn try_assign_andterms(g: &InputGraph, mc_assignment: &[(PARMCAssignment, PA
         return AndTermAssignmentResult::FailurePtermExceeded(unfitted_pterms);
     }
 
+    // Update the "reverse" pointers
+    for mc_i in 0..MCS_PER_FB {
+        if let Some(pterm_idx) = ret[mc_i] {
+            let pterm = g.pterms.get_mut(pterm_idx);
+            pterm.loc = Some(AssignedLocationInner{
+                fb: fb_i,
+                i: mc_i as u32,
+            });
+        }
+    }
+
     AndTermAssignmentResult::Success(ret)
 }
 
@@ -459,14 +492,14 @@ pub enum FBAssignmentResult {
 }
 
 // FIXME: mutable assignments is a hack
-pub fn try_assign_fb(g: &InputGraph, mc_assignments: &mut [[(PARMCAssignment, PARMCAssignment); MCS_PER_FB]],
+pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
     fb_i: u32) -> FBAssignmentResult {
 
     let mut base_failing_score = 0;
     // TODO: Weight factors?
 
     // Can we even assign p-terms?
-    let pterm_assign_result = try_assign_andterms(g, &mc_assignments[fb_i as usize]);
+    let pterm_assign_result = try_assign_andterms(g, &mc_assignments[fb_i as usize], fb_i);
     match pterm_assign_result {
         AndTermAssignmentResult::Success(andterm_assignment) => {
             // Can we assign the ZIA?
@@ -499,7 +532,7 @@ pub fn try_assign_fb(g: &InputGraph, mc_assignments: &mut [[(PARMCAssignment, PA
         if let PARMCAssignment::MC(old_assign_idx) = old_assign {
             mc_assignments[fb_i as usize][mc_i].0 = PARMCAssignment::None;
             let mut new_failing_score = 0;
-            match try_assign_andterms(g, &mc_assignments[fb_i as usize]) {
+            match try_assign_andterms(g, &mc_assignments[fb_i as usize], fb_i) {
                 AndTermAssignmentResult::Success(andterm_assignment) => {
                     // Can we assign the ZIA?
                     match try_assign_zia(g, &andterm_assignment) {
@@ -541,14 +574,14 @@ pub fn try_assign_fb(g: &InputGraph, mc_assignments: &mut [[(PARMCAssignment, PA
 }
 
 pub enum PARResult {
-    Success(Vec<([(PARMCAssignment, PARMCAssignment); MCS_PER_FB],
+    Success(Vec<(PARFBAssignment,
         [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB],
         [XC2ZIAInput; INPUTS_PER_ANDTERM])>),
     FailurePTCNeverSatisfiable,
     FailureIterationsExceeded,
 }
 
-pub fn do_par(g: &InputGraph) -> PARResult {
+pub fn do_par(g: &mut InputGraph) -> PARResult {
     let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
 
     let mut macrocell_placement = greedy_initial_placement(g);
@@ -692,6 +725,23 @@ pub fn do_par(g: &InputGraph) -> PARResult {
         let final_orig_cand_assignment = macrocell_placement[move_final_fb][move_final_mc].0;
         macrocell_placement[move_final_fb][move_final_mc].0 = final_orig_move_assignment;
         macrocell_placement[move_fb as usize][move_mc as usize].0 = final_orig_cand_assignment;
+        // Swap the "reverse" pointers as well
+        if let PARMCAssignment::MC(mc1_idx) = final_orig_move_assignment {
+            if let PARMCAssignment::MC(mc2_idx) = final_orig_cand_assignment {
+                let mc1_loc = g.mcs.get(mc1_idx).loc;
+                let mc2_loc = g.mcs.get(mc2_idx).loc;
+                {
+                    g.mcs.get_mut(mc2_idx).loc = mc1_loc;
+                }
+                {
+                    g.mcs.get_mut(mc1_idx).loc = mc2_loc;
+                }
+            } else {
+                unreachable!();
+            }
+        } else {
+            unreachable!();
+        }
     }
 
     PARResult::FailureIterationsExceeded
