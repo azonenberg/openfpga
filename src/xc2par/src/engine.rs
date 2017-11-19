@@ -246,7 +246,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
             // FIXME: Ugly code duplication
             let this_mc = &g2.mcs.get(mc_g_idx);
 
-            if let Some(io_bits) = this_mc.io_bits {
+            if let Some(ref io_bits) = this_mc.io_bits {
                 if let Some(InputGraphIOOEType::PTerm(oe_idx)) = io_bits.oe {
                     // This goes into PTB
                     let ptb_idx = get_ptb(mc_i as u32) as usize;
@@ -260,7 +260,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
                 }
             }
 
-            if let Some(xor_bits) = this_mc.xor_bits {
+            if let Some(ref xor_bits) = this_mc.xor_bits {
                 if let Some(ptc_node_idx) = xor_bits.andterm_input {
                     // This goes into PTC
                     let ptc_idx = get_ptc(mc_i as u32) as usize;
@@ -274,7 +274,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
                 }
             }
 
-            if let Some(reg_bits) = this_mc.reg_bits {
+            if let Some(ref reg_bits) = this_mc.reg_bits {
                 if let Some(ptc_node_idx) = reg_bits.ce_input {
                     // This goes into PTC
                     let ptc_idx = get_ptc(mc_i as u32) as usize;
@@ -287,8 +287,10 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
                     }
 
                     // Extra check for unsatisfiable PTC usage
-                    if this_mc.xor_bits.is_some() && this_mc.xor_bits.unwrap().andterm_input.is_some() {
-                        if !compare_andterms2(g2, ptc_node_idx, this_mc.xor_bits.unwrap().andterm_input.unwrap()) {
+                    if this_mc.xor_bits.is_some() && this_mc.xor_bits.as_ref().unwrap().andterm_input.is_some() {
+                        if !compare_andterms2(g2, ptc_node_idx,
+                            this_mc.xor_bits.as_ref().unwrap().andterm_input.unwrap()) {
+
                             return AndTermAssignmentResult::FailurePTCNeverSatisfiable;
                         }
                     }
@@ -343,8 +345,8 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
         if let PARMCAssignment::MC(mc_g_idx) = mc_assignment[mc_i].0 {
             let this_mc = &g2.mcs.get(mc_g_idx);
 
-            if let Some(xor_bits) = this_mc.xor_bits {
-                for andterm_node_idx in xor_bits.orterm_inputs {
+            if let Some(ref xor_bits) = this_mc.xor_bits {
+                for &andterm_node_idx in &xor_bits.orterm_inputs {
                     let mut idx = None;
                     // FIXME: This code is super inefficient
                     // Is it equal to anything already assigned?
@@ -401,13 +403,13 @@ pub fn try_assign_zia(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacr
     for pt_i in 0..ANDTERMS_PER_FB {
         if pterm_assignment[pt_i].is_some() {
             let andterm_node = g2.pterms.get(pterm_assignment[pt_i].unwrap());
-            for input_net in andterm_node.inputs_true {
+            for &input_net in &andterm_node.inputs_true {
                 if !collected_inputs_set.contains(&input_net) {
                     collected_inputs_set.insert(input_net);
                     collected_inputs_vec.push(input_net);
                 }
             }
-            for input_net in andterm_node.inputs_comp {
+            for &input_net in &andterm_node.inputs_comp {
                 if !collected_inputs_set.contains(&input_net) {
                     collected_inputs_set.insert(input_net);
                     collected_inputs_vec.push(input_net);
@@ -542,8 +544,8 @@ pub fn try_assign_fb(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacro
     let mut failure_scores = Vec::new();
     for mc_i in 0..MCS_PER_FB {
         let old_assign = mc_assignments[fb_i as usize][mc_i].0;
-        if old_assign >= 0 {
-            mc_assignments[fb_i as usize][mc_i].0 = -3;
+        if let PARMCAssignment::MC(old_assign_idx) = old_assign {
+            mc_assignments[fb_i as usize][mc_i].0 = PARMCAssignment::None;
             let mut new_failing_score = 0;
             match try_assign_andterms(g, g2, mcs, &mc_assignments[fb_i as usize]) {
                 AndTermAssignmentResult::Success(andterm_assignment) => {
