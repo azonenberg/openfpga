@@ -161,31 +161,6 @@ pub struct IntermediateGraph {
     pub vss_net: ObjPoolIndex<IntermediateGraphNet>,
 }
 
-#[derive(Debug)]
-pub enum NetlistMacrocell {
-    PinOutput {
-        // Index of the IOBUFE
-        i: ObjPoolIndex<IntermediateGraphNode>,
-    },
-    PinInputUnreg {
-        // Index of the IBUF
-        i: ObjPoolIndex<IntermediateGraphNode>,
-    },
-    PinInputReg {
-        // Index of the IBUF
-        i: ObjPoolIndex<IntermediateGraphNode>,
-    },
-    BuriedComb {
-        // Index of the XOR
-        i: ObjPoolIndex<IntermediateGraphNode>,
-    },
-    BuriedReg {
-        // Index of the register
-        i: ObjPoolIndex<IntermediateGraphNode>,
-        has_comb_fb: bool,
-    }
-}
-
 // BuriedComb is compatible with PinInputUnreg and PinInputReg.
 // BuriedReg is compatible with PinInputUnreg as long as has_comb_fb is false.
 
@@ -650,7 +625,7 @@ impl IntermediateGraph {
         })
     }
 
-    pub fn gather_macrocells(&self) -> Vec<NetlistMacrocell> {
+    fn gather_macrocells(&self) -> Vec<ObjPoolIndex<IntermediateGraphNode>> {
         let mut ret = Vec::new();
         let mut encountered_xors = HashSet::new();
 
@@ -662,7 +637,7 @@ impl IntermediateGraph {
             let node = self.nodes.get(node_idx);
 
             if let IntermediateGraphNodeVariant::IOBuf{input, ..} = node.variant {
-                ret.push(NetlistMacrocell::PinOutput{i: node_idx});
+                ret.push(node_idx);
 
                 if input.is_some() {
                     let input = input.unwrap();
@@ -714,13 +689,10 @@ impl IntermediateGraph {
 
                 if maybe_reg_index.is_none() {
                     // Buried combinatorial
-                    ret.push(NetlistMacrocell::BuriedComb{i: node_idx});
+                    ret.push(node_idx);
                 } else {
                     // Buried register
-                    ret.push(NetlistMacrocell::BuriedReg{
-                        i: maybe_reg_index.unwrap(),
-                        has_comb_fb: self.nets.get(output).sinks.len() > 1
-                    });
+                    ret.push(maybe_reg_index.unwrap());
                 }
             }
         }
@@ -740,7 +712,7 @@ impl IntermediateGraph {
                 }
 
                 if maybe_reg_index.is_some() {
-                    ret.push(NetlistMacrocell::PinInputReg{i: node_idx});
+                    ret.push(node_idx);
                 }
             }
         }
@@ -760,7 +732,7 @@ impl IntermediateGraph {
                 }
 
                 if maybe_reg_index.is_none() {
-                    ret.push(NetlistMacrocell::PinInputUnreg{i: node_idx});
+                    ret.push(node_idx);
                 }
             }
         }
@@ -982,13 +954,7 @@ impl InputGraph {
             };
 
             let newg_idx = mcs.insert(dummy_mc);
-            let oldg_idx = match gathered_mcs[i] {
-                NetlistMacrocell::PinOutput{i} => i,
-                NetlistMacrocell::PinInputUnreg{i} => i,
-                NetlistMacrocell::PinInputReg{i} => i,
-                NetlistMacrocell::BuriedComb{i} => i,
-                NetlistMacrocell::BuriedReg{i, ..} => i,
-            };
+            let oldg_idx = gathered_mcs[i];
             mcs_map.insert(oldg_idx, newg_idx);
         }
 
@@ -1528,14 +1494,7 @@ impl InputGraph {
                 consumed_inputs: &mut consumed_inputs,
             };
             for oldg_mc in gathered_mcs {
-                let oldg_idx = match oldg_mc {
-                    NetlistMacrocell::PinOutput{i} => i,
-                    NetlistMacrocell::PinInputUnreg{i} => i,
-                    NetlistMacrocell::PinInputReg{i} => i,
-                    NetlistMacrocell::BuriedComb{i} => i,
-                    NetlistMacrocell::BuriedReg{i, ..} => i,
-                };
-                process_one_intermed_node(&mut s, oldg_idx)?;
+                process_one_intermed_node(&mut s, oldg_mc)?;
             }
         }
 

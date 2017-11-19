@@ -29,6 +29,32 @@ use self::xc2bit::*;
 use *;
 use objpool::*;
 
+// XXX DELETE THIS
+#[derive(Debug)]
+pub enum NetlistMacrocell {
+    PinOutput {
+        // Index of the IOBUFE
+        i: ObjPoolIndex<IntermediateGraphNode>,
+    },
+    PinInputUnreg {
+        // Index of the IBUF
+        i: ObjPoolIndex<IntermediateGraphNode>,
+    },
+    PinInputReg {
+        // Index of the IBUF
+        i: ObjPoolIndex<IntermediateGraphNode>,
+    },
+    BuriedComb {
+        // Index of the XOR
+        i: ObjPoolIndex<IntermediateGraphNode>,
+    },
+    BuriedReg {
+        // Index of the register
+        i: ObjPoolIndex<IntermediateGraphNode>,
+        has_comb_fb: bool,
+    }
+}
+
 pub fn produce_bitstream(device_type: XC2Device, g: &IntermediateGraph, mcs: &[NetlistMacrocell],
     placements: &[([(isize, isize); MCS_PER_FB], [Option<ObjPoolIndex<IntermediateGraphNode>>; ANDTERMS_PER_FB],
         [XC2ZIAInput; INPUTS_PER_ANDTERM])]) -> XC2Bitstream {
