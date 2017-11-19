@@ -95,6 +95,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                 // FIXME: This code is duplicated
                 let mc = g.mcs.get(mc_idx);
 
+                assert!(mc.reg_bits.is_none() && mc.xor_bits.is_none());
                 if let Some(ref io_bits) = mc.io_bits {
                     assert!(io_bits.input.is_none() && io_bits.oe.is_none());
 
@@ -142,7 +143,19 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                         iob_bits[i_iob as usize].obuf_mode = match io_bits.oe {
                             None => XC2IOBOBufMode::PushPull,
                             Some(InputGraphIOOEType::OpenDrain) => XC2IOBOBufMode::OpenDrain,
-                            Some(InputGraphIOOEType::PTerm(pterm)) => unimplemented!(),
+                            Some(InputGraphIOOEType::PTerm(pterm)) => {
+                                let pterm = g.pterms.get(pterm);
+                                let pt_loc = pterm.loc.unwrap();
+                                assert!(pt_loc.fb == mc.loc.unwrap().fb);
+
+                                if pt_loc.i == CTE {
+                                    XC2IOBOBufMode::TriStateCTE
+                                } else if pt_loc.i == get_ptb(mc_i as u32) {
+                                    XC2IOBOBufMode::TriStatePTB
+                                } else {
+                                    panic!("Internal error - not CTE or PTB");
+                                }
+                            },
                             Some(InputGraphIOOEType::GTS(gts)) => {
                                 let gts = g.bufg_gts.get(gts);
                                 let which = gts.loc.unwrap().i;
@@ -151,7 +164,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                                     1 => XC2IOBOBufMode::TriStateGTS1,
                                     2 => XC2IOBOBufMode::TriStateGTS2,
                                     3 => XC2IOBOBufMode::TriStateGTS3,
-                                    _ => unreachable!(),
+                                    _ => panic!("Internal error - bad GTS"),
                                 }
                             },
                         }
@@ -211,14 +224,38 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                     fb_bits[fb_i].mcs[mc_i].s_src = match reg_bits.set_input {
                         None => XC2MCRegSetSrc::Disabled,
                         Some(InputGraphRegRSType::GSR(_)) => XC2MCRegSetSrc::GSR,
-                        Some(InputGraphRegRSType::PTerm(pterm)) => unimplemented!(),
+                        Some(InputGraphRegRSType::PTerm(pterm)) => {
+                            let pterm = g.pterms.get(pterm);
+                            let pt_loc = pterm.loc.unwrap();
+                            assert!(pt_loc.fb == mc.loc.unwrap().fb);
+
+                            if pt_loc.i == CTS {
+                                XC2MCRegSetSrc::CTS
+                            } else if pt_loc.i == get_pta(mc_i as u32) {
+                                XC2MCRegSetSrc::PTA
+                            } else {
+                                panic!("Internal error - not CTS or PTA");
+                            }
+                        },
                     };
 
                     // Reset
                     fb_bits[fb_i].mcs[mc_i].r_src = match reg_bits.reset_input {
                         None => XC2MCRegResetSrc::Disabled,
                         Some(InputGraphRegRSType::GSR(_)) => XC2MCRegResetSrc::GSR,
-                        Some(InputGraphRegRSType::PTerm(pterm)) => unimplemented!(),
+                        Some(InputGraphRegRSType::PTerm(pterm)) => {
+                            let pterm = g.pterms.get(pterm);
+                            let pt_loc = pterm.loc.unwrap();
+                            assert!(pt_loc.fb == mc.loc.unwrap().fb);
+
+                            if pt_loc.i == CTR {
+                                XC2MCRegResetSrc::CTR
+                            } else if pt_loc.i == get_pta(mc_i as u32) {
+                                XC2MCRegResetSrc::PTA
+                            } else {
+                                panic!("Internal error - not CTR or PTA");
+                            }
+                        },
                     };
 
                     // D/T input
@@ -226,7 +263,19 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
 
                     // Clock input
                     fb_bits[fb_i].mcs[mc_i].clk_src = match reg_bits.clk_input {
-                        InputGraphRegClockType::PTerm(pterm) => unimplemented!(),
+                        InputGraphRegClockType::PTerm(pterm) => {
+                            let pterm = g.pterms.get(pterm);
+                            let pt_loc = pterm.loc.unwrap();
+                            assert!(pt_loc.fb == mc.loc.unwrap().fb);
+
+                            if pt_loc.i == CTC {
+                                XC2MCRegClkSrc::CTC
+                            } else if pt_loc.i == get_ptc(mc_i as u32) {
+                                XC2MCRegClkSrc::PTC
+                            } else {
+                                panic!("Internal error - not CTC or PTC");
+                            }
+                        },
                         InputGraphRegClockType::GCK(gck) => {
                             let gck = g.bufg_clks.get(gck);
                             let which = gck.loc.unwrap().i;
@@ -234,7 +283,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                                 0 => XC2MCRegClkSrc::GCK0,
                                 1 => XC2MCRegClkSrc::GCK1,
                                 2 => XC2MCRegClkSrc::GCK2,
-                                _ => unreachable!(),
+                                _ => panic!("Internal error - bad GCK"),
                             }
                         },
                     }
