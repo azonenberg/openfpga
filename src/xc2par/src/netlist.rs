@@ -1531,6 +1531,10 @@ impl InputGraph {
             if x.xor_feedback_used && x.xor_bits.is_none() {
                 return Err("Used XOR input but there is no XOR data?");
             }
+
+            if x.io_feedback_used && x.reg_feedback_used && x.xor_feedback_used {
+                return Err("Too many feedback paths used");
+            }
         }
 
         Ok(())

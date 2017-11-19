@@ -132,6 +132,10 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                     if mc.io_feedback_used {
                         // We need to set the ZIA mode to use the IO pad.
                         iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
+                    } else if mc.xor_feedback_used && mc.reg_feedback_used {
+                        // If both of these are used, then the register _has_ to come from here. Otherwise use the
+                        // "normal" one.
+                        iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::REG;
                     }
                     if let Some(input) = io_bits.input {
                         iob_bits[i_iob as usize].obuf_uses_ff = input == InputGraphIOInputType::Reg;
@@ -141,6 +145,40 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                             Some(InputGraphIOOEType::PTerm(pterm)) => unimplemented!(),
                             Some(InputGraphIOOEType::GTS(gts)) => unimplemented!(),
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    // OR/XOR gates
+    for fb_i in 0..placements.len() {
+        for mc_i in 0..MCS_PER_FB {
+            if let PARMCAssignment::MC(mc_idx) = placements[fb_i].0[mc_i].0 {
+                let mc = g.mcs.get(mc_idx);
+
+                if let Some(ref xor_bits) = mc.xor_bits {
+                    // XOR
+                    fb_bits[fb_i].mcs[mc_i].xor_mode = match (xor_bits.invert_out, xor_bits.andterm_input) {
+                        (false, None) => XC2MCXorMode::ZERO,
+                        (true, None) => XC2MCXorMode::ONE,
+                        (false, Some(_)) => XC2MCXorMode::PTC,
+                        (true, Some(_)) => XC2MCXorMode::PTCB,
+                    };
+
+                    // OR
+                    for &and_to_or_idx in &xor_bits.orterm_inputs {
+                        let pterm = g.pterms.get(and_to_or_idx);
+                        let pt_loc = pterm.loc.unwrap();
+                        assert!(pt_loc.fb == mc.loc.unwrap().fb);
+                        fb_bits[fb_i].or_terms[mc_i].input[pt_loc.i as usize] = true;
+                    }
+
+                    // Feedback
+                    if mc.xor_feedback_used {
+                        fb_bits[fb_i].mcs[mc_i].fb_mode = XC2MCFeedbackMode::COMB;
+                    } else if mc.reg_feedback_used {
+                        fb_bits[fb_i].mcs[mc_i].fb_mode = XC2MCFeedbackMode::REG;
                     }
                 }
             }
