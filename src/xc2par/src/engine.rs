@@ -42,16 +42,10 @@ pub enum PARMCAssignment {
     Banned,
 }
 
-impl PARMCAssignment {
-    pub fn used(&self) -> bool {
-        match self {
-            &PARMCAssignment::MC(_) => true,
-            _ => false,
-        }
-    }
-}
-
 pub type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
+pub type PARPTermAssignment = [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB];
+pub type PARZIAAssignment = [XC2ZIAInput; INPUTS_PER_ANDTERM];
+pub type PARPTermZIARows = [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB];
 
 // First element of tuple is anything, second element can only be pin input
 pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignment>> {
@@ -224,14 +218,12 @@ fn compare_andterms(g: &InputGraph, a: ObjPoolIndex<InputGraphPTerm>, b: ObjPool
 }
 
 pub enum AndTermAssignmentResult {
-    Success([Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB]),
+    Success(PARPTermAssignment),
     FailurePtermConflict(u32),
     FailurePtermExceeded(u32),
 }
 
-pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, fb_i: u32)
-    -> AndTermAssignmentResult {
-
+pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, fb_i: u32) -> AndTermAssignmentResult {
     let mut ret = [None; ANDTERMS_PER_FB];
 
     // Place all the special product terms
@@ -249,7 +241,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
                     if ret[ptb_idx].is_none() {
                         ret[ptb_idx] = Some(oe_idx);
                     } else {
-                        if !compare_andterms(g, ret[ptb_idx].unwrap(), oe_idx) {
+                        if g.pterms.get(ret[ptb_idx].unwrap()) != g.pterms.get(oe_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -263,7 +255,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
                     if ret[ptc_idx].is_none() {
                         ret[ptc_idx] = Some(ptc_node_idx);
                     } else {
-                        if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
+                        if g.pterms.get(ret[ptc_idx].unwrap()) != g.pterms.get(ptc_node_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -277,7 +269,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
                     if ret[ptc_idx].is_none() {
                         ret[ptc_idx] = Some(ptc_node_idx);
                     } else {
-                        if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
+                        if g.pterms.get(ret[ptc_idx].unwrap()) != g.pterms.get(ptc_node_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -289,7 +281,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
                     if ret[ptc_idx].is_none() {
                         ret[ptc_idx] = Some(clk_node_idx);
                     } else {
-                        if !compare_andterms(g, ret[ptc_idx].unwrap(), clk_node_idx) {
+                        if g.pterms.get(ret[ptc_idx].unwrap()) != g.pterms.get(clk_node_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -301,7 +293,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
                     if ret[pta_idx].is_none() {
                         ret[pta_idx] = Some(set_node_idx);
                     } else {
-                        if !compare_andterms(g, ret[pta_idx].unwrap(), set_node_idx) {
+                        if g.pterms.get(ret[pta_idx].unwrap()) != g.pterms.get(set_node_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -313,7 +305,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
                     if ret[pta_idx].is_none() {
                         ret[pta_idx] = Some(reset_node_idx);
                     } else {
-                        if !compare_andterms(g, ret[pta_idx].unwrap(), reset_node_idx) {
+                        if g.pterms.get(ret[pta_idx].unwrap()) != g.pterms.get(reset_node_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -327,6 +319,14 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
     }
 
     // Finally, place all of the remaining p-terms
+    let mut existing_pterm_map = HashMap::new();
+    for pterm_i in 0..ANDTERMS_PER_FB {
+        if let Some(pterm_idx) = ret[pterm_i] {
+            let pterm_obj = g.pterms.get(pterm_idx);
+            existing_pterm_map.insert(pterm_obj.clone(), pterm_i);
+        }
+    }
+
     let mut unfitted_pterms = 0;
     for mc_i in 0..MCS_PER_FB {
         if let PARMCAssignment::MC(mc_g_idx) = mc_assignment[mc_i].0 {
@@ -334,31 +334,27 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
 
             if let Some(ref xor_bits) = this_mc.xor_bits {
                 for &andterm_node_idx in &xor_bits.orterm_inputs {
-                    let mut idx = None;
-                    // FIXME: This code is super inefficient
-                    // Is it equal to anything already assigned?
-                    for pterm_i in 0..ANDTERMS_PER_FB {
-                        if ret[pterm_i].is_some() && compare_andterms(g, ret[pterm_i].unwrap(), andterm_node_idx) {
-                            idx = Some(pterm_i);
-                            break;
-                        }
-                    }
+                    let this_pterm_obj = g.pterms.get(andterm_node_idx);
 
-                    if idx.is_none() {
+                    if let Some(_) = existing_pterm_map.get(&this_pterm_obj) {
+                        // It is equal to this existing term, so we don't have to do anything
+                    } else {
                         // Need to find an unused spot
+                        let mut idx = None;
                         for pterm_i in 0..ANDTERMS_PER_FB {
                             if ret[pterm_i].is_none() {
                                 idx = Some(pterm_i);
                                 break;
                             }
                         }
-                    }
 
-                    if idx.is_none() {
-                        unfitted_pterms += 1;
-                    } else {
-                        // Put it here
-                        ret[idx.unwrap()] = Some(andterm_node_idx);
+                        if idx.is_none() {
+                            unfitted_pterms += 1;
+                        } else {
+                            // Put it here
+                            ret[idx.unwrap()] = Some(andterm_node_idx);
+                            existing_pterm_map.insert(this_pterm_obj.clone(), idx.unwrap());
+                        }
                     }
                 }
             }
@@ -370,9 +366,9 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
     }
 
     // Update the "reverse" pointers
-    for mc_i in 0..MCS_PER_FB {
-        if let Some(pterm_idx) = ret[mc_i] {
-            let pterm = g.pterms.get_mut(pterm_idx);
+    for pterm in g.pterms.iter_mut() {
+        // Only do this update if this lookup succeeds. This lookup will fail for terms that are in other FBs
+        if let Some(&mc_i) = existing_pterm_map.get(pterm) {
             pterm.loc = Some(AssignedLocationInner{
                 fb: fb_i,
                 i: mc_i as u32,
@@ -384,15 +380,12 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
 }
 
 pub enum ZIAAssignmentResult {
-    Success(([XC2ZIAInput; INPUTS_PER_ANDTERM], [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB])),
+    Success((PARZIAAssignment, PARPTermZIARows)),
     FailureTooManyInputs(u32),
     FailureUnroutable(u32),
 }
 
-pub fn try_assign_zia(g: &InputGraph,
-    pterm_assignment: &[Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB])
-    -> ZIAAssignmentResult {
-
+pub fn try_assign_zia(g: &InputGraph, pterm_assignment: &PARPTermAssignment) -> ZIAAssignmentResult {
     let mut ret_zia = [XC2ZIAInput::One; INPUTS_PER_ANDTERM];
     let mut input_to_row_map = HashMap::new();
     let mut ret_pterms = [(vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
@@ -481,10 +474,10 @@ pub fn try_assign_zia(g: &InputGraph,
 
     // Actually do the search to assign ZIA rows
     let mut most_routed = 0;
-    fn backtrack_inner(most_routed: &mut u32, ret: &mut [XC2ZIAInput; INPUTS_PER_ANDTERM],
-        candidate_sites: &[((InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>), XC2ZIAInput, Vec<usize>)],
+    fn backtrack_inner(most_routed: &mut u32, ret: &mut PARZIAAssignment,
+        candidate_sites: &[(InputGraphPTermInput, XC2ZIAInput, Vec<usize>)],
         working_on_idx: usize,
-        input_to_row_map: &mut HashMap<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>), u32>) -> bool {
+        input_to_row_map: &mut HashMap<InputGraphPTermInput, u32>) -> bool {
 
         if working_on_idx == candidate_sites.len() {
             // Complete assignment, we are done
@@ -528,7 +521,7 @@ pub fn try_assign_zia(g: &InputGraph,
 }
 
 pub enum FBAssignmentResult {
-    Success(([Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB], [XC2ZIAInput; INPUTS_PER_ANDTERM], [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB])),
+    Success((PARPTermAssignment, PARZIAAssignment, PARPTermZIARows)),
     // macrocell assignment mc, score
     Failure(Vec<(u32, u32)>),
 }
@@ -665,9 +658,9 @@ pub fn do_par_sanity_check(g: &InputGraph) -> PARSanityResult {
 
 pub enum PARResult {
     Success(Vec<(PARFBAssignment,
-        [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB],
-        [XC2ZIAInput; INPUTS_PER_ANDTERM],
-        [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB])>),
+        PARPTermAssignment,
+        PARZIAAssignment,
+        PARPTermZIARows)>),
     FailureSanity(PARSanityResult),
     FailureIterationsExceeded,
 }

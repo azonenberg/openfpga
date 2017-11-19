@@ -56,8 +56,7 @@ pub enum NetlistMacrocell {
 }
 
 pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
-    placements: &[(PARFBAssignment, [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB],
-        [XC2ZIAInput; INPUTS_PER_ANDTERM], [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB])]) -> XC2Bitstream {
+    placements: &[(PARFBAssignment, PARPTermAssignment, PARZIAAssignment, PARPTermZIARows)]) -> XC2Bitstream {
 
     // FIXME: Don't hardcode
     let mut fb_bits = [XC2BitstreamFB::default(); 2];

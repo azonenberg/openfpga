@@ -839,13 +839,15 @@ pub enum InputGraphPTermInputType {
     Pin,
 }
 
+pub type InputGraphPTermInput = (InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>);
+
 #[derive(Clone, Debug)]
 pub struct InputGraphPTerm {
     pub loc: AssignedLocation,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
-    pub inputs_true: Vec<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)>,
-    pub inputs_comp: Vec<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)>,
+    pub inputs_true: Vec<InputGraphPTermInput>,
+    pub inputs_comp: Vec<InputGraphPTermInput>,
 }
 
 #[derive(Clone, Debug)]
