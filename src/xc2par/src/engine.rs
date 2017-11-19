@@ -85,7 +85,6 @@ pub fn greedy_initial_placement(g: &InputGraph) -> Vec<[(PARMCAssignment, PARMCA
 
     // Do the actual greedy assignment
     for i_ in g.mcs.iter_idx() {
-        let i = i_.get_raw_i();
         let mc = g.mcs.get(i_);
         match mc.get_type() {
             InputGraphMacrocellType::PinOutput => {
@@ -163,64 +162,17 @@ pub fn greedy_initial_placement(g: &InputGraph) -> Vec<[(PARMCAssignment, PARMCA
     ret
 }
 
-fn compare_andterms(g: &IntermediateGraph, a: ObjPoolIndex<IntermediateGraphNode>, b: ObjPoolIndex<IntermediateGraphNode>) -> bool {
-    let a_ = g.nodes.get(a);
-    let b_ = g.nodes.get(b);
-    if let IntermediateGraphNodeVariant::AndTerm{
-        inputs_true: ref a_inp_true, inputs_comp: ref a_inp_comp, ..} = a_.variant {
-
-        if let IntermediateGraphNodeVariant::AndTerm{
-            inputs_true: ref b_inp_true, inputs_comp: ref b_inp_comp, ..} = b_.variant {
-
-            let mut a_inp_true_h: HashSet<ObjPoolIndex<IntermediateGraphNode>> = HashSet::new();
-            let mut a_inp_comp_h: HashSet<ObjPoolIndex<IntermediateGraphNode>> = HashSet::new();
-            let mut b_inp_true_h: HashSet<ObjPoolIndex<IntermediateGraphNode>> = HashSet::new();
-            let mut b_inp_comp_h: HashSet<ObjPoolIndex<IntermediateGraphNode>> = HashSet::new();
-
-            for &x in a_inp_true {
-                let inp_net = g.nets.get(x);
-                let src_node_idx = inp_net.source.unwrap().0;
-                a_inp_true_h.insert(src_node_idx);
-            }
-
-            for &x in a_inp_comp {
-                let inp_net = g.nets.get(x);
-                let src_node_idx = inp_net.source.unwrap().0;
-                a_inp_comp_h.insert(src_node_idx);
-            }
-
-            for &x in b_inp_true {
-                let inp_net = g.nets.get(x);
-                let src_node_idx = inp_net.source.unwrap().0;
-                b_inp_true_h.insert(src_node_idx);
-            }
-
-            for &x in b_inp_comp {
-                let inp_net = g.nets.get(x);
-                let src_node_idx = inp_net.source.unwrap().0;
-                b_inp_comp_h.insert(src_node_idx);
-            }
-
-            a_inp_true_h == b_inp_true_h && a_inp_comp_h == b_inp_comp_h
-        } else {
-            panic!("not an and term");
-        }
-    } else {
-        panic!("not an and term");
-    }
-}
-
-fn compare_andterms2(g: &InputGraph, a: ObjPoolIndex<InputGraphPTerm>, b: ObjPoolIndex<InputGraphPTerm>) -> bool {
+fn compare_andterms(g: &InputGraph, a: ObjPoolIndex<InputGraphPTerm>, b: ObjPoolIndex<InputGraphPTerm>) -> bool {
     let a_ = g.pterms.get(a);
     let b_ = g.pterms.get(b);
 
-    let mut a_inp_true_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+    let a_inp_true_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
         HashSet::from_iter(a_.inputs_true.iter().cloned());
-    let mut a_inp_comp_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+    let a_inp_comp_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
         HashSet::from_iter(a_.inputs_comp.iter().cloned());
-    let mut b_inp_true_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+    let b_inp_true_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
         HashSet::from_iter(b_.inputs_true.iter().cloned());
-    let mut b_inp_comp_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+    let b_inp_comp_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
         HashSet::from_iter(b_.inputs_comp.iter().cloned());
 
     a_inp_true_h == b_inp_true_h && a_inp_comp_h == b_inp_comp_h
@@ -233,7 +185,7 @@ pub enum AndTermAssignmentResult {
     FailurePtermExceeded(u32),
 }
 
-pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacrocell], mc_assignment: &[(PARMCAssignment, PARMCAssignment); MCS_PER_FB])
+pub fn try_assign_andterms(g: &InputGraph, mc_assignment: &[(PARMCAssignment, PARMCAssignment); MCS_PER_FB])
     -> AndTermAssignmentResult {
 
     let mut ret = [None; ANDTERMS_PER_FB];
@@ -244,7 +196,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
     for mc_i in 0..MCS_PER_FB {
         if let PARMCAssignment::MC(mc_g_idx) = mc_assignment[mc_i].0 {
             // FIXME: Ugly code duplication
-            let this_mc = &g2.mcs.get(mc_g_idx);
+            let this_mc = &g.mcs.get(mc_g_idx);
 
             if let Some(ref io_bits) = this_mc.io_bits {
                 if let Some(InputGraphIOOEType::PTerm(oe_idx)) = io_bits.oe {
@@ -253,7 +205,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
                     if ret[ptb_idx].is_none() {
                         ret[ptb_idx] = Some(oe_idx);
                     } else {
-                        if !compare_andterms2(g2, ret[ptb_idx].unwrap(), oe_idx) {
+                        if !compare_andterms(g, ret[ptb_idx].unwrap(), oe_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -267,7 +219,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
                     if ret[ptc_idx].is_none() {
                         ret[ptc_idx] = Some(ptc_node_idx);
                     } else {
-                        if !compare_andterms2(g2, ret[ptc_idx].unwrap(), ptc_node_idx) {
+                        if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -281,14 +233,14 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
                     if ret[ptc_idx].is_none() {
                         ret[ptc_idx] = Some(ptc_node_idx);
                     } else {
-                        if !compare_andterms2(g2, ret[ptc_idx].unwrap(), ptc_node_idx) {
+                        if !compare_andterms(g, ret[ptc_idx].unwrap(), ptc_node_idx) {
                             pterm_conflicts += 1;
                         }
                     }
 
                     // Extra check for unsatisfiable PTC usage
                     if this_mc.xor_bits.is_some() && this_mc.xor_bits.as_ref().unwrap().andterm_input.is_some() {
-                        if !compare_andterms2(g2, ptc_node_idx,
+                        if !compare_andterms(g, ptc_node_idx,
                             this_mc.xor_bits.as_ref().unwrap().andterm_input.unwrap()) {
 
                             return AndTermAssignmentResult::FailurePTCNeverSatisfiable;
@@ -302,7 +254,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
                     if ret[ptc_idx].is_none() {
                         ret[ptc_idx] = Some(clk_node_idx);
                     } else {
-                        if !compare_andterms2(g2, ret[ptc_idx].unwrap(), clk_node_idx) {
+                        if !compare_andterms(g, ret[ptc_idx].unwrap(), clk_node_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -314,7 +266,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
                     if ret[pta_idx].is_none() {
                         ret[pta_idx] = Some(set_node_idx);
                     } else {
-                        if !compare_andterms2(g2, ret[pta_idx].unwrap(), set_node_idx) {
+                        if !compare_andterms(g, ret[pta_idx].unwrap(), set_node_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -326,7 +278,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
                     if ret[pta_idx].is_none() {
                         ret[pta_idx] = Some(reset_node_idx);
                     } else {
-                        if !compare_andterms2(g2, ret[pta_idx].unwrap(), reset_node_idx) {
+                        if !compare_andterms(g, ret[pta_idx].unwrap(), reset_node_idx) {
                             pterm_conflicts += 1;
                         }
                     }
@@ -343,7 +295,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
     let mut unfitted_pterms = 0;
     for mc_i in 0..MCS_PER_FB {
         if let PARMCAssignment::MC(mc_g_idx) = mc_assignment[mc_i].0 {
-            let this_mc = &g2.mcs.get(mc_g_idx);
+            let this_mc = &g.mcs.get(mc_g_idx);
 
             if let Some(ref xor_bits) = this_mc.xor_bits {
                 for &andterm_node_idx in &xor_bits.orterm_inputs {
@@ -351,7 +303,7 @@ pub fn try_assign_andterms(g: &IntermediateGraph, g2: &InputGraph, mcs: &[Netlis
                     // FIXME: This code is super inefficient
                     // Is it equal to anything already assigned?
                     for pterm_i in 0..ANDTERMS_PER_FB {
-                        if ret[pterm_i].is_some() && compare_andterms2(g2, ret[pterm_i].unwrap(), andterm_node_idx) {
+                        if ret[pterm_i].is_some() && compare_andterms(g, ret[pterm_i].unwrap(), andterm_node_idx) {
                             idx = Some(pterm_i);
                             break;
                         }
@@ -391,7 +343,7 @@ pub enum ZIAAssignmentResult {
     FailureUnroutable(u32),
 }
 
-pub fn try_assign_zia(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacrocell], mc_assignments: &[[(PARMCAssignment, PARMCAssignment); MCS_PER_FB]],
+pub fn try_assign_zia(g: &InputGraph,
     pterm_assignment: &[Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB])
     -> ZIAAssignmentResult {
 
@@ -402,7 +354,7 @@ pub fn try_assign_zia(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacr
     let mut collected_inputs_set = HashSet::new();
     for pt_i in 0..ANDTERMS_PER_FB {
         if pterm_assignment[pt_i].is_some() {
-            let andterm_node = g2.pterms.get(pterm_assignment[pt_i].unwrap());
+            let andterm_node = g.pterms.get(pterm_assignment[pt_i].unwrap());
             for &input_net in &andterm_node.inputs_true {
                 if !collected_inputs_set.contains(&input_net) {
                     collected_inputs_set.insert(input_net);
@@ -425,7 +377,7 @@ pub fn try_assign_zia(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacr
 
     // Find candidate sites
     let candidate_sites = collected_inputs_vec.iter().map(|input| {
-        let input_obj = g2.mcs.get(input.1);
+        let input_obj = g.mcs.get(input.1);
         let fb = input_obj.loc.unwrap().fb;
         let mc = input_obj.loc.unwrap().i;
         let need_to_use_ibuf_zia_path = input.0 == InputGraphPTermInputType::Reg && input_obj.xor_feedback_used;
@@ -507,18 +459,18 @@ pub enum FBAssignmentResult {
 }
 
 // FIXME: mutable assignments is a hack
-pub fn try_assign_fb(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacrocell], mc_assignments: &mut [[(PARMCAssignment, PARMCAssignment); MCS_PER_FB]],
+pub fn try_assign_fb(g: &InputGraph, mc_assignments: &mut [[(PARMCAssignment, PARMCAssignment); MCS_PER_FB]],
     fb_i: u32) -> FBAssignmentResult {
 
     let mut base_failing_score = 0;
     // TODO: Weight factors?
 
     // Can we even assign p-terms?
-    let pterm_assign_result = try_assign_andterms(g, g2, mcs, &mc_assignments[fb_i as usize]);
+    let pterm_assign_result = try_assign_andterms(g, &mc_assignments[fb_i as usize]);
     match pterm_assign_result {
         AndTermAssignmentResult::Success(andterm_assignment) => {
             // Can we assign the ZIA?
-            let zia_assign_result = try_assign_zia(g, g2, mcs, mc_assignments, &andterm_assignment);
+            let zia_assign_result = try_assign_zia(g, &andterm_assignment);
             match zia_assign_result {
                 ZIAAssignmentResult::Success(zia_assignment) =>
                     return FBAssignmentResult::Success((andterm_assignment, zia_assignment)),
@@ -547,10 +499,10 @@ pub fn try_assign_fb(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacro
         if let PARMCAssignment::MC(old_assign_idx) = old_assign {
             mc_assignments[fb_i as usize][mc_i].0 = PARMCAssignment::None;
             let mut new_failing_score = 0;
-            match try_assign_andterms(g, g2, mcs, &mc_assignments[fb_i as usize]) {
+            match try_assign_andterms(g, &mc_assignments[fb_i as usize]) {
                 AndTermAssignmentResult::Success(andterm_assignment) => {
                     // Can we assign the ZIA?
-                    match try_assign_zia(g, g2, mcs, mc_assignments, &andterm_assignment) {
+                    match try_assign_zia(g, &andterm_assignment) {
                         ZIAAssignmentResult::Success(..) => {
                             new_failing_score = 0;
                         },
@@ -589,20 +541,17 @@ pub fn try_assign_fb(g: &IntermediateGraph, g2: &InputGraph, mcs: &[NetlistMacro
 }
 
 pub enum PARResult {
-    Success((Vec<([(PARMCAssignment, PARMCAssignment); MCS_PER_FB],
+    Success(Vec<([(PARMCAssignment, PARMCAssignment); MCS_PER_FB],
         [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB],
-        [XC2ZIAInput; INPUTS_PER_ANDTERM])>, Vec<NetlistMacrocell>)),
+        [XC2ZIAInput; INPUTS_PER_ANDTERM])>),
     FailurePTCNeverSatisfiable,
     FailureIterationsExceeded,
 }
 
-pub fn do_par(g: &IntermediateGraph, g2: &InputGraph) -> PARResult {
+pub fn do_par(g: &InputGraph) -> PARResult {
     let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
 
-    let ngraph_collected_mc = g.gather_macrocells();
-    println!("{:?}", ngraph_collected_mc);
-
-    let mut macrocell_placement = greedy_initial_placement(g2);
+    let mut macrocell_placement = greedy_initial_placement(g);
     println!("{:?}", macrocell_placement);
 
     let mut par_results_per_fb = Vec::with_capacity(2);
@@ -614,7 +563,7 @@ pub fn do_par(g: &IntermediateGraph, g2: &InputGraph) -> PARResult {
         let mut bad_candidates = Vec::new();
         let mut bad_score_sum = 0;
         for fb_i in 0..2 {
-            let fb_assign_result = try_assign_fb(g, g2, &ngraph_collected_mc, &mut macrocell_placement, fb_i as u32);
+            let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32);
             match fb_assign_result {
                 FBAssignmentResult::Success((pterm, zia)) => {
                     par_results_per_fb[fb_i] = Some((pterm, zia));
@@ -637,7 +586,7 @@ pub fn do_par(g: &IntermediateGraph, g2: &InputGraph) -> PARResult {
                 ret.push((macrocell_placement[i], par_results_per_fb[i].unwrap().0, par_results_per_fb[i].unwrap().1));
             }
 
-            return PARResult::Success((ret, ngraph_collected_mc));
+            return PARResult::Success(ret);
         }
 
         // Here, we need to swap some stuff around
@@ -662,10 +611,10 @@ pub fn do_par(g: &IntermediateGraph, g2: &InputGraph) -> PARResult {
                 let mut new_badness = 0;
                 // Does this violate a pairing constraint?
                 if let PARMCAssignment::MC(mc_cand_idx) = macrocell_placement[cand_fb_i][cand_mc_i].1 {
-                    let mc_cand = g2.mcs.get(mc_cand_idx);
+                    let mc_cand = g.mcs.get(mc_cand_idx);
                     let mc_move =
                         if let PARMCAssignment::MC(x) = macrocell_placement[move_fb as usize][move_mc as usize].0 {
-                            g2.mcs.get(x)
+                            g.mcs.get(x)
                         } else {
                             unreachable!();
                         };
@@ -702,7 +651,7 @@ pub fn do_par(g: &IntermediateGraph, g2: &InputGraph) -> PARResult {
                 macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
 
                 // Now score
-                match try_assign_fb(g, g2, &ngraph_collected_mc, &mut macrocell_placement, cand_fb_i as u32) {
+                match try_assign_fb(g, &mut macrocell_placement, cand_fb_i as u32) {
                     FBAssignmentResult::Success(..) => {
                         // Do nothing, don't need to change badness (will be 0 if was 0)
                     },

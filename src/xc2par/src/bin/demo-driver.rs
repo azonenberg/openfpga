@@ -64,12 +64,12 @@ fn main() {
     // TODO
     let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
 
-    let par_result = do_par(&ngraph_rs, &input_graph);
-    if let PARResult::Success((x, mcs)) = par_result {
+    let par_result = do_par(&input_graph);
+    if let PARResult::Success(x) = par_result {
         // Get a bitstream result
-        let bitstream = produce_bitstream(device_type, &ngraph_rs, &mcs, &x);
+        //let bitstream = produce_bitstream(device_type, &ngraph_rs, &mcs, &x);
         println!("********************************************************************************");
-        bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
+        //bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
     } else {
         panic!("par failed!")
     }
