@@ -88,112 +88,64 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
         }
     }
 
-    // // Input pins
-    // for fb_i in 0..placements.len() {
-    //     for mc_i in 0..MCS_PER_FB {
-    //         let i_iob = fb_mc_num_to_iob_num(device_type, fb_i as u32, mc_i as u32).unwrap();
-    //         let gathered_mc_idx = placements[fb_i].0[mc_i].1;
-    //         if gathered_mc_idx >= 0 {
-    //             match mcs[gathered_mc_idx as usize] {
-    //                 NetlistMacrocell::PinInputUnreg{i} => {
-    //                     let ibuf_node = g.nodes.get(i);
-    //                     if let IntermediateGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, ..} = ibuf_node.variant {
-    //                         iob_bits[i_iob as usize].schmitt_trigger = schmitt_trigger;
-    //                         iob_bits[i_iob as usize].termination_enabled = termination_enabled;
+    // Input pins
+    for fb_i in 0..placements.len() {
+        for mc_i in 0..MCS_PER_FB {
+            if let PARMCAssignment::MC(mc_idx) = placements[fb_i].0[mc_i].1 {
+                // FIXME: This code is duplicated
+                let mc = g.mcs.get(mc_idx);
 
-    //                         // We need to set the ZIA mode to use the IO pad.
-    //                         iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
-    //                     } else {
-    //                         panic!("mismatched node type");
-    //                     }
-    //                 },
-    //                 NetlistMacrocell::PinInputReg{i} => {
-    //                     let ibuf_node = g.nodes.get(i);
-    //                     if let IntermediateGraphNodeVariant::InBuf{schmitt_trigger, termination_enabled, output, ..} = ibuf_node.variant {
-    //                         iob_bits[i_iob as usize].schmitt_trigger = schmitt_trigger;
-    //                         iob_bits[i_iob as usize].termination_enabled = termination_enabled;
+                if let Some(ref io_bits) = mc.io_bits {
+                    assert!(io_bits.input.is_none() && io_bits.oe.is_none());
 
-    //                         // We need to set the ZIA mode to use the IO pad.
-    //                         iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
+                    if true && fb_i == 2 && mc_i == 0 {
+                        // Special input-only pin
+                        extra_inpin.schmitt_trigger = io_bits.schmitt_trigger;
+                        extra_inpin.termination_enabled = io_bits.termination_enabled;
+                    } else {
+                        let i_iob = fb_mc_num_to_iob_num(device_type, fb_i as u32, mc_i as u32).unwrap();
 
-    //                         let reg_node = g.nodes.get(g.nets.get(output).source.unwrap().0);
-    //                         if let IntermediateGraphNodeVariant::Reg{mode, clkinv, clkddr, init_state, set_input, reset_input,
-    //                             dt_input, clk_input, ..} = reg_node.variant {
+                        iob_bits[i_iob as usize].schmitt_trigger = io_bits.schmitt_trigger;
+                        iob_bits[i_iob as usize].termination_enabled = io_bits.termination_enabled;
+                        if mc.io_feedback_used {
+                            // We need to set the ZIA mode to use the IO pad.
+                            iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-    //                             // TODO
+    // Output and buried pins
+    for fb_i in 0..placements.len() {
+        for mc_i in 0..MCS_PER_FB {
+            if let PARMCAssignment::MC(mc_idx) = placements[fb_i].0[mc_i].0 {
+                let mc = g.mcs.get(mc_idx);
 
-    //                         } else {
-    //                             panic!("mismatched node type");
-    //                         }
-    //                     } else {
-    //                         panic!("mismatched node type");
-    //                     }
-    //                 },
-    //                 _ => unreachable!(),
-    //             }
-    //         }
-    //     }
-    // }
+                if let Some(ref io_bits) = mc.io_bits {
+                    let i_iob = fb_mc_num_to_iob_num(device_type, fb_i as u32, mc_i as u32).unwrap();
 
-    // // Output and buried pins
-    // for fb_i in 0..placements.len() {
-    //     for mc_i in 0..MCS_PER_FB {
-    //         let gathered_mc_idx = placements[fb_i].0[mc_i].0;
-    //         if gathered_mc_idx >= 0 {
-    //             match mcs[gathered_mc_idx as usize] {
-    //                 NetlistMacrocell::PinOutput{i} => {
-    //                     let iobufe = g.nodes.get(i);
-    //                     let i_iob = fb_mc_num_to_iob_num(device_type, fb_i as u32, mc_i as u32).unwrap();
-    //                     if let IntermediateGraphNodeVariant::IOBuf{oe, input, output,
-    //                             schmitt_trigger, termination_enabled, slew_is_fast, ..} = iobufe.variant {
-
-    //                         iob_bits[i_iob as usize].schmitt_trigger = schmitt_trigger;
-    //                         iob_bits[i_iob as usize].termination_enabled = termination_enabled;
-    //                         iob_bits[i_iob as usize].slew_is_fast = slew_is_fast;
-
-    //                         if output.is_some() {
-    //                             // If the input side of the IOB is being used, we need to set the ZIA mode to use the IO pad.
-    //                             // The structure of the device graph should prevent any conflicts.
-    //                             iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
-    //                         }
-
-    //                         if input.is_some() {
-    //                             // The output side of the IOB is being used.
-
-    //                             // For now, assume it's push-pull and override it later.
-    //                             iob_bits[i_iob as usize].obuf_mode = XC2IOBOBufMode::PushPull;
-
-    //                             // What is feeding the output?
-    //                             if input.unwrap() != g.vss_net {
-    //                                 let input_src = g.nodes.get(g.nets.get(input.unwrap()).source.unwrap().0);
-    //                                 if let IntermediateGraphNodeVariant::Xor{..} = input_src.variant {
-    //                                     iob_bits[i_iob as usize].obuf_uses_ff = false;
-    //                                 } else if let IntermediateGraphNodeVariant::Reg{..} = input_src.variant {
-    //                                     iob_bits[i_iob as usize].obuf_uses_ff = true;
-    //                                 } else {
-    //                                     panic!("mismatched graph node types");
-    //                                 }
-    //                             }
-    //                         }
-
-    //                         if oe.is_some() {
-    //                             unimplemented!();
-    //                         }
-    //                     } else {
-    //                         panic!("mismatched graph node types");
-    //                     }
-    //                 },
-    //                 NetlistMacrocell::BuriedComb{i} => {
-    //                     unimplemented!();
-    //                 },
-    //                 NetlistMacrocell::BuriedReg{i, ..} => {
-    //                     unimplemented!();
-    //                 }
-    //                 _ => unreachable!(),
-    //             }
-    //         }
-    //     }
-    // }
+                    iob_bits[i_iob as usize].schmitt_trigger = io_bits.schmitt_trigger;
+                    iob_bits[i_iob as usize].termination_enabled = io_bits.termination_enabled;
+                    iob_bits[i_iob as usize].slew_is_fast = io_bits.slew_is_fast;
+                    if mc.io_feedback_used {
+                        // We need to set the ZIA mode to use the IO pad.
+                        iob_bits[i_iob as usize].zia_mode = XC2IOBZIAMode::PAD;
+                    }
+                    if let Some(input) = io_bits.input {
+                        iob_bits[i_iob as usize].obuf_uses_ff = input == InputGraphIOInputType::Reg;
+                        iob_bits[i_iob as usize].obuf_mode = match io_bits.oe {
+                            None => XC2IOBOBufMode::PushPull,
+                            Some(InputGraphIOOEType::OpenDrain) => XC2IOBOBufMode::OpenDrain,
+                            Some(InputGraphIOOEType::PTerm(pterm)) => unimplemented!(),
+                            Some(InputGraphIOOEType::GTS(gts)) => unimplemented!(),
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // XXX TODO other bits
 
