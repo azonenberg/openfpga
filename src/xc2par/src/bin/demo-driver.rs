@@ -67,9 +67,9 @@ fn main() {
     let par_result = do_par(&mut input_graph);
     if let PARResult::Success(x) = par_result {
         // Get a bitstream result
-        //let bitstream = produce_bitstream(device_type, &ngraph_rs, &mcs, &x);
+        let bitstream = produce_bitstream(device_type, &input_graph, &x);
         println!("********************************************************************************");
-        //bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
+        bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
     } else {
         panic!("par failed!")
     }

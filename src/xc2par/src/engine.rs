@@ -23,7 +23,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-use std::collections::{HashSet};
+use std::collections::{HashSet, HashMap};
 use std::iter::FromIterator;
 
 extern crate rand;
@@ -51,7 +51,7 @@ impl PARMCAssignment {
     }
 }
 
-type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
+pub type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
 
 // First element of tuple is anything, second element can only be pin input
 pub fn greedy_initial_placement(g: &mut InputGraph) -> Vec<PARFBAssignment> {
@@ -371,7 +371,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
 }
 
 pub enum ZIAAssignmentResult {
-    Success([XC2ZIAInput; INPUTS_PER_ANDTERM]),
+    Success(([XC2ZIAInput; INPUTS_PER_ANDTERM], [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB])),
     FailureTooManyInputs(u32),
     FailureUnroutable(u32),
 }
@@ -380,7 +380,22 @@ pub fn try_assign_zia(g: &InputGraph,
     pterm_assignment: &[Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB])
     -> ZIAAssignmentResult {
 
-    let mut ret = [XC2ZIAInput::One; INPUTS_PER_ANDTERM];
+    let mut ret_zia = [XC2ZIAInput::One; INPUTS_PER_ANDTERM];
+    let mut input_to_row_map = HashMap::new();
+    let mut ret_pterms = [(vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),
+                          (vec![], vec![]), (vec![], vec![]), (vec![], vec![]), (vec![], vec![]),];
 
     // Collect the inputs that need to go into this FB
     let mut collected_inputs_vec = Vec::new();
@@ -448,43 +463,59 @@ pub fn try_assign_zia(g: &InputGraph,
             }
         }
 
-        (choice, candidate_sites_for_this_input)
+        (*input, choice, candidate_sites_for_this_input)
     }).collect::<Vec<_>>();
 
     // Actually do the search to assign ZIA rows
     let mut most_routed = 0;
     fn backtrack_inner(most_routed: &mut u32, ret: &mut [XC2ZIAInput; INPUTS_PER_ANDTERM],
-        candidate_sites: &[(XC2ZIAInput, Vec<usize>)],
-        working_on_idx: usize) -> bool {
+        candidate_sites: &[((InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>), XC2ZIAInput, Vec<usize>)],
+        working_on_idx: usize,
+        input_to_row_map: &mut HashMap<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>), u32>) -> bool {
 
         if working_on_idx == candidate_sites.len() {
             // Complete assignment, we are done
             return true;
         }
-        let (choice, ref candidate_sites_for_this_input) = candidate_sites[working_on_idx];
+        let (input, choice, ref candidate_sites_for_this_input) = candidate_sites[working_on_idx];
         for &candidate_zia_row in candidate_sites_for_this_input {
             if ret[candidate_zia_row] == XC2ZIAInput::One {
                 // It is possible to assign to this site
                 ret[candidate_zia_row] = choice;
+                input_to_row_map.insert(input, candidate_zia_row as u32);
                 *most_routed = working_on_idx as u32 + 1;
-                if backtrack_inner(most_routed, ret, candidate_sites, working_on_idx + 1) {
+                if backtrack_inner(most_routed, ret, candidate_sites, working_on_idx + 1, input_to_row_map) {
                     return true;
                 }
                 ret[candidate_zia_row] = XC2ZIAInput::One;
+                input_to_row_map.remove(&input);
             }
         }
         return false;
     };
 
-    if !backtrack_inner(&mut most_routed, &mut ret, &candidate_sites, 0) {
+    if !backtrack_inner(&mut most_routed, &mut ret_zia, &candidate_sites, 0, &mut input_to_row_map) {
         return ZIAAssignmentResult::FailureUnroutable(candidate_sites.len() as u32 - most_routed);
     }
 
-    ZIAAssignmentResult::Success(ret)
+    // Now we search through all the inputs and record which row they go in
+    for pt_i in 0..ANDTERMS_PER_FB {
+        if pterm_assignment[pt_i].is_some() {
+            let andterm_node = g.pterms.get(pterm_assignment[pt_i].unwrap());
+            for input_net in &andterm_node.inputs_true {
+                ret_pterms[pt_i].0.push(*input_to_row_map.get(input_net).unwrap());
+            }
+            for input_net in &andterm_node.inputs_comp {
+                ret_pterms[pt_i].1.push(*input_to_row_map.get(input_net).unwrap());
+            }
+        }
+    }
+
+    ZIAAssignmentResult::Success((ret_zia, ret_pterms))
 }
 
 pub enum FBAssignmentResult {
-    Success(([Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB], [XC2ZIAInput; INPUTS_PER_ANDTERM])),
+    Success(([Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB], [XC2ZIAInput; INPUTS_PER_ANDTERM], [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB])),
     // macrocell assignment mc, score
     Failure(Vec<(u32, u32)>),
     // FIXME: This should report which one?
@@ -506,7 +537,7 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
             let zia_assign_result = try_assign_zia(g, &andterm_assignment);
             match zia_assign_result {
                 ZIAAssignmentResult::Success(zia_assignment) =>
-                    return FBAssignmentResult::Success((andterm_assignment, zia_assignment)),
+                    return FBAssignmentResult::Success((andterm_assignment, zia_assignment.0, zia_assignment.1)),
                 ZIAAssignmentResult::FailureTooManyInputs(x) => {
                     base_failing_score = x;
                 },
@@ -576,7 +607,8 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
 pub enum PARResult {
     Success(Vec<(PARFBAssignment,
         [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB],
-        [XC2ZIAInput; INPUTS_PER_ANDTERM])>),
+        [XC2ZIAInput; INPUTS_PER_ANDTERM],
+        [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB])>),
     FailurePTCNeverSatisfiable,
     FailureIterationsExceeded,
 }
@@ -598,8 +630,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         for fb_i in 0..2 {
             let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32);
             match fb_assign_result {
-                FBAssignmentResult::Success((pterm, zia)) => {
-                    par_results_per_fb[fb_i] = Some((pterm, zia));
+                FBAssignmentResult::Success((pterm, zia, zia_pterm)) => {
+                    par_results_per_fb[fb_i] = Some((pterm, zia, zia_pterm));
                 },
                 FBAssignmentResult::FailurePTCNeverSatisfiable =>
                     return PARResult::FailurePTCNeverSatisfiable,
@@ -616,7 +648,9 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             // It worked!
             let mut ret = Vec::new();
             for i in 0..2 {
-                ret.push((macrocell_placement[i], par_results_per_fb[i].unwrap().0, par_results_per_fb[i].unwrap().1));
+                let result_i = std::mem::replace(&mut par_results_per_fb[i], None);
+                let (pterm, zia, zia_pterm) = result_i.unwrap();
+                ret.push((macrocell_placement[i], pterm, zia, zia_pterm));
             }
 
             return PARResult::Success(ret);
