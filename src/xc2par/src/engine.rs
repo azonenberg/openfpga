@@ -24,7 +24,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::collections::{HashSet, HashMap};
-use std::iter::FromIterator;
 
 extern crate rand;
 use self::rand::{Rng, SeedableRng, XorShiftRng};
@@ -220,16 +219,7 @@ fn compare_andterms(g: &InputGraph, a: ObjPoolIndex<InputGraphPTerm>, b: ObjPool
     let a_ = g.pterms.get(a);
     let b_ = g.pterms.get(b);
 
-    let a_inp_true_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
-        HashSet::from_iter(a_.inputs_true.iter().cloned());
-    let a_inp_comp_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
-        HashSet::from_iter(a_.inputs_comp.iter().cloned());
-    let b_inp_true_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
-        HashSet::from_iter(b_.inputs_true.iter().cloned());
-    let b_inp_comp_h: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
-        HashSet::from_iter(b_.inputs_comp.iter().cloned());
-
-    a_inp_true_h == b_inp_true_h && a_inp_comp_h == b_inp_comp_h
+    a_ == b_
 }
 
 pub enum AndTermAssignmentResult {
@@ -634,6 +624,16 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
     }
 
     FBAssignmentResult::Failure(failure_scores)
+}
+
+pub enum PARSanityResult {
+    Ok,
+    FailurePTCNeverSatisfiable,
+    FailureTooManyMCs,
+    FailureTooManyPTerms,
+    FailureTooManyBufgClk,
+    FailureTooManyBufgGTS,
+    FailureTooManyBufgGSR,
 }
 
 pub enum PARResult {

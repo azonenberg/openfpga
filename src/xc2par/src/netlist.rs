@@ -25,6 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
+use std::iter::FromIterator;
 
 extern crate xc2bit;
 use self::xc2bit::*;
@@ -908,6 +910,35 @@ impl InputGraphMacrocell {
             } else {
                 InputGraphMacrocellType::BuriedComb
             }
+        }
+    }
+}
+
+impl PartialEq for InputGraphPTerm {
+    // WARNING WARNING does not check loc/name/requested_loc. Only checks if the inputs are the same
+    fn eq(&self, other: &InputGraphPTerm) -> bool {
+        let a_inp_true_hash: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+            HashSet::from_iter(self.inputs_true.iter().cloned());
+        let a_inp_comp_hash: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+            HashSet::from_iter(self.inputs_comp.iter().cloned());
+        let b_inp_true_hash: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+            HashSet::from_iter(other.inputs_true.iter().cloned());
+        let b_inp_comp_hash: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+            HashSet::from_iter(other.inputs_comp.iter().cloned());
+
+        a_inp_true_hash == b_inp_true_hash && a_inp_comp_hash == b_inp_comp_hash
+    }
+}
+impl Eq for InputGraphPTerm { }
+
+impl Hash for InputGraphPTerm {
+    // WARNING WARNING assumes that there are no duplicates in the inputs (why would there be?)
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        for x in &self.inputs_true {
+            x.hash(state);
+        }
+        for x in &self.inputs_comp {
+            x.hash(state);
         }
     }
 }
