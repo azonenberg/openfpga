@@ -34,7 +34,7 @@ use util::{b2s};
 use zia::{zia_get_row_width};
 
 /// Represents a collection of all the parts that make up one function block
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct XC2BitstreamFB {
     /// The AND terms of the PLA part of the function block
     pub and_terms: [XC2PLAAndTerm; ANDTERMS_PER_FB],
@@ -44,10 +44,6 @@ pub struct XC2BitstreamFB {
     pub zia_bits: [XC2ZIARowPiece; INPUTS_PER_ANDTERM],
     /// The macrocells of the function block
     pub mcs: [XC2Macrocell; MCS_PER_FB],
-}
-
-impl Clone for XC2BitstreamFB {
-    fn clone(&self) -> Self {*self}
 }
 
 impl Default for XC2BitstreamFB {

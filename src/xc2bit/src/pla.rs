@@ -29,7 +29,7 @@ use *;
 
 /// Represents one single AND term in the PLA. Each AND term can perform an AND function on any subset of its inputs
 /// and the complement of those inputs. The index for each input is the corresponding ZIA row.
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct XC2PLAAndTerm {
     /// Indicates whether a particular ZIA row output is a part of this AND term.
     ///
@@ -39,10 +39,6 @@ pub struct XC2PLAAndTerm {
     ///
     /// `true` = part of and, `false` = not part of and
     pub input_b: [bool; INPUTS_PER_ANDTERM],
-}
-
-impl Clone for XC2PLAAndTerm {
-    fn clone(&self) -> Self {*self}
 }
 
 impl Default for XC2PLAAndTerm {
@@ -75,16 +71,12 @@ impl XC2PLAAndTerm {
 
 /// Represents one single OR term in the PLA. Each OR term can perform an OR function on any subset of its inputs.
 /// The index for each input is the index of the corresponding AND term in the same PLA.
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct XC2PLAOrTerm {
     /// Indicates whether a particular PLA AND term is a part of this OR term.
     ///
     /// `true` = part of or, `false` = not part of or
     pub input: [bool; ANDTERMS_PER_FB],
-}
-
-impl Clone for XC2PLAOrTerm {
-    fn clone(&self) -> Self {*self}
 }
 
 impl Default for XC2PLAOrTerm {
