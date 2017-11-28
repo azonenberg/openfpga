@@ -29,14 +29,14 @@ use *;
 
 /// Represents one output of the ZIA. The ZIA is divided into rows, and each row can independently select a choice
 /// to connect to each function block. This represents one such output (as opposed to all outputs in a given row)
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Default)]
 pub struct XC2ZIARowPiece {
     pub selected: XC2ZIAInput,
 }
 
 /// Represents one input to the ZIA. The ZIA has inputs from every part of the chip and can additionally output a
 /// constant zero or one.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum XC2ZIAInput {
     Macrocell {
         fb: u32,

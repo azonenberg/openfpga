@@ -389,6 +389,7 @@ impl XC2Bitstream {
 
 /// Represents the configuration of the global nets. Coolrunner-II parts have various global control signals that have
 /// dedicated low-skew paths.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct XC2GlobalNets {
     /// Controls whether the three global clock nets are enabled or not
     pub gck_enable: [bool; 3],
@@ -559,7 +560,7 @@ pub enum XC2ClockDivRatio {
 
 /// Represents the configuration of the programmable clock divider in devices with 128 macrocells or more. This is
 /// hard-wired onto the GCK2 clock pin.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct XC2ClockDiv {
     /// Ratio that input clock is divided by
     pub div_ratio: XC2ClockDivRatio,

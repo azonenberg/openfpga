@@ -113,7 +113,7 @@ impl XC2IOBOBufMode {
 }
 
 /// Represents an I/O pin on "small" (32 and 64 macrocell) devices.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct XC2MCSmallIOB {
     /// Mux selection for the ZIA input for this pin
     pub zia_mode: XC2IOBZIAMode,
@@ -403,7 +403,7 @@ impl XC2IOBIbufMode {
 }
 
 /// Represents an I/O pin on "large" (128 and greater macrocell) devices.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct XC2MCLargeIOB {
     /// Mux selection for the ZIA input for this pin
     pub zia_mode: XC2IOBZIAMode,
@@ -693,6 +693,7 @@ impl XC2MCLargeIOB {
 }
 
 /// Represents the one additional special input-only pin on 32-macrocell devices.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct XC2ExtraIBuf {
     pub schmitt_trigger: bool,
     pub termination_enabled: bool,

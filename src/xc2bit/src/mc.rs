@@ -239,7 +239,7 @@ impl XC2MCXorMode {
 }
 
 /// Represents a macrocell.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct XC2Macrocell {
     /// Clock source for the register
     pub clk_src: XC2MCRegClkSrc,
