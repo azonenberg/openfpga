@@ -1592,6 +1592,7 @@ impl InputGraph {
     }
 
     fn sanity_check(&self) -> Result<(), &'static str> {
+        // Check various connectivity rules in the CPLD
         for x in self.mcs.iter() {
             if x.io_feedback_used && x.io_bits.is_none() {
                 return Err("Used IO input but there is no IO data?");
@@ -1607,6 +1608,73 @@ impl InputGraph {
 
             if x.io_feedback_used && x.reg_feedback_used && x.xor_feedback_used {
                 return Err("Too many feedback paths used");
+            }
+        }
+
+        // Check that LOC constraints are possible
+        for x in self.mcs.iter() {
+            if let Some(mc_req_loc) = x.requested_loc {
+                if let Some(ref xor) = x.xor_bits {
+                    if let Some(pterm) = xor.andterm_input {
+                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
+                            if mc_req_loc.fb != pt_req_loc.fb {
+                                return Err("Impossible LOC constraints across FBs");
+                            }
+                        }
+                    }
+
+                    for pterm in &xor.orterm_inputs {
+                        if let Some(pt_req_loc) = self.pterms.get(*pterm).requested_loc {
+                            if mc_req_loc.fb != pt_req_loc.fb {
+                                return Err("Impossible LOC constraints across FBs");
+                            }
+                        }
+                    }
+                }
+
+                if let Some(ref reg) = x.reg_bits {
+                    if let Some(pterm) = reg.ce_input {
+                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
+                            if mc_req_loc.fb != pt_req_loc.fb {
+                                return Err("Impossible LOC constraints across FBs");
+                            }
+                        }
+                    }
+
+                    if let InputGraphRegClockType::PTerm(pterm) = reg.clk_input {
+                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
+                            if mc_req_loc.fb != pt_req_loc.fb {
+                                return Err("Impossible LOC constraints across FBs");
+                            }
+                        }
+                    }
+
+                    if let Some(InputGraphRegRSType::PTerm(pterm)) = reg.set_input {
+                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
+                            if mc_req_loc.fb != pt_req_loc.fb {
+                                return Err("Impossible LOC constraints across FBs");
+                            }
+                        }
+                    }
+
+                    if let Some(InputGraphRegRSType::PTerm(pterm)) = reg.reset_input {
+                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
+                            if mc_req_loc.fb != pt_req_loc.fb {
+                                return Err("Impossible LOC constraints across FBs");
+                            }
+                        }
+                    }
+                }
+
+                if let Some(ref io) = x.io_bits {
+                    if let Some(InputGraphIOOEType::PTerm(pterm)) = io.oe {
+                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
+                            if mc_req_loc.fb != pt_req_loc.fb {
+                                return Err("Impossible LOC constraints across FBs");
+                            }
+                        }
+                    }
+                }
             }
         }
 
