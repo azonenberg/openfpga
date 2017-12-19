@@ -233,6 +233,8 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
 
     println!("after global assign {:?}", g);
 
+    // Now actually assign macrocell locations
+
     // TODO: Number of FBs
     // FIXME: Hack for dedicated input
     for _ in 0..2 {
@@ -244,95 +246,169 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
         ret[x][0] = (PARMCAssignment::Banned, PARMCAssignment::None);
     }
 
-    // Immediately place all LOC'd macrocells now
+    // Immediately place all fully LOC'd macrocells now
+    for i in g.mcs.iter_idx() {
+        let mc = g.mcs.get(i);
+        let is_pininput = match mc.get_type() {
+            InputGraphMacrocellType::PinOutput |
+            InputGraphMacrocellType::BuriedComb |
+            InputGraphMacrocellType::BuriedReg => false,
+            InputGraphMacrocellType::PinInputReg |
+            InputGraphMacrocellType::PinInputUnreg => true,
+        };
 
-    let mut candidate_sites_anything = Vec::new();
-    let mut candidate_sites_pininput_conservative = Vec::new();
-    let mut not_available_for_pininput_reg = HashSet::new();
-    let mut not_available_for_pininput_unreg = HashSet::new();
-    if true {
-        candidate_sites_pininput_conservative.push((2, 0));
-        not_available_for_pininput_reg.insert((2, 0));
-    }
-    for i in (0..2).rev() {
-        for j in (0..MCS_PER_FB).rev() {
-            candidate_sites_anything.push((i, j));
-            candidate_sites_pininput_conservative.push((i, j));
+        if let Some(RequestedLocation{fb, i: Some(mc_idx)}) = mc.requested_loc {
+            if !is_pininput {
+                if ret[fb as usize][mc_idx as usize].0 != PARMCAssignment::None {
+                    return None;
+                }
+
+                ret[fb as usize][mc_idx as usize].0 = PARMCAssignment::MC(i);
+            } else {
+                if ret[fb as usize][mc_idx as usize].1 != PARMCAssignment::None {
+                    return None;
+                }
+
+                ret[fb as usize][mc_idx as usize].1 = PARMCAssignment::MC(i);
+            }
         }
     }
 
-    // Do the actual greedy assignment
+    // Check for pairing violations
+    for fb_i in 0..3 {
+        for mc_i in 0..MCS_PER_FB {
+            if let PARMCAssignment::MC(mc_idx_0) = ret[fb_i as usize][mc_i].0 {
+                if let PARMCAssignment::MC(mc_idx_1) = ret[fb_i as usize][mc_i].1 {
+                    let type_0 = g.mcs.get(mc_idx_0).get_type();
+                    let type_1 = g.mcs.get(mc_idx_1).get_type();
+                    match (type_0, type_1) {
+                        (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedComb) |
+                        (InputGraphMacrocellType::PinInputReg, InputGraphMacrocellType::BuriedComb) => {},
+                        (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedReg) => {
+                            if g.mcs.get(mc_idx_0).xor_feedback_used {
+                                return None;
+                            }
+                        }
+                        _ => return None,
+                    }
+                }
+            }
+        }
+    }
+
+    // Now place macrocells that have a FB constraint but no MC constraint
     for i in g.mcs.iter_idx() {
         let mc = g.mcs.get(i);
-        match mc.get_type() {
-            InputGraphMacrocellType::PinOutput => {
-                if candidate_sites_anything.len() == 0 {
-                    return None;
-                }
+        let is_pininput = match mc.get_type() {
+            InputGraphMacrocellType::PinOutput |
+            InputGraphMacrocellType::BuriedComb |
+            InputGraphMacrocellType::BuriedReg => false,
+            InputGraphMacrocellType::PinInputReg |
+            InputGraphMacrocellType::PinInputUnreg => true,
+        };
 
-                let (fb, mc) = candidate_sites_anything.pop().unwrap();
-                // Remove from the pininput candidates as well. This requires that all PinOutput entries come first.
-                candidate_sites_pininput_conservative.pop().unwrap();
-                ret[fb][mc].0 = PARMCAssignment::MC(i);
-            },
-            InputGraphMacrocellType::BuriedComb => {
-                if candidate_sites_anything.len() == 0 {
-                    return None;
-                }
+        if let Some(RequestedLocation{fb, i: None}) = mc.requested_loc {
+            let mut mc_i = None;
+            for i in 0..MCS_PER_FB {
+                if !is_pininput {
+                    if ret[fb as usize][i].0 != PARMCAssignment::None {
+                        continue;
+                    }
+                } else {
+                    if ret[fb as usize][i].1 != PARMCAssignment::None {
+                        continue;
+                    }
 
-                let (fb, mc) = candidate_sites_anything.pop().unwrap();
-                // This is compatible with all input pin types
-                ret[fb][mc].0 = PARMCAssignment::MC(i);
-            },
-            InputGraphMacrocellType::BuriedReg => {
-                let has_comb_fb = mc.xor_feedback_used;
-
-                if candidate_sites_anything.len() == 0 {
-                    return None;
-                }
-
-                let (fb, mc) = candidate_sites_anything.pop().unwrap();
-                // Cannot share with registered pin input
-                not_available_for_pininput_reg.insert((fb, mc));
-                if has_comb_fb {
-                    // Not available to be shared at all
-                    not_available_for_pininput_unreg.insert((fb, mc));
-                }
-                ret[fb][mc].0 = PARMCAssignment::MC(i);
-            },
-            InputGraphMacrocellType::PinInputReg => {
-                // XXX This is not particularly efficient
-                let mut idx = None;
-                for j in (0..candidate_sites_pininput_conservative.len()).rev() {
-                    if !not_available_for_pininput_reg.contains(&candidate_sites_pininput_conservative[j]) {
-                        idx = Some(j);
-                        break;
+                    // If this is a pin input, check if pairing is ok
+                    // This logic relies on the gather_macrocells sorting.
+                    if let PARMCAssignment::MC(mc_idx_0) = ret[fb as usize][i].0 {
+                        let type_0 = g.mcs.get(mc_idx_0).get_type();
+                        let type_1 = mc.get_type();
+                        match (type_0, type_1) {
+                            (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedComb) |
+                            (InputGraphMacrocellType::PinInputReg, InputGraphMacrocellType::BuriedComb) => {},
+                            (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedReg) => {
+                                if g.mcs.get(mc_idx_0).xor_feedback_used {
+                                    continue;
+                                }
+                            }
+                            _ => continue,
+                        }
                     }
                 }
 
-                if idx.is_none() {
-                    return None;
-                }
+                mc_i = Some(i as u32);
+                break;
+            }
 
-                let (fb, mc) = candidate_sites_pininput_conservative.remove(idx.unwrap());
-                ret[fb][mc].1 = PARMCAssignment::MC(i);
-            },
-            InputGraphMacrocellType::PinInputUnreg => {
-                // XXX This is not particularly efficient
-                let mut idx = None;
-                for j in (0..candidate_sites_pininput_conservative.len()).rev() {
-                    if !not_available_for_pininput_unreg.contains(&candidate_sites_pininput_conservative[j]) {
-                        idx = Some(j);
-                        break;
+            if mc_i.is_none() {
+                return None;
+            }
+            let mc_idx = mc_i.unwrap();
+            if !is_pininput {
+                ret[fb as usize][mc_idx as usize].0 = PARMCAssignment::MC(i);
+            } else {
+                ret[fb as usize][mc_idx as usize].1 = PARMCAssignment::MC(i);
+            }
+        }
+    }
+
+    // Now place all the other macrocells
+    // FIXME: Copypasta
+    for i in g.mcs.iter_idx() {
+        let mc = g.mcs.get(i);
+        let is_pininput = match mc.get_type() {
+            InputGraphMacrocellType::PinOutput |
+            InputGraphMacrocellType::BuriedComb |
+            InputGraphMacrocellType::BuriedReg => false,
+            InputGraphMacrocellType::PinInputReg |
+            InputGraphMacrocellType::PinInputUnreg => true,
+        };
+
+        if mc.requested_loc.is_none() {
+            let mut fbmc_i = None;
+            for fb in 0..3 {
+                for i in 0..MCS_PER_FB {
+                    if !is_pininput {
+                        if ret[fb][i].0 != PARMCAssignment::None {
+                            continue;
+                        }
+                    } else {
+                        if ret[fb][i].1 != PARMCAssignment::None {
+                            continue;
+                        }
+
+                        // If this is a pin input, check if pairing is ok
+                        // This logic relies on the gather_macrocells sorting.
+                        if let PARMCAssignment::MC(mc_idx_0) = ret[fb][i].0 {
+                            let type_0 = g.mcs.get(mc_idx_0).get_type();
+                            let type_1 = mc.get_type();
+                            match (type_0, type_1) {
+                                (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedComb) |
+                                (InputGraphMacrocellType::PinInputReg, InputGraphMacrocellType::BuriedComb) => {},
+                                (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedReg) => {
+                                    if g.mcs.get(mc_idx_0).xor_feedback_used {
+                                        continue;
+                                    }
+                                }
+                                _ => continue,
+                            }
+                        }
                     }
-                }
 
-                if idx.is_none() {
-                    return None;
+                    fbmc_i = Some((fb as u32, i as u32));
+                    break;
                 }
+            }
 
-                let (fb, mc) = candidate_sites_pininput_conservative.remove(idx.unwrap());
-                ret[fb][mc].1 = PARMCAssignment::MC(i);
+            if fbmc_i.is_none() {
+                return None;
+            }
+            let (fb, mc_idx) = fbmc_i.unwrap();
+            if !is_pininput {
+                ret[fb as usize][mc_idx as usize].0 = PARMCAssignment::MC(i);
+            } else {
+                ret[fb as usize][mc_idx as usize].1 = PARMCAssignment::MC(i);
             }
         }
     }

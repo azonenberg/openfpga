@@ -114,21 +114,21 @@ impl RequestedLocation {
             if loc_fb_i.len() == 1 {
                 // FBn
                 Ok(Some(RequestedLocation {
-                    fb: loc_fb_i[0][2..].parse::<u32>().unwrap(),
+                    fb: loc_fb_i[0][2..].parse::<u32>().unwrap() - 1,
                     i: None,
                 }))
             } else if loc_fb_i.len() == 2 {
                 if !loc_fb_i[1].starts_with("P") {
                     // FBn_i
                     Ok(Some(RequestedLocation {
-                        fb: loc_fb_i[0][2..].parse::<u32>().unwrap(),
-                        i: Some(loc_fb_i[1].parse::<u32>().unwrap()),
+                        fb: loc_fb_i[0][2..].parse::<u32>().unwrap() - 1,
+                        i: Some(loc_fb_i[1].parse::<u32>().unwrap() - 1),
                     }))
                 } else {
                     // FBn_Pi
                     Ok(Some(RequestedLocation {
-                        fb: loc_fb_i[0][2..].parse::<u32>().unwrap(),
-                        i: Some(loc_fb_i[1][1..].parse::<u32>().unwrap()),
+                        fb: loc_fb_i[0][2..].parse::<u32>().unwrap() - 1,
+                        i: Some(loc_fb_i[1][1..].parse::<u32>().unwrap() - 1),
                     }))
                 }
             } else {
