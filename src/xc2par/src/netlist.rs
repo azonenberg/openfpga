@@ -1163,13 +1163,13 @@ impl InputGraph {
                     };
 
                     {
-                        let mut newg_n = s.mcs.get_mut(newg_idx);
+                        let newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.io_bits.is_none());
                         newg_n.name = combine_names(&newg_n.name, &n.name);
                         newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
                         newg_n.io_bits = Some(InputGraphIOBuf {
-                            input: input,
-                            oe: oe,
+                            input,
+                            oe,
                             schmitt_trigger,
                             termination_enabled,
                             slew_is_fast,
@@ -1183,7 +1183,7 @@ impl InputGraph {
                     let newg_idx = *s.mcs_map.get(&n_idx).unwrap();
 
                     {
-                        let mut newg_n = s.mcs.get_mut(newg_idx);
+                        let newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.io_bits.is_none());
                         newg_n.name = combine_names(&newg_n.name, &n.name);
                         newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
@@ -1251,7 +1251,7 @@ impl InputGraph {
                     };
 
                     {
-                        let mut newg_n = s.mcs.get_mut(newg_idx);
+                        let newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.xor_bits.is_none());
                         newg_n.name = combine_names(&newg_n.name, &n.name);
                         newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
@@ -1286,7 +1286,7 @@ impl InputGraph {
 
                         // Flag the appropriate bits as used
                         {
-                            let mut input_newg_n = s.mcs.get_mut(input_newg);
+                            let input_newg_n = s.mcs.get_mut(input_newg);
                             match input_type {
                                 InputGraphPTermInputType::Pin => input_newg_n.io_feedback_used = true,
                                 InputGraphPTermInputType::Xor => input_newg_n.xor_feedback_used = true,
@@ -1316,7 +1316,7 @@ impl InputGraph {
 
                         // Flag the appropriate bits as used
                         {
-                            let mut input_newg_n = s.mcs.get_mut(input_newg);
+                            let input_newg_n = s.mcs.get_mut(input_newg);
                             match input_type {
                                 InputGraphPTermInputType::Pin => input_newg_n.io_feedback_used = true,
                                 InputGraphPTermInputType::Xor => input_newg_n.xor_feedback_used = true,
@@ -1448,7 +1448,7 @@ impl InputGraph {
                     };
 
                     {
-                        let mut newg_n = s.mcs.get_mut(newg_idx);
+                        let newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.reg_bits.is_none());
                         newg_n.name = combine_names(&newg_n.name, &n.name);
                         newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
@@ -1618,7 +1618,7 @@ impl InputGraph {
 
         for mc in self.mcs.iter_mut() {
             if mc.xor_bits.is_some() {
-                let mut xor = mc.xor_bits.as_mut().unwrap();
+                let xor = mc.xor_bits.as_mut().unwrap();
 
                 if let Some(pterm) = xor.andterm_input {
                     if used_pterms.contains(&pterm) {
@@ -1641,7 +1641,7 @@ impl InputGraph {
             }
 
             if mc.reg_bits.is_some() {
-                let mut reg = mc.reg_bits.as_mut().unwrap();
+                let reg = mc.reg_bits.as_mut().unwrap();
 
                 if let Some(pterm) = reg.ce_input {
                     if used_pterms.contains(&pterm) {
@@ -1681,7 +1681,7 @@ impl InputGraph {
             }
 
             if mc.io_bits.is_some() {
-                let mut io = mc.io_bits.as_mut().unwrap();
+                let io = mc.io_bits.as_mut().unwrap();
 
                 if let Some(InputGraphIOOEType::PTerm(pterm)) = io.oe {
                     if used_pterms.contains(&pterm) {
