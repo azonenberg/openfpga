@@ -47,41 +47,191 @@ pub type PARPTermAssignment = [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_P
 pub type PARZIAAssignment = [XC2ZIAInput; INPUTS_PER_ANDTERM];
 pub type PARPTermZIARows = [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB];
 
+// TODO: LOC constraints for not-macrocell stuff
+
 // First element of tuple is anything, second element can only be pin input
 pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignment>> {
     let mut ret = Vec::new();
 
-    // Note that we checked ahead of time that there aren't too many of these.
+    // First greedily assign all of the global nets
+    // TODO: Replace with BitSet when it becomes stable
+    let mut gck_used = HashSet::with_capacity(NUM_BUFG_CLK);
+    let mut gts_used = HashSet::with_capacity(NUM_BUFG_GTS);
+    let mut gsr_used = HashSet::with_capacity(NUM_BUFG_GSR);
+    
+    // Begin with assigning those that have a LOC constraint on the buffer. We know that these already have LOC
+    // constraints on the pin as well.
     {
-        let mut i = 0;
         for gck in g.bufg_clks.iter_mut() {
+            if let Some(RequestedLocation{i: Some(idx), ..}) = gck.requested_loc {
+                if gck_used.contains(&idx) {
+                    return None;
+                }
+                gck_used.insert(idx);
+
+                gck.loc = Some(AssignedLocationInner {
+                    fb: 0,
+                    i: idx,
+                });
+            }
+        }
+    }
+    {
+        for gts in g.bufg_gts.iter_mut() {
+            if let Some(RequestedLocation{i: Some(idx), ..}) = gts.requested_loc {
+                if gts_used.contains(&idx) {
+                    return None;
+                }
+                gts_used.insert(idx);
+
+                gts.loc = Some(AssignedLocationInner {
+                    fb: 0,
+                    i: idx,
+                });
+            }
+        }
+    }
+    {
+        for gsr in g.bufg_gsr.iter_mut() {
+            if let Some(RequestedLocation{i: Some(idx), ..}) = gsr.requested_loc {
+                if gsr_used.contains(&idx) {
+                    return None;
+                }
+                gsr_used.insert(idx);
+
+                gsr.loc = Some(AssignedLocationInner {
+                    fb: 0,
+                    i: idx,
+                });
+            }
+        }
+    }
+
+    // Now we assign locations to all of the remaining global buffers. Note that we checked ahead of time that there
+    // aren't too many of these in use. However, it is still possible to get an unsatisfiable assignment due to
+    // FB constraints on the macrocell.
+    {
+        for gck in g.bufg_clks.iter_mut() {
+            if gck.loc.is_some() {
+                continue;
+            }
+
+            let mut idx = None;
+            for i in 0..NUM_BUFG_CLK {
+                if gck_used.contains(&(i as u32)) {
+                    continue;
+                }
+
+                let mc_req_loc = g.mcs.get(gck.input).requested_loc;
+                let actual_mc_loc = get_gck(XC2Device::XC2C32A, i).unwrap();
+                assert!(mc_req_loc.is_none() || mc_req_loc.unwrap().i.is_none());
+                if mc_req_loc.is_some() && mc_req_loc.unwrap().fb != actual_mc_loc.0 {
+                    continue;
+                }
+
+                idx = Some(i as u32);
+                // Now force the MC to have the full location
+                // XXX: This can in very rare occasions cause a design that should in theory fit to no longer fit.
+                // However, we consider this to be unimportant because global nets almost always need special treatment
+                // by the HDL designer to work properly anyways.
+                g.mcs.get_mut(gck.input).requested_loc = Some(RequestedLocation{
+                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+                break;
+            }
+
+            if idx.is_none() {
+                return None;
+            }
+
+            gck_used.insert(idx.unwrap());
             gck.loc = Some(AssignedLocationInner {
                 fb: 0,
-                i
+                i: idx.unwrap(),
             });
-            i += 1;
         }
     }
     {
-        let mut i = 0;
-        for gts in g.bufg_gts.iter_mut() {
+        for gts in g.bufg_clks.iter_mut() {
+            if gts.loc.is_some() {
+                continue;
+            }
+
+            let mut idx = None;
+            for i in 0..NUM_BUFG_GTS {
+                if gts_used.contains(&(i as u32)) {
+                    continue;
+                }
+
+                let mc_req_loc = g.mcs.get(gts.input).requested_loc;
+                let actual_mc_loc = get_gts(XC2Device::XC2C32A, i).unwrap();
+                assert!(mc_req_loc.is_none() || mc_req_loc.unwrap().i.is_none());
+                if mc_req_loc.is_some() && mc_req_loc.unwrap().fb != actual_mc_loc.0 {
+                    continue;
+                }
+
+                idx = Some(i as u32);
+                // Now force the MC to have the full location
+                // XXX: This can in very rare occasions cause a design that should in theory fit to no longer fit.
+                // However, we consider this to be unimportant because global nets almost always need special treatment
+                // by the HDL designer to work properly anyways.
+                g.mcs.get_mut(gts.input).requested_loc = Some(RequestedLocation{
+                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+                break;
+            }
+
+            if idx.is_none() {
+                return None;
+            }
+
+            gts_used.insert(idx.unwrap());
             gts.loc = Some(AssignedLocationInner {
                 fb: 0,
-                i
+                i: idx.unwrap(),
             });
-            i += 1;
         }
     }
     {
-        let mut i = 0;
-        for gsr in g.bufg_gsr.iter_mut() {
+        for gsr in g.bufg_clks.iter_mut() {
+            if gsr.loc.is_some() {
+                continue;
+            }
+
+            let mut idx = None;
+            for i in 0..NUM_BUFG_GSR {
+                if gsr_used.contains(&(i as u32)) {
+                    continue;
+                }
+
+                let mc_req_loc = g.mcs.get(gsr.input).requested_loc;
+                let actual_mc_loc = get_gsr(XC2Device::XC2C32A);
+                assert!(mc_req_loc.is_none() || mc_req_loc.unwrap().i.is_none());
+                if mc_req_loc.is_some() && mc_req_loc.unwrap().fb != actual_mc_loc.0 {
+                    continue;
+                }
+
+                idx = Some(i as u32);
+                // Now force the MC to have the full location
+                // XXX: This can in very rare occasions cause a design that should in theory fit to no longer fit.
+                // However, we consider this to be unimportant because global nets almost always need special treatment
+                // by the HDL designer to work properly anyways.
+                g.mcs.get_mut(gsr.input).requested_loc = Some(RequestedLocation{
+                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+                break;
+            }
+
+            if idx.is_none() {
+                return None;
+            }
+
+            gsr_used.insert(idx.unwrap());
             gsr.loc = Some(AssignedLocationInner {
                 fb: 0,
-                i
+                i: idx.unwrap(),
             });
-            i += 1;
         }
     }
+
+    println!("after global assign {:?}", g);
 
     // TODO: Number of FBs
     // FIXME: Hack for dedicated input
@@ -94,7 +244,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
         ret[x][0] = (PARMCAssignment::Banned, PARMCAssignment::None);
     }
 
-    // TODO: Handle LOCs
+    // Immediately place all LOC'd macrocells now
 
     let mut candidate_sites_anything = Vec::new();
     let mut candidate_sites_pininput_conservative = Vec::new();
@@ -605,6 +755,7 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
 pub enum PARSanityResult {
     Ok,
     FailurePTCNeverSatisfiable,
+    FailureGlobalNetWrongLoc,
     FailureTooManyMCs,
     FailureTooManyPTerms,
     FailureTooManyBufgClk,
@@ -612,7 +763,8 @@ pub enum PARSanityResult {
     FailureTooManyBufgGSR,
 }
 
-pub fn do_par_sanity_check(g: &InputGraph) -> PARSanityResult {
+// FIXME: What happens in netlist.rs and what happens here?
+pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
     // Check if everything fits in the device
     if g.mcs.len() > 2 * (2 * MCS_PER_FB) {
         // Note that this is a conservative fail-early check. It is incomplete because it doesn't account for
@@ -650,6 +802,113 @@ pub fn do_par_sanity_check(g: &InputGraph) -> PARSanityResult {
         }
     }
 
+    // Check the LOC constraints for global nets
+    for buf in g.bufg_clks.iter_mut() {
+        let buf_req_loc = buf.requested_loc;
+        let mc_req_loc = g.mcs.get(buf.input).requested_loc;
+
+        match (buf_req_loc, mc_req_loc) {
+            (Some(RequestedLocation{i: Some(buf_idx), ..}), Some(mc_loc)) => {
+                // Both the pin and the buffer have a preference for where to be.
+
+                // These two need to match
+                let actual_mc_loc = get_gck(XC2Device::XC2C32A, buf_idx as usize).unwrap();
+                if actual_mc_loc.0 != mc_loc.fb || (mc_loc.i.is_some() && mc_loc.i.unwrap() != actual_mc_loc.1) {
+                    return PARSanityResult::FailureGlobalNetWrongLoc;
+                }
+
+                // Now force the MC to have the full location
+                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
+                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+            },
+            (Some(RequestedLocation{i: Some(buf_idx), ..}), None) => {
+                // There is a preference for the buffer, but no preference for the pin.
+
+                let actual_mc_loc = get_gck(XC2Device::XC2C32A, buf_idx as usize).unwrap();
+
+                // Now force the MC to have the full location
+                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
+                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+            },
+            (Some(RequestedLocation{i: None, ..}), Some(_)) | (None, Some(_)) => {
+                // There is a preference for the pin, but no preference for the buffer.
+                // Do nothing for now, we can fail this in the greedy assignment step
+            },
+            _ => {},
+        }
+    }
+
+    // FIXME: Copypasta
+    for buf in g.bufg_gts.iter_mut() {
+        let buf_req_loc = buf.requested_loc;
+        let mc_req_loc = g.mcs.get(buf.input).requested_loc;
+
+        match (buf_req_loc, mc_req_loc) {
+            (Some(RequestedLocation{i: Some(buf_idx), ..}), Some(mc_loc)) => {
+                // Both the pin and the buffer have a preference for where to be.
+
+                // These two need to match
+                let actual_mc_loc = get_gts(XC2Device::XC2C32A, buf_idx as usize).unwrap();
+                if actual_mc_loc.0 != mc_loc.fb || (mc_loc.i.is_some() && mc_loc.i.unwrap() != actual_mc_loc.1) {
+                    return PARSanityResult::FailureGlobalNetWrongLoc;
+                }
+
+                // Now force the MC to have the full location
+                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
+                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+            },
+            (Some(RequestedLocation{i: Some(buf_idx), ..}), None) => {
+                // There is a preference for the buffer, but no preference for the pin.
+
+                let actual_mc_loc = get_gts(XC2Device::XC2C32A, buf_idx as usize).unwrap();
+
+                // Now force the MC to have the full location
+                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
+                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+            },
+            (Some(RequestedLocation{i: None, ..}), Some(_)) | (None, Some(_)) => {
+                // There is a preference for the pin, but no preference for the buffer.
+                // Do nothing for now, we can fail this in the greedy assignment step
+            },
+            _ => {},
+        }
+    }
+
+    for buf in g.bufg_gsr.iter_mut() {
+        let buf_req_loc = buf.requested_loc;
+        let mc_req_loc = g.mcs.get(buf.input).requested_loc;
+
+        match (buf_req_loc, mc_req_loc) {
+            (Some(RequestedLocation{i: Some(_), ..}), Some(mc_loc)) => {
+                // Both the pin and the buffer have a preference for where to be.
+
+                // These two need to match
+                let actual_mc_loc = get_gsr(XC2Device::XC2C32A);
+                if actual_mc_loc.0 != mc_loc.fb || (mc_loc.i.is_some() && mc_loc.i.unwrap() != actual_mc_loc.1) {
+                    return PARSanityResult::FailureGlobalNetWrongLoc;
+                }
+
+                // Now force the MC to have the full location
+                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
+                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+            },
+            (Some(RequestedLocation{i: Some(_), ..}), None) => {
+                // There is a preference for the buffer, but no preference for the pin.
+
+                let actual_mc_loc = get_gsr(XC2Device::XC2C32A);
+
+                // Now force the MC to have the full location
+                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
+                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+            },
+            (Some(RequestedLocation{i: None, ..}), Some(_)) | (None, Some(_)) => {
+                // There is a preference for the pin, but no preference for the buffer.
+                // Do nothing for now, we can fail this in the greedy assignment step
+            },
+            _ => {},
+        }
+    }
+
     PARSanityResult::Ok
 }
 
@@ -683,7 +942,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         par_results_per_fb.push(None);
     }
 
-    for iter_count in 0..1000 {
+    for _iter_count in 0..1000 {
         let mut bad_candidates = Vec::new();
         let mut bad_score_sum = 0;
         for fb_i in 0..2 {

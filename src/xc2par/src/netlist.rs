@@ -1611,7 +1611,7 @@ impl InputGraph {
             }
         }
 
-        // Check that LOC constraints are possible
+        // Check that LOC constraints between the macrocells and p-terms are possible
         for x in self.mcs.iter() {
             if let Some(mc_req_loc) = x.requested_loc {
                 if let Some(ref xor) = x.xor_bits {
