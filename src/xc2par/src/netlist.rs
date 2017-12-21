@@ -848,6 +848,8 @@ pub struct InputGraphPTerm {
     pub requested_loc: Option<RequestedLocation>,
     pub inputs_true: Vec<InputGraphPTermInput>,
     pub inputs_comp: Vec<InputGraphPTermInput>,
+    pub inputs_true_zia: Vec<u32>,
+    pub inputs_comp_zia: Vec<u32>,
 }
 
 #[derive(Clone, Debug)]
@@ -1333,6 +1335,8 @@ impl InputGraph {
                         requested_loc: n.location,
                         inputs_true: inputs_true_new,
                         inputs_comp: inputs_comp_new,
+                        inputs_true_zia: Vec::new(),
+                        inputs_comp_zia: Vec::new(),
                     };
 
                     let newg_idx = s.pterms.insert(newg_n);
@@ -1608,6 +1612,25 @@ impl InputGraph {
 
             if x.io_feedback_used && x.reg_feedback_used && x.xor_feedback_used {
                 return Err("Too many feedback paths used");
+            }
+        }
+
+        // Check for duplicate inputs to p-terms
+        for pt in self.pterms.iter() {
+            let inputs_true_set: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+                HashSet::from_iter(pt.inputs_true.iter().cloned());
+            let inputs_comp_set: HashSet<(InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>)> =
+                HashSet::from_iter(pt.inputs_comp.iter().cloned());
+
+            if inputs_true_set.len() != pt.inputs_true.len() {
+                return Err("Duplicate inputs to p-term");
+            }
+            if inputs_comp_set.len() != pt.inputs_comp.len() {
+                return Err("Duplicate inputs to p-term");
+            }
+
+            if inputs_true_set.intersection(&inputs_comp_set).count() != 0 {
+                return Err("True and compliment input to p-term");
             }
         }
 

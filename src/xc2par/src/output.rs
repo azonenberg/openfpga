@@ -56,7 +56,7 @@ pub enum NetlistMacrocell {
 }
 
 pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
-    placements: &[(PARZIAAssignment, PARPTermZIARows)]) -> XC2Bitstream {
+    placements: &[PARZIAAssignment]) -> XC2Bitstream {
 
     // FIXME: Don't hardcode
     let mut fb_bits = [XC2BitstreamFB::default(); 2];
@@ -69,21 +69,20 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
     // ZIA settings
     for fb_i in 0..placements.len() {
         for zia_i in 0..INPUTS_PER_ANDTERM {
-            fb_bits[fb_i].zia_bits[zia_i] = XC2ZIARowPiece{selected: placements[fb_i].0[zia_i]};
+            fb_bits[fb_i].zia_bits[zia_i] = XC2ZIARowPiece{selected: placements[fb_i][zia_i]};
         }
     }
 
     // AND terms
-    for fb_i in 0..placements.len() {
-        for andterm_i in 0..ANDTERMS_PER_FB {
-            let andterm_rows = &placements[fb_i].1[andterm_i];
+    for andterm in g.pterms.iter() {
+        let fb_i = andterm.loc.unwrap().fb as usize;
+        let andterm_i = andterm.loc.unwrap().i as usize;
 
-            for &x in &andterm_rows.0 {
-                fb_bits[fb_i].and_terms[andterm_i].input[x as usize] = true;
-            }
-            for &x in &andterm_rows.1 {
-                fb_bits[fb_i].and_terms[andterm_i].input_b[x as usize] = true;
-            }
+        for &x in &andterm.inputs_true_zia {
+            fb_bits[fb_i].and_terms[andterm_i].input[x as usize] = true;
+        }
+        for &x in &andterm.inputs_comp_zia {
+            fb_bits[fb_i].and_terms[andterm_i].input_b[x as usize] = true;
         }
     }
 
