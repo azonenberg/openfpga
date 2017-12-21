@@ -43,7 +43,6 @@ pub enum PARMCAssignment {
 }
 
 type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
-type PARPTermAssignment = [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB];
 pub type PARZIAAssignment = [XC2ZIAInput; INPUTS_PER_ANDTERM];
 
 // TODO: LOC constraints for not-macrocell stuff
@@ -436,7 +435,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
 }
 
 pub enum AndTermAssignmentResult {
-    Success(PARPTermAssignment),
+    Success,
     FailurePtermConflict(u32),
     FailurePtermExceeded(u32),
 }
@@ -594,7 +593,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
         }
     }
 
-    AndTermAssignmentResult::Success(ret)
+    AndTermAssignmentResult::Success
 }
 
 pub enum ZIAAssignmentResult {
@@ -603,27 +602,68 @@ pub enum ZIAAssignmentResult {
     FailureUnroutable(u32),
 }
 
-pub fn try_assign_zia(g: &mut InputGraph, pterm_assignment: &PARPTermAssignment) -> ZIAAssignmentResult {
+pub fn try_assign_zia(g: &mut InputGraph, mc_assignment: &PARFBAssignment) -> ZIAAssignmentResult {
     let mut ret_zia = [XC2ZIAInput::One; INPUTS_PER_ANDTERM];
     let mut input_to_row_map = HashMap::new();
+
+    // Collect the p-terms that will be used by this FB
+    let mut collected_pterms = Vec::new();
+    for mc_i in 0..MCS_PER_FB {
+        if let PARMCAssignment::MC(mc_g_idx) = mc_assignment[mc_i].0 {
+            // FIXME: Ugly code duplication
+            let this_mc = &g.mcs.get(mc_g_idx);
+
+            if let Some(ref io_bits) = this_mc.io_bits {
+                if let Some(InputGraphIOOEType::PTerm(oe_idx)) = io_bits.oe {
+                    collected_pterms.push(oe_idx);
+                }
+            }
+
+            if let Some(ref xor_bits) = this_mc.xor_bits {
+                if let Some(ptc_node_idx) = xor_bits.andterm_input {
+                    collected_pterms.push(ptc_node_idx);
+                }
+
+                for &andterm_node_idx in &xor_bits.orterm_inputs {
+                    collected_pterms.push(andterm_node_idx);
+                }
+            }
+
+            if let Some(ref reg_bits) = this_mc.reg_bits {
+                if let Some(ptc_node_idx) = reg_bits.ce_input {
+                    collected_pterms.push(ptc_node_idx);
+                }
+
+                if let InputGraphRegClockType::PTerm(clk_node_idx) = reg_bits.clk_input {
+                    collected_pterms.push(clk_node_idx);
+                }
+
+                if let Some(InputGraphRegRSType::PTerm(set_node_idx)) = reg_bits.set_input {
+                    collected_pterms.push(set_node_idx);
+                }
+
+                if let Some(InputGraphRegRSType::PTerm(reset_node_idx)) = reg_bits.reset_input {
+                    collected_pterms.push(reset_node_idx);
+                }
+            }
+        }
+    }
 
     // Collect the inputs that need to go into this FB
     let mut collected_inputs_vec = Vec::new();
     let mut collected_inputs_set = HashSet::new();
-    for pt_i in 0..ANDTERMS_PER_FB {
-        if pterm_assignment[pt_i].is_some() {
-            let andterm_node = g.pterms.get(pterm_assignment[pt_i].unwrap());
-            for &input_net in &andterm_node.inputs_true {
-                if !collected_inputs_set.contains(&input_net) {
-                    collected_inputs_set.insert(input_net);
-                    collected_inputs_vec.push(input_net);
-                }
+    for &pt_idx in &collected_pterms {
+        let andterm_node = g.pterms.get(pt_idx);
+        for &input_net in &andterm_node.inputs_true {
+            if !collected_inputs_set.contains(&input_net) {
+                collected_inputs_set.insert(input_net);
+                collected_inputs_vec.push(input_net);
             }
-            for &input_net in &andterm_node.inputs_comp {
-                if !collected_inputs_set.contains(&input_net) {
-                    collected_inputs_set.insert(input_net);
-                    collected_inputs_vec.push(input_net);
-                }
+        }
+        for &input_net in &andterm_node.inputs_comp {
+            if !collected_inputs_set.contains(&input_net) {
+                collected_inputs_set.insert(input_net);
+                collected_inputs_vec.push(input_net);
             }
         }
     }
@@ -709,15 +749,13 @@ pub fn try_assign_zia(g: &mut InputGraph, pterm_assignment: &PARPTermAssignment)
     }
 
     // Now we search through all the inputs and record which row they go in
-    for pt_i in 0..ANDTERMS_PER_FB {
-        if pterm_assignment[pt_i].is_some() {
-            let andterm_node = g.pterms.get_mut(pterm_assignment[pt_i].unwrap());
-            for input_net in &andterm_node.inputs_true {
-                andterm_node.inputs_true_zia.push(*input_to_row_map.get(input_net).unwrap());
-            }
-            for input_net in &andterm_node.inputs_comp {
-                andterm_node.inputs_comp_zia.push(*input_to_row_map.get(input_net).unwrap());
-            }
+    for &pt_idx in &collected_pterms {
+        let andterm_node = g.pterms.get_mut(pt_idx);
+        for input_net in &andterm_node.inputs_true {
+            andterm_node.inputs_true_zia.push(*input_to_row_map.get(input_net).unwrap());
+        }
+        for input_net in &andterm_node.inputs_comp {
+            andterm_node.inputs_comp_zia.push(*input_to_row_map.get(input_net).unwrap());
         }
     }
 
@@ -738,9 +776,9 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
     // Can we even assign p-terms?
     let pterm_assign_result = try_assign_andterms(g, &mc_assignments[fb_i as usize], fb_i);
     match pterm_assign_result {
-        AndTermAssignmentResult::Success(andterm_assignment) => {
+        AndTermAssignmentResult::Success => {
             // Can we assign the ZIA?
-            let zia_assign_result = try_assign_zia(g, &andterm_assignment);
+            let zia_assign_result = try_assign_zia(g, &mc_assignments[fb_i as usize]);
             match zia_assign_result {
                 ZIAAssignmentResult::Success(zia_assignment) =>
                     return FBAssignmentResult::Success(zia_assignment),
@@ -768,9 +806,9 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
             mc_assignments[fb_i as usize][mc_i].0 = PARMCAssignment::None;
             let new_failing_score;
             match try_assign_andterms(g, &mc_assignments[fb_i as usize], fb_i) {
-                AndTermAssignmentResult::Success(andterm_assignment) => {
+                AndTermAssignmentResult::Success => {
                     // Can we assign the ZIA?
-                    match try_assign_zia(g, &andterm_assignment) {
+                    match try_assign_zia(g, &mc_assignments[fb_i as usize]) {
                         ZIAAssignmentResult::Success(..) => {
                             new_failing_score = 0;
                         },
