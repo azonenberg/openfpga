@@ -56,7 +56,7 @@ pub enum NetlistMacrocell {
 }
 
 pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
-    placements: &[(PARFBAssignment, PARPTermAssignment, PARZIAAssignment, PARPTermZIARows)]) -> XC2Bitstream {
+    placements: &[(PARFBAssignment, PARZIAAssignment, PARPTermZIARows)]) -> XC2Bitstream {
 
     // FIXME: Don't hardcode
     let mut fb_bits = [XC2BitstreamFB::default(); 2];
@@ -69,14 +69,14 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
     // ZIA settings
     for fb_i in 0..placements.len() {
         for zia_i in 0..INPUTS_PER_ANDTERM {
-            fb_bits[fb_i].zia_bits[zia_i] = XC2ZIARowPiece{selected: placements[fb_i].2[zia_i]};
+            fb_bits[fb_i].zia_bits[zia_i] = XC2ZIARowPiece{selected: placements[fb_i].1[zia_i]};
         }
     }
 
     // AND terms
     for fb_i in 0..placements.len() {
         for andterm_i in 0..ANDTERMS_PER_FB {
-            let andterm_rows = &placements[fb_i].3[andterm_i];
+            let andterm_rows = &placements[fb_i].2[andterm_i];
 
             for &x in &andterm_rows.0 {
                 fb_bits[fb_i].and_terms[andterm_i].input[x as usize] = true;

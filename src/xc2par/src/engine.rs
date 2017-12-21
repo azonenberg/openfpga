@@ -747,7 +747,7 @@ pub fn try_assign_zia(g: &InputGraph, pterm_assignment: &PARPTermAssignment) -> 
 }
 
 pub enum FBAssignmentResult {
-    Success((PARPTermAssignment, PARZIAAssignment, PARPTermZIARows)),
+    Success((PARZIAAssignment, PARPTermZIARows)),
     // macrocell assignment mc, score
     Failure(Vec<(u32, u32)>),
 }
@@ -765,7 +765,7 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
             let zia_assign_result = try_assign_zia(g, &andterm_assignment);
             match zia_assign_result {
                 ZIAAssignmentResult::Success(zia_assignment) =>
-                    return FBAssignmentResult::Success((andterm_assignment, zia_assignment.0, zia_assignment.1)),
+                    return FBAssignmentResult::Success((zia_assignment.0, zia_assignment.1)),
                 ZIAAssignmentResult::FailureTooManyInputs(x) => {
                     base_failing_score = x;
                 },
@@ -990,7 +990,6 @@ pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
 
 pub enum PARResult {
     Success(Vec<(PARFBAssignment,
-        PARPTermAssignment,
         PARZIAAssignment,
         PARPTermZIARows)>),
     FailureSanity(PARSanityResult),
@@ -1024,8 +1023,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         for fb_i in 0..2 {
             let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32);
             match fb_assign_result {
-                FBAssignmentResult::Success((pterm, zia, zia_pterm)) => {
-                    par_results_per_fb[fb_i] = Some((pterm, zia, zia_pterm));
+                FBAssignmentResult::Success((zia, zia_pterm)) => {
+                    par_results_per_fb[fb_i] = Some((zia, zia_pterm));
                 },
                 FBAssignmentResult::Failure(fail_vec) => {
                     for (mc, score) in fail_vec {
@@ -1041,8 +1040,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             let mut ret = Vec::new();
             for i in 0..2 {
                 let result_i = std::mem::replace(&mut par_results_per_fb[i], None);
-                let (pterm, zia, zia_pterm) = result_i.unwrap();
-                ret.push((macrocell_placement[i], pterm, zia, zia_pterm));
+                let (zia, zia_pterm) = result_i.unwrap();
+                ret.push((macrocell_placement[i], zia, zia_pterm));
             }
 
             return PARResult::Success(ret);
