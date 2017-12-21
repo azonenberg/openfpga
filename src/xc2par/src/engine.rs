@@ -607,13 +607,24 @@ pub fn try_assign_zia(g: &mut InputGraph, pterm_assignment: &PARPTermAssignment)
     let mut ret_zia = [XC2ZIAInput::One; INPUTS_PER_ANDTERM];
     let mut input_to_row_map = HashMap::new();
 
-    // Collect the inputs that need to go into this FB. Duplicates have already been checked for earlier
-    let mut collected_inputs_vec: Vec<InputGraphPTermInput> = Vec::new();
+    // Collect the inputs that need to go into this FB
+    let mut collected_inputs_vec = Vec::new();
+    let mut collected_inputs_set = HashSet::new();
     for pt_i in 0..ANDTERMS_PER_FB {
         if pterm_assignment[pt_i].is_some() {
             let andterm_node = g.pterms.get(pterm_assignment[pt_i].unwrap());
-            collected_inputs_vec.extend(&andterm_node.inputs_true);
-            collected_inputs_vec.extend(&andterm_node.inputs_comp);
+            for &input_net in &andterm_node.inputs_true {
+                if !collected_inputs_set.contains(&input_net) {
+                    collected_inputs_set.insert(input_net);
+                    collected_inputs_vec.push(input_net);
+                }
+            }
+            for &input_net in &andterm_node.inputs_comp {
+                if !collected_inputs_set.contains(&input_net) {
+                    collected_inputs_set.insert(input_net);
+                    collected_inputs_vec.push(input_net);
+                }
+            }
         }
     }
 
