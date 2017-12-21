@@ -43,6 +43,8 @@ pub enum PARMCAssignment {
 }
 
 type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
+// fb, mc, pininput?
+type PARFBAssignLoc = (u32, u32, bool);
 pub type PARZIAAssignment = [XC2ZIAInput; INPUTS_PER_ANDTERM];
 
 // TODO: LOC constraints for not-macrocell stuff
@@ -434,6 +436,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
     Some(ret)
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum AndTermAssignmentResult {
     Success,
     FailurePtermConflict(u32),
@@ -762,85 +765,88 @@ pub fn try_assign_zia(g: &mut InputGraph, mc_assignment: &PARFBAssignment) -> ZI
     ZIAAssignmentResult::Success(ret_zia)
 }
 
+enum FBAssignmentResultInner {
+    Success(PARZIAAssignment),
+    // badness
+    Failure(u32),
+}
+
 pub enum FBAssignmentResult {
     Success(PARZIAAssignment),
     // macrocell assignment mc, score
     Failure(Vec<(u32, u32)>),
 }
 
-// FIXME: mutable assignments is a hack
-pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment], fb_i: u32) -> FBAssignmentResult {
-    let base_failing_score;
+fn try_assign_fb_inner(g: &mut InputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32) -> FBAssignmentResultInner {
+    let mut failing_score = 0;
     // TODO: Weight factors?
 
     // Can we even assign p-terms?
     let pterm_assign_result = try_assign_andterms(g, &mc_assignments[fb_i as usize], fb_i);
-    match pterm_assign_result {
-        AndTermAssignmentResult::Success => {
-            // Can we assign the ZIA?
-            let zia_assign_result = try_assign_zia(g, &mc_assignments[fb_i as usize]);
-            match zia_assign_result {
-                ZIAAssignmentResult::Success(zia_assignment) =>
-                    return FBAssignmentResult::Success(zia_assignment),
-                ZIAAssignmentResult::FailureTooManyInputs(x) => {
-                    base_failing_score = x;
-                },
-                ZIAAssignmentResult::FailureUnroutable(x) => {
-                    base_failing_score = x;
-                },
-            }
-        },
-        AndTermAssignmentResult::FailurePtermConflict(x) => {
-            base_failing_score = x;
-        },
-        AndTermAssignmentResult::FailurePtermExceeded(x) => {
-            base_failing_score = x;
-        },
-    }
+    let zia_assign_result = try_assign_zia(g, &mc_assignments[fb_i as usize]);
 
-    // If we got here, there was a failure. Delete one macrocell at a time and see what happens.
-    let mut failure_scores = Vec::new();
-    for mc_i in 0..MCS_PER_FB {
-        let old_assign = mc_assignments[fb_i as usize][mc_i].0;
-        if let PARMCAssignment::MC(_) = old_assign {
-            mc_assignments[fb_i as usize][mc_i].0 = PARMCAssignment::None;
-            let new_failing_score;
-            match try_assign_andterms(g, &mc_assignments[fb_i as usize], fb_i) {
-                AndTermAssignmentResult::Success => {
-                    // Can we assign the ZIA?
-                    match try_assign_zia(g, &mc_assignments[fb_i as usize]) {
-                        ZIAAssignmentResult::Success(..) => {
-                            new_failing_score = 0;
-                        },
-                        ZIAAssignmentResult::FailureTooManyInputs(x) => {
-                            new_failing_score = x;
-                        },
-                        ZIAAssignmentResult::FailureUnroutable(x) => {
-                            new_failing_score = x;
-                        },
-                    }
-                },
-                AndTermAssignmentResult::FailurePtermConflict(x) => {
-                    new_failing_score = x;
-                },
-                AndTermAssignmentResult::FailurePtermExceeded(x) => {
-                    new_failing_score = x;
-                },
-            }
-
-            if new_failing_score > base_failing_score {
-                panic!("scores are borked");
-            }
-
-            if base_failing_score - new_failing_score > 0 {
-                // Deleting this thing made the score better
-                failure_scores.push((mc_i as u32, (base_failing_score - new_failing_score) as u32));
-            }
-            mc_assignments[fb_i as usize][mc_i].0 = old_assign;
+    if pterm_assign_result == AndTermAssignmentResult::Success {
+        if let ZIAAssignmentResult::Success(zia_assignment) = zia_assign_result {
+            return FBAssignmentResultInner::Success(zia_assignment);
         }
     }
 
-    FBAssignmentResult::Failure(failure_scores)
+    match pterm_assign_result {
+        AndTermAssignmentResult::FailurePtermConflict(x) => {
+            failing_score += x;
+        },
+        AndTermAssignmentResult::FailurePtermExceeded(x) => {
+            failing_score += x;
+        },
+        _ => unreachable!(),
+    }
+
+    match zia_assign_result {
+        ZIAAssignmentResult::FailureTooManyInputs(x) => {
+            failing_score += x;
+        },
+        ZIAAssignmentResult::FailureUnroutable(x) => {
+            failing_score += x;
+        },
+        _ => unreachable!(),
+    }
+
+    FBAssignmentResultInner::Failure(failing_score)
+}
+
+pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment], fb_i: u32,
+    constraint_violations: &mut HashMap<PARFBAssignLoc, u32>) -> FBAssignmentResult {
+    let initial_assign_result = try_assign_fb_inner(g, mc_assignments, fb_i);
+
+    match initial_assign_result {
+        FBAssignmentResultInner::Success(x) => FBAssignmentResult::Success(x),
+        FBAssignmentResultInner::Failure(base_failing_score) => {
+            // Not a success. Delete one macrocell at a time and see what happens.
+            let mut failure_scores = Vec::new();
+            for mc_i in 0..MCS_PER_FB {
+                let old_assign = mc_assignments[fb_i as usize][mc_i].0;
+                if let PARMCAssignment::MC(_) = old_assign {
+                    mc_assignments[fb_i as usize][mc_i].0 = PARMCAssignment::None;
+                    let new_failing_score = match try_assign_fb_inner(g, mc_assignments, fb_i) {
+                        FBAssignmentResultInner::Success(_) => 0,
+                        FBAssignmentResultInner::Failure(x) => x,
+                    };
+
+                    if new_failing_score > base_failing_score {
+                        panic!("scores are borked");
+                    }
+
+                    if base_failing_score - new_failing_score > 0 {
+                        // Deleting this thing made the score better (as opposed to no change)
+                        failure_scores.push((mc_i as u32, (base_failing_score - new_failing_score) as u32));
+                    }
+                    mc_assignments[fb_i as usize][mc_i].0 = old_assign;
+                }
+            }
+
+            FBAssignmentResult::Failure(failure_scores)
+        }
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -1035,7 +1041,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         let mut bad_candidates = Vec::new();
         let mut bad_score_sum = 0;
         for fb_i in 0..2 {
-            let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32);
+            let mut xxx = HashMap::new();
+            let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32, &mut xxx);
             match fb_assign_result {
                 FBAssignmentResult::Success(zia) => {
                     par_results_per_fb[fb_i] = Some(zia);
@@ -1123,7 +1130,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
 
                 // Now score
-                match try_assign_fb(g, &mut macrocell_placement, cand_fb_i as u32) {
+                let mut xxx = HashMap::new();
+                match try_assign_fb(g, &mut macrocell_placement, cand_fb_i as u32, &mut xxx) {
                     FBAssignmentResult::Success(..) => {
                         // Do nothing, don't need to change badness (will be 0 if was 0)
                     },
