@@ -42,8 +42,8 @@ pub enum PARMCAssignment {
     Banned,
 }
 
-pub type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
-pub type PARPTermAssignment = [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB];
+type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
+type PARPTermAssignment = [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB];
 pub type PARZIAAssignment = [XC2ZIAInput; INPUTS_PER_ANDTERM];
 pub type PARPTermZIARows = [(Vec<u32>, Vec<u32>); ANDTERMS_PER_FB];
 
@@ -989,7 +989,7 @@ pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
 }
 
 pub enum PARResult {
-    Success(Vec<(PARFBAssignment,
+    Success(Vec<(
         PARZIAAssignment,
         PARPTermZIARows)>),
     FailureSanity(PARSanityResult),
@@ -1041,7 +1041,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             for i in 0..2 {
                 let result_i = std::mem::replace(&mut par_results_per_fb[i], None);
                 let (zia, zia_pterm) = result_i.unwrap();
-                ret.push((macrocell_placement[i], zia, zia_pterm));
+                ret.push((zia, zia_pterm));
             }
 
             return PARResult::Success(ret);
