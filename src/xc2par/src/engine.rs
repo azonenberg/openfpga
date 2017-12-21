@@ -435,13 +435,6 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
     Some(ret)
 }
 
-fn compare_andterms(g: &InputGraph, a: ObjPoolIndex<InputGraphPTerm>, b: ObjPoolIndex<InputGraphPTerm>) -> bool {
-    let a_ = g.pterms.get(a);
-    let b_ = g.pterms.get(b);
-
-    a_ == b_
-}
-
 pub enum AndTermAssignmentResult {
     Success(PARPTermAssignment),
     FailurePtermConflict(u32),
@@ -614,24 +607,13 @@ pub fn try_assign_zia(g: &mut InputGraph, pterm_assignment: &PARPTermAssignment)
     let mut ret_zia = [XC2ZIAInput::One; INPUTS_PER_ANDTERM];
     let mut input_to_row_map = HashMap::new();
 
-    // Collect the inputs that need to go into this FB
-    let mut collected_inputs_vec = Vec::new();
-    let mut collected_inputs_set = HashSet::new();
+    // Collect the inputs that need to go into this FB. Duplicates have already been checked for earlier
+    let mut collected_inputs_vec: Vec<InputGraphPTermInput> = Vec::new();
     for pt_i in 0..ANDTERMS_PER_FB {
         if pterm_assignment[pt_i].is_some() {
             let andterm_node = g.pterms.get(pterm_assignment[pt_i].unwrap());
-            for &input_net in &andterm_node.inputs_true {
-                if !collected_inputs_set.contains(&input_net) {
-                    collected_inputs_set.insert(input_net);
-                    collected_inputs_vec.push(input_net);
-                }
-            }
-            for &input_net in &andterm_node.inputs_comp {
-                if !collected_inputs_set.contains(&input_net) {
-                    collected_inputs_set.insert(input_net);
-                    collected_inputs_vec.push(input_net);
-                }
-            }
+            collected_inputs_vec.extend(&andterm_node.inputs_true);
+            collected_inputs_vec.extend(&andterm_node.inputs_comp);
         }
     }
 
@@ -854,7 +836,7 @@ pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
             if let Some(oe_node_idx) = reg_bits.ce_input {
                 if let Some(ref xor_bits) = mc.xor_bits {
                     if let Some(xor_ptc_node_idx) = xor_bits.andterm_input {
-                        if !compare_andterms(g, oe_node_idx, xor_ptc_node_idx) {
+                        if g.pterms.get(oe_node_idx) != g.pterms.get(xor_ptc_node_idx) {
                             return PARSanityResult::FailurePTCNeverSatisfiable;
                         }
                     }
