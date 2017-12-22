@@ -42,6 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //! to IOBs.) As a special exception, the smallest 32-macrocell devices also have one single input-only pin that is
 //! connected directly into the global interconnect and does not have a corresponding macrocell.
 
+#[macro_use]
+extern crate serde_derive;
+
 /// The number of inputs from the ZIA interconnect into the AND gate section of each PLA.
 /// This is an unchangeable property of the architecture of the CPLD.
 pub const INPUTS_PER_ANDTERM: usize = 40;

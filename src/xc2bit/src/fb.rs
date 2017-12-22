@@ -34,13 +34,15 @@ use util::{b2s};
 use zia::{zia_get_row_width};
 
 /// Represents a collection of all the parts that make up one function block
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize)]
 pub struct XC2BitstreamFB {
     /// The AND terms of the PLA part of the function block
+    #[serde(serialize_with = "<[_]>::serialize")]
     pub and_terms: [XC2PLAAndTerm; ANDTERMS_PER_FB],
     /// The OR terms of the PLA part of the function block
     pub or_terms: [XC2PLAOrTerm; MCS_PER_FB],
     /// The inputs to the function block from the ZIA
+    #[serde(serialize_with = "<[_]>::serialize")]
     pub zia_bits: [XC2ZIARowPiece; INPUTS_PER_ANDTERM],
     /// The macrocells of the function block
     pub mcs: [XC2Macrocell; MCS_PER_FB],

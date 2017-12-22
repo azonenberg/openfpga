@@ -35,7 +35,7 @@ extern crate yosys_netlist_json;
 
 use objpool::*;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum IntermediateGraphNodeVariant {
     AndTerm {
         inputs_true: Vec<ObjPoolIndex<IntermediateGraphNet>>,

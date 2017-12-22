@@ -38,6 +38,7 @@ use util::{b2s};
 use zia::{zia_get_row_width};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
+#[derive(Serialize)]
 pub struct XC2Bitstream {
     pub speed_grade: XC2Speed,
     pub package: XC2Package,
@@ -389,7 +390,7 @@ impl XC2Bitstream {
 
 /// Represents the configuration of the global nets. Coolrunner-II parts have various global control signals that have
 /// dedicated low-skew paths.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
 pub struct XC2GlobalNets {
     /// Controls whether the three global clock nets are enabled or not
     pub gck_enable: [bool; 3],
@@ -546,7 +547,7 @@ impl XC2GlobalNets {
 }
 
 /// Possible clock divide ratios for the programmable clock divider
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
 pub enum XC2ClockDivRatio {
     Div2,
     Div4,
@@ -560,7 +561,7 @@ pub enum XC2ClockDivRatio {
 
 /// Represents the configuration of the programmable clock divider in devices with 128 macrocells or more. This is
 /// hard-wired onto the GCK2 clock pin.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
 pub struct XC2ClockDiv {
     /// Ratio that input clock is divided by
     pub div_ratio: XC2ClockDivRatio,
@@ -651,6 +652,7 @@ impl XC2ClockDiv {
 }
 
 /// The actual bitstream bits for each possible Coolrunner-II part
+#[derive(Copy, Clone, Serialize)]
 pub enum XC2BitstreamBits {
     XC2C32 {
         fb: [XC2BitstreamFB; 2],
@@ -690,6 +692,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C64 {
         fb: [XC2BitstreamFB; 4],
+        #[serde(serialize_with = "<[_]>::serialize")]
         iobs: [XC2MCSmallIOB; 64],
         global_nets: XC2GlobalNets,
         /// Voltage level control
@@ -703,6 +706,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C64A {
         fb: [XC2BitstreamFB; 4],
+        #[serde(serialize_with = "<[_]>::serialize")]
         iobs: [XC2MCSmallIOB; 64],
         global_nets: XC2GlobalNets,
         /// Legacy voltage level control, should almost always be set to `false`
@@ -724,6 +728,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C128 {
         fb: [XC2BitstreamFB; 8],
+        #[serde(serialize_with = "<[_]>::serialize")]
         iobs: [XC2MCLargeIOB; 100],
         global_nets: XC2GlobalNets,
         clock_div: XC2ClockDiv,
@@ -742,6 +747,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C256 {
         fb: [XC2BitstreamFB; 16],
+        #[serde(serialize_with = "<[_]>::serialize")]
         iobs: [XC2MCLargeIOB; 184],
         global_nets: XC2GlobalNets,
         clock_div: XC2ClockDiv,
@@ -760,6 +766,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C384 {
         fb: [XC2BitstreamFB; 24],
+        #[serde(serialize_with = "<[_]>::serialize")]
         iobs: [XC2MCLargeIOB; 240],
         global_nets: XC2GlobalNets,
         clock_div: XC2ClockDiv,
@@ -778,6 +785,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C512 {
         fb: [XC2BitstreamFB; 32],
+        #[serde(serialize_with = "<[_]>::serialize")]
         iobs: [XC2MCLargeIOB; 270],
         global_nets: XC2GlobalNets,
         clock_div: XC2ClockDiv,

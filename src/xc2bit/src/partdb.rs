@@ -74,7 +74,7 @@ impl XC2Device {
 }
 
 /// Possible speed grades
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
 pub enum XC2Speed {
     Speed4,
     Speed5,
@@ -96,7 +96,7 @@ impl fmt::Display for XC2Speed {
 }
 
 /// Possible physical packages
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
 pub enum XC2Package {
     PC44,
     QFG32,

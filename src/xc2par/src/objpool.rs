@@ -27,7 +27,7 @@ use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::slice::{Iter, IterMut};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct ObjPoolIndex<T> {
     i: usize,
     type_marker: PhantomData<T>
