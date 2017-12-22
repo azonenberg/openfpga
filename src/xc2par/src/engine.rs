@@ -818,6 +818,38 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
     constraint_violations: &mut HashMap<PARFBAssignLoc, u32>) -> FBAssignmentResult {
     let initial_assign_result = try_assign_fb_inner(g, mc_assignments, fb_i);
 
+    // Check for pairing violations
+    // TODO: Fix copypasta
+    // XXX: Explain why this doesn't need the "remove and try again" logic?
+    for mc_i in 0..MCS_PER_FB {
+        if let PARMCAssignment::MC(mc_idx_0) = mc_assignments[fb_i as usize][mc_i].0 {
+            if let PARMCAssignment::MC(mc_idx_1) = mc_assignments[fb_i as usize][mc_i].1 {
+                let type_0 = g.mcs.get(mc_idx_0).get_type();
+                let type_1 = g.mcs.get(mc_idx_1).get_type();
+                match (type_0, type_1) {
+                    (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedComb) |
+                    (InputGraphMacrocellType::PinInputReg, InputGraphMacrocellType::BuriedComb) => {},
+                    (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedReg) => {
+                        if g.mcs.get(mc_idx_0).xor_feedback_used {
+                            // Conflict
+                            let x = constraint_violations.insert((fb_i, mc_i as u32, false), 1);
+                            assert!(x.is_none());
+                            let x = constraint_violations.insert((fb_i, mc_i as u32, true), 1);
+                            assert!(x.is_none());
+                        }
+                    },
+                    _ => {
+                        // Conflict
+                        let x = constraint_violations.insert((fb_i, mc_i as u32, false), 1);
+                        assert!(x.is_none());
+                        let x = constraint_violations.insert((fb_i, mc_i as u32, true), 1);
+                        assert!(x.is_none());
+                    }
+                }
+            }
+        }
+    }
+
     match initial_assign_result {
         FBAssignmentResultInner::Success(x) => FBAssignmentResult::Success(x),
         FBAssignmentResultInner::Failure(base_failing_score) => {
@@ -838,7 +870,13 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
 
                     if base_failing_score - new_failing_score > 0 {
                         // Deleting this thing made the score better (as opposed to no change)
-                        failure_scores.push((mc_i as u32, (base_failing_score - new_failing_score) as u32));
+                        let my_loc = (fb_i, mc_i as u32, false);
+                        let old_score = if constraint_violations.contains_key(&my_loc) {
+                            *constraint_violations.get(&my_loc).unwrap()
+                        } else { 0 };
+                        let new_score = (base_failing_score - new_failing_score) as u32;
+                        constraint_violations.insert(my_loc, old_score + new_score);
+                        failure_scores.push((mc_i as u32, new_score));
                     }
                     mc_assignments[fb_i as usize][mc_i].0 = old_assign;
                 }
