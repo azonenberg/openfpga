@@ -771,12 +771,6 @@ enum FBAssignmentResultInner {
     Failure(u32),
 }
 
-pub enum FBAssignmentResult {
-    Success(PARZIAAssignment),
-    // macrocell assignment mc, score
-    Failure(Vec<(u32, u32)>),
-}
-
 fn try_assign_fb_inner(g: &mut InputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32) -> FBAssignmentResultInner {
     let mut failing_score = 0;
     // TODO: Weight factors?
@@ -815,7 +809,7 @@ fn try_assign_fb_inner(g: &mut InputGraph, mc_assignments: &[PARFBAssignment], f
 }
 
 pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment], fb_i: u32,
-    constraint_violations: &mut HashMap<PARFBAssignLoc, u32>) -> FBAssignmentResult {
+    constraint_violations: &mut HashMap<PARFBAssignLoc, u32>) -> Option<PARZIAAssignment> {
     let initial_assign_result = try_assign_fb_inner(g, mc_assignments, fb_i);
 
     // Check for pairing violations
@@ -851,10 +845,9 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
     }
 
     match initial_assign_result {
-        FBAssignmentResultInner::Success(x) => FBAssignmentResult::Success(x),
+        FBAssignmentResultInner::Success(x) => Some(x),
         FBAssignmentResultInner::Failure(base_failing_score) => {
             // Not a success. Delete one macrocell at a time and see what happens.
-            let mut failure_scores = Vec::new();
             for mc_i in 0..MCS_PER_FB {
                 let old_assign = mc_assignments[fb_i as usize][mc_i].0;
                 if let PARMCAssignment::MC(_) = old_assign {
@@ -876,13 +869,12 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
                         } else { 0 };
                         let new_score = (base_failing_score - new_failing_score) as u32;
                         constraint_violations.insert(my_loc, old_score + new_score);
-                        failure_scores.push((mc_i as u32, new_score));
                     }
                     mc_assignments[fb_i as usize][mc_i].0 = old_assign;
                 }
             }
 
-            FBAssignmentResult::Failure(failure_scores)
+            None
         }
     }
 }
@@ -1079,13 +1071,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
     let mut best_placement_violations = HashMap::new();
     for fb_i in 0..2 {
         let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32, &mut best_placement_violations);
-        match fb_assign_result {
-            FBAssignmentResult::Success(zia) => {
-                best_par_results_per_fb[fb_i] = Some(zia);
-            },
-            FBAssignmentResult::Failure(_) => {
-            }
-        }
+        best_par_results_per_fb[fb_i] = fb_assign_result;
     }
     let mut best_placement_violations_score = 0;
     for x in best_placement_violations.values() {
@@ -1194,13 +1180,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 for fb_i in 0..2 {
                     let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32,
                         &mut new_placement_violations);
-                    match fb_assign_result {
-                        FBAssignmentResult::Success(zia) => {
-                            par_results_per_fb[fb_i] = Some(zia);
-                        },
-                        FBAssignmentResult::Failure(_) => {
-                        }
-                    }
+                    par_results_per_fb[fb_i] = fb_assign_result;
                 }
                 let mut new_placement_violations_score = 0;
                 for x in new_placement_violations.values() {
