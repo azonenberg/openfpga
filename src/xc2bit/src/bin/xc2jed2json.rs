@@ -194,7 +194,7 @@ fn main() {
                     let toplevel_wire = {
                         let orig_wire_idx = {*wire_idx.borrow()};
                         let mut output_netlist_mut = output_netlist.borrow_mut();
-                        let mut netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
+                        let netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
                         netnames.insert(format!("PAD_FB{}_{}", fb + 1, mc + 1), Netname {
                             hide_name: 0,
                             bits: vec![BitVal::N(orig_wire_idx)],
@@ -209,7 +209,7 @@ fn main() {
                     // Construct the toplevel port
                     {
                         let mut output_netlist_mut = output_netlist.borrow_mut();
-                        let mut ports = &mut output_netlist_mut.modules.get_mut("top").unwrap().ports;
+                        let ports = &mut output_netlist_mut.modules.get_mut("top").unwrap().ports;
                         ports.insert(format!("PAD_FB{}_{}", fb + 1, mc + 1), Port {
                             direction: if has_output {PortDirection::InOut} else {PortDirection::Input},
                             bits: vec![BitVal::N(toplevel_wire)],
@@ -234,7 +234,7 @@ fn main() {
                     let toplevel_wire = {
                         let orig_wire_idx = {*wire_idx.borrow()};
                         let mut output_netlist_mut = output_netlist.borrow_mut();
-                        let mut netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
+                        let netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
                         netnames.insert(String::from("INPAD"), Netname {
                             hide_name: 0,
                             bits: vec![BitVal::N(orig_wire_idx)],
@@ -249,7 +249,7 @@ fn main() {
                     // Construct the toplevel port
                     {
                         let mut output_netlist_mut = output_netlist.borrow_mut();
-                        let mut ports = &mut output_netlist_mut.modules.get_mut("top").unwrap().ports;
+                        let ports = &mut output_netlist_mut.modules.get_mut("top").unwrap().ports;
                         ports.insert(String::from("INPAD"), Port {
                             direction: PortDirection::Input,
                             bits: vec![BitVal::N(toplevel_wire)],
@@ -382,7 +382,7 @@ fn main() {
 
             // Create the cell in the output module
             let mut output_netlist_mut = output_netlist.borrow_mut();
-            let mut cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
+            let cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
             cells.insert(node_name.to_owned(), Cell {
                 hide_name: 0,
                 cell_type,
@@ -401,7 +401,7 @@ fn main() {
             // Create the net in the output module
             let orig_wire_idx = {*wire_idx.borrow()};
             let mut output_netlist_mut = output_netlist.borrow_mut();
-            let mut netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
+            let netnames = &mut output_netlist_mut.modules.get_mut("top").unwrap().netnames;
             netnames.insert(wire_name.to_owned(), Netname {
                 hide_name: 0,
                 bits: vec![BitVal::N(orig_wire_idx)],
@@ -531,17 +531,17 @@ fn main() {
 
                         let zia_row = zia_table_get_row(bitstream.bits.device_type(), port_idx as usize);
                         // FIXME: extra_data checking is a hack
-                        if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize].selected ==
+                        if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize] ==
                             XC2ZIAInput::One && extra_data == (0, 0) {
 
                             should_add_andterm_wire = true;
                             wire_bitval = BitVal::S(SpecialBit::_1);
-                        } else if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize].selected ==
+                        } else if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize] ==
                             XC2ZIAInput::Zero && extra_data == (0, 0) {
 
                             should_add_andterm_wire = true;
                             wire_bitval = BitVal::S(SpecialBit::_0);
-                        } else if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize].selected ==
+                        } else if bitstream.bits.get_fb()[fb as usize].zia_bits[port_idx as usize] ==
                             zia_row[extra_data.0 as usize] {
 
                             let zia_choice = zia_row[extra_data.0 as usize];
@@ -741,7 +741,7 @@ fn main() {
             };
 
             let mut output_netlist_mut = output_netlist.borrow_mut();
-            let mut cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
+            let cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
             if should_add_wire {
                 cells.get_mut(node_name).unwrap().connections.get_mut(port_name).unwrap().push(wire_bitval);
             }
@@ -754,7 +754,7 @@ fn main() {
     // We need to fill in some widths here
     {
         let mut output_netlist_mut = output_netlist.borrow_mut();
-        let mut cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
+        let cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
         for (_, cell) in cells.iter_mut() {
             if cell.cell_type == "ANDTERM" {
                 cell.parameters.insert(String::from("TRUE_INP"),
@@ -773,7 +773,7 @@ fn main() {
     // Fix up driving multiple nets (none of our cells have outputs with width > 1)
     {
         let mut output_netlist_mut = output_netlist.borrow_mut();
-        let mut cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
+        let cells = &mut output_netlist_mut.modules.get_mut("top").unwrap().cells;
         let mut cells_to_add = HashMap::new();
         for (cell_name, cell) in cells.iter_mut() {
             let out = match cell.cell_type.as_ref() {
