@@ -741,11 +741,10 @@ impl IntermediateGraph {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
-pub struct AssignedLocationInner {
+pub struct AssignedLocation {
     pub fb: u32,
     pub i: u32,
 }
-pub type AssignedLocation = Option<AssignedLocationInner>;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum InputGraphIOInputType {
@@ -810,7 +809,7 @@ pub struct InputGraphXor {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphMacrocell {
-    pub loc: AssignedLocation,
+    pub loc: Option<AssignedLocation>,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
     pub io_bits: Option<InputGraphIOBuf>,
@@ -843,7 +842,7 @@ pub type InputGraphPTermInput = (InputGraphPTermInputType, ObjPoolIndex<InputGra
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphPTerm {
-    pub loc: AssignedLocation,
+    pub loc: Option<AssignedLocation>,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
     pub inputs_true: Vec<InputGraphPTermInput>,
@@ -854,7 +853,7 @@ pub struct InputGraphPTerm {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgClk {
-    pub loc: AssignedLocation,
+    pub loc: Option<AssignedLocation>,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
@@ -862,7 +861,7 @@ pub struct InputGraphBufgClk {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgGTS {
-    pub loc: AssignedLocation,
+    pub loc: Option<AssignedLocation>,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
@@ -871,7 +870,7 @@ pub struct InputGraphBufgGTS {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgGSR {
-    pub loc: AssignedLocation,
+    pub loc: Option<AssignedLocation>,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
     pub input: ObjPoolIndex<InputGraphMacrocell>,

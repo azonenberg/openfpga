@@ -69,7 +69,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
                 }
                 gck_used.insert(idx);
 
-                gck.loc = Some(AssignedLocationInner {
+                gck.loc = Some(AssignedLocation {
                     fb: 0,
                     i: idx,
                 });
@@ -84,7 +84,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
                 }
                 gts_used.insert(idx);
 
-                gts.loc = Some(AssignedLocationInner {
+                gts.loc = Some(AssignedLocation {
                     fb: 0,
                     i: idx,
                 });
@@ -99,7 +99,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
                 }
                 gsr_used.insert(idx);
 
-                gsr.loc = Some(AssignedLocationInner {
+                gsr.loc = Some(AssignedLocation {
                     fb: 0,
                     i: idx,
                 });
@@ -144,7 +144,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
             }
 
             gck_used.insert(idx.unwrap());
-            gck.loc = Some(AssignedLocationInner {
+            gck.loc = Some(AssignedLocation {
                 fb: 0,
                 i: idx.unwrap(),
             });
@@ -184,7 +184,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
             }
 
             gts_used.insert(idx.unwrap());
-            gts.loc = Some(AssignedLocationInner {
+            gts.loc = Some(AssignedLocation {
                 fb: 0,
                 i: idx.unwrap(),
             });
@@ -224,7 +224,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
             }
 
             gsr_used.insert(idx.unwrap());
-            gsr.loc = Some(AssignedLocationInner {
+            gsr.loc = Some(AssignedLocation {
                 fb: 0,
                 i: idx.unwrap(),
             });
@@ -418,14 +418,14 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
         for mc_i in 0..MCS_PER_FB {
             if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].0 {
                 let mc = g.mcs.get_mut(mc_idx);
-                mc.loc = Some(AssignedLocationInner{
+                mc.loc = Some(AssignedLocation{
                     fb: fb_i,
                     i: mc_i as u32,
                 });
             }
             if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].1 {
                 let mc = g.mcs.get_mut(mc_idx);
-                mc.loc = Some(AssignedLocationInner{
+                mc.loc = Some(AssignedLocation{
                     fb: fb_i,
                     i: mc_i as u32,
                 });
@@ -458,42 +458,42 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
             if let Some(ref io_bits) = this_mc.io_bits {
                 if let Some(InputGraphIOOEType::PTerm(oe_idx)) = io_bits.oe {
                     // This goes into PTB or CTE
-                    let ptb_idx = get_ptb(mc_i as u32) as usize;
-                    pterm_and_candidate_sites.push((oe_idx, vec![ptb_idx as u32, CTE]));
+                    let ptb_idx = get_ptb(mc_i as u32);
+                    pterm_and_candidate_sites.push((oe_idx, vec![ptb_idx, CTE]));
                 }
             }
 
             if let Some(ref xor_bits) = this_mc.xor_bits {
                 if let Some(ptc_node_idx) = xor_bits.andterm_input {
                     // This goes into PTC
-                    let ptc_idx = get_ptc(mc_i as u32) as usize;
-                    pterm_and_candidate_sites.push((ptc_node_idx, vec![ptc_idx as u32]));
+                    let ptc_idx = get_ptc(mc_i as u32);
+                    pterm_and_candidate_sites.push((ptc_node_idx, vec![ptc_idx]));
                 }
             }
 
             if let Some(ref reg_bits) = this_mc.reg_bits {
                 if let Some(ptc_node_idx) = reg_bits.ce_input {
                     // This goes into PTC
-                    let ptc_idx = get_ptc(mc_i as u32) as usize;
-                    pterm_and_candidate_sites.push((ptc_node_idx, vec![ptc_idx as u32]));
+                    let ptc_idx = get_ptc(mc_i as u32);
+                    pterm_and_candidate_sites.push((ptc_node_idx, vec![ptc_idx]));
                 }
 
                 if let InputGraphRegClockType::PTerm(clk_node_idx) = reg_bits.clk_input {
                     // This goes into PTC or CTC
-                    let ptc_idx = get_ptc(mc_i as u32) as usize;
-                    pterm_and_candidate_sites.push((clk_node_idx, vec![ptc_idx as u32, CTC]));
+                    let ptc_idx = get_ptc(mc_i as u32);
+                    pterm_and_candidate_sites.push((clk_node_idx, vec![ptc_idx, CTC]));
                 }
 
                 if let Some(InputGraphRegRSType::PTerm(set_node_idx)) = reg_bits.set_input {
                     // This goes into PTA or CTS
-                    let pta_idx = get_pta(mc_i as u32) as usize;
-                    pterm_and_candidate_sites.push((set_node_idx, vec![pta_idx as u32, CTS]));
+                    let pta_idx = get_pta(mc_i as u32);
+                    pterm_and_candidate_sites.push((set_node_idx, vec![pta_idx, CTS]));
                 }
 
                 if let Some(InputGraphRegRSType::PTerm(reset_node_idx)) = reg_bits.reset_input {
                     // This goes into PTA or CTR
-                    let pta_idx = get_pta(mc_i as u32) as usize;
-                    pterm_and_candidate_sites.push((reset_node_idx, vec![pta_idx as u32, CTR]));
+                    let pta_idx = get_pta(mc_i as u32);
+                    pterm_and_candidate_sites.push((reset_node_idx, vec![pta_idx, CTR]));
                 }
             }
         }
@@ -593,7 +593,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
     for pterm in g.pterms.iter_mut() {
         // Only do this update if this lookup succeeds. This lookup will fail for terms that are in other FBs
         if let Some(&mc_i) = existing_pterm_map.get(pterm) {
-            pterm.loc = Some(AssignedLocationInner{
+            pterm.loc = Some(AssignedLocation{
                 fb: fb_i,
                 i: mc_i as u32,
             });
@@ -1107,14 +1107,14 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             for mc_i in 0..MCS_PER_FB {
                 if let PARMCAssignment::MC(mc_idx) = best_placement[fb_i][mc_i].0 {
                     let mc = g.mcs.get_mut(mc_idx);
-                    mc.loc = Some(AssignedLocationInner{
+                    mc.loc = Some(AssignedLocation{
                         fb: fb_i as u32,
                         i: mc_i as u32,
                     });
                 }
                 if let PARMCAssignment::MC(mc_idx) = best_placement[fb_i][mc_i].1 {
                     let mc = g.mcs.get_mut(mc_idx);
-                    mc.loc = Some(AssignedLocationInner{
+                    mc.loc = Some(AssignedLocation{
                         fb: fb_i as u32,
                         i: mc_i as u32,
                     });
@@ -1205,13 +1205,13 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
                 // Swap the "loc" field as well
                 if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
-                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocationInner {
+                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
                         fb: cand_fb as u32,
                         i: cand_mc as u32,
                     });
                 }
                 if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
-                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocationInner {
+                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
                         fb: move_fb,
                         i: move_mc,
                     });
@@ -1261,13 +1261,13 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
                 // Swap the "loc" field as well
                 if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
-                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocationInner {
+                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
                         fb: move_fb,
                         i: move_mc,
                     });
                 }
                 if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
-                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocationInner {
+                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
                         fb: cand_fb as u32,
                         i: cand_mc as u32,
                     });
