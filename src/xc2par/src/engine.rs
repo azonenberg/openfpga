@@ -824,24 +824,36 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
             if let PARMCAssignment::MC(mc_idx_1) = mc_assignments[fb_i as usize][mc_i].1 {
                 let type_0 = g.mcs.get(mc_idx_0).get_type();
                 let type_1 = g.mcs.get(mc_idx_1).get_type();
+                let loc_0 = g.mcs.get(mc_idx_0).requested_loc;
+                let loc_1 = g.mcs.get(mc_idx_1).requested_loc;
                 match (type_0, type_1) {
                     (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedComb) |
                     (InputGraphMacrocellType::PinInputReg, InputGraphMacrocellType::BuriedComb) => {},
                     (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedReg) => {
                         if g.mcs.get(mc_idx_0).xor_feedback_used {
                             // Conflict
-                            let x = constraint_violations.insert((fb_i, mc_i as u32, false), 1);
-                            assert!(x.is_none());
-                            let x = constraint_violations.insert((fb_i, mc_i as u32, true), 1);
-                            assert!(x.is_none());
+
+                            // If not fully-LOCed, then add it as a conflict
+                            if !(loc_0.is_some() && loc_0.unwrap().i.is_some()) {
+                                let x = constraint_violations.insert((fb_i, mc_i as u32, false), 1);
+                                assert!(x.is_none());
+                            }
+                            if !(loc_1.is_some() && loc_1.unwrap().i.is_some()) {
+                                let x = constraint_violations.insert((fb_i, mc_i as u32, true), 1);
+                                assert!(x.is_none());
+                            }
                         }
                     },
                     _ => {
                         // Conflict
-                        let x = constraint_violations.insert((fb_i, mc_i as u32, false), 1);
-                        assert!(x.is_none());
-                        let x = constraint_violations.insert((fb_i, mc_i as u32, true), 1);
-                        assert!(x.is_none());
+                        if !(loc_0.is_some() && loc_0.unwrap().i.is_some()) {
+                            let x = constraint_violations.insert((fb_i, mc_i as u32, false), 1);
+                            assert!(x.is_none());
+                        }
+                        if !(loc_1.is_some() && loc_1.unwrap().i.is_some()) {
+                            let x = constraint_violations.insert((fb_i, mc_i as u32, true), 1);
+                            assert!(x.is_none());
+                        }
                     }
                 }
             }
@@ -854,7 +866,13 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
             // Not a success. Delete one macrocell at a time and see what happens.
             for mc_i in 0..MCS_PER_FB {
                 let old_assign = mc_assignments[fb_i as usize][mc_i].0;
-                if let PARMCAssignment::MC(_) = old_assign {
+                if let PARMCAssignment::MC(mc_idx) = old_assign {
+                    let loc = g.mcs.get(mc_idx).requested_loc;
+                    // If fully-LOCed, then we cannot move this, so don't even try deleting it or scoring it.
+                    if loc.is_some() && loc.unwrap().i.is_some() {
+                        continue;
+                    }
+
                     mc_assignments[fb_i as usize][mc_i].0 = PARMCAssignment::None;
                     let new_failing_score = match try_assign_fb_inner(g, mc_assignments, fb_i) {
                         FBAssignmentResultInner::Success(_) => 0,
@@ -1131,9 +1149,33 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         }
         let ((move_fb, move_mc, move_pininput), _) = bad_candidates[move_cand_idx];
 
+        // Are we moving something that is constrained to a particular FB?
+        let to_move_mc_idx = if !move_pininput {
+            if let PARMCAssignment::MC(mc_idx) = macrocell_placement[move_fb as usize][move_mc as usize].0 {
+                mc_idx
+            } else {
+                unreachable!();
+            }
+        } else {
+            if let PARMCAssignment::MC(mc_idx) = macrocell_placement[move_fb as usize][move_mc as usize].1 {
+                mc_idx
+            } else {
+                unreachable!();
+            }
+        };
+        let to_move_req_fb = if let Some(RequestedLocation{fb, ..}) = g.mcs.get(to_move_mc_idx).requested_loc {
+            Some(fb)
+        } else {
+            None
+        };
+
         // Find min-conflicts site
         let mut new_best_placement_violations_score = None;
         for cand_fb in 0..2 {
+            if to_move_req_fb.is_some() && to_move_req_fb.unwrap() != cand_fb as u32 {
+                continue;
+            }
+
             for cand_mc in 0..MCS_PER_FB {
                 // This site is not usable
                 if !move_pininput {
