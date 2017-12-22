@@ -35,7 +35,7 @@ use mc::{MC_TO_ROW_MAP_LARGE};
 /// Mux selection for the ZIA input from this I/O pin's input. The ZIA input can be chosen to come from either the
 /// input pin directly or from the output of the register in the macrocell corresponding to this I/O pin. The latter
 /// is used to allow for buried combinatorial feedback in a macrocell without "wasting" the register.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum XC2IOBZIAMode {
     Disabled,
     PAD,
@@ -63,7 +63,7 @@ impl XC2IOBZIAMode {
 }
 
 /// Mode selection for the I/O pin's output buffer. See the Xilinx Coolrunner-II documentation for more information.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum XC2IOBOBufMode {
     Disabled,
     PushPull,
@@ -113,7 +113,7 @@ impl XC2IOBOBufMode {
 }
 
 /// Represents an I/O pin on "small" (32 and 64 macrocell) devices.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct XC2MCSmallIOB {
     /// Mux selection for the ZIA input for this pin
     pub zia_mode: XC2IOBZIAMode,
@@ -368,7 +368,7 @@ impl XC2MCSmallIOB {
 }
 
 /// Input mode selection on larger parts with VREF
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum XC2IOBIbufMode {
     /// This input buffer is not using VREF, and it is also not using the Schmitt trigger
     NoVrefNoSt,
@@ -403,7 +403,7 @@ impl XC2IOBIbufMode {
 }
 
 /// Represents an I/O pin on "large" (128 and greater macrocell) devices.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct XC2MCLargeIOB {
     /// Mux selection for the ZIA input for this pin
     pub zia_mode: XC2IOBZIAMode,
@@ -693,7 +693,7 @@ impl XC2MCLargeIOB {
 }
 
 /// Represents the one additional special input-only pin on 32-macrocell devices.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct XC2ExtraIBuf {
     pub schmitt_trigger: bool,
     pub termination_enabled: bool,

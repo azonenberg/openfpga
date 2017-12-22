@@ -27,7 +27,7 @@ use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::slice::{Iter, IterMut};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ObjPoolIndex<T> {
     i: usize,
     type_marker: PhantomData<T>
@@ -61,7 +61,7 @@ impl<T> ObjPoolIndex<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ObjPool<T> {
     storage: Vec<T>
 }

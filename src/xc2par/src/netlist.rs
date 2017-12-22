@@ -35,7 +35,7 @@ extern crate yosys_netlist_json;
 
 use objpool::*;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum IntermediateGraphNodeVariant {
     AndTerm {
         inputs_true: Vec<ObjPoolIndex<IntermediateGraphNet>>,
@@ -95,7 +95,7 @@ pub enum IntermediateGraphNodeVariant {
     },
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct RequestedLocation {
     pub fb: u32,
     pub i: Option<u32>,
@@ -141,21 +141,21 @@ impl RequestedLocation {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct IntermediateGraphNode {
     pub variant: IntermediateGraphNodeVariant,
     pub name: String,
     pub location: Option<RequestedLocation>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct IntermediateGraphNet {
     pub name: Option<String>,
     pub source: Option<(ObjPoolIndex<IntermediateGraphNode>, &'static str)>,
     pub sinks: Vec<(ObjPoolIndex<IntermediateGraphNode>, &'static str)>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct IntermediateGraph {
     pub nodes: ObjPool<IntermediateGraphNode>,
     pub nets: ObjPool<IntermediateGraphNet>,
