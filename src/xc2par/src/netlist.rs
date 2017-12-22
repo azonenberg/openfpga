@@ -148,14 +148,15 @@ pub struct IntermediateGraphNode {
     pub location: Option<RequestedLocation>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
+// FIXME: String kinda sucks but is the easiest way to get this to be deserializable
 pub struct IntermediateGraphNet {
     pub name: Option<String>,
-    pub source: Option<(ObjPoolIndex<IntermediateGraphNode>, &'static str)>,
-    pub sinks: Vec<(ObjPoolIndex<IntermediateGraphNode>, &'static str)>,
+    pub source: Option<(ObjPoolIndex<IntermediateGraphNode>, String)>,
+    pub sinks: Vec<(ObjPoolIndex<IntermediateGraphNode>, String)>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct IntermediateGraph {
     pub nodes: ObjPool<IntermediateGraphNode>,
     pub nets: ObjPool<IntermediateGraphNet>,
@@ -545,61 +546,61 @@ impl IntermediateGraph {
             match node.variant {
                 IntermediateGraphNodeVariant::AndTerm{ref inputs_true, ref inputs_comp, output} => {
                     for &input in inputs_true {
-                        nets.get_mut(input).sinks.push((node_idx, "IN"));
+                        nets.get_mut(input).sinks.push((node_idx, String::from("IN")));
                     }
                     for &input in inputs_comp {
-                        nets.get_mut(input).sinks.push((node_idx, "IN"));
+                        nets.get_mut(input).sinks.push((node_idx, String::from("IN")));
                     }
-                    set_net_source(&mut nets, output, (node_idx, "OUT"))?;
+                    set_net_source(&mut nets, output, (node_idx, String::from("OUT")))?;
                 },
                 IntermediateGraphNodeVariant::OrTerm{ref inputs, output} => {
                     for &input in inputs {
-                        nets.get_mut(input).sinks.push((node_idx, "IN"));
+                        nets.get_mut(input).sinks.push((node_idx, String::from("IN")));
                     }
-                    set_net_source(&mut nets, output, (node_idx, "OUT"))?;
+                    set_net_source(&mut nets, output, (node_idx, String::from("OUT")))?;
                 },
                 IntermediateGraphNodeVariant::Xor{orterm_input, andterm_input, output, ..} => {
                     if orterm_input.is_some() {
-                        nets.get_mut(orterm_input.unwrap()).sinks.push((node_idx, "IN_ORTERM"));
+                        nets.get_mut(orterm_input.unwrap()).sinks.push((node_idx, String::from("IN_ORTERM")));
                     }
                     if andterm_input.is_some() {
-                        nets.get_mut(andterm_input.unwrap()).sinks.push((node_idx, "IN_PTC"));
+                        nets.get_mut(andterm_input.unwrap()).sinks.push((node_idx, String::from("IN_PTC")));
                     }
-                    set_net_source(&mut nets, output, (node_idx, "OUT"))?;
+                    set_net_source(&mut nets, output, (node_idx, String::from("OUT")))?;
                 },
                 IntermediateGraphNodeVariant::Reg{set_input, reset_input, ce_input, dt_input, clk_input, output, ..} => {
                     if set_input.is_some() {
-                        nets.get_mut(set_input.unwrap()).sinks.push((node_idx, "S"));
+                        nets.get_mut(set_input.unwrap()).sinks.push((node_idx, String::from("S")));
                     }
                     if reset_input.is_some() {
-                        nets.get_mut(reset_input.unwrap()).sinks.push((node_idx, "R"));
+                        nets.get_mut(reset_input.unwrap()).sinks.push((node_idx, String::from("R")));
                     }
                     if ce_input.is_some() {
-                        nets.get_mut(ce_input.unwrap()).sinks.push((node_idx, "CE"));
+                        nets.get_mut(ce_input.unwrap()).sinks.push((node_idx, String::from("CE")));
                     }
-                    nets.get_mut(dt_input).sinks.push((node_idx, "D/T"));
-                    nets.get_mut(clk_input).sinks.push((node_idx, "CLK"));
-                    set_net_source(&mut nets, output, (node_idx, "Q"))?;
+                    nets.get_mut(dt_input).sinks.push((node_idx, String::from("D/T")));
+                    nets.get_mut(clk_input).sinks.push((node_idx, String::from("CLK")));
+                    set_net_source(&mut nets, output, (node_idx, String::from("Q")))?;
                 },
                 IntermediateGraphNodeVariant::BufgClk{input, output, ..} |
                 IntermediateGraphNodeVariant::BufgGTS{input, output, ..} |
                 IntermediateGraphNodeVariant::BufgGSR{input, output, ..} => {
-                    nets.get_mut(input).sinks.push((node_idx, "I"));
-                    set_net_source(&mut nets, output, (node_idx, "O"))?;
+                    nets.get_mut(input).sinks.push((node_idx, String::from("I")));
+                    set_net_source(&mut nets, output, (node_idx, String::from("O")))?;
                 },
                 IntermediateGraphNodeVariant::IOBuf{input, oe, output, ..} => {
                     if input.is_some() {
-                        nets.get_mut(input.unwrap()).sinks.push((node_idx, "I"));
+                        nets.get_mut(input.unwrap()).sinks.push((node_idx, String::from("I")));
                     }
                     if oe.is_some() {
-                        nets.get_mut(oe.unwrap()).sinks.push((node_idx, "E"));
+                        nets.get_mut(oe.unwrap()).sinks.push((node_idx, String::from("E")));
                     }
                     if output.is_some() {
-                        set_net_source(&mut nets, output.unwrap(), (node_idx, "O"))?;
+                        set_net_source(&mut nets, output.unwrap(), (node_idx, String::from("O")))?;
                     }
                 },
                 IntermediateGraphNodeVariant::InBuf{output, ..} => {
-                    set_net_source(&mut nets, output, (node_idx, "O"))?;
+                    set_net_source(&mut nets, output, (node_idx, String::from("O")))?;
                 },
             }
         }
@@ -641,14 +642,14 @@ impl IntermediateGraph {
                 if input.is_some() {
                     let input = input.unwrap();
 
-                    let source_node_idx = self.nets.get(input).source.unwrap().0;
+                    let source_node_idx = self.nets.get(input).source.as_ref().unwrap().0;
                     let source_node = self.nodes.get(source_node_idx);
                     if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
                         // Combinatorial output
                         encountered_xors.insert(source_node_idx);
                     } else if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = source_node.variant {
                         // Registered output, look at the input into the register
-                        let source_node_idx = self.nets.get(dt_input).source.unwrap().0;
+                        let source_node_idx = self.nets.get(dt_input).source.as_ref().unwrap().0;
                         let source_node = self.nodes.get(source_node_idx);
                         if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
                             encountered_xors.insert(source_node_idx);
@@ -740,27 +741,27 @@ impl IntermediateGraph {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct AssignedLocationInner {
     pub fb: u32,
     pub i: u32,
 }
 pub type AssignedLocation = Option<AssignedLocationInner>;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum InputGraphIOInputType {
     Reg,
     Xor,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum InputGraphIOOEType {
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     GTS(ObjPoolIndex<InputGraphBufgGTS>),
     OpenDrain,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphIOBuf {
     pub input: Option<InputGraphIOInputType>,
     pub oe: Option<InputGraphIOOEType>,
@@ -770,25 +771,25 @@ pub struct InputGraphIOBuf {
     pub uses_data_gate: bool,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum InputGraphRegRSType {
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     GSR(ObjPoolIndex<InputGraphBufgGSR>),
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum InputGraphRegInputType {
     Pin,
     Xor,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum InputGraphRegClockType {
     PTerm(ObjPoolIndex<InputGraphPTerm>),
     GCK(ObjPoolIndex<InputGraphBufgClk>),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphReg {
     pub mode: XC2MCRegMode,
     pub clkinv: bool,
@@ -801,14 +802,14 @@ pub struct InputGraphReg {
     pub clk_input: InputGraphRegClockType,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphXor {
     pub orterm_inputs: Vec<ObjPoolIndex<InputGraphPTerm>>,
     pub andterm_input: Option<ObjPoolIndex<InputGraphPTerm>>,
     pub invert_out: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphMacrocell {
     pub loc: AssignedLocation,
     pub name: String,
@@ -832,7 +833,7 @@ pub enum InputGraphMacrocellType {
     BuriedReg,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum InputGraphPTermInputType {
     Reg,
     Xor,
@@ -841,7 +842,7 @@ pub enum InputGraphPTermInputType {
 
 pub type InputGraphPTermInput = (InputGraphPTermInputType, ObjPoolIndex<InputGraphMacrocell>);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphPTerm {
     pub loc: AssignedLocation,
     pub name: String,
@@ -852,7 +853,7 @@ pub struct InputGraphPTerm {
     pub inputs_comp_zia: Vec<u32>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgClk {
     pub loc: AssignedLocation,
     pub name: String,
@@ -860,7 +861,7 @@ pub struct InputGraphBufgClk {
     pub input: ObjPoolIndex<InputGraphMacrocell>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgGTS {
     pub loc: AssignedLocation,
     pub name: String,
@@ -869,7 +870,7 @@ pub struct InputGraphBufgGTS {
     pub invert: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgGSR {
     pub loc: AssignedLocation,
     pub name: String,
@@ -878,7 +879,7 @@ pub struct InputGraphBufgGSR {
     pub invert: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct InputGraph {
     pub mcs: ObjPool<InputGraphMacrocell>,
     pub pterms: ObjPool<InputGraphPTerm>,
@@ -1096,7 +1097,7 @@ impl InputGraph {
                                     return Err("broken open-drain connection");
                                 }
                                 // FIXME: Copypasta
-                                let input_n = s.g.nets.get(oe.unwrap()).source.unwrap().0;
+                                let input_n = s.g.nets.get(oe.unwrap()).source.as_ref().unwrap().0;
                                 let input_type = match s.g.nodes.get(input_n).variant {
                                     IntermediateGraphNodeVariant::Xor{..} => {
                                         Some(InputGraphIOInputType::Xor)
@@ -1117,7 +1118,7 @@ impl InputGraph {
                             } else if input.unwrap() == s.g.vdd_net {
                                 return Err("broken constant-1 IO");
                             } else {
-                                let input_n = s.g.nets.get(input.unwrap()).source.unwrap().0;
+                                let input_n = s.g.nets.get(input.unwrap()).source.as_ref().unwrap().0;
                                 let input_type = match s.g.nodes.get(input_n).variant {
                                     IntermediateGraphNodeVariant::Xor{..} => {
                                         Some(InputGraphIOInputType::Xor)
@@ -1150,7 +1151,7 @@ impl InputGraph {
                                 if old_input.is_some() && old_input.unwrap() == s.g.vss_net {
                                     Some(InputGraphIOOEType::OpenDrain)
                                 } else {
-                                    let oe_n = s.g.nets.get(oe.unwrap()).source.unwrap().0;
+                                    let oe_n = s.g.nets.get(oe.unwrap()).source.as_ref().unwrap().0;
                                     let oe_newg_n = process_one_intermed_node(s, oe_n)?;
                                     Some(match oe_newg_n {
                                         InputGraphAnyPoolIdx::PTerm(x) => InputGraphIOOEType::PTerm(x),
@@ -1207,7 +1208,7 @@ impl InputGraph {
                     // Visit OR gate
                     let mut orterm_inputs = Vec::new();
                     if orterm_input.is_some() {
-                        let or_n = s.g.nets.get(orterm_input.unwrap()).source.unwrap().0;
+                        let or_n = s.g.nets.get(orterm_input.unwrap()).source.as_ref().unwrap().0;
 
                         // This is manually inlined so that we don't need to add hacky extra logic to return the
                         // desired array of actual Pterms.
@@ -1218,7 +1219,7 @@ impl InputGraph {
 
                         if let IntermediateGraphNodeVariant::OrTerm{ref inputs, ..} = s.g.nodes.get(or_n).variant {
                             for x in inputs {
-                                let input_n = s.g.nets.get(*x).source.unwrap().0;
+                                let input_n = s.g.nets.get(*x).source.as_ref().unwrap().0;
                                 if let IntermediateGraphNodeVariant::AndTerm{..} =
                                     s.g.nodes.get(input_n).variant {} else {
 
@@ -1240,7 +1241,7 @@ impl InputGraph {
                     // Visit PTC
                     let ptc_input = {
                         if andterm_input.is_some() {
-                            let ptc_n = s.g.nets.get(andterm_input.unwrap()).source.unwrap().0;
+                            let ptc_n = s.g.nets.get(andterm_input.unwrap()).source.as_ref().unwrap().0;
                             let ptc_newg_n = process_one_intermed_node(s, ptc_n)?;
                             if let InputGraphAnyPoolIdx::PTerm(x) = ptc_newg_n {
                                 Some(x)
@@ -1271,7 +1272,7 @@ impl InputGraph {
 
                     let mut inputs_true_new = Vec::new();
                     for x in inputs_true {
-                        let input_n = s.g.nets.get(*x).source.unwrap().0;
+                        let input_n = s.g.nets.get(*x).source.as_ref().unwrap().0;
                         let input_type = match s.g.nodes.get(input_n).variant {
                             IntermediateGraphNodeVariant::Xor{..} => InputGraphPTermInputType::Xor,
                             IntermediateGraphNodeVariant::Reg{..} => InputGraphPTermInputType::Reg,
@@ -1301,7 +1302,7 @@ impl InputGraph {
 
                     let mut inputs_comp_new = Vec::new();
                     for x in inputs_comp {
-                        let input_n = s.g.nets.get(*x).source.unwrap().0;
+                        let input_n = s.g.nets.get(*x).source.as_ref().unwrap().0;
                         let input_type = match s.g.nodes.get(input_n).variant {
                             IntermediateGraphNodeVariant::Xor{..} => InputGraphPTermInputType::Xor,
                             IntermediateGraphNodeVariant::Reg{..} => InputGraphPTermInputType::Reg,
@@ -1354,7 +1355,7 @@ impl InputGraph {
 
                     // Visit data input
                     let dt_input = {
-                        let input_n = s.g.nets.get(dt_input).source.unwrap().0;
+                        let input_n = s.g.nets.get(dt_input).source.as_ref().unwrap().0;
                         let input_type = match s.g.nodes.get(input_n).variant {
                             IntermediateGraphNodeVariant::Xor{..} => {
                                 InputGraphRegInputType::Xor
@@ -1379,7 +1380,7 @@ impl InputGraph {
 
                     // Visit clock input
                     let clk_input = {
-                        let clk_n = s.g.nets.get(clk_input).source.unwrap().0;
+                        let clk_n = s.g.nets.get(clk_input).source.as_ref().unwrap().0;
                         let clk_newg_n = process_one_intermed_node(s, clk_n)?;
                         if let InputGraphAnyPoolIdx::PTerm(x) = clk_newg_n {
                             InputGraphRegClockType::PTerm(x)
@@ -1393,7 +1394,7 @@ impl InputGraph {
                     // Visit CE
                     let ce_input = {
                         if ce_input.is_some() {
-                            let ce_n = s.g.nets.get(ce_input.unwrap()).source.unwrap().0;
+                            let ce_n = s.g.nets.get(ce_input.unwrap()).source.as_ref().unwrap().0;
                             let ce_newg_n = process_one_intermed_node(s, ce_n)?;
                             if let InputGraphAnyPoolIdx::PTerm(x) = ce_newg_n {
                                 Some(x)
@@ -1413,7 +1414,7 @@ impl InputGraph {
                             } else if set_input.unwrap() == s.g.vdd_net {
                                 return Err("cannot tie set input high");
                             } else {
-                                let set_n = s.g.nets.get(set_input.unwrap()).source.unwrap().0;
+                                let set_n = s.g.nets.get(set_input.unwrap()).source.as_ref().unwrap().0;
                                 let set_newg_n = process_one_intermed_node(s, set_n)?;
                                 if let InputGraphAnyPoolIdx::PTerm(x) = set_newg_n {
                                     Some(InputGraphRegRSType::PTerm(x))
@@ -1436,7 +1437,7 @@ impl InputGraph {
                             } else if reset_input.unwrap() == s.g.vdd_net {
                                 return Err("cannot tie reset input high");
                             } else {
-                                let reset_n = s.g.nets.get(reset_input.unwrap()).source.unwrap().0;
+                                let reset_n = s.g.nets.get(reset_input.unwrap()).source.as_ref().unwrap().0;
                                 let reset_newg_n = process_one_intermed_node(s, reset_n)?;
                                 if let InputGraphAnyPoolIdx::PTerm(x) = reset_newg_n {
                                     Some(InputGraphRegRSType::PTerm(x))
@@ -1474,7 +1475,7 @@ impl InputGraph {
                 IntermediateGraphNodeVariant::BufgClk{input, ..} => {
                     // This always inserts a new item again
 
-                    let input_n = s.g.nets.get(input).source.unwrap().0;
+                    let input_n = s.g.nets.get(input).source.as_ref().unwrap().0;
                     match s.g.nodes.get(input_n).variant {
                         IntermediateGraphNodeVariant::IOBuf{..} |
                         IntermediateGraphNodeVariant::InBuf{..} => {},
@@ -1499,7 +1500,7 @@ impl InputGraph {
                     Ok(InputGraphAnyPoolIdx::BufgClk(newg_idx))
                 },
                 IntermediateGraphNodeVariant::BufgGTS{input, invert, ..} => {
-                    let input_n = s.g.nets.get(input).source.unwrap().0;
+                    let input_n = s.g.nets.get(input).source.as_ref().unwrap().0;
                     match s.g.nodes.get(input_n).variant {
                         IntermediateGraphNodeVariant::IOBuf{..} |
                         IntermediateGraphNodeVariant::InBuf{..} => {},
@@ -1525,7 +1526,7 @@ impl InputGraph {
                     Ok(InputGraphAnyPoolIdx::BufgGTS(newg_idx))
                 },
                 IntermediateGraphNodeVariant::BufgGSR{input, invert, ..} => {
-                    let input_n = s.g.nets.get(input).source.unwrap().0;
+                    let input_n = s.g.nets.get(input).source.as_ref().unwrap().0;
                     match s.g.nodes.get(input_n).variant {
                         IntermediateGraphNodeVariant::IOBuf{..} |
                         IntermediateGraphNodeVariant::InBuf{..} => {},

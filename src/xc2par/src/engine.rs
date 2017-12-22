@@ -35,7 +35,7 @@ use self::xc2bit::*;
 use *;
 use objpool::*;
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum PARMCAssignment {
     MC(ObjPoolIndex<InputGraphMacrocell>),
     None,
