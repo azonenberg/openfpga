@@ -439,16 +439,17 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum AndTermAssignmentResult {
     Success,
-    FailurePtermConflict(u32),
+    FailurePtermLOCUnsatisfiable(u32),
     FailurePtermExceeded(u32),
 }
 
 pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, fb_i: u32) -> AndTermAssignmentResult {
     let mut ret = [None; ANDTERMS_PER_FB];
 
+    let mut pterm_and_candidate_sites = Vec::new();
+
+    // Gather up all product terms and the locations at which they may be placed
     // Place all the special product terms
-    let mut pterm_conflicts = 0;
-    // TODO: Implement using special control product terms
     for mc_i in 0..MCS_PER_FB {
         if let PARMCAssignment::MC(mc_g_idx) = mc_assignment[mc_i].0 {
             // FIXME: Ugly code duplication
@@ -456,15 +457,9 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
 
             if let Some(ref io_bits) = this_mc.io_bits {
                 if let Some(InputGraphIOOEType::PTerm(oe_idx)) = io_bits.oe {
-                    // This goes into PTB
+                    // This goes into PTB or CTE
                     let ptb_idx = get_ptb(mc_i as u32) as usize;
-                    if ret[ptb_idx].is_none() {
-                        ret[ptb_idx] = Some(oe_idx);
-                    } else {
-                        if g.pterms.get(ret[ptb_idx].unwrap()) != g.pterms.get(oe_idx) {
-                            pterm_conflicts += 1;
-                        }
-                    }
+                    pterm_and_candidate_sites.push((oe_idx, vec![ptb_idx as u32, CTE]));
                 }
             }
 
@@ -472,13 +467,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
                 if let Some(ptc_node_idx) = xor_bits.andterm_input {
                     // This goes into PTC
                     let ptc_idx = get_ptc(mc_i as u32) as usize;
-                    if ret[ptc_idx].is_none() {
-                        ret[ptc_idx] = Some(ptc_node_idx);
-                    } else {
-                        if g.pterms.get(ret[ptc_idx].unwrap()) != g.pterms.get(ptc_node_idx) {
-                            pterm_conflicts += 1;
-                        }
-                    }
+                    pterm_and_candidate_sites.push((ptc_node_idx, vec![ptc_idx as u32]));
                 }
             }
 
@@ -486,59 +475,113 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
                 if let Some(ptc_node_idx) = reg_bits.ce_input {
                     // This goes into PTC
                     let ptc_idx = get_ptc(mc_i as u32) as usize;
-                    if ret[ptc_idx].is_none() {
-                        ret[ptc_idx] = Some(ptc_node_idx);
-                    } else {
-                        if g.pterms.get(ret[ptc_idx].unwrap()) != g.pterms.get(ptc_node_idx) {
-                            pterm_conflicts += 1;
-                        }
-                    }
+                    pterm_and_candidate_sites.push((ptc_node_idx, vec![ptc_idx as u32]));
                 }
 
                 if let InputGraphRegClockType::PTerm(clk_node_idx) = reg_bits.clk_input {
-                    // This goes into PTC
+                    // This goes into PTC or CTC
                     let ptc_idx = get_ptc(mc_i as u32) as usize;
-                    if ret[ptc_idx].is_none() {
-                        ret[ptc_idx] = Some(clk_node_idx);
-                    } else {
-                        if g.pterms.get(ret[ptc_idx].unwrap()) != g.pterms.get(clk_node_idx) {
-                            pterm_conflicts += 1;
-                        }
-                    }
+                    pterm_and_candidate_sites.push((clk_node_idx, vec![ptc_idx as u32, CTC]));
                 }
 
                 if let Some(InputGraphRegRSType::PTerm(set_node_idx)) = reg_bits.set_input {
-                    // This goes into PTA
+                    // This goes into PTA or CTS
                     let pta_idx = get_pta(mc_i as u32) as usize;
-                    if ret[pta_idx].is_none() {
-                        ret[pta_idx] = Some(set_node_idx);
-                    } else {
-                        if g.pterms.get(ret[pta_idx].unwrap()) != g.pterms.get(set_node_idx) {
-                            pterm_conflicts += 1;
-                        }
-                    }
+                    pterm_and_candidate_sites.push((set_node_idx, vec![pta_idx as u32, CTS]));
                 }
 
                 if let Some(InputGraphRegRSType::PTerm(reset_node_idx)) = reg_bits.reset_input {
-                    // This goes into PTA
+                    // This goes into PTA or CTR
                     let pta_idx = get_pta(mc_i as u32) as usize;
-                    if ret[pta_idx].is_none() {
-                        ret[pta_idx] = Some(reset_node_idx);
+                    pterm_and_candidate_sites.push((reset_node_idx, vec![pta_idx as u32, CTR]));
+                }
+            }
+        }
+    }
+
+    // Do a pass checking if the LOC constraints are satisfiable
+    // Note that we checked if the FB matches already
+    let mut loc_unsatisfiable = 0;
+    for &mut (pt_idx, ref mut cand_locs) in pterm_and_candidate_sites.iter_mut() {
+        let pt = g.pterms.get(pt_idx);
+        if let Some(RequestedLocation{i: Some(loc_i), ..}) = pt.requested_loc {
+            let mut found = false;
+            for &cand_i in cand_locs.iter() {
+                if cand_i == loc_i {
+                    found = true;
+                    break;
+                }
+            }
+
+            // XXX this LOC handling is a bit busted
+            if !found {
+                loc_unsatisfiable += 1;
+            } else {
+                *cand_locs = vec![loc_i];
+            }
+        }
+    }
+
+    if loc_unsatisfiable > 0 {
+        return AndTermAssignmentResult::FailurePtermLOCUnsatisfiable(loc_unsatisfiable);
+    }
+
+    // Finally, gather all of the remaining p-terms
+    for mc_i in 0..MCS_PER_FB {
+        if let PARMCAssignment::MC(mc_g_idx) = mc_assignment[mc_i].0 {
+            let this_mc = &g.mcs.get(mc_g_idx);
+
+            if let Some(ref xor_bits) = this_mc.xor_bits {
+                for &pt_idx in &xor_bits.orterm_inputs {
+                    let pt = g.pterms.get(pt_idx);
+
+                    if let Some(RequestedLocation{i: Some(loc_i), ..}) = pt.requested_loc {
+                        pterm_and_candidate_sites.push((pt_idx, vec![loc_i]));
                     } else {
-                        if g.pterms.get(ret[pta_idx].unwrap()) != g.pterms.get(reset_node_idx) {
-                            pterm_conflicts += 1;
+                        let mut all_sites = Vec::with_capacity(ANDTERMS_PER_FB);
+                        for i in 0..(ANDTERMS_PER_FB as u32) {
+                            all_sites.push(i);
                         }
+                        pterm_and_candidate_sites.push((pt_idx, all_sites));
                     }
                 }
             }
         }
     }
 
-    if pterm_conflicts > 0 {
-        return AndTermAssignmentResult::FailurePtermConflict(pterm_conflicts);
+    // Actually do the search to assign P-terms
+    // TODO: MRV/LCV?
+    let mut most_placed = 0;
+    fn backtrack_inner(g: &InputGraph, most_placed: &mut u32,
+        ret: &mut [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB],
+        candidate_sites: &[(ObjPoolIndex<InputGraphPTerm>, Vec<u32>)],
+        working_on_idx: usize) -> bool {
+
+        if working_on_idx == candidate_sites.len() {
+            // Complete assignment, we are done
+            return true;
+        }
+        let (pt_idx, ref candidate_sites_for_this_input) = candidate_sites[working_on_idx];
+        let pt = g.pterms.get(pt_idx);
+        for &candidate_pt_i in candidate_sites_for_this_input {
+            if ret[candidate_pt_i as usize].is_none() || (g.pterms.get(ret[candidate_pt_i as usize].unwrap()) == pt) {
+                // It is possible to assign to this site
+                ret[candidate_pt_i as usize] = Some(pt_idx);
+                *most_placed = working_on_idx as u32 + 1;
+                if backtrack_inner(g, most_placed, ret, candidate_sites, working_on_idx + 1) {
+                    return true;
+                }
+                ret[candidate_pt_i as usize] = None;
+            }
+        }
+        return false;
+    };
+
+    if !backtrack_inner(g, &mut most_placed, &mut ret, &pterm_and_candidate_sites, 0) {
+        return AndTermAssignmentResult::FailurePtermExceeded(pterm_and_candidate_sites.len() as u32 - most_placed);
     }
 
-    // Finally, place all of the remaining p-terms
+    // Update the "reverse" pointers
     let mut existing_pterm_map = HashMap::new();
     for pterm_i in 0..ANDTERMS_PER_FB {
         if let Some(pterm_idx) = ret[pterm_i] {
@@ -547,45 +590,6 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
         }
     }
 
-    let mut unfitted_pterms = 0;
-    for mc_i in 0..MCS_PER_FB {
-        if let PARMCAssignment::MC(mc_g_idx) = mc_assignment[mc_i].0 {
-            let this_mc = &g.mcs.get(mc_g_idx);
-
-            if let Some(ref xor_bits) = this_mc.xor_bits {
-                for &andterm_node_idx in &xor_bits.orterm_inputs {
-                    let this_pterm_obj = g.pterms.get(andterm_node_idx);
-
-                    if let Some(_) = existing_pterm_map.get(&this_pterm_obj) {
-                        // It is equal to this existing term, so we don't have to do anything
-                    } else {
-                        // Need to find an unused spot
-                        let mut idx = None;
-                        for pterm_i in 0..ANDTERMS_PER_FB {
-                            if ret[pterm_i].is_none() {
-                                idx = Some(pterm_i);
-                                break;
-                            }
-                        }
-
-                        if idx.is_none() {
-                            unfitted_pterms += 1;
-                        } else {
-                            // Put it here
-                            ret[idx.unwrap()] = Some(andterm_node_idx);
-                            existing_pterm_map.insert(this_pterm_obj.clone(), idx.unwrap());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if unfitted_pterms > 0 {
-        return AndTermAssignmentResult::FailurePtermExceeded(unfitted_pterms);
-    }
-
-    // Update the "reverse" pointers
     for pterm in g.pterms.iter_mut() {
         // Only do this update if this lookup succeeds. This lookup will fail for terms that are in other FBs
         if let Some(&mc_i) = existing_pterm_map.get(pterm) {
@@ -786,12 +790,12 @@ fn try_assign_fb_inner(g: &mut InputGraph, mc_assignments: &[PARFBAssignment], f
     }
 
     match pterm_assign_result {
-        AndTermAssignmentResult::FailurePtermConflict(x) => {
-            failing_score += x;
-        },
         AndTermAssignmentResult::FailurePtermExceeded(x) => {
             failing_score += x;
         },
+        AndTermAssignmentResult::FailurePtermLOCUnsatisfiable(x) => {
+            failing_score += x;
+        }
         _ => unreachable!(),
     }
 
