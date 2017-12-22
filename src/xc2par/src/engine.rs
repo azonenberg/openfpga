@@ -1070,35 +1070,55 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
     }
     let mut macrocell_placement = macrocell_placement.unwrap();
 
-    let mut par_results_per_fb = Vec::with_capacity(2);
+    // Score whatever we got out of the greedy placement
+    let mut best_par_results_per_fb = Vec::with_capacity(2);
     for _ in 0..2 {
-        par_results_per_fb.push(None);
+        best_par_results_per_fb.push(None);
+    }
+    let mut best_placement = macrocell_placement.clone();
+    let mut best_placement_violations = HashMap::new();
+    for fb_i in 0..2 {
+        let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32, &mut best_placement_violations);
+        match fb_assign_result {
+            FBAssignmentResult::Success(zia) => {
+                best_par_results_per_fb[fb_i] = Some(zia);
+            },
+            FBAssignmentResult::Failure(_) => {
+            }
+        }
+    }
+    let mut best_placement_violations_score = 0;
+    for x in best_placement_violations.values() {
+        best_placement_violations_score += x;
     }
 
     for _iter_count in 0..1000 {
-        let mut bad_candidates = Vec::new();
-        let mut bad_score_sum = 0;
-        for fb_i in 0..2 {
-            let mut xxx = HashMap::new();
-            let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32, &mut xxx);
-            match fb_assign_result {
-                FBAssignmentResult::Success(zia) => {
-                    par_results_per_fb[fb_i] = Some(zia);
-                },
-                FBAssignmentResult::Failure(fail_vec) => {
-                    for (mc, score) in fail_vec {
-                        bad_score_sum += score;
-                        bad_candidates.push((fb_i as u32, mc, score));
-                    }
+        // Update the "reverse" pointers
+        // TODO: Fix copypasta
+        for fb_i in 0..3 {
+            for mc_i in 0..MCS_PER_FB {
+                if let PARMCAssignment::MC(mc_idx) = best_placement[fb_i][mc_i].0 {
+                    let mc = g.mcs.get_mut(mc_idx);
+                    mc.loc = Some(AssignedLocationInner{
+                        fb: fb_i as u32,
+                        i: mc_i as u32,
+                    });
+                }
+                if let PARMCAssignment::MC(mc_idx) = best_placement[fb_i][mc_i].1 {
+                    let mc = g.mcs.get_mut(mc_idx);
+                    mc.loc = Some(AssignedLocationInner{
+                        fb: fb_i as u32,
+                        i: mc_i as u32,
+                    });
                 }
             }
         }
 
-        if bad_candidates.len() == 0 {
+        if best_placement_violations.len() == 0 {
             // It worked!
             let mut ret = Vec::new();
             for i in 0..2 {
-                let result_i = std::mem::replace(&mut par_results_per_fb[i], None);
+                let result_i = std::mem::replace(&mut best_par_results_per_fb[i], None);
                 let zia = result_i.unwrap();
                 ret.push(zia);
             }
@@ -1107,124 +1127,126 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         }
 
         // Here, we need to swap some stuff around
-        let mut move_cand_rand = prng.gen_range(0, bad_score_sum);
+        let mut bad_candidates = Vec::new();
+        for (&k, &v) in &best_placement_violations {
+            bad_candidates.push((k, v));
+        }
+
+        // Pick a candidate to move weighted by its badness
+        let mut move_cand_rand = prng.gen_range(0, best_placement_violations_score);
         let mut move_cand_idx = 0;
-        while move_cand_rand >= bad_candidates[move_cand_idx].2 {
-            move_cand_rand -= bad_candidates[move_cand_idx].2;
+        while move_cand_rand >= bad_candidates[move_cand_idx].1 {
+            move_cand_rand -= bad_candidates[move_cand_idx].1;
             move_cand_idx += 1;
         }
-        let (move_fb, move_mc, _) = bad_candidates[move_cand_idx];
+        let ((move_fb, move_mc, move_pininput), _) = bad_candidates[move_cand_idx];
 
         // Find min-conflicts site
-        let mut move_to_badness_vec = Vec::new();
-        let mut best_badness = None;
-        for cand_fb_i in 0..2 {
-            for cand_mc_i in 0..MCS_PER_FB {
+        let mut new_best_placement_violations_score = None;
+        for cand_fb in 0..2 {
+            for cand_mc in 0..MCS_PER_FB {
                 // This site is not usable
-                if macrocell_placement[cand_fb_i][cand_mc_i].0 == PARMCAssignment::Banned {
-                    continue;
-                }
-
-                let mut new_badness = 0;
-                // Does this violate a pairing constraint?
-                if let PARMCAssignment::MC(mc_cand_idx) = macrocell_placement[cand_fb_i][cand_mc_i].1 {
-                    let mc_cand = g.mcs.get(mc_cand_idx);
-                    let mc_move =
-                        if let PARMCAssignment::MC(x) = macrocell_placement[move_fb as usize][move_mc as usize].0 {
-                            g.mcs.get(x)
-                        } else {
-                            unreachable!();
-                        };
-
-                    match mc_move.get_type() {
-                        InputGraphMacrocellType::PinOutput => {
-                            new_badness = 1;
-                        },
-                        InputGraphMacrocellType::BuriedComb => {
-                            // Ok, do nothing
-                        },
-                        InputGraphMacrocellType::BuriedReg => {
-                            let has_comb_fb = mc_move.xor_feedback_used;
-                            match mc_cand.get_type() {
-                                InputGraphMacrocellType::PinInputReg => {
-                                    new_badness = 1;
-                                },
-                                InputGraphMacrocellType::PinInputUnreg => {
-                                    if has_comb_fb {
-                                        new_badness = 1;
-                                    }
-                                },
-                                _ => unreachable!(),
-                            }
-                        }
-                        _ => unreachable!(),
+                if !move_pininput {
+                    if macrocell_placement[cand_fb][cand_mc].0 == PARMCAssignment::Banned {
+                        continue;
+                    }
+                } else {
+                    if macrocell_placement[cand_fb][cand_mc].1 == PARMCAssignment::Banned {
+                        continue;
                     }
                 }
 
-                // The new site is possibly ok, so let's swap it there for now
-                let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].0;
-                let orig_cand_assignment = macrocell_placement[cand_fb_i][cand_mc_i].0;
-                macrocell_placement[cand_fb_i][cand_mc_i].0 = orig_move_assignment;
-                macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
+                // Swap it into this site
+                let (orig_move_assignment, orig_cand_assignment) = if !move_pininput {
+                    let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].0;
+                    let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].0;
+                    macrocell_placement[cand_fb][cand_mc].0 = orig_move_assignment;
+                    macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
+                    (orig_move_assignment, orig_cand_assignment)
+                } else {
+                    let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].1;
+                    let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].1;
+                    macrocell_placement[cand_fb][cand_mc].1 = orig_move_assignment;
+                    macrocell_placement[move_fb as usize][move_mc as usize].1 = orig_cand_assignment;
+                    (orig_move_assignment, orig_cand_assignment)
+                };
 
-                // Now score
-                let mut xxx = HashMap::new();
-                match try_assign_fb(g, &mut macrocell_placement, cand_fb_i as u32, &mut xxx) {
-                    FBAssignmentResult::Success(..) => {
-                        // Do nothing, don't need to change badness (will be 0 if was 0)
-                    },
-                    FBAssignmentResult::Failure(fail_vec) => {
-                        for (mc, score) in fail_vec {
-                            if mc == cand_mc_i as u32 {
-                                new_badness += score;
-                            }
-                            // XXX what happens if this condition never triggers?
+                // Swap the "loc" field as well
+                if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
+                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocationInner {
+                        fb: cand_fb as u32,
+                        i: cand_mc as u32,
+                    });
+                }
+                if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
+                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocationInner {
+                        fb: move_fb,
+                        i: move_mc,
+                    });
+                }
+
+                // Score what we've got
+                let mut par_results_per_fb = Vec::with_capacity(2);
+                for _ in 0..2 {
+                    par_results_per_fb.push(None);
+                }
+                let mut new_placement_violations = HashMap::new();
+                for fb_i in 0..2 {
+                    let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32,
+                        &mut new_placement_violations);
+                    match fb_assign_result {
+                        FBAssignmentResult::Success(zia) => {
+                            par_results_per_fb[fb_i] = Some(zia);
+                        },
+                        FBAssignmentResult::Failure(_) => {
                         }
                     }
                 }
-
-                // Remember it
-                move_to_badness_vec.push((cand_fb_i, cand_mc_i, new_badness));
-                if best_badness.is_none() || best_badness.unwrap() > new_badness {
-                    best_badness = Some(new_badness);
+                let mut new_placement_violations_score = 0;
+                for x in new_placement_violations.values() {
+                    new_placement_violations_score += x;
                 }
 
-                macrocell_placement[cand_fb_i][cand_mc_i].0 = orig_cand_assignment;
-                macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_move_assignment;
-            }
-        }
+                // Is it better? Remember it
+                if new_best_placement_violations_score.is_none() ||
+                    (new_placement_violations_score < new_best_placement_violations_score.unwrap()) {
 
-        // Now we need to get the candidates matching the lowest score
-        let mut move_final_candidates = Vec::new();
-        for x in move_to_badness_vec {
-            if x.2 == best_badness.unwrap() {
-                move_final_candidates.push((x.0, x.1));
-            }
-        }
+                    new_best_placement_violations_score = Some(new_placement_violations_score);
+                    best_placement = macrocell_placement.clone();
+                    best_placement_violations = new_placement_violations;
+                    best_par_results_per_fb = par_results_per_fb;
+                    best_placement_violations_score = new_placement_violations_score;
+                }
 
-        // Do the actual swap now
-        let move_final_candidates_rand_idx = prng.gen_range(0, move_final_candidates.len());
-        let (move_final_fb, move_final_mc) = move_final_candidates[move_final_candidates_rand_idx];
-        let final_orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].0;
-        let final_orig_cand_assignment = macrocell_placement[move_final_fb][move_final_mc].0;
-        macrocell_placement[move_final_fb][move_final_mc].0 = final_orig_move_assignment;
-        macrocell_placement[move_fb as usize][move_mc as usize].0 = final_orig_cand_assignment;
-        // Swap the "reverse" pointers as well
-        if let PARMCAssignment::MC(mc1_idx) = final_orig_move_assignment {
-            if let PARMCAssignment::MC(mc2_idx) = final_orig_cand_assignment {
-                let mc1_loc = g.mcs.get(mc1_idx).loc;
-                let mc2_loc = g.mcs.get(mc2_idx).loc;
-                {
-                    g.mcs.get_mut(mc2_idx).loc = mc1_loc;
+                // Swap it back
+                let (orig_move_assignment, orig_cand_assignment) = if !move_pininput {
+                    let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].0;
+                    let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].0;
+                    macrocell_placement[cand_fb][cand_mc].0 = orig_move_assignment;
+                    macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
+                    (orig_move_assignment, orig_cand_assignment)
+                } else {
+                    let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].1;
+                    let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].1;
+                    macrocell_placement[cand_fb][cand_mc].1 = orig_move_assignment;
+                    macrocell_placement[move_fb as usize][move_mc as usize].1 = orig_cand_assignment;
+                    (orig_move_assignment, orig_cand_assignment)
+                };
+
+                // Swap the "loc" field as well
+                if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
+                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocationInner {
+                        fb: move_fb,
+                        i: move_mc,
+                    });
                 }
-                {
-                    g.mcs.get_mut(mc1_idx).loc = mc2_loc;
+                if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
+                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocationInner {
+                        fb: cand_fb as u32,
+                        i: cand_mc as u32,
+                    });
                 }
-            } else {
-                unreachable!();
             }
-        } else {
-            unreachable!();
         }
     }
 
