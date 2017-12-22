@@ -42,7 +42,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
     // ZIA settings
     for fb_i in 0..placements.len() {
         for zia_i in 0..INPUTS_PER_ANDTERM {
-            fb_bits[fb_i].zia_bits[zia_i] = XC2ZIARowPiece{selected: placements[fb_i][zia_i]};
+            fb_bits[fb_i].zia_bits[zia_i] = placements[fb_i][zia_i];
         }
     }
 
