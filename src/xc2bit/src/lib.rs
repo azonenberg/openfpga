@@ -72,7 +72,7 @@ mod crbit;
 pub use crbit::{FuseArray};
 
 mod errors;
-pub use errors::{JedParserError, XC2BitError};
+pub use errors::{XC2BitError};
 
 mod fb;
 pub use fb::{XC2BitstreamFB, CTC, CTR, CTS, CTE, get_pta, get_ptb, get_ptc};
@@ -100,9 +100,6 @@ pub use structure::{get_gck, get_gts, get_gsr, get_cdrst, get_dge, get_device_st
 mod zia;
 pub use zia::{XC2ZIAInput, zia_table_get_row, ZIA_MAP_32, ZIA_MAP_64, ZIA_MAP_128, ZIA_MAP_256,
               ZIA_MAP_384, ZIA_MAP_512};
-
-mod jed;
-pub use jed::{read_jed};
 
 mod util;
 

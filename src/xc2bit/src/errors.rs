@@ -28,91 +28,10 @@ use util::{b2s};
 use std::error;
 use std::error::Error;
 use std::fmt;
-use std::num;
 use std::str;
 
-/// Errors that can occur when parsing a .jed file
-#[derive(Debug, PartialEq, Eq)]
-pub enum JedParserError {
-    /// No STX byte found
-    MissingSTX,
-    /// No ETX byte found
-    MissingETX,
-    /// An invalid UTF-8 sequence occurred
-    InvalidUtf8(str::Utf8Error),
-    /// A field contains a character not appropriate for that field (e.g. non-hex digit in a hex field)
-    InvalidCharacter,
-    /// An unexpected end of file was encountered in the file checksum
-    UnexpectedEnd,
-    /// The file checksum was nonzero and incorrect
-    BadFileChecksum,
-    /// The fuse checksum (`C` command) was incorrect
-    BadFuseChecksum,
-    /// A `L` field index was out of range
-    InvalidFuseIndex,
-    /// There was no `QF` field
-    MissingQF,
-    /// There was no `F` field, but not all fuses had a value specified
-    MissingF,
-    /// There was a field that this program does not recognize
-    UnrecognizedField,
-}
-
-impl error::Error for JedParserError {
-    fn description(&self) -> &'static str {
-        match *self {
-            JedParserError::MissingSTX => "STX not found",
-            JedParserError::MissingETX => "ETX not found",
-            JedParserError::InvalidUtf8(_) => "invalid utf8 character",
-            JedParserError::InvalidCharacter => "invalid character in field",
-            JedParserError::UnexpectedEnd => "unexpected end of file",
-            JedParserError::BadFileChecksum => "invalid file checksum",
-            JedParserError::BadFuseChecksum => "invalid fuse checksum",
-            JedParserError::InvalidFuseIndex => "invalid fuse index value",
-            JedParserError::MissingQF => "missing QF field",
-            JedParserError::MissingF => "missing F field",
-            JedParserError::UnrecognizedField => "unrecognized field",
-        }
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            JedParserError::MissingSTX => None,
-            JedParserError::MissingETX => None,
-            JedParserError::InvalidUtf8(ref err) => Some(err),
-            JedParserError::InvalidCharacter => None,
-            JedParserError::UnexpectedEnd => None,
-            JedParserError::BadFileChecksum => None,
-            JedParserError::BadFuseChecksum => None,
-            JedParserError::InvalidFuseIndex => None,
-            JedParserError::MissingQF => None,
-            JedParserError::MissingF => None,
-            JedParserError::UnrecognizedField => None,
-        }
-    }
-}
-
-impl fmt::Display for JedParserError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(cause) = self.cause() {
-            write!(f, "{}: {}", self.description(), cause)
-        } else {
-            write!(f, "{}", self.description())
-        }
-    }
-}
-
-impl From<str::Utf8Error> for JedParserError {
-    fn from(err: str::Utf8Error) -> Self {
-        JedParserError::InvalidUtf8(err)
-    }
-}
-
-impl From<num::ParseIntError> for JedParserError {
-    fn from(_: num::ParseIntError) -> Self {
-        JedParserError::InvalidCharacter
-    }
-}
+extern crate jedec;
+use self::jedec::*;
 
 /// Errors that can occur when parsing a bitstream
 #[derive(Debug, PartialEq, Eq)]

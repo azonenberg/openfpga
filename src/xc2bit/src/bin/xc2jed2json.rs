@@ -30,6 +30,9 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 
+extern crate jedec;
+use jedec::*;
+
 extern crate xc2bit;
 use xc2bit::*;
 
