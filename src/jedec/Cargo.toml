@@ -5,7 +5,7 @@ authors = ["Robert Ou <rqou@robertou.com>"]
 license = "BSD-2-Clause"
 description = "A library for working with JEDEC programming files"
 repository = "https://github.com/azonenberg/openfpga/tree/master/src/jedec"
-keywords = ["cpld", "pal", "gal", "jed", "jedec", "bitstream", "eda"]
+keywords = ["cpld", "pal", "gal", "jed", "jedec"]
 categories = ["parser-implementations"]
 
 [profile.release]
