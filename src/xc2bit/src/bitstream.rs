@@ -1170,7 +1170,7 @@ impl XC2BitstreamBits {
                 for fb_i in 0..2 {
                     let fuse_base = fb_fuse_idx(XC2Device::XC2C32, fb_i as u32);
 
-                    // fb[fb_i].to_jed(XC2Device::XC2C32, fuse_base, writer)?;
+                    fb[fb_i].to_jed(XC2Device::XC2C32, fuse_base, jed, linebreaks);
 
                     // Macrocells
                     XC2Macrocell::to_jed_small(jed, linebreaks, XC2Device::XC2C32, &fb[fb_i], iobs, fb_i, fuse_base);
@@ -1182,7 +1182,7 @@ impl XC2BitstreamBits {
                 for fb_i in 0..4 {
                     let fuse_base = fb_fuse_idx(XC2Device::XC2C64, fb_i as u32);
 
-                    // fb[fb_i].to_jed(XC2Device::XC2C64, fuse_base, writer)?;
+                    fb[fb_i].to_jed(XC2Device::XC2C64, fuse_base, jed, linebreaks);
 
                     // Macrocells
                     XC2Macrocell::to_jed_small(jed, linebreaks, XC2Device::XC2C64, &fb[fb_i], iobs, fb_i, fuse_base);
@@ -1193,7 +1193,7 @@ impl XC2BitstreamBits {
                 for fb_i in 0..8 {
                     let fuse_base = fb_fuse_idx(XC2Device::XC2C128, fb_i as u32);
 
-                    // fb[fb_i].to_jed(XC2Device::XC2C128, fuse_base, writer)?;
+                    fb[fb_i].to_jed(XC2Device::XC2C128, fuse_base, jed, linebreaks);
 
                     // Macrocells
                     XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C128, &fb[fb_i], iobs, fb_i, fuse_base);
@@ -1204,7 +1204,7 @@ impl XC2BitstreamBits {
                 for fb_i in 0..16 {
                     let fuse_base = fb_fuse_idx(XC2Device::XC2C256, fb_i as u32);
 
-                    // fb[fb_i].to_jed(XC2Device::XC2C256, fuse_base, writer)?;
+                    fb[fb_i].to_jed(XC2Device::XC2C256, fuse_base, jed, linebreaks);
 
                     // Macrocells
                     XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C256, &fb[fb_i], iobs, fb_i, fuse_base);
@@ -1215,7 +1215,7 @@ impl XC2BitstreamBits {
                 for fb_i in 0..24 {
                     let fuse_base = fb_fuse_idx(XC2Device::XC2C384, fb_i as u32);
 
-                    // fb[fb_i].to_jed(XC2Device::XC2C384, fuse_base, writer)?;
+                    fb[fb_i].to_jed(XC2Device::XC2C384, fuse_base, jed, linebreaks);
 
                     // Macrocells
                     XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C384, &fb[fb_i], iobs, fb_i, fuse_base);
@@ -1226,7 +1226,7 @@ impl XC2BitstreamBits {
                 for fb_i in 0..32 {
                     let fuse_base = fb_fuse_idx(XC2Device::XC2C512, fb_i as u32);
 
-                    // fb[fb_i].to_jed(XC2Device::XC2C512, fuse_base, writer)?;
+                    fb[fb_i].to_jed(XC2Device::XC2C512, fuse_base, jed, linebreaks);
 
                     // Macrocells
                     XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C512, &fb[fb_i], iobs, fb_i, fuse_base);

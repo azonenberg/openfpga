@@ -28,9 +28,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::io;
 use std::io::Write;
 
+extern crate jedec;
+use self::jedec::*;
+
 use *;
 use fusemap_physical::{zia_block_loc, and_block_loc, or_block_loc};
-use util::{b2s};
+use util::{LinebreakSet};
 use zia::{zia_get_row_width};
 
 /// Represents a collection of all the parts that make up one function block
@@ -508,21 +511,29 @@ impl XC2BitstreamFB {
         })
     }
 
-    /// Write the .JED representation of the settings for this FB to the given `writer` object.
+    /// Write the .JED representation of the settings for this FB to the given `jed` object.
     /// `device` must be the device type this FB was extracted from and is needed to encode the ZIA.
     /// `fuse_base` must be the starting fuse number of this function block.
-    pub fn to_jed(&self, device: XC2Device, fuse_base: usize, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn to_jed(&self, device: XC2Device, fuse_base: usize, jed: &mut JEDECFile, linebreaks: &mut LinebreakSet) {
         // ZIA
         let zia_row_width = zia_get_row_width(device);
+
+        if fuse_base != 0 {
+            linebreaks.add(fuse_base);
+        }
         for i in 0..INPUTS_PER_ANDTERM {
-            write!(writer, "L{:06} ", fuse_base + i * zia_row_width)?;
+            let mut zia_fuse_base = fuse_base + i * zia_row_width;
+            if zia_fuse_base != 0 {
+                linebreaks.add(zia_fuse_base);
+            }
             match device {
                 XC2Device::XC2C32 | XC2Device::XC2C32A => {
                     let zia_choice_bits = XC2ZIAInput::encode_32_zia_choice(i as u32, self.zia_bits[i])
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
+                        jed.f[zia_fuse_base] = zia_choice_bits[j];
+                        zia_fuse_base += 1;
                     }
                 },
                 XC2Device::XC2C64 | XC2Device::XC2C64A => {
@@ -530,7 +541,8 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
+                        jed.f[zia_fuse_base] = zia_choice_bits[j];
+                        zia_fuse_base += 1;
                     }
                 },
                 XC2Device::XC2C128 => {
@@ -538,7 +550,8 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
+                        jed.f[zia_fuse_base] = zia_choice_bits[j];
+                        zia_fuse_base += 1;
                     }
                 },
                 XC2Device::XC2C256 => {
@@ -546,7 +559,8 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
+                        jed.f[zia_fuse_base] = zia_choice_bits[j];
+                        zia_fuse_base += 1;
                     }
                 },
                 XC2Device::XC2C384 => {
@@ -554,7 +568,8 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
+                        jed.f[zia_fuse_base] = zia_choice_bits[j];
+                        zia_fuse_base += 1;
                     }
                 },
                 XC2Device::XC2C512 => {
@@ -562,51 +577,34 @@ impl XC2BitstreamFB {
                         // FIXME: Fold this into the error system??
                         .expect("invalid ZIA input");
                     for j in 0..zia_choice_bits.len() {
-                        write!(writer, "{}", b2s(zia_choice_bits[j]))?;
+                        jed.f[zia_fuse_base] = zia_choice_bits[j];
+                        zia_fuse_base += 1;
                     }
                 },
             }
-            write!(writer, "*\n")?;
         }
-        write!(writer, "\n")?;
 
         // AND terms
+        linebreaks.add(fuse_base + zia_row_width * INPUTS_PER_ANDTERM);
         for i in 0..ANDTERMS_PER_FB {
-            write!(writer, "L{:06} ",
-                fuse_base + zia_row_width * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2)?;
+            let and_fuse_base = fuse_base + zia_row_width * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2;
+            linebreaks.add(and_fuse_base);
             for j in 0..INPUTS_PER_ANDTERM {
-                if self.and_terms[i].input[j] {
-                    write!(writer, "0")?;
-                } else {
-                    write!(writer, "1")?;
-                }
-                if self.and_terms[i].input_b[j] {
-                    write!(writer, "0")?;
-                } else {
-                    write!(writer, "1")?;
-                }
+                jed.f[and_fuse_base + j * 2 + 0] = !self.and_terms[i].input[j];
+                jed.f[and_fuse_base + j * 2 + 1] = !self.and_terms[i].input_b[j];
             }
-            write!(writer, "*\n")?;
         }
-        write!(writer, "\n")?;
 
         // OR terms
+        linebreaks.add(fuse_base + zia_row_width * INPUTS_PER_ANDTERM + ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2);
         for i in 0..ANDTERMS_PER_FB {
-            write!(writer, "L{:06} ",
-                fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
-                ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB)?;
+            let or_fuse_base = fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
+                ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB;
+            linebreaks.add(or_fuse_base);
             for j in 0..MCS_PER_FB {
-                if self.or_terms[j].input[i] {
-                    write!(writer, "0")?;
-                } else {
-                    write!(writer, "1")?;
-                }
+                jed.f[or_fuse_base + j] = !self.or_terms[j].input[i];
             }
-            write!(writer, "*\n")?;
         }
-        write!(writer, "\n")?;
-
-        Ok(())
     }
 
     /// Internal function that reads a function block
