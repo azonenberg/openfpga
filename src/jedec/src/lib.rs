@@ -23,7 +23,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-//! Xilinx JED file I/O
+//! JEDEC programming file format parser and writer
 
 use std::error;
 use std::error::Error;
@@ -125,179 +125,193 @@ enum Ternary {
 const STX: u8 = 0x02;
 const ETX: u8 = 0x03;
 
-/// Reads .jed file and outputs the fuses as an array of booleans and optional device name
-pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), JedParserError> {
-    let mut fuse_csum = Wrapping(0u16);
-    let mut fuse_expected_csum = None;
-    let mut file_csum = Wrapping(0u16);
-    let mut num_fuses: u32 = 0;
-    let mut device = None;
-    let mut jed_stx: usize = 0;
-    let mut jed_etx: usize;
-    let mut fuses_ternary = vec![];
-    let mut default_fuse = Ternary::Undef;
+/// Struct representing a JEDEC programming file. Primarily consists of a fuse array, and also contains some other
+/// miscellaneous fields.
+pub struct JEDECFile {
+    /// Fuse array
+    pub f: Vec<bool>,
+    /// Possibly contains a device name
+    pub dev_name_str: Option<String>,
+}
 
-    // Find STX
-    while in_bytes[jed_stx] != STX {
-        jed_stx += 1;
-        if jed_stx >= in_bytes.len() {
-            return Err(JedParserError::MissingSTX);
-        }
-    }
+impl JEDECFile {
+    /// Reads .jed file and outputs the fuses as an array of booleans and optional device name
+    pub fn from_bytes(in_bytes: &[u8]) -> Result<Self, JedParserError> {
+        let mut fuse_csum = Wrapping(0u16);
+        let mut fuse_expected_csum = None;
+        let mut file_csum = Wrapping(0u16);
+        let mut num_fuses: u32 = 0;
+        let mut device = None;
+        let mut jed_stx: usize = 0;
+        let mut jed_etx: usize;
+        let mut fuses_ternary = vec![];
+        let mut default_fuse = Ternary::Undef;
 
-    // Checksum and find ETX
-    jed_etx = jed_stx;
-    while in_bytes[jed_etx] != ETX {
-        file_csum += Wrapping(in_bytes[jed_etx] as u16);
-        jed_etx += 1;
-        if jed_etx >= in_bytes.len() {
-            return Err(JedParserError::MissingETX);
-        }
-    }
-    // Add the ETX to the checksum too
-    file_csum += Wrapping(ETX as u16);
-
-    // Check the checksum
-    if jed_etx + 4 >= in_bytes.len() {
-        return Err(JedParserError::UnexpectedEnd);
-    }
-    let csum_expected = &in_bytes[jed_etx + 1..jed_etx + 5];
-    let csum_expected = str::from_utf8(csum_expected)?;
-    let csum_expected = u16::from_str_radix(csum_expected, 16)?;
-    if csum_expected != 0 && csum_expected != file_csum.0 {
-        return Err(JedParserError::BadFileChecksum);
-    }
-
-    // Make a str object out of the body
-    let jed_body = str::from_utf8(&in_bytes[jed_stx + 1..jed_etx])?;
-
-    // Ready to parse each line
-    for l in jed_body.split('*') {
-        let l = l.trim_matches(|c| c == ' ' || c == '\r' || c == '\n');
-        if l.len() == 0 {
-            // FIXME: Should we do something else here?
-            // ignore empty fields
-            continue;
+        // Find STX
+        while in_bytes[jed_stx] != STX {
+            jed_stx += 1;
+            if jed_stx >= in_bytes.len() {
+                return Err(JedParserError::MissingSTX);
+            }
         }
 
-        // Now we can look at the first byte to figure out what we have
-        match l.chars().next().unwrap() {
-            'J' => {}, // TODO: "Official" device type
-            'G' => {}, // TODO: Security fuse
-            'B' | 'I' | 'K' | 'M' | 'O' | 'W' | 'Y' | 'Z' => {}, // Explicitly reserved in spec, ignore
-            'D' => {}, // Obsolete
-            'E' | 'U' => {}, // TODO: Extra fuses, unsupported for now
-            'X' | 'V' | 'P' | 'S' | 'R' | 'T' | 'A' => {}, // Testing-related, no intent to support for now
-            'F' => {
-                // Default state
-                let (_, default_state_str) = l.split_at(1);
-                default_fuse = match default_state_str {
-                    "0" => Ternary::Zero,
-                    "1" => Ternary::One,
-                    _ => return Err(JedParserError::InvalidCharacter)
-                }
-            },
-            'N' => {
-                // Notes; we want to extract N DEVICE but otherwise ignore it
-                let note_pieces = l.split(|c| c == ' ' || c == '\r' || c == '\n').collect::<Vec<_>>();
-                if note_pieces.len() == 3 && note_pieces[1] == "DEVICE" {
-                    device = Some(note_pieces[2].to_owned());
-                }
-            },
-            'Q' => {
-                // Look for QF
-                if l.starts_with("QF") {
-                    let (_, num_fuses_str) = l.split_at(2);
-                    num_fuses = u32::from_str_radix(num_fuses_str, 10)?;
-                    fuses_ternary.reserve(num_fuses as usize);
-                    for _ in 0..num_fuses {
-                        fuses_ternary.push(Ternary::Undef);
+        // Checksum and find ETX
+        jed_etx = jed_stx;
+        while in_bytes[jed_etx] != ETX {
+            file_csum += Wrapping(in_bytes[jed_etx] as u16);
+            jed_etx += 1;
+            if jed_etx >= in_bytes.len() {
+                return Err(JedParserError::MissingETX);
+            }
+        }
+        // Add the ETX to the checksum too
+        file_csum += Wrapping(ETX as u16);
+
+        // Check the checksum
+        if jed_etx + 4 >= in_bytes.len() {
+            return Err(JedParserError::UnexpectedEnd);
+        }
+        let csum_expected = &in_bytes[jed_etx + 1..jed_etx + 5];
+        let csum_expected = str::from_utf8(csum_expected)?;
+        let csum_expected = u16::from_str_radix(csum_expected, 16)?;
+        if csum_expected != 0 && csum_expected != file_csum.0 {
+            return Err(JedParserError::BadFileChecksum);
+        }
+
+        // Make a str object out of the body
+        let jed_body = str::from_utf8(&in_bytes[jed_stx + 1..jed_etx])?;
+
+        // Ready to parse each line
+        for l in jed_body.split('*') {
+            let l = l.trim_matches(|c| c == ' ' || c == '\r' || c == '\n');
+            if l.len() == 0 {
+                // FIXME: Should we do something else here?
+                // ignore empty fields
+                continue;
+            }
+
+            // Now we can look at the first byte to figure out what we have
+            match l.chars().next().unwrap() {
+                'J' => {}, // TODO: "Official" device type
+                'G' => {}, // TODO: Security fuse
+                'B' | 'I' | 'K' | 'M' | 'O' | 'W' | 'Y' | 'Z' => {}, // Explicitly reserved in spec, ignore
+                'D' => {}, // Obsolete
+                'E' | 'U' => {}, // TODO: Extra fuses, unsupported for now
+                'X' | 'V' | 'P' | 'S' | 'R' | 'T' | 'A' => {}, // Testing-related, no intent to support for now
+                'F' => {
+                    // Default state
+                    let (_, default_state_str) = l.split_at(1);
+                    default_fuse = match default_state_str {
+                        "0" => Ternary::Zero,
+                        "1" => Ternary::One,
+                        _ => return Err(JedParserError::InvalidCharacter)
                     }
-                }
-            },
-            'L' => {
-                // A set of fuses
-                if num_fuses == 0 {
-                    return Err(JedParserError::MissingQF);
-                }
-
-                let mut fuse_field_splitter = l.splitn(2, |c| c == ' ' || c == '\r' || c == '\n');
-                let fuse_idx_str = fuse_field_splitter.next();
-                let (_, fuse_idx_str) = fuse_idx_str.unwrap().split_at(1);
-                let mut fuse_idx = u32::from_str_radix(fuse_idx_str, 10)?;
-
-                let fuse_bits_part = fuse_field_splitter.next();
-                if fuse_bits_part.is_none() {
-                    return Err(JedParserError::InvalidFuseIndex);
-                }
-                let fuse_bits_part = fuse_bits_part.unwrap();
-                for fuse in fuse_bits_part.chars() {
-                    match fuse {
-                        '0' => {
-                            if fuse_idx >= num_fuses {
-                                return Err(JedParserError::InvalidFuseIndex);
-                            }
-                            fuses_ternary[fuse_idx as usize] = Ternary::Zero;
-                            fuse_idx += 1;
-                        },
-                        '1' => {
-                            if fuse_idx >= num_fuses {
-                                return Err(JedParserError::InvalidFuseIndex);
-                            }
-                            fuses_ternary[fuse_idx as usize] = Ternary::One;
-                            fuse_idx += 1;
-                        },
-                        ' ' | '\r' | '\n' => {}, // Do nothing
-                        _ => return Err(JedParserError::InvalidCharacter),
+                },
+                'N' => {
+                    // Notes; we want to extract N DEVICE but otherwise ignore it
+                    let note_pieces = l.split(|c| c == ' ' || c == '\r' || c == '\n').collect::<Vec<_>>();
+                    if note_pieces.len() == 3 && note_pieces[1] == "DEVICE" {
+                        device = Some(note_pieces[2].to_owned());
                     }
+                },
+                'Q' => {
+                    // Look for QF
+                    if l.starts_with("QF") {
+                        let (_, num_fuses_str) = l.split_at(2);
+                        num_fuses = u32::from_str_radix(num_fuses_str, 10)?;
+                        fuses_ternary.reserve(num_fuses as usize);
+                        for _ in 0..num_fuses {
+                            fuses_ternary.push(Ternary::Undef);
+                        }
+                    }
+                },
+                'L' => {
+                    // A set of fuses
+                    if num_fuses == 0 {
+                        return Err(JedParserError::MissingQF);
+                    }
+
+                    let mut fuse_field_splitter = l.splitn(2, |c| c == ' ' || c == '\r' || c == '\n');
+                    let fuse_idx_str = fuse_field_splitter.next();
+                    let (_, fuse_idx_str) = fuse_idx_str.unwrap().split_at(1);
+                    let mut fuse_idx = u32::from_str_radix(fuse_idx_str, 10)?;
+
+                    let fuse_bits_part = fuse_field_splitter.next();
+                    if fuse_bits_part.is_none() {
+                        return Err(JedParserError::InvalidFuseIndex);
+                    }
+                    let fuse_bits_part = fuse_bits_part.unwrap();
+                    for fuse in fuse_bits_part.chars() {
+                        match fuse {
+                            '0' => {
+                                if fuse_idx >= num_fuses {
+                                    return Err(JedParserError::InvalidFuseIndex);
+                                }
+                                fuses_ternary[fuse_idx as usize] = Ternary::Zero;
+                                fuse_idx += 1;
+                            },
+                            '1' => {
+                                if fuse_idx >= num_fuses {
+                                    return Err(JedParserError::InvalidFuseIndex);
+                                }
+                                fuses_ternary[fuse_idx as usize] = Ternary::One;
+                                fuse_idx += 1;
+                            },
+                            ' ' | '\r' | '\n' => {}, // Do nothing
+                            _ => return Err(JedParserError::InvalidCharacter),
+                        }
+                    }
+                },
+                'C' => {
+                    // Checksum
+                    let (_, csum_str) = l.split_at(1);
+                    if csum_str.len() != 4 {
+                        return Err(JedParserError::BadFuseChecksum);
+                    }
+                    fuse_expected_csum = Some(u16::from_str_radix(csum_str, 16)?);
                 }
-            },
-            'C' => {
-                // Checksum
-                let (_, csum_str) = l.split_at(1);
-                if csum_str.len() != 4 {
-                    return Err(JedParserError::BadFuseChecksum);
+                _ => return Err(JedParserError::UnrecognizedField),
+            }
+        }
+
+        // Fill in the default values
+        for x in &mut fuses_ternary {
+            if *x == Ternary::Undef {
+                // There cannot be undefined fuses if there isn't an F field
+                if default_fuse == Ternary::Undef {
+                    return Err(JedParserError::MissingF)
                 }
-                fuse_expected_csum = Some(u16::from_str_radix(csum_str, 16)?);
-            }
-            _ => return Err(JedParserError::UnrecognizedField),
-        }
-    }
 
-    // Fill in the default values
-    for x in &mut fuses_ternary {
-        if *x == Ternary::Undef {
-            // There cannot be undefined fuses if there isn't an F field
-            if default_fuse == Ternary::Undef {
-                return Err(JedParserError::MissingF)
-            }
-
-            *x = default_fuse;
-        }
-    }
-
-    // Un-ternary it
-    let fuses = fuses_ternary.iter().map(|&x| match x {
-        Ternary::Zero => false,
-        Ternary::One => true,
-        _ => unreachable!(),
-    }).collect::<Vec<_>>();
-
-    // Fuse checksum
-    if let Some(fuse_expected_csum) = fuse_expected_csum {
-        for i in 0..num_fuses {
-            if fuses[i as usize] {
-                // Fuse is a 1 and contributes to the sum
-                fuse_csum += Wrapping(1u16 << (i % 8));
+                *x = default_fuse;
             }
         }
 
-        if fuse_expected_csum != fuse_csum.0 {
-            return Err(JedParserError::BadFuseChecksum);
-        }
-    }
+        // Un-ternary it
+        let fuses = fuses_ternary.iter().map(|&x| match x {
+            Ternary::Zero => false,
+            Ternary::One => true,
+            _ => unreachable!(),
+        }).collect::<Vec<_>>();
 
-    Ok((fuses, device))
+        // Fuse checksum
+        if let Some(fuse_expected_csum) = fuse_expected_csum {
+            for i in 0..num_fuses {
+                if fuses[i as usize] {
+                    // Fuse is a 1 and contributes to the sum
+                    fuse_csum += Wrapping(1u16 << (i % 8));
+                }
+            }
+
+            if fuse_expected_csum != fuse_csum.0 {
+                return Err(JedParserError::BadFuseChecksum);
+            }
+        }
+
+        Ok(Self {
+            f: fuses,
+            dev_name_str: device
+        })
+    }
 }
 
 #[cfg(test)]

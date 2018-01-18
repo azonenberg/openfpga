@@ -47,11 +47,8 @@ fn main() {
     let mut data = Vec::new();
     f.read_to_end(&mut data).expect("failed to read data");
 
-    let bits_result = read_jed(&data);
-    let (bits, device_name_option) = bits_result.expect("failed to read jed");
-    let device_name = device_name_option.expect("missing device name in jed");
-
-    let bitstream_result = XC2Bitstream::from_jed(&bits, &device_name);
+    let jed = JEDECFile::from_bytes(&data).expect("failed to read jed");
+    let bitstream_result = XC2Bitstream::from_jed(&jed);
     let bitstream = bitstream_result.expect("failed to process jed");
 
     bitstream.to_jed(&mut ::std::io::stdout()).expect("failed to write jed");

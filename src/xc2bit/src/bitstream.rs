@@ -28,6 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::io;
 use std::io::Write;
 
+extern crate jedec;
+use self::jedec::*;
+
 use *;
 use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx,
                       total_logical_fuse_count, clock_div_fuse_idx};
@@ -85,13 +88,21 @@ impl XC2Bitstream {
     }
 
     /// Processes a fuse array into a bitstream object
-    pub fn from_jed(fuses: &[bool], device: &str) -> Result<Self, XC2BitError> {
+    pub fn from_jed(jed: &JEDECFile) -> Result<Self, XC2BitError> {
+        if jed.dev_name_str.is_none() {
+            return Err(XC2BitError::BadDeviceName(String::new()));
+        }
+
+        let device = jed.dev_name_str.as_ref().unwrap();
+
         let device_combination = parse_part_name_string(device);
         if device_combination.is_none() {
             return Err(XC2BitError::BadDeviceName(device.to_owned()));
         }
 
         let (part, spd, pkg) = device_combination.unwrap();
+
+        let fuses = &jed.f;
 
         if fuses.len() != total_logical_fuse_count(part) {
             return Err(XC2BitError::WrongFuseCount);
