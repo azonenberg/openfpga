@@ -32,7 +32,7 @@ extern crate yosys_netlist_json;
 
 use objpool::*;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum IntermediateGraphNodeVariant {
     AndTerm {
         inputs_true: Vec<ObjPoolIndex<IntermediateGraphNet>>,
@@ -92,21 +92,21 @@ pub enum IntermediateGraphNodeVariant {
     },
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct IntermediateGraphNode {
     pub variant: IntermediateGraphNodeVariant,
     pub name: String,
     pub location: Option<RequestedLocation>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct IntermediateGraphNet {
     pub name: Option<String>,
     pub source: Option<ObjPoolIndex<IntermediateGraphNode>>,
     pub sinks: Vec<ObjPoolIndex<IntermediateGraphNode>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct IntermediateGraph {
     pub nodes: ObjPool<IntermediateGraphNode>,
     pub nets: ObjPool<IntermediateGraphNet>,
@@ -735,4 +735,39 @@ impl RequestedLocation {
             Err("Malformed LOC constraint")
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std;
+    use std::fs::File;
+    use std::io::Read;
+
+    extern crate serde_json;
+
+    fn run_one_reftest(input_filename: &'static str) {
+        let input_path = std::path::Path::new(input_filename);
+        let mut output_path = input_path.to_path_buf();
+        output_path.set_extension("out");
+
+        let mut input_data = Vec::new();
+        let mut output_data = Vec::new();
+
+        File::open(&input_path).unwrap().read_to_end(&mut input_data).unwrap();
+        File::open(&output_path).unwrap().read_to_end(&mut output_data).unwrap();
+
+        // Read original json
+        let yosys_netlist = yosys_netlist_json::Netlist::from_slice(&input_data).unwrap();
+        // Read reference json
+        let reference_data_structure = serde_json::from_slice(&output_data).unwrap();
+        // This is what we get
+        let our_data_structure = IntermediateGraph::from_yosys_netlist(&yosys_netlist).unwrap();
+
+        assert_eq!(our_data_structure, reference_data_structure);
+    }
+
+    // Include list of actual tests to run
+    include!(concat!(env!("OUT_DIR"), "/frontend-reftests.rs"));
 }

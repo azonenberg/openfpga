@@ -61,7 +61,7 @@ impl<T> ObjPoolIndex<T> {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct ObjPool<T> {
     storage: Vec<T>
 }

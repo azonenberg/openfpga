@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016-2017, Robert Ou <rqou@robertou.com> and contributors
+Copyright (c) 2018, Robert Ou <rqou@robertou.com> and contributors
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::fs::File;
 use std::io::Read;
 
-extern crate xc2bit;
-use xc2bit::*;
+extern crate serde_json;
 
 extern crate xc2par;
 use xc2par::*;
@@ -49,27 +48,8 @@ fn main() {
 
     // de-serialize the yosys netlist
     let yosys_netlist = yosys_netlist_json::Netlist::from_slice(&data).unwrap();
-    println!("{:?}", yosys_netlist);
 
     // Netlist graph (native part)
     let ngraph_rs = IntermediateGraph::from_yosys_netlist(&yosys_netlist).unwrap();
-    // ngraph_rs.insert_into_par_graph(&mut par_graphs, &lmap);
-    println!("{:?}", ngraph_rs);
-
-    // New data structure
-    let mut input_graph = InputGraph::from_intermed_graph(&ngraph_rs).unwrap();
-    println!("{:?}", input_graph);
-
-    // TODO
-    let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
-
-    let par_result = do_par(&mut input_graph);
-    if let PARResult::Success(x) = par_result {
-        // Get a bitstream result
-        let bitstream = produce_bitstream(device_type, &input_graph, &x);
-        println!("********************************************************************************");
-        bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
-    } else {
-        panic!("par failed!")
-    }
+    println!("{}", serde_json::to_string(&ngraph_rs).unwrap());
 }

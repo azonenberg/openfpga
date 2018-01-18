@@ -1,6 +1,7 @@
 [package]
 name = "xc2par"
 version = "0.0.1"
+build = "build.rs"
 
 [profile.release]
 lto = true
