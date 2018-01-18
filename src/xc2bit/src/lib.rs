@@ -110,53 +110,49 @@ mod tests {
     use std::fs::File;
     use std::io::Read;
 
-    #[test]
-    fn xc2bit_reftests() {
-        let files = std::fs::read_dir("./reftests").unwrap();
+    extern crate jedec;
+    use self::jedec::*;
 
-        for file in files {
-            let path = file.expect("failed to get path").path();
-            if path.extension().expect("bogus reftest filename (doesn't have extension)") == "jed" {
-                let jed_path = path;
-                let mut txt_path = jed_path.clone();
-                txt_path.set_extension("txt");
+    fn run_one_reftest(jed_filename: &'static str) {
+        let jed_path = std::path::Path::new(jed_filename);
+        let mut txt_path = jed_path.to_path_buf();
+        txt_path.set_extension("txt");
 
-                println!("{:?}", jed_path);
+        let mut jed_data = Vec::new();
+        let mut txt_data = Vec::new();
 
-                let mut jed_data = Vec::new();
-                let mut txt_data = Vec::new();
+        File::open(&jed_path).expect("failed to open jed file")
+            .read_to_end(&mut jed_data).expect("failed to read jed file");
+        File::open(&txt_path).expect("failed to open txt file")
+            .read_to_end(&mut txt_data).expect("failed to read txt file");
 
-                File::open(&jed_path).expect("failed to open jed file")
-                    .read_to_end(&mut jed_data).expect("failed to read jed file");
-                File::open(&txt_path).expect("failed to open txt file")
-                    .read_to_end(&mut txt_data).expect("failed to read txt file");
+        // Read original JED
+        let (parsed_jed_data, device_name) = read_jed(&jed_data).expect("failed to read jed");
+        let device_name = device_name.expect("missing device name in jed");
 
-                // Read original JED
-                let (parsed_jed_data, device_name) = read_jed(&jed_data).expect("failed to read jed");
-                let device_name = device_name.expect("missing device name in jed");
+        let parsed_bitstream_data = XC2Bitstream::from_jed(&parsed_jed_data, &device_name)
+            .expect("failed to process jed");
 
-                let parsed_bitstream_data = XC2Bitstream::from_jed(&parsed_jed_data, &device_name)
-                    .expect("failed to process jed");
+        // Write to crbit
+        let mut crbit = Vec::new();
+        let write_fuse_array = parsed_bitstream_data.to_crbit();
+        write_fuse_array.write_to_writer(&mut crbit).expect("failed to write crbit");
 
-                // Write to crbit
-                let mut crbit = Vec::new();
-                let write_fuse_array = parsed_bitstream_data.to_crbit();
-                write_fuse_array.write_to_writer(&mut crbit).expect("failed to write crbit");
+        // Read back from crbit
+        let read_fuse_array = FuseArray::from_file_contents(&crbit).expect("failed to read crbit");
+        let parsed_bitstream_data = XC2Bitstream::from_crbit(&read_fuse_array).expect("failed to process crbit");
 
-                // Read back from crbit
-                let read_fuse_array = FuseArray::from_file_contents(&crbit).expect("failed to read crbit");
-                let parsed_bitstream_data = XC2Bitstream::from_crbit(&read_fuse_array).expect("failed to process crbit");
+        // FIXME: This is quite hacky
+        let mut new_jed = Vec::new();
+        parsed_bitstream_data.to_jed(&mut new_jed).expect("failed to write jed");
+        assert_eq!(jed_data, new_jed);
 
-                // FIXME: This is quite hacky
-                let mut new_jed = Vec::new();
-                parsed_bitstream_data.to_jed(&mut new_jed).expect("failed to write jed");
-                assert_eq!(jed_data, new_jed);
-
-                let mut human_readable_data = Vec::new();
-                parsed_bitstream_data.dump_human_readable(&mut human_readable_data)
-                    .expect("failed to get human readable");
-                assert_eq!(txt_data, human_readable_data);
-            }
-        }
+        let mut human_readable_data = Vec::new();
+        parsed_bitstream_data.dump_human_readable(&mut human_readable_data)
+            .expect("failed to get human readable");
+        assert_eq!(txt_data, human_readable_data);
     }
+
+    // Include list of actual tests to run
+    include!(concat!(env!("OUT_DIR"), "/reftests.rs"));
 }

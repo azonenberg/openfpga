@@ -25,6 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Miscellaneous stuff related to possible part combinations
 
+#[allow(unused_imports)]
 use std::ascii::AsciiExt;
 use std::fmt;
 
