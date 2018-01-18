@@ -28,9 +28,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::io;
 use std::io::Write;
 
+extern crate jedec;
+use self::jedec::*;
+
 use *;
 use fusemap_physical::{mc_block_loc};
-use util::{b2s};
+use util::{LinebreakSet};
 use zia::{zia_get_row_width};
 
 /// Clock source for the register in a macrocell
@@ -1022,188 +1025,212 @@ impl XC2Macrocell {
     }
 
     /// Helper that prints the IOB and macrocell configuration on the "small" parts
-    pub fn to_jed_small(writer: &mut Write, device: XC2Device, fb: &XC2BitstreamFB, iobs: &[XC2MCSmallIOB],
-        fb_i: usize, fuse_base: usize) -> Result<(), io::Error> {
+    pub fn to_jed_small(jed: &mut JEDECFile, linebreaks: &mut LinebreakSet,
+        device: XC2Device, fb: &XC2BitstreamFB, iobs: &[XC2MCSmallIOB], fb_i: usize, fuse_base: usize) {
 
         let zia_row_width = zia_get_row_width(device);
 
         for i in 0..MCS_PER_FB {
-            write!(writer, "L{:06} ",
-                fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
-                ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + ANDTERMS_PER_FB * MCS_PER_FB + i * 27)?;
+            let mc_fuse_base = fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
+                ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + ANDTERMS_PER_FB * MCS_PER_FB + i * 27;
+                
+            linebreaks.add(mc_fuse_base);
+            if i == 0 {
+                linebreaks.add(mc_fuse_base);
+            }
 
             let iob = fb_mc_num_to_iob_num(device, fb_i as u32, i as u32).unwrap() as usize;
 
             // aclk
-            write!(writer, "{}", b2s(fb.mcs[i].clk_src.encode_aclk()))?;
+            jed.f[mc_fuse_base +  0] = fb.mcs[i].clk_src.encode_aclk();
 
             // clkop
-            write!(writer, "{}", b2s(fb.mcs[i].clk_invert_pol))?;
+            jed.f[mc_fuse_base +  1] = fb.mcs[i].clk_invert_pol;
 
             // clk
             let clk = fb.mcs[i].clk_src.encode_clk();
-            write!(writer, "{}{}", b2s(clk.0), b2s(clk.1))?;
+            jed.f[mc_fuse_base +  2] = clk.0;
+            jed.f[mc_fuse_base +  3] = clk.1;
 
             // clkfreq
-            write!(writer, "{}", b2s(fb.mcs[i].is_ddr))?;
+            jed.f[mc_fuse_base +  4] = fb.mcs[i].is_ddr;
 
             // r
             let r = fb.mcs[i].r_src.encode();
-            write!(writer, "{}{}", b2s(r.0), b2s(r.1))?;
+            jed.f[mc_fuse_base +  5] = r.0;
+            jed.f[mc_fuse_base +  6] = r.1;
 
             // p
             let p = fb.mcs[i].s_src.encode();
-            write!(writer, "{}{}", b2s(p.0), b2s(p.1))?;
+            jed.f[mc_fuse_base +  7] = p.0;
+            jed.f[mc_fuse_base +  8] = p.1;
 
             // regmod
             let regmod = fb.mcs[i].reg_mode.encode();
-            write!(writer, "{}{}", b2s(regmod.0), b2s(regmod.1))?;
+            jed.f[mc_fuse_base +  9] = regmod.0;
+            jed.f[mc_fuse_base + 10] = regmod.1;
 
             // inz
             let inz = iobs[iob].zia_mode.encode();
-            write!(writer, "{}{}", b2s(inz.0), b2s(inz.1))?;
+            jed.f[mc_fuse_base + 11] = inz.0;
+            jed.f[mc_fuse_base + 12] = inz.1;
 
             // fb
             let fb_bits = fb.mcs[i].fb_mode.encode();
-            write!(writer, "{}{}", b2s(fb_bits.0), b2s(fb_bits.1))?;
+            jed.f[mc_fuse_base + 13] = fb_bits.0;
+            jed.f[mc_fuse_base + 14] = fb_bits.1;
 
             // inreg
-            write!(writer, "{}", b2s(!fb.mcs[i].ff_in_ibuf))?;
+            jed.f[mc_fuse_base + 15] = !fb.mcs[i].ff_in_ibuf;
 
             // st
-            write!(writer, "{}", b2s(iobs[iob].schmitt_trigger))?;
+            jed.f[mc_fuse_base + 16] = iobs[iob].schmitt_trigger;
 
             // xorin
             let xorin = fb.mcs[i].xor_mode.encode();
-            write!(writer, "{}{}", b2s(xorin.0), b2s(xorin.1))?;
+            jed.f[mc_fuse_base + 17] = xorin.0;
+            jed.f[mc_fuse_base + 18] = xorin.1;
 
             // regcom
-            write!(writer, "{}", b2s(!iobs[iob].obuf_uses_ff))?;
+            jed.f[mc_fuse_base + 19] = !iobs[iob].obuf_uses_ff;
 
             // oe
             let oe = iobs[iob].obuf_mode.encode();
-            write!(writer, "{}{}{}{}",
-                b2s(oe.0), b2s(oe.1),
-                b2s(oe.2), b2s(oe.3))?;
+            jed.f[mc_fuse_base + 20] = oe.0;
+            jed.f[mc_fuse_base + 21] = oe.1;
+            jed.f[mc_fuse_base + 22] = oe.2;
+            jed.f[mc_fuse_base + 23] = oe.3;
 
             // tm
-            write!(writer, "{}", b2s(iobs[iob].termination_enabled))?;
+            jed.f[mc_fuse_base + 24] = iobs[iob].termination_enabled;
 
             // slw
-            write!(writer, "{}", b2s(!iobs[iob].slew_is_fast))?;
+            jed.f[mc_fuse_base + 25] = !iobs[iob].slew_is_fast;
 
             // pu
-            write!(writer, "{}", b2s(!fb.mcs[i].init_state))?;
-
-            write!(writer, "*\n")?;
+            jed.f[mc_fuse_base + 26] = !fb.mcs[i].init_state;
         }
-        write!(writer, "\n")?;
-
-        Ok(())
     }
 
     /// Helper that prints the IOB and macrocell configuration on the "large" parts
-    pub fn to_jed_large(writer: &mut Write, device: XC2Device, fb: &XC2BitstreamFB, iobs: &[XC2MCLargeIOB],
-        fb_i: usize, fuse_base: usize) -> Result<(), io::Error> {
+    pub fn to_jed_large(jed: &mut JEDECFile, linebreaks: &mut LinebreakSet,
+        device: XC2Device, fb: &XC2BitstreamFB, iobs: &[XC2MCLargeIOB], fb_i: usize, fuse_base: usize) {
 
         let zia_row_width = zia_get_row_width(device);
 
         let mut current_fuse_offset = fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
             ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + ANDTERMS_PER_FB * MCS_PER_FB;
 
+        linebreaks.add(current_fuse_offset);
+
         for i in 0..MCS_PER_FB {
-            write!(writer, "L{:06} ", current_fuse_offset)?;
+            linebreaks.add(current_fuse_offset);
 
             let iob = fb_mc_num_to_iob_num(device, fb_i as u32, i as u32);
 
             // aclk
-            write!(writer, "{}", b2s(fb.mcs[i].clk_src.encode_aclk()))?;
+            jed.f[current_fuse_offset] = fb.mcs[i].clk_src.encode_aclk();
+            current_fuse_offset += 1;
 
             // clk
             let clk = fb.mcs[i].clk_src.encode_clk();
-            write!(writer, "{}{}", b2s(clk.0), b2s(clk.1))?;
-
+            jed.f[current_fuse_offset + 0] = clk.0;
+            jed.f[current_fuse_offset + 1] = clk.1;
+            current_fuse_offset += 2;
 
             // clkfreq
-            write!(writer, "{}", b2s(fb.mcs[i].is_ddr))?;
+            jed.f[current_fuse_offset] = fb.mcs[i].is_ddr;
+            current_fuse_offset += 1;
 
             // clkop
-            write!(writer, "{}", b2s(fb.mcs[i].clk_invert_pol))?;
+            jed.f[current_fuse_offset] = fb.mcs[i].clk_invert_pol;
+            current_fuse_offset += 1;
 
-            // dg
             if iob.is_some() {
-                write!(writer, "{}", b2s(iobs[iob.unwrap() as usize].uses_data_gate))?;
+                // dg
+                jed.f[current_fuse_offset] = iobs[iob.unwrap() as usize].uses_data_gate;
+                current_fuse_offset += 1;
             }
 
             // fb
             let fb_bits = fb.mcs[i].fb_mode.encode();
-            write!(writer, "{}{}", b2s(fb_bits.0), b2s(fb_bits.1))?;
+            jed.f[current_fuse_offset + 0] = fb_bits.0;
+            jed.f[current_fuse_offset + 1] = fb_bits.1;
+            current_fuse_offset += 2;
 
             if iob.is_some() {
                 let iob = iob.unwrap() as usize;
 
                 // inmod
                 let inmod = iobs[iob].ibuf_mode.encode();
-                write!(writer, "{}{}", b2s(inmod.0), b2s(inmod.1))?;
+                jed.f[current_fuse_offset + 0] = inmod.0;
+                jed.f[current_fuse_offset + 1] = inmod.1;
+                current_fuse_offset += 2;
 
                 // inreg
-                write!(writer, "{}", b2s(!fb.mcs[i].ff_in_ibuf))?;
+                jed.f[current_fuse_offset] = !fb.mcs[i].ff_in_ibuf;
+                current_fuse_offset += 1;
 
                 // inz
                 let inz = iobs[iob].zia_mode.encode();
-                write!(writer, "{}{}", b2s(inz.0), b2s(inz.1))?;
+                jed.f[current_fuse_offset + 0] = inz.0;
+                jed.f[current_fuse_offset + 1] = inz.1;
+                current_fuse_offset += 2;
 
                 // oe
                 let oe = iobs[iob].obuf_mode.encode();
-                write!(writer, "{}{}{}{}",
-                    b2s(oe.0), b2s(oe.1),
-                    b2s(oe.2), b2s(oe.3))?;
+                jed.f[current_fuse_offset + 0] = oe.0;
+                jed.f[current_fuse_offset + 1] = oe.1;
+                jed.f[current_fuse_offset + 2] = oe.2;
+                jed.f[current_fuse_offset + 3] = oe.3;
+                current_fuse_offset += 4;
             }
 
             // p
             let p = fb.mcs[i].s_src.encode();
-            write!(writer, "{}{}", b2s(p.0), b2s(p.1))?;
+            jed.f[current_fuse_offset + 0] = p.0;
+            jed.f[current_fuse_offset + 1] = p.1;
+            current_fuse_offset += 2;
 
             // pu
-            write!(writer, "{}", b2s(!fb.mcs[i].init_state))?;
+            jed.f[current_fuse_offset] = !fb.mcs[i].init_state;
+            current_fuse_offset += 1;
 
             if iob.is_some() {
                 // regcom
-                write!(writer, "{}", b2s(!iobs[iob.unwrap() as usize].obuf_uses_ff))?;
+                jed.f[current_fuse_offset] = !iobs[iob.unwrap() as usize].obuf_uses_ff;
+                current_fuse_offset += 1;
             }
 
             // regmod
             let regmod = fb.mcs[i].reg_mode.encode();
-            write!(writer, "{}{}", b2s(regmod.0), b2s(regmod.1))?;
+            jed.f[current_fuse_offset + 0] = regmod.0;
+            jed.f[current_fuse_offset + 1] = regmod.1;
+            current_fuse_offset += 2;
 
             // r
             let r = fb.mcs[i].r_src.encode();
-            write!(writer, "{}{}", b2s(r.0), b2s(r.1))?;
+            jed.f[current_fuse_offset + 0] = r.0;
+            jed.f[current_fuse_offset + 1] = r.1;
+            current_fuse_offset += 2;
 
             if iob.is_some() {
                 let iob = iob.unwrap() as usize;
 
                 // slw
-                write!(writer, "{}", b2s(!iobs[iob].slew_is_fast))?;
+                jed.f[current_fuse_offset] = !iobs[iob].slew_is_fast;
+                current_fuse_offset += 1;
 
                 // tm
-                write!(writer, "{}", b2s(iobs[iob].termination_enabled))?;
+                jed.f[current_fuse_offset] = iobs[iob].termination_enabled;
+                current_fuse_offset += 1;
             }
 
             // xorin
             let xorin = fb.mcs[i].xor_mode.encode();
-            write!(writer, "{}{}", b2s(xorin.0), b2s(xorin.1))?;
-
-            write!(writer, "*\n")?;
-
-            if iob.is_some() {
-                current_fuse_offset += 29;
-            } else {
-                current_fuse_offset += 16;
-            }
+            jed.f[current_fuse_offset + 0] = xorin.0;
+            jed.f[current_fuse_offset + 1] = xorin.1;
+            current_fuse_offset += 2;
         }
-        write!(writer, "\n")?;
-
-        Ok(())
     }
 }

@@ -1162,77 +1162,77 @@ impl XC2BitstreamBits {
 
     /// Write a .jed representation of the bitstream to the given `jed` object.
     pub fn to_jed(&self, jed: &mut JEDECFile, linebreaks: &mut LinebreakSet) {
-        // // FBs
-        // match self {
-        //     &XC2BitstreamBits::XC2C32 {ref fb, ref iobs, ..} |
-        //     &XC2BitstreamBits::XC2C32A {ref fb, ref iobs, ..} => {
-        //         // Each FB
-        //         for fb_i in 0..2 {
-        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C32, fb_i as u32);
+        // FBs
+        match self {
+            &XC2BitstreamBits::XC2C32 {ref fb, ref iobs, ..} |
+            &XC2BitstreamBits::XC2C32A {ref fb, ref iobs, ..} => {
+                // Each FB
+                for fb_i in 0..2 {
+                    let fuse_base = fb_fuse_idx(XC2Device::XC2C32, fb_i as u32);
 
-        //             fb[fb_i].to_jed(XC2Device::XC2C32, fuse_base, writer)?;
+                    // fb[fb_i].to_jed(XC2Device::XC2C32, fuse_base, writer)?;
 
-        //             // Macrocells
-        //             XC2Macrocell::to_jed_small(writer, XC2Device::XC2C32, &fb[fb_i], iobs, fb_i, fuse_base)?;
-        //         }
-        //     }
-        //     &XC2BitstreamBits::XC2C64 {ref fb, ref iobs, ..} |
-        //     &XC2BitstreamBits::XC2C64A {ref fb, ref iobs, ..} => {
-        //         // Each FB
-        //         for fb_i in 0..4 {
-        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C64, fb_i as u32);
+                    // Macrocells
+                    XC2Macrocell::to_jed_small(jed, linebreaks, XC2Device::XC2C32, &fb[fb_i], iobs, fb_i, fuse_base);
+                }
+            }
+            &XC2BitstreamBits::XC2C64 {ref fb, ref iobs, ..} |
+            &XC2BitstreamBits::XC2C64A {ref fb, ref iobs, ..} => {
+                // Each FB
+                for fb_i in 0..4 {
+                    let fuse_base = fb_fuse_idx(XC2Device::XC2C64, fb_i as u32);
 
-        //             fb[fb_i].to_jed(XC2Device::XC2C64, fuse_base, writer)?;
+                    // fb[fb_i].to_jed(XC2Device::XC2C64, fuse_base, writer)?;
 
-        //             // Macrocells
-        //             XC2Macrocell::to_jed_small(writer, XC2Device::XC2C64, &fb[fb_i], iobs, fb_i, fuse_base)?;
-        //         }
-        //     }
-        //     &XC2BitstreamBits::XC2C128 {ref fb, ref iobs, ..}  => {
-        //         // Each FB
-        //         for fb_i in 0..8 {
-        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C128, fb_i as u32);
+                    // Macrocells
+                    XC2Macrocell::to_jed_small(jed, linebreaks, XC2Device::XC2C64, &fb[fb_i], iobs, fb_i, fuse_base);
+                }
+            }
+            &XC2BitstreamBits::XC2C128 {ref fb, ref iobs, ..}  => {
+                // Each FB
+                for fb_i in 0..8 {
+                    let fuse_base = fb_fuse_idx(XC2Device::XC2C128, fb_i as u32);
 
-        //             fb[fb_i].to_jed(XC2Device::XC2C128, fuse_base, writer)?;
+                    // fb[fb_i].to_jed(XC2Device::XC2C128, fuse_base, writer)?;
 
-        //             // Macrocells
-        //             XC2Macrocell::to_jed_large(writer, XC2Device::XC2C128, &fb[fb_i], iobs, fb_i, fuse_base)?;
-        //         }
-        //     }
-        //     &XC2BitstreamBits::XC2C256 {ref fb, ref iobs, ..}  => {
-        //         // Each FB
-        //         for fb_i in 0..16 {
-        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C256, fb_i as u32);
+                    // Macrocells
+                    XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C128, &fb[fb_i], iobs, fb_i, fuse_base);
+                }
+            }
+            &XC2BitstreamBits::XC2C256 {ref fb, ref iobs, ..}  => {
+                // Each FB
+                for fb_i in 0..16 {
+                    let fuse_base = fb_fuse_idx(XC2Device::XC2C256, fb_i as u32);
 
-        //             fb[fb_i].to_jed(XC2Device::XC2C256, fuse_base, writer)?;
+                    // fb[fb_i].to_jed(XC2Device::XC2C256, fuse_base, writer)?;
 
-        //             // Macrocells
-        //             XC2Macrocell::to_jed_large(writer, XC2Device::XC2C256, &fb[fb_i], iobs, fb_i, fuse_base)?;
-        //         }
-        //     }
-        //     &XC2BitstreamBits::XC2C384 {ref fb, ref iobs, ..}  => {
-        //         // Each FB
-        //         for fb_i in 0..24 {
-        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C384, fb_i as u32);
+                    // Macrocells
+                    XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C256, &fb[fb_i], iobs, fb_i, fuse_base);
+                }
+            }
+            &XC2BitstreamBits::XC2C384 {ref fb, ref iobs, ..}  => {
+                // Each FB
+                for fb_i in 0..24 {
+                    let fuse_base = fb_fuse_idx(XC2Device::XC2C384, fb_i as u32);
 
-        //             fb[fb_i].to_jed(XC2Device::XC2C384, fuse_base, writer)?;
+                    // fb[fb_i].to_jed(XC2Device::XC2C384, fuse_base, writer)?;
 
-        //             // Macrocells
-        //             XC2Macrocell::to_jed_large(writer, XC2Device::XC2C384, &fb[fb_i], iobs, fb_i, fuse_base)?;
-        //         }
-        //     }
-        //     &XC2BitstreamBits::XC2C512 {ref fb, ref iobs, ..}  => {
-        //         // Each FB
-        //         for fb_i in 0..32 {
-        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C512, fb_i as u32);
+                    // Macrocells
+                    XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C384, &fb[fb_i], iobs, fb_i, fuse_base);
+                }
+            }
+            &XC2BitstreamBits::XC2C512 {ref fb, ref iobs, ..}  => {
+                // Each FB
+                for fb_i in 0..32 {
+                    let fuse_base = fb_fuse_idx(XC2Device::XC2C512, fb_i as u32);
 
-        //             fb[fb_i].to_jed(XC2Device::XC2C512, fuse_base, writer)?;
+                    // fb[fb_i].to_jed(XC2Device::XC2C512, fuse_base, writer)?;
 
-        //             // Macrocells
-        //             XC2Macrocell::to_jed_large(writer, XC2Device::XC2C512, &fb[fb_i], iobs, fb_i, fuse_base)?;
-        //         }
-        //     }
-        // }
+                    // Macrocells
+                    XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C512, &fb[fb_i], iobs, fb_i, fuse_base);
+                }
+            }
+        }
 
         // GCK
         linebreaks.add(gck_fuse_idx(self.device_type()));
@@ -1247,7 +1247,7 @@ impl XC2BitstreamBits {
 
             linebreaks.add(clock_fuse_block);
             jed.f[clock_fuse_block] = !clock_div.enabled;
-            jed.f[clock_fuse_block+1..clock_fuse_block+3].copy_from_slice(&match clock_div.div_ratio {
+            jed.f[clock_fuse_block+1..clock_fuse_block+4].copy_from_slice(&match clock_div.div_ratio {
                 XC2ClockDivRatio::Div2  => [false, false, false],
                 XC2ClockDivRatio::Div4  => [false, false,  true],
                 XC2ClockDivRatio::Div6  => [false,  true, false],
