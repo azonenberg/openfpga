@@ -182,7 +182,12 @@ pub fn read_jed(in_bytes: &[u8]) -> Result<(Vec<bool>, Option<String>), JedParse
 
         // Now we can look at the first byte to figure out what we have
         match l.chars().next().unwrap() {
-            'X' | 'J' => {}, // Do nothing, don't care about these
+            'J' => {}, // TODO: "Official" device type
+            'G' => {}, // TODO: Security fuse
+            'B' | 'I' | 'K' | 'M' | 'O' | 'W' | 'Y' | 'Z' => {}, // Explicitly reserved in spec, ignore
+            'D' => {}, // Obsolete
+            'E' | 'U' => {}, // TODO: Extra fuses, unsupported for now
+            'X' | 'V' | 'P' | 'S' | 'R' | 'T' | 'A' => {}, // Testing-related, no intent to support for now
             'F' => {
                 // Default state
                 let (_, default_state_str) = l.split_at(1);
