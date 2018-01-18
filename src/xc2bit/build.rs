@@ -5,7 +5,7 @@ fn main() {
     let destination = std::path::Path::new(&out_dir).join("reftests.rs");
     let mut f = std::fs::File::create(&destination).unwrap();
 
-    let files = std::fs::read_dir("./reftests").unwrap();
+    let files = std::fs::read_dir("../../tests/xc2bit/reftests").unwrap();
 
     for file in files {
         let path = file.expect("failed to get path").path();
