@@ -37,7 +37,7 @@ use util::{LinebreakSet};
 use zia::{zia_get_row_width};
 
 /// Clock source for the register in a macrocell
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum XC2MCRegClkSrc {
     GCK0,
     GCK1,
@@ -80,7 +80,7 @@ impl XC2MCRegClkSrc {
 }
 
 /// Reset source for the register in a macrocell
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum XC2MCRegResetSrc {
     Disabled,
     PTA,
@@ -111,7 +111,7 @@ impl XC2MCRegResetSrc {
 }
 
 /// Set source for the register in a macrocell
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum XC2MCRegSetSrc {
     Disabled,
     PTA,
@@ -142,7 +142,7 @@ impl XC2MCRegSetSrc {
 }
 
 /// Mode of the register in a macrocell.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum XC2MCRegMode {
     /// D-type flip-flop
     DFF,
@@ -178,7 +178,7 @@ impl XC2MCRegMode {
 
 /// Mux selection for the ZIA input from this macrocell. The ZIA input can be chosen to come from either the XOR gate
 /// or from the output of the register.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum XC2MCFeedbackMode {
     Disabled,
     COMB,
@@ -207,7 +207,7 @@ impl XC2MCFeedbackMode {
 
 /// Mux selection for the "not from OR gate" input to the XOR gate. The XOR gate in a macrocell contains two inputs,
 /// the output of the corresponding OR term from the PLA and a specific dedicated AND term from the PLA.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum XC2MCXorMode {
     /// A constant zero which results in this XOR outputting the value of the OR term
     ZERO,
@@ -242,7 +242,7 @@ impl XC2MCXorMode {
 }
 
 /// Represents a macrocell.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct XC2Macrocell {
     /// Clock source for the register
     pub clk_src: XC2MCRegClkSrc,

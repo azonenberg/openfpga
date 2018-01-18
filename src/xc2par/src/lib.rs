@@ -26,6 +26,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #[macro_use]
 extern crate serde_derive;
 
+mod frontend;
+pub use frontend::*;
+
 mod engine;
 pub use engine::*;
 
