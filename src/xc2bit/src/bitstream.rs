@@ -900,41 +900,13 @@ impl XC2BitstreamBits {
         }
 
         // IOBs
-        match self {
-            // This match is needed because the different sizes have different IOB structures, and fixed-sized arrays
-            // are gimped enough that returning an array of trait objects is hard.
-            &XC2BitstreamBits::XC2C32 {ref iobs, ..} |
-            &XC2BitstreamBits::XC2C32A {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
-                }
-            },
-            &XC2BitstreamBits::XC2C64 {ref iobs, ..} |
-            &XC2BitstreamBits::XC2C64A {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
-                }
-            },
-            &XC2BitstreamBits::XC2C128 {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
-                }
-            },
-            &XC2BitstreamBits::XC2C256 {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
-                }
-            },
-            &XC2BitstreamBits::XC2C384 {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
-                }
-            },
-            &XC2BitstreamBits::XC2C512 {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
-                }
-            },
+        for i in 0..self.device_type().num_iobs() {
+            if let Some(iobs) = self.get_small_iobs() {
+                iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
+            }
+            if let Some(iobs) = self.get_large_iobs() {
+                iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
+            }
         }
 
         // Weird extra input-only pin
@@ -1107,41 +1079,13 @@ impl XC2BitstreamBits {
         self.get_global_nets().dump_human_readable(writer)?;
 
         // IOBs
-        match self {
-            // This match is needed because the different sizes have different IOB structures, and fixed-sized arrays
-            // are gimped enough that returning an array of trait objects is hard.
-            &XC2BitstreamBits::XC2C32 {ref iobs, ..} |
-            &XC2BitstreamBits::XC2C32A {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
-                }
-            },
-            &XC2BitstreamBits::XC2C64 {ref iobs, ..} |
-            &XC2BitstreamBits::XC2C64A {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
-                }
-            },
-            &XC2BitstreamBits::XC2C128 {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
-                }
-            },
-            &XC2BitstreamBits::XC2C256 {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
-                }
-            },
-            &XC2BitstreamBits::XC2C384 {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
-                }
-            },
-            &XC2BitstreamBits::XC2C512 {ref iobs, ..} => {
-                for i in 0..self.device_type().num_iobs() {
-                    iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
-                }
-            },
+        for i in 0..self.device_type().num_iobs() {
+            if let Some(iobs) = self.get_small_iobs() {
+                iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
+            }
+            if let Some(iobs) = self.get_large_iobs() {
+                iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
+            }
         }
 
         // Input-only pin
@@ -1163,74 +1107,20 @@ impl XC2BitstreamBits {
     /// Write a .jed representation of the bitstream to the given `jed` object.
     pub fn to_jed(&self, jed: &mut JEDECFile, linebreaks: &mut LinebreakSet) {
         // FBs
-        match self {
-            &XC2BitstreamBits::XC2C32 {ref fb, ref iobs, ..} |
-            &XC2BitstreamBits::XC2C32A {ref fb, ref iobs, ..} => {
-                // Each FB
-                for fb_i in 0..2 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C32, fb_i as u32);
+        for fb_i in 0..self.device_type().num_fbs() {
+            let fuse_base = fb_fuse_idx(self.device_type(), fb_i as u32);
+            self.get_fb()[fb_i].to_jed(self.device_type(), fuse_base, jed, linebreaks);
+        }
 
-                    fb[fb_i].to_jed(XC2Device::XC2C32, fuse_base, jed, linebreaks);
-
-                    // Macrocells
-                    XC2Macrocell::to_jed_small(jed, linebreaks, XC2Device::XC2C32, &fb[fb_i], iobs, fb_i, fuse_base);
-                }
+        // Macrocells
+        for fb_i in 0..self.device_type().num_fbs() {
+            let fuse_base = fb_fuse_idx(self.device_type(), fb_i as u32);
+            let fb = self.get_fb();
+            if let Some(iobs) = self.get_small_iobs() {
+                XC2Macrocell::to_jed_small(jed, linebreaks, self.device_type(), &fb[fb_i], iobs, fb_i, fuse_base);
             }
-            &XC2BitstreamBits::XC2C64 {ref fb, ref iobs, ..} |
-            &XC2BitstreamBits::XC2C64A {ref fb, ref iobs, ..} => {
-                // Each FB
-                for fb_i in 0..4 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C64, fb_i as u32);
-
-                    fb[fb_i].to_jed(XC2Device::XC2C64, fuse_base, jed, linebreaks);
-
-                    // Macrocells
-                    XC2Macrocell::to_jed_small(jed, linebreaks, XC2Device::XC2C64, &fb[fb_i], iobs, fb_i, fuse_base);
-                }
-            }
-            &XC2BitstreamBits::XC2C128 {ref fb, ref iobs, ..}  => {
-                // Each FB
-                for fb_i in 0..8 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C128, fb_i as u32);
-
-                    fb[fb_i].to_jed(XC2Device::XC2C128, fuse_base, jed, linebreaks);
-
-                    // Macrocells
-                    XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C128, &fb[fb_i], iobs, fb_i, fuse_base);
-                }
-            }
-            &XC2BitstreamBits::XC2C256 {ref fb, ref iobs, ..}  => {
-                // Each FB
-                for fb_i in 0..16 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C256, fb_i as u32);
-
-                    fb[fb_i].to_jed(XC2Device::XC2C256, fuse_base, jed, linebreaks);
-
-                    // Macrocells
-                    XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C256, &fb[fb_i], iobs, fb_i, fuse_base);
-                }
-            }
-            &XC2BitstreamBits::XC2C384 {ref fb, ref iobs, ..}  => {
-                // Each FB
-                for fb_i in 0..24 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C384, fb_i as u32);
-
-                    fb[fb_i].to_jed(XC2Device::XC2C384, fuse_base, jed, linebreaks);
-
-                    // Macrocells
-                    XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C384, &fb[fb_i], iobs, fb_i, fuse_base);
-                }
-            }
-            &XC2BitstreamBits::XC2C512 {ref fb, ref iobs, ..}  => {
-                // Each FB
-                for fb_i in 0..32 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C512, fb_i as u32);
-
-                    fb[fb_i].to_jed(XC2Device::XC2C512, fuse_base, jed, linebreaks);
-
-                    // Macrocells
-                    XC2Macrocell::to_jed_large(jed, linebreaks, XC2Device::XC2C512, &fb[fb_i], iobs, fb_i, fuse_base);
-                }
+            if let Some(iobs) = self.get_large_iobs() {
+                XC2Macrocell::to_jed_large(jed, linebreaks, self.device_type(), &fb[fb_i], iobs, fb_i, fuse_base);
             }
         }
 
