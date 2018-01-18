@@ -37,7 +37,7 @@ use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, glo
 use fusemap_physical::{fuse_array_dims, gck_fuse_coords, gsr_fuse_coords, gts_fuse_coords, global_term_fuse_coord,
                        clock_div_fuse_coord};
 use partdb::{parse_part_name_string};
-use util::{b2s};
+use util::{LinebreakSet};
 use zia::{zia_get_row_width};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
@@ -60,17 +60,16 @@ impl XC2Bitstream {
     }
 
     /// Write a .jed representation of the bitstream to the given `writer` object.
-    pub fn to_jed(&self, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn to_jed<W>(&self, mut writer: W) -> Result<(), io::Error> where W: Write {
         write!(writer, ".JED fuse map written by xc2bit\n")?;
         write!(writer, "https://github.com/azonenberg/openfpga\n\n")?;
-        write!(writer, "\x02")?;
 
-        write!(writer, "QF{}*\n", total_logical_fuse_count(self.bits.device_type()))?;
-        write!(writer, "N DEVICE {}-{}-{}*\n\n", self.bits.device_type(), self.speed_grade, self.package)?;
+        let mut linebreaks = LinebreakSet::new();
+        let mut jed = JEDECFile::new(total_logical_fuse_count(self.bits.device_type()));
+        jed.dev_name_str = Some(format!("{}-{}-{}", self.bits.device_type(), self.speed_grade, self.package));
+        self.bits.to_jed(&mut jed, &mut linebreaks);
 
-        self.bits.to_jed(writer)?;
-
-        write!(writer, "\x030000\n")?;
+        jed.write_custom_linebreaks(&mut writer, linebreaks.iter())?;
 
         Ok(())
     }
@@ -1161,131 +1160,126 @@ impl XC2BitstreamBits {
         Ok(())
     }
 
-    /// Write a .jed representation of the bitstream to the given `writer` object.
-    pub fn to_jed(&self, writer: &mut Write) -> Result<(), io::Error> {
-        // FBs
-        match self {
-            &XC2BitstreamBits::XC2C32 {ref fb, ref iobs, ..} |
-            &XC2BitstreamBits::XC2C32A {ref fb, ref iobs, ..} => {
-                // Each FB
-                for fb_i in 0..2 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C32, fb_i as u32);
+    /// Write a .jed representation of the bitstream to the given `jed` object.
+    pub fn to_jed(&self, jed: &mut JEDECFile, linebreaks: &mut LinebreakSet) {
+        // // FBs
+        // match self {
+        //     &XC2BitstreamBits::XC2C32 {ref fb, ref iobs, ..} |
+        //     &XC2BitstreamBits::XC2C32A {ref fb, ref iobs, ..} => {
+        //         // Each FB
+        //         for fb_i in 0..2 {
+        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C32, fb_i as u32);
 
-                    fb[fb_i].to_jed(XC2Device::XC2C32, fuse_base, writer)?;
+        //             fb[fb_i].to_jed(XC2Device::XC2C32, fuse_base, writer)?;
 
-                    // Macrocells
-                    XC2Macrocell::to_jed_small(writer, XC2Device::XC2C32, &fb[fb_i], iobs, fb_i, fuse_base)?;
-                }
-            }
-            &XC2BitstreamBits::XC2C64 {ref fb, ref iobs, ..} |
-            &XC2BitstreamBits::XC2C64A {ref fb, ref iobs, ..} => {
-                // Each FB
-                for fb_i in 0..4 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C64, fb_i as u32);
+        //             // Macrocells
+        //             XC2Macrocell::to_jed_small(writer, XC2Device::XC2C32, &fb[fb_i], iobs, fb_i, fuse_base)?;
+        //         }
+        //     }
+        //     &XC2BitstreamBits::XC2C64 {ref fb, ref iobs, ..} |
+        //     &XC2BitstreamBits::XC2C64A {ref fb, ref iobs, ..} => {
+        //         // Each FB
+        //         for fb_i in 0..4 {
+        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C64, fb_i as u32);
 
-                    fb[fb_i].to_jed(XC2Device::XC2C64, fuse_base, writer)?;
+        //             fb[fb_i].to_jed(XC2Device::XC2C64, fuse_base, writer)?;
 
-                    // Macrocells
-                    XC2Macrocell::to_jed_small(writer, XC2Device::XC2C64, &fb[fb_i], iobs, fb_i, fuse_base)?;
-                }
-            }
-            &XC2BitstreamBits::XC2C128 {ref fb, ref iobs, ..}  => {
-                // Each FB
-                for fb_i in 0..8 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C128, fb_i as u32);
+        //             // Macrocells
+        //             XC2Macrocell::to_jed_small(writer, XC2Device::XC2C64, &fb[fb_i], iobs, fb_i, fuse_base)?;
+        //         }
+        //     }
+        //     &XC2BitstreamBits::XC2C128 {ref fb, ref iobs, ..}  => {
+        //         // Each FB
+        //         for fb_i in 0..8 {
+        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C128, fb_i as u32);
 
-                    fb[fb_i].to_jed(XC2Device::XC2C128, fuse_base, writer)?;
+        //             fb[fb_i].to_jed(XC2Device::XC2C128, fuse_base, writer)?;
 
-                    // Macrocells
-                    XC2Macrocell::to_jed_large(writer, XC2Device::XC2C128, &fb[fb_i], iobs, fb_i, fuse_base)?;
-                }
-            }
-            &XC2BitstreamBits::XC2C256 {ref fb, ref iobs, ..}  => {
-                // Each FB
-                for fb_i in 0..16 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C256, fb_i as u32);
+        //             // Macrocells
+        //             XC2Macrocell::to_jed_large(writer, XC2Device::XC2C128, &fb[fb_i], iobs, fb_i, fuse_base)?;
+        //         }
+        //     }
+        //     &XC2BitstreamBits::XC2C256 {ref fb, ref iobs, ..}  => {
+        //         // Each FB
+        //         for fb_i in 0..16 {
+        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C256, fb_i as u32);
 
-                    fb[fb_i].to_jed(XC2Device::XC2C256, fuse_base, writer)?;
+        //             fb[fb_i].to_jed(XC2Device::XC2C256, fuse_base, writer)?;
 
-                    // Macrocells
-                    XC2Macrocell::to_jed_large(writer, XC2Device::XC2C256, &fb[fb_i], iobs, fb_i, fuse_base)?;
-                }
-            }
-            &XC2BitstreamBits::XC2C384 {ref fb, ref iobs, ..}  => {
-                // Each FB
-                for fb_i in 0..24 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C384, fb_i as u32);
+        //             // Macrocells
+        //             XC2Macrocell::to_jed_large(writer, XC2Device::XC2C256, &fb[fb_i], iobs, fb_i, fuse_base)?;
+        //         }
+        //     }
+        //     &XC2BitstreamBits::XC2C384 {ref fb, ref iobs, ..}  => {
+        //         // Each FB
+        //         for fb_i in 0..24 {
+        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C384, fb_i as u32);
 
-                    fb[fb_i].to_jed(XC2Device::XC2C384, fuse_base, writer)?;
+        //             fb[fb_i].to_jed(XC2Device::XC2C384, fuse_base, writer)?;
 
-                    // Macrocells
-                    XC2Macrocell::to_jed_large(writer, XC2Device::XC2C384, &fb[fb_i], iobs, fb_i, fuse_base)?;
-                }
-            }
-            &XC2BitstreamBits::XC2C512 {ref fb, ref iobs, ..}  => {
-                // Each FB
-                for fb_i in 0..32 {
-                    let fuse_base = fb_fuse_idx(XC2Device::XC2C512, fb_i as u32);
+        //             // Macrocells
+        //             XC2Macrocell::to_jed_large(writer, XC2Device::XC2C384, &fb[fb_i], iobs, fb_i, fuse_base)?;
+        //         }
+        //     }
+        //     &XC2BitstreamBits::XC2C512 {ref fb, ref iobs, ..}  => {
+        //         // Each FB
+        //         for fb_i in 0..32 {
+        //             let fuse_base = fb_fuse_idx(XC2Device::XC2C512, fb_i as u32);
 
-                    fb[fb_i].to_jed(XC2Device::XC2C512, fuse_base, writer)?;
+        //             fb[fb_i].to_jed(XC2Device::XC2C512, fuse_base, writer)?;
 
-                    // Macrocells
-                    XC2Macrocell::to_jed_large(writer, XC2Device::XC2C512, &fb[fb_i], iobs, fb_i, fuse_base)?;
-                }
-            }
-        }
+        //             // Macrocells
+        //             XC2Macrocell::to_jed_large(writer, XC2Device::XC2C512, &fb[fb_i], iobs, fb_i, fuse_base)?;
+        //         }
+        //     }
+        // }
 
         // GCK
-        write!(writer, "L{:06} {}{}{}*\n",
-            gck_fuse_idx(self.device_type()),
-            b2s(self.get_global_nets().gck_enable[0]),
-            b2s(self.get_global_nets().gck_enable[1]),
-            b2s(self.get_global_nets().gck_enable[2]))?;
+        linebreaks.add(gck_fuse_idx(self.device_type()));
+        linebreaks.add(gck_fuse_idx(self.device_type()));
+        jed.f[gck_fuse_idx(self.device_type()) + 0] = self.get_global_nets().gck_enable[0];
+        jed.f[gck_fuse_idx(self.device_type()) + 1] = self.get_global_nets().gck_enable[1];
+        jed.f[gck_fuse_idx(self.device_type()) + 2] = self.get_global_nets().gck_enable[2];
 
         // Clock divider
         if let Some(clock_div) = self.get_clock_div() {
             let clock_fuse_block = clock_div_fuse_idx(self.device_type());
 
-            write!(writer, "L{:06} {}{}*\n",
-                clock_fuse_block,
-                b2s(!clock_div.enabled),
-                match clock_div.div_ratio {
-                    XC2ClockDivRatio::Div2  => "000",
-                    XC2ClockDivRatio::Div4  => "001",
-                    XC2ClockDivRatio::Div6  => "010",
-                    XC2ClockDivRatio::Div8  => "011",
-                    XC2ClockDivRatio::Div10 => "100",
-                    XC2ClockDivRatio::Div12 => "101",
-                    XC2ClockDivRatio::Div14 => "110",
-                    XC2ClockDivRatio::Div16 => "111",
-                })?;
-            write!(writer, "L{:06} {}*\n",
-                clock_fuse_block + 4,
-                b2s(!clock_div.delay))?;
+            linebreaks.add(clock_fuse_block);
+            jed.f[clock_fuse_block] = !clock_div.enabled;
+            jed.f[clock_fuse_block+1..clock_fuse_block+3].copy_from_slice(&match clock_div.div_ratio {
+                XC2ClockDivRatio::Div2  => [false, false, false],
+                XC2ClockDivRatio::Div4  => [false, false,  true],
+                XC2ClockDivRatio::Div6  => [false,  true, false],
+                XC2ClockDivRatio::Div8  => [false,  true,  true],
+                XC2ClockDivRatio::Div10 => [ true, false, false],
+                XC2ClockDivRatio::Div12 => [ true, false,  true],
+                XC2ClockDivRatio::Div14 => [ true,  true, false],
+                XC2ClockDivRatio::Div16 => [ true,  true,  true],
+            });
+            linebreaks.add(clock_fuse_block + 4);
+            jed.f[clock_fuse_block + 4] = !clock_div.delay;
         }
 
         // GSR
-        write!(writer, "L{:06} {}{}*\n",
-            gsr_fuse_idx(self.device_type()),
-            b2s(self.get_global_nets().gsr_invert),
-            b2s(self.get_global_nets().gsr_enable))?;
+        linebreaks.add(gsr_fuse_idx(self.device_type()));
+        jed.f[gsr_fuse_idx(self.device_type()) + 0] = self.get_global_nets().gsr_invert;
+        jed.f[gsr_fuse_idx(self.device_type()) + 1] = self.get_global_nets().gsr_enable;
 
         // GTS
-        write!(writer, "L{:06} {}{}{}{}{}{}{}{}*\n",
-            gts_fuse_idx(self.device_type()),
-            b2s(self.get_global_nets().gts_invert[0]),
-            b2s(!self.get_global_nets().gts_enable[0]),
-            b2s(self.get_global_nets().gts_invert[1]),
-            b2s(!self.get_global_nets().gts_enable[1]),
-            b2s(self.get_global_nets().gts_invert[2]),
-            b2s(!self.get_global_nets().gts_enable[2]),
-            b2s(self.get_global_nets().gts_invert[3]),
-            b2s(!self.get_global_nets().gts_enable[3]))?;
+        linebreaks.add(gts_fuse_idx(self.device_type()));
+        jed.f[gts_fuse_idx(self.device_type()) + 0] = self.get_global_nets().gts_invert[0];
+        jed.f[gts_fuse_idx(self.device_type()) + 1] = !self.get_global_nets().gts_enable[0];
+        jed.f[gts_fuse_idx(self.device_type()) + 2] = self.get_global_nets().gts_invert[1];
+        jed.f[gts_fuse_idx(self.device_type()) + 3] = !self.get_global_nets().gts_enable[1];
+        jed.f[gts_fuse_idx(self.device_type()) + 4] = self.get_global_nets().gts_invert[2];
+        jed.f[gts_fuse_idx(self.device_type()) + 5] = !self.get_global_nets().gts_enable[2];
+        jed.f[gts_fuse_idx(self.device_type()) + 6] = self.get_global_nets().gts_invert[3];
+        jed.f[gts_fuse_idx(self.device_type()) + 7] = !self.get_global_nets().gts_enable[3];
 
         // Global termination
-        write!(writer, "L{:06} {}*\n",
-            global_term_fuse_idx(self.device_type()),
-            b2s(self.get_global_nets().global_pu))?;
+        linebreaks.add(global_term_fuse_idx(self.device_type()));
+        jed.f[global_term_fuse_idx(self.device_type())] = self.get_global_nets().global_pu;
 
         // Bank voltages and miscellaneous
         match self {
@@ -1293,78 +1287,114 @@ impl XC2BitstreamBits {
             &XC2BitstreamBits::XC2C32A {ref inpin, legacy_ivoltage: ref ivoltage,
                 legacy_ovoltage: ref ovoltage, ..} => {
 
-                write!(writer, "L012270 {}*\n", b2s(!ovoltage))?;
-                write!(writer, "L012271 {}*\n", b2s(!ivoltage))?;
+                linebreaks.add(12270);
+                jed.f[12270] = !ovoltage;
+                linebreaks.add(12271);
+                jed.f[12271] = !ivoltage;
 
-                write!(writer, "L012272 {}{}*\n",
-                    b2s(inpin.schmitt_trigger),
-                    b2s(inpin.termination_enabled))?;
+                linebreaks.add(12272);
+                jed.f[12272] = inpin.schmitt_trigger;
+                jed.f[12273] = inpin.termination_enabled;
             }
             &XC2BitstreamBits::XC2C64 {ref ivoltage, ref ovoltage, ..} |
             &XC2BitstreamBits::XC2C64A {legacy_ivoltage: ref ivoltage, legacy_ovoltage: ref ovoltage, ..} => {
-                write!(writer, "L025806 {}*\n", b2s(!ovoltage))?;
-                write!(writer, "L025807 {}*\n", b2s(!ivoltage))?;
+                linebreaks.add(25806);
+                jed.f[25806] = !ovoltage;
+                linebreaks.add(25807);
+                jed.f[25807] = !ivoltage;
             }
             &XC2BitstreamBits::XC2C128 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
-                write!(writer, "L055335 {}*\n", b2s(!data_gate))?;
+                linebreaks.add(55335);
+                jed.f[55335] = !data_gate;
 
-                write!(writer, "L055336 {}{}*\n", b2s(!ivoltage[0]), b2s(!ivoltage[1]))?;
-                write!(writer, "L055338 {}{}*\n", b2s(!ovoltage[0]), b2s(!ovoltage[1]))?;
+                linebreaks.add(55336);
+                jed.f[55336] = !ivoltage[0];
+                jed.f[55337] = !ivoltage[1];
+                linebreaks.add(55338);
+                jed.f[55338] = !ovoltage[0];
+                jed.f[55339] = !ovoltage[1];
 
-                write!(writer, "L055340 {}*\n", b2s(!use_vref))?;
+                linebreaks.add(55340);
+                jed.f[55340] = !use_vref;
             }
             &XC2BitstreamBits::XC2C256 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
-                write!(writer, "L123243 {}*\n", b2s(!data_gate))?;
+                linebreaks.add(123243);
+                jed.f[123243] = !data_gate;
 
-                write!(writer, "L123244 {}{}*\n", b2s(!ivoltage[0]), b2s(!ivoltage[1]))?;
-                write!(writer, "L123246 {}{}*\n", b2s(!ovoltage[0]), b2s(!ovoltage[1]))?;
+                linebreaks.add(123244);
+                jed.f[123244] = !ivoltage[0];
+                jed.f[123245] = !ivoltage[1];
+                linebreaks.add(123246);
+                jed.f[123246] = !ovoltage[0];
+                jed.f[123247] = !ovoltage[1];
 
-                write!(writer, "L123248 {}*\n", b2s(!use_vref))?;
+                linebreaks.add(123248);
+                jed.f[123248] = !use_vref;
             }
             &XC2BitstreamBits::XC2C384 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
-                write!(writer, "L209347 {}*\n", b2s(!data_gate))?;
+                linebreaks.add(209347);
+                jed.f[209347] = !data_gate;
 
-                write!(writer, "L209348 {}{}{}{}*\n",
-                    b2s(!ivoltage[0]), b2s(!ivoltage[1]),
-                    b2s(!ivoltage[2]), b2s(!ivoltage[3]))?;
-                write!(writer, "L209352 {}{}{}{}*\n",
-                    b2s(!ovoltage[0]), b2s(!ovoltage[1]),
-                    b2s(!ovoltage[2]), b2s(!ovoltage[3]))?;
+                linebreaks.add(209348);
+                jed.f[209348] = !ivoltage[0];
+                jed.f[209349] = !ivoltage[1];
+                jed.f[209350] = !ivoltage[2];
+                jed.f[209351] = !ivoltage[3];
 
-                write!(writer, "L209356 {}*\n", b2s(!use_vref))?;
+                linebreaks.add(209352);
+                jed.f[209352] = !ovoltage[0];
+                jed.f[209353] = !ovoltage[1];
+                jed.f[209354] = !ovoltage[2];
+                jed.f[209355] = !ovoltage[3];
+
+                linebreaks.add(209356);
+                jed.f[209356] = !use_vref;
             }
             &XC2BitstreamBits::XC2C512 {ref ivoltage, ref ovoltage, ref data_gate, ref use_vref, ..}  => {
-                write!(writer, "L296393 {}*\n", b2s(!data_gate))?;
+                linebreaks.add(296393);
+                jed.f[296393] = !data_gate;
 
-                write!(writer, "L296394 {}{}{}{}*\n",
-                    b2s(ivoltage[0]), b2s(ivoltage[1]),
-                    b2s(ivoltage[2]), b2s(ivoltage[3]))?;
-                write!(writer, "L296398 {}{}{}{}*\n",
-                    b2s(ovoltage[0]), b2s(ovoltage[1]),
-                    b2s(ovoltage[2]), b2s(ovoltage[3]))?;
+                linebreaks.add(296394);
+                jed.f[296394] = ivoltage[0];
+                jed.f[296395] = ivoltage[1];
+                jed.f[296396] = ivoltage[2];
+                jed.f[296397] = ivoltage[3];
 
-                write!(writer, "L296402 {}*\n", b2s(!use_vref))?;
+                linebreaks.add(296398);
+                jed.f[296398] = ovoltage[0];
+                jed.f[296399] = ovoltage[1];
+                jed.f[296400] = ovoltage[2];
+                jed.f[296401] = ovoltage[3];
+
+                linebreaks.add(296402);
+                jed.f[296402] = !use_vref;
             }
         }
 
         // A-variant bank voltages
         match self {
             &XC2BitstreamBits::XC2C32A {ref ivoltage, ref ovoltage, ..} => {
-                write!(writer, "L012274 {}*\n", b2s(!ivoltage[0]))?;
-                write!(writer, "L012275 {}*\n", b2s(!ovoltage[0]))?;
-                write!(writer, "L012276 {}*\n", b2s(!ivoltage[1]))?;
-                write!(writer, "L012277 {}*\n", b2s(!ovoltage[1]))?;
+                linebreaks.add(12274);
+                jed.f[12274] = !ivoltage[0];
+                linebreaks.add(12275);
+                jed.f[12275] = !ovoltage[0];
+                linebreaks.add(12276);
+                jed.f[12276] = !ivoltage[1];
+                linebreaks.add(12277);
+                jed.f[12277] = !ovoltage[1];
             },
             &XC2BitstreamBits::XC2C64A {ref ivoltage, ref ovoltage, ..} => {
-                write!(writer, "L025808 {}*\n", b2s(!ivoltage[0]))?;
-                write!(writer, "L025809 {}*\n", b2s(!ovoltage[0]))?;
-                write!(writer, "L025810 {}*\n", b2s(!ivoltage[1]))?;
-                write!(writer, "L025811 {}*\n", b2s(!ovoltage[1]))?;
+                linebreaks.add(25808);
+                jed.f[25808] = !ivoltage[0];
+                linebreaks.add(25809);
+                jed.f[25809] = !ovoltage[0];
+                linebreaks.add(25810);
+                jed.f[25810] = !ivoltage[1];
+                linebreaks.add(25811);
+                jed.f[25811] = !ovoltage[1];
             },
             _ => {}
         }
-
-        Ok(())
     }
 }
 
