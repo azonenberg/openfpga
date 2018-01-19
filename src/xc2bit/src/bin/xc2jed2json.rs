@@ -183,8 +183,7 @@ fn main() {
                         }
 
                         if iobs[idx as usize].uses_data_gate {
-                            // FIXME
-                            unimplemented!();
+                            attributes.insert(String::from("DATA_GATE"), AttributeVal::S(String::from("TRUE")));
                         }
 
                         has_output = iobs[idx as usize].obuf_mode != XC2IOBOBufMode::Disabled;

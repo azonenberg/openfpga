@@ -331,9 +331,6 @@ impl IntermediateGraph {
                 "IOBUFE"  => {
                     // FIXME: Check that IO goes to a module port
 
-                    let schmitt_trigger = optional_string_bool_attrib("SCHMITT_TRIGGER")?;
-                    let termination_enabled = optional_string_bool_attrib("TERM")?;
-
                     let slew_attrib = optional_string_attrib("SLEW")?;
                     let slew_is_fast = if let Some(attrib) = slew_attrib {
                         if attrib.eq_ignore_ascii_case("fast") {
@@ -347,17 +344,19 @@ impl IntermediateGraph {
                         false   // TODO: Default should be?
                     };
 
+                    let uses_data_gate = optional_string_bool_attrib("DATA_GATE")?;
+                    // FIXME: Check if this is requested on parts where this is not supported
+
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::IOBuf {
                             input: single_optional_connection("I")?,
                             oe: single_optional_connection("E")?,
                             output: single_optional_connection("O")?,
-                            schmitt_trigger,
-                            termination_enabled,
+                            schmitt_trigger: optional_string_bool_attrib("SCHMITT_TRIGGER")?,
+                            termination_enabled: optional_string_bool_attrib("TERM")?,
                             slew_is_fast,
-                            // TODO
-                            uses_data_gate: false,
+                            uses_data_gate,
                         },
                         location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
@@ -365,17 +364,16 @@ impl IntermediateGraph {
                 "IBUF" => {
                     // FIXME: Check that IO goes to a module port
 
-                    let schmitt_trigger = optional_string_bool_attrib("SCHMITT_TRIGGER")?;
-                    let termination_enabled = optional_string_bool_attrib("TERM")?;
+                    let uses_data_gate = optional_string_bool_attrib("DATA_GATE")?;
+                    // FIXME: Check if this is requested on parts where this is not supported
 
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::InBuf {
                             output: single_required_connection("O")?,
-                            schmitt_trigger,
-                            termination_enabled,
-                            // TODO
-                            uses_data_gate: false,
+                            schmitt_trigger: optional_string_bool_attrib("SCHMITT_TRIGGER")?,
+                            termination_enabled: optional_string_bool_attrib("TERM")?,
+                            uses_data_gate,
                         },
                         location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
                     });
