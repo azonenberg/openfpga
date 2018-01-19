@@ -272,6 +272,22 @@ impl IntermediateGraph {
                 };
             };
 
+            // Helper to retrieve an optional string attribute containing a boolean
+            let optional_string_bool_attrib = |name: &str| -> Result<bool, &'static str> {
+                let attrib = optional_string_attrib(name)?;
+                Ok(if let Some(attrib) = attrib {
+                    if attrib.eq_ignore_ascii_case("true") {
+                        true
+                    } else if attrib.eq_ignore_ascii_case("false") {
+                        false
+                    } else {
+                        return Err("invalid attribute value");
+                    }
+                } else {
+                    false   // TODO: Default should be?
+                })
+            };
+
             // Helper to retrieve a single net that is definitely required
             let single_required_connection = |name : &str| {
                 let conn_obj = cell_obj.connections.get(name);
@@ -315,16 +331,32 @@ impl IntermediateGraph {
                 "IOBUFE"  => {
                     // FIXME: Check that IO goes to a module port
 
+                    let schmitt_trigger = optional_string_bool_attrib("SCHMITT_TRIGGER")?;
+                    let termination_enabled = optional_string_bool_attrib("TERM")?;
+
+                    let slew_attrib = optional_string_attrib("SLEW")?;
+                    let slew_is_fast = if let Some(attrib) = slew_attrib {
+                        if attrib.eq_ignore_ascii_case("fast") {
+                            true
+                        } else if attrib.eq_ignore_ascii_case("slow") {
+                            false
+                        } else {
+                            return Err("invalid attribute value");
+                        }
+                    } else {
+                        false   // TODO: Default should be?
+                    };
+
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::IOBuf {
                             input: single_optional_connection("I")?,
                             oe: single_optional_connection("E")?,
                             output: single_optional_connection("O")?,
+                            schmitt_trigger,
+                            termination_enabled,
+                            slew_is_fast,
                             // TODO
-                            schmitt_trigger: false,
-                            termination_enabled: false,
-                            slew_is_fast: false,
                             uses_data_gate: false,
                         },
                         location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
@@ -333,13 +365,16 @@ impl IntermediateGraph {
                 "IBUF" => {
                     // FIXME: Check that IO goes to a module port
 
+                    let schmitt_trigger = optional_string_bool_attrib("SCHMITT_TRIGGER")?;
+                    let termination_enabled = optional_string_bool_attrib("TERM")?;
+
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::InBuf {
                             output: single_required_connection("O")?,
+                            schmitt_trigger,
+                            termination_enabled,
                             // TODO
-                            schmitt_trigger: false,
-                            termination_enabled: false,
                             uses_data_gate: false,
                         },
                         location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
