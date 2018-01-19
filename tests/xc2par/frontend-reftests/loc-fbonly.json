@@ -1,0 +1,174 @@
+{
+  "modules": {
+    "top": {
+      "attributes": {
+        "top": 1
+      },
+      "ports": {
+        "a": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "b": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "q1": {
+          "direction": "output",
+          "bits": [ 4 ]
+        },
+        "clk_": {
+          "direction": "input",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+        "and0": {
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": 2,
+            "TRUE_INP": 0
+          },
+          "attributes": {
+          },
+          "port_directions": {
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 6, 7 ],
+            "OUT": [ 8 ]
+          }
+        },
+        "and1": {
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": 0,
+            "TRUE_INP": 2
+          },
+          "attributes": {
+          },
+          "port_directions": {
+          },
+          "connections": {
+            "IN": [ 6, 7 ],
+            "IN_B": [ ],
+            "OUT": [ 9 ]
+          }
+        },
+        "or0": {
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": 2
+          },
+          "attributes": {
+          },
+          "port_directions": {
+          },
+          "connections": {
+            "IN": [ 9, 8 ],
+            "OUT": [ 10 ]
+          }
+        },
+        "xor0": {
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": 1
+          },
+          "attributes": {
+          },
+          "port_directions": {
+          },
+          "connections": {
+            "IN_ORTERM": [ 10 ],
+            "OUT": [ 11 ]
+          }
+        },
+        "ibuf0": {
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+          },
+          "connections": {
+            "I": [ 2 ],
+            "O": [ 7 ]
+          }
+        },
+        "ibuf1": {
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+          },
+          "connections": {
+            "I": [ 3 ],
+            "O": [ 6 ]
+          }
+        },
+        "ibuf2": {
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+          },
+          "connections": {
+            "I": [ 5 ],
+            "O": [ 12 ]
+          }
+        },
+        "iobufe0": {
+          "type": "IOBUFE",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB2"
+          },
+          "port_directions": {
+          },
+          "connections": {
+            "I": [ 13 ],
+            "IO": [ 4 ]
+          }
+        },
+        "ff0": {
+          "type": "FDCP",
+          "parameters": {
+            "INIT": 0
+          },
+          "attributes": {
+          },
+          "port_directions": {
+          },
+          "connections": {
+            "C": [ 14 ],
+            "CLR": [ "0" ],
+            "D": [ 11 ],
+            "PRE": [ "0" ],
+            "Q": [ 13 ]
+          }
+        },
+        "bufg0": {
+          "type": "BUFG",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+          },
+          "connections": {
+            "I": [ 12 ],
+            "O": [ 14 ]
+          }
+        }
+      },
+      "netnames": {
+      }
+    }
+  }
+}

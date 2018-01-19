@@ -781,22 +781,20 @@ mod tests {
     extern crate serde_json;
 
     fn run_one_reftest(input_filename: &'static str) {
-        let input_path = std::path::Path::new(input_filename);
-        let mut output_path = input_path.to_path_buf();
-        output_path.set_extension("out");
-
-        let mut input_data = Vec::new();
-        let mut output_data = Vec::new();
-
-        File::open(&input_path).unwrap().read_to_end(&mut input_data).unwrap();
-        File::open(&output_path).unwrap().read_to_end(&mut output_data).unwrap();
-
         // Read original json
+        let input_path = std::path::Path::new(input_filename);
+        let mut input_data = Vec::new();
+        File::open(&input_path).unwrap().read_to_end(&mut input_data).unwrap();
         let yosys_netlist = yosys_netlist_json::Netlist::from_slice(&input_data).unwrap();
-        // Read reference json
-        let reference_data_structure = serde_json::from_slice(&output_data).unwrap();
         // This is what we get
         let our_data_structure = IntermediateGraph::from_yosys_netlist(&yosys_netlist).unwrap();
+
+        // Read reference json
+        let mut output_path = input_path.to_path_buf();
+        output_path.set_extension("out");
+        let mut output_data = Vec::new();
+        File::open(&output_path).unwrap().read_to_end(&mut output_data).unwrap();
+        let reference_data_structure = serde_json::from_slice(&output_data).unwrap();
 
         assert_eq!(our_data_structure, reference_data_structure);
     }

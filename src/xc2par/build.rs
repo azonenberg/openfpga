@@ -11,7 +11,8 @@ fn main() {
 
     for file in files {
         let path = file.expect("failed to get path").path();
-        if path.extension().expect("bogus reftest filename (doesn't have extension)") == "json" {
+        let ext = path.extension().expect("bogus reftest filename (doesn't have extension)");
+        if ext == "json" || ext == "fail" {
             let path = path.canonicalize().unwrap();
 
             let id_string = path.file_name().unwrap().to_str().unwrap().chars().map(|x| match x {
@@ -19,6 +20,9 @@ fn main() {
                 _ => '_',
             }).collect::<String>();
 
+            if ext == "fail" {
+                write!(f, "#[should_panic]\n").unwrap();
+            }
             write!(f, r#"
                 #[test]
                 fn reftest_{}() {{
