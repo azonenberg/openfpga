@@ -147,7 +147,7 @@ pub struct InputGraphPTerm {
     pub inputs_comp_zia: Vec<u32>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgClk {
     pub loc: Option<AssignedLocation>,
     pub name: String,
@@ -155,7 +155,7 @@ pub struct InputGraphBufgClk {
     pub input: ObjPoolIndex<InputGraphMacrocell>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgGTS {
     pub loc: Option<AssignedLocation>,
     pub name: String,
@@ -164,7 +164,7 @@ pub struct InputGraphBufgGTS {
     pub invert: bool,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgGSR {
     pub loc: Option<AssignedLocation>,
     pub name: String,
@@ -173,7 +173,7 @@ pub struct InputGraphBufgGSR {
     pub invert: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct InputGraph {
     pub mcs: ObjPool<InputGraphMacrocell>,
     pub pterms: ObjPool<InputGraphPTerm>,
@@ -1088,4 +1088,37 @@ impl InputGraph {
             }
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std;
+    use std::fs::File;
+    use std::io::Read;
+
+    extern crate serde_json;
+
+    fn run_one_reftest(input_filename: &'static str) {
+        // Read original json
+        let input_path = std::path::Path::new(input_filename);
+        let mut input_data = Vec::new();
+        File::open(&input_path).unwrap().read_to_end(&mut input_data).unwrap();
+        let intermed_graph = serde_json::from_slice(&input_data).unwrap();
+        // This is what we get
+        let our_data_structure = InputGraph::from_intermed_graph(&intermed_graph).unwrap();
+
+        // Read reference json
+        let mut output_path = input_path.to_path_buf();
+        output_path.set_extension("out");
+        let mut output_data = Vec::new();
+        File::open(&output_path).unwrap().read_to_end(&mut output_data).unwrap();
+        let reference_data_structure = serde_json::from_slice(&output_data).unwrap();
+
+        assert_eq!(our_data_structure, reference_data_structure);
+    }
+
+    // Include list of actual tests to run
+    include!(concat!(env!("OUT_DIR"), "/netlist-reftests.rs"));
 }

@@ -1,12 +1,12 @@
 use std::io::Write;
 
-fn main() {
+fn one_set_of_reftests(outfile: &'static str, indir: &'static str) {
     let out_dir = std::env::var("OUT_DIR").unwrap();
-    let destination = std::path::Path::new(&out_dir).join("frontend-reftests.rs");
+    let destination = std::path::Path::new(&out_dir).join(outfile);
     let mut f = std::fs::File::create(&destination).unwrap();
 
     let root_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    let reftests_dir = std::path::Path::new(&root_dir).join("../../tests/xc2par/frontend-reftests");
+    let reftests_dir = std::path::Path::new(&root_dir).join(indir);
     let files = std::fs::read_dir(reftests_dir).unwrap();
 
     for file in files {
@@ -31,4 +31,9 @@ fn main() {
                 "#, id_string, path.to_str().unwrap()).unwrap();
         }
     }
+}
+
+fn main() {
+    one_set_of_reftests("frontend-reftests.rs", "../../tests/xc2par/frontend-reftests");
+    one_set_of_reftests("netlist-reftests.rs", "../../tests/xc2par/netlist-reftests");
 }
