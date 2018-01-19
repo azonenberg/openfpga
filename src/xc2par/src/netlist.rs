@@ -533,14 +533,22 @@ impl InputGraph {
                     }
 
                     // Visit PTC
+                    let mut invert_out = invert_out;
                     let ptc_input = {
                         if andterm_input.is_some() {
-                            let ptc_n = s.g.nets.get(andterm_input.unwrap()).source.unwrap();
-                            let ptc_newg_n = process_one_intermed_node(s, ptc_n)?;
-                            if let InputGraphAnyPoolIdx::PTerm(x) = ptc_newg_n {
-                                Some(x)
+                            if andterm_input.unwrap() == s.g.vdd_net {
+                                invert_out = !invert_out;
+                                None
+                            } else if andterm_input.unwrap() == s.g.vss_net {
+                                None
                             } else {
-                                return Err("mis-connected nodes");
+                                let ptc_n = s.g.nets.get(andterm_input.unwrap()).source.unwrap();
+                                let ptc_newg_n = process_one_intermed_node(s, ptc_n)?;
+                                if let InputGraphAnyPoolIdx::PTerm(x) = ptc_newg_n {
+                                    Some(x)
+                                } else {
+                                    return Err("mis-connected nodes");
+                                }
                             }
                         } else {
                             None

@@ -724,7 +724,7 @@ impl RequestedLocation {
                     // FBn_Pi
                     Ok(Some(RequestedLocation {
                         fb: loc_fb_i[0][2..].parse::<u32>().unwrap() - 1,
-                        i: Some(loc_fb_i[1][1..].parse::<u32>().unwrap() - 1),
+                        i: Some(loc_fb_i[1][1..].parse::<u32>().unwrap()),
                     }))
                 }
             } else {

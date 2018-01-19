@@ -58,6 +58,111 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
     let mut gck_used = HashSet::with_capacity(NUM_BUFG_CLK);
     let mut gts_used = HashSet::with_capacity(NUM_BUFG_GTS);
     let mut gsr_used = HashSet::with_capacity(NUM_BUFG_GSR);
+
+    // Find global buffers that have no constraint on the buffer but are fully constrained on the pin. Transfer these
+    // into a constraint on the buffer.
+    {
+        for gck in g.bufg_clks.iter_mut() {
+            if gck.loc.is_some() {
+                continue;
+            }
+
+            let mc_req_loc = g.mcs.get(gck.input).requested_loc;
+            if mc_req_loc.is_none() {
+                continue;
+            }
+
+            let mc_req_loc = mc_req_loc.unwrap();
+            if mc_req_loc.i.is_some() {
+                let mut idx = None;
+                for i in 0..NUM_BUFG_CLK {
+                    let actual_mc_loc = get_gck(XC2Device::XC2C32A, i).unwrap();
+
+                    if mc_req_loc.fb != actual_mc_loc.0 || mc_req_loc.i.unwrap() != actual_mc_loc.1 {
+                        continue;
+                    }
+
+                    idx = Some(i as u32);
+                    // Now force the buffer to have the full location
+                    gck.requested_loc = Some(RequestedLocation{fb: 0, i: Some(i as u32)});
+                    break;
+
+                }
+
+                if idx.is_none() {
+                    return None;
+                }
+            }
+        }
+    }
+    {
+        for gts in g.bufg_gts.iter_mut() {
+            if gts.loc.is_some() {
+                continue;
+            }
+
+            let mc_req_loc = g.mcs.get(gts.input).requested_loc;
+            if mc_req_loc.is_none() {
+                continue;
+            }
+
+            let mc_req_loc = mc_req_loc.unwrap();
+            if mc_req_loc.i.is_some() {
+                let mut idx = None;
+                for i in 0..NUM_BUFG_GTS {
+                    let actual_mc_loc = get_gts(XC2Device::XC2C32A, i).unwrap();
+
+                    if mc_req_loc.fb != actual_mc_loc.0 || mc_req_loc.i.unwrap() != actual_mc_loc.1 {
+                        continue;
+                    }
+
+                    idx = Some(i as u32);
+                    // Now force the buffer to have the full location
+                    gts.requested_loc = Some(RequestedLocation{fb: 0, i: Some(i as u32)});
+                    break;
+
+                }
+
+                if idx.is_none() {
+                    return None;
+                }
+            }
+        }
+    }
+    {
+        for gsr in g.bufg_gsr.iter_mut() {
+            if gsr.loc.is_some() {
+                continue;
+            }
+
+            let mc_req_loc = g.mcs.get(gsr.input).requested_loc;
+            if mc_req_loc.is_none() {
+                continue;
+            }
+
+            let mc_req_loc = mc_req_loc.unwrap();
+            if mc_req_loc.i.is_some() {
+                let mut idx = None;
+                for i in 0..NUM_BUFG_GSR {
+                    let actual_mc_loc = get_gsr(XC2Device::XC2C32A);
+
+                    if mc_req_loc.fb != actual_mc_loc.0 || mc_req_loc.i.unwrap() != actual_mc_loc.1 {
+                        continue;
+                    }
+
+                    idx = Some(i as u32);
+                    // Now force the buffer to have the full location
+                    gsr.requested_loc = Some(RequestedLocation{fb: 0, i: Some(i as u32)});
+                    break;
+
+                }
+
+                if idx.is_none() {
+                    return None;
+                }
+            }
+        }
+    }
     
     // Begin with assigning those that have a LOC constraint on the buffer. We know that these already have LOC
     // constraints on the pin as well.
@@ -151,7 +256,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
         }
     }
     {
-        for gts in g.bufg_clks.iter_mut() {
+        for gts in g.bufg_gts.iter_mut() {
             if gts.loc.is_some() {
                 continue;
             }
@@ -191,7 +296,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
         }
     }
     {
-        for gsr in g.bufg_clks.iter_mut() {
+        for gsr in g.bufg_gsr.iter_mut() {
             if gsr.loc.is_some() {
                 continue;
             }
