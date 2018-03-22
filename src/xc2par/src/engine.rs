@@ -554,7 +554,13 @@ pub enum AndTermAssignmentResult {
 pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, fb_i: u32) -> AndTermAssignmentResult {
     let mut ret = [None; ANDTERMS_PER_FB];
 
+    // This is a collection of p-terms that have some restrictions on where they can be placed (either because the
+    // p-term is used for some special function or because there is a LOC constraint on it). The algorithm will run
+    // backtracking search on these to try to find a satisfying assignment, and then afterwards it will take all of
+    // the other p-terms and greedily assign them wherever there is room. We definitely don't want to put them along
+    // in the backtracking search because the worst-case 54! iterations is no fun.
     let mut pterm_and_candidate_sites = Vec::new();
+    let mut free_pterms = Vec::new();
 
     // Gather up all product terms and the locations at which they may be placed
     // Place all the special product terms
@@ -646,11 +652,7 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
                     if let Some(RequestedLocation{i: Some(loc_i), ..}) = pt.requested_loc {
                         pterm_and_candidate_sites.push((pt_idx, vec![loc_i]));
                     } else {
-                        let mut all_sites = Vec::with_capacity(ANDTERMS_PER_FB);
-                        for i in 0..(ANDTERMS_PER_FB as u32) {
-                            all_sites.push(i);
-                        }
-                        pterm_and_candidate_sites.push((pt_idx, all_sites));
+                        free_pterms.push(pt_idx);
                     }
                 }
             }
@@ -686,10 +688,32 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
     };
 
     if !backtrack_inner(g, &mut most_placed, &mut ret, &pterm_and_candidate_sites, 0) {
-        return AndTermAssignmentResult::FailurePtermExceeded(pterm_and_candidate_sites.len() as u32 - most_placed);
+        return AndTermAssignmentResult::FailurePtermExceeded(
+            (pterm_and_candidate_sites.len() + free_pterms.len()) as u32 - most_placed);
     }
 
-    // Update the "reverse" pointers
+    // The backtracking search is completed. Greedily assign everything that is left.
+    for &pt_idx in &free_pterms {
+        let pt = g.pterms.get(pt_idx);
+        let mut found = false;
+        for candidate_pt_i in 0..ANDTERMS_PER_FB {
+            if ret[candidate_pt_i].is_none() || (g.pterms.get(ret[candidate_pt_i].unwrap()) == pt) {
+                // It is possible to assign to this site
+                ret[candidate_pt_i] = Some(pt_idx);
+                most_placed += 1;
+                found = true;
+                break;
+            }
+        }
+
+        if !found {
+            // XXX really need to check if these scores follow the rules
+            return AndTermAssignmentResult::FailurePtermExceeded(
+                (pterm_and_candidate_sites.len() + free_pterms.len()) as u32 - most_placed);
+        }
+    }
+
+    // If we got here, everything is assigned. Update the "reverse" pointers
     let mut existing_pterm_map = HashMap::new();
     for pterm_i in 0..ANDTERMS_PER_FB {
         if let Some(pterm_idx) = ret[pterm_i] {
@@ -903,8 +927,8 @@ fn try_assign_fb_inner(g: &mut InputGraph, mc_assignments: &[PARFBAssignment], f
         },
         AndTermAssignmentResult::FailurePtermLOCUnsatisfiable(x) => {
             failing_score += x;
-        }
-        _ => unreachable!(),
+        },
+        AndTermAssignmentResult::Success => {},
     }
 
     match zia_assign_result {
@@ -914,7 +938,7 @@ fn try_assign_fb_inner(g: &mut InputGraph, mc_assignments: &[PARFBAssignment], f
         ZIAAssignmentResult::FailureUnroutable(x) => {
             failing_score += x;
         },
-        _ => unreachable!(),
+        ZIAAssignmentResult::Success(_) => {},
     }
 
     FBAssignmentResultInner::Failure(failing_score)
@@ -1208,6 +1232,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
     }
 
     for _iter_count in 0..1000 {
+        println!("iter {}", _iter_count);
         // Update the "reverse" pointers
         // TODO: Fix copypasta
         for fb_i in 0..3 {
@@ -1261,6 +1286,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             if let PARMCAssignment::MC(mc_idx) = macrocell_placement[move_fb as usize][move_mc as usize].0 {
                 mc_idx
             } else {
+                println!("bug bug bug {:?} {} {}", macrocell_placement, move_fb, move_mc);
                 unreachable!();
             }
         } else {
@@ -1294,6 +1320,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                         continue;
                     }
                 }
+
+                println!("cand {} {}", cand_fb, cand_mc);
 
                 // Swap it into this site
                 let (orig_move_assignment, orig_cand_assignment) = if !move_pininput {
