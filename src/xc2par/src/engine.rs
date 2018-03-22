@@ -1233,6 +1233,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
     for _iter_count in 0..1000 {
         println!("iter {}", _iter_count);
+        macrocell_placement = best_placement.clone();
         // Update the "reverse" pointers
         // TODO: Fix copypasta
         for fb_i in 0..3 {
@@ -1280,13 +1281,15 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             move_cand_idx += 1;
         }
         let ((move_fb, move_mc, move_pininput), _) = bad_candidates[move_cand_idx];
+        println!("moving {} {} {} ->", move_fb, move_mc, move_pininput);
 
         // Are we moving something that is constrained to a particular FB?
         let to_move_mc_idx = if !move_pininput {
             if let PARMCAssignment::MC(mc_idx) = macrocell_placement[move_fb as usize][move_mc as usize].0 {
                 mc_idx
             } else {
-                println!("bug bug bug {:?} {} {}", macrocell_placement, move_fb, move_mc);
+                println!("bug bug bug {:?} {} {} {}", macrocell_placement, move_fb, move_mc, move_pininput);
+                println!("bug bug bug {:?} {}", bad_candidates, move_cand_idx);
                 unreachable!();
             }
         } else {
@@ -1303,7 +1306,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         };
 
         // Find min-conflicts site
-        let mut new_best_placement_violations_score = None;
+        let mut new_best_placement_violations_score = best_placement_violations_score;
         for cand_fb in 0..2 {
             if to_move_req_fb.is_some() && to_move_req_fb.unwrap() != cand_fb as u32 {
                 continue;
@@ -1369,10 +1372,9 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 }
 
                 // Is it better? Remember it
-                if new_best_placement_violations_score.is_none() ||
-                    (new_placement_violations_score < new_best_placement_violations_score.unwrap()) {
-
-                    new_best_placement_violations_score = Some(new_placement_violations_score);
+                if new_placement_violations_score < new_best_placement_violations_score {
+                    println!("this cand is an improvement");
+                    new_best_placement_violations_score = new_placement_violations_score;
                     best_placement = macrocell_placement.clone();
                     best_placement_violations = new_placement_violations;
                     best_par_results_per_fb = par_results_per_fb;
