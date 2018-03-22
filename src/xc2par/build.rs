@@ -36,4 +36,5 @@ fn one_set_of_reftests(outfile: &'static str, indir: &'static str) {
 fn main() {
     one_set_of_reftests("frontend-reftests.rs", "../../tests/xc2par/frontend-reftests");
     one_set_of_reftests("netlist-reftests.rs", "../../tests/xc2par/netlist-reftests");
+    one_set_of_reftests("par-reftests.rs", "../../tests/xc2par/par-reftests");
 }

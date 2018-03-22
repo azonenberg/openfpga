@@ -336,8 +336,6 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
         }
     }
 
-    println!("after global assign {:?}", g);
-
     // Now actually assign macrocell locations
 
     // TODO: Number of FBs
@@ -502,6 +500,11 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
                     }
 
                     fbmc_i = Some((fb as u32, i as u32));
+                    break;
+                }
+
+                // Need to break out again
+                if fbmc_i.is_some() {
                     break;
                 }
             }
@@ -1182,7 +1185,6 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
     let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
 
     let macrocell_placement = greedy_initial_placement(g);
-    println!("{:?}", macrocell_placement);
     if macrocell_placement.is_none() {
         // XXX this is ugly
         return PARResult::FailureSanity(PARSanityResult::FailureTooManyMCs);
@@ -1383,3 +1385,47 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
     PARResult::FailureIterationsExceeded
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std;
+    use std::fs::File;
+    use std::io::Read;
+
+    extern crate serde_json;
+
+    fn run_one_reftest(input_filename: &'static str) {
+        // Read original json
+        let input_path = std::path::Path::new(input_filename);
+        let mut input_data = Vec::new();
+        File::open(&input_path).unwrap().read_to_end(&mut input_data).unwrap();
+        let mut input_graph = serde_json::from_slice(&input_data).unwrap();
+        // TODO
+        let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
+        // This is what we get
+        let our_data_structure = if let PARResult::Success(x) = do_par(&mut input_graph) {
+            // Get a bitstream result
+            let bitstream = produce_bitstream(device_type, &input_graph, &x);
+            let mut ret = Vec::new();
+            bitstream.to_jed(&mut ret).unwrap();
+            ret
+        } else {
+            panic!("PAR failed!");
+        };
+
+        // Read reference jed
+        let mut output_path = input_path.to_path_buf();
+        output_path.set_extension("out");
+        let mut output_data = Vec::new();
+        File::open(&output_path).unwrap().read_to_end(&mut output_data).unwrap();
+        let reference_data_structure = output_data;
+
+        assert_eq!(our_data_structure, reference_data_structure);
+    }
+
+    // Include list of actual tests to run
+    include!(concat!(env!("OUT_DIR"), "/par-reftests.rs"));
+}
+
