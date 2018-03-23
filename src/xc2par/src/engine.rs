@@ -675,11 +675,6 @@ pub fn try_assign_andterms(g: &mut InputGraph, go: &mut OutputGraph, mc_assignme
     for (pterm_idx, pterm) in g.pterms.iter_mut_idx() {
         // Only do this update if this lookup succeeds. This lookup will fail for terms that are in other FBs
         if let Some(&mc_i) = existing_pterm_map.get(pterm) {
-            pterm.loc = Some(AssignedLocation{
-                fb: fb_i,
-                i: mc_i as u32,
-            });
-
             let pterm_go = go.pterms.get_mut(ObjPoolIndex::from(pterm_idx));
             pterm_go.loc = Some(AssignedLocation{
                 fb: fb_i,
@@ -697,7 +692,9 @@ pub enum ZIAAssignmentResult {
     FailureUnroutable(u32),
 }
 
-pub fn try_assign_zia(g: &mut InputGraph, mc_assignment: &PARFBAssignment) -> ZIAAssignmentResult {
+pub fn try_assign_zia(g: &mut InputGraph, go: &mut OutputGraph, mc_assignment: &PARFBAssignment)
+    -> ZIAAssignmentResult {
+
     let mut ret_zia = PARZIAAssignment { x: [XC2ZIAInput::One; INPUTS_PER_ANDTERM] };
     let mut input_to_row_map = HashMap::new();
 
@@ -846,13 +843,14 @@ pub fn try_assign_zia(g: &mut InputGraph, mc_assignment: &PARFBAssignment) -> ZI
     // Now we search through all the inputs and record which row they go in
     for &pt_idx in &collected_pterms {
         let andterm_node = g.pterms.get_mut(pt_idx);
-        andterm_node.inputs_true_zia.clear();
-        andterm_node.inputs_comp_zia.clear();
+        let andterm_node_go = go.pterms.get_mut(ObjPoolIndex::from(pt_idx));
+        andterm_node_go.inputs_true_zia.clear();
+        andterm_node_go.inputs_comp_zia.clear();
         for input_net in &andterm_node.inputs_true {
-            andterm_node.inputs_true_zia.push(*input_to_row_map.get(input_net).unwrap());
+            andterm_node_go.inputs_true_zia.push(*input_to_row_map.get(input_net).unwrap());
         }
         for input_net in &andterm_node.inputs_comp {
-            andterm_node.inputs_comp_zia.push(*input_to_row_map.get(input_net).unwrap());
+            andterm_node_go.inputs_comp_zia.push(*input_to_row_map.get(input_net).unwrap());
         }
     }
 
@@ -873,7 +871,7 @@ fn try_assign_fb_inner(g: &mut InputGraph, go: &mut OutputGraph, mc_assignments:
 
     // Can we even assign p-terms?
     let pterm_assign_result = try_assign_andterms(g, go, &mc_assignments[fb_i as usize], fb_i);
-    let zia_assign_result = try_assign_zia(g, &mc_assignments[fb_i as usize]);
+    let zia_assign_result = try_assign_zia(g, go, &mc_assignments[fb_i as usize]);
 
     if pterm_assign_result == AndTermAssignmentResult::Success {
         if let ZIAAssignmentResult::Success(zia_assignment) = zia_assign_result {

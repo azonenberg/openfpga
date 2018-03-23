@@ -49,15 +49,14 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
 
     // AND terms
     for andterm_idx in g.pterms.iter_idx() {
-        let andterm = g.pterms.get(andterm_idx);
         let andterm_go = go.pterms.get(ObjPoolIndex::from(andterm_idx));
         let fb_i = andterm_go.loc.unwrap().fb as usize;
         let andterm_i = andterm_go.loc.unwrap().i as usize;
 
-        for &x in &andterm.inputs_true_zia {
+        for &x in &andterm_go.inputs_true_zia {
             fb_bits[fb_i].and_terms[andterm_i].input[x as usize] = true;
         }
-        for &x in &andterm.inputs_comp_zia {
+        for &x in &andterm_go.inputs_comp_zia {
             fb_bits[fb_i].and_terms[andterm_i].input_b[x as usize] = true;
         }
     }
@@ -92,7 +91,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                         None => XC2IOBOBufMode::PushPull,
                         Some(InputGraphIOOEType::OpenDrain) => XC2IOBOBufMode::OpenDrain,
                         Some(InputGraphIOOEType::PTerm(pterm)) => {
-                            let pterm = g.pterms.get(pterm);
+                            let pterm = go.pterms.get(ObjPoolIndex::from(pterm));
                             let pt_loc = pterm.loc.unwrap();
                             assert!(pt_loc.fb == fb_i);
 
@@ -137,7 +136,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
 
             // OR
             for &and_to_or_idx in &xor_bits.orterm_inputs {
-                let pterm = g.pterms.get(and_to_or_idx);
+                let pterm = go.pterms.get(ObjPoolIndex::from(and_to_or_idx));
                 let pt_loc = pterm.loc.unwrap();
                 assert!(pt_loc.fb as usize == fb_i);
                 fb_bits[fb_i].or_terms[mc_i].input[pt_loc.i as usize] = true;
@@ -168,7 +167,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                 None => XC2MCRegSetSrc::Disabled,
                 Some(InputGraphRegRSType::GSR(_)) => XC2MCRegSetSrc::GSR,
                 Some(InputGraphRegRSType::PTerm(pterm)) => {
-                    let pterm = g.pterms.get(pterm);
+                    let pterm = go.pterms.get(ObjPoolIndex::from(pterm));
                     let pt_loc = pterm.loc.unwrap();
                     assert!(pt_loc.fb as usize == fb_i);
 
@@ -187,7 +186,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                 None => XC2MCRegResetSrc::Disabled,
                 Some(InputGraphRegRSType::GSR(_)) => XC2MCRegResetSrc::GSR,
                 Some(InputGraphRegRSType::PTerm(pterm)) => {
-                    let pterm = g.pterms.get(pterm);
+                    let pterm = go.pterms.get(ObjPoolIndex::from(pterm));
                     let pt_loc = pterm.loc.unwrap();
                     assert!(pt_loc.fb as usize == fb_i);
 
@@ -207,7 +206,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
             // Clock input
             fb_bits[fb_i].mcs[mc_i].clk_src = match reg_bits.clk_input {
                 InputGraphRegClockType::PTerm(pterm) => {
-                    let pterm = g.pterms.get(pterm);
+                    let pterm = go.pterms.get(ObjPoolIndex::from(pterm));
                     let pt_loc = pterm.loc.unwrap();
                     assert!(pt_loc.fb as usize == fb_i);
 

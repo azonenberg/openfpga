@@ -138,13 +138,10 @@ pub type InputGraphPTermInput = (InputGraphPTermInputType, ObjPoolIndex<InputGra
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputGraphPTerm {
-    pub loc: Option<AssignedLocation>,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
     pub inputs_true: Vec<InputGraphPTermInput>,
     pub inputs_comp: Vec<InputGraphPTermInput>,
-    pub inputs_true_zia: Vec<u32>,
-    pub inputs_comp_zia: Vec<u32>,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
@@ -633,13 +630,10 @@ impl InputGraph {
                     }
 
                     let newg_n = InputGraphPTerm {
-                        loc: None,
                         name: n.name.clone(),
                         requested_loc: n.location,
                         inputs_true: inputs_true_new,
                         inputs_comp: inputs_comp_new,
-                        inputs_true_zia: Vec::new(),
-                        inputs_comp_zia: Vec::new(),
                     };
 
                     let newg_idx = s.pterms.insert(newg_n);
