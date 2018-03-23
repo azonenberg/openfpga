@@ -29,9 +29,7 @@ use self::xc2bit::*;
 use *;
 use objpool::*;
 
-pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
-    go: &OutputGraph, placements: &[PARZIAAssignment]) -> XC2Bitstream {
-
+pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph, go: &OutputGraph) -> XC2Bitstream {
     // FIXME: Don't hardcode
     let mut fb_bits = [XC2BitstreamFB::default(); 2];
     let mut iob_bits = [XC2MCSmallIOB::default(); 32];
@@ -41,9 +39,9 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
     let mut extra_inpin = XC2ExtraIBuf::default();
 
     // ZIA settings
-    for fb_i in 0..placements.len() {
+    for fb_i in 0..go.zia.len() {
         for zia_i in 0..INPUTS_PER_ANDTERM {
-            fb_bits[fb_i].zia_bits[zia_i] = placements[fb_i].x[zia_i];
+            fb_bits[fb_i].zia_bits[zia_i] = go.zia[fb_i].x[zia_i];
         }
     }
 

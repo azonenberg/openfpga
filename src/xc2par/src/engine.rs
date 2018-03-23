@@ -501,7 +501,7 @@ pub enum AndTermAssignmentResult {
     FailurePtermExceeded(u32),
 }
 
-pub fn try_assign_andterms(g: &mut InputGraph, go: &mut OutputGraph, mc_assignment: &PARFBAssignment, fb_i: u32)
+pub fn try_assign_andterms(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARFBAssignment, fb_i: u32)
     -> AndTermAssignmentResult {
 
     let mut ret = [None; ANDTERMS_PER_FB];
@@ -674,7 +674,8 @@ pub fn try_assign_andterms(g: &mut InputGraph, go: &mut OutputGraph, mc_assignme
         }
     }
 
-    for (pterm_idx, pterm) in g.pterms.iter_mut_idx() {
+    for pterm_idx in g.pterms.iter_idx() {
+        let pterm = g.pterms.get(pterm_idx);
         // Only do this update if this lookup succeeds. This lookup will fail for terms that are in other FBs
         if let Some(&mc_i) = existing_pterm_map.get(pterm) {
             let pterm_go = go.pterms.get_mut(ObjPoolIndex::from(pterm_idx));
@@ -694,7 +695,7 @@ pub enum ZIAAssignmentResult {
     FailureUnroutable(u32),
 }
 
-pub fn try_assign_zia(g: &mut InputGraph, go: &mut OutputGraph, mc_assignment: &PARFBAssignment)
+pub fn try_assign_zia(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARFBAssignment)
     -> ZIAAssignmentResult {
 
     let mut ret_zia = PARZIAAssignment { x: [XC2ZIAInput::One; INPUTS_PER_ANDTERM] };
@@ -845,7 +846,7 @@ pub fn try_assign_zia(g: &mut InputGraph, go: &mut OutputGraph, mc_assignment: &
 
     // Now we search through all the inputs and record which row they go in
     for &pt_idx in &collected_pterms {
-        let andterm_node = g.pterms.get_mut(pt_idx);
+        let andterm_node = g.pterms.get(pt_idx);
         let andterm_node_go = go.pterms.get_mut(ObjPoolIndex::from(pt_idx));
         andterm_node_go.inputs_true_zia.clear();
         andterm_node_go.inputs_comp_zia.clear();
@@ -866,7 +867,7 @@ enum FBAssignmentResultInner {
     Failure(u32),
 }
 
-fn try_assign_fb_inner(g: &mut InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32)
+fn try_assign_fb_inner(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32)
     -> FBAssignmentResultInner {
 
     let mut failing_score = 0;
@@ -905,7 +906,7 @@ fn try_assign_fb_inner(g: &mut InputGraph, go: &mut OutputGraph, mc_assignments:
     FBAssignmentResultInner::Failure(failing_score)
 }
 
-pub fn try_assign_fb(g: &mut InputGraph, go: &mut OutputGraph, mc_assignments: &mut [PARFBAssignment], fb_i: u32,
+pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &mut [PARFBAssignment], fb_i: u32,
     constraint_violations: &mut HashMap<PARFBAssignLoc, u32>) -> Option<PARZIAAssignment> {
     let initial_assign_result = try_assign_fb_inner(g, go, mc_assignments, fb_i);
 
@@ -1094,7 +1095,7 @@ pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
 }
 
 pub enum PARResult {
-    Success((Vec<PARZIAAssignment>, OutputGraph)),
+    Success(OutputGraph),
     FailureSanity(PARSanityResult),
     FailureIterationsExceeded,
 }
@@ -1159,7 +1160,6 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
         if best_placement_violations.len() == 0 {
             // It worked!
-            let mut ret = Vec::new();
 
             // XXX Run the assignment again to make sure all the state is updated. This is a sign that something
             // weird is going on and that we should make sure there are no lingering logic bugs.
@@ -1168,10 +1168,10 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 let fb_assign_result = try_assign_fb(g, &mut go, &mut macrocell_placement, fb_i as u32,
                     &mut final_violations);
                 assert!(final_violations.len() == 0);
-                ret.push(fb_assign_result.unwrap());
+                go.zia.push(fb_assign_result.unwrap());
             }
 
-            return PARResult::Success((ret, go));
+            return PARResult::Success(go);
         }
 
         // Here, we need to swap some stuff around
@@ -1467,9 +1467,9 @@ mod tests {
         // TODO
         let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
         // This is what we get
-        let our_data_structure = if let PARResult::Success((x, y)) = do_par(&mut input_graph) {
+        let our_data_structure = if let PARResult::Success(y) = do_par(&mut input_graph) {
             // Get a bitstream result
-            let bitstream = produce_bitstream(device_type, &input_graph, &y, &x);
+            let bitstream = produce_bitstream(device_type, &input_graph, &y);
             let mut ret = Vec::new();
             bitstream.to_jed(&mut ret).unwrap();
             ret
