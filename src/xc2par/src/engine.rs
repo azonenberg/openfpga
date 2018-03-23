@@ -1299,7 +1299,9 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 unreachable!();
             }
         };
-        let to_move_req_fb = if let Some(RequestedLocation{fb, ..}) = g.mcs.get(to_move_mc_idx).requested_loc {
+        let to_move_req_fb = if let Some(RequestedLocation{fb, i}) = g.mcs.get(to_move_mc_idx).requested_loc {
+            // Other code should never put something that is fully-LOCd into this list
+            assert!(i.is_none());
             Some(fb)
         } else {
             None
@@ -1314,6 +1316,36 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
             for cand_mc in 0..MCS_PER_FB {
                 // This site is not usable
+                let cand_cur_assign = if !move_pininput {
+                    macrocell_placement[cand_fb][cand_mc].0
+                } else {
+                    macrocell_placement[cand_fb][cand_mc].1
+                };
+                match cand_cur_assign {
+                    PARMCAssignment::Banned => {
+                        continue;
+                    },
+                    PARMCAssignment::MC(cand_mc_idx) => {
+                        let cand_mc = g.mcs.get(cand_mc_idx);
+                        if let Some(cand_mc_req_loc) = cand_mc.requested_loc {
+                            // The thing we want to swap with has a LOC restriction of some kind
+                            if cand_mc_req_loc.i.is_some() {
+                                // The site we want to move to is completely LOC'd and can't be used.
+                                continue;
+                            }
+
+                            if cand_mc_req_loc.fb != move_fb {
+                                // The thing being moved can fit in this target site, but the thing in the target
+                                // site can't fit in the thing being moved. This move cannot be performed.
+                                // XXX is this the right way to do it? Technically the thing being moved can be further
+                                // moved elsewhere?
+                                continue;
+                            }
+                        }
+                    },
+                    PARMCAssignment::None => {},
+                }
+
                 if !move_pininput {
                     if macrocell_placement[cand_fb][cand_mc].0 == PARMCAssignment::Banned {
                         continue;
