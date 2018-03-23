@@ -1314,6 +1314,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         };
 
         // Find min-conflicts site
+        let mut found_anything_better = false;
+        let mut all_cand_sites = Vec::new();
         let mut new_best_placement_violations_score = best_placement_violations_score;
         for cand_fb in 0..2 {
             if to_move_req_fb.is_some() && to_move_req_fb.unwrap() != cand_fb as u32 {
@@ -1363,6 +1365,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 }
 
                 println!("cand {} {}", cand_fb, cand_mc);
+                all_cand_sites.push((cand_fb, cand_mc));
 
                 // Swap it into this site
                 let (orig_move_assignment, orig_cand_assignment) = if !move_pininput {
@@ -1412,6 +1415,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 // Is it better? Remember it
                 if new_placement_violations_score < new_best_placement_violations_score {
                     println!("this cand is an improvement");
+                    found_anything_better = true;
                     new_best_placement_violations_score = new_placement_violations_score;
                     best_placement = macrocell_placement.clone();
                     best_placement_violations = new_placement_violations;
@@ -1460,6 +1464,65 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 println!("HUGE SUCCESS!");
                 break;
             }
+        }
+
+        if !found_anything_better {
+            // No improvements possible. We have to do _something_, so move it somewhere random
+            let (cand_fb, cand_mc) = all_cand_sites[prng.gen_range(0, all_cand_sites.len())];
+            println!("forcemove {} {}", cand_fb, cand_mc);
+
+            // XXX DEFINITELY fix copypasta
+
+            // Swap it into this site
+            let (orig_move_assignment, orig_cand_assignment) = if !move_pininput {
+                let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].0;
+                let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].0;
+                macrocell_placement[cand_fb][cand_mc].0 = orig_move_assignment;
+                macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
+                (orig_move_assignment, orig_cand_assignment)
+            } else {
+                let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].1;
+                let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].1;
+                macrocell_placement[cand_fb][cand_mc].1 = orig_move_assignment;
+                macrocell_placement[move_fb as usize][move_mc as usize].1 = orig_cand_assignment;
+                (orig_move_assignment, orig_cand_assignment)
+            };
+
+            // Swap the "loc" field as well
+            if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
+                g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
+                    fb: cand_fb as u32,
+                    i: cand_mc as u32,
+                });
+            }
+            if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
+                g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
+                    fb: move_fb,
+                    i: move_mc,
+                });
+            }
+
+            // Score what we've got
+            let mut par_results_per_fb = Vec::with_capacity(2);
+            for _ in 0..2 {
+                par_results_per_fb.push(None);
+            }
+            let mut new_placement_violations = HashMap::new();
+            for fb_i in 0..2 {
+                let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32,
+                    &mut new_placement_violations);
+                par_results_per_fb[fb_i] = fb_assign_result;
+            }
+            let mut new_placement_violations_score = 0;
+            for x in new_placement_violations.values() {
+                new_placement_violations_score += x;
+            }
+
+            // Remember it
+            best_placement = macrocell_placement.clone();
+            best_placement_violations = new_placement_violations;
+            best_par_results_per_fb = par_results_per_fb;
+            best_placement_violations_score = new_placement_violations_score;
         }
     }
 
