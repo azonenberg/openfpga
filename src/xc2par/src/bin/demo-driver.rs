@@ -66,7 +66,7 @@ fn main() {
     let par_result = do_par(&mut input_graph);
     if let PARResult::Success(x) = par_result {
         for xx in &x {
-            for yy in xx.iter() {
+            for yy in xx.x.iter() {
                 println!("{:?}", yy);
             }
         }
