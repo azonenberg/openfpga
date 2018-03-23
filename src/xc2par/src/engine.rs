@@ -1145,15 +1145,10 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
         if best_placement_violations.len() == 0 {
             // It worked!
-
-            // XXX Run the assignment again to make sure all the state is updated. This is a sign that something
-            // weird is going on and that we should make sure there are no lingering logic bugs.
-            let mut final_violations = HashMap::new();
-            for fb_i in 0..2 {
-                let fb_assign_result = try_assign_fb(g, &mut go, &mut macrocell_placement, fb_i as u32,
-                    &mut final_violations);
-                assert!(final_violations.len() == 0);
-                go.zia.push(fb_assign_result.unwrap());
+            for i in 0..2 {
+                let result_i = std::mem::replace(&mut best_par_results_per_fb[i], None);
+                let zia = result_i.unwrap();
+                go.zia.push(zia);
             }
 
             return PARResult::Success(go);
