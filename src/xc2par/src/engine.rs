@@ -890,6 +890,8 @@ pub fn try_assign_zia(g: &mut InputGraph, mc_assignment: &PARFBAssignment) -> ZI
     // Now we search through all the inputs and record which row they go in
     for &pt_idx in &collected_pterms {
         let andterm_node = g.pterms.get_mut(pt_idx);
+        andterm_node.inputs_true_zia.clear();
+        andterm_node.inputs_comp_zia.clear();
         for input_net in &andterm_node.inputs_true {
             andterm_node.inputs_true_zia.push(*input_to_row_map.get(input_net).unwrap());
         }

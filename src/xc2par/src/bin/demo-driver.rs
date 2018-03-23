@@ -65,6 +65,12 @@ fn main() {
 
     let par_result = do_par(&mut input_graph);
     if let PARResult::Success(x) = par_result {
+        for xx in &x {
+            for yy in xx.iter() {
+                println!("{:?}", yy);
+            }
+        }
+        println!("{:?}", input_graph);
         // Get a bitstream result
         let bitstream = produce_bitstream(device_type, &input_graph, &x);
         println!("********************************************************************************");
