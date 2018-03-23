@@ -156,27 +156,6 @@ impl OutputGraph {
             zia,
         }
     }
-
-    fn xfer_mc_placement(&mut self, mc_placement: &[PARFBAssignment]) {
-        for fb_i in 0..3 {
-            for mc_i in 0..MCS_PER_FB {
-                if let PARMCAssignment::MC(mc_idx) = mc_placement[fb_i as usize][mc_i].0 {
-                    let mc = self.mcs.get_mut(ObjPoolIndex::from(mc_idx));
-                    mc.loc = Some(AssignedLocation{
-                        fb: fb_i,
-                        i: mc_i as u32,
-                    });
-                }
-                if let PARMCAssignment::MC(mc_idx) = mc_placement[fb_i as usize][mc_i].1 {
-                    let mc = self.mcs.get_mut(ObjPoolIndex::from(mc_idx));
-                    mc.loc = Some(AssignedLocation{
-                        fb: fb_i,
-                        i: mc_i as u32,
-                    });
-                }
-            }
-        }
-    }
 }
 
 // First element of tuple is anything, second element can only be pin input
@@ -493,7 +472,24 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Opt
     }
 
     // Update the "reverse" pointers
-    go.xfer_mc_placement(&ret);
+    for fb_i in 0..3 {
+        for mc_i in 0..MCS_PER_FB {
+            if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].0 {
+                let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
+                mc.loc = Some(AssignedLocation{
+                    fb: fb_i,
+                    i: mc_i as u32,
+                });
+            }
+            if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].1 {
+                let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
+                mc.loc = Some(AssignedLocation{
+                    fb: fb_i,
+                    i: mc_i as u32,
+                });
+            }
+        }
+    }
 
     Some(ret)
 }
@@ -1146,8 +1142,6 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
     for _iter_count in 0..1000 {
         println!("iter {}", _iter_count);
         macrocell_placement = best_placement.clone();
-        // Update the "reverse" pointers
-        go.xfer_mc_placement(&best_placement);
 
         if best_placement_violations.len() == 0 {
             // It worked!
@@ -1223,6 +1217,39 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             None
         };
 
+        // Don't want this to be a function because we don't want to borrow macrocell_placement until used
+        macro_rules! xchg_macrocells {
+            ($a_fb:expr, $a_mc:expr, $pininput:expr, $b_fb:expr, $b_mc:expr) => {
+                let (a_assignment, b_assignment) = if !$pininput {
+                    let a_assignment = macrocell_placement[$a_fb as usize][$a_mc as usize].0;
+                    let b_assignment = macrocell_placement[$b_fb as usize][$b_mc as usize].0;
+                    macrocell_placement[$b_fb as usize][$b_mc as usize].0 = a_assignment;
+                    macrocell_placement[$a_fb as usize][$a_mc as usize].0 = b_assignment;
+                    (a_assignment, b_assignment)
+                } else {
+                    let a_assignment = macrocell_placement[$a_fb as usize][$a_mc as usize].1;
+                    let b_assignment = macrocell_placement[$b_fb as usize][$b_mc as usize].1;
+                    macrocell_placement[$b_fb as usize][$b_mc as usize].1 = a_assignment;
+                    macrocell_placement[$a_fb as usize][$a_mc as usize].1 = b_assignment;
+                    (a_assignment, b_assignment)
+                };
+
+                // Swap the "loc" field as well
+                if let PARMCAssignment::MC(mc_idx) = a_assignment {
+                    go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
+                        fb: $b_fb,
+                        i: $b_mc,
+                    });
+                }
+                if let PARMCAssignment::MC(mc_idx) = b_assignment {
+                    go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
+                        fb: $a_fb,
+                        i: $a_mc,
+                    });
+                }
+            }
+        }
+
         // Find min-conflicts site
         let mut found_anything_better = false;
         let mut all_cand_sites = Vec::new();
@@ -1278,33 +1305,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 all_cand_sites.push((cand_fb, cand_mc));
 
                 // Swap it into this site
-                let (orig_move_assignment, orig_cand_assignment) = if !move_pininput {
-                    let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].0;
-                    let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].0;
-                    macrocell_placement[cand_fb][cand_mc].0 = orig_move_assignment;
-                    macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
-                    (orig_move_assignment, orig_cand_assignment)
-                } else {
-                    let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].1;
-                    let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].1;
-                    macrocell_placement[cand_fb][cand_mc].1 = orig_move_assignment;
-                    macrocell_placement[move_fb as usize][move_mc as usize].1 = orig_cand_assignment;
-                    (orig_move_assignment, orig_cand_assignment)
-                };
-
-                // Swap the "loc" field as well
-                if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
-                    go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
-                        fb: cand_fb as u32,
-                        i: cand_mc as u32,
-                    });
-                }
-                if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
-                    go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
-                        fb: move_fb,
-                        i: move_mc,
-                    });
-                }
+                xchg_macrocells!(move_fb, move_mc, move_pininput, cand_fb as u32, cand_mc as u32);
 
                 // Score what we've got
                 let mut par_results_per_fb = Vec::with_capacity(2);
@@ -1340,33 +1341,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 }
 
                 // Swap it back
-                let (orig_move_assignment, orig_cand_assignment) = if !move_pininput {
-                    let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].0;
-                    let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].0;
-                    macrocell_placement[cand_fb][cand_mc].0 = orig_move_assignment;
-                    macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
-                    (orig_move_assignment, orig_cand_assignment)
-                } else {
-                    let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].1;
-                    let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].1;
-                    macrocell_placement[cand_fb][cand_mc].1 = orig_move_assignment;
-                    macrocell_placement[move_fb as usize][move_mc as usize].1 = orig_cand_assignment;
-                    (orig_move_assignment, orig_cand_assignment)
-                };
-
-                // Swap the "loc" field as well
-                if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
-                    go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
-                        fb: move_fb,
-                        i: move_mc,
-                    });
-                }
-                if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
-                    go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
-                        fb: cand_fb as u32,
-                        i: cand_mc as u32,
-                    });
-                }
+                xchg_macrocells!(move_fb, move_mc, move_pininput, cand_fb as u32, cand_mc as u32);
             }
 
             // Is the score 0? We can immediately exit
@@ -1384,33 +1359,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             // XXX DEFINITELY fix copypasta
 
             // Swap it into this site
-            let (orig_move_assignment, orig_cand_assignment) = if !move_pininput {
-                let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].0;
-                let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].0;
-                macrocell_placement[cand_fb][cand_mc].0 = orig_move_assignment;
-                macrocell_placement[move_fb as usize][move_mc as usize].0 = orig_cand_assignment;
-                (orig_move_assignment, orig_cand_assignment)
-            } else {
-                let orig_move_assignment = macrocell_placement[move_fb as usize][move_mc as usize].1;
-                let orig_cand_assignment = macrocell_placement[cand_fb][cand_mc].1;
-                macrocell_placement[cand_fb][cand_mc].1 = orig_move_assignment;
-                macrocell_placement[move_fb as usize][move_mc as usize].1 = orig_cand_assignment;
-                (orig_move_assignment, orig_cand_assignment)
-            };
-
-            // Swap the "loc" field as well
-            if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
-                go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
-                    fb: cand_fb as u32,
-                    i: cand_mc as u32,
-                });
-            }
-            if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
-                go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
-                    fb: move_fb,
-                    i: move_mc,
-                });
-            }
+            xchg_macrocells!(move_fb, move_mc, move_pininput, cand_fb as u32, cand_mc as u32);
 
             // Score what we've got
             let mut par_results_per_fb = Vec::with_capacity(2);
