@@ -62,9 +62,11 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
     }
 
     // IO bits
-    for mc in g.mcs.iter() {
-        let fb_i = mc.loc.unwrap().fb;
-        let mc_i = mc.loc.unwrap().i;
+    for mc_idx in g.mcs.iter_idx() {
+        let mc = g.mcs.get(mc_idx);
+        let mc_go = go.mcs.get(ObjPoolIndex::from(mc_idx));
+        let fb_i = mc_go.loc.unwrap().fb;
+        let mc_i = mc_go.loc.unwrap().i;
 
         if let Some(ref io_bits) = mc.io_bits {
             if true && fb_i == 2 && mc_i == 0 {
@@ -104,7 +106,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                             }
                         },
                         Some(InputGraphIOOEType::GTS(gts)) => {
-                            let gts = g.bufg_gts.get(gts);
+                            let gts = go.bufg_gts.get(ObjPoolIndex::from(gts));
                             let which = gts.loc.unwrap().i;
                             match which {
                                 0 => XC2IOBOBufMode::TriStateGTS0,
@@ -121,9 +123,11 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
     }
 
     // OR/XOR gates
-    for mc in g.mcs.iter() {
-        let fb_i = mc.loc.unwrap().fb as usize;
-        let mc_i = mc.loc.unwrap().i as usize;
+    for mc_idx in g.mcs.iter_idx() {
+        let mc = g.mcs.get(mc_idx);
+        let mc_go = go.mcs.get(ObjPoolIndex::from(mc_idx));
+        let fb_i = mc_go.loc.unwrap().fb as usize;
+        let mc_i = mc_go.loc.unwrap().i as usize;
 
         if let Some(ref xor_bits) = mc.xor_bits {
             // XOR
@@ -152,9 +156,11 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
     }
 
     // Register bits
-    for mc in g.mcs.iter() {
-        let fb_i = mc.loc.unwrap().fb as usize;
-        let mc_i = mc.loc.unwrap().i as usize;
+    for mc_idx in g.mcs.iter_idx() {
+        let mc = g.mcs.get(mc_idx);
+        let mc_go = go.mcs.get(ObjPoolIndex::from(mc_idx));
+        let fb_i = mc_go.loc.unwrap().fb as usize;
+        let mc_i = mc_go.loc.unwrap().i as usize;
 
         if let Some(ref reg_bits) = mc.reg_bits {
             fb_bits[fb_i].mcs[mc_i].reg_mode = reg_bits.mode;
@@ -219,7 +225,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
                     }
                 },
                 InputGraphRegClockType::GCK(gck) => {
-                    let gck = g.bufg_clks.get(gck);
+                    let gck = go.bufg_clks.get(ObjPoolIndex::from(gck));
                     let which = gck.loc.unwrap().i;
                     match which {
                         0 => XC2MCRegClkSrc::GCK0,
@@ -233,12 +239,14 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
     }
 
     // Global buffers
-    for gck in g.bufg_clks.iter() {
+    for gck in go.bufg_clks.iter() {
         let which = gck.loc.unwrap().i;
         global_nets.gck_enable[which as usize] = true;
     }
-    for gts in g.bufg_gts.iter() {
-        let which = gts.loc.unwrap().i;
+    for gts_idx in g.bufg_gts.iter_idx() {
+        let gts = g.bufg_gts.get(gts_idx);
+        let gts_go = go.bufg_gts.get(ObjPoolIndex::from(gts_idx));
+        let which = gts_go.loc.unwrap().i;
         global_nets.gts_enable[which as usize] = true;
         global_nets.gts_invert[which as usize] = gts.invert;
     }

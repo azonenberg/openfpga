@@ -159,7 +159,7 @@ impl OutputGraph {
 }
 
 // First element of tuple is anything, second element can only be pin input
-pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignment>> {
+pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Option<Vec<PARFBAssignment>> {
     let mut ret = Vec::new();
 
     // First greedily assign all of the global nets
@@ -214,14 +214,15 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
     // constraints on the pin as well.
     macro_rules! place_loc_buf {
         ($g_name:ident, $set_name:ident) => {
-            for gbuf in g.$g_name.iter_mut() {
+            for (gbuf_idx, gbuf) in g.$g_name.iter_mut_idx() {
                 if let Some(RequestedLocation{i: Some(idx), ..}) = gbuf.requested_loc {
                     if $set_name.contains(&idx) {
                         return None;
                     }
                     $set_name.insert(idx);
 
-                    gbuf.loc = Some(AssignedLocation {
+                    let gbuf_go = go.$g_name.get_mut(ObjPoolIndex::from(gbuf_idx));
+                    gbuf_go.loc = Some(AssignedLocation {
                         fb: 0,
                         i: idx,
                     });
@@ -238,8 +239,9 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
     // FB constraints on the macrocell.
     macro_rules! place_other_buf {
         ($g_name:ident, $set_name:ident, $cnt_name:ident, $loc_lookup:expr) => {
-            for gbuf in g.$g_name.iter_mut() {
-                if gbuf.loc.is_some() {
+            for (gbuf_idx, gbuf) in g.$g_name.iter_mut_idx() {
+                let gbuf_go = go.$g_name.get_mut(ObjPoolIndex::from(gbuf_idx));
+                if gbuf_go.loc.is_some() {
                     continue;
                 }
 
@@ -273,7 +275,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
                 }
 
                 $set_name.insert(idx.unwrap());
-                gbuf.loc = Some(AssignedLocation {
+                gbuf_go.loc = Some(AssignedLocation {
                     fb: 0,
                     i: idx.unwrap(),
                 });
@@ -473,14 +475,14 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
     for fb_i in 0..3 {
         for mc_i in 0..MCS_PER_FB {
             if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].0 {
-                let mc = g.mcs.get_mut(mc_idx);
+                let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
                 mc.loc = Some(AssignedLocation{
                     fb: fb_i,
                     i: mc_i as u32,
                 });
             }
             if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].1 {
-                let mc = g.mcs.get_mut(mc_idx);
+                let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
                 mc.loc = Some(AssignedLocation{
                     fb: fb_i,
                     i: mc_i as u32,
@@ -768,8 +770,9 @@ pub fn try_assign_zia(g: &mut InputGraph, go: &mut OutputGraph, mc_assignment: &
     // Find candidate sites
     let candidate_sites = collected_inputs_vec.iter().map(|input| {
         let input_obj = g.mcs.get(input.1);
-        let fb = input_obj.loc.unwrap().fb;
-        let mc = input_obj.loc.unwrap().i;
+        let input_obj_go = go.mcs.get(ObjPoolIndex::from(input.1));
+        let fb = input_obj_go.loc.unwrap().fb;
+        let mc = input_obj_go.loc.unwrap().i;
         let need_to_use_ibuf_zia_path = input.0 == InputGraphPTermInputType::Reg && input_obj.xor_feedback_used;
 
         // What input do we actually want?
@@ -1106,7 +1109,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
     let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
 
-    let macrocell_placement = greedy_initial_placement(g);
+    let macrocell_placement = greedy_initial_placement(g, &mut go);
     if macrocell_placement.is_none() {
         // XXX this is ugly
         return PARResult::FailureSanity(PARSanityResult::FailureTooManyMCs);
@@ -1138,14 +1141,14 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         for fb_i in 0..3 {
             for mc_i in 0..MCS_PER_FB {
                 if let PARMCAssignment::MC(mc_idx) = best_placement[fb_i][mc_i].0 {
-                    let mc = g.mcs.get_mut(mc_idx);
+                    let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
                     mc.loc = Some(AssignedLocation{
                         fb: fb_i as u32,
                         i: mc_i as u32,
                     });
                 }
                 if let PARMCAssignment::MC(mc_idx) = best_placement[fb_i][mc_i].1 {
-                    let mc = g.mcs.get_mut(mc_idx);
+                    let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
                     mc.loc = Some(AssignedLocation{
                         fb: fb_i as u32,
                         i: mc_i as u32,
@@ -1300,13 +1303,13 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
                 // Swap the "loc" field as well
                 if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
-                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
+                    go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
                         fb: cand_fb as u32,
                         i: cand_mc as u32,
                     });
                 }
                 if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
-                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
+                    go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
                         fb: move_fb,
                         i: move_mc,
                     });
@@ -1362,13 +1365,13 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
                 // Swap the "loc" field as well
                 if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
-                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
+                    go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
                         fb: move_fb,
                         i: move_mc,
                     });
                 }
                 if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
-                    g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
+                    go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
                         fb: cand_fb as u32,
                         i: cand_mc as u32,
                     });
@@ -1406,13 +1409,13 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
             // Swap the "loc" field as well
             if let PARMCAssignment::MC(mc_idx) = orig_move_assignment {
-                g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
+                go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
                     fb: cand_fb as u32,
                     i: cand_mc as u32,
                 });
             }
             if let PARMCAssignment::MC(mc_idx) = orig_cand_assignment {
-                g.mcs.get_mut(mc_idx).loc = Some(AssignedLocation {
+                go.mcs.get_mut(ObjPoolIndex::from(mc_idx)).loc = Some(AssignedLocation {
                     fb: move_fb,
                     i: move_mc,
                 });

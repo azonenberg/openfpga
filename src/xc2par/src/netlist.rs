@@ -105,7 +105,6 @@ pub struct InputGraphXor {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct InputGraphMacrocell {
-    pub loc: Option<AssignedLocation>,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
     pub io_bits: Option<InputGraphIOBuf>,
@@ -146,7 +145,6 @@ pub struct InputGraphPTerm {
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgClk {
-    pub loc: Option<AssignedLocation>,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
@@ -154,7 +152,6 @@ pub struct InputGraphBufgClk {
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgGTS {
-    pub loc: Option<AssignedLocation>,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
@@ -163,7 +160,6 @@ pub struct InputGraphBufgGTS {
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct InputGraphBufgGSR {
-    pub loc: Option<AssignedLocation>,
     pub name: String,
     pub requested_loc: Option<RequestedLocation>,
     pub input: ObjPoolIndex<InputGraphMacrocell>,
@@ -308,7 +304,6 @@ impl InputGraph {
         // Now we pre-create all the macrocell objects
         for i in 0..gathered_mcs.len() {
             let dummy_mc = InputGraphMacrocell {
-                loc: None,
                 name: String::from(""),
                 requested_loc: None,
                 io_bits: None,
@@ -785,7 +780,6 @@ impl InputGraph {
                     };
 
                     let newg_n = InputGraphBufgClk {
-                        loc: None,
                         name: n.name.clone(),
                         requested_loc: n.location,
                         input: input_newg,
@@ -810,7 +804,6 @@ impl InputGraph {
                     };
 
                     let newg_n = InputGraphBufgGTS {
-                        loc: None,
                         name: n.name.clone(),
                         requested_loc: n.location,
                         input: input_newg,
@@ -836,7 +829,6 @@ impl InputGraph {
                     };
 
                     let newg_n = InputGraphBufgGSR {
-                        loc: None,
                         name: n.name.clone(),
                         requested_loc: n.location,
                         input: input_newg,
