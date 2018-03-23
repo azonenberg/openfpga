@@ -90,6 +90,74 @@ pub struct OutputGraph {
     pub zia: Vec<PARZIAAssignment>,
 }
 
+macro_rules! impl_from_ig_to_og {
+    ($i_type:ident, $o_type:ident) => {
+        impl std::convert::From<ObjPoolIndex<$i_type>>
+            for ObjPoolIndex<$o_type> {
+
+            fn from(x: ObjPoolIndex<$i_type>) -> Self {
+                unsafe {
+                    // This is fine because we are basically just turning a number into a number
+                    std::mem::transmute(x)
+                }
+            }
+        }
+    }
+}
+impl_from_ig_to_og!(InputGraphMacrocell, OutputGraphMacrocell);
+impl_from_ig_to_og!(InputGraphPTerm, OutputGraphPTerm);
+impl_from_ig_to_og!(InputGraphBufgClk, OutputGraphBufgClk);
+impl_from_ig_to_og!(InputGraphBufgGTS, OutputGraphBufgGTS);
+impl_from_ig_to_og!(InputGraphBufgGSR, OutputGraphBufgGSR);
+
+impl OutputGraph {
+    pub fn from_input_graph(gi: &InputGraph) -> Self {
+        let mut mcs = ObjPool::new();
+        let mut pterms = ObjPool::new();
+        let mut bufg_clks = ObjPool::new();
+        let mut bufg_gts = ObjPool::new();
+        let mut bufg_gsr = ObjPool::new();
+        let zia = Vec::new();
+
+        for _ in gi.mcs.iter() {
+            mcs.insert(OutputGraphMacrocell {
+                loc: None,
+            });
+        }
+        for pterm in gi.pterms.iter() {
+            pterms.insert(OutputGraphPTerm {
+                loc: None,
+                inputs_true_zia: Vec::with_capacity(pterm.inputs_true.len()),
+                inputs_comp_zia: Vec::with_capacity(pterm.inputs_comp.len()),
+            });
+        }
+        for _ in gi.bufg_clks.iter() {
+            bufg_clks.insert(OutputGraphBufgClk {
+                loc: None,
+            });
+        }
+        for _ in gi.bufg_gts.iter() {
+            bufg_gts.insert(OutputGraphBufgGTS {
+                loc: None,
+            });
+        }
+        for _ in gi.bufg_gsr.iter() {
+            bufg_gsr.insert(OutputGraphBufgGSR {
+                loc: None,
+            });
+        }
+
+        Self {
+            mcs,
+            pterms,
+            bufg_clks,
+            bufg_gts,
+            bufg_gsr,
+            zia,
+        }
+    }
+}
+
 // First element of tuple is anything, second element can only be pin input
 pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignment>> {
     let mut ret = Vec::new();
@@ -431,7 +499,9 @@ pub enum AndTermAssignmentResult {
     FailurePtermExceeded(u32),
 }
 
-pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, fb_i: u32) -> AndTermAssignmentResult {
+pub fn try_assign_andterms(g: &mut InputGraph, go: &mut OutputGraph, mc_assignment: &PARFBAssignment, fb_i: u32)
+    -> AndTermAssignmentResult {
+
     let mut ret = [None; ANDTERMS_PER_FB];
 
     // This is a collection of p-terms that have some restrictions on where they can be placed (either because the
@@ -602,10 +672,16 @@ pub fn try_assign_andterms(g: &mut InputGraph, mc_assignment: &PARFBAssignment, 
         }
     }
 
-    for pterm in g.pterms.iter_mut() {
+    for (pterm_idx, pterm) in g.pterms.iter_mut_idx() {
         // Only do this update if this lookup succeeds. This lookup will fail for terms that are in other FBs
         if let Some(&mc_i) = existing_pterm_map.get(pterm) {
             pterm.loc = Some(AssignedLocation{
+                fb: fb_i,
+                i: mc_i as u32,
+            });
+
+            let pterm_go = go.pterms.get_mut(ObjPoolIndex::from(pterm_idx));
+            pterm_go.loc = Some(AssignedLocation{
                 fb: fb_i,
                 i: mc_i as u32,
             });
@@ -789,12 +865,14 @@ enum FBAssignmentResultInner {
     Failure(u32),
 }
 
-fn try_assign_fb_inner(g: &mut InputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32) -> FBAssignmentResultInner {
+fn try_assign_fb_inner(g: &mut InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32)
+    -> FBAssignmentResultInner {
+
     let mut failing_score = 0;
     // TODO: Weight factors?
 
     // Can we even assign p-terms?
-    let pterm_assign_result = try_assign_andterms(g, &mc_assignments[fb_i as usize], fb_i);
+    let pterm_assign_result = try_assign_andterms(g, go, &mc_assignments[fb_i as usize], fb_i);
     let zia_assign_result = try_assign_zia(g, &mc_assignments[fb_i as usize]);
 
     if pterm_assign_result == AndTermAssignmentResult::Success {
@@ -826,9 +904,9 @@ fn try_assign_fb_inner(g: &mut InputGraph, mc_assignments: &[PARFBAssignment], f
     FBAssignmentResultInner::Failure(failing_score)
 }
 
-pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment], fb_i: u32,
+pub fn try_assign_fb(g: &mut InputGraph, go: &mut OutputGraph, mc_assignments: &mut [PARFBAssignment], fb_i: u32,
     constraint_violations: &mut HashMap<PARFBAssignLoc, u32>) -> Option<PARZIAAssignment> {
-    let initial_assign_result = try_assign_fb_inner(g, mc_assignments, fb_i);
+    let initial_assign_result = try_assign_fb_inner(g, go, mc_assignments, fb_i);
 
     // Check for pairing violations
     // TODO: Fix copypasta
@@ -888,7 +966,7 @@ pub fn try_assign_fb(g: &mut InputGraph, mc_assignments: &mut [PARFBAssignment],
                     }
 
                     mc_assignments[fb_i as usize][mc_i].0 = PARMCAssignment::None;
-                    let new_failing_score = match try_assign_fb_inner(g, mc_assignments, fb_i) {
+                    let new_failing_score = match try_assign_fb_inner(g, go, mc_assignments, fb_i) {
                         FBAssignmentResultInner::Success(_) => 0,
                         FBAssignmentResultInner::Failure(x) => x,
                     };
@@ -1015,12 +1093,14 @@ pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
 }
 
 pub enum PARResult {
-    Success(Vec<PARZIAAssignment>),
+    Success((Vec<PARZIAAssignment>, OutputGraph)),
     FailureSanity(PARSanityResult),
     FailureIterationsExceeded,
 }
 
 pub fn do_par(g: &mut InputGraph) -> PARResult {
+    let mut go = OutputGraph::from_input_graph(g);
+
     let sanity_check = do_par_sanity_check(g);
     if sanity_check != PARSanityResult::Ok {
         return PARResult::FailureSanity(sanity_check);
@@ -1043,7 +1123,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
     let mut best_placement = macrocell_placement.clone();
     let mut best_placement_violations = HashMap::new();
     for fb_i in 0..2 {
-        let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32, &mut best_placement_violations);
+        let fb_assign_result = try_assign_fb(g, &mut go, &mut macrocell_placement, fb_i as u32,
+            &mut best_placement_violations);
         best_par_results_per_fb[fb_i] = fb_assign_result;
     }
     let mut best_placement_violations_score = 0;
@@ -1083,12 +1164,13 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             // weird is going on and that we should make sure there are no lingering logic bugs.
             let mut final_violations = HashMap::new();
             for fb_i in 0..2 {
-                let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32, &mut final_violations);
+                let fb_assign_result = try_assign_fb(g, &mut go, &mut macrocell_placement, fb_i as u32,
+                    &mut final_violations);
                 assert!(final_violations.len() == 0);
                 ret.push(fb_assign_result.unwrap());
             }
 
-            return PARResult::Success(ret);
+            return PARResult::Success((ret, go));
         }
 
         // Here, we need to swap some stuff around
@@ -1239,7 +1321,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                 }
                 let mut new_placement_violations = HashMap::new();
                 for fb_i in 0..2 {
-                    let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32,
+                    let fb_assign_result = try_assign_fb(g, &mut go, &mut macrocell_placement, fb_i as u32,
                         &mut new_placement_violations);
                     par_results_per_fb[fb_i] = fb_assign_result;
                 }
@@ -1345,7 +1427,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             }
             let mut new_placement_violations = HashMap::new();
             for fb_i in 0..2 {
-                let fb_assign_result = try_assign_fb(g, &mut macrocell_placement, fb_i as u32,
+                let fb_assign_result = try_assign_fb(g, &mut go, &mut macrocell_placement, fb_i as u32,
                     &mut new_placement_violations);
                 par_results_per_fb[fb_i] = fb_assign_result;
             }
@@ -1384,9 +1466,9 @@ mod tests {
         // TODO
         let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
         // This is what we get
-        let our_data_structure = if let PARResult::Success(x) = do_par(&mut input_graph) {
+        let our_data_structure = if let PARResult::Success((x, y)) = do_par(&mut input_graph) {
             // Get a bitstream result
-            let bitstream = produce_bitstream(device_type, &input_graph, &x);
+            let bitstream = produce_bitstream(device_type, &input_graph, &y, &x);
             let mut ret = Vec::new();
             bitstream.to_jed(&mut ret).unwrap();
             ret

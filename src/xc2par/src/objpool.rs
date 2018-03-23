@@ -102,6 +102,13 @@ impl<T> ObjPool<T> {
         self.storage.iter_mut()
     }
 
+    pub fn iter_mut_idx(&mut self) -> ObjPoolMutIdxIterator<T> {
+        ObjPoolMutIdxIterator {
+            inner_iter: self.storage.iter_mut(),
+            current_idx: 0,
+        }
+    }
+
     pub fn len(&self) -> usize {
         self.storage.len()
     }
@@ -133,6 +140,27 @@ impl<'a, T> Iterator for ObjPoolIdxIterator<'a, T> {
             let ret = ObjPoolIndex::<T> {i: self.current_idx, type_marker: PhantomData};
             self.current_idx += 1;
             Some(ret)
+        }
+    }
+}
+
+pub struct ObjPoolMutIdxIterator<'a, T: 'a> {
+    inner_iter: IterMut<'a, T>,
+    current_idx: usize,
+}
+
+impl<'a, T> Iterator for ObjPoolMutIdxIterator<'a, T> {
+    type Item = (ObjPoolIndex<T>, &'a mut T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self.inner_iter.next();
+        match next {
+            None => None,
+            Some(x) => {
+                let ret = ObjPoolIndex::<T> {i: self.current_idx, type_marker: PhantomData};
+                self.current_idx += 1;
+                Some((ret, x))
+            }
         }
     }
 }

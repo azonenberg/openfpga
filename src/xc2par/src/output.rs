@@ -27,9 +27,10 @@ extern crate xc2bit;
 use self::xc2bit::*;
 
 use *;
+use objpool::*;
 
 pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
-    placements: &[PARZIAAssignment]) -> XC2Bitstream {
+    go: &OutputGraph, placements: &[PARZIAAssignment]) -> XC2Bitstream {
 
     // FIXME: Don't hardcode
     let mut fb_bits = [XC2BitstreamFB::default(); 2];
@@ -47,9 +48,11 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph,
     }
 
     // AND terms
-    for andterm in g.pterms.iter() {
-        let fb_i = andterm.loc.unwrap().fb as usize;
-        let andterm_i = andterm.loc.unwrap().i as usize;
+    for andterm_idx in g.pterms.iter_idx() {
+        let andterm = g.pterms.get(andterm_idx);
+        let andterm_go = go.pterms.get(ObjPoolIndex::from(andterm_idx));
+        let fb_i = andterm_go.loc.unwrap().fb as usize;
+        let andterm_i = andterm_go.loc.unwrap().i as usize;
 
         for &x in &andterm.inputs_true_zia {
             fb_bits[fb_i].and_terms[andterm_i].input[x as usize] = true;
