@@ -23,6 +23,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+use std::cmp::Ordering;
 use std::collections::{HashSet, HashMap};
 use std::iter::FromIterator;
 
@@ -1278,6 +1279,24 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         for (&k, &v) in &best_placement_violations {
             bad_candidates.push((k, v));
         }
+        bad_candidates.sort_unstable_by(|a, b| {
+            let &((a_fb, a_mc, a_pininput), _) = a;
+            let &((b_fb, b_mc, b_pininput), _) = b;
+
+            let ret = a_fb.cmp(&b_fb);
+            if ret == Ordering::Equal {
+                let ret = a_mc.cmp(&b_mc);
+                if ret == Ordering::Equal {
+                    // DEBUG: There cannot be any equality here
+                    assert!(a_pininput != b_pininput);
+                    a_pininput.cmp(&b_pininput)
+                } else {
+                    ret
+                }
+            } else {
+                ret
+            }
+        });
 
         // Pick a candidate to move weighted by its badness
         let mut move_cand_rand = prng.gen_range(0, best_placement_violations_score);
