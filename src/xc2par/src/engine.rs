@@ -62,280 +62,119 @@ pub fn greedy_initial_placement(g: &mut InputGraph) -> Option<Vec<PARFBAssignmen
 
     // Find global buffers that have no constraint on the buffer but are fully constrained on the pin. Transfer these
     // into a constraint on the buffer.
-    {
-        for gck in g.bufg_clks.iter_mut() {
-            if gck.loc.is_some() {
-                continue;
-            }
-
-            let mc_req_loc = g.mcs.get(gck.input).requested_loc;
-            if mc_req_loc.is_none() {
-                continue;
-            }
-
-            let mc_req_loc = mc_req_loc.unwrap();
-            if mc_req_loc.i.is_some() {
-                let mut idx = None;
-                for i in 0..NUM_BUFG_CLK {
-                    let actual_mc_loc = get_gck(XC2Device::XC2C32A, i).unwrap();
-
-                    if mc_req_loc.fb != actual_mc_loc.0 || mc_req_loc.i.unwrap() != actual_mc_loc.1 {
-                        continue;
-                    }
-
-                    idx = Some(i as u32);
-                    // Now force the buffer to have the full location
-                    gck.requested_loc = Some(RequestedLocation{fb: 0, i: Some(i as u32)});
-                    break;
-
+    macro_rules! xfer_pin_loc_to_buf {
+        ($g_name:ident, $cnt_name:ident, $loc_lookup:expr) => {
+            for gbuf in g.$g_name.iter_mut() {
+                if gbuf.requested_loc.is_some() {
+                    continue;
                 }
 
-                if idx.is_none() {
-                    return None;
+                let mc_req_loc = g.mcs.get(gbuf.input).requested_loc;
+                if mc_req_loc.is_none() {
+                    continue;
+                }
+
+                let mc_req_loc = mc_req_loc.unwrap();
+                if mc_req_loc.i.is_some() {
+                    let mut idx = None;
+                    for i in 0..$cnt_name {
+                        let actual_mc_loc = $loc_lookup(i);
+
+                        if mc_req_loc.fb != actual_mc_loc.0 || mc_req_loc.i.unwrap() != actual_mc_loc.1 {
+                            continue;
+                        }
+
+                        idx = Some(i as u32);
+                        // Now force the buffer to have the full location
+                        gbuf.requested_loc = Some(RequestedLocation{fb: 0, i: Some(i as u32)});
+                        break;
+
+                    }
+
+                    if idx.is_none() {
+                        return None;
+                    }
                 }
             }
         }
     }
-    {
-        for gts in g.bufg_gts.iter_mut() {
-            if gts.loc.is_some() {
-                continue;
-            }
-
-            let mc_req_loc = g.mcs.get(gts.input).requested_loc;
-            if mc_req_loc.is_none() {
-                continue;
-            }
-
-            let mc_req_loc = mc_req_loc.unwrap();
-            if mc_req_loc.i.is_some() {
-                let mut idx = None;
-                for i in 0..NUM_BUFG_GTS {
-                    let actual_mc_loc = get_gts(XC2Device::XC2C32A, i).unwrap();
-
-                    if mc_req_loc.fb != actual_mc_loc.0 || mc_req_loc.i.unwrap() != actual_mc_loc.1 {
-                        continue;
-                    }
-
-                    idx = Some(i as u32);
-                    // Now force the buffer to have the full location
-                    gts.requested_loc = Some(RequestedLocation{fb: 0, i: Some(i as u32)});
-                    break;
-
-                }
-
-                if idx.is_none() {
-                    return None;
-                }
-            }
-        }
-    }
-    {
-        for gsr in g.bufg_gsr.iter_mut() {
-            if gsr.loc.is_some() {
-                continue;
-            }
-
-            let mc_req_loc = g.mcs.get(gsr.input).requested_loc;
-            if mc_req_loc.is_none() {
-                continue;
-            }
-
-            let mc_req_loc = mc_req_loc.unwrap();
-            if mc_req_loc.i.is_some() {
-                let mut idx = None;
-                for i in 0..NUM_BUFG_GSR {
-                    let actual_mc_loc = get_gsr(XC2Device::XC2C32A);
-
-                    if mc_req_loc.fb != actual_mc_loc.0 || mc_req_loc.i.unwrap() != actual_mc_loc.1 {
-                        continue;
-                    }
-
-                    idx = Some(i as u32);
-                    // Now force the buffer to have the full location
-                    gsr.requested_loc = Some(RequestedLocation{fb: 0, i: Some(i as u32)});
-                    break;
-
-                }
-
-                if idx.is_none() {
-                    return None;
-                }
-            }
-        }
-    }
+    xfer_pin_loc_to_buf!(bufg_clks, NUM_BUFG_CLK, |i| get_gck(XC2Device::XC2C32A, i).unwrap());
+    xfer_pin_loc_to_buf!(bufg_gts, NUM_BUFG_GTS, |i| get_gts(XC2Device::XC2C32A, i).unwrap());
+    xfer_pin_loc_to_buf!(bufg_gsr, NUM_BUFG_GSR, |_| get_gsr(XC2Device::XC2C32A));
     
     // Begin with assigning those that have a LOC constraint on the buffer. We know that these already have LOC
     // constraints on the pin as well.
-    {
-        for gck in g.bufg_clks.iter_mut() {
-            if let Some(RequestedLocation{i: Some(idx), ..}) = gck.requested_loc {
-                if gck_used.contains(&idx) {
-                    return None;
-                }
-                gck_used.insert(idx);
+    macro_rules! place_loc_buf {
+        ($g_name:ident, $set_name:ident) => {
+            for gbuf in g.$g_name.iter_mut() {
+                if let Some(RequestedLocation{i: Some(idx), ..}) = gbuf.requested_loc {
+                    if $set_name.contains(&idx) {
+                        return None;
+                    }
+                    $set_name.insert(idx);
 
-                gck.loc = Some(AssignedLocation {
-                    fb: 0,
-                    i: idx,
-                });
+                    gbuf.loc = Some(AssignedLocation {
+                        fb: 0,
+                        i: idx,
+                    });
+                }
             }
         }
     }
-    {
-        for gts in g.bufg_gts.iter_mut() {
-            if let Some(RequestedLocation{i: Some(idx), ..}) = gts.requested_loc {
-                if gts_used.contains(&idx) {
-                    return None;
-                }
-                gts_used.insert(idx);
-
-                gts.loc = Some(AssignedLocation {
-                    fb: 0,
-                    i: idx,
-                });
-            }
-        }
-    }
-    {
-        for gsr in g.bufg_gsr.iter_mut() {
-            if let Some(RequestedLocation{i: Some(idx), ..}) = gsr.requested_loc {
-                if gsr_used.contains(&idx) {
-                    return None;
-                }
-                gsr_used.insert(idx);
-
-                gsr.loc = Some(AssignedLocation {
-                    fb: 0,
-                    i: idx,
-                });
-            }
-        }
-    }
+    place_loc_buf!(bufg_clks, gck_used);
+    place_loc_buf!(bufg_gts, gts_used);
+    place_loc_buf!(bufg_gsr, gsr_used);
 
     // Now we assign locations to all of the remaining global buffers. Note that we checked ahead of time that there
     // aren't too many of these in use. However, it is still possible to get an unsatisfiable assignment due to
     // FB constraints on the macrocell.
-    {
-        for gck in g.bufg_clks.iter_mut() {
-            if gck.loc.is_some() {
-                continue;
-            }
-
-            let mut idx = None;
-            for i in 0..NUM_BUFG_CLK {
-                if gck_used.contains(&(i as u32)) {
+    macro_rules! place_other_buf {
+        ($g_name:ident, $set_name:ident, $cnt_name:ident, $loc_lookup:expr) => {
+            for gbuf in g.$g_name.iter_mut() {
+                if gbuf.loc.is_some() {
                     continue;
                 }
 
-                let mc_req_loc = g.mcs.get(gck.input).requested_loc;
-                let actual_mc_loc = get_gck(XC2Device::XC2C32A, i).unwrap();
-                assert!(mc_req_loc.is_none() || mc_req_loc.unwrap().i.is_none());
-                if mc_req_loc.is_some() && mc_req_loc.unwrap().fb != actual_mc_loc.0 {
-                    continue;
+                assert!(gbuf.requested_loc.is_none());
+
+                let mut idx = None;
+                for i in 0..$cnt_name {
+                    if $set_name.contains(&(i as u32)) {
+                        continue;
+                    }
+
+                    let mc_req_loc = g.mcs.get(gbuf.input).requested_loc;
+                    let actual_mc_loc = $loc_lookup(i);
+                    assert!(mc_req_loc.is_none() || mc_req_loc.unwrap().i.is_none());
+                    if mc_req_loc.is_some() && mc_req_loc.unwrap().fb != actual_mc_loc.0 {
+                        continue;
+                    }
+
+                    idx = Some(i as u32);
+                    // Now force the MC to have the full location
+                    // XXX: This can in very rare occasions cause a design that should in theory fit to no longer fit.
+                    // However, we consider this to be unimportant because global nets almost always need special treatment
+                    // by the HDL designer to work properly anyways.
+                    g.mcs.get_mut(gbuf.input).requested_loc = Some(RequestedLocation{
+                        fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+                    break;
                 }
 
-                idx = Some(i as u32);
-                // Now force the MC to have the full location
-                // XXX: This can in very rare occasions cause a design that should in theory fit to no longer fit.
-                // However, we consider this to be unimportant because global nets almost always need special treatment
-                // by the HDL designer to work properly anyways.
-                g.mcs.get_mut(gck.input).requested_loc = Some(RequestedLocation{
-                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
-                break;
-            }
+                if idx.is_none() {
+                    return None;
+                }
 
-            if idx.is_none() {
-                return None;
+                $set_name.insert(idx.unwrap());
+                gbuf.loc = Some(AssignedLocation {
+                    fb: 0,
+                    i: idx.unwrap(),
+                });
             }
-
-            gck_used.insert(idx.unwrap());
-            gck.loc = Some(AssignedLocation {
-                fb: 0,
-                i: idx.unwrap(),
-            });
         }
     }
-    {
-        for gts in g.bufg_gts.iter_mut() {
-            if gts.loc.is_some() {
-                continue;
-            }
-
-            let mut idx = None;
-            for i in 0..NUM_BUFG_GTS {
-                if gts_used.contains(&(i as u32)) {
-                    continue;
-                }
-
-                let mc_req_loc = g.mcs.get(gts.input).requested_loc;
-                let actual_mc_loc = get_gts(XC2Device::XC2C32A, i).unwrap();
-                assert!(mc_req_loc.is_none() || mc_req_loc.unwrap().i.is_none());
-                if mc_req_loc.is_some() && mc_req_loc.unwrap().fb != actual_mc_loc.0 {
-                    continue;
-                }
-
-                idx = Some(i as u32);
-                // Now force the MC to have the full location
-                // XXX: This can in very rare occasions cause a design that should in theory fit to no longer fit.
-                // However, we consider this to be unimportant because global nets almost always need special treatment
-                // by the HDL designer to work properly anyways.
-                g.mcs.get_mut(gts.input).requested_loc = Some(RequestedLocation{
-                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
-                break;
-            }
-
-            if idx.is_none() {
-                return None;
-            }
-
-            gts_used.insert(idx.unwrap());
-            gts.loc = Some(AssignedLocation {
-                fb: 0,
-                i: idx.unwrap(),
-            });
-        }
-    }
-    {
-        for gsr in g.bufg_gsr.iter_mut() {
-            if gsr.loc.is_some() {
-                continue;
-            }
-
-            let mut idx = None;
-            for i in 0..NUM_BUFG_GSR {
-                if gsr_used.contains(&(i as u32)) {
-                    continue;
-                }
-
-                let mc_req_loc = g.mcs.get(gsr.input).requested_loc;
-                let actual_mc_loc = get_gsr(XC2Device::XC2C32A);
-                assert!(mc_req_loc.is_none() || mc_req_loc.unwrap().i.is_none());
-                if mc_req_loc.is_some() && mc_req_loc.unwrap().fb != actual_mc_loc.0 {
-                    continue;
-                }
-
-                idx = Some(i as u32);
-                // Now force the MC to have the full location
-                // XXX: This can in very rare occasions cause a design that should in theory fit to no longer fit.
-                // However, we consider this to be unimportant because global nets almost always need special treatment
-                // by the HDL designer to work properly anyways.
-                g.mcs.get_mut(gsr.input).requested_loc = Some(RequestedLocation{
-                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
-                break;
-            }
-
-            if idx.is_none() {
-                return None;
-            }
-
-            gsr_used.insert(idx.unwrap());
-            gsr.loc = Some(AssignedLocation {
-                fb: 0,
-                i: idx.unwrap(),
-            });
-        }
-    }
+    place_other_buf!(bufg_clks, gck_used, NUM_BUFG_CLK, |i| get_gck(XC2Device::XC2C32A, i).unwrap());
+    place_other_buf!(bufg_gts, gts_used, NUM_BUFG_GTS, |i| get_gts(XC2Device::XC2C32A, i).unwrap());
+    place_other_buf!(bufg_gsr, gsr_used, NUM_BUFG_GSR, |_| get_gsr(XC2Device::XC2C32A));
 
     // Now actually assign macrocell locations
 
@@ -1088,111 +927,49 @@ pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
     }
 
     // Check the LOC constraints for global nets
-    for buf in g.bufg_clks.iter_mut() {
-        let buf_req_loc = buf.requested_loc;
-        let mc_req_loc = g.mcs.get(buf.input).requested_loc;
+    macro_rules! sanity_check_bufg {
+        ($g_name:ident, $loc_lookup:expr) => {
+            for buf in g.$g_name.iter_mut() {
+                let buf_req_loc = buf.requested_loc;
+                let mc_req_loc = g.mcs.get(buf.input).requested_loc;
 
-        match (buf_req_loc, mc_req_loc) {
-            (Some(RequestedLocation{i: Some(buf_idx), ..}), Some(mc_loc)) => {
-                // Both the pin and the buffer have a preference for where to be.
+                match (buf_req_loc, mc_req_loc) {
+                    (Some(RequestedLocation{i: Some(buf_idx), ..}), Some(mc_loc)) => {
+                        // Both the pin and the buffer have a preference for where to be.
 
-                // These two need to match
-                let actual_mc_loc = get_gck(XC2Device::XC2C32A, buf_idx as usize).unwrap();
-                if actual_mc_loc.0 != mc_loc.fb || (mc_loc.i.is_some() && mc_loc.i.unwrap() != actual_mc_loc.1) {
-                    return PARSanityResult::FailureGlobalNetWrongLoc;
+                        // These two need to match
+                        let actual_mc_loc = $loc_lookup(buf_idx as usize);
+                        if actual_mc_loc.0 != mc_loc.fb ||
+                            (mc_loc.i.is_some() && mc_loc.i.unwrap() != actual_mc_loc.1) {
+
+                            return PARSanityResult::FailureGlobalNetWrongLoc;
+                        }
+
+                        // Now force the MC to have the full location
+                        g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
+                            fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+                    },
+                    (Some(RequestedLocation{i: Some(buf_idx), ..}), None) => {
+                        // There is a preference for the buffer, but no preference for the pin.
+
+                        let actual_mc_loc = $loc_lookup(buf_idx as usize);
+
+                        // Now force the MC to have the full location
+                        g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
+                            fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+                    },
+                    (Some(RequestedLocation{i: None, ..}), Some(_)) | (None, Some(_)) => {
+                        // There is a preference for the pin, but no preference for the buffer.
+                        // Do nothing for now, we can fail this in the greedy assignment step
+                    },
+                    _ => {},
                 }
-
-                // Now force the MC to have the full location
-                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
-                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
-            },
-            (Some(RequestedLocation{i: Some(buf_idx), ..}), None) => {
-                // There is a preference for the buffer, but no preference for the pin.
-
-                let actual_mc_loc = get_gck(XC2Device::XC2C32A, buf_idx as usize).unwrap();
-
-                // Now force the MC to have the full location
-                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
-                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
-            },
-            (Some(RequestedLocation{i: None, ..}), Some(_)) | (None, Some(_)) => {
-                // There is a preference for the pin, but no preference for the buffer.
-                // Do nothing for now, we can fail this in the greedy assignment step
-            },
-            _ => {},
+            }
         }
     }
-
-    // FIXME: Copypasta
-    for buf in g.bufg_gts.iter_mut() {
-        let buf_req_loc = buf.requested_loc;
-        let mc_req_loc = g.mcs.get(buf.input).requested_loc;
-
-        match (buf_req_loc, mc_req_loc) {
-            (Some(RequestedLocation{i: Some(buf_idx), ..}), Some(mc_loc)) => {
-                // Both the pin and the buffer have a preference for where to be.
-
-                // These two need to match
-                let actual_mc_loc = get_gts(XC2Device::XC2C32A, buf_idx as usize).unwrap();
-                if actual_mc_loc.0 != mc_loc.fb || (mc_loc.i.is_some() && mc_loc.i.unwrap() != actual_mc_loc.1) {
-                    return PARSanityResult::FailureGlobalNetWrongLoc;
-                }
-
-                // Now force the MC to have the full location
-                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
-                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
-            },
-            (Some(RequestedLocation{i: Some(buf_idx), ..}), None) => {
-                // There is a preference for the buffer, but no preference for the pin.
-
-                let actual_mc_loc = get_gts(XC2Device::XC2C32A, buf_idx as usize).unwrap();
-
-                // Now force the MC to have the full location
-                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
-                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
-            },
-            (Some(RequestedLocation{i: None, ..}), Some(_)) | (None, Some(_)) => {
-                // There is a preference for the pin, but no preference for the buffer.
-                // Do nothing for now, we can fail this in the greedy assignment step
-            },
-            _ => {},
-        }
-    }
-
-    for buf in g.bufg_gsr.iter_mut() {
-        let buf_req_loc = buf.requested_loc;
-        let mc_req_loc = g.mcs.get(buf.input).requested_loc;
-
-        match (buf_req_loc, mc_req_loc) {
-            (Some(RequestedLocation{i: Some(_), ..}), Some(mc_loc)) => {
-                // Both the pin and the buffer have a preference for where to be.
-
-                // These two need to match
-                let actual_mc_loc = get_gsr(XC2Device::XC2C32A);
-                if actual_mc_loc.0 != mc_loc.fb || (mc_loc.i.is_some() && mc_loc.i.unwrap() != actual_mc_loc.1) {
-                    return PARSanityResult::FailureGlobalNetWrongLoc;
-                }
-
-                // Now force the MC to have the full location
-                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
-                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
-            },
-            (Some(RequestedLocation{i: Some(_), ..}), None) => {
-                // There is a preference for the buffer, but no preference for the pin.
-
-                let actual_mc_loc = get_gsr(XC2Device::XC2C32A);
-
-                // Now force the MC to have the full location
-                g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
-                    fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
-            },
-            (Some(RequestedLocation{i: None, ..}), Some(_)) | (None, Some(_)) => {
-                // There is a preference for the pin, but no preference for the buffer.
-                // Do nothing for now, we can fail this in the greedy assignment step
-            },
-            _ => {},
-        }
-    }
+    sanity_check_bufg!(bufg_clks, |i| get_gck(XC2Device::XC2C32A, i).unwrap());
+    sanity_check_bufg!(bufg_gts, |i| get_gts(XC2Device::XC2C32A, i).unwrap());
+    sanity_check_bufg!(bufg_gts, |_| get_gsr(XC2Device::XC2C32A));
 
     PARSanityResult::Ok
 }
