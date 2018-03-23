@@ -156,6 +156,27 @@ impl OutputGraph {
             zia,
         }
     }
+
+    fn xfer_mc_placement(&mut self, mc_placement: &[PARFBAssignment]) {
+        for fb_i in 0..3 {
+            for mc_i in 0..MCS_PER_FB {
+                if let PARMCAssignment::MC(mc_idx) = mc_placement[fb_i as usize][mc_i].0 {
+                    let mc = self.mcs.get_mut(ObjPoolIndex::from(mc_idx));
+                    mc.loc = Some(AssignedLocation{
+                        fb: fb_i,
+                        i: mc_i as u32,
+                    });
+                }
+                if let PARMCAssignment::MC(mc_idx) = mc_placement[fb_i as usize][mc_i].1 {
+                    let mc = self.mcs.get_mut(ObjPoolIndex::from(mc_idx));
+                    mc.loc = Some(AssignedLocation{
+                        fb: fb_i,
+                        i: mc_i as u32,
+                    });
+                }
+            }
+        }
+    }
 }
 
 // First element of tuple is anything, second element can only be pin input
@@ -472,24 +493,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Opt
     }
 
     // Update the "reverse" pointers
-    for fb_i in 0..3 {
-        for mc_i in 0..MCS_PER_FB {
-            if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].0 {
-                let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
-                mc.loc = Some(AssignedLocation{
-                    fb: fb_i,
-                    i: mc_i as u32,
-                });
-            }
-            if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].1 {
-                let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
-                mc.loc = Some(AssignedLocation{
-                    fb: fb_i,
-                    i: mc_i as u32,
-                });
-            }
-        }
-    }
+    go.xfer_mc_placement(&ret);
 
     Some(ret)
 }
@@ -906,7 +910,7 @@ fn try_assign_fb_inner(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[P
     FBAssignmentResultInner::Failure(failing_score)
 }
 
-pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &mut [PARFBAssignment], fb_i: u32,
+pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32,
     constraint_violations: &mut HashMap<PARFBAssignLoc, u32>) -> Option<PARZIAAssignment> {
     let initial_assign_result = try_assign_fb_inner(g, go, mc_assignments, fb_i);
 
@@ -958,8 +962,13 @@ pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &mut 
         FBAssignmentResultInner::Success(x) => Some(x),
         FBAssignmentResultInner::Failure(base_failing_score) => {
             // Not a success. Delete one macrocell at a time and see what happens.
+
+            // XXX We only need this copy for the macrocell assignments. Inefficient
+            let mut dummy_go = go.clone();
+            let mut new_mc_assign = mc_assignments.to_owned();
+
             for mc_i in 0..MCS_PER_FB {
-                let old_assign = mc_assignments[fb_i as usize][mc_i].0;
+                let old_assign = new_mc_assign[fb_i as usize][mc_i].0;
                 if let PARMCAssignment::MC(mc_idx) = old_assign {
                     let loc = g.mcs.get(mc_idx).requested_loc;
                     // If fully-LOCed, then we cannot move this, so don't even try deleting it or scoring it.
@@ -967,8 +976,8 @@ pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &mut 
                         continue;
                     }
 
-                    mc_assignments[fb_i as usize][mc_i].0 = PARMCAssignment::None;
-                    let new_failing_score = match try_assign_fb_inner(g, go, mc_assignments, fb_i) {
+                    new_mc_assign[fb_i as usize][mc_i].0 = PARMCAssignment::None;
+                    let new_failing_score = match try_assign_fb_inner(g, &mut dummy_go, &new_mc_assign, fb_i) {
                         FBAssignmentResultInner::Success(_) => 0,
                         FBAssignmentResultInner::Failure(x) => x,
                     };
@@ -986,7 +995,7 @@ pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &mut 
                         let new_score = (base_failing_score - new_failing_score) as u32;
                         constraint_violations.insert(my_loc, old_score + new_score);
                     }
-                    mc_assignments[fb_i as usize][mc_i].0 = old_assign;
+                    new_mc_assign[fb_i as usize][mc_i].0 = old_assign;
                 }
             }
 
@@ -1138,25 +1147,7 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         println!("iter {}", _iter_count);
         macrocell_placement = best_placement.clone();
         // Update the "reverse" pointers
-        // TODO: Fix copypasta
-        for fb_i in 0..3 {
-            for mc_i in 0..MCS_PER_FB {
-                if let PARMCAssignment::MC(mc_idx) = best_placement[fb_i][mc_i].0 {
-                    let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
-                    mc.loc = Some(AssignedLocation{
-                        fb: fb_i as u32,
-                        i: mc_i as u32,
-                    });
-                }
-                if let PARMCAssignment::MC(mc_idx) = best_placement[fb_i][mc_i].1 {
-                    let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
-                    mc.loc = Some(AssignedLocation{
-                        fb: fb_i as u32,
-                        i: mc_i as u32,
-                    });
-                }
-            }
-        }
+        go.xfer_mc_placement(&best_placement);
 
         if best_placement_violations.len() == 0 {
             // It worked!
