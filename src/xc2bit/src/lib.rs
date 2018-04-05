@@ -66,7 +66,7 @@ pub const NUM_BUFG_GTS: usize = 4;
 pub const NUM_BUFG_GSR: usize = 1;
 
 mod bitstream;
-pub use bitstream::{XC2Bitstream, XC2BitstreamBits, XC2GlobalNets, XC2ClockDivRatio, XC2ClockDiv};
+pub use bitstream::{XC2Bitstream, XC2BitstreamBits};
 
 mod crbit;
 pub use crbit::{FuseArray};
@@ -79,6 +79,9 @@ pub use fb::{XC2BitstreamFB, CTC, CTR, CTS, CTE, get_pta, get_ptb, get_ptc};
 
 mod fusemap_logical;
 mod fusemap_physical;
+
+mod globalbits;
+pub use globalbits::{XC2GlobalNets, XC2ClockDivRatio, XC2ClockDiv};
 
 mod iob;
 pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, XC2IOBIbufMode, XC2MCLargeIOB,
