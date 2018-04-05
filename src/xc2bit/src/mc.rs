@@ -95,133 +95,66 @@ pub enum XC2MCRegResetSrc {
 
 /// Set source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitPattern)]
 pub enum XC2MCRegSetSrc {
+    #[bits = "11"]
     Disabled,
+    #[bits = "00"]
     PTA,
+    #[bits = "01"]
     GSR,
+    #[bits = "10"]
     CTS,
-}
-
-impl XC2MCRegSetSrc {
-    /// decodes the P bits
-    pub fn decode(r: (bool, bool)) -> Self {
-        match r {
-            (false, false) => XC2MCRegSetSrc::PTA,
-            (false, true)  => XC2MCRegSetSrc::GSR,
-            (true, false)  => XC2MCRegSetSrc::CTS,
-            (true, true)   => XC2MCRegSetSrc::Disabled,
-        }
-    }
-
-    /// encodes the P bits
-    pub fn encode(&self) -> (bool, bool) {
-        match *self {
-            XC2MCRegSetSrc::PTA => (false, false),
-            XC2MCRegSetSrc::GSR => (false, true),
-            XC2MCRegSetSrc::CTS => (true, false),
-            XC2MCRegSetSrc::Disabled => (true, true),
-        }
-    }
 }
 
 /// Mode of the register in a macrocell.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitPattern)]
 pub enum XC2MCRegMode {
     /// D-type flip-flop
+    #[bits = "00"]
     DFF,
     /// Transparent latch
+    #[bits = "01"]
     LATCH,
     /// Toggle flip-flop
+    #[bits = "10"]
     TFF,
     /// D-type flip-flop with clock-enable pin
+    #[bits = "11"]
     DFFCE,
-}
-
-impl XC2MCRegMode {
-    /// decodes the RegMod bits
-    pub fn decode(regmod: (bool, bool)) -> Self {
-        match regmod {
-            (false, false) => XC2MCRegMode::DFF,
-            (false, true)  => XC2MCRegMode::LATCH,
-            (true, false)  => XC2MCRegMode::TFF,
-            (true, true)   => XC2MCRegMode::DFFCE,
-        }
-    }
-
-    /// encodes the RegMod bits
-    pub fn encode(&self) -> (bool, bool) {
-        match *self {
-            XC2MCRegMode::DFF => (false, false),
-            XC2MCRegMode::LATCH => (false, true),
-            XC2MCRegMode::TFF => (true, false),
-            XC2MCRegMode::DFFCE => (true, true),
-        }
-    }
 }
 
 /// Mux selection for the ZIA input from this macrocell. The ZIA input can be chosen to come from either the XOR gate
 /// or from the output of the register.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitPattern)]
 pub enum XC2MCFeedbackMode {
+    #[bits = "X1"]
     Disabled,
+    #[bits = "00"]
     COMB,
+    #[bits = "10"]
     REG,
-}
-
-impl XC2MCFeedbackMode {
-    /// decodes the FB bits
-    pub fn decode(fb: (bool, bool)) -> Self {
-        match fb {
-            (false, false) => XC2MCFeedbackMode::COMB,
-            (true, false)  => XC2MCFeedbackMode::REG,
-            (_, true)      => XC2MCFeedbackMode::Disabled,
-        }
-    }
-
-    /// encodes the FB bits
-    pub fn encode(&self) -> (bool, bool) {
-        match *self {
-            XC2MCFeedbackMode::COMB => (false, false),
-            XC2MCFeedbackMode::REG => (true, false),
-            XC2MCFeedbackMode::Disabled => (true, true),
-        }
-    }
 }
 
 /// Mux selection for the "not from OR gate" input to the XOR gate. The XOR gate in a macrocell contains two inputs,
 /// the output of the corresponding OR term from the PLA and a specific dedicated AND term from the PLA.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitPattern)]
 pub enum XC2MCXorMode {
     /// A constant zero which results in this XOR outputting the value of the OR term
+    #[bits = "00"]
     ZERO,
     /// A constant one which results in this XOR outputting the complement of the OR term
+    #[bits = "11"]
     ONE,
     /// XOR the OR term with the special product term C
+    #[bits = "10"]
     PTC,
     /// XNOR the OR term with the special product term C
+    #[bits = "01"]
     PTCB,
-}
-
-impl XC2MCXorMode {
-    /// decodes the XorIn bits
-    pub fn decode(xorin: (bool, bool)) -> Self {
-        match xorin {
-            (false, false) => XC2MCXorMode::ZERO,
-            (false, true)  => XC2MCXorMode::PTCB,
-            (true, false)  => XC2MCXorMode::PTC,
-            (true, true)   => XC2MCXorMode::ONE,
-        }
-    }
-
-    /// encodes the XorIn bits
-    pub fn encode(&self) -> (bool, bool) {
-        match *self {
-            XC2MCXorMode::ZERO => (false, false),
-            XC2MCXorMode::PTCB => (false, true),
-            XC2MCXorMode::PTC => (true, false),
-            XC2MCXorMode::ONE => (true, true),
-        }
-    }
 }
 
 /// Represents a macrocell.

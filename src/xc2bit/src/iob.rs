@@ -36,80 +36,42 @@ use mc::{MC_TO_ROW_MAP_LARGE};
 /// input pin directly or from the output of the register in the macrocell corresponding to this I/O pin. The latter
 /// is used to allow for buried combinatorial feedback in a macrocell without "wasting" the register.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitPattern)]
 pub enum XC2IOBZIAMode {
+    #[bits = "X1"]
     Disabled,
+    #[bits = "00"]
     PAD,
+    #[bits = "10"]
     REG,
-}
-
-impl XC2IOBZIAMode {
-    /// encodes the INz bits
-    pub fn encode(&self) -> (bool, bool) {
-        match *self {
-            XC2IOBZIAMode::PAD => (false, false),
-            XC2IOBZIAMode::REG => (true, false),
-            XC2IOBZIAMode::Disabled => (true, true),
-        }
-    }
-
-    /// decodes the INz bits
-    pub fn decode(inz: (bool, bool)) -> Self {
-        match inz {
-            (false, false) => XC2IOBZIAMode::PAD,
-            (true, false) => XC2IOBZIAMode::REG,
-            (_, true) => XC2IOBZIAMode::Disabled,
-        }
-    }
 }
 
 /// Mode selection for the I/O pin's output buffer. See the Xilinx Coolrunner-II documentation for more information.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitPattern)]
+#[bits_default = "XC2BitError::UnsupportedOeConfiguration(x)"]
+#[bits_errtype = "XC2BitError"]
 pub enum XC2IOBOBufMode {
+    #[bits = "1111"]
     Disabled,
+    #[bits = "0000"]
     PushPull,
+    #[bits = "0001"]
     OpenDrain,
+    #[bits = "1100"]
     TriStateGTS0,
+    #[bits = "0010"]
     TriStateGTS1,
+    #[bits = "1010"]
     TriStateGTS2,
+    #[bits = "0110"]
     TriStateGTS3,
+    #[bits = "0100"]
     TriStatePTB,
+    #[bits = "1000"]
     TriStateCTE,
+    #[bits = "1110"]
     CGND,
-}
-
-impl XC2IOBOBufMode {
-    /// encodes the Oe bits
-    pub fn encode(&self) -> (bool, bool, bool, bool) {
-        match *self {
-            XC2IOBOBufMode::PushPull => (false, false, false, false),
-            XC2IOBOBufMode::OpenDrain => (false, false, false, true),
-            XC2IOBOBufMode::TriStateGTS1 => (false, false, true, false),
-            XC2IOBOBufMode::TriStatePTB => (false, true, false, false),
-            XC2IOBOBufMode::TriStateGTS3 => (false, true, true, false),
-            XC2IOBOBufMode::TriStateCTE => (true, false, false, false),
-            XC2IOBOBufMode::TriStateGTS2 => (true, false, true, false),
-            XC2IOBOBufMode::TriStateGTS0 => (true, true, false, false),
-            XC2IOBOBufMode::CGND => (true, true, true, false),
-            XC2IOBOBufMode::Disabled => (true, true, true, true),
-        }
-    }
-
-    /// decodes the Oe bits
-    pub fn decode(oe: (bool, bool, bool, bool)) -> Result<Self, XC2BitError> {
-        Ok(match oe {
-            (false, false, false, false) => XC2IOBOBufMode::PushPull,
-            (false, false, false, true)  => XC2IOBOBufMode::OpenDrain,
-            (false, false, true, false)  => XC2IOBOBufMode::TriStateGTS1,
-            (false, true, false, false)  => XC2IOBOBufMode::TriStatePTB,
-            (false, true, true, false)   => XC2IOBOBufMode::TriStateGTS3,
-            (true, false, false, false)  => XC2IOBOBufMode::TriStateCTE,
-            (true, false, true, false)   => XC2IOBOBufMode::TriStateGTS2,
-            (true, true, false, false)   => XC2IOBOBufMode::TriStateGTS0,
-            (true, true, true, false)    => XC2IOBOBufMode::CGND,
-            (true, true, true, true)     => XC2IOBOBufMode::Disabled,
-            _ => return Err(XC2BitError::UnsupportedOeConfiguration(oe)),
-        })
-    }
 }
 
 /// Represents an I/O pin on "small" (32 and 64 macrocell) devices.
