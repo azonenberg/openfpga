@@ -331,37 +331,20 @@ impl XC2MCSmallIOB {
 
 /// Input mode selection on larger parts with VREF
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitPattern)]
 pub enum XC2IOBIbufMode {
     /// This input buffer is not using VREF, and it is also not using the Schmitt trigger
+    #[bits = "00"]
     NoVrefNoSt,
     /// This input buffer is not using VREF, but it is using the Schmitt trigger
+    #[bits = "11"]
     NoVrefSt,
     /// This input buffer is using VREF (supposedly it always has the Schmitt trigger?)
+    #[bits = "10"]
     UsesVref,
     /// This input pin is serving as VREF
+    #[bits = "01"]
     IsVref,
-}
-
-impl XC2IOBIbufMode {
-    /// encodes the InMod bits
-    pub fn encode(&self) -> (bool, bool) {
-        match *self {
-            XC2IOBIbufMode::NoVrefNoSt => (false, false),
-            XC2IOBIbufMode::IsVref => (false, true),
-            XC2IOBIbufMode::UsesVref => (true, false),
-            XC2IOBIbufMode::NoVrefSt => (true, true),
-        }
-    }
-
-    /// decodes the InMod bits
-    pub fn decode(inmod: (bool, bool)) -> Self {
-        match inmod {
-            (false, false) => XC2IOBIbufMode::NoVrefNoSt,
-            (false, true)  => XC2IOBIbufMode::IsVref,
-            (true, false)  => XC2IOBIbufMode::UsesVref,
-            (true, true)   => XC2IOBIbufMode::NoVrefSt,
-        }
-    }
 }
 
 /// Represents an I/O pin on "large" (128 and greater macrocell) devices.
