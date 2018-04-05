@@ -5,54 +5,47 @@ extern crate quote;
 
 use proc_macro::TokenStream;
 
+fn parse_string_attr_helper<T, F>(attrs: &[syn::Attribute], attr_name: &str, cb: F) -> Option<T>
+    where F: FnOnce(syn::LitStr) -> T {
+
+    let mut ret = None;
+    for attr in attrs {
+        if attr.path.leading_colon.is_none() && attr.path.segments.len() == 1 &&
+           attr.path.segments[0].ident.as_ref() == attr_name {
+            if ret.is_some() {
+                panic!("Only one {} allowed", attr_name);
+            }
+
+            let attr_val = attr.interpret_meta();
+            if attr_val.is_none() {
+                panic!("Failed to parse {} attribute", attr_name);
+            }
+
+            if let syn::Meta::NameValue(nameval) = attr_val.unwrap() {
+                if let syn::Lit::Str(litstr) = nameval.lit {
+                    ret = Some(litstr);
+                } else {
+                    panic!("{} attribute must be set to a string", attr_name)
+                }
+            } else {
+                panic!("Malformed {} attribute", attr_name);
+            }
+        }
+    }
+
+    ret.map(cb)
+}
+
 #[proc_macro_derive(BitPattern, attributes(bits, bits_default, bits_errtype))]
 pub fn bitpattern(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let input: syn::DeriveInput = syn::parse(input).unwrap();
 
-    let mut bits_default: Option<syn::Expr> = None;
-    for attr in &input.attrs {
-        if attr.path.leading_colon.is_none() && attr.path.segments.len() == 1 &&
-           attr.path.segments[0].ident.as_ref() == "bits_default" {
-            if bits_default.is_some() {
-                panic!("Only one bits_default allowed");
-            }
+    let bits_default: Option<syn::Expr> = parse_string_attr_helper(&input.attrs, "bits_default",
+        |x| x.parse().expect("Failed to parse bits_default attribute contents"));
 
-            let default_val = attr.interpret_meta().expect("Failed to parse bits_default attribute");
-
-            if let syn::Meta::NameValue(nameval) = default_val {
-                if let syn::Lit::Str(litstr) = nameval.lit {
-                    bits_default = Some(litstr.parse().expect("Failed to parse bits_default attribute contents"));
-                } else {
-                    panic!("bits_default attribute must be set to a string")
-                }
-            } else {
-                panic!("Malformed bits_default attribute");
-            }
-        }
-    }
-
-    let mut bits_errtype: Option<syn::TypeParam> = None;
-    for attr in &input.attrs {
-        if attr.path.leading_colon.is_none() && attr.path.segments.len() == 1 &&
-           attr.path.segments[0].ident.as_ref() == "bits_errtype" {
-            if bits_errtype.is_some() {
-                panic!("Only one bits_errtype allowed");
-            }
-
-            let errtype_val = attr.interpret_meta().expect("Failed to parse bits_errtype attribute");
-
-            if let syn::Meta::NameValue(nameval) = errtype_val {
-                if let syn::Lit::Str(litstr) = nameval.lit {
-                    bits_errtype = Some(litstr.parse().expect("Failed to parse bits_errtype attribute contents"));
-                } else {
-                    panic!("bits_errtype attribute must be set to a string")
-                }
-            } else {
-                panic!("Malformed bits_errtype attribute");
-            }
-        }
-    }
+    let bits_errtype: Option<syn::TypeParam> = parse_string_attr_helper(&input.attrs, "bits_errtype",
+        |x| x.parse().expect("Failed to parse bits_errtype attribute contents"));
 
     if let (input_ident, syn::Data::Enum(dataenum)) = (input.ident, input.data) {
         // Ignore enums with no variants
@@ -68,34 +61,9 @@ pub fn bitpattern(input: TokenStream) -> TokenStream {
                 panic!("All variants must be a unit variant");
             }
 
-            let mut found_bits_attr = false;
-            for attr in &var.attrs {
-                if attr.path.leading_colon.is_none() && attr.path.segments.len() == 1 &&
-                   attr.path.segments[0].ident.as_ref() == "bits" {
-
-                    if found_bits_attr {
-                        panic!("Only one bits attribute allowed");
-                    }
-
-                    found_bits_attr = true;
-
-                    let bits_val = attr.interpret_meta().expect("Failed to parse bits attribute");
-
-                    if let syn::Meta::NameValue(nameval) = bits_val {
-                        if let syn::Lit::Str(litstr) = nameval.lit {
-                            var_bits.push((var.ident, litstr.value()));
-                        } else {
-                            panic!("bits attribute must be set to a string")
-                        }
-                    } else {
-                        panic!("Malformed bits attribute");
-                    }
-                }
-            }
-
-            if !found_bits_attr {
-                panic!("All variants need a bits attribute");
-            }
+            let bits_attr = parse_string_attr_helper(&var.attrs, "bits", |x| x)
+                .expect("All variants need a bits attribute");
+            var_bits.push((var.ident, bits_attr.value()));
         }
 
         let bits_len = var_bits[0].1.len();
