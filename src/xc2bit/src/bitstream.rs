@@ -665,16 +665,7 @@ impl XC2BitstreamBits {
 
             fuse_array.set(clken_x, clken_y, !clock_div.enabled);
 
-            let divratio = match clock_div.div_ratio {
-                XC2ClockDivRatio::Div2  => (false, false, false),
-                XC2ClockDivRatio::Div4  => (false, false, true),
-                XC2ClockDivRatio::Div6  => (false, true, false),
-                XC2ClockDivRatio::Div8  => (false, true, true),
-                XC2ClockDivRatio::Div10 => (true, false, false),
-                XC2ClockDivRatio::Div12 => (true, false, true),
-                XC2ClockDivRatio::Div14 => (true, true, false),
-                XC2ClockDivRatio::Div16 => (true, true, true),
-            };
+            let divratio = clock_div.div_ratio.encode();
             fuse_array.set(clkdiv0_x, clkdiv0_y, divratio.0);
             fuse_array.set(clkdiv1_x, clkdiv1_y, divratio.1);
             fuse_array.set(clkdiv2_x, clkdiv2_y, divratio.2);
@@ -873,16 +864,10 @@ impl XC2BitstreamBits {
 
             linebreaks.add(clock_fuse_block);
             jed.f[clock_fuse_block] = !clock_div.enabled;
-            jed.f[clock_fuse_block+1..clock_fuse_block+4].copy_from_slice(&match clock_div.div_ratio {
-                XC2ClockDivRatio::Div2  => [false, false, false],
-                XC2ClockDivRatio::Div4  => [false, false,  true],
-                XC2ClockDivRatio::Div6  => [false,  true, false],
-                XC2ClockDivRatio::Div8  => [false,  true,  true],
-                XC2ClockDivRatio::Div10 => [ true, false, false],
-                XC2ClockDivRatio::Div12 => [ true, false,  true],
-                XC2ClockDivRatio::Div14 => [ true,  true, false],
-                XC2ClockDivRatio::Div16 => [ true,  true,  true],
-            });
+            let clk_div_bits = clock_div.div_ratio.encode();
+            jed.f[clock_fuse_block+1] = clk_div_bits.0;
+            jed.f[clock_fuse_block+2] = clk_div_bits.1;
+            jed.f[clock_fuse_block+3] = clk_div_bits.2;
             linebreaks.add(clock_fuse_block + 4);
             jed.f[clock_fuse_block + 4] = !clock_div.delay;
         }

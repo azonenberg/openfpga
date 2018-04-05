@@ -38,45 +38,18 @@ use zia::{zia_get_row_width};
 
 /// Clock source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitPattern)]
 pub enum XC2MCRegClkSrc {
+    #[bits = "x00"]
     GCK0,
+    #[bits = "x10"]
     GCK1,
+    #[bits = "x01"]
     GCK2,
+    #[bits = "011"]
     PTC,
+    #[bits = "111"]
     CTC,
-}
-
-impl XC2MCRegClkSrc {
-    /// decodes the Aclk and Clk bits
-    pub fn decode(aclk: bool, clk: (bool, bool)) -> Self {
-        match clk {
-            (false, false) => XC2MCRegClkSrc::GCK0,
-            (false, true)  => XC2MCRegClkSrc::GCK2,
-            (true, false)  => XC2MCRegClkSrc::GCK1,
-            (true, true)   => match aclk {
-                true => XC2MCRegClkSrc::CTC,
-                false => XC2MCRegClkSrc::PTC,
-            },
-        }
-    }
-
-    /// encodes the Aclk bit
-    pub fn encode_aclk(&self) -> bool {
-        match *self {
-            XC2MCRegClkSrc::CTC => true,
-            _ => false,
-        }
-    }
-
-    /// encodes the Clk bits
-    pub fn encode_clk(&self) -> (bool, bool) {
-        match *self {
-            XC2MCRegClkSrc::GCK0 => (false, false),
-            XC2MCRegClkSrc::GCK1 => (true, false),
-            XC2MCRegClkSrc::GCK2 => (false, true),
-            XC2MCRegClkSrc::PTC | XC2MCRegClkSrc::CTC => (true, true),
-        }
-    }
 }
 
 /// Reset source for the register in a macrocell
@@ -278,13 +251,13 @@ impl XC2Macrocell {
                 let y = y + (mc as usize) * 3;
 
                 // aclk
-                fuse_array.set((x + d * 0) as usize, y + 0, self.clk_src.encode_aclk());
+                fuse_array.set((x + d * 0) as usize, y + 0, self.clk_src.encode().0);
 
                 // clkop
                 fuse_array.set((x + d * 1) as usize, y + 0, self.clk_invert_pol);
 
                 // clk
-                let clk = self.clk_src.encode_clk();
+                let clk = (self.clk_src.encode().1, self.clk_src.encode().2);
                 fuse_array.set((x + d * 2) as usize, y + 0, clk.0);
                 fuse_array.set((x + d * 3) as usize, y + 0, clk.1);
 
@@ -337,13 +310,13 @@ impl XC2Macrocell {
                 let y = y + (mc as usize) * 3;
 
                 // aclk
-                fuse_array.set((x + d * 8) as usize, y + 0, self.clk_src.encode_aclk());
+                fuse_array.set((x + d * 8) as usize, y + 0, self.clk_src.encode().0);
 
                 // clkop
                 fuse_array.set((x + d * 7) as usize, y + 0, self.clk_invert_pol);
 
                 // clk
-                let clk = self.clk_src.encode_clk();
+                let clk = (self.clk_src.encode().1, self.clk_src.encode().2);
                 fuse_array.set((x + d * 5) as usize, y + 0, clk.0);
                 fuse_array.set((x + d * 6) as usize, y + 0, clk.1);
 
@@ -411,12 +384,12 @@ impl XC2Macrocell {
                 fuse_array.set((x + d * 6) as usize, y + 0, self.is_ddr);
 
                 // clk
-                let clk = self.clk_src.encode_clk();
+                let clk = (self.clk_src.encode().1, self.clk_src.encode().2);
                 fuse_array.set((x + d * 7) as usize, y + 0, clk.0);
                 fuse_array.set((x + d * 8) as usize, y + 0, clk.1);
 
                 // aclk
-                fuse_array.set((x + d * 9) as usize, y + 0, self.clk_src.encode_aclk());
+                fuse_array.set((x + d * 9) as usize, y + 0, self.clk_src.encode().0);
 
                 // pu
                 fuse_array.set((x + d * 0) as usize, y + 1, !self.init_state);
@@ -469,10 +442,10 @@ impl XC2Macrocell {
                 // skipped Tm (belongs to IOB)
 
                 // aclk
-                fuse_array.set((x + d * 8) as usize, y + 0, self.clk_src.encode_aclk());
+                fuse_array.set((x + d * 8) as usize, y + 0, self.clk_src.encode().0);
 
                 // clk
-                let clk = self.clk_src.encode_clk();
+                let clk = (self.clk_src.encode().1, self.clk_src.encode().2);
                 fuse_array.set((x + d * 9) as usize, y + 0, clk.0);
                 fuse_array.set((x + d * 10) as usize, y + 0, clk.1);
 
@@ -576,7 +549,7 @@ impl XC2Macrocell {
                 let init_state = !fuse_array.get((x + d * 8) as usize, y + 2);
 
                 XC2Macrocell {
-                    clk_src: XC2MCRegClkSrc::decode(aclk, clk),
+                    clk_src: XC2MCRegClkSrc::decode((aclk, clk.0, clk.1)),
                     clk_invert_pol,
                     is_ddr,
                     r_src: XC2MCRegResetSrc::decode(r),
@@ -642,7 +615,7 @@ impl XC2Macrocell {
                 let init_state = !fuse_array.get((x + d * 0) as usize, y + 2);
 
                 XC2Macrocell {
-                    clk_src: XC2MCRegClkSrc::decode(aclk, clk),
+                    clk_src: XC2MCRegClkSrc::decode((aclk, clk.0, clk.1)),
                     clk_invert_pol,
                     is_ddr,
                     r_src: XC2MCRegResetSrc::decode(r),
@@ -711,7 +684,7 @@ impl XC2Macrocell {
                 // skipped RegCom (belongs to IOB)
 
                 XC2Macrocell {
-                    clk_src: XC2MCRegClkSrc::decode(aclk, clk),
+                    clk_src: XC2MCRegClkSrc::decode((aclk, clk.0, clk.1)),
                     clk_invert_pol,
                     is_ddr,
                     r_src: XC2MCRegResetSrc::decode(r),
@@ -778,7 +751,7 @@ impl XC2Macrocell {
                          fuse_array.get((x + d * 14) as usize, y + 1));
 
                 XC2Macrocell {
-                    clk_src: XC2MCRegClkSrc::decode(aclk, clk),
+                    clk_src: XC2MCRegClkSrc::decode((aclk, clk.0, clk.1)),
                     clk_invert_pol,
                     is_ddr,
                     r_src: XC2MCRegResetSrc::decode(r),
@@ -799,7 +772,7 @@ impl XC2Macrocell {
         let clk = (fuses[block_idx + mc_idx * 27 + 2],
                    fuses[block_idx + mc_idx * 27 + 3]);
 
-        let clk_src = XC2MCRegClkSrc::decode(aclk, clk);
+        let clk_src = XC2MCRegClkSrc::decode((aclk, clk.0, clk.1));
 
         let clkop = fuses[block_idx + mc_idx * 27 + 1];
         let clkfreq = fuses[block_idx + mc_idx * 27 + 4];
@@ -849,7 +822,7 @@ impl XC2Macrocell {
         let clk = (fuses[fuse_idx + 1],
                    fuses[fuse_idx + 2]);
 
-        let clk_src = XC2MCRegClkSrc::decode(aclk, clk);
+        let clk_src = XC2MCRegClkSrc::decode((aclk, clk.0, clk.1));
 
         let clkfreq = fuses[fuse_idx + 3];
         let clkop = fuses[fuse_idx + 4];
@@ -899,7 +872,7 @@ impl XC2Macrocell {
         let clk = (fuses[fuse_idx + 1],
                    fuses[fuse_idx + 2]);
 
-        let clk_src = XC2MCRegClkSrc::decode(aclk, clk);
+        let clk_src = XC2MCRegClkSrc::decode((aclk, clk.0, clk.1));
 
         let clkfreq = fuses[fuse_idx + 3];
         let clkop = fuses[fuse_idx + 4];
@@ -958,13 +931,13 @@ impl XC2Macrocell {
             let iob = fb_mc_num_to_iob_num(device, fb_i as u32, i as u32).unwrap() as usize;
 
             // aclk
-            jed.f[mc_fuse_base +  0] = fb.mcs[i].clk_src.encode_aclk();
+            jed.f[mc_fuse_base +  0] = fb.mcs[i].clk_src.encode().0;
 
             // clkop
             jed.f[mc_fuse_base +  1] = fb.mcs[i].clk_invert_pol;
 
             // clk
-            let clk = fb.mcs[i].clk_src.encode_clk();
+            let clk = (fb.mcs[i].clk_src.encode().1, fb.mcs[i].clk_src.encode().2);
             jed.f[mc_fuse_base +  2] = clk.0;
             jed.f[mc_fuse_base +  3] = clk.1;
 
@@ -1045,11 +1018,11 @@ impl XC2Macrocell {
             let iob = fb_mc_num_to_iob_num(device, fb_i as u32, i as u32);
 
             // aclk
-            jed.f[current_fuse_offset] = fb.mcs[i].clk_src.encode_aclk();
+            jed.f[current_fuse_offset] = fb.mcs[i].clk_src.encode().0;
             current_fuse_offset += 1;
 
             // clk
-            let clk = fb.mcs[i].clk_src.encode_clk();
+            let clk = (fb.mcs[i].clk_src.encode().1, fb.mcs[i].clk_src.encode().2);
             jed.f[current_fuse_offset + 0] = clk.0;
             jed.f[current_fuse_offset + 1] = clk.1;
             current_fuse_offset += 2;

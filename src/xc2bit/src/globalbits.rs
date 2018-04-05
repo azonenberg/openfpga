@@ -193,14 +193,23 @@ impl XC2GlobalNets {
 
 /// Possible clock divide ratios for the programmable clock divider
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(BitPattern)]
 pub enum XC2ClockDivRatio {
+    #[bits = "000"]
     Div2,
+    #[bits = "001"]
     Div4,
+    #[bits = "010"]
     Div6,
+    #[bits = "011"]
     Div8,
+    #[bits = "100"]
     Div10,
+    #[bits = "101"]
     Div12,
+    #[bits = "110"]
     Div14,
+    #[bits = "111"]
     Div16,
 }
 
@@ -257,16 +266,7 @@ impl XC2ClockDiv {
         XC2ClockDiv {
             delay: !fuses[clock_fuse_block + 4],
             enabled: !fuses[clock_fuse_block],
-            div_ratio: match (fuses[clock_fuse_block + 1], fuses[clock_fuse_block + 2], fuses[clock_fuse_block + 3]) {
-                (false, false, false) => XC2ClockDivRatio::Div2,
-                (false, false,  true) => XC2ClockDivRatio::Div4,
-                (false,  true, false) => XC2ClockDivRatio::Div6,
-                (false,  true,  true) => XC2ClockDivRatio::Div8,
-                ( true, false, false) => XC2ClockDivRatio::Div10,
-                ( true, false,  true) => XC2ClockDivRatio::Div12,
-                ( true,  true, false) => XC2ClockDivRatio::Div14,
-                ( true,  true,  true) => XC2ClockDivRatio::Div16,
-            }
+            div_ratio: XC2ClockDivRatio::decode((fuses[clock_fuse_block + 1], fuses[clock_fuse_block + 2], fuses[clock_fuse_block + 3])),
         }
     }
 
@@ -282,16 +282,7 @@ impl XC2ClockDiv {
         XC2ClockDiv {
             delay: !fuse_array.get(clkdelay_x, clkdelay_y),
             enabled: !fuse_array.get(clken_x, clken_y),
-            div_ratio: match div_ratio_bits {
-                (false, false, false) => XC2ClockDivRatio::Div2,
-                (false, false,  true) => XC2ClockDivRatio::Div4,
-                (false,  true, false) => XC2ClockDivRatio::Div6,
-                (false,  true,  true) => XC2ClockDivRatio::Div8,
-                ( true, false, false) => XC2ClockDivRatio::Div10,
-                ( true, false,  true) => XC2ClockDivRatio::Div12,
-                ( true,  true, false) => XC2ClockDivRatio::Div14,
-                ( true,  true,  true) => XC2ClockDivRatio::Div16,
-            }
+            div_ratio: XC2ClockDivRatio::decode(div_ratio_bits),
         }
     }
 }
