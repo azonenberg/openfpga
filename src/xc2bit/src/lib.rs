@@ -43,6 +43,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //! connected directly into the global interconnect and does not have a corresponding macrocell.
 
 #[macro_use]
+extern crate bittwiddler;
+
+#[macro_use]
 extern crate serde_derive;
 
 /// The number of inputs from the ZIA interconnect into the AND gate section of each PLA.

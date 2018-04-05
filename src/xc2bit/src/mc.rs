@@ -81,33 +81,16 @@ impl XC2MCRegClkSrc {
 
 /// Reset source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitPattern)]
 pub enum XC2MCRegResetSrc {
+    #[bits = "11"]
     Disabled,
+    #[bits = "00"]
     PTA,
+    #[bits = "01"]
     GSR,
+    #[bits = "10"]
     CTR,
-}
-
-impl XC2MCRegResetSrc {
-    /// decodes the R bits
-    pub fn decode(r: (bool, bool)) -> Self {
-        match r {
-            (false, false) => XC2MCRegResetSrc::PTA,
-            (false, true)  => XC2MCRegResetSrc::GSR,
-            (true, false)  => XC2MCRegResetSrc::CTR,
-            (true, true)   => XC2MCRegResetSrc::Disabled,
-        }
-    }
-
-    /// encodes the R bits
-    pub fn encode(&self) -> (bool, bool) {
-        match *self {
-            XC2MCRegResetSrc::PTA => (false, false),
-            XC2MCRegResetSrc::GSR => (false, true),
-            XC2MCRegResetSrc::CTR => (true, false),
-            XC2MCRegResetSrc::Disabled => (true, true),
-        }
-    }
 }
 
 /// Set source for the register in a macrocell

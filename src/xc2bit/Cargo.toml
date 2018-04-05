@@ -19,5 +19,6 @@ crate-type = ["rlib"]
 [dependencies]
 serde = "1.0"
 serde_derive = "1.0"
+bittwiddler = { path = "../bittwiddler" }
 jedec = { path = "../jedec" }
 yosys-netlist-json = { path = "../yosys-netlist-json" }

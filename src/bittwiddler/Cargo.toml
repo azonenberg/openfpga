@@ -1,0 +1,14 @@
+[package]
+name = "bittwiddler"
+version = "0.0.1"
+authors = ["Robert Ou <rqou@robertou.com>"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "0.5.1"
+
+[dependencies.syn]
+version = "0.13.1"
+features = ["extra-traits"]
