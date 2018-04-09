@@ -393,8 +393,15 @@ impl XC2MCLargeIOB {
 
 /// Represents the one additional special input-only pin on 32-macrocell devices.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitTwiddler)]
+#[bittwiddler = "jed pub abs"]
+#[bittwiddler = "crbit pub abs"]
 pub struct XC2ExtraIBuf {
+    #[bittwiddler_field = "jed 12272"]
+    #[bittwiddler_field = "crbit 131|24"]
     pub schmitt_trigger: bool,
+    #[bittwiddler_field = "jed 12273"]
+    #[bittwiddler_field = "crbit 132|24"]
     pub termination_enabled: bool,
 }
 
@@ -419,28 +426,6 @@ impl XC2ExtraIBuf {
         write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
 
         Ok(())
-    }
-
-    /// Internal function that reads only the input-only pin configuration
-    pub fn from_jed(fuses: &[bool]) -> Self {
-        let st = fuses[12272];
-        let tm = fuses[12273];
-
-        XC2ExtraIBuf {
-            schmitt_trigger: st,
-            termination_enabled: tm,
-        }
-    }
-
-    /// Internal function that reads only the input-only pin configuration
-    pub fn from_crbit(fuse_array: &FuseArray) -> Self {
-        let st = fuse_array.get(131, 24);
-        let tm = fuse_array.get(132, 24);
-
-        XC2ExtraIBuf {
-            schmitt_trigger: st,
-            termination_enabled: tm,
-        }
     }
 }
 

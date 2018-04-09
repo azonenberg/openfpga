@@ -132,37 +132,71 @@ pub enum XC2MCXorMode {
 
 /// Represents a macrocell.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitTwiddler)]
+#[bittwiddler = "jed_internal_small"]
+#[bittwiddler = "jed_internal_large"]
+#[bittwiddler = "jed_internal_large_buried"]
 pub struct XC2Macrocell {
     /// Clock source for the register
+    #[bittwiddler_field = "jed_internal_small 0 2 3"]
+    #[bittwiddler_field = "jed_internal_large 0 1 2"]
+    #[bittwiddler_field = "jed_internal_large_buried 0 1 2"]
     pub clk_src: XC2MCRegClkSrc,
     /// Specifies the clock polarity for the register
     ///
     /// `false` = rising edge triggered flip-flop, transparent-when-high latch
     ///
     /// `true` = falling edge triggered flip-flop, transparent-when-low latch
+    #[bittwiddler_field = "jed_internal_small 1"]
+    #[bittwiddler_field = "jed_internal_large 4"]
+    #[bittwiddler_field = "jed_internal_large_buried 4"]
     pub clk_invert_pol: bool,
     /// Specifies whether flip-flop are triggered on both clock edges
     ///
     /// It is currently unknown what happens when this is used on a transparent latch
+    #[bittwiddler_field = "jed_internal_small 4"]
+    #[bittwiddler_field = "jed_internal_large 3"]
+    #[bittwiddler_field = "jed_internal_large_buried 3"]
     pub is_ddr: bool,
     /// Reset source for the register
+    #[bittwiddler_field = "jed_internal_small 5 6"]
+    #[bittwiddler_field = "jed_internal_large 23 24"]
+    #[bittwiddler_field = "jed_internal_large_buried 12 13"]
     pub r_src: XC2MCRegResetSrc,
     /// Set source for the register
+    #[bittwiddler_field = "jed_internal_small 7 8"]
+    #[bittwiddler_field = "jed_internal_large 17 18"]
+    #[bittwiddler_field = "jed_internal_large_buried 7 8"]
     pub s_src: XC2MCRegSetSrc,
     /// Power-up state of the register
     ///
     /// `false` = init to 0, `true` = init to 1
+    #[bittwiddler_field = "jed_internal_small !26"]
+    #[bittwiddler_field = "jed_internal_large !19"]
+    #[bittwiddler_field = "jed_internal_large_buried !9"]
     pub init_state: bool,
     /// Register mode
+    #[bittwiddler_field = "jed_internal_small 9 10"]
+    #[bittwiddler_field = "jed_internal_large 21 22"]
+    #[bittwiddler_field = "jed_internal_large_buried 10 11"]
     pub reg_mode: XC2MCRegMode,
     /// ZIA input mode for feedback from this macrocell
+    #[bittwiddler_field = "jed_internal_small 13 14"]
+    #[bittwiddler_field = "jed_internal_large 6 7"]
+    #[bittwiddler_field = "jed_internal_large_buried 5 6"]
     pub fb_mode: XC2MCFeedbackMode,
     /// Controls the input for the register
     ///
     /// `false` = use the output of the XOR gate (combinatorial path), `true` = use IOB direct path
     /// (`true` is illegal for buried macrocells in the larger devices)
+    #[bittwiddler_field = "jed_internal_small !15"]
+    #[bittwiddler_field = "jed_internal_large !10"]
+    #[bittwiddler_field = "jed_internal_large_buried F"]
     pub ff_in_ibuf: bool,
     /// Controls the "other" (not from the OR term) input to the XOR gate
+    #[bittwiddler_field = "jed_internal_small 17 18"]
+    #[bittwiddler_field = "jed_internal_large 27 28"]
+    #[bittwiddler_field = "jed_internal_large_buried 14 15"]
     pub xor_mode: XC2MCXorMode,
 }
 
@@ -768,149 +802,17 @@ impl XC2Macrocell {
 
     ///  Internal function that reads only the macrocell-related bits from the macrcocell configuration
     pub fn from_jed_small(fuses: &[bool], block_idx: usize, mc_idx: usize) -> Self {
-        let aclk = fuses[block_idx + mc_idx * 27 + 0];
-        let clk = (fuses[block_idx + mc_idx * 27 + 2],
-                   fuses[block_idx + mc_idx * 27 + 3]);
-
-        let clk_src = XC2MCRegClkSrc::decode((aclk, clk.0, clk.1));
-
-        let clkop = fuses[block_idx + mc_idx * 27 + 1];
-        let clkfreq = fuses[block_idx + mc_idx * 27 + 4];
-
-        let r = (fuses[block_idx + mc_idx * 27 + 5],
-                 fuses[block_idx + mc_idx * 27 + 6]);
-        let reset_mode = XC2MCRegResetSrc::decode(r);
-
-        let p = (fuses[block_idx + mc_idx * 27 + 7],
-                 fuses[block_idx + mc_idx * 27 + 8]);
-        let set_mode = XC2MCRegSetSrc::decode(p);
-
-        let regmod = (fuses[block_idx + mc_idx * 27 + 9],
-                      fuses[block_idx + mc_idx * 27 + 10]);
-        let reg_mode = XC2MCRegMode::decode(regmod);
-
-        let fb = (fuses[block_idx + mc_idx * 27 + 13],
-                  fuses[block_idx + mc_idx * 27 + 14]);
-        let fb_mode = XC2MCFeedbackMode::decode(fb);
-
-        let inreg = fuses[block_idx + mc_idx * 27 + 15];
-
-        let xorin = (fuses[block_idx + mc_idx * 27 + 17],
-                     fuses[block_idx + mc_idx * 27 + 18]);
-        let xormode = XC2MCXorMode::decode(xorin);
-
-        let pu = fuses[block_idx + mc_idx * 27 + 26];
-
-        XC2Macrocell {
-            clk_src,
-            clk_invert_pol: clkop,
-            is_ddr: clkfreq,
-            r_src: reset_mode,
-            s_src: set_mode,
-            init_state: !pu,
-            reg_mode,
-            fb_mode,
-            ff_in_ibuf: !inreg,
-            xor_mode: xormode,
-        }
+        Self::decode_jed_internal_small(fuses, block_idx + mc_idx * 27)
     }
 
     ///  Internal function that reads only the macrocell-related bits from the macrcocell configuration
     pub fn from_jed_large(fuses: &[bool], fuse_idx: usize) -> Self {
-        let aclk = fuses[fuse_idx + 0];
-
-        let clk = (fuses[fuse_idx + 1],
-                   fuses[fuse_idx + 2]);
-
-        let clk_src = XC2MCRegClkSrc::decode((aclk, clk.0, clk.1));
-
-        let clkfreq = fuses[fuse_idx + 3];
-        let clkop = fuses[fuse_idx + 4];
-
-        let fb = (fuses[fuse_idx + 6],
-                  fuses[fuse_idx + 7]);
-        let fb_mode = XC2MCFeedbackMode::decode(fb);
-
-        let inreg = fuses[fuse_idx + 10];
-
-        let p = (fuses[fuse_idx + 17],
-                 fuses[fuse_idx + 18]);
-        let set_mode = XC2MCRegSetSrc::decode(p);
-
-        let pu = fuses[fuse_idx + 19];
-
-        let regmod = (fuses[fuse_idx + 21],
-                      fuses[fuse_idx + 22]);
-        let reg_mode = XC2MCRegMode::decode(regmod);
-
-        let r = (fuses[fuse_idx + 23],
-                 fuses[fuse_idx + 24]);
-        let reset_mode = XC2MCRegResetSrc::decode(r);
-
-        let xorin = (fuses[fuse_idx + 27],
-                     fuses[fuse_idx + 28]);
-        let xormode = XC2MCXorMode::decode(xorin);
-
-        XC2Macrocell {
-            clk_src,
-            clk_invert_pol: clkop,
-            is_ddr: clkfreq,
-            r_src: reset_mode,
-            s_src: set_mode,
-            init_state: !pu,
-            reg_mode,
-            fb_mode,
-            ff_in_ibuf: !inreg,
-            xor_mode: xormode,
-        }
+        Self::decode_jed_internal_large(fuses, fuse_idx)
     }
 
     ///  Internal function that reads only the macrocell-related bits from the macrcocell configuration
     pub fn from_jed_large_buried(fuses: &[bool], fuse_idx: usize) -> Self {
-        let aclk = fuses[fuse_idx + 0];
-
-        let clk = (fuses[fuse_idx + 1],
-                   fuses[fuse_idx + 2]);
-
-        let clk_src = XC2MCRegClkSrc::decode((aclk, clk.0, clk.1));
-
-        let clkfreq = fuses[fuse_idx + 3];
-        let clkop = fuses[fuse_idx + 4];
-
-        let fb = (fuses[fuse_idx + 5],
-                  fuses[fuse_idx + 6]);
-        let fb_mode = XC2MCFeedbackMode::decode(fb);
-
-        let p = (fuses[fuse_idx + 7],
-                 fuses[fuse_idx + 8]);
-        let set_mode = XC2MCRegSetSrc::decode(p);
-
-        let pu = fuses[fuse_idx + 9];
-
-        let regmod = (fuses[fuse_idx + 10],
-                      fuses[fuse_idx + 11]);
-        let reg_mode = XC2MCRegMode::decode(regmod);
-
-        let r = (fuses[fuse_idx + 12],
-                 fuses[fuse_idx + 13]);
-        let reset_mode = XC2MCRegResetSrc::decode(r);
-
-        let xorin = (fuses[fuse_idx + 14],
-                     fuses[fuse_idx + 15]);
-        let xormode = XC2MCXorMode::decode(xorin);
-
-        XC2Macrocell {
-            clk_src,
-            clk_invert_pol: clkop,
-            is_ddr: clkfreq,
-            r_src: reset_mode,
-            s_src: set_mode,
-            init_state: !pu,
-            reg_mode,
-            fb_mode,
-            ff_in_ibuf: false,
-            xor_mode: xormode,
-        }
+        Self::decode_jed_internal_large_buried(fuses, fuse_idx)
     }
 
     /// Helper that prints the IOB and macrocell configuration on the "small" parts
@@ -929,52 +831,7 @@ impl XC2Macrocell {
             }
 
             let iob = fb_mc_num_to_iob_num(device, fb_i as u32, i as u32).unwrap() as usize;
-
-            // aclk
-            jed.f[mc_fuse_base +  0] = fb.mcs[i].clk_src.encode().0;
-
-            // clkop
-            jed.f[mc_fuse_base +  1] = fb.mcs[i].clk_invert_pol;
-
-            // clk
-            let clk = (fb.mcs[i].clk_src.encode().1, fb.mcs[i].clk_src.encode().2);
-            jed.f[mc_fuse_base +  2] = clk.0;
-            jed.f[mc_fuse_base +  3] = clk.1;
-
-            // clkfreq
-            jed.f[mc_fuse_base +  4] = fb.mcs[i].is_ddr;
-
-            // r
-            let r = fb.mcs[i].r_src.encode();
-            jed.f[mc_fuse_base +  5] = r.0;
-            jed.f[mc_fuse_base +  6] = r.1;
-
-            // p
-            let p = fb.mcs[i].s_src.encode();
-            jed.f[mc_fuse_base +  7] = p.0;
-            jed.f[mc_fuse_base +  8] = p.1;
-
-            // regmod
-            let regmod = fb.mcs[i].reg_mode.encode();
-            jed.f[mc_fuse_base +  9] = regmod.0;
-            jed.f[mc_fuse_base + 10] = regmod.1;
-
-            // fb
-            let fb_bits = fb.mcs[i].fb_mode.encode();
-            jed.f[mc_fuse_base + 13] = fb_bits.0;
-            jed.f[mc_fuse_base + 14] = fb_bits.1;
-
-            // inreg
-            jed.f[mc_fuse_base + 15] = !fb.mcs[i].ff_in_ibuf;
-
-            // xorin
-            let xorin = fb.mcs[i].xor_mode.encode();
-            jed.f[mc_fuse_base + 17] = xorin.0;
-            jed.f[mc_fuse_base + 18] = xorin.1;
-
-            // pu
-            jed.f[mc_fuse_base + 26] = !fb.mcs[i].init_state;
-
+            fb.mcs[i].encode_jed_internal_small(&mut jed.f, mc_fuse_base);
             iobs[iob].encode_jed_internal(&mut jed.f, mc_fuse_base);
         }
     }
@@ -999,92 +856,12 @@ impl XC2Macrocell {
                 let iob = iob.unwrap() as usize;
 
                 iobs[iob].encode_jed_internal(&mut jed.f, current_fuse_offset);
+                fb.mcs[i].encode_jed_internal_large(&mut jed.f, current_fuse_offset);
+                current_fuse_offset += 29;
+            } else {
+                fb.mcs[i].encode_jed_internal_large_buried(&mut jed.f, current_fuse_offset);
+                current_fuse_offset += 16;
             }
-
-            // aclk
-            jed.f[current_fuse_offset] = fb.mcs[i].clk_src.encode().0;
-            current_fuse_offset += 1;
-
-            // clk
-            let clk = (fb.mcs[i].clk_src.encode().1, fb.mcs[i].clk_src.encode().2);
-            jed.f[current_fuse_offset + 0] = clk.0;
-            jed.f[current_fuse_offset + 1] = clk.1;
-            current_fuse_offset += 2;
-
-            // clkfreq
-            jed.f[current_fuse_offset] = fb.mcs[i].is_ddr;
-            current_fuse_offset += 1;
-
-            // clkop
-            jed.f[current_fuse_offset] = fb.mcs[i].clk_invert_pol;
-            current_fuse_offset += 1;
-
-            if iob.is_some() {
-                // dg
-                current_fuse_offset += 1;
-            }
-
-            // fb
-            let fb_bits = fb.mcs[i].fb_mode.encode();
-            jed.f[current_fuse_offset + 0] = fb_bits.0;
-            jed.f[current_fuse_offset + 1] = fb_bits.1;
-            current_fuse_offset += 2;
-
-            if iob.is_some() {
-                // inmod
-                current_fuse_offset += 2;
-
-                // inreg
-                jed.f[current_fuse_offset] = !fb.mcs[i].ff_in_ibuf;
-                current_fuse_offset += 1;
-
-                // inz
-                current_fuse_offset += 2;
-
-                // oe
-                current_fuse_offset += 4;
-            }
-
-            // p
-            let p = fb.mcs[i].s_src.encode();
-            jed.f[current_fuse_offset + 0] = p.0;
-            jed.f[current_fuse_offset + 1] = p.1;
-            current_fuse_offset += 2;
-
-            // pu
-            jed.f[current_fuse_offset] = !fb.mcs[i].init_state;
-            current_fuse_offset += 1;
-
-            if iob.is_some() {
-                // regcom
-                current_fuse_offset += 1;
-            }
-
-            // regmod
-            let regmod = fb.mcs[i].reg_mode.encode();
-            jed.f[current_fuse_offset + 0] = regmod.0;
-            jed.f[current_fuse_offset + 1] = regmod.1;
-            current_fuse_offset += 2;
-
-            // r
-            let r = fb.mcs[i].r_src.encode();
-            jed.f[current_fuse_offset + 0] = r.0;
-            jed.f[current_fuse_offset + 1] = r.1;
-            current_fuse_offset += 2;
-
-            if iob.is_some() {
-                // slw
-                current_fuse_offset += 1;
-
-                // tm
-                current_fuse_offset += 1;
-            }
-
-            // xorin
-            let xorin = fb.mcs[i].xor_mode.encode();
-            jed.f[current_fuse_offset + 0] = xorin.0;
-            jed.f[current_fuse_offset + 1] = xorin.1;
-            current_fuse_offset += 2;
         }
     }
 }

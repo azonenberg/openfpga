@@ -420,6 +420,8 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
         let mut decode_field_tokens = quote!{};
         let mut decode_field_ids = Vec::new();
 
+        let is_abs = instance_attribs_hash.contains("abs");
+
         for (field_id, field_locs, field_isbool, field_ty) in this_instance_attribs {
             if field_locs.len() == 0 {
                 continue;
@@ -497,80 +499,106 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                     loc = loc.split_at(1).1;
                 }
 
-                let coords = loc.split('|').collect::<Vec<_>>();
-
-                if dimensions.is_none() {
-                    dimensions = Some(coords.len());
+                if loc == "T" || loc == "F" {
+                    let inv_token = if inv {quote!{!}} else {quote!{}};
+                    let tf = loc == "T";
+                    // Shut up an unused variable warning
+                    encode_this_field.append_all(quote! {
+                        match x {
+                            _ => {}
+                        }
+                    });
+                    decode_this_field_locs.push(quote! {
+                        #inv_token #tf
+                    });
                 } else {
-                    if dimensions.unwrap() != coords.len() {
-                        panic!("Instance {} on {} has mismatched dimensions", instance_name, input_ident.as_ref());
+                    let coords = loc.split('|').collect::<Vec<_>>();
+
+                    if dimensions.is_none() {
+                        dimensions = Some(coords.len());
+                    } else {
+                        if dimensions.unwrap() != coords.len() {
+                            panic!("Instance {} on {} has mismatched dimensions", instance_name, input_ident.as_ref());
+                        }
                     }
-                }
 
-                let mut index_each_dim = Vec::with_capacity(coords.len());
-                for (dim_i, coord_str) in coords.iter().enumerate() {
-                    let mirror_attrib = format!("mirror{}", dim_i);
-                    let mirror = instance_attribs_hash.contains::<str>(&mirror_attrib);
-                    let coord_i = coord_str.parse::<usize>().expect("Could not parse coordinate as number");
+                    let mut index_each_dim = Vec::with_capacity(coords.len());
+                    for (dim_i, coord_str) in coords.iter().enumerate() {
+                        let mirror_attrib = format!("mirror{}", dim_i);
+                        let mirror = instance_attribs_hash.contains::<str>(&mirror_attrib);
+                        let coord_i = coord_str.parse::<usize>().expect("Could not parse coordinate as number or T/F");
 
-                    if dimensions.unwrap() > 1 {
-                        let dim_idx = syn::Index {
-                            index: dim_i as u32,
+                        if mirror && is_abs {
+                            panic!("Mirror and abs cannot be used at the same time");
+                        }
+
+                        if dimensions.unwrap() > 1 {
+                            let dim_idx = syn::Index {
+                                index: dim_i as u32,
+                                // TODO: IDK wtf to do here?!
+                                span: input_ident.span()
+                            };
+
+                            if mirror {
+                                let mirror_ident = syn::Ident::from(format!("mirror_{}", dim_i));
+                                // mirror_idents.push(quote!{#mirror_ident: bool});
+                                index_each_dim.push(quote! {
+                                    (start_coord.#dim_idx as isize +
+                                        (if #mirror_ident {-1} else {1}) * #coord_i as isize) as usize
+                                });
+                            } else if !is_abs {
+                                index_each_dim.push(quote! {
+                                    start_coord.#dim_idx + #coord_i
+                                });
+                            } else {
+                                index_each_dim.push(quote! {
+                                    #coord_i
+                                });
+                            }
+                        } else {
+                            if mirror {
+                                let mirror_ident = syn::Ident::from(format!("mirror_{}", dim_i));
+                                // mirror_idents.push(quote!{#mirror_ident: bool});
+                                index_each_dim.push(quote! {
+                                    (start_coord as isize +
+                                        (if #mirror_ident {-1} else {1}) * #coord_i as isize) as usize
+                                });
+                            } else if !is_abs {
+                                index_each_dim.push(quote! {
+                                    start_coord + #coord_i
+                                });
+                            } else {
+                                index_each_dim.push(quote! {
+                                    #coord_i
+                                });
+                            }
+                        }
+                    }
+
+                    let index_each_dim2 = index_each_dim.clone();
+
+                    let inv_token = if inv {quote!{!}} else {quote!{}};
+
+                    if !field_isbool {
+                        let field_bit_idx = syn::Index {
+                            index: field_bit_i as u32,
                             // TODO: IDK wtf to do here?!
                             span: input_ident.span()
                         };
 
-                        if mirror {
-                            let mirror_ident = syn::Ident::from(format!("mirror_{}", dim_i));
-                            // mirror_idents.push(quote!{#mirror_ident: bool});
-                            index_each_dim.push(quote! {
-                                (start_coord.#dim_idx as isize +
-                                    (if #mirror_ident {-1} else {1}) * #coord_i as isize) as usize
-                            });
-                        } else {
-                            index_each_dim.push(quote! {
-                                start_coord.#dim_idx + #coord_i
-                            });
-                        }
+                        encode_this_field.append_all(quote! {
+                            fuses[(#(#index_each_dim),*)] = #inv_token x.#field_bit_idx;
+                        });
                     } else {
-                        if mirror {
-                            let mirror_ident = syn::Ident::from(format!("mirror_{}", dim_i));
-                            // mirror_idents.push(quote!{#mirror_ident: bool});
-                            index_each_dim.push(quote! {
-                                (start_coord as isize +
-                                    (if #mirror_ident {-1} else {1}) * #coord_i as isize) as usize
-                            });
-                        } else {
-                            index_each_dim.push(quote! {
-                                start_coord + #coord_i
-                            });
-                        }
+                        encode_this_field.append_all(quote! {
+                            fuses[(#(#index_each_dim),*)] = #inv_token x;
+                        });
                     }
-                }
 
-                let index_each_dim2 = index_each_dim.clone();
-
-                let inv_token = if inv {quote!{!}} else {quote!{}};
-
-                if !field_isbool {
-                    let field_bit_idx = syn::Index {
-                        index: field_bit_i as u32,
-                        // TODO: IDK wtf to do here?!
-                        span: input_ident.span()
-                    };
-
-                    encode_this_field.append_all(quote! {
-                        fuses[(#(#index_each_dim),*)] = #inv_token x.#field_bit_idx;
-                    });
-                } else {
-                    encode_this_field.append_all(quote! {
-                        fuses[(#(#index_each_dim),*)] = #inv_token x;
+                    decode_this_field_locs.push(quote! {
+                        #inv_token fuses[(#(#index_each_dim2),*)]
                     });
                 }
-
-                decode_this_field_locs.push(quote! {
-                    #inv_token fuses[(#(#index_each_dim2),*)]
-                });
             }
 
             encode_field_tokens.append_all(encode_this_field);
@@ -694,13 +722,25 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             quote!{}
         };
 
-        let encode_tokens = quote!{
-            impl #input_ident {
-                #ispub_token fn #encode_fn_ident<T>(&self,
-                    fuses: &mut T, start_coord: (#(#usize_idents),*), #(#mirror_idents),*) 
-                    where T: ::std::ops::IndexMut<(#(#usize_idents2),*), Output=bool> + ?Sized
-                {
-                    #encode_field_tokens
+        let encode_tokens = if !is_abs {
+            quote!{
+                impl #input_ident {
+                    #ispub_token fn #encode_fn_ident<T>(&self,
+                        fuses: &mut T, start_coord: (#(#usize_idents),*), #(#mirror_idents),*)
+                        where T: ::std::ops::IndexMut<(#(#usize_idents2),*), Output=bool> + ?Sized
+                    {
+                        #encode_field_tokens
+                    }
+                }
+            }
+        } else {
+            quote!{
+                impl #input_ident {
+                    #ispub_token fn #encode_fn_ident<T>(&self, fuses: &mut T)
+                        where T: ::std::ops::IndexMut<(#(#usize_idents2),*), Output=bool> + ?Sized
+                    {
+                        #encode_field_tokens
+                    }
                 }
             }
         };
@@ -750,16 +790,30 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             }
         };
 
-        let decode_tokens = quote!{
-            impl #input_ident {
-                #ispub_token fn #decode_fn_ident<T>(
-                    fuses: &T, start_coord: (#(#usize_idents3),*), #(#mirror_idents2),*)
-                    -> #decode_output_tokens
-                    where T: ::std::ops::Index<(#(#usize_idents4),*), Output=bool> + ?Sized
-                {
-                    #decode_field_tokens
-                    
-                    #decode_return_tokens
+        let decode_tokens = if !is_abs {
+            quote!{
+                impl #input_ident {
+                    #ispub_token fn #decode_fn_ident<T>(
+                        fuses: &T, start_coord: (#(#usize_idents3),*), #(#mirror_idents2),*)
+                        -> #decode_output_tokens
+                        where T: ::std::ops::Index<(#(#usize_idents4),*), Output=bool> + ?Sized
+                    {
+                        #decode_field_tokens
+                        
+                        #decode_return_tokens
+                    }
+                }
+            }
+        } else {
+            quote!{
+                impl #input_ident {
+                    #ispub_token fn #decode_fn_ident<T>(fuses: &T) -> #decode_output_tokens
+                        where T: ::std::ops::Index<(#(#usize_idents4),*), Output=bool> + ?Sized
+                    {
+                        #decode_field_tokens
+                        
+                        #decode_return_tokens
+                    }
                 }
             }
         };
