@@ -76,14 +76,21 @@ pub enum XC2IOBOBufMode {
 
 /// Represents an I/O pin on "small" (32 and 64 macrocell) devices.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+#[derive(BitTwiddler)]
+#[bittwiddler = "jed_internal mirror1"]
+// #[bittwiddler = "crbit_internal"]
 pub struct XC2MCSmallIOB {
     /// Mux selection for the ZIA input for this pin
+    // #[bittwiddler_field = "jed_internal !18|19 20|21"]
     pub zia_mode: XC2IOBZIAMode,
     /// Whether the Schmitt trigger is being used on this pin's input
+    #[bittwiddler_field = "jed_internal !16|17"]
+    #[bittwiddler_field = "foobarbaz 17"]
     pub schmitt_trigger: bool,
     /// Selects the source used to drive this pin's output (if the output is enabled).
     /// `false` selects the XOR gate in the macrocell (combinatorial output), and `true` selects the register output
     /// (registered output).
+    #[bittwiddler_field = "foobarbaz 17"]
     pub obuf_uses_ff: bool,
     /// Selects the output mode for this pin
     pub obuf_mode: XC2IOBOBufMode,
