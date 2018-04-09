@@ -995,6 +995,12 @@ impl XC2Macrocell {
 
             let iob = fb_mc_num_to_iob_num(device, fb_i as u32, i as u32);
 
+            if iob.is_some() {
+                let iob = iob.unwrap() as usize;
+
+                iobs[iob].encode_jed_internal(&mut jed.f, current_fuse_offset);
+            }
+
             // aclk
             jed.f[current_fuse_offset] = fb.mcs[i].clk_src.encode().0;
             current_fuse_offset += 1;
@@ -1015,7 +1021,6 @@ impl XC2Macrocell {
 
             if iob.is_some() {
                 // dg
-                jed.f[current_fuse_offset] = iobs[iob.unwrap() as usize].uses_data_gate;
                 current_fuse_offset += 1;
             }
 
@@ -1026,12 +1031,7 @@ impl XC2Macrocell {
             current_fuse_offset += 2;
 
             if iob.is_some() {
-                let iob = iob.unwrap() as usize;
-
                 // inmod
-                let inmod = iobs[iob].ibuf_mode.encode();
-                jed.f[current_fuse_offset + 0] = inmod.0;
-                jed.f[current_fuse_offset + 1] = inmod.1;
                 current_fuse_offset += 2;
 
                 // inreg
@@ -1039,17 +1039,9 @@ impl XC2Macrocell {
                 current_fuse_offset += 1;
 
                 // inz
-                let inz = iobs[iob].zia_mode.encode();
-                jed.f[current_fuse_offset + 0] = inz.0;
-                jed.f[current_fuse_offset + 1] = inz.1;
                 current_fuse_offset += 2;
 
                 // oe
-                let oe = iobs[iob].obuf_mode.encode();
-                jed.f[current_fuse_offset + 0] = oe.0;
-                jed.f[current_fuse_offset + 1] = oe.1;
-                jed.f[current_fuse_offset + 2] = oe.2;
-                jed.f[current_fuse_offset + 3] = oe.3;
                 current_fuse_offset += 4;
             }
 
@@ -1065,7 +1057,6 @@ impl XC2Macrocell {
 
             if iob.is_some() {
                 // regcom
-                jed.f[current_fuse_offset] = !iobs[iob.unwrap() as usize].obuf_uses_ff;
                 current_fuse_offset += 1;
             }
 
@@ -1082,14 +1073,10 @@ impl XC2Macrocell {
             current_fuse_offset += 2;
 
             if iob.is_some() {
-                let iob = iob.unwrap() as usize;
-
                 // slw
-                jed.f[current_fuse_offset] = !iobs[iob].slew_is_fast;
                 current_fuse_offset += 1;
 
                 // tm
-                jed.f[current_fuse_offset] = iobs[iob].termination_enabled;
                 current_fuse_offset += 1;
             }
 
