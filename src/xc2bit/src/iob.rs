@@ -79,27 +79,41 @@ pub enum XC2IOBOBufMode {
 #[derive(BitTwiddler)]
 // FIXME: Probably should not be pub
 #[bittwiddler = "jed_internal pub err=XC2BitError"]
+#[bittwiddler = "crbit32 mirror0 err=XC2BitError"]
+#[bittwiddler = "crbit64 mirror0 err=XC2BitError"]
 // #[bittwiddler = "crbit_internal"]
 pub struct XC2MCSmallIOB {
     /// Mux selection for the ZIA input for this pin
     #[bittwiddler_field = "jed_internal 11 12"]
+    #[bittwiddler_field = "crbit32 2|1 3|1"]
+    #[bittwiddler_field = "crbit64 5|1 6|1"]
     pub zia_mode: XC2IOBZIAMode,
     /// Whether the Schmitt trigger is being used on this pin's input
     #[bittwiddler_field = "jed_internal 16"]
+    #[bittwiddler_field = "crbit32 7|1"]
+    #[bittwiddler_field = "crbit64 1|1"]
     pub schmitt_trigger: bool,
     /// Selects the source used to drive this pin's output (if the output is enabled).
     /// `false` selects the XOR gate in the macrocell (combinatorial output), and `true` selects the register output
     /// (registered output).
     #[bittwiddler_field = "jed_internal !19"]
+    #[bittwiddler_field = "crbit32 !1|2"]
+    #[bittwiddler_field = "crbit64 !0|1"]
     pub obuf_uses_ff: bool,
     /// Selects the output mode for this pin
     #[bittwiddler_field = "jed_internal err 20 21 22 23"]
+    #[bittwiddler_field = "crbit32 err 2|2 3|2 4|2 5|2"]
+    #[bittwiddler_field = "crbit64 err 3|2 4|2 5|2 6|2"]
     pub obuf_mode: XC2IOBOBufMode,
     /// Selects if the global termination (bus hold or pull-up) is enabled on this pin
     #[bittwiddler_field = "jed_internal 24"]
+    #[bittwiddler_field = "crbit32 6|2"]
+    #[bittwiddler_field = "crbit64 2|2"]
     pub termination_enabled: bool,
     /// Selects if fast slew rate is used on this pin
     #[bittwiddler_field = "jed_internal !25"]
+    #[bittwiddler_field = "crbit32 !7|2"]
+    #[bittwiddler_field = "crbit64 !1|2"]
     pub slew_is_fast: bool,
 }
 
@@ -158,67 +172,18 @@ impl XC2MCSmallIOB {
     pub fn to_crbit(&self, device: XC2Device, iob: u32, fuse_array: &mut FuseArray) {
         let (fb, mc) = iob_num_to_fb_mc_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
-        // direction
-        let x = x as i32;
-        let d = if !mirror {1} else {-1};
         match device {
             XC2Device::XC2C32 | XC2Device::XC2C32A => {
                 // The "32" variant
                 // each macrocell is 3 rows high
                 let y = y + (mc as usize) * 3;
-
-                // inz
-                let inz = self.zia_mode.encode();
-                fuse_array.set((x + d * 2) as usize, y + 1, inz.0);
-                fuse_array.set((x + d * 3) as usize, y + 1, inz.1);
-
-                // st
-                fuse_array.set((x + d * 7) as usize, y + 1, self.schmitt_trigger);
-
-                // regcom
-                fuse_array.set((x + d * 1) as usize, y + 2, !self.obuf_uses_ff);
-
-                // oe
-                let oe = self.obuf_mode.encode();
-                fuse_array.set((x + d * 2) as usize, y + 2, oe.0);
-                fuse_array.set((x + d * 3) as usize, y + 2, oe.1);
-                fuse_array.set((x + d * 4) as usize, y + 2, oe.2);
-                fuse_array.set((x + d * 5) as usize, y + 2, oe.3);
-
-                // tm
-                fuse_array.set((x + d * 6) as usize, y + 2, self.termination_enabled);
-
-                // slw
-                fuse_array.set((x + d * 7) as usize, y + 2, !self.slew_is_fast);
+                self.encode_crbit32(fuse_array, (x, y), mirror);
             },
             XC2Device::XC2C64 | XC2Device::XC2C64A => {
                 // The "64" variant
                 // each macrocell is 3 rows high
                 let y = y + (mc as usize) * 3;
-
-                // inz
-                let inz = self.zia_mode.encode();
-                fuse_array.set((x + d * 5) as usize, y + 1, inz.0);
-                fuse_array.set((x + d * 6) as usize, y + 1, inz.1);
-
-                // st
-                fuse_array.set((x + d * 1) as usize, y + 1, self.schmitt_trigger);
-
-                // regcom
-                fuse_array.set((x + d * 0) as usize, y + 1, !self.obuf_uses_ff);
-
-                // oe
-                let oe = self.obuf_mode.encode();
-                fuse_array.set((x + d * 3) as usize, y + 2, oe.0);
-                fuse_array.set((x + d * 4) as usize, y + 2, oe.1);
-                fuse_array.set((x + d * 5) as usize, y + 2, oe.2);
-                fuse_array.set((x + d * 6) as usize, y + 2, oe.3);
-
-                // tm
-                fuse_array.set((x + d * 2) as usize, y + 2, self.termination_enabled);
-
-                // slw
-                fuse_array.set((x + d * 1) as usize, y + 2, !self.slew_is_fast);
+                self.encode_crbit64(fuse_array, (x, y), mirror);
             },
             _ => unreachable!(),
         }
@@ -230,81 +195,18 @@ impl XC2MCSmallIOB {
     pub fn from_crbit(device: XC2Device, iob: u32, fuse_array: &FuseArray) -> Result<Self, XC2BitError> {
         let (fb, mc) = iob_num_to_fb_mc_num(device, iob).unwrap();
         let (x, y, mirror) = mc_block_loc(device, fb);
-        // direction
-        let x = x as i32;
-        let d = if !mirror {1} else {-1};
         match device {
             XC2Device::XC2C32 | XC2Device::XC2C32A => {
                 // The "32" variant
                 // each macrocell is 3 rows high
                 let y = y + (mc as usize) * 3;
-
-                // inz
-                let inz = (fuse_array.get((x + d * 2) as usize, y + 1),
-                           fuse_array.get((x + d * 3) as usize, y + 1));
-
-                // st
-                let schmitt_trigger = fuse_array.get((x + d * 7) as usize, y + 1);
-
-                // regcom
-                let obuf_uses_ff = !fuse_array.get((x + d * 1) as usize, y + 2);
-
-                // oe
-                let oe = (fuse_array.get((x + d * 2) as usize, y + 2),
-                          fuse_array.get((x + d * 3) as usize, y + 2),
-                          fuse_array.get((x + d * 4) as usize, y + 2),
-                          fuse_array.get((x + d * 5) as usize, y + 2));
-
-                // tm
-                let termination_enabled = fuse_array.get((x + d * 6) as usize, y + 2);
-
-                // slw
-                let slew_is_fast = !fuse_array.get((x + d * 7) as usize, y + 2);
-
-                Ok(XC2MCSmallIOB {
-                    zia_mode: XC2IOBZIAMode::decode(inz),
-                    schmitt_trigger,
-                    obuf_uses_ff,
-                    obuf_mode: XC2IOBOBufMode::decode(oe)?,
-                    termination_enabled,
-                    slew_is_fast,
-                })
+                Self::decode_crbit32(fuse_array, (x, y), mirror)
             },
             XC2Device::XC2C64 | XC2Device::XC2C64A => {
                 // The "64" variant
                 // each macrocell is 3 rows high
                 let y = y + (mc as usize) * 3;
-
-                // inz
-                let inz = (fuse_array.get((x + d * 5) as usize, y + 1),
-                           fuse_array.get((x + d * 6) as usize, y + 1));
-
-                // st
-                let schmitt_trigger = fuse_array.get((x + d * 1) as usize, y + 1);
-
-                // regcom
-                let obuf_uses_ff = !fuse_array.get((x + d * 0) as usize, y + 1);
-
-                // oe
-                let oe = (fuse_array.get((x + d * 3) as usize, y + 2),
-                          fuse_array.get((x + d * 4) as usize, y + 2),
-                          fuse_array.get((x + d * 5) as usize, y + 2),
-                          fuse_array.get((x + d * 6) as usize, y + 2));
-
-                // tm
-                let termination_enabled = fuse_array.get((x + d * 2) as usize, y + 2);
-
-                // slw
-                let slew_is_fast = !fuse_array.get((x + d * 1) as usize, y + 2);
-
-                Ok(XC2MCSmallIOB {
-                    zia_mode: XC2IOBZIAMode::decode(inz),
-                    schmitt_trigger,
-                    obuf_uses_ff,
-                    obuf_mode: XC2IOBOBufMode::decode(oe)?,
-                    termination_enabled,
-                    slew_is_fast,
-                })
+                Self::decode_crbit64(fuse_array, (x, y), mirror)
             },
             _ => unreachable!(),
         }

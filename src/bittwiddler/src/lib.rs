@@ -314,17 +314,8 @@ fn is_bool(ty: &syn::Type) -> bool {
 pub fn bittwiddler(input: TokenStream) -> TokenStream {
     let input: syn::DeriveInput = syn::parse(input).unwrap();
 
-    let test1 = StringSplitter::new("asdf   fdsa   'ab c d e f'g hij");
-    let test2 = test1.collect::<Vec<_>>();
-    println!("{:?}", test2);
-
-    let test1 = StringSplitter::new("asdf   fdsa   'ab c d e f'g hij ");
-    let test2 = test1.collect::<Vec<_>>();
-    println!("{:?}", test2);
-
     let main_bittwiddler_attribs = parse_multi_string_attr_helper(&input.attrs, "bittwiddler",
         |x| x.value()).collect::<Vec<_>>();
-    println!("{:?}", main_bittwiddler_attribs);
 
     let mut fields_and_attrs = Vec::new();
 
@@ -332,9 +323,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
 
     match input.data {
         syn::Data::Struct(datastruct) => {
-            // let input_ident = input.ident;
-            // println!("{:?}", input_ident);
-
             match datastruct.fields {
                 syn::Fields::Named(named) => {
                     for field in &named.named {
@@ -342,8 +330,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                         let bittwiddler_field_attrs = parse_multi_string_attr_helper(&field.attrs, "bittwiddler_field",
                             |x| x.value()).collect::<Vec<_>>();
 
-                        // println!("{:?} {:?}", id, bittwiddler_field_attrs);
-                        // println!("{:?}", field.ty);
                         let is_bool = is_bool(&field.ty);
 
                         if bittwiddler_field_attrs.len() > 0 {
@@ -359,7 +345,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                         let bittwiddler_field_attrs = parse_multi_string_attr_helper(&field.attrs, "bittwiddler_field",
                             |x| x.value()).collect::<Vec<_>>();
 
-                        // println!("{:?} {:?}", idx, bittwiddler_field_attrs);
                         let is_bool = is_bool(&field.ty);
 
                         if bittwiddler_field_attrs.len() > 0 {
@@ -377,10 +362,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             }
         },
         syn::Data::Enum(_dataenum) => {
-            // let input_ident = input.ident;
-            // println!("{:?}", input_ident);
-            // unimplemented!();
-
             let bittwiddler_field_attrs = parse_multi_string_attr_helper(&input.attrs, "bittwiddler_field",
                 |x| x.value()).collect::<Vec<_>>();
 
@@ -394,8 +375,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
     }
 
     let input_ident = input.ident;
-    println!("{:?}", input_ident);
-    println!("{:?}", fields_and_attrs);
 
     let mut all_tokens = quote!{};
 
@@ -404,7 +383,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
         let instance_name = attrib_split.next().unwrap();
 
         let instance_attribs = attrib_split.collect::<Vec<_>>();
-        println!("{:?}", instance_attribs);
         let mut instance_attribs_hash = HashSet::with_capacity(instance_attribs.len());
         for &x in &instance_attribs {
             instance_attribs_hash.insert(x);
@@ -413,9 +391,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
         let this_instance_attribs = fields_and_attrs.iter().map(|x|
             (x.0, x.1.iter().map(|y| StringSplitter::new(y).collect::<Vec<_>>()).filter(|z|
                 z[0] == instance_name).collect::<Vec<_>>(), x.2, x.3.clone()));
-
-        println!("{}", instance_name);
-        // println!("{:?}", this_instance_attribs.collect::<Vec<_>>());
 
         let mut errtype = None;
         for x in &instance_attribs {
@@ -430,7 +405,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                     errtype_tmp = errtype_tmp.split_at(errtype_tmp.len() - 1).0;
                 }
 
-                println!("errtype {}", errtype_tmp);
                 errtype = Some(syn::parse_str::<syn::TypeParam>(errtype_tmp).expect("Failed to parse err= attribute"));
             }
         }
@@ -451,8 +425,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                 continue;
             }
 
-            // println!("{:?} {:?} {:?}", field_id, field_locs, field_isbool);
-
             if field_locs.len() > 1 {
                 panic!("{} has multiple bittwiddler_field for type {}", field_id.to_string(), instance_name);
             }
@@ -463,8 +435,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                 needs_err = true;
                 field_locs = &field_locs[1..];
             }
-
-            println!("{:?} {:?} {:?} {:?}", field_id, field_locs, field_isbool, needs_err);
 
             if field_isbool && field_locs.len() != 1 {
                 panic!("Field {} of {} on {} has too many locations for a boolean",
@@ -529,8 +499,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
 
                 let coords = loc.split('|').collect::<Vec<_>>();
 
-                // println!("{:?} {:?}", inv, coords);
-
                 if dimensions.is_none() {
                     dimensions = Some(coords.len());
                 } else {
@@ -582,8 +550,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
 
                 let index_each_dim2 = index_each_dim.clone();
 
-                // println!("{:?}", index_each_dim);
-
                 let inv_token = if inv {quote!{!}} else {quote!{}};
 
                 if !field_isbool {
@@ -607,7 +573,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                 });
             }
 
-            // println!("{:?}", encode_this_field);
             encode_field_tokens.append_all(encode_this_field);
 
             let mut decode_this_field = if decode_this_field_locs.len() != 1 {
@@ -689,9 +654,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             decode_field_tokens.append_all(decode_this_field);
         }
 
-        println!("{:?}", decode_field_tokens);
-        println!("{:?}", decode_field_ids);
-
         if dimensions.is_none() {
             panic!("Instance {} on {} has zero fields", instance_name, input_ident.as_ref());
         }
@@ -743,8 +705,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             }
         };
 
-        // encode_tokens.append_all(quote!{}});
-        println!("{:?}", encode_tokens);
         all_tokens.append_all(encode_tokens);
 
         let decode_output_tokens = if errtype.is_some() {
@@ -804,7 +764,6 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             }
         };
 
-        println!("{:?}", decode_tokens);
         all_tokens.append_all(decode_tokens);
     }
 

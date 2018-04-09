@@ -29,6 +29,7 @@ use util::{b2s};
 
 use std::io;
 use std::io::Write;
+use std::ops::{Index, IndexMut};
 use std::str;
 
 /// Struct representing a 2-dimensional fuse array and handles converting xy-coordinates into a single linear index.
@@ -138,3 +139,18 @@ impl FuseArray {
         Ok(())
     }
 }
+
+impl Index<(usize, usize)> for FuseArray {
+    type Output = bool;
+
+    fn index(&self, coords: (usize, usize)) -> &bool {
+        &self.v[coords.1 * self.w + coords.0]
+    }
+}
+
+impl IndexMut<(usize, usize)> for FuseArray {
+    fn index_mut(&mut self, coords: (usize, usize)) -> &mut bool {
+        &mut self.v[coords.1 * self.w + coords.0]
+    }
+}
+
