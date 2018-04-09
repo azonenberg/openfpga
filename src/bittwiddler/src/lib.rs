@@ -514,39 +514,58 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                     let mirror = instance_attribs_hash.contains::<str>(&mirror_attrib);
                     let coord_i = coord_str.parse::<usize>().expect("Could not parse coordinate as number");
 
-                    let dim_idx = syn::Index {
-                        index: dim_i as u32,
-                        // TODO: IDK wtf to do here?!
-                        span: input_ident.span()
-                    };
+                    if dimensions.unwrap() > 1 {
+                        let dim_idx = syn::Index {
+                            index: dim_i as u32,
+                            // TODO: IDK wtf to do here?!
+                            span: input_ident.span()
+                        };
 
-                    if mirror {
-                        let mirror_ident = syn::Ident::from(format!("mirror_{}", dim_i));
-                        // mirror_idents.push(quote!{#mirror_ident: bool});
-                        index_each_dim.push(quote! {
-                            (start_coord.#dim_idx as isize + (if #mirror_ident {-1} else {1}) * #coord_i as isize) as usize
-                        });
+                        if mirror {
+                            let mirror_ident = syn::Ident::from(format!("mirror_{}", dim_i));
+                            // mirror_idents.push(quote!{#mirror_ident: bool});
+                            index_each_dim.push(quote! {
+                                (start_coord.#dim_idx as isize +
+                                    (if #mirror_ident {-1} else {1}) * #coord_i as isize) as usize
+                            });
+                        } else {
+                            index_each_dim.push(quote! {
+                                start_coord.#dim_idx + #coord_i
+                            });
+                        }
                     } else {
-                        index_each_dim.push(quote! {
-                            start_coord.#dim_idx + #coord_i
-                        });
+                        if mirror {
+                            let mirror_ident = syn::Ident::from(format!("mirror_{}", dim_i));
+                            // mirror_idents.push(quote!{#mirror_ident: bool});
+                            index_each_dim.push(quote! {
+                                (start_coord as isize +
+                                    (if #mirror_ident {-1} else {1}) * #coord_i as isize) as usize
+                            });
+                        } else {
+                            index_each_dim.push(quote! {
+                                start_coord + #coord_i
+                            });
+                        }
                     }
                 }
 
                 // println!("{:?}", index_each_dim);
 
-                let field_bit_idx = syn::Index {
-                    index: field_bit_i as u32,
-                    // TODO: IDK wtf to do here?!
-                    span: input_ident.span()
-                };
+                let inv_token = if inv {quote!{!}} else {quote!{}};
+
                 if !field_isbool {
+                    let field_bit_idx = syn::Index {
+                        index: field_bit_i as u32,
+                        // TODO: IDK wtf to do here?!
+                        span: input_ident.span()
+                    };
+
                     encode_this_field.append_all(quote! {
-                        fuses[(#(#index_each_dim),*)] = x.#field_bit_idx;
+                        fuses[(#(#index_each_dim),*)] = #inv_token x.#field_bit_idx;
                     });
                 } else {
                     encode_this_field.append_all(quote! {
-                        fuses[(#(#index_each_dim),*)] = x;
+                        fuses[(#(#index_each_dim),*)] = #inv_token x;
                     });
                 }
             }
@@ -592,10 +611,9 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
         let mut encode_tokens = quote!{
             impl #input_ident {
                 #ispub_token fn #encode_fn_ident<T>(&self,
-                    mut fuses: T, start_coord: (#(#usize_idents),*), #(#mirror_idents),*) 
+                    fuses: &mut T, start_coord: (#(#usize_idents),*), #(#mirror_idents),*) 
 
                     where T: ::std::ops::IndexMut<(#(#usize_idents2),*), Output=bool>,
-                    // <T as ::std::ops::Index<(#(#usize_idents3),*)>>::Output: bool
                 {
                     #encode_field_tokens
                 }

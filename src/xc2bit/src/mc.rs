@@ -959,11 +959,6 @@ impl XC2Macrocell {
             jed.f[mc_fuse_base +  9] = regmod.0;
             jed.f[mc_fuse_base + 10] = regmod.1;
 
-            // inz
-            let inz = iobs[iob].zia_mode.encode();
-            jed.f[mc_fuse_base + 11] = inz.0;
-            jed.f[mc_fuse_base + 12] = inz.1;
-
             // fb
             let fb_bits = fb.mcs[i].fb_mode.encode();
             jed.f[mc_fuse_base + 13] = fb_bits.0;
@@ -972,32 +967,15 @@ impl XC2Macrocell {
             // inreg
             jed.f[mc_fuse_base + 15] = !fb.mcs[i].ff_in_ibuf;
 
-            // st
-            jed.f[mc_fuse_base + 16] = iobs[iob].schmitt_trigger;
-
             // xorin
             let xorin = fb.mcs[i].xor_mode.encode();
             jed.f[mc_fuse_base + 17] = xorin.0;
             jed.f[mc_fuse_base + 18] = xorin.1;
 
-            // regcom
-            jed.f[mc_fuse_base + 19] = !iobs[iob].obuf_uses_ff;
-
-            // oe
-            let oe = iobs[iob].obuf_mode.encode();
-            jed.f[mc_fuse_base + 20] = oe.0;
-            jed.f[mc_fuse_base + 21] = oe.1;
-            jed.f[mc_fuse_base + 22] = oe.2;
-            jed.f[mc_fuse_base + 23] = oe.3;
-
-            // tm
-            jed.f[mc_fuse_base + 24] = iobs[iob].termination_enabled;
-
-            // slw
-            jed.f[mc_fuse_base + 25] = !iobs[iob].slew_is_fast;
-
             // pu
             jed.f[mc_fuse_base + 26] = !fb.mcs[i].init_state;
+
+            iobs[iob].encode_jed_internal(&mut jed.f, mc_fuse_base);
         }
     }
 
