@@ -588,11 +588,11 @@ fn main() {
                         }
 
                         if should_add_andterm_wire {
-                            if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize].input[port_idx as usize] {
+                            if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize].get(port_idx as usize) {
                                 should_add_wire = true;
                                 port_name = "IN";
                             }
-                            if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize].input_b[port_idx as usize] {
+                            if bitstream.bits.get_fb()[fb as usize].and_terms[idx as usize].get_b(port_idx as usize) {
                                 should_add_wire_2 = true;
                                 port_name_2 = "IN_B";
                                 wire_bitval_2 = wire_bitval.clone();
@@ -607,7 +607,7 @@ fn main() {
                         // This is always driven
                         should_add_wire = true;
                     } else if port_name == "IN" {
-                        if bitstream.bits.get_fb()[fb as usize].or_terms[idx as usize].input[port_idx as usize] {
+                        if bitstream.bits.get_fb()[fb as usize].or_terms[idx as usize].get(port_idx as usize) {
                             should_add_wire = true;
                         }
                     } else {

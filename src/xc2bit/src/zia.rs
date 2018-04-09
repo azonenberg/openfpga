@@ -33,11 +33,11 @@ use *;
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 pub enum XC2ZIAInput {
     Macrocell {
-        fb: u32,
-        mc: u32,
+        fb: u8,
+        mc: u8,
     },
     IBuf {
-        ibuf: u32,
+        ibuf: u16,
     },
     DedicatedInput,
     Zero,

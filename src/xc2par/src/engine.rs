@@ -783,17 +783,17 @@ pub fn try_assign_zia(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARF
                 if true && fb == 2 && mc == 0 {
                     XC2ZIAInput::DedicatedInput
                 } else {
-                    XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
+                    XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap() as u16}
                 }
             },
             InputGraphPTermInputType::Xor => {
-                XC2ZIAInput::Macrocell{fb: fb as u32, mc: mc as u32}
+                XC2ZIAInput::Macrocell{fb: fb as u8, mc: mc as u8}
             },
             InputGraphPTermInputType::Reg => {
                 if need_to_use_ibuf_zia_path {
-                    XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap()}
+                    XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap() as u16}
                 } else {
-                    XC2ZIAInput::Macrocell{fb: fb as u32, mc: mc as u32}
+                    XC2ZIAInput::Macrocell{fb: fb as u8, mc: mc as u8}
                 }
             },
         };

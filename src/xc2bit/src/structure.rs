@@ -360,7 +360,7 @@ pub fn get_device_structure<N, W, C>(device: XC2Device,
                                 (zia_choice_i as u32, 1));
                         },
                         &XC2ZIAInput::IBuf{ibuf: zia_iob} => {
-                            let (iob_fb, iob_mc) = iob_num_to_fb_mc_num(device, zia_iob).unwrap();
+                            let (iob_fb, iob_mc) = iob_num_to_fb_mc_num(device, zia_iob as u32).unwrap();
                             // From the pad
                             connection_callback(fb_things[and_fb as usize].3[and_i as usize],
                                 to_from_iob_wires[zia_iob as usize].1, "IN", zia_row_i,

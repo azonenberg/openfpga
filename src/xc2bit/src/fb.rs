@@ -140,7 +140,7 @@ impl XC2BitstreamFB {
                 XC2ZIAInput::Macrocell{fb, mc} =>
                     write!(writer, "FB{}_{} FF\n", fb + 1, mc + 1)?,
                 XC2ZIAInput::IBuf{ibuf} => {
-                    let (fb, mc) = iob_num_to_fb_mc_num(device, ibuf).unwrap();
+                    let (fb, mc) = iob_num_to_fb_mc_num(device, ibuf as u32).unwrap();
                     write!(writer, "FB{}_{} pad\n", fb + 1, mc + 1)?;
                 },
                 XC2ZIAInput::DedicatedInput => write!(writer, "dedicated input\n")?,
@@ -157,13 +157,13 @@ impl XC2BitstreamFB {
         for i in 0..ANDTERMS_PER_FB {
             write!(writer, "{:2}:", i)?;
             for j in 0..INPUTS_PER_ANDTERM {
-                if self.and_terms[i].input[j] {
+                if self.and_terms[i].get(j) {
                     write!(writer, "|XXX")?;
                 } else {
                     write!(writer, "|   ")?;
                 }
 
-                if self.and_terms[i].input_b[j] {
+                if self.and_terms[i].get_b(j) {
                     write!(writer, "|XXX")?;
                 } else {
                     write!(writer, "|   ")?;
@@ -180,7 +180,7 @@ impl XC2BitstreamFB {
         for i in 0..MCS_PER_FB {
             write!(writer, "{:2}:", i)?;
             for j in 0..ANDTERMS_PER_FB {
-                if self.or_terms[i].input[j] {
+                if self.or_terms[i].get(j) {
                     write!(writer, "|XX")?;
                 } else {
                     write!(writer, "|  ")?;
@@ -265,14 +265,14 @@ impl XC2BitstreamFB {
 
                         if !mirror {
                             // true input
-                            fuse_array.set(x + term_idx * 2 + 1, out_y, !self.and_terms[term_idx].input[input_idx]);
+                            fuse_array.set(x + term_idx * 2 + 1, out_y, !self.and_terms[term_idx].get(input_idx));
                             // complement input
-                            fuse_array.set(x + term_idx * 2 + 0, out_y, !self.and_terms[term_idx].input_b[input_idx]);
+                            fuse_array.set(x + term_idx * 2 + 0, out_y, !self.and_terms[term_idx].get_b(input_idx));
                         } else {
                             // true input
-                            fuse_array.set(x - term_idx * 2 - 1, out_y, !self.and_terms[term_idx].input[input_idx]);
+                            fuse_array.set(x - term_idx * 2 - 1, out_y, !self.and_terms[term_idx].get(input_idx));
                             // complement input
-                            fuse_array.set(x - term_idx * 2 - 0, out_y, !self.and_terms[term_idx].input_b[input_idx]);
+                            fuse_array.set(x - term_idx * 2 - 0, out_y, !self.and_terms[term_idx].get_b(input_idx));
                         }
                     }
                 }
@@ -285,17 +285,17 @@ impl XC2BitstreamFB {
                         if !mirror {
                             // true input
                             fuse_array.set(x + term_idx * 2 + 1, y + input_idx,
-                                !self.and_terms[phys_term_idx].input[input_idx]);
+                                !self.and_terms[phys_term_idx].get(input_idx));
                             // complement input
                             fuse_array.set(x + term_idx * 2 + 0, y + input_idx,
-                                !self.and_terms[phys_term_idx].input_b[input_idx]);
+                                !self.and_terms[phys_term_idx].get_b(input_idx));
                         } else {
                             // true input
                             fuse_array.set(x - term_idx * 2 - 1, y + input_idx,
-                                !self.and_terms[phys_term_idx].input[input_idx]);
+                                !self.and_terms[phys_term_idx].get(input_idx));
                             // complement input
                             fuse_array.set(x - term_idx * 2 - 0, y + input_idx,
-                                !self.and_terms[phys_term_idx].input_b[input_idx]);
+                                !self.and_terms[phys_term_idx].get_b(input_idx));
                         }
                     }
                 }
@@ -317,7 +317,7 @@ impl XC2BitstreamFB {
                             x - off_x
                         };
 
-                        fuse_array.set(out_x, out_y, !self.or_terms[or_term_idx].input[and_term_idx]);
+                        fuse_array.set(out_x, out_y, !self.or_terms[or_term_idx].get(and_term_idx));
                     }
                 }
             },
@@ -345,7 +345,7 @@ impl XC2BitstreamFB {
                             x - out_x
                         };
 
-                        fuse_array.set(out_x, out_y, !self.or_terms[or_term_idx].input[and_term_idx]);
+                        fuse_array.set(out_x, out_y, !self.or_terms[or_term_idx].get(and_term_idx));
                     }
                 }
             },
@@ -410,14 +410,14 @@ impl XC2BitstreamFB {
 
                         if !mirror {
                             // true input
-                            and_terms[term_idx].input[input_idx] = !fuse_array.get(x + term_idx * 2 + 1, out_y);
+                            and_terms[term_idx].set(input_idx, !fuse_array.get(x + term_idx * 2 + 1, out_y));
                             // complement input
-                            and_terms[term_idx].input_b[input_idx] = !fuse_array.get(x + term_idx * 2 + 0, out_y);
+                            and_terms[term_idx].set_b(input_idx, !fuse_array.get(x + term_idx * 2 + 0, out_y));
                         } else {
                             // true input
-                            and_terms[term_idx].input[input_idx] = !fuse_array.get(x - term_idx * 2 - 1, out_y);
+                            and_terms[term_idx].set(input_idx, !fuse_array.get(x - term_idx * 2 - 1, out_y));
                             // complement input
-                            and_terms[term_idx].input_b[input_idx] = !fuse_array.get(x - term_idx * 2 - 0, out_y);
+                            and_terms[term_idx].set_b(input_idx, !fuse_array.get(x - term_idx * 2 - 0, out_y));
                         }
                     }
                 }
@@ -429,18 +429,18 @@ impl XC2BitstreamFB {
                         let phys_term_idx = AND_BLOCK_TYPE2_P2L_MAP[term_idx];
                         if !mirror {
                             // true input
-                            and_terms[phys_term_idx].input[input_idx] =
-                                !fuse_array.get(x + term_idx * 2 + 1, y + input_idx);
+                            and_terms[phys_term_idx].set(input_idx,
+                                !fuse_array.get(x + term_idx * 2 + 1, y + input_idx));
                             // complement input
-                            and_terms[phys_term_idx].input_b[input_idx] =
-                                !fuse_array.get(x + term_idx * 2 + 0, y + input_idx);
+                            and_terms[phys_term_idx].set_b(input_idx,
+                                !fuse_array.get(x + term_idx * 2 + 0, y + input_idx));
                         } else {
                             // true input
-                            and_terms[phys_term_idx].input[input_idx] =
-                                !fuse_array.get(x - term_idx * 2 - 1, y + input_idx);
+                            and_terms[phys_term_idx].set(input_idx,
+                                !fuse_array.get(x - term_idx * 2 - 1, y + input_idx));
                             // complement input
-                            and_terms[phys_term_idx].input_b[input_idx] =
-                                !fuse_array.get(x - term_idx * 2 - 0, y + input_idx);
+                            and_terms[phys_term_idx].set_b(input_idx,
+                                !fuse_array.get(x - term_idx * 2 - 0, y + input_idx));
                         }
                     }
                 }
@@ -463,7 +463,7 @@ impl XC2BitstreamFB {
                             x - off_x
                         };
 
-                        or_terms[or_term_idx].input[and_term_idx] = !fuse_array.get(out_x, out_y);
+                        or_terms[or_term_idx].set(and_term_idx, !fuse_array.get(out_x, out_y));
                     }
                 }
             },
@@ -491,7 +491,7 @@ impl XC2BitstreamFB {
                             x - out_x
                         };
 
-                        or_terms[or_term_idx].input[and_term_idx] = !fuse_array.get(out_x, out_y);
+                        or_terms[or_term_idx].set(and_term_idx, !fuse_array.get(out_x, out_y));
                     }
                 }
             },
@@ -590,8 +590,8 @@ impl XC2BitstreamFB {
             let and_fuse_base = fuse_base + zia_row_width * INPUTS_PER_ANDTERM + i * INPUTS_PER_ANDTERM * 2;
             linebreaks.add(and_fuse_base);
             for j in 0..INPUTS_PER_ANDTERM {
-                jed.f[and_fuse_base + j * 2 + 0] = !self.and_terms[i].input[j];
-                jed.f[and_fuse_base + j * 2 + 1] = !self.and_terms[i].input_b[j];
+                jed.f[and_fuse_base + j * 2 + 0] = !self.and_terms[i].get(j);
+                jed.f[and_fuse_base + j * 2 + 1] = !self.and_terms[i].get_b(j);
             }
         }
 
@@ -602,7 +602,7 @@ impl XC2BitstreamFB {
                 ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + i * MCS_PER_FB;
             linebreaks.add(or_fuse_base);
             for j in 0..MCS_PER_FB {
-                jed.f[or_fuse_base + j] = !self.or_terms[j].input[i];
+                jed.f[or_fuse_base + j] = !self.or_terms[j].get(i);
             }
         }
     }

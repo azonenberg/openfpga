@@ -33,6 +33,14 @@ fn main() {
 
     if args.len() != 2 {
         println!("Usage: {} <device>-<speed>-<package>", args[0]);
+
+        println!("{:?}", ::std::mem::size_of::<XC2Bitstream>());
+        println!("{:?}", ::std::mem::size_of::<XC2BitstreamFB>());
+        println!("{:?}", ::std::mem::size_of::<XC2Macrocell>());
+        println!("{:?}", ::std::mem::size_of::<XC2ZIAInput>());
+        println!("{:?}", ::std::mem::size_of::<XC2MCSmallIOB>());
+        println!("{:?}", ::std::mem::size_of::<XC2MCLargeIOB>());
+
         ::std::process::exit(1);
     }
 

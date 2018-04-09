@@ -35,20 +35,20 @@ pub struct XC2PLAAndTerm {
     ///
     /// `true` = part of and, `false` = not part of and
     #[serde(serialize_with = "<[_]>::serialize")]
-    pub input: [bool; INPUTS_PER_ANDTERM],
+    input: [u8; INPUTS_PER_ANDTERM / 8],
     /// Indicates whether the complement of a particular ZIA row output is a part of this AND term.
     ///
     /// `true` = part of and, `false` = not part of and
     #[serde(serialize_with = "<[_]>::serialize")]
-    pub input_b: [bool; INPUTS_PER_ANDTERM],
+    input_b: [u8; INPUTS_PER_ANDTERM / 8],
 }
 
 impl Default for XC2PLAAndTerm {
     /// Returns a "default" AND term. The default state is for none of the inputs to be selected.
     fn default() -> Self {
         XC2PLAAndTerm {
-            input: [false; INPUTS_PER_ANDTERM],
-            input_b: [false; INPUTS_PER_ANDTERM],
+            input: [0u8; INPUTS_PER_ANDTERM / 8],
+            input_b: [0u8; INPUTS_PER_ANDTERM / 8],
         }
     }
 }
@@ -56,17 +56,49 @@ impl Default for XC2PLAAndTerm {
 impl XC2PLAAndTerm {
     /// Internal function that reads one single AND term from a block of fuses using logical fuse indexing
     pub fn from_jed(fuses: &[bool], block_idx: usize, term_idx: usize) -> XC2PLAAndTerm {
-        let mut input = [false; INPUTS_PER_ANDTERM];
-        let mut input_b = [false; INPUTS_PER_ANDTERM];
+        let mut input = [0u8; INPUTS_PER_ANDTERM / 8];
+        let mut input_b = [0u8; INPUTS_PER_ANDTERM / 8];
 
         for i in 0..INPUTS_PER_ANDTERM {
-            input[i]   = !fuses[block_idx + term_idx * INPUTS_PER_ANDTERM * 2 + i * 2 + 0];
-            input_b[i] = !fuses[block_idx + term_idx * INPUTS_PER_ANDTERM * 2 + i * 2 + 1];
+            if !fuses[block_idx + term_idx * INPUTS_PER_ANDTERM * 2 + i * 2 + 0] {
+                input[i / 8] |= 1 << (i % 8);
+            }
+            if !fuses[block_idx + term_idx * INPUTS_PER_ANDTERM * 2 + i * 2 + 1] {
+                input_b[i / 8] |= 1 << (i % 8);
+            }
         }
 
         XC2PLAAndTerm {
             input,
             input_b,
+        }
+    }
+
+    /// Returns `true` if the `i`th input is used in this AND term
+    pub fn get(&self, i: usize) -> bool {
+        self.input[i / 8] & (1 << (i % 8)) != 0
+    }
+
+    /// Returns `true` if the `i`th input complement is used in this AND term
+    pub fn get_b(&self, i: usize) -> bool {
+        self.input_b[i / 8] & (1 << (i % 8)) != 0
+    }
+
+    /// Sets whether the `i`th input is used in this AND term
+    pub fn set(&mut self, i: usize, val: bool) {
+        if !val {
+            self.input[i / 8] &=  !(1 << (i % 8));
+        } else {
+            self.input[i / 8] |=  1 << (i % 8);
+        }
+    }
+
+    /// Sets whether the `i`th input complement is used in this AND term
+    pub fn set_b(&mut self, i: usize, val: bool) {
+        if !val {
+            self.input_b[i / 8] &=  !(1 << (i % 8));
+        } else {
+            self.input_b[i / 8] |=  1 << (i % 8);
         }
     }
 }
@@ -79,14 +111,14 @@ pub struct XC2PLAOrTerm {
     ///
     /// `true` = part of or, `false` = not part of or
     #[serde(serialize_with = "<[_]>::serialize")]
-    pub input: [bool; ANDTERMS_PER_FB],
+    input: [u8; ANDTERMS_PER_FB / 8],
 }
 
 impl Default for XC2PLAOrTerm {
     /// Returns a "default" OR term. The default state is for none of the inputs to be selected.
     fn default() -> Self {
         XC2PLAOrTerm {
-            input: [false; ANDTERMS_PER_FB],
+            input: [0u8; ANDTERMS_PER_FB / 8],
         }
     }
 }
@@ -94,14 +126,30 @@ impl Default for XC2PLAOrTerm {
 impl XC2PLAOrTerm {
     /// Internal function that reads one single OR term from a block of fuses using logical fuse indexing
     pub fn from_jed(fuses: &[bool], block_idx: usize, term_idx: usize) -> XC2PLAOrTerm {
-        let mut input = [false; ANDTERMS_PER_FB];
+        let mut input = [0u8; ANDTERMS_PER_FB / 8];
 
         for i in 0..ANDTERMS_PER_FB {
-            input[i] = !fuses[block_idx + term_idx +i * MCS_PER_FB];
+            if !fuses[block_idx + term_idx +i * MCS_PER_FB] {
+                input[i / 8] |= 1 << (i % 8);
+            }
         }
 
         XC2PLAOrTerm {
             input,
+        }
+    }
+
+    /// Returns `true` if the `i`th AND term is used in this OR term
+    pub fn get(&self, i: usize) -> bool {
+        self.input[i / 8] & (1 << (i % 8)) != 0
+    }
+
+    /// Sets whether the `i`th AND term is used in this OR term
+    pub fn set(&mut self, i: usize, val: bool) {
+        if !val {
+            self.input[i / 8] &=  !(1 << (i % 8));
+        } else {
+            self.input[i / 8] |=  1 << (i % 8);
         }
     }
 }

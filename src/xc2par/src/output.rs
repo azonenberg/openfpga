@@ -52,10 +52,10 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph, go: &OutputGrap
         let andterm_i = andterm_go.loc.unwrap().i as usize;
 
         for &x in &andterm_go.inputs_true_zia {
-            fb_bits[fb_i].and_terms[andterm_i].input[x as usize] = true;
+            fb_bits[fb_i].and_terms[andterm_i].set(x as usize, true);
         }
         for &x in &andterm_go.inputs_comp_zia {
-            fb_bits[fb_i].and_terms[andterm_i].input_b[x as usize] = true;
+            fb_bits[fb_i].and_terms[andterm_i].set_b(x as usize, true);
         }
     }
 
@@ -141,7 +141,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph, go: &OutputGrap
                 let pterm = go.pterms.get(ObjPoolIndex::from(and_to_or_idx));
                 let pt_loc = pterm.loc.unwrap();
                 assert!(pt_loc.fb as usize == fb_i);
-                fb_bits[fb_i].or_terms[mc_i].input[pt_loc.i as usize] = true;
+                fb_bits[fb_i].or_terms[mc_i].set(pt_loc.i as usize, true);
             }
 
             // Feedback
