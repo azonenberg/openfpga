@@ -136,11 +136,19 @@ pub enum XC2MCXorMode {
 #[bittwiddler = "jed_internal_small"]
 #[bittwiddler = "jed_internal_large"]
 #[bittwiddler = "jed_internal_large_buried"]
+#[bittwiddler = "crbit32 mirror0"]
+#[bittwiddler = "crbit64 mirror0"]
+#[bittwiddler = "crbit256 mirror0"]
+#[bittwiddler = "crbit_large mirror0"]
 pub struct XC2Macrocell {
     /// Clock source for the register
     #[bittwiddler_field = "jed_internal_small 0 2 3"]
     #[bittwiddler_field = "jed_internal_large 0 1 2"]
     #[bittwiddler_field = "jed_internal_large_buried 0 1 2"]
+    #[bittwiddler_field = "crbit32 0|0 2|0 3|0"]
+    #[bittwiddler_field = "crbit64 8|0 5|0 6|0"]
+    #[bittwiddler_field = "crbit256 9|0 7|0 8|0"]
+    #[bittwiddler_field = "crbit_large 8|0 9|0 10|0"]
     pub clk_src: XC2MCRegClkSrc,
     /// Specifies the clock polarity for the register
     ///
@@ -150,6 +158,10 @@ pub struct XC2Macrocell {
     #[bittwiddler_field = "jed_internal_small 1"]
     #[bittwiddler_field = "jed_internal_large 4"]
     #[bittwiddler_field = "jed_internal_large_buried 4"]
+    #[bittwiddler_field = "crbit32 1|0"]
+    #[bittwiddler_field = "crbit64 7|0"]
+    #[bittwiddler_field = "crbit256 5|0"]
+    #[bittwiddler_field = "crbit_large 12|0"]
     pub clk_invert_pol: bool,
     /// Specifies whether flip-flop are triggered on both clock edges
     ///
@@ -157,16 +169,28 @@ pub struct XC2Macrocell {
     #[bittwiddler_field = "jed_internal_small 4"]
     #[bittwiddler_field = "jed_internal_large 3"]
     #[bittwiddler_field = "jed_internal_large_buried 3"]
+    #[bittwiddler_field = "crbit32 4|0"]
+    #[bittwiddler_field = "crbit64 4|0"]
+    #[bittwiddler_field = "crbit256 6|0"]
+    #[bittwiddler_field = "crbit_large 11|0"]
     pub is_ddr: bool,
     /// Reset source for the register
     #[bittwiddler_field = "jed_internal_small 5 6"]
     #[bittwiddler_field = "jed_internal_large 23 24"]
     #[bittwiddler_field = "jed_internal_large_buried 12 13"]
+    #[bittwiddler_field = "crbit32 5|0 6|0"]
+    #[bittwiddler_field = "crbit64 2|0 3|0"]
+    #[bittwiddler_field = "crbit256 4|2 5|2"]
+    #[bittwiddler_field = "crbit_large 11|1 12|1"]
     pub r_src: XC2MCRegResetSrc,
     /// Set source for the register
     #[bittwiddler_field = "jed_internal_small 7 8"]
     #[bittwiddler_field = "jed_internal_large 17 18"]
     #[bittwiddler_field = "jed_internal_large_buried 7 8"]
+    #[bittwiddler_field = "crbit32 7|0 8|0"]
+    #[bittwiddler_field = "crbit64 0|0 1|0"]
+    #[bittwiddler_field = "crbit256 1|1 2|1"]
+    #[bittwiddler_field = "crbit_large 13|1 14|1"]
     pub s_src: XC2MCRegSetSrc,
     /// Power-up state of the register
     ///
@@ -174,16 +198,28 @@ pub struct XC2Macrocell {
     #[bittwiddler_field = "jed_internal_small !26"]
     #[bittwiddler_field = "jed_internal_large !19"]
     #[bittwiddler_field = "jed_internal_large_buried !9"]
+    #[bittwiddler_field = "crbit32 !8|2"]
+    #[bittwiddler_field = "crbit64 !0|2"]
+    #[bittwiddler_field = "crbit256 !0|1"]
+    #[bittwiddler_field = "crbit_large !14|0"]
     pub init_state: bool,
     /// Register mode
     #[bittwiddler_field = "jed_internal_small 9 10"]
     #[bittwiddler_field = "jed_internal_large 21 22"]
     #[bittwiddler_field = "jed_internal_large_buried 10 11"]
+    #[bittwiddler_field = "crbit32 0|1 1|1"]
+    #[bittwiddler_field = "crbit64 7|1 8|1"]
+    #[bittwiddler_field = "crbit256 6|2 7|2"]
+    #[bittwiddler_field = "crbit_large 9|1 10|1"]
     pub reg_mode: XC2MCRegMode,
     /// ZIA input mode for feedback from this macrocell
     #[bittwiddler_field = "jed_internal_small 13 14"]
     #[bittwiddler_field = "jed_internal_large 6 7"]
     #[bittwiddler_field = "jed_internal_large_buried 5 6"]
+    #[bittwiddler_field = "crbit32 4|1 5|1"]
+    #[bittwiddler_field = "crbit64 3|1 4|1"]
+    #[bittwiddler_field = "crbit256 2|0 3|0"]
+    #[bittwiddler_field = "crbit_large 2|0 3|0"]
     pub fb_mode: XC2MCFeedbackMode,
     /// Controls the input for the register
     ///
@@ -192,11 +228,19 @@ pub struct XC2Macrocell {
     #[bittwiddler_field = "jed_internal_small !15"]
     #[bittwiddler_field = "jed_internal_large !10"]
     #[bittwiddler_field = "jed_internal_large_buried F"]
+    #[bittwiddler_field = "crbit32 !6|1"]
+    #[bittwiddler_field = "crbit64 !2|1"]
+    #[bittwiddler_field = "crbit256 !9|1"]
+    #[bittwiddler_field = "crbit_large !13|0"]
     pub ff_in_ibuf: bool,
     /// Controls the "other" (not from the OR term) input to the XOR gate
     #[bittwiddler_field = "jed_internal_small 17 18"]
     #[bittwiddler_field = "jed_internal_large 27 28"]
     #[bittwiddler_field = "jed_internal_large_buried 14 15"]
+    #[bittwiddler_field = "crbit32 8|1 0|2"]
+    #[bittwiddler_field = "crbit64 7|2 8|2"]
+    #[bittwiddler_field = "crbit256 0|2 1|2"]
+    #[bittwiddler_field = "crbit_large 0|1 1|1"]
     pub xor_mode: XC2MCXorMode,
 }
 
@@ -275,249 +319,30 @@ impl XC2Macrocell {
     /// Write the crbit representation of this macrocell to the given `fuse_array`.
     pub fn to_crbit(&self, device: XC2Device, fb: u32, mc: u32, fuse_array: &mut FuseArray) {
         let (x, y, mirror) = mc_block_loc(device, fb);
-        // direction
-        let x = x as i32;
-        let d = if !mirror {1} else {-1};
         match device {
             XC2Device::XC2C32 | XC2Device::XC2C32A => {
                 // The "32" variant
                 // each macrocell is 3 rows high
                 let y = y + (mc as usize) * 3;
-
-                // aclk
-                fuse_array.set((x + d * 0) as usize, y + 0, self.clk_src.encode().0);
-
-                // clkop
-                fuse_array.set((x + d * 1) as usize, y + 0, self.clk_invert_pol);
-
-                // clk
-                let clk = (self.clk_src.encode().1, self.clk_src.encode().2);
-                fuse_array.set((x + d * 2) as usize, y + 0, clk.0);
-                fuse_array.set((x + d * 3) as usize, y + 0, clk.1);
-
-                // clkfreq
-                fuse_array.set((x + d * 4) as usize, y + 0, self.is_ddr);
-
-                // r
-                let r = self.r_src.encode();
-                fuse_array.set((x + d * 5) as usize, y + 0, r.0);
-                fuse_array.set((x + d * 6) as usize, y + 0, r.1);
-
-                // p
-                let p = self.s_src.encode();
-                fuse_array.set((x + d * 7) as usize, y + 0, p.0);
-                fuse_array.set((x + d * 8) as usize, y + 0, p.1);
-
-                // regmod
-                let regmod = self.reg_mode.encode();
-                fuse_array.set((x + d * 0) as usize, y + 1, regmod.0);
-                fuse_array.set((x + d * 1) as usize, y + 1, regmod.1);
-
-                // skipped INz (belongs to IOB)
-
-                // fb
-                let fb = self.fb_mode.encode();
-                fuse_array.set((x + d * 4) as usize, y + 1, fb.0);
-                fuse_array.set((x + d * 5) as usize, y + 1, fb.1);
-
-                // inreg
-                fuse_array.set((x + d * 6) as usize, y + 1, !self.ff_in_ibuf);
-
-                // skipped St (belongs to IOB)
-
-                // xorin
-                let xorin = self.xor_mode.encode();
-                fuse_array.set((x + d * 8) as usize, y + 1, xorin.0);
-                fuse_array.set((x + d * 0) as usize, y + 2, xorin.1);
-
-                // skipped RegCom (belongs to IOB)
-                // skipped Oe (belongs to IOB)
-                // skipped Tm (belongs to IOB)
-                // skipped Slw (belongs to IOB)
-
-                // pu
-                fuse_array.set((x + d * 8) as usize, y + 2, !self.init_state);
+                self.encode_crbit32(fuse_array, (x, y), mirror);
             },
             XC2Device::XC2C64 | XC2Device::XC2C64A => {
                 // The "64" variant
                 // each macrocell is 3 rows high
                 let y = y + (mc as usize) * 3;
-
-                // aclk
-                fuse_array.set((x + d * 8) as usize, y + 0, self.clk_src.encode().0);
-
-                // clkop
-                fuse_array.set((x + d * 7) as usize, y + 0, self.clk_invert_pol);
-
-                // clk
-                let clk = (self.clk_src.encode().1, self.clk_src.encode().2);
-                fuse_array.set((x + d * 5) as usize, y + 0, clk.0);
-                fuse_array.set((x + d * 6) as usize, y + 0, clk.1);
-
-                // clkfreq
-                fuse_array.set((x + d * 4) as usize, y + 0, self.is_ddr);
-
-                // r
-                let r = self.r_src.encode();
-                fuse_array.set((x + d * 2) as usize, y + 0, r.0);
-                fuse_array.set((x + d * 3) as usize, y + 0, r.1);
-
-                // p
-                let p = self.s_src.encode();
-                fuse_array.set((x + d * 0) as usize, y + 0, p.0);
-                fuse_array.set((x + d * 1) as usize, y + 0, p.1);
-
-                // regmod
-                let regmod = self.reg_mode.encode();
-                fuse_array.set((x + d * 7) as usize, y + 1, regmod.0);
-                fuse_array.set((x + d * 8) as usize, y + 1, regmod.1);
-
-                // skipped INz (belongs to IOB)
-
-                // fb
-                let fb = self.fb_mode.encode();
-                fuse_array.set((x + d * 3) as usize, y + 1, fb.0);
-                fuse_array.set((x + d * 4) as usize, y + 1, fb.1);
-
-                // inreg
-                fuse_array.set((x + d * 2) as usize, y + 1, !self.ff_in_ibuf);
-
-                // skipped St (belongs to IOB)
-
-                // xorin
-                let xorin = self.xor_mode.encode();
-                fuse_array.set((x + d * 7) as usize, y + 2, xorin.0);
-                fuse_array.set((x + d * 8) as usize, y + 2, xorin.1);
-
-                // skipped RegCom (belongs to IOB)
-                // skipped Oe (belongs to IOB)
-                // skipped Tm (belongs to IOB)
-                // skipped Slw (belongs to IOB)
-
-                // pu
-                fuse_array.set((x + d * 0) as usize, y + 2, !self.init_state);
+                self.encode_crbit64(fuse_array, (x, y), mirror);
             },
             XC2Device::XC2C256 => {
                 // The "256" variant
                 // each macrocell is 3 rows high
                 let y = y + (mc as usize) * 3;
-
-                // skipped InMod (belongs to IOB)
-
-                // fb
-                let fb = self.fb_mode.encode();
-                fuse_array.set((x + d * 2) as usize, y + 0, fb.0);
-                fuse_array.set((x + d * 3) as usize, y + 0, fb.1);
-
-                // skipped DG (belongs to IOB)
-
-                // clkop
-                fuse_array.set((x + d * 5) as usize, y + 0, self.clk_invert_pol);
-
-                // clkfreq
-                fuse_array.set((x + d * 6) as usize, y + 0, self.is_ddr);
-
-                // clk
-                let clk = (self.clk_src.encode().1, self.clk_src.encode().2);
-                fuse_array.set((x + d * 7) as usize, y + 0, clk.0);
-                fuse_array.set((x + d * 8) as usize, y + 0, clk.1);
-
-                // aclk
-                fuse_array.set((x + d * 9) as usize, y + 0, self.clk_src.encode().0);
-
-                // pu
-                fuse_array.set((x + d * 0) as usize, y + 1, !self.init_state);
-
-                // p
-                let p = self.s_src.encode();
-                fuse_array.set((x + d * 1) as usize, y + 1, p.0);
-                fuse_array.set((x + d * 2) as usize, y + 1, p.1);
-
-                // skipped Oe (belongs to IOB)
-                // skipped INz (belongs to IOB)
-
-                // inreg
-                fuse_array.set((x + d * 9) as usize, y + 1, !self.ff_in_ibuf);
-
-                // xorin
-                let xorin = self.xor_mode.encode();
-                fuse_array.set((x + d * 0) as usize, y + 2, xorin.0);
-                fuse_array.set((x + d * 1) as usize, y + 2, xorin.1);
-
-                // skipped Tm (belongs to IOB)
-                // skipped Slw (belongs to IOB)
-
-                // r
-                let r = self.r_src.encode();
-                fuse_array.set((x + d * 4) as usize, y + 2, r.0);
-                fuse_array.set((x + d * 5) as usize, y + 2, r.1);
-
-                // regmod
-                let regmod = self.reg_mode.encode();
-                fuse_array.set((x + d * 6) as usize, y + 2, regmod.0);
-                fuse_array.set((x + d * 7) as usize, y + 2, regmod.1);
-
-                // skipped RegCom (belongs to IOB)
+                self.encode_crbit256(fuse_array, (x, y), mirror);
             },
             XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
                 // The "common large macrocell" variant
                 // we need this funny lookup table, but otherwise macrocells are 2x15
                 let y = y + MC_TO_ROW_MAP_LARGE[mc as usize];
-
-                // skipped INz (belongs to IOB)
-
-                // fb
-                let fb = self.fb_mode.encode();
-                fuse_array.set((x + d * 2) as usize, y + 0, fb.0);
-                fuse_array.set((x + d * 3) as usize, y + 0, fb.1);
-
-                // skipped DG (belongs to IOB)
-                // skipped InMod (belongs to IOB)
-                // skipped Tm (belongs to IOB)
-
-                // aclk
-                fuse_array.set((x + d * 8) as usize, y + 0, self.clk_src.encode().0);
-
-                // clk
-                let clk = (self.clk_src.encode().1, self.clk_src.encode().2);
-                fuse_array.set((x + d * 9) as usize, y + 0, clk.0);
-                fuse_array.set((x + d * 10) as usize, y + 0, clk.1);
-
-                // clkfreq
-                fuse_array.set((x + d * 11) as usize, y + 0, self.is_ddr);
-
-                // clkop
-                fuse_array.set((x + d * 12) as usize, y + 0, self.clk_invert_pol);
-
-                // inreg
-                fuse_array.set((x + d * 13) as usize, y + 0, !self.ff_in_ibuf);
-
-                // pu
-                fuse_array.set((x + d * 14) as usize, y + 0, !self.init_state);
-
-                // xorin
-                let xorin = self.xor_mode.encode();
-                fuse_array.set((x + d * 0) as usize, y + 1, xorin.0);
-                fuse_array.set((x + d * 1) as usize, y + 1, xorin.1);
-
-                // skipped Oe (belongs to IOB)
-                // skipped Slw (belongs to IOB)
-                // skipped RegCom (belongs to IOB)
-
-                // regmod
-                let regmod = self.reg_mode.encode();
-                fuse_array.set((x + d * 9) as usize, y + 1, regmod.0);
-                fuse_array.set((x + d * 10) as usize, y + 1, regmod.1);
-
-                // r
-                let r = self.r_src.encode();
-                fuse_array.set((x + d * 11) as usize, y + 1, r.0);
-                fuse_array.set((x + d * 12) as usize, y + 1, r.1);
-
-                // p
-                let p = self.s_src.encode();
-                fuse_array.set((x + d * 13) as usize, y + 1, p.0);
-                fuse_array.set((x + d * 14) as usize, y + 1, p.1);
+                self.encode_crbit_large(fuse_array, (x, y), mirror);
             }
         }
     }
@@ -525,277 +350,30 @@ impl XC2Macrocell {
     /// Reads the crbit representation of this macrocell from the given `fuse_array`.
     pub fn from_crbit(device: XC2Device, fb: u32, mc: u32, fuse_array: &FuseArray) -> Self {
         let (x, y, mirror) = mc_block_loc(device, fb);
-        // direction
-        let x = x as i32;
-        let d = if !mirror {1} else {-1};
         match device {
             XC2Device::XC2C32 | XC2Device::XC2C32A => {
                 // The "32" variant
                 // each macrocell is 3 rows high
                 let y = y + (mc as usize) * 3;
-
-                // aclk
-                let aclk = fuse_array.get((x + d * 0) as usize, y + 0);
-
-                // clkop
-                let clk_invert_pol = fuse_array.get((x + d * 1) as usize, y + 0);
-
-                // clk
-                let clk = (fuse_array.get((x + d * 2) as usize, y + 0),
-                           fuse_array.get((x + d * 3) as usize, y + 0));
-
-                // clkfreq
-                let is_ddr = fuse_array.get((x + d * 4) as usize, y + 0);
-
-                // r
-                let r = (fuse_array.get((x + d * 5) as usize, y + 0),
-                         fuse_array.get((x + d * 6) as usize, y + 0));
-
-                // p
-                let p = (fuse_array.get((x + d * 7) as usize, y + 0),
-                         fuse_array.get((x + d * 8) as usize, y + 0));
-
-                // regmod
-                let regmod = (fuse_array.get((x + d * 0) as usize, y + 1),
-                              fuse_array.get((x + d * 1) as usize, y + 1));
-
-                // skipped INz (belongs to IOB)
-
-                // fb
-                let fb = (fuse_array.get((x + d * 4) as usize, y + 1),
-                          fuse_array.get((x + d * 5) as usize, y + 1));
-
-                // inreg
-                let ff_in_ibuf = !fuse_array.get((x + d * 6) as usize, y + 1);
-
-                // skipped St (belongs to IOB)
-
-                // xorin
-                let xorin = (fuse_array.get((x + d * 8) as usize, y + 1),
-                             fuse_array.get((x + d * 0) as usize, y + 2));
-
-                // skipped RegCom (belongs to IOB)
-                // skipped Oe (belongs to IOB)
-                // skipped Tm (belongs to IOB)
-                // skipped Slw (belongs to IOB)
-
-                // pu
-                let init_state = !fuse_array.get((x + d * 8) as usize, y + 2);
-
-                XC2Macrocell {
-                    clk_src: XC2MCRegClkSrc::decode((aclk, clk.0, clk.1)),
-                    clk_invert_pol,
-                    is_ddr,
-                    r_src: XC2MCRegResetSrc::decode(r),
-                    s_src: XC2MCRegSetSrc::decode(p),
-                    init_state,
-                    reg_mode: XC2MCRegMode::decode(regmod),
-                    fb_mode: XC2MCFeedbackMode::decode(fb),
-                    ff_in_ibuf,
-                    xor_mode: XC2MCXorMode::decode(xorin),
-                }
+                Self::decode_crbit32(fuse_array, (x, y), mirror)
             },
             XC2Device::XC2C64 | XC2Device::XC2C64A => {
                 // The "64" variant
                 // each macrocell is 3 rows high
                 let y = y + (mc as usize) * 3;
-
-                // aclk
-                let aclk = fuse_array.get((x + d * 8) as usize, y + 0);
-
-                // clkop
-                let clk_invert_pol = fuse_array.get((x + d * 7) as usize, y + 0);
-
-                // clk
-                let clk = (fuse_array.get((x + d * 5) as usize, y + 0),
-                           fuse_array.get((x + d * 6) as usize, y + 0));
-
-                // clkfreq
-                let is_ddr = fuse_array.get((x + d * 4) as usize, y + 0);
-
-                // r
-                let r = (fuse_array.get((x + d * 2) as usize, y + 0),
-                         fuse_array.get((x + d * 3) as usize, y + 0));
-
-                // p
-                let p = (fuse_array.get((x + d * 0) as usize, y + 0),
-                         fuse_array.get((x + d * 1) as usize, y + 0));
-
-                // regmod
-                let regmod = (fuse_array.get((x + d * 7) as usize, y + 1),
-                              fuse_array.get((x + d * 8) as usize, y + 1));
-
-                // skipped INz (belongs to IOB)
-
-                // fb
-                let fb = (fuse_array.get((x + d * 3) as usize, y + 1),
-                          fuse_array.get((x + d * 4) as usize, y + 1));
-
-                // inreg
-                let ff_in_ibuf = !fuse_array.get((x + d * 2) as usize, y + 1);
-
-                // skipped St (belongs to IOB)
-
-                // xorin
-                let xorin = (fuse_array.get((x + d * 7) as usize, y + 2),
-                             fuse_array.get((x + d * 8) as usize, y + 2));
-
-                // skipped RegCom (belongs to IOB)
-                // skipped Oe (belongs to IOB)
-                // skipped Tm (belongs to IOB)
-                // skipped Slw (belongs to IOB)
-
-                // pu
-                let init_state = !fuse_array.get((x + d * 0) as usize, y + 2);
-
-                XC2Macrocell {
-                    clk_src: XC2MCRegClkSrc::decode((aclk, clk.0, clk.1)),
-                    clk_invert_pol,
-                    is_ddr,
-                    r_src: XC2MCRegResetSrc::decode(r),
-                    s_src: XC2MCRegSetSrc::decode(p),
-                    init_state,
-                    reg_mode: XC2MCRegMode::decode(regmod),
-                    fb_mode: XC2MCFeedbackMode::decode(fb),
-                    ff_in_ibuf,
-                    xor_mode: XC2MCXorMode::decode(xorin),
-                }
+                Self::decode_crbit64(fuse_array, (x, y), mirror)
             },
             XC2Device::XC2C256 => {
                 // The "256" variant
                 // each macrocell is 3 rows high
                 let y = y + (mc as usize) * 3;
-
-                // skipped InMod (belongs to IOB)
-
-                // fb
-                let fb = (fuse_array.get((x + d * 2) as usize, y + 0),
-                          fuse_array.get((x + d * 3) as usize, y + 0));
-
-                // skipped DG (belongs to IOB)
-
-                // clkop
-                let clk_invert_pol = fuse_array.get((x + d * 5) as usize, y + 0);
-
-                // clkfreq
-                let is_ddr = fuse_array.get((x + d * 6) as usize, y + 0);
-
-                // clk
-                let clk = (fuse_array.get((x + d * 7) as usize, y + 0),
-                           fuse_array.get((x + d * 8) as usize, y + 0));
-
-                // aclk
-                let aclk = fuse_array.get((x + d * 9) as usize, y + 0);
-
-                // pu
-                let init_state = !fuse_array.get((x + d * 0) as usize, y + 1);
-
-                // p
-                let p = (fuse_array.get((x + d * 1) as usize, y + 1),
-                         fuse_array.get((x + d * 2) as usize, y + 1));
-
-                // skipped Oe (belongs to IOB)
-                // skipped INz (belongs to IOB)
-
-                // inreg
-                let ff_in_ibuf = !fuse_array.get((x + d * 9) as usize, y + 1);
-
-                // xorin
-                let xorin = (fuse_array.get((x + d * 0) as usize, y + 2),
-                             fuse_array.get((x + d * 1) as usize, y + 2));
-
-                // skipped Tm (belongs to IOB)
-                // skipped Slw (belongs to IOB)
-
-                // r
-                let r = (fuse_array.get((x + d * 4) as usize, y + 2),
-                         fuse_array.get((x + d * 5) as usize, y + 2));
-
-                // regmod
-                let regmod = (fuse_array.get((x + d * 6) as usize, y + 2),
-                              fuse_array.get((x + d * 7) as usize, y + 2));
-
-                // skipped RegCom (belongs to IOB)
-
-                XC2Macrocell {
-                    clk_src: XC2MCRegClkSrc::decode((aclk, clk.0, clk.1)),
-                    clk_invert_pol,
-                    is_ddr,
-                    r_src: XC2MCRegResetSrc::decode(r),
-                    s_src: XC2MCRegSetSrc::decode(p),
-                    init_state,
-                    reg_mode: XC2MCRegMode::decode(regmod),
-                    fb_mode: XC2MCFeedbackMode::decode(fb),
-                    ff_in_ibuf,
-                    xor_mode: XC2MCXorMode::decode(xorin),
-                }
+                Self::decode_crbit256(fuse_array, (x, y), mirror)
             },
             XC2Device::XC2C128 | XC2Device::XC2C384 | XC2Device::XC2C512 => {
                 // The "common large macrocell" variant
                 // we need this funny lookup table, but otherwise macrocells are 2x15
                 let y = y + MC_TO_ROW_MAP_LARGE[mc as usize];
-
-                // skipped INz (belongs to IOB)
-
-                // fb
-                let fb = (fuse_array.get((x + d * 2) as usize, y + 0),
-                          fuse_array.get((x + d * 3) as usize, y + 0));
-
-                // skipped DG (belongs to IOB)
-                // skipped InMod (belongs to IOB)
-                // skipped Tm (belongs to IOB)
-
-                // aclk
-                let aclk = fuse_array.get((x + d * 8) as usize, y + 0);
-
-                // clk
-                let clk = (fuse_array.get((x + d * 9) as usize, y + 0),
-                           fuse_array.get((x + d * 10) as usize, y + 0));
-
-                // clkfreq
-                let is_ddr = fuse_array.get((x + d * 11) as usize, y + 0);
-
-                // clkop
-                let clk_invert_pol = fuse_array.get((x + d * 12) as usize, y + 0);
-
-                // inreg
-                let ff_in_ibuf = !fuse_array.get((x + d * 13) as usize, y + 0);
-
-                // pu
-                let init_state = !fuse_array.get((x + d * 14) as usize, y + 0);
-
-                // xorin
-                let xorin = (fuse_array.get((x + d * 0) as usize, y + 1),
-                             fuse_array.get((x + d * 1) as usize, y + 1));
-
-                // skipped Oe (belongs to IOB)
-                // skipped Slw (belongs to IOB)
-                // skipped RegCom (belongs to IOB)
-
-                // regmod
-                let regmod = (fuse_array.get((x + d * 9) as usize, y + 1),
-                              fuse_array.get((x + d * 10) as usize, y + 1));
-
-                // r
-                let r = (fuse_array.get((x + d * 11) as usize, y + 1),
-                         fuse_array.get((x + d * 12) as usize, y + 1));
-
-                // p
-                let p = (fuse_array.get((x + d * 13) as usize, y + 1),
-                         fuse_array.get((x + d * 14) as usize, y + 1));
-
-                XC2Macrocell {
-                    clk_src: XC2MCRegClkSrc::decode((aclk, clk.0, clk.1)),
-                    clk_invert_pol,
-                    is_ddr,
-                    r_src: XC2MCRegResetSrc::decode(r),
-                    s_src: XC2MCRegSetSrc::decode(p),
-                    init_state,
-                    reg_mode: XC2MCRegMode::decode(regmod),
-                    fb_mode: XC2MCFeedbackMode::decode(fb),
-                    ff_in_ibuf,
-                    xor_mode: XC2MCXorMode::decode(xorin),
-                }
+                Self::decode_crbit_large(fuse_array, (x, y), mirror)
             }
         }
     }
