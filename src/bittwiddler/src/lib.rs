@@ -480,8 +480,13 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                         }
                     },
                     BitTwiddlerFieldRef::Index(idx) => {
+                        let field_idx = syn::Index {
+                            index: idx as u32,
+                            // TODO: IDK wtf to do here?!
+                            span: input_ident.span()
+                        };
                         quote! {
-                            let x = self.#idx.encode();
+                            let x = self.#field_idx.encode();
                         }
                     },
                     BitTwiddlerFieldRef::Self_ => {
@@ -498,8 +503,13 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                         }
                     },
                     BitTwiddlerFieldRef::Index(idx) => {
+                        let field_idx = syn::Index {
+                            index: idx as u32,
+                            // TODO: IDK wtf to do here?!
+                            span: input_ident.span()
+                        };
                         quote! {
-                            let x = self.#idx;
+                            let x = self.#field_idx;
                         }
                     },
                     BitTwiddlerFieldRef::Self_ => {
@@ -766,13 +776,13 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             BitTwiddlerObjType::Unnamed => {
                 if errtype.is_some() {
                     quote!{
-                        Ok(Self (
+                        Ok(#input_ident (
                             #(#decode_field_ids),*
                         ))
                     }
                 } else {
                     quote!{
-                        Self (
+                        #input_ident (
                             #(#decode_field_ids),*
                         )
                     }
