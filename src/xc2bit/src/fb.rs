@@ -125,9 +125,9 @@ impl XC2BitstreamFB {
     /// Dump a human-readable explanation of the settings for this FB to the given `writer` object.
     /// `device` must be the device type this FB was extracted from and is needed to decode I/O pin numbers.
     /// `fb` must be the index of this function block.
-    pub fn dump_human_readable(&self, device: XC2Device, fb: u32, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable<W: Write>(&self, device: XC2Device, fb: u32, mut writer: W) -> Result<(), io::Error> {
         for i in 0..MCS_PER_FB {
-            self.mcs[i].dump_human_readable(fb, i as u32, writer)?;
+            self.mcs[i].dump_human_readable(fb, i as u32, &mut writer)?;
         }
 
         write!(writer, "\n")?;

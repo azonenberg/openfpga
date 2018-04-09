@@ -137,7 +137,7 @@ impl Default for XC2MCSmallIOB {
 impl XC2MCSmallIOB {
     /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
     /// `my_idx` must be the index of this I/O pin in the internal numbering scheme.
-    pub fn dump_human_readable(&self, device: XC2Device, my_idx: u32, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable<W: Write>(&self, device: XC2Device, my_idx: u32, mut writer: W) -> Result<(), io::Error> {
         write!(writer, "\n")?;
         let (fb, mc) = iob_num_to_fb_mc_num(device, my_idx).unwrap();
         write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, mc + 1)?;
@@ -304,7 +304,7 @@ impl Default for XC2MCLargeIOB {
 impl XC2MCLargeIOB {
     /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
     /// `my_idx` must be the index of this I/O pin in the internal numbering scheme.
-    pub fn dump_human_readable(&self, device: XC2Device, my_idx: u32, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable<W: Write>(&self, device: XC2Device, my_idx: u32, mut writer: W) -> Result<(), io::Error> {
         write!(writer, "\n")?;
         let (fb, mc) = iob_num_to_fb_mc_num(device, my_idx).unwrap();
         write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, mc + 1)?;
@@ -419,7 +419,7 @@ impl Default for XC2ExtraIBuf {
 
 impl XC2ExtraIBuf {
     /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
-    pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable<W: Write>(&self, mut writer: W) -> Result<(), io::Error> {
         write!(writer, "\n")?;
         write!(writer, "I/O configuration for input-only pin\n")?;
         write!(writer, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"})?;

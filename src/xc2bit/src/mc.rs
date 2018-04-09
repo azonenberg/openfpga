@@ -269,7 +269,7 @@ pub static MC_TO_ROW_MAP_LARGE: [usize; MCS_PER_FB] =
 impl XC2Macrocell {
     /// Dump a human-readable explanation of the settings for this macrocell to the given `writer` object.
     /// `fb` and `mc` must be the function block number and macrocell number of this macrocell.
-    pub fn dump_human_readable(&self, fb: u32, mc: u32, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable<W: Write>(&self, fb: u32, mc: u32, mut writer: W) -> Result<(), io::Error> {
         write!(writer, "\n")?;
         write!(writer, "FF configuration for FB{}_{}\n", fb + 1, mc + 1)?;
         write!(writer, "FF mode: {}\n", match self.reg_mode {

@@ -49,17 +49,17 @@ pub struct XC2Bitstream {
 
 impl XC2Bitstream {
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
-    pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable<W: Write>(&self, mut writer: W) -> Result<(), io::Error> {
         write!(writer, "xc2bit dump\n")?;
         write!(writer, "device speed grade: {}\n", self.speed_grade)?;
         write!(writer, "device package: {}\n", self.package)?;
-        self.bits.dump_human_readable(writer)?;
+        self.bits.dump_human_readable(&mut writer)?;
 
         Ok(())
     }
 
     /// Write a .jed representation of the bitstream to the given `writer` object.
-    pub fn to_jed<W>(&self, mut writer: W) -> Result<(), io::Error> where W: Write {
+    pub fn to_jed<W: Write>(&self, mut writer: W) -> Result<(), io::Error> {
         write!(writer, ".JED fuse map written by xc2bit\n")?;
         write!(writer, "https://github.com/azonenberg/openfpga\n\n")?;
 
@@ -753,7 +753,7 @@ impl XC2BitstreamBits {
     }
 
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
-    pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable<W: Write>(&self, mut writer: W) -> Result<(), io::Error> {
         write!(writer, "device type: {}\n", self.device_type())?;
 
         // Bank voltages
@@ -798,33 +798,33 @@ impl XC2BitstreamBits {
 
         // Clock divider
         if let Some(clock_div) = self.get_clock_div() {
-            clock_div.dump_human_readable(writer)?;
+            clock_div.dump_human_readable(&mut writer)?;
         }
 
         // Global net configuration
-        self.get_global_nets().dump_human_readable(writer)?;
+        self.get_global_nets().dump_human_readable(&mut writer)?;
 
         // IOBs
         for i in 0..self.device_type().num_iobs() {
             if let Some(iobs) = self.get_small_iobs() {
-                iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
+                iobs[i].dump_human_readable(self.device_type(), i as u32, &mut writer)?;
             }
             if let Some(iobs) = self.get_large_iobs() {
-                iobs[i].dump_human_readable(self.device_type(), i as u32, writer)?;
+                iobs[i].dump_human_readable(self.device_type(), i as u32, &mut writer)?;
             }
         }
 
         // Input-only pin
         match self {
             &XC2BitstreamBits::XC2C32 {ref inpin, ..} | &XC2BitstreamBits::XC2C32A {ref inpin, ..} => {
-                inpin.dump_human_readable(writer)?;
+                inpin.dump_human_readable(&mut writer)?;
             },
             _ => {}
         }
 
         // FBs
         for i in 0..self.device_type().num_fbs() {
-            self.get_fb()[i].dump_human_readable(self.device_type(), i as u32, writer)?;
+            self.get_fb()[i].dump_human_readable(self.device_type(), i as u32, &mut writer)?;
         }
 
         Ok(())

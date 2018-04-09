@@ -73,7 +73,7 @@ impl Default for XC2GlobalNets {
 
 impl XC2GlobalNets {
     /// Dump a human-readable explanation of the global net configuration to the given `writer` object.
-    pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable<W: Write>(&self, mut writer: W) -> Result<(), io::Error> {
         write!(writer, "\n")?;
         write!(writer, "GCK0 {}\n", if self.gck_enable[0] {"enabled"} else {"disabled"})?;
         write!(writer, "GCK1 {}\n", if self.gck_enable[1] {"enabled"} else {"disabled"})?;
@@ -227,7 +227,7 @@ pub struct XC2ClockDiv {
 
 impl XC2ClockDiv {
     /// Dump a human-readable explanation of the clock divider to the given `writer` object.
-    pub fn dump_human_readable(&self, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn dump_human_readable<W: Write>(&self, mut writer: W) -> Result<(), io::Error> {
         write!(writer, "\n")?;
         write!(writer, "GCK2 clock divider {}\n", if self.enabled {"enabled"} else {"disabled"})?;
         write!(writer, "clock divider delay {}\n", if self.delay {"enabled"} else {"disabled"})?;
