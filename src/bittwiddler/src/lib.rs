@@ -192,6 +192,13 @@ enum BitTwiddlerFieldRef {
     Self_,
 }
 
+#[derive(Copy, Clone, Debug)]
+enum BitTwiddlerObjType {
+    Named,
+    Unnamed,
+    Enum,
+}
+
 impl BitTwiddlerFieldRef {
     fn to_string(&self) -> String {
         match self {
@@ -321,6 +328,8 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
 
     let mut fields_and_attrs = Vec::new();
 
+    let overall_type;
+
     match input.data {
         syn::Data::Struct(datastruct) => {
             // let input_ident = input.ident;
@@ -338,9 +347,12 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                         let is_bool = is_bool(&field.ty);
 
                         if bittwiddler_field_attrs.len() > 0 {
-                            fields_and_attrs.push((BitTwiddlerFieldRef::Ident(id), bittwiddler_field_attrs, is_bool));
+                            fields_and_attrs.push((BitTwiddlerFieldRef::Ident(id),
+                                bittwiddler_field_attrs, is_bool, Some(field.ty.clone())));
                         }
                     }
+
+                    overall_type = BitTwiddlerObjType::Named;
                 },
                 syn::Fields::Unnamed(unnamed) => {
                     for (idx, field) in unnamed.unnamed.iter().enumerate() {
@@ -351,11 +363,17 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                         let is_bool = is_bool(&field.ty);
 
                         if bittwiddler_field_attrs.len() > 0 {
-                            fields_and_attrs.push((BitTwiddlerFieldRef::Index(idx), bittwiddler_field_attrs, is_bool));
+                            fields_and_attrs.push((BitTwiddlerFieldRef::Index(idx),
+                                bittwiddler_field_attrs, is_bool, Some(field.ty.clone())));
                         }
                     }
+
+                    overall_type = BitTwiddlerObjType::Unnamed;
                 },
-                syn::Fields::Unit => {},
+                syn::Fields::Unit => {
+                    // This will be rejected later
+                    overall_type = BitTwiddlerObjType::Named;
+                },
             }
         },
         syn::Data::Enum(_dataenum) => {
@@ -367,8 +385,10 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                 |x| x.value()).collect::<Vec<_>>();
 
             if bittwiddler_field_attrs.len() > 0 {
-                fields_and_attrs.push((BitTwiddlerFieldRef::Self_, bittwiddler_field_attrs, false));
+                fields_and_attrs.push((BitTwiddlerFieldRef::Self_, bittwiddler_field_attrs, false, None));
             }
+
+            overall_type = BitTwiddlerObjType::Enum;
         },
         _ => panic!("BitPattern must be used on a struct or enum")
     }
@@ -386,18 +406,34 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
         let instance_attribs = attrib_split.collect::<Vec<_>>();
         println!("{:?}", instance_attribs);
         let mut instance_attribs_hash = HashSet::with_capacity(instance_attribs.len());
-        for x in instance_attribs {
+        for &x in &instance_attribs {
             instance_attribs_hash.insert(x);
         }
 
         let this_instance_attribs = fields_and_attrs.iter().map(|x|
             (x.0, x.1.iter().map(|y| StringSplitter::new(y).collect::<Vec<_>>()).filter(|z|
-                z[0] == instance_name).collect::<Vec<_>>(), x.2));
+                z[0] == instance_name).collect::<Vec<_>>(), x.2, x.3.clone()));
 
         println!("{}", instance_name);
         // println!("{:?}", this_instance_attribs.collect::<Vec<_>>());
 
-        // TODO: Look for the error attribute
+        let mut errtype = None;
+        for x in &instance_attribs {
+            if x.starts_with("err=") {
+                let mut errtype_tmp = x.split_at(4).1;
+                if errtype_tmp.starts_with("'") {
+                    if !errtype_tmp.ends_with("'") {
+                        panic!("Malformed error type for {} on {}", instance_name, input_ident.as_ref());
+                    }
+
+                    errtype_tmp = errtype_tmp.split_at(1).1;
+                    errtype_tmp = errtype_tmp.split_at(errtype_tmp.len() - 1).0;
+                }
+
+                println!("errtype {}", errtype_tmp);
+                errtype = Some(syn::parse_str::<syn::TypeParam>(errtype_tmp).expect("Failed to parse err= attribute"));
+            }
+        }
 
         let mut dimensions = None;
 
@@ -405,7 +441,12 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
 
         let mut encode_field_tokens = quote!{};
 
-        for (field_id, field_locs, field_isbool) in this_instance_attribs {
+        let decode_fn_ident = syn::Ident::from(format!("decode_{}", instance_name));
+
+        let mut decode_field_tokens = quote!{};
+        let mut decode_field_ids = Vec::new();
+
+        for (field_id, field_locs, field_isbool, field_ty) in this_instance_attribs {
             if field_locs.len() == 0 {
                 continue;
             }
@@ -434,44 +475,22 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             let mut encode_this_field = if !field_isbool {
                 match field_id {
                     BitTwiddlerFieldRef::Ident(id) => {
-                        if needs_err {
-                            quote! {
-                                let x = self.#id.encode()?;
-                            }
-                        } else {
-                            quote! {
-                                let x = self.#id.encode();
-                            }
+                        quote! {
+                            let x = self.#id.encode();
                         }
                     },
                     BitTwiddlerFieldRef::Index(idx) => {
-                        if needs_err {
-                            quote! {
-                                let x = self.#idx.encode()?;
-                            }
-                        } else {
-                            quote! {
-                                let x = self.#idx.encode();
-                            }
+                        quote! {
+                            let x = self.#idx.encode();
                         }
                     },
                     BitTwiddlerFieldRef::Self_ => {
-                        if needs_err {
-                            quote! {
-                                let x = self.encode()?;
-                            }
-                        } else {
-                            quote! {
-                                let x = self.encode();
-                            }
+                        quote! {
+                            let x = self.encode();
                         }
                     }
                 }
             } else {
-                if needs_err {
-                    panic!("Field {} of {} on {} has \"err\" flag, but it's a boolean",
-                        field_id.to_string(), instance_name, input_ident.as_ref());
-                }
                 match field_id {
                     BitTwiddlerFieldRef::Ident(id) => {
                         quote! {
@@ -488,6 +507,8 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                     }
                 }
             };
+
+            let mut decode_this_field_locs = Vec::new();
 
             for (field_bit_i, loc) in field_locs.iter().enumerate() {
                 let mut loc = *loc;
@@ -549,6 +570,8 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                     }
                 }
 
+                let index_each_dim2 = index_each_dim.clone();
+
                 // println!("{:?}", index_each_dim);
 
                 let inv_token = if inv {quote!{!}} else {quote!{}};
@@ -568,11 +591,96 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                         fuses[(#(#index_each_dim),*)] = #inv_token x;
                     });
                 }
+
+                decode_this_field_locs.push(quote! {
+                    #inv_token fuses[(#(#index_each_dim2),*)]
+                });
             }
 
             // println!("{:?}", encode_this_field);
             encode_field_tokens.append_all(encode_this_field);
+
+            let mut decode_this_field = if decode_this_field_locs.len() != 1 {
+                quote! {
+                    let x = (#(#decode_this_field_locs),*);
+                }
+            } else {
+                // Suppress warnings about extra parens
+                quote! {
+                    let x = #(#decode_this_field_locs),*;
+                }
+            };
+            decode_this_field.append_all(if !field_isbool {
+                match field_id {
+                    BitTwiddlerFieldRef::Ident(id) => {
+                        let ty = field_ty.unwrap();
+                        decode_field_ids.push(id);
+                        if needs_err {
+                            quote! {
+                                let #id = #ty::decode(x)?;
+                            }
+                        } else {
+                            quote! {
+                                let #id = #ty::decode(x);
+                            }
+                        }
+                    },
+                    BitTwiddlerFieldRef::Index(idx) => {
+                        let ty = field_ty.unwrap();
+                        let id = syn::Ident::from(format!{"field{}", idx});
+                        decode_field_ids.push(id);
+                        if needs_err {
+                            quote! {
+                                let #id = #ty::decode(x)?;
+                            }
+                        } else {
+                            quote! {
+                                let #id = #ty::decode(x);
+                            }
+                        }
+                    },
+                    BitTwiddlerFieldRef::Self_ => {
+                        if needs_err {
+                            quote! {
+                                let self_ = Self::decode(x)?;
+                            }
+                        } else {
+                            quote! {
+                                let self_ = Self::decode(x);
+                            }
+                        }
+                    }
+                }
+            } else {
+                if needs_err {
+                    panic!("Field {} of {} on {} has \"err\" flag, but it's a boolean",
+                        field_id.to_string(), instance_name, input_ident.as_ref());
+                }
+                match field_id {
+                    BitTwiddlerFieldRef::Ident(id) => {
+                        decode_field_ids.push(id);
+                        quote! {
+                            let #id = x;
+                        }
+                    },
+                    BitTwiddlerFieldRef::Index(idx) => {
+                        let id = syn::Ident::from(format!{"field{}", idx});
+                        decode_field_ids.push(id);
+                        quote! {
+                            let #id = x;
+                        }
+                    },
+                    BitTwiddlerFieldRef::Self_ => {
+                        unreachable!();
+                    }
+                }
+            });
+
+            decode_field_tokens.append_all(decode_this_field);
         }
+
+        println!("{:?}", decode_field_tokens);
+        println!("{:?}", decode_field_ids);
 
         if dimensions.is_none() {
             panic!("Instance {} on {} has zero fields", instance_name, input_ident.as_ref());
@@ -590,6 +698,10 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
         for _ in 0..dimensions.unwrap() {
             usize_idents3.push(quote!{usize});
         }
+        let mut usize_idents4 = Vec::with_capacity(dimensions.unwrap());
+        for _ in 0..dimensions.unwrap() {
+            usize_idents4.push(quote!{usize});
+        }
 
         let mut mirror_idents = Vec::new();
         for dim_i in 0..dimensions.unwrap() {
@@ -602,18 +714,19 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             }
         }
 
+        let mirror_idents2 = mirror_idents.clone();
+
         let ispub_token = if instance_attribs_hash.contains("pub") {
             quote!{pub}
         } else {
             quote!{}
         };
 
-        let mut encode_tokens = quote!{
+        let encode_tokens = quote!{
             impl #input_ident {
                 #ispub_token fn #encode_fn_ident<T>(&self,
                     fuses: &mut T, start_coord: (#(#usize_idents),*), #(#mirror_idents),*) 
-
-                    where T: ::std::ops::IndexMut<(#(#usize_idents2),*), Output=bool>,
+                    where T: ::std::ops::IndexMut<(#(#usize_idents2),*), Output=bool> + ?Sized
                 {
                     #encode_field_tokens
                 }
@@ -623,6 +736,66 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
         // encode_tokens.append_all(quote!{}});
         println!("{:?}", encode_tokens);
         all_tokens.append_all(encode_tokens);
+
+        let decode_output_tokens = if errtype.is_some() {
+            let errtype = errtype.as_ref().unwrap();
+            quote! {
+                Result<Self, #errtype>
+            }
+        } else {
+            quote! {Self}
+        };
+
+        let decode_return_tokens = match overall_type {
+            BitTwiddlerObjType::Enum => {quote!{self_}},
+            BitTwiddlerObjType::Named => {
+                if errtype.is_some() {
+                    quote!{
+                        Ok(Self {
+                            #(#decode_field_ids),*
+                        })
+                    }
+                } else {
+                    quote!{
+                        Self {
+                            #(#decode_field_ids),*
+                        }
+                    }
+                }
+            },
+            BitTwiddlerObjType::Unnamed => {
+                if errtype.is_some() {
+                    quote!{
+                        Ok(Self (
+                            #(#decode_field_ids),*
+                        ))
+                    }
+                } else {
+                    quote!{
+                        Self (
+                            #(#decode_field_ids),*
+                        )
+                    }
+                }
+            }
+        };
+
+        let decode_tokens = quote!{
+            impl #input_ident {
+                #ispub_token fn #decode_fn_ident<T>(
+                    fuses: &T, start_coord: (#(#usize_idents3),*), #(#mirror_idents2),*)
+                    -> #decode_output_tokens
+                    where T: ::std::ops::Index<(#(#usize_idents4),*), Output=bool> + ?Sized
+                {
+                    #decode_field_tokens
+                    
+                    #decode_return_tokens
+                }
+            }
+        };
+
+        println!("{:?}", decode_tokens);
+        all_tokens.append_all(decode_tokens);
     }
 
     all_tokens.into()

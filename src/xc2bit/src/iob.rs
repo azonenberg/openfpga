@@ -78,7 +78,7 @@ pub enum XC2IOBOBufMode {
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 #[derive(BitTwiddler)]
 // FIXME: Probably should not be pub
-#[bittwiddler = "jed_internal pub"]
+#[bittwiddler = "jed_internal pub err=XC2BitError"]
 // #[bittwiddler = "crbit_internal"]
 pub struct XC2MCSmallIOB {
     /// Mux selection for the ZIA input for this pin
@@ -93,7 +93,7 @@ pub struct XC2MCSmallIOB {
     #[bittwiddler_field = "jed_internal !19"]
     pub obuf_uses_ff: bool,
     /// Selects the output mode for this pin
-    #[bittwiddler_field = "jed_internal 20 21 22 23"]
+    #[bittwiddler_field = "jed_internal err 20 21 22 23"]
     pub obuf_mode: XC2IOBOBufMode,
     /// Selects if the global termination (bus hold or pull-up) is enabled on this pin
     #[bittwiddler_field = "jed_internal 24"]
@@ -312,30 +312,7 @@ impl XC2MCSmallIOB {
 
     /// Internal function that reads only the IO-related bits from the macrocell configuration
     pub fn from_jed(fuses: &[bool], fuse_idx: usize) -> Result<Self, XC2BitError> {
-        let inz = (fuses[fuse_idx + 11],
-                   fuses[fuse_idx + 12]);
-        let input_to_zia = XC2IOBZIAMode::decode(inz);
-
-        let st = fuses[fuse_idx + 16];
-        let regcom = fuses[fuse_idx + 19];
-
-        let oe = (fuses[fuse_idx + 20],
-                  fuses[fuse_idx + 21],
-                  fuses[fuse_idx + 22],
-                  fuses[fuse_idx + 23]);
-        let output_mode = XC2IOBOBufMode::decode(oe)?;
-
-        let tm = fuses[fuse_idx + 24];
-        let slw = fuses[fuse_idx + 25];
-
-        Ok(XC2MCSmallIOB {
-            zia_mode: input_to_zia,
-            schmitt_trigger: st,
-            obuf_uses_ff: !regcom,
-            obuf_mode: output_mode,
-            termination_enabled: tm,
-            slew_is_fast: !slw,
-        })
+        Self::decode_jed_internal(fuses, fuse_idx)
     }
 }
 
