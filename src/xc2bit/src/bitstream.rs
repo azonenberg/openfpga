@@ -335,7 +335,7 @@ impl XC2Bitstream {
                     package,
                     bits: XC2BitstreamBits::XC2C128 {
                         fb: [XC2BitstreamFB::default(); 8],
-                        iobs: [XC2MCLargeIOB::default(); 100],
+                        iobs: [[XC2MCLargeIOB::default(); 25]; 4],
                         global_nets: XC2GlobalNets::default(),
                         ivoltage: [false, false],
                         ovoltage: [false, false],
@@ -351,7 +351,7 @@ impl XC2Bitstream {
                     package,
                     bits: XC2BitstreamBits::XC2C256 {
                         fb: [XC2BitstreamFB::default(); 16],
-                        iobs: [XC2MCLargeIOB::default(); 184],
+                        iobs: [[XC2MCLargeIOB::default(); 23]; 8],
                         global_nets: XC2GlobalNets::default(),
                         ivoltage: [false, false],
                         ovoltage: [false, false],
@@ -367,7 +367,7 @@ impl XC2Bitstream {
                     package,
                     bits: XC2BitstreamBits::XC2C384 {
                         fb: [XC2BitstreamFB::default(); 24],
-                        iobs: [XC2MCLargeIOB::default(); 240],
+                        iobs: [[XC2MCLargeIOB::default(); 24]; 10],
                         global_nets: XC2GlobalNets::default(),
                         ivoltage: [false, false, false, false],
                         ovoltage: [false, false, false, false],
@@ -383,7 +383,7 @@ impl XC2Bitstream {
                     package,
                     bits: XC2BitstreamBits::XC2C512 {
                         fb: [XC2BitstreamFB::default(); 32],
-                        iobs: [XC2MCLargeIOB::default(); 270],
+                        iobs: [[XC2MCLargeIOB::default(); 27]; 10],
                         global_nets: XC2GlobalNets::default(),
                         ivoltage: [false, false, false, false],
                         ovoltage: [false, false, false, false],
@@ -398,7 +398,7 @@ impl XC2Bitstream {
 }
 
 /// The actual bitstream bits for each possible Coolrunner-II part
-#[derive(Copy, Clone, Serialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum XC2BitstreamBits {
     XC2C32 {
         fb: [XC2BitstreamFB; 2],
@@ -472,8 +472,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C128 {
         fb: [XC2BitstreamFB; 8],
-        #[serde(serialize_with = "<[_]>::serialize")]
-        iobs: [XC2MCLargeIOB; 100],
+        iobs: [[XC2MCLargeIOB; 25]; 4],
         global_nets: XC2GlobalNets,
         clock_div: XC2ClockDiv,
         /// Whether the DataGate feature is used
@@ -491,8 +490,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C256 {
         fb: [XC2BitstreamFB; 16],
-        #[serde(serialize_with = "<[_]>::serialize")]
-        iobs: [XC2MCLargeIOB; 184],
+        iobs: [[XC2MCLargeIOB; 23]; 8],
         global_nets: XC2GlobalNets,
         clock_div: XC2ClockDiv,
         /// Whether the DataGate feature is used
@@ -510,8 +508,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C384 {
         fb: [XC2BitstreamFB; 24],
-        #[serde(serialize_with = "<[_]>::serialize")]
-        iobs: [XC2MCLargeIOB; 240],
+        iobs: [[XC2MCLargeIOB; 24]; 10],
         global_nets: XC2GlobalNets,
         clock_div: XC2ClockDiv,
         /// Whether the DataGate feature is used
@@ -529,8 +526,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C512 {
         fb: [XC2BitstreamFB; 32],
-        #[serde(serialize_with = "<[_]>::serialize")]
-        iobs: [XC2MCLargeIOB; 270],
+        iobs: [[XC2MCLargeIOB; 27]; 10],
         global_nets: XC2GlobalNets,
         clock_div: XC2ClockDiv,
         /// Whether the DataGate feature is used
@@ -602,10 +598,10 @@ impl XC2BitstreamBits {
     /// Helper to extract only the I/O data without having to perform an explicit `match`
     pub fn get_large_iob(&self, i: usize) -> Option<&XC2MCLargeIOB> {
         match self {
-            &XC2BitstreamBits::XC2C128{ref iobs, ..} => Some(&iobs[i]),
-            &XC2BitstreamBits::XC2C256{ref iobs, ..} => Some(&iobs[i]),
-            &XC2BitstreamBits::XC2C384{ref iobs, ..} => Some(&iobs[i]),
-            &XC2BitstreamBits::XC2C512{ref iobs, ..} => Some(&iobs[i]),
+            &XC2BitstreamBits::XC2C128{ref iobs, ..} => Some(&iobs[i / 25][i % 25]),
+            &XC2BitstreamBits::XC2C256{ref iobs, ..} => Some(&iobs[i / 23][i % 23]),
+            &XC2BitstreamBits::XC2C384{ref iobs, ..} => Some(&iobs[i / 24][i % 24]),
+            &XC2BitstreamBits::XC2C512{ref iobs, ..} => Some(&iobs[i / 27][i % 27]),
             _ => None,
         }
     }
@@ -613,10 +609,10 @@ impl XC2BitstreamBits {
     /// Helper to extract only the I/O data without having to perform an explicit `match`
     pub fn get_mut_large_iob(&mut self, i: usize) -> Option<&mut XC2MCLargeIOB> {
         match self {
-            &mut XC2BitstreamBits::XC2C128{ref mut iobs, ..} => Some(&mut iobs[i]),
-            &mut XC2BitstreamBits::XC2C256{ref mut iobs, ..} => Some(&mut iobs[i]),
-            &mut XC2BitstreamBits::XC2C384{ref mut iobs, ..} => Some(&mut iobs[i]),
-            &mut XC2BitstreamBits::XC2C512{ref mut iobs, ..} => Some(&mut iobs[i]),
+            &mut XC2BitstreamBits::XC2C128{ref mut iobs, ..} => Some(&mut iobs[i / 25][i % 25]),
+            &mut XC2BitstreamBits::XC2C256{ref mut iobs, ..} => Some(&mut iobs[i / 23][i % 23]),
+            &mut XC2BitstreamBits::XC2C384{ref mut iobs, ..} => Some(&mut iobs[i / 24][i % 24]),
+            &mut XC2BitstreamBits::XC2C512{ref mut iobs, ..} => Some(&mut iobs[i / 27][i % 27]),
             _ => None,
         }
     }
@@ -1217,9 +1213,14 @@ fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2Bit
 
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C128, fuses);
 
+    let mut iobs2 = [[XC2MCLargeIOB::default(); 25]; 4];
+    for i in 0..iobs.len() {
+        iobs2[i / 25][i % 25] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C128 {
         fb,
-        iobs: iobs,
+        iobs: iobs2,
         global_nets,
         clock_div: XC2ClockDiv::from_jed(XC2Device::XC2C128, fuses),
         data_gate: !fuses[55335],
@@ -1244,9 +1245,14 @@ fn read_256_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2Bit
 
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C256, fuses);
 
+    let mut iobs2 = [[XC2MCLargeIOB::default(); 23]; 8];
+    for i in 0..iobs.len() {
+        iobs2[i / 23][i % 23] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C256 {
         fb,
-        iobs: iobs,
+        iobs: iobs2,
         global_nets,
         clock_div: XC2ClockDiv::from_jed(XC2Device::XC2C256, fuses),
         data_gate: !fuses[123243],
@@ -1271,9 +1277,14 @@ fn read_384_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2Bit
 
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C384, fuses);
 
+    let mut iobs2 = [[XC2MCLargeIOB::default(); 24]; 10];
+    for i in 0..iobs.len() {
+        iobs2[i / 24][i % 24] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C384 {
         fb,
-        iobs: iobs,
+        iobs: iobs2,
         global_nets,
         clock_div: XC2ClockDiv::from_jed(XC2Device::XC2C384, fuses),
         data_gate: !fuses[209347],
@@ -1302,9 +1313,14 @@ fn read_512_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2Bit
 
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C512, fuses);
 
+    let mut iobs2 = [[XC2MCLargeIOB::default(); 27]; 10];
+    for i in 0..iobs.len() {
+        iobs2[i / 27][i % 27] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C512 {
         fb,
-        iobs: iobs,
+        iobs: iobs2,
         global_nets,
         clock_div: XC2ClockDiv::from_jed(XC2Device::XC2C512, fuses),
         data_gate: !fuses[296393],
@@ -1467,10 +1483,15 @@ fn read_128_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBit
 
     let global_nets = XC2GlobalNets::from_crbit(XC2Device::XC2C128, fuse_array);
 
+    let mut iobs2 = [[XC2MCLargeIOB::default(); 25]; 4];
+    for i in 0..iobs.len() {
+        iobs2[i / 25][i % 25] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C128 {
-        fb: fb,
-        iobs: iobs,
-        global_nets: global_nets,
+        fb,
+        iobs: iobs2,
+        global_nets,
         clock_div: XC2ClockDiv::from_crbit(XC2Device::XC2C128, fuse_array),
         data_gate: !fuse_array.get(371, 67),
         use_vref: !fuse_array.get(10, 67),
@@ -1494,10 +1515,15 @@ fn read_256_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBit
 
     let global_nets = XC2GlobalNets::from_crbit(XC2Device::XC2C256, fuse_array);
 
+    let mut iobs2 = [[XC2MCLargeIOB::default(); 23]; 8];
+    for i in 0..iobs.len() {
+        iobs2[i / 23][i % 23] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C256 {
-        fb: fb,
-        iobs: iobs,
-        global_nets: global_nets,
+        fb,
+        iobs: iobs2,
+        global_nets,
         clock_div: XC2ClockDiv::from_crbit(XC2Device::XC2C256, fuse_array),
         data_gate: !fuse_array.get(518, 23),
         use_vref: !fuse_array.get(177, 23),
@@ -1521,10 +1547,15 @@ fn read_384_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBit
 
     let global_nets = XC2GlobalNets::from_crbit(XC2Device::XC2C384, fuse_array);
 
+    let mut iobs2 = [[XC2MCLargeIOB::default(); 24]; 10];
+    for i in 0..iobs.len() {
+        iobs2[i / 24][i % 24] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C384 {
-        fb: fb,
-        iobs: iobs,
-        global_nets: global_nets,
+        fb,
+        iobs: iobs2,
+        global_nets,
         clock_div: XC2ClockDiv::from_crbit(XC2Device::XC2C384, fuse_array),
         data_gate: !fuse_array.get(932, 17),
         use_vref: !fuse_array.get(3, 17),
@@ -1552,10 +1583,15 @@ fn read_512_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBit
 
     let global_nets = XC2GlobalNets::from_crbit(XC2Device::XC2C512, fuse_array);
 
+    let mut iobs2 = [[XC2MCLargeIOB::default(); 27]; 10];
+    for i in 0..iobs.len() {
+        iobs2[i / 27][i % 27] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C512 {
-        fb: fb,
-        iobs: iobs,
-        global_nets: global_nets,
+        fb,
+        iobs: iobs2,
+        global_nets,
         clock_div: XC2ClockDiv::from_crbit(XC2Device::XC2C512, fuse_array),
         data_gate: !fuse_array.get(982, 147),
         use_vref: !fuse_array.get(1, 147),

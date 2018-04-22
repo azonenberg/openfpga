@@ -35,7 +35,7 @@ use fusemap_physical::{gck_fuse_coords, gsr_fuse_coords, gts_fuse_coords, global
 
 /// Represents the configuration of the global nets. Coolrunner-II parts have various global control signals that have
 /// dedicated low-skew paths.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct XC2GlobalNets {
     /// Controls whether the three global clock nets are enabled or not
     pub gck_enable: [bool; 3],
@@ -192,7 +192,7 @@ impl XC2GlobalNets {
 }
 
 /// Possible clock divide ratios for the programmable clock divider
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 #[derive(BitPattern)]
 pub enum XC2ClockDivRatio {
     #[bits = "000"]
@@ -215,7 +215,7 @@ pub enum XC2ClockDivRatio {
 
 /// Represents the configuration of the programmable clock divider in devices with 128 macrocells or more. This is
 /// hard-wired onto the GCK2 clock pin.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct XC2ClockDiv {
     /// Ratio that input clock is divided by
     pub div_ratio: XC2ClockDivRatio,
