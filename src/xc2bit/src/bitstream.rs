@@ -307,7 +307,7 @@ impl XC2Bitstream {
                     package,
                     bits: XC2BitstreamBits::XC2C64 {
                         fb: [XC2BitstreamFB::default(); 4],
-                        iobs: [XC2MCSmallIOB::default(); 64],
+                        iobs: [[XC2MCSmallIOB::default(); 32]; 2],
                         global_nets: XC2GlobalNets::default(),
                         ivoltage: false,
                         ovoltage: false,
@@ -320,7 +320,7 @@ impl XC2Bitstream {
                     package,
                     bits: XC2BitstreamBits::XC2C64A {
                         fb: [XC2BitstreamFB::default(); 4],
-                        iobs: [XC2MCSmallIOB::default(); 64],
+                        iobs: [[XC2MCSmallIOB::default(); 32]; 2],
                         global_nets: XC2GlobalNets::default(),
                         legacy_ivoltage: false,
                         legacy_ovoltage: false,
@@ -438,8 +438,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C64 {
         fb: [XC2BitstreamFB; 4],
-        #[serde(serialize_with = "<[_]>::serialize")]
-        iobs: [XC2MCSmallIOB; 64],
+        iobs: [[XC2MCSmallIOB; 32]; 2],
         global_nets: XC2GlobalNets,
         /// Voltage level control
         ///
@@ -452,8 +451,7 @@ pub enum XC2BitstreamBits {
     },
     XC2C64A {
         fb: [XC2BitstreamFB; 4],
-        #[serde(serialize_with = "<[_]>::serialize")]
-        iobs: [XC2MCSmallIOB; 64],
+        iobs: [[XC2MCSmallIOB; 32]; 2],
         global_nets: XC2GlobalNets,
         /// Legacy voltage level control, should almost always be set to `false`
         ///
@@ -580,23 +578,45 @@ impl XC2BitstreamBits {
     }
 
     /// Helper to extract only the I/O data without having to perform an explicit `match`
-    pub fn get_small_iobs(&self) -> Option<&[XC2MCSmallIOB]> {
+    pub fn get_small_iob(&self, i: usize) -> Option<&XC2MCSmallIOB> {
         match self {
-            &XC2BitstreamBits::XC2C32{ref iobs, ..} => Some(iobs),
-            &XC2BitstreamBits::XC2C32A{ref iobs, ..} => Some(iobs),
-            &XC2BitstreamBits::XC2C64{ref iobs, ..} => Some(iobs),
-            &XC2BitstreamBits::XC2C64A{ref iobs, ..} => Some(iobs),
+            &XC2BitstreamBits::XC2C32{ref iobs, ..} => Some(&iobs[i]),
+            &XC2BitstreamBits::XC2C32A{ref iobs, ..} => Some(&iobs[i]),
+            &XC2BitstreamBits::XC2C64{ref iobs, ..} => Some(&iobs[i / 32][i % 32]),
+            &XC2BitstreamBits::XC2C64A{ref iobs, ..} => Some(&iobs[i / 32][i % 32]),
             _ => None,
         }
     }
 
     /// Helper to extract only the I/O data without having to perform an explicit `match`
-    pub fn get_large_iobs(&self) -> Option<&[XC2MCLargeIOB]> {
+    pub fn get_mut_small_iob(&mut self, i: usize) -> Option<&mut XC2MCSmallIOB> {
         match self {
-            &XC2BitstreamBits::XC2C128{ref iobs, ..} => Some(iobs),
-            &XC2BitstreamBits::XC2C256{ref iobs, ..} => Some(iobs),
-            &XC2BitstreamBits::XC2C384{ref iobs, ..} => Some(iobs),
-            &XC2BitstreamBits::XC2C512{ref iobs, ..} => Some(iobs),
+            &mut XC2BitstreamBits::XC2C32{ref mut iobs, ..} => Some(&mut iobs[i]),
+            &mut XC2BitstreamBits::XC2C32A{ref mut iobs, ..} => Some(&mut iobs[i]),
+            &mut XC2BitstreamBits::XC2C64{ref mut iobs, ..} => Some(&mut iobs[i / 32][i % 32]),
+            &mut XC2BitstreamBits::XC2C64A{ref mut iobs, ..} => Some(&mut iobs[i / 32][i % 32]),
+            _ => None,
+        }
+    }
+
+    /// Helper to extract only the I/O data without having to perform an explicit `match`
+    pub fn get_large_iob(&self, i: usize) -> Option<&XC2MCLargeIOB> {
+        match self {
+            &XC2BitstreamBits::XC2C128{ref iobs, ..} => Some(&iobs[i]),
+            &XC2BitstreamBits::XC2C256{ref iobs, ..} => Some(&iobs[i]),
+            &XC2BitstreamBits::XC2C384{ref iobs, ..} => Some(&iobs[i]),
+            &XC2BitstreamBits::XC2C512{ref iobs, ..} => Some(&iobs[i]),
+            _ => None,
+        }
+    }
+
+    /// Helper to extract only the I/O data without having to perform an explicit `match`
+    pub fn get_mut_large_iob(&mut self, i: usize) -> Option<&mut XC2MCLargeIOB> {
+        match self {
+            &mut XC2BitstreamBits::XC2C128{ref mut iobs, ..} => Some(&mut iobs[i]),
+            &mut XC2BitstreamBits::XC2C256{ref mut iobs, ..} => Some(&mut iobs[i]),
+            &mut XC2BitstreamBits::XC2C384{ref mut iobs, ..} => Some(&mut iobs[i]),
+            &mut XC2BitstreamBits::XC2C512{ref mut iobs, ..} => Some(&mut iobs[i]),
             _ => None,
         }
     }
@@ -637,11 +657,11 @@ impl XC2BitstreamBits {
 
         // IOBs
         for i in 0..self.device_type().num_iobs() {
-            if let Some(iobs) = self.get_small_iobs() {
-                iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
+            if let Some(iob) = self.get_small_iob(i) {
+                iob.to_crbit(self.device_type(), i as u32, fuse_array);
             }
-            if let Some(iobs) = self.get_large_iobs() {
-                iobs[i].to_crbit(self.device_type(), i as u32, fuse_array);
+            if let Some(iob) = self.get_large_iob(i) {
+                iob.to_crbit(self.device_type(), i as u32, fuse_array);
             }
         }
 
@@ -806,11 +826,11 @@ impl XC2BitstreamBits {
 
         // IOBs
         for i in 0..self.device_type().num_iobs() {
-            if let Some(iobs) = self.get_small_iobs() {
-                iobs[i].dump_human_readable(self.device_type(), i as u32, &mut writer)?;
+            if let Some(iob) = self.get_small_iob(i) {
+                iob.dump_human_readable(self.device_type(), i as u32, &mut writer)?;
             }
-            if let Some(iobs) = self.get_large_iobs() {
-                iobs[i].dump_human_readable(self.device_type(), i as u32, &mut writer)?;
+            if let Some(iob) = self.get_large_iob(i) {
+                iob.dump_human_readable(self.device_type(), i as u32, &mut writer)?;
             }
         }
 
@@ -842,11 +862,33 @@ impl XC2BitstreamBits {
         for fb_i in 0..self.device_type().num_fbs() {
             let fuse_base = fb_fuse_idx(self.device_type(), fb_i as u32);
             let fb = self.get_fb();
-            if let Some(iobs) = self.get_small_iobs() {
-                XC2Macrocell::to_jed_small(jed, linebreaks, self.device_type(), &fb[fb_i], iobs, fb_i, fuse_base);
+            if self.device_type().is_small_iob() {
+                XC2Macrocell::to_jed_small(jed, linebreaks, self.device_type(), &fb[fb_i], fuse_base);
+
+                for i in 0..MCS_PER_FB {
+                    let iob = fb_mc_num_to_iob_num(self.device_type(), fb_i as u32, i as u32).unwrap() as usize;
+                    self.get_small_iob(iob).unwrap().to_jed(jed, self.device_type(), fuse_base, i);
+                }
             }
-            if let Some(iobs) = self.get_large_iobs() {
-                XC2Macrocell::to_jed_large(jed, linebreaks, self.device_type(), &fb[fb_i], iobs, fb_i, fuse_base);
+            if self.device_type().is_large_iob() {
+                XC2Macrocell::to_jed_large(jed, linebreaks, self.device_type(), &fb[fb_i], fb_i, fuse_base);
+
+                let zia_row_width = zia_get_row_width(self.device_type());
+                let mut current_fuse_offset = fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
+                    ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + ANDTERMS_PER_FB * MCS_PER_FB;
+
+                for i in 0..MCS_PER_FB {
+                    let iob = fb_mc_num_to_iob_num(self.device_type(), fb_i as u32, i as u32);
+
+                    if iob.is_some() {
+                        let iob = iob.unwrap() as usize;
+
+                        self.get_large_iob(iob).unwrap().to_jed(jed, current_fuse_offset);
+                        current_fuse_offset += 29;
+                    } else {
+                        current_fuse_offset += 16;
+                    }
+                }
             }
         }
 
@@ -1074,10 +1116,10 @@ fn read_32_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2BitE
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C32, fuses);
 
     Ok(XC2BitstreamBits::XC2C32 {
-        fb: fb,
-        iobs: iobs,
-        inpin: inpin,
-        global_nets: global_nets,
+        fb,
+        iobs,
+        inpin,
+        global_nets,
         ovoltage: !fuses[12270],
         ivoltage: !fuses[12271],
     })
@@ -1095,10 +1137,10 @@ fn read_32a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2Bit
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C32A, fuses);
 
     Ok(XC2BitstreamBits::XC2C32A {
-        fb: fb,
-        iobs: iobs,
-        inpin: inpin,
-        global_nets: global_nets,
+        fb,
+        iobs,
+        inpin,
+        global_nets,
         legacy_ovoltage: !fuses[12270],
         legacy_ivoltage: !fuses[12271],
         ivoltage: [
@@ -1121,10 +1163,15 @@ fn read_64_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2BitE
 
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C64, fuses);
 
+    let mut iobs2 = [[XC2MCSmallIOB::default(); 32]; 2];
+    for i in 0..iobs.len() {
+        iobs2[i / 32][i % 32] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C64 {
-        fb: fb,
-        iobs: iobs,
-        global_nets: global_nets,
+        fb,
+        iobs: iobs2,
+        global_nets,
         ovoltage: !fuses[25806],
         ivoltage: !fuses[25807],
     })
@@ -1139,10 +1186,15 @@ fn read_64a_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2Bit
 
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C64A, fuses);
 
+    let mut iobs2 = [[XC2MCSmallIOB::default(); 32]; 2];
+    for i in 0..iobs.len() {
+        iobs2[i / 32][i % 32] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C64A {
-        fb: fb,
-        iobs: iobs,
-        global_nets: global_nets,
+        fb,
+        iobs: iobs2,
+        global_nets,
         legacy_ovoltage: !fuses[25806],
         legacy_ivoltage: !fuses[25807],
         ivoltage: [
@@ -1166,9 +1218,9 @@ fn read_128_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2Bit
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C128, fuses);
 
     Ok(XC2BitstreamBits::XC2C128 {
-        fb: fb,
+        fb,
         iobs: iobs,
-        global_nets: global_nets,
+        global_nets,
         clock_div: XC2ClockDiv::from_jed(XC2Device::XC2C128, fuses),
         data_gate: !fuses[55335],
         use_vref: !fuses[55340],
@@ -1193,9 +1245,9 @@ fn read_256_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2Bit
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C256, fuses);
 
     Ok(XC2BitstreamBits::XC2C256 {
-        fb: fb,
+        fb,
         iobs: iobs,
-        global_nets: global_nets,
+        global_nets,
         clock_div: XC2ClockDiv::from_jed(XC2Device::XC2C256, fuses),
         data_gate: !fuses[123243],
         use_vref: !fuses[123248],
@@ -1220,9 +1272,9 @@ fn read_384_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2Bit
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C384, fuses);
 
     Ok(XC2BitstreamBits::XC2C384 {
-        fb: fb,
+        fb,
         iobs: iobs,
-        global_nets: global_nets,
+        global_nets,
         clock_div: XC2ClockDiv::from_jed(XC2Device::XC2C384, fuses),
         data_gate: !fuses[209347],
         use_vref: !fuses[209356],
@@ -1251,9 +1303,9 @@ fn read_512_bitstream_logical(fuses: &[bool]) -> Result<XC2BitstreamBits, XC2Bit
     let global_nets = XC2GlobalNets::from_jed(XC2Device::XC2C512, fuses);
 
     Ok(XC2BitstreamBits::XC2C512 {
-        fb: fb,
+        fb,
         iobs: iobs,
-        global_nets: global_nets,
+        global_nets,
         clock_div: XC2ClockDiv::from_jed(XC2Device::XC2C512, fuses),
         data_gate: !fuses[296393],
         use_vref: !fuses[296402],
@@ -1314,10 +1366,10 @@ fn read_32_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits
     let global_nets = XC2GlobalNets::from_crbit(XC2Device::XC2C32, fuse_array);
 
     Ok(XC2BitstreamBits::XC2C32 {
-        fb: fb,
-        iobs: iobs,
-        inpin: inpin,
-        global_nets: global_nets,
+        fb,
+        iobs,
+        inpin,
+        global_nets,
         ovoltage: !fuse_array.get(130, 24),
         ivoltage: !fuse_array.get(130, 25),
     })
@@ -1335,10 +1387,10 @@ fn read_32a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBit
     let global_nets = XC2GlobalNets::from_crbit(XC2Device::XC2C32A, fuse_array);
 
     Ok(XC2BitstreamBits::XC2C32A {
-        fb: fb,
-        iobs: iobs,
-        inpin: inpin,
-        global_nets: global_nets,
+        fb,
+        iobs,
+        inpin,
+        global_nets,
         legacy_ovoltage: !fuse_array.get(130, 24),
         legacy_ivoltage: !fuse_array.get(130, 25),
         ivoltage: [
@@ -1361,10 +1413,15 @@ fn read_64_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBits
 
     let global_nets = XC2GlobalNets::from_crbit(XC2Device::XC2C64, fuse_array);
 
+    let mut iobs2 = [[XC2MCSmallIOB::default(); 32]; 2];
+    for i in 0..iobs.len() {
+        iobs2[i / 32][i % 32] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C64 {
-        fb: fb,
-        iobs: iobs,
-        global_nets: global_nets,
+        fb,
+        iobs: iobs2,
+        global_nets,
         ovoltage: !fuse_array.get(137, 23),
         ivoltage: !fuse_array.get(138, 23),
     })
@@ -1379,10 +1436,15 @@ fn read_64a_bitstream_physical(fuse_array: &FuseArray) -> Result<XC2BitstreamBit
 
     let global_nets = XC2GlobalNets::from_crbit(XC2Device::XC2C64A, fuse_array);
 
+    let mut iobs2 = [[XC2MCSmallIOB::default(); 32]; 2];
+    for i in 0..iobs.len() {
+        iobs2[i / 32][i % 32] = iobs[i];
+    }
+
     Ok(XC2BitstreamBits::XC2C64A {
-        fb: fb,
-        iobs: iobs,
-        global_nets: global_nets,
+        fb,
+        iobs: iobs2,
+        global_nets,
         legacy_ovoltage: !fuse_array.get(137, 23),
         legacy_ivoltage: !fuse_array.get(138, 23),
         ivoltage: [

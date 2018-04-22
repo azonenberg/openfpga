@@ -121,49 +121,49 @@ fn main() {
 
                     attributes.insert(String::from("LOC"), AttributeVal::S(format!("FB{}_{}", fb + 1, mc + 1)));
                     // Grab attributes from the bitstream
-                    if let Some(iobs) = bitstream.bits.get_small_iobs() {
-                        if iobs[idx as usize].slew_is_fast {
+                    if let Some(iob) = bitstream.bits.get_small_iob(idx as usize) {
+                        if iob.slew_is_fast {
                             attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("FAST")));
                         } else {
                             attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("SLOW")));
                         }
 
-                        if iobs[idx as usize].termination_enabled {
+                        if iob.termination_enabled {
                             attributes.insert(String::from("TERM"), AttributeVal::S(String::from("TRUE")));
                         } else {
                             attributes.insert(String::from("TERM"), AttributeVal::S(String::from("FALSE")));
                         }
 
-                        if iobs[idx as usize].obuf_mode == XC2IOBOBufMode::CGND {
+                        if iob.obuf_mode == XC2IOBOBufMode::CGND {
                             attributes.insert(String::from("CGND"), AttributeVal::N(1));
                         }
 
-                        if iobs[idx as usize].schmitt_trigger {
+                        if iob.schmitt_trigger {
                             attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("TRUE")));
                         } else {
                             attributes.insert(String::from("SCHMITT_TRIGGER"), AttributeVal::S(String::from("FALSE")));
                         }
 
-                        has_output = iobs[idx as usize].obuf_mode != XC2IOBOBufMode::Disabled;
+                        has_output = iob.obuf_mode != XC2IOBOBufMode::Disabled;
                     }
-                    if let Some(iobs) = bitstream.bits.get_large_iobs() {
-                        if iobs[idx as usize].slew_is_fast {
+                    if let Some(iob) = bitstream.bits.get_large_iob(idx as usize) {
+                        if iob.slew_is_fast {
                             attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("FAST")));
                         } else {
                             attributes.insert(String::from("SLEW"), AttributeVal::S(String::from("SLOW")));
                         }
 
-                        if iobs[idx as usize].termination_enabled {
+                        if iob.termination_enabled {
                             attributes.insert(String::from("TERM"), AttributeVal::S(String::from("TRUE")));
                         } else {
                             attributes.insert(String::from("TERM"), AttributeVal::S(String::from("FALSE")));
                         }
 
-                        if iobs[idx as usize].obuf_mode == XC2IOBOBufMode::CGND {
+                        if iob.obuf_mode == XC2IOBOBufMode::CGND {
                             attributes.insert(String::from("CGND"), AttributeVal::N(1));
                         }
 
-                        match iobs[idx as usize].ibuf_mode {
+                        match iob.ibuf_mode {
                             XC2IOBIbufMode::NoVrefNoSt => {
                                 attributes.insert(String::from("SCHMITT_TRIGGER"),
                                     AttributeVal::S(String::from("FALSE")));
@@ -182,11 +182,11 @@ fn main() {
                             }
                         }
 
-                        if iobs[idx as usize].uses_data_gate {
+                        if iob.uses_data_gate {
                             attributes.insert(String::from("DATA_GATE"), AttributeVal::S(String::from("TRUE")));
                         }
 
-                        has_output = iobs[idx as usize].obuf_mode != XC2IOBOBufMode::Disabled;
+                        has_output = iob.obuf_mode != XC2IOBOBufMode::Disabled;
                     }
 
                     // Construct the wire for the toplevel port
@@ -465,11 +465,11 @@ fn main() {
                     if port_name == "I" {
                         // FIXME: Verify the CGND behavior on hardware
                         let mut obuf_mode = None;
-                        if let Some(iobs) = bitstream.bits.get_small_iobs() {
-                            obuf_mode = Some(iobs[idx as usize].obuf_mode);
+                        if let Some(iob) = bitstream.bits.get_small_iob(idx as usize) {
+                            obuf_mode = Some(iob.obuf_mode);
                         }
-                        if let Some(iobs) = bitstream.bits.get_large_iobs() {
-                            obuf_mode = Some(iobs[idx as usize].obuf_mode);
+                        if let Some(iob) = bitstream.bits.get_large_iob(idx as usize) {
+                            obuf_mode = Some(iob.obuf_mode);
                         }
 
                         if obuf_mode.unwrap() == XC2IOBOBufMode::CGND ||
@@ -482,11 +482,11 @@ fn main() {
                         }
                     } else if port_name == "E" {
                         let mut obuf_mode = None;
-                        if let Some(iobs) = bitstream.bits.get_small_iobs() {
-                            obuf_mode = Some(iobs[idx as usize].obuf_mode);
+                        if let Some(iob) = bitstream.bits.get_small_iob(idx as usize) {
+                            obuf_mode = Some(iob.obuf_mode);
                         }
-                        if let Some(iobs) = bitstream.bits.get_large_iobs() {
-                            obuf_mode = Some(iobs[idx as usize].obuf_mode);
+                        if let Some(iob) = bitstream.bits.get_large_iob(idx as usize) {
+                            obuf_mode = Some(iob.obuf_mode);
                         }
 
                         // FIXME: This idx == 0 is a hack
@@ -562,11 +562,11 @@ fn main() {
                                 },
                                 &XC2ZIAInput::IBuf{ibuf: zia_iob} => {
                                     let mut zia_mode = None;
-                                    if let Some(iobs) = bitstream.bits.get_small_iobs() {
-                                        zia_mode = Some(iobs[zia_iob as usize].zia_mode);
+                                    if let Some(iob) = bitstream.bits.get_small_iob(zia_iob as usize) {
+                                        zia_mode = Some(iob.zia_mode);
                                     }
-                                    if let Some(iobs) = bitstream.bits.get_large_iobs() {
-                                        zia_mode = Some(iobs[zia_iob as usize].zia_mode);
+                                    if let Some(iob) = bitstream.bits.get_large_iob(zia_iob as usize) {
+                                        zia_mode = Some(iob.zia_mode);
                                     }
 
                                     // FIXME: Hack
@@ -631,11 +631,11 @@ fn main() {
                         } else {
                             if let Some(iob_idx) = fb_mc_num_to_iob_num(bitstream.bits.device_type(), fb, idx) {
                                 let mut obuf_uses_ff = false;
-                                if let Some(iobs) = bitstream.bits.get_small_iobs() {
-                                    obuf_uses_ff = iobs[iob_idx as usize].obuf_uses_ff;
+                                if let Some(iob) = bitstream.bits.get_small_iob(iob_idx as usize) {
+                                    obuf_uses_ff = iob.obuf_uses_ff;
                                 }
-                                if let Some(iobs) = bitstream.bits.get_large_iobs() {
-                                    obuf_uses_ff = iobs[iob_idx as usize].obuf_uses_ff;
+                                if let Some(iob) = bitstream.bits.get_large_iob(iob_idx as usize) {
+                                    obuf_uses_ff = iob.obuf_uses_ff;
                                 }
 
                                 if !obuf_uses_ff {
@@ -655,11 +655,11 @@ fn main() {
                         } else {
                             if let Some(iob_idx) = fb_mc_num_to_iob_num(bitstream.bits.device_type(), fb, idx) {
                                 let mut obuf_uses_ff = false;
-                                if let Some(iobs) = bitstream.bits.get_small_iobs() {
-                                    obuf_uses_ff = iobs[iob_idx as usize].obuf_uses_ff;
+                                if let Some(iob) = bitstream.bits.get_small_iob(iob_idx as usize) {
+                                    obuf_uses_ff = iob.obuf_uses_ff;
                                 }
-                                if let Some(iobs) = bitstream.bits.get_large_iobs() {
-                                    obuf_uses_ff = iobs[iob_idx as usize].obuf_uses_ff;
+                                if let Some(iob) = bitstream.bits.get_large_iob(iob_idx as usize) {
+                                    obuf_uses_ff = iob.obuf_uses_ff;
                                 }
 
                                 if obuf_uses_ff {

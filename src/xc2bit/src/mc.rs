@@ -393,9 +393,9 @@ impl XC2Macrocell {
         Self::decode_jed_internal_large_buried(fuses, fuse_idx)
     }
 
-    /// Helper that prints the IOB and macrocell configuration on the "small" parts
+    /// Helper that prints the macrocell configuration on the "small" parts
     pub fn to_jed_small(jed: &mut JEDECFile, linebreaks: &mut LinebreakSet,
-        device: XC2Device, fb: &XC2BitstreamFB, iobs: &[XC2MCSmallIOB], fb_i: usize, fuse_base: usize) {
+        device: XC2Device, fb: &XC2BitstreamFB, fuse_base: usize) {
 
         let zia_row_width = zia_get_row_width(device);
 
@@ -408,15 +408,13 @@ impl XC2Macrocell {
                 linebreaks.add(mc_fuse_base);
             }
 
-            let iob = fb_mc_num_to_iob_num(device, fb_i as u32, i as u32).unwrap() as usize;
             fb.mcs[i].encode_jed_internal_small(&mut jed.f, mc_fuse_base);
-            iobs[iob].encode_jed_internal(&mut jed.f, mc_fuse_base);
         }
     }
 
-    /// Helper that prints the IOB and macrocell configuration on the "large" parts
+    /// Helper that prints the macrocell configuration on the "large" parts
     pub fn to_jed_large(jed: &mut JEDECFile, linebreaks: &mut LinebreakSet,
-        device: XC2Device, fb: &XC2BitstreamFB, iobs: &[XC2MCLargeIOB], fb_i: usize, fuse_base: usize) {
+        device: XC2Device, fb: &XC2BitstreamFB, fb_i: usize, fuse_base: usize) {
 
         let zia_row_width = zia_get_row_width(device);
 
@@ -431,9 +429,6 @@ impl XC2Macrocell {
             let iob = fb_mc_num_to_iob_num(device, fb_i as u32, i as u32);
 
             if iob.is_some() {
-                let iob = iob.unwrap() as usize;
-
-                iobs[iob].encode_jed_internal(&mut jed.f, current_fuse_offset);
                 fb.mcs[i].encode_jed_internal_large(&mut jed.f, current_fuse_offset);
                 current_fuse_offset += 29;
             } else {

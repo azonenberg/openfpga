@@ -28,9 +28,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::io;
 use std::io::Write;
 
+extern crate jedec;
+use self::jedec::*;
+
 use *;
 use fusemap_physical::{mc_block_loc};
 use mc::{MC_TO_ROW_MAP_LARGE};
+use zia::{zia_get_row_width};
 
 /// Mux selection for the ZIA input from this I/O pin's input. The ZIA input can be chosen to come from either the
 /// input pin directly or from the output of the register in the macrocell corresponding to this I/O pin. The latter
@@ -216,6 +220,15 @@ impl XC2MCSmallIOB {
     pub fn from_jed(fuses: &[bool], fuse_idx: usize) -> Result<Self, XC2BitError> {
         Self::decode_jed_internal(fuses, fuse_idx)
     }
+
+    /// Helper that prints the IOB and macrocell configuration on the "small" parts
+    pub fn to_jed(&self, jed: &mut JEDECFile, device: XC2Device, fuse_base: usize, i: usize) {
+        let zia_row_width = zia_get_row_width(device);
+        let mc_fuse_base = fuse_base + zia_row_width * INPUTS_PER_ANDTERM +
+            ANDTERMS_PER_FB * INPUTS_PER_ANDTERM * 2 + ANDTERMS_PER_FB * MCS_PER_FB + i * 27;
+     
+        self.encode_jed_internal(&mut jed.f, mc_fuse_base);
+    }
 }
 
 /// Input mode selection on larger parts with VREF
@@ -388,6 +401,11 @@ impl XC2MCLargeIOB {
     /// Internal function that reads only the IO-related bits from the macrocell configuration
     pub fn from_jed(fuses: &[bool], fuse_idx: usize) -> Result<Self, XC2BitError> {
         Self::decode_jed_internal(fuses, fuse_idx)
+    }
+
+    /// Helper that prints the IOB configuration on the "large" parts
+    pub fn to_jed(&self, jed: &mut JEDECFile, fuse_base: usize) {
+        self.encode_jed_internal(&mut jed.f, fuse_base);
     }
 }
 

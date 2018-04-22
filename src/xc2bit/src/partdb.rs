@@ -72,6 +72,22 @@ impl XC2Device {
             XC2Device::XC2C512 => 270,
         }
     }
+
+    pub fn is_small_iob(&self) -> bool {
+        match *self {
+            XC2Device::XC2C32 | XC2Device::XC2C32A |
+            XC2Device::XC2C64 | XC2Device::XC2C64A => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_large_iob(&self) -> bool {
+        match *self {
+            XC2Device::XC2C128 | XC2Device::XC2C256 |
+            XC2Device::XC2C384 | XC2Device::XC2C512 => true,
+             _ => false,
+        }
+    }
 }
 
 /// Possible speed grades
