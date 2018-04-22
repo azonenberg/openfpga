@@ -29,17 +29,15 @@ use *;
 
 /// Represents one single AND term in the PLA. Each AND term can perform an AND function on any subset of its inputs
 /// and the complement of those inputs. The index for each input is the corresponding ZIA row.
-#[derive(Copy, Clone, Serialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct XC2PLAAndTerm {
     /// Indicates whether a particular ZIA row output is a part of this AND term.
     ///
     /// `true` = part of and, `false` = not part of and
-    #[serde(serialize_with = "<[_]>::serialize")]
     input: [u8; INPUTS_PER_ANDTERM / 8],
     /// Indicates whether the complement of a particular ZIA row output is a part of this AND term.
     ///
     /// `true` = part of and, `false` = not part of and
-    #[serde(serialize_with = "<[_]>::serialize")]
     input_b: [u8; INPUTS_PER_ANDTERM / 8],
 }
 
@@ -105,12 +103,11 @@ impl XC2PLAAndTerm {
 
 /// Represents one single OR term in the PLA. Each OR term can perform an OR function on any subset of its inputs.
 /// The index for each input is the index of the corresponding AND term in the same PLA.
-#[derive(Copy, Clone, Serialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct XC2PLAOrTerm {
     /// Indicates whether a particular PLA AND term is a part of this OR term.
     ///
     /// `true` = part of or, `false` = not part of or
-    #[serde(serialize_with = "<[_]>::serialize")]
     input: [u8; ANDTERMS_PER_FB / 8],
 }
 

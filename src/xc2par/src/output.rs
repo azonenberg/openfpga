@@ -41,7 +41,7 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph, go: &OutputGrap
     // ZIA settings
     for fb_i in 0..go.zia.len() {
         for zia_i in 0..INPUTS_PER_ANDTERM {
-            fb_bits[fb_i].zia_bits[zia_i] = go.zia[fb_i].x[zia_i];
+            *fb_bits[fb_i].get_mut_zia(zia_i) = go.zia[fb_i].x[zia_i];
         }
     }
 
@@ -52,10 +52,10 @@ pub fn produce_bitstream(device_type: XC2Device, g: &InputGraph, go: &OutputGrap
         let andterm_i = andterm_go.loc.unwrap().i as usize;
 
         for &x in &andterm_go.inputs_true_zia {
-            fb_bits[fb_i].and_terms[andterm_i].set(x as usize, true);
+            fb_bits[fb_i].get_mut_andterm(andterm_i).set(x as usize, true);
         }
         for &x in &andterm_go.inputs_comp_zia {
-            fb_bits[fb_i].and_terms[andterm_i].set_b(x as usize, true);
+            fb_bits[fb_i].get_mut_andterm(andterm_i).set_b(x as usize, true);
         }
     }
 
