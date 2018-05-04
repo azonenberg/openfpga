@@ -207,13 +207,13 @@ impl IntermediateGraph {
         let mut top_module_name = "";
         let mut top_module_found = false;
         for (module_name, module) in &yosys_net.modules {
-            info!(logger, "found yosys netlist module"; "module name" => module_name);
+            debug!(logger, "found yosys netlist module"; "module name" => module_name);
 
             if let Some(top_attr) = module.attributes.get("top") {
                 if let &yosys_netlist_json::AttributeVal::N(n) = top_attr {
                     if n != 0 {
                         // Claims to be a top-level module
-                        info!(logger, "found toplevel yosys netlist module"; "module name" => module_name);
+                        debug!(logger, "found toplevel yosys netlist module"; "module name" => module_name);
 
                         if top_module_found {
                             error!(logger, "found multiple toplevel yosys netlist modules";
@@ -278,7 +278,7 @@ impl IntermediateGraph {
                     if let &yosys_netlist_json::BitVal::N(yosys_edge_idx) = connection {
                         // Don't create nets for the pad side of io buffers
                         if module_ports.contains(&yosys_edge_idx) {
-                            info!(logger, "nets - skipping module port for cell";
+                            debug!(logger, "nets - skipping module port for cell";
                                 "cell name" => cell_name,
                                 "connection name" => connection_name,
                                 "net index" => yosys_edge_idx);
@@ -287,7 +287,7 @@ impl IntermediateGraph {
 
                         if net_map.get(&yosys_edge_idx).is_none() {
                             // Need to add a new one
-                            info!(logger, "nets - adding new net because of cell";
+                            debug!(logger, "nets - adding new net because of cell";
                                 "cell name" => cell_name,
                                 "connection name" => connection_name,
                                 "net index" => yosys_edge_idx);
@@ -313,7 +313,7 @@ impl IntermediateGraph {
                 if let &yosys_netlist_json::BitVal::N(yosys_edge_idx) = yosys_edge_idx {
                     // Don't create nets for the pad side of io buffers
                     if module_ports.contains(&yosys_edge_idx) {
-                        info!(logger, "nets - skipping module port for netname";
+                        debug!(logger, "nets - skipping module port for netname";
                             "name" => netname_name,
                             "index" => yosys_edge_idx);
                         continue;
@@ -321,7 +321,7 @@ impl IntermediateGraph {
 
                     if net_map.get(&yosys_edge_idx).is_none() {
                         // Need to add a new one
-                        info!(logger, "nets - adding new net because of netname";
+                        debug!(logger, "nets - adding new net because of netname";
                             "name" => netname_name,
                             "index" => yosys_edge_idx);
                         let our_edge_idx = nets.insert(IntermediateGraphNet {
@@ -332,7 +332,7 @@ impl IntermediateGraph {
                         net_map.insert(yosys_edge_idx, our_edge_idx);
                     } else {
                         // Naming an existing one
-                        info!(logger, "nets - naming existing net";
+                        debug!(logger, "nets - naming existing net";
                             "name" => netname_name,
                             "index" => yosys_edge_idx);
                         let existing_net_our_idx = net_map.get(&yosys_edge_idx).unwrap();
@@ -383,7 +383,7 @@ impl IntermediateGraph {
                 }
                 let param_option_copy = *param_option.as_ref().unwrap();
                 if let &yosys_netlist_json::AttributeVal::N(n) = param_option.unwrap() {
-                    info!(logger, "cells - numeric parameter";
+                    debug!(logger, "cells - numeric parameter";
                         "name" => name,
                         "value" => n);
                     return Ok(n)
@@ -403,7 +403,7 @@ impl IntermediateGraph {
                 }
                 let param_option_copy = *param_option.as_ref().unwrap();
                 if let &yosys_netlist_json::AttributeVal::S(ref s) = param_option.unwrap() {
-                    info!(logger, "cells - string parameter";
+                    debug!(logger, "cells - string parameter";
                         "name" => name,
                         "value" => s);
                     return Ok(Some(s))
@@ -420,12 +420,12 @@ impl IntermediateGraph {
                 let attrib = optional_string_attrib(name)?;
                 Ok(if let Some(attrib) = attrib {
                     if attrib.eq_ignore_ascii_case("true") {
-                        info!(logger, "cells - bool parameter";
+                        debug!(logger, "cells - bool parameter";
                             "name" => name,
                             "value" => true);
                         true
                     } else if attrib.eq_ignore_ascii_case("false") {
-                        info!(logger, "cells - bool parameter";
+                        debug!(logger, "cells - bool parameter";
                             "name" => name,
                             "value" => false);
                         false
@@ -455,7 +455,7 @@ impl IntermediateGraph {
                     return Err(FrontendError::TooManyConnections(name.to_owned()));
                 }
                 let result = bitval_to_net(conn_obj[0].clone(), name, logger)?;
-                info!(logger, "cells - mapped required connection";
+                debug!(logger, "cells - mapped required connection";
                     "connection name" => name,
                     "yosys net idx" => conn_obj[0].clone(),
                     "net pool idx" => result);
@@ -475,7 +475,7 @@ impl IntermediateGraph {
                     return Err(FrontendError::TooManyConnections(name.to_owned()));
                 }
                 let result = bitval_to_net(conn_obj[0].clone(), name, logger)?;
-                info!(logger, "cells - mapped optional connection";
+                debug!(logger, "cells - mapped optional connection";
                     "connection name" => name,
                     "yosys net idx" => conn_obj[0].clone(),
                     "net pool idx" => result);
@@ -496,7 +496,7 @@ impl IntermediateGraph {
                     result.push(bitval_to_net(x.clone(), name, logger)?);
                 }
                 for i in 0..result.len() {
-                    info!(logger, "cells - mapped multiple connections";
+                    debug!(logger, "cells - mapped multiple connections";
                         "connection name" => name,
                         "yosys net idx" => &conn_obj_copy[i],
                         "net pool idx" => result[i]);
@@ -514,10 +514,10 @@ impl IntermediateGraph {
                     let slew_attrib = optional_string_attrib("SLEW")?;
                     let slew_is_fast = if let Some(attrib) = slew_attrib {
                         if attrib.eq_ignore_ascii_case("fast") {
-                            info!(logger, "cells - IOBUFE - slow is fast");
+                            debug!(logger, "cells - IOBUFE - slow is fast");
                             true
                         } else if attrib.eq_ignore_ascii_case("slow") {
-                            info!(logger, "cells - IOBUFE - slow is slow");
+                            debug!(logger, "cells - IOBUFE - slow is slow");
                             false
                         } else {
                             error!(logger, "cells - IOBUFE - invalid slew rate";
@@ -721,7 +721,7 @@ impl IntermediateGraph {
                 return Err(FrontendError::MultipleNetDrivers(output_net.name.as_ref()
                     .unwrap_or(&"<no name>".to_owned()).to_owned()));
             }
-            info!(logger, "connectivity - connecting driver";
+            debug!(logger, "connectivity - connecting driver";
                 "net" => &output_net.name,
                 "driver" => x);
             output_net.source = Some(x);
@@ -815,7 +815,11 @@ impl IntermediateGraph {
         })
     }
 
-    pub fn gather_macrocells(&self) -> Vec<ObjPoolIndex<IntermediateGraphNode>> {
+    pub fn gather_macrocells<L: Into<Option<slog::Logger>>>(&self, logger: L)
+        -> Result<Vec<ObjPoolIndex<IntermediateGraphNode>>, GatherMacrocellError> {
+
+        let logger = logger.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
+
         let mut ret = Vec::new();
         let mut encountered_xors = HashSet::new();
 
@@ -827,6 +831,8 @@ impl IntermediateGraph {
             let node = self.nodes.get(node_idx);
 
             if let IntermediateGraphNodeVariant::IOBuf{input, ..} = node.variant {
+                debug!(logger, "gather - found IOBUFE";
+                    "name" => &node.name);
                 ret.push(node_idx);
 
                 if input.is_some() {
@@ -836,24 +842,41 @@ impl IntermediateGraph {
                     let source_node = self.nodes.get(source_node_idx);
                     if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
                         // Combinatorial output
+                        debug!(logger, "gather - remembering XOR for combinatorial";
+                            "iobufe name" => &node.name,
+                            "xor name" => &source_node.name);
                         encountered_xors.insert(source_node_idx);
                     } else if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = source_node.variant {
                         // Registered output, look at the input into the register
+                        let reg_name_copy = &source_node.name;
                         let source_node_idx = self.nets.get(dt_input).source.unwrap();
                         let source_node = self.nodes.get(source_node_idx);
                         if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
+                            debug!(logger, "gather - remembering XOR for registered";
+                                "iobufe name" => &node.name,
+                                "xor name" => &source_node.name,
+                                "reg name" => reg_name_copy);
                             encountered_xors.insert(source_node_idx);
                         } else if let IntermediateGraphNodeVariant::IOBuf{..} = source_node.variant {
                             if node_idx != source_node_idx {
                                 // Trying to go from a different pin into the direct input path of this pin
-                                panic!("mismatched graph node types");
+                                error!(logger, "gather - invalid path IOBUFE -> FF -> IOBUFE";
+                                    "node 1" => &node.name,
+                                    "node 2" => &source_node.name);
+                                return Err(GatherMacrocellError::IllegalNodeDriver(node.name.to_owned()));
                             }
                             // Otherwise ignore this for now. This is a bit strange, but possible.
                         } else {
-                            panic!("mismatched graph node types");
+                            error!(logger, "gather - invalid path ![XOR|IOBUFE] -> FF -> IOBUFE";
+                                "iobuf node" => &node.name,
+                                "invalid node" => &source_node.name);
+                            return Err(GatherMacrocellError::IllegalNodeDriver(node.name.to_owned()));
                         }
                     } else {
-                        panic!("mismatched graph node types");
+                        error!(logger, "gather - invalid path ![XOR|FF] -> IOBUFE";
+                            "iobuf node" => &node.name,
+                            "invalid node" => &source_node.name);
+                        return Err(GatherMacrocellError::IllegalNodeDriver(node.name.to_owned()));
                     }
                 }
             }
@@ -869,19 +892,34 @@ impl IntermediateGraph {
                 }
 
                 let mut maybe_reg_index = None;
+                let mut maybe_reg_name = None;
                 for &sink_node_idx in &self.nets.get(output).sinks {
                     let sink_node = self.nodes.get(sink_node_idx);
 
                     if let IntermediateGraphNodeVariant::Reg{..} = sink_node.variant {
+                        if maybe_reg_index.is_some() {
+                            error!(logger, "gather - invalid multiple FF sinks for node";
+                                "node" => &node.name,
+                                "ff node 1" => maybe_reg_name.unwrap(),
+                                "ff node 2" => &sink_node.name);
+                            return Err(GatherMacrocellError::IllegalNodeSink(node.name.to_owned()));
+                        }
+
                         maybe_reg_index = Some(sink_node_idx);
+                        maybe_reg_name = Some(&sink_node.name);
                     }
                 }
 
                 if maybe_reg_index.is_none() {
                     // Buried combinatorial
+                    debug!(logger, "gather - found buried combinatorial";
+                        "name" => &node.name);
                     ret.push(node_idx);
                 } else {
                     // Buried register
+                    debug!(logger, "gather - found buried register";
+                        "xor name" => &node.name,
+                        "reg name" => maybe_reg_name.unwrap());
                     ret.push(maybe_reg_index.unwrap());
                 }
             }
@@ -893,15 +931,28 @@ impl IntermediateGraph {
 
             if let IntermediateGraphNodeVariant::InBuf{output, ..} = node.variant {
                 let mut maybe_reg_index = None;
+                let mut maybe_reg_name = None;
                 for &sink_node_idx in &self.nets.get(output).sinks {
                     let sink_node = self.nodes.get(sink_node_idx);
 
                     if let IntermediateGraphNodeVariant::Reg{..} = sink_node.variant {
+                        if maybe_reg_index.is_some() {
+                            error!(logger, "gather - invalid multiple FF sinks for node";
+                                "node" => &node.name,
+                                "ff node 1" => maybe_reg_name.unwrap(),
+                                "ff node 2" => &sink_node.name);
+                            return Err(GatherMacrocellError::IllegalNodeSink(node.name.to_owned()));
+                        }
+
                         maybe_reg_index = Some(sink_node_idx);
+                        maybe_reg_name = Some(&sink_node.name);
                     }
                 }
 
                 if maybe_reg_index.is_some() {
+                    debug!(logger, "gather - found registered IBUF";
+                        "ibuf name" => &node.name,
+                        "reg name" => maybe_reg_name.unwrap());
                     ret.push(node_idx);
                 }
             }
@@ -922,12 +973,44 @@ impl IntermediateGraph {
                 }
 
                 if maybe_reg_index.is_none() {
+                    debug!(logger, "gather - found unregistered IBUF";
+                        "name" => &node.name);
                     ret.push(node_idx);
                 }
             }
         }
 
-        ret
+        Ok(ret)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum GatherMacrocellError {
+    IllegalNodeDriver(String),
+    IllegalNodeSink(String),
+}
+
+impl error::Error for GatherMacrocellError {
+    fn description(&self) -> &'static str {
+        match self {
+            &GatherMacrocellError::IllegalNodeDriver(_) => "node is driven by illegal type of node",
+            &GatherMacrocellError::IllegalNodeSink(_) => "node sinks to too many nodes",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        None
+    }
+}
+
+impl fmt::Display for GatherMacrocellError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &GatherMacrocellError::IllegalNodeDriver(ref s) |
+            &GatherMacrocellError::IllegalNodeSink(ref s) => {
+                write!(f, "{} - {}", self.description(), s)
+            },
+        }
     }
 }
 
@@ -951,7 +1034,7 @@ impl RequestedLocation {
                 if loc_fb_i.len() == 1 {
                     // FBn
                     let fb = loc_fb_i[0][2..].parse::<u32>()? - 1;
-                    info!(logger, "loc - FB";
+                    debug!(logger, "loc - FB";
                         "fb" => fb);
                     Ok(Some(RequestedLocation {
                         fb,
@@ -962,7 +1045,7 @@ impl RequestedLocation {
                         // FBn_i
                         let fb = loc_fb_i[0][2..].parse::<u32>()? - 1;
                         let i = loc_fb_i[1].parse::<u32>()? - 1;
-                        info!(logger, "loc - FB/MC";
+                        debug!(logger, "loc - FB/MC";
                             "fb" => fb,
                             "mc" => i);
                         Ok(Some(RequestedLocation {
@@ -973,7 +1056,7 @@ impl RequestedLocation {
                         // FBn_Pi
                         let fb = loc_fb_i[0][2..].parse::<u32>()? - 1;
                         let i = loc_fb_i[1][1..].parse::<u32>()?;
-                        info!(logger, "loc - FB/Pterm";
+                        debug!(logger, "loc - FB/Pterm";
                             "fb" => fb,
                             "pt" => i);
                         Ok(Some(RequestedLocation {

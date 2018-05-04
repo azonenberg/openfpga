@@ -27,6 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
+use slog::Drain;
 
 extern crate xc2bit;
 use self::xc2bit::*;
@@ -276,7 +277,11 @@ fn combine_locs(old: Option<RequestedLocation>, additional: Option<RequestedLoca
 }
 
 impl InputGraph {
-    pub fn from_intermed_graph(g: &IntermediateGraph) -> Result<Self, &'static str> {
+    pub fn from_intermed_graph<L: Into<Option<slog::Logger>>>(g: &IntermediateGraph, logger: L)
+        -> Result<Self, &'static str> {
+
+        let logger = logger.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
+
         // TODO: Implement location checking
 
         let mut mcs = ObjPool::new();
@@ -299,7 +304,7 @@ impl InputGraph {
         // The first step is to invoke the "old" macrocell-gathering function so that:
         // * we can generate our macrocells in the "correct" order
         // * we can create all the needed macrocell objects ahead of time to break the cycle of references
-        let gathered_mcs = g.gather_macrocells();
+        let gathered_mcs = g.gather_macrocells(logger.new(o!())).unwrap();
 
         // Now we pre-create all the macrocell objects
         for i in 0..gathered_mcs.len() {
@@ -1093,7 +1098,7 @@ mod tests {
         File::open(&input_path).unwrap().read_to_end(&mut input_data).unwrap();
         let intermed_graph = serde_json::from_slice(&input_data).unwrap();
         // This is what we get
-        let our_data_structure = InputGraph::from_intermed_graph(&intermed_graph).unwrap();
+        let our_data_structure = InputGraph::from_intermed_graph(&intermed_graph, None).unwrap();
 
         // Read reference json
         let mut output_path = input_path.to_path_buf();

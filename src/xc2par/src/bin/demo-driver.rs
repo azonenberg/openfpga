@@ -62,12 +62,12 @@ fn main() {
     // println!("{:?}", yosys_netlist);
 
     // Netlist graph (native part)
-    let ngraph_rs = IntermediateGraph::from_yosys_netlist(&yosys_netlist, log).unwrap();
+    let ngraph_rs = IntermediateGraph::from_yosys_netlist(&yosys_netlist, log.new(o!())).unwrap();
     // ngraph_rs.insert_into_par_graph(&mut par_graphs, &lmap);
-    println!("{:?}", ngraph_rs);
+    // println!("{:?}", ngraph_rs);
 
     // New data structure
-    let mut input_graph = InputGraph::from_intermed_graph(&ngraph_rs).unwrap();
+    let mut input_graph = InputGraph::from_intermed_graph(&ngraph_rs, log.new(o!())).unwrap();
     println!("{:?}", input_graph);
 
     // TODO

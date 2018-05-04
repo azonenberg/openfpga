@@ -50,6 +50,6 @@ fn main() {
     let intermed_graph = serde_json::from_slice(&data).unwrap();
 
     // Netlist graph
-    let input_graph = InputGraph::from_intermed_graph(&intermed_graph).unwrap();
+    let input_graph = InputGraph::from_intermed_graph(&intermed_graph, None).unwrap();
     println!("{}", serde_json::to_string(&input_graph).unwrap());
 }
