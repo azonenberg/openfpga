@@ -59,7 +59,7 @@ fn main() {
 
     // de-serialize the yosys netlist
     let yosys_netlist = yosys_netlist_json::Netlist::from_slice(&data).unwrap();
-    println!("{:?}", yosys_netlist);
+    // println!("{:?}", yosys_netlist);
 
     // Netlist graph (native part)
     let ngraph_rs = IntermediateGraph::from_yosys_netlist(&yosys_netlist, log).unwrap();

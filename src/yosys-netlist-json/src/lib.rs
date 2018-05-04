@@ -72,7 +72,7 @@ impl slog::Value for SpecialBit {
 }
 
 /// A number representing a single bit of a wire
-#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq, Hash)]
 #[serde(untagged)]
 pub enum BitVal {
     /// An actual signal number
@@ -118,7 +118,7 @@ impl slog::Value for AttributeVal {
 }
 
 /// Represents an entire .json file used by Yosys
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct Netlist {
     /// The program that created this file.
     #[serde(default)]
@@ -129,7 +129,7 @@ pub struct Netlist {
 }
 
 /// Represents one module in the Yosys hierarchy
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct Module {
     /// Module attributes
     #[serde(default)]
@@ -146,7 +146,7 @@ pub struct Module {
 }
 
 /// Represents a port on a module
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct Port {
     /// Port direction
     pub direction: PortDirection,
@@ -155,7 +155,7 @@ pub struct Port {
 }
 
 /// Represents a cell in a module
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct Cell {
     /// Indicates an internal/auto-generated name that starts with `$`
     #[serde(default)]
@@ -177,7 +177,7 @@ pub struct Cell {
 }
 
 /// Represents the name of a net in a module
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct Netname {
     /// Indicates an internal/auto-generated name that starts with `$`
     #[serde(default)]

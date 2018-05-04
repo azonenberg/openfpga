@@ -23,6 +23,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+use std::error;
+use std::error::{Error};
+use std::fmt;
 use std::collections::{HashMap, HashSet};
 use objpool::*;
 use slog;
@@ -114,9 +117,90 @@ pub struct IntermediateGraph {
     pub vss_net: ObjPoolIndex<IntermediateGraphNet>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum FrontendError {
+    MultipleToplevelModules,
+    NoToplevelModules,
+    UnsupportedCellType(String),
+    MultipleNetDrivers(String),
+    NoNetDrivers(String),
+    MalformedLoc(String),
+    IllegalBitValue(yosys_netlist_json::BitVal),
+    IllegalAttributeValue(yosys_netlist_json::AttributeVal),
+    IllegalStringAttributeValue(String),
+    MissingRequiredConnection(String),
+    TooManyConnections(String),
+    MissingRequiredParameter(String),
+    MismatchedInputCount,
+    ParseIntError(::std::num::ParseIntError),
+}
+
+impl error::Error for FrontendError {
+    fn description(&self) -> &'static str {
+        match self {
+            &FrontendError::MultipleToplevelModules => "multiple top-level modules",
+            &FrontendError::NoToplevelModules => "no top-level modules",
+            &FrontendError::UnsupportedCellType(_) => "unsupported cell type",
+            &FrontendError::MultipleNetDrivers(_) => "multiple drivers for net",
+            &FrontendError::NoNetDrivers(_) => "no drivers for net",
+            &FrontendError::MalformedLoc(_) => "malformed LOC attribute",
+            &FrontendError::IllegalBitValue(_) => "illegal bit value",
+            &FrontendError::IllegalAttributeValue(_) => "illegal attribute value",
+            &FrontendError::IllegalStringAttributeValue(_) => "illegal string attribute value",
+            &FrontendError::MissingRequiredConnection(_) => "missing required connection",
+            &FrontendError::TooManyConnections(_) => "too many net connections",
+            &FrontendError::MissingRequiredParameter(_) => "missing required parameter",
+            &FrontendError::MismatchedInputCount => "mismatched input count",
+            &FrontendError::ParseIntError(_) => "integer parse error",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match self {
+            &FrontendError::ParseIntError(ref inner) => Some(inner),
+            _ => None,
+        }
+    }
+}
+
+impl fmt::Display for FrontendError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &FrontendError::UnsupportedCellType(ref s) |
+            &FrontendError::MultipleNetDrivers(ref s) |
+            &FrontendError::NoNetDrivers(ref s) |
+            &FrontendError::MalformedLoc(ref s) |
+            &FrontendError::IllegalStringAttributeValue(ref s) |
+            &FrontendError::MissingRequiredConnection(ref s) |
+            &FrontendError::TooManyConnections(ref s) |
+            &FrontendError::MissingRequiredParameter(ref s) => {
+                write!(f, "{} - {}", self.description(), s)
+            },
+            &FrontendError::IllegalBitValue(v) => {
+                write!(f, "{} - {:?}", self.description(), v)
+            },
+            &FrontendError::IllegalAttributeValue(ref v) => {
+                write!(f, "{} - {:?}", self.description(), v)
+            },
+            &FrontendError::ParseIntError(ref inner) => {
+                write!(f, "{}", inner)
+            }
+            _ => {
+                write!(f, "{}", self.description())
+            }
+        }
+    }
+}
+
+impl From<::std::num::ParseIntError> for FrontendError {
+    fn from(err: ::std::num::ParseIntError) -> Self {
+        FrontendError::ParseIntError(err)
+    }
+}
+
 impl IntermediateGraph {
     pub fn from_yosys_netlist<L: Into<Option<slog::Logger>>>(
-        yosys_net: &yosys_netlist_json::Netlist, logger: L) -> Result<Self, &'static str> {
+        yosys_net: &yosys_netlist_json::Netlist, logger: L) -> Result<Self, FrontendError> {
 
         let logger = logger.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
 
@@ -134,7 +218,7 @@ impl IntermediateGraph {
                         if top_module_found {
                             error!(logger, "found multiple toplevel yosys netlist modules";
                                 "second module name" => module_name);
-                            return Err("Multiple top-level modules found in netlist");
+                            return Err(FrontendError::MultipleToplevelModules);
                         }
 
                         top_module_found = true;
@@ -146,7 +230,7 @@ impl IntermediateGraph {
 
         if !top_module_found {
             error!(logger, "found no toplevel yosys netlist modules");
-            return Err("No top-level modules found in netlist");
+            return Err(FrontendError::NoToplevelModules);
         }
         let top_module = yosys_net.modules.get(top_module_name).unwrap();
 
@@ -278,7 +362,7 @@ impl IntermediateGraph {
                     error!(logger, "cells - illegal bit value";
                         "connection name" => conn_name,
                         "value" => bitval);
-                    Err("Illegal bit value in JSON")
+                    Err(FrontendError::IllegalBitValue(bitval))
                 },
             }
         };
@@ -295,9 +379,9 @@ impl IntermediateGraph {
                 if param_option.is_none() {
                     error!(logger, "cells - missing required parameter";
                         "name" => name);
-                    return Err("required cell parameter is missing");
+                    return Err(FrontendError::MissingRequiredParameter(name.to_owned()));
                 }
-                let param_option_copy = param_option.as_ref().unwrap();
+                let param_option_copy = *param_option.as_ref().unwrap();
                 if let &yosys_netlist_json::AttributeVal::N(n) = param_option.unwrap() {
                     info!(logger, "cells - numeric parameter";
                         "name" => name,
@@ -307,17 +391,17 @@ impl IntermediateGraph {
                     error!(logger, "cells - parameter not a number";
                         "name" => name,
                         "value" => param_option_copy);
-                    return Err("cell parameter is not a number");
+                    return Err(FrontendError::IllegalAttributeValue(param_option_copy.clone()));
                 };
             };
 
             // Helper to retrieve an optional string attribute
-            let optional_string_attrib = |name: &str| -> Result<Option<&str>, &'static str> {
+            let optional_string_attrib = |name: &str| -> Result<Option<&str>, FrontendError> {
                 let param_option = cell_obj.attributes.get(name);
                 if param_option.is_none() {
                     return Ok(None);
                 }
-                let param_option_copy = param_option.as_ref().unwrap();
+                let param_option_copy = *param_option.as_ref().unwrap();
                 if let &yosys_netlist_json::AttributeVal::S(ref s) = param_option.unwrap() {
                     info!(logger, "cells - string parameter";
                         "name" => name,
@@ -327,12 +411,12 @@ impl IntermediateGraph {
                     error!(logger, "cells - parameter not a string";
                         "name" => name,
                         "value" => param_option_copy);
-                    return Err("cell parameter is not a string");
+                    return Err(FrontendError::IllegalAttributeValue(param_option_copy.clone()));
                 };
             };
 
             // Helper to retrieve an optional string attribute containing a boolean
-            let optional_string_bool_attrib = |name: &str| -> Result<bool, &'static str> {
+            let optional_string_bool_attrib = |name: &str| -> Result<bool, FrontendError> {
                 let attrib = optional_string_attrib(name)?;
                 Ok(if let Some(attrib) = attrib {
                     if attrib.eq_ignore_ascii_case("true") {
@@ -349,7 +433,7 @@ impl IntermediateGraph {
                         error!(logger, "cells - parameter not a boolean";
                             "name" => name,
                             "value" => attrib);
-                        return Err("invalid attribute value");
+                        return Err(FrontendError::IllegalStringAttributeValue(attrib.to_owned()));
                     }
                 } else {
                     false   // TODO: Default should be?
@@ -362,13 +446,13 @@ impl IntermediateGraph {
                 if conn_obj.is_none() {
                     error!(logger, "cells - missing required connection";
                         "connection name" => name);
-                    return Err("cell is missing required connection");
+                    return Err(FrontendError::MissingRequiredConnection(name.to_owned()));
                 }
                 let conn_obj = conn_obj.unwrap();
                 if conn_obj.len() != 1 {
                     error!(logger, "cells - too many nets";
                         "connection name" => name);
-                    return Err("cell connection has too many nets")
+                    return Err(FrontendError::TooManyConnections(name.to_owned()));
                 }
                 let result = bitval_to_net(conn_obj[0].clone(), name, logger)?;
                 info!(logger, "cells - mapped required connection";
@@ -388,7 +472,7 @@ impl IntermediateGraph {
                 if conn_obj.len() != 1 {
                     error!(logger, "cells - too many nets";
                         "connection name" => name);
-                    return Err("cell connection has too many nets")
+                    return Err(FrontendError::TooManyConnections(name.to_owned()));
                 }
                 let result = bitval_to_net(conn_obj[0].clone(), name, logger)?;
                 info!(logger, "cells - mapped optional connection";
@@ -404,7 +488,7 @@ impl IntermediateGraph {
                 if conn_obj.is_none() {
                     error!(logger, "cells - missing required connection";
                         "connection name" => name);
-                    return Err("cell is missing required connection");
+                    return Err(FrontendError::MissingRequiredConnection(name.to_owned()));
                 }
                 let mut result = Vec::new();
                 let conn_obj_copy = conn_obj.as_ref().unwrap().clone();
@@ -438,7 +522,7 @@ impl IntermediateGraph {
                         } else {
                             error!(logger, "cells - IOBUFE - invalid slew rate";
                                 "value" => attrib);
-                            return Err("invalid attribute value");
+                            return Err(FrontendError::IllegalStringAttributeValue(attrib.to_owned()));
                         }
                     } else {
                         false   // TODO: Default should be?
@@ -491,7 +575,7 @@ impl IntermediateGraph {
                             "comp input attrib" => num_comp_inputs,
                             "true input conn" => inputs_true.len(),
                             "comp input conn" => inputs_comp.len());
-                        return Err("ANDTERM cell has a mismatched number of inputs");
+                        return Err(FrontendError::MismatchedInputCount);
                     }
 
                     nodes.insert(IntermediateGraphNode {
@@ -513,7 +597,7 @@ impl IntermediateGraph {
                         error!(logger, "cells - ORTERM - mismatched number of inputs";
                             "input attrib" => num_inputs,
                             "input conn" => inputs.len());
-                        return Err("ORTERM cell has a mismatched number of inputs");
+                        return Err(FrontendError::MismatchedInputCount);
                     }
 
                     nodes.insert(IntermediateGraphNode {
@@ -618,7 +702,7 @@ impl IntermediateGraph {
                 }
                 _ => {
                     error!(logger, "cells - unsupported cell type");
-                    return Err("unsupported cell type")
+                    return Err(FrontendError::UnsupportedCellType(cell_obj.cell_type.to_owned()));
                 }
             }
         }
@@ -630,9 +714,12 @@ impl IntermediateGraph {
             let output_net = nets.get_mut(output);
             if output_net.source.is_some() {
                 error!(logger, "connectivity - multiple drivers for net";
+                    "net" => &output_net.name,
                     "old driver" => output_net.source.unwrap(),
                     "new driver" => x);
-                return Err("multiple drivers for net");
+                // FIXME: Wtf is &"lit".to_owned()?!
+                return Err(FrontendError::MultipleNetDrivers(output_net.name.as_ref()
+                    .unwrap_or(&"<no name>".to_owned()).to_owned()));
             }
             info!(logger, "connectivity - connecting driver";
                 "net" => &output_net.name,
@@ -715,7 +802,8 @@ impl IntermediateGraph {
             if net.source.is_none() {
                 error!(logger, "connectivity - undriven net";
                     "net" => &net.name);
-                return Err("net without driver");
+                return Err(FrontendError::NoNetDrivers(net.name.as_ref()
+                    .unwrap_or(&"<no name>".to_owned()).to_owned()));
             }
         }
 
@@ -850,59 +938,64 @@ pub struct RequestedLocation {
 }
 
 impl RequestedLocation {
-    fn parse_location(loc: Option<&str>, logger: &slog::Logger) -> Result<Option<Self>, &'static str> {
+    fn parse_location(loc: Option<&str>, logger: &slog::Logger) -> Result<Option<Self>, FrontendError> {
         if loc.is_none() {
             return Ok(None);
         }
 
         let loc = loc.unwrap();
 
-        if loc.starts_with("FB") {
-            let loc_fb_i = loc.split("_").collect::<Vec<_>>();
-            if loc_fb_i.len() == 1 {
-                // FBn
-                let fb = loc_fb_i[0][2..].parse::<u32>().unwrap() - 1;
-                info!(logger, "loc - FB";
-                    "fb" => fb);
-                Ok(Some(RequestedLocation {
-                    fb,
-                    i: None,
-                }))
-            } else if loc_fb_i.len() == 2 {
-                if !loc_fb_i[1].starts_with("P") {
-                    // FBn_i
-                    let fb = loc_fb_i[0][2..].parse::<u32>().unwrap() - 1;
-                    let i = loc_fb_i[1].parse::<u32>().unwrap() - 1;
-                    info!(logger, "loc - FB/MC";
-                        "fb" => fb,
-                        "mc" => i);
+        let f = |loc: &str| {
+            if loc.starts_with("FB") {
+                let loc_fb_i = loc.split("_").collect::<Vec<_>>();
+                if loc_fb_i.len() == 1 {
+                    // FBn
+                    let fb = loc_fb_i[0][2..].parse::<u32>()? - 1;
+                    info!(logger, "loc - FB";
+                        "fb" => fb);
                     Ok(Some(RequestedLocation {
                         fb,
-                        i: Some(i),
+                        i: None,
                     }))
+                } else if loc_fb_i.len() == 2 {
+                    if !loc_fb_i[1].starts_with("P") {
+                        // FBn_i
+                        let fb = loc_fb_i[0][2..].parse::<u32>()? - 1;
+                        let i = loc_fb_i[1].parse::<u32>()? - 1;
+                        info!(logger, "loc - FB/MC";
+                            "fb" => fb,
+                            "mc" => i);
+                        Ok(Some(RequestedLocation {
+                            fb,
+                            i: Some(i),
+                        }))
+                    } else {
+                        // FBn_Pi
+                        let fb = loc_fb_i[0][2..].parse::<u32>()? - 1;
+                        let i = loc_fb_i[1][1..].parse::<u32>()?;
+                        info!(logger, "loc - FB/Pterm";
+                            "fb" => fb,
+                            "pt" => i);
+                        Ok(Some(RequestedLocation {
+                            fb,
+                            i: Some(i),
+                        }))
+                    }
                 } else {
-                    // FBn_Pi
-                    let fb = loc_fb_i[0][2..].parse::<u32>().unwrap() - 1;
-                    let i = loc_fb_i[1][1..].parse::<u32>().unwrap();
-                    info!(logger, "loc - FB/Pterm";
-                        "fb" => fb,
-                        "pt" => i);
-                    Ok(Some(RequestedLocation {
-                        fb,
-                        i: Some(i),
-                    }))
+                    Err(FrontendError::MalformedLoc(loc.to_owned()))
                 }
             } else {
-                error!(logger, "loc - malformed";
-                    "loc" => loc);
-                Err("Malformed LOC constraint")
+                // TODO: Pin names
+                Err(FrontendError::MalformedLoc(loc.to_owned()))
             }
-        } else {
-            // TODO: Pin names
+        };
+
+        let result = f(loc);
+        if result.is_err() {
             error!(logger, "loc - malformed";
                 "loc" => loc);
-            Err("Malformed LOC constraint")
         }
+        result
     }
 }
 
