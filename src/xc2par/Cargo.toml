@@ -11,6 +11,9 @@ name = "xc2par"
 crate-type = ["rlib", "staticlib"]
 
 [dependencies]
+slog = "2"
+slog-stdlog = "3"
+slog-term = "2"
 rand = "0.3"
 serde = "1.0"
 serde_json = "1.0"

@@ -34,6 +34,11 @@ use xc2par::*;
 
 extern crate yosys_netlist_json;
 
+extern crate slog_term;
+#[macro_use]
+extern crate slog;
+use slog::Drain;
+
 fn main() {
     let args = ::std::env::args().collect::<Vec<_>>();
 
@@ -41,6 +46,11 @@ fn main() {
         println!("Usage: {} file.json", args[0]);
         ::std::process::exit(1);
     }
+
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = std::sync::Mutex::new(drain).fuse();
+    let log = slog::Logger::root(drain, o!());
 
     // Read the entire input file
     let mut f = File::open(&args[1]).expect("failed to open file");
@@ -52,7 +62,7 @@ fn main() {
     println!("{:?}", yosys_netlist);
 
     // Netlist graph (native part)
-    let ngraph_rs = IntermediateGraph::from_yosys_netlist(&yosys_netlist).unwrap();
+    let ngraph_rs = IntermediateGraph::from_yosys_netlist(&yosys_netlist, log).unwrap();
     // ngraph_rs.insert_into_par_graph(&mut par_graphs, &lmap);
     println!("{:?}", ngraph_rs);
 

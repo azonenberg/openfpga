@@ -30,6 +30,8 @@ use std::io::Write;
 extern crate serde_derive;
 extern crate serde_json;
 
+extern crate slog;
+
 /// Legal values for the direction of a port on a module
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq, Hash)]
 pub enum PortDirection {
@@ -58,6 +60,17 @@ pub enum SpecialBit {
     Z,
 }
 
+impl slog::Value for SpecialBit {
+    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut slog::Serializer) -> slog::Result {
+        match self {
+            &SpecialBit::_0 => serializer.emit_str(key, "0"),
+            &SpecialBit::_1 => serializer.emit_str(key, "1"),
+            &SpecialBit::X => serializer.emit_str(key, "x"),
+            &SpecialBit::Z => serializer.emit_str(key, "z"),
+        }
+    }
+}
+
 /// A number representing a single bit of a wire
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq, Hash)]
 #[serde(untagged)]
@@ -68,6 +81,19 @@ pub enum BitVal {
     S(SpecialBit)
 }
 
+impl slog::Value for BitVal {
+    fn serialize(&self, record: &slog::Record, key: slog::Key, serializer: &mut slog::Serializer) -> slog::Result {
+        match self {
+            &BitVal::N(n) => {
+                serializer.emit_usize(key, n)
+            },
+            &BitVal::S(s) => {
+                s.serialize(record, key, serializer)
+            }
+        }
+    }
+}
+
 /// The value of an attribute/parameter
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq, Hash)]
 #[serde(untagged)]
@@ -76,6 +102,19 @@ pub enum AttributeVal {
     N(usize),
     /// String attribute value
     S(String),
+}
+
+impl slog::Value for AttributeVal {
+    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut slog::Serializer) -> slog::Result {
+        match self {
+            &AttributeVal::N(n) => {
+                serializer.emit_usize(key, n)
+            },
+            &AttributeVal::S(ref s) => {
+                serializer.emit_str(key, s)
+            }
+        }
+    }
 }
 
 /// Represents an entire .json file used by Yosys

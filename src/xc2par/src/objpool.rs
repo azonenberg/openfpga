@@ -27,6 +27,8 @@ use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::slice::{Iter, IterMut};
 
+use slog;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ObjPoolIndex<T> {
     i: usize,
@@ -58,6 +60,12 @@ impl<T> Hash for ObjPoolIndex<T> {
 impl<T> ObjPoolIndex<T> {
     pub fn get_raw_i(&self) -> usize {
         self.i
+    }
+}
+
+impl<T> slog::Value for ObjPoolIndex<T> {
+    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut slog::Serializer) -> slog::Result {
+        serializer.emit_usize(key, self.i)
     }
 }
 

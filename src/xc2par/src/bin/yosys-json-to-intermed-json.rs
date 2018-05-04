@@ -50,6 +50,6 @@ fn main() {
     let yosys_netlist = yosys_netlist_json::Netlist::from_slice(&data).unwrap();
 
     // Netlist graph (native part)
-    let ngraph_rs = IntermediateGraph::from_yosys_netlist(&yosys_netlist).unwrap();
+    let ngraph_rs = IntermediateGraph::from_yosys_netlist(&yosys_netlist, None).unwrap();
     println!("{}", serde_json::to_string(&ngraph_rs).unwrap());
 }

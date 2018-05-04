@@ -24,13 +24,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::collections::{HashMap, HashSet};
-
-extern crate xc2bit;
-use self::xc2bit::*;
-
-extern crate yosys_netlist_json;
-
 use objpool::*;
+use slog;
+use slog::Drain;
+use slog_stdlog;
+use xc2bit::*;
+use yosys_netlist_json;
+
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum IntermediateGraphNodeVariant {
@@ -115,15 +115,25 @@ pub struct IntermediateGraph {
 }
 
 impl IntermediateGraph {
-    pub fn from_yosys_netlist(yosys_net: &yosys_netlist_json::Netlist) -> Result<Self, &'static str> {
+    pub fn from_yosys_netlist<L: Into<Option<slog::Logger>>>(
+        yosys_net: &yosys_netlist_json::Netlist, logger: L) -> Result<Self, &'static str> {
+
+        let logger = logger.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
+
         let mut top_module_name = "";
         let mut top_module_found = false;
         for (module_name, module) in &yosys_net.modules {
+            info!(logger, "found yosys netlist module"; "module name" => module_name);
+
             if let Some(top_attr) = module.attributes.get("top") {
                 if let &yosys_netlist_json::AttributeVal::N(n) = top_attr {
                     if n != 0 {
                         // Claims to be a top-level module
+                        info!(logger, "found toplevel yosys netlist module"; "module name" => module_name);
+
                         if top_module_found {
+                            error!(logger, "found multiple toplevel yosys netlist modules";
+                                "second module name" => module_name);
                             return Err("Multiple top-level modules found in netlist");
                         }
 
@@ -135,9 +145,12 @@ impl IntermediateGraph {
         }
 
         if !top_module_found {
+            error!(logger, "found no toplevel yosys netlist modules");
             return Err("No top-level modules found in netlist");
         }
         let top_module = yosys_net.modules.get(top_module_name).unwrap();
+
+        let logger = logger.new(o!("top module" => top_module_name.to_owned()));
 
         // First, we must process all nets
         let mut nets = ObjPool::new();
@@ -181,11 +194,19 @@ impl IntermediateGraph {
                     if let &yosys_netlist_json::BitVal::N(yosys_edge_idx) = connection {
                         // Don't create nets for the pad side of io buffers
                         if module_ports.contains(&yosys_edge_idx) {
+                            info!(logger, "nets - skipping module port for cell";
+                                "cell name" => cell_name,
+                                "connection name" => connection_name,
+                                "net index" => yosys_edge_idx);
                             continue;
                         }
 
                         if net_map.get(&yosys_edge_idx).is_none() {
                             // Need to add a new one
+                            info!(logger, "nets - adding new net because of cell";
+                                "cell name" => cell_name,
+                                "connection name" => connection_name,
+                                "net index" => yosys_edge_idx);
                             let our_edge_idx = nets.insert(IntermediateGraphNet {
                                 name: None,
                                 source: None,
@@ -208,11 +229,17 @@ impl IntermediateGraph {
                 if let &yosys_netlist_json::BitVal::N(yosys_edge_idx) = yosys_edge_idx {
                     // Don't create nets for the pad side of io buffers
                     if module_ports.contains(&yosys_edge_idx) {
+                        info!(logger, "nets - skipping module port for netname";
+                            "name" => netname_name,
+                            "index" => yosys_edge_idx);
                         continue;
                     }
 
                     if net_map.get(&yosys_edge_idx).is_none() {
                         // Need to add a new one
+                        info!(logger, "nets - adding new net because of netname";
+                            "name" => netname_name,
+                            "index" => yosys_edge_idx);
                         let our_edge_idx = nets.insert(IntermediateGraphNet {
                             name: Some(netname_name.to_owned()),
                             source: None,
@@ -221,8 +248,17 @@ impl IntermediateGraph {
                         net_map.insert(yosys_edge_idx, our_edge_idx);
                     } else {
                         // Naming an existing one
+                        info!(logger, "nets - naming existing net";
+                            "name" => netname_name,
+                            "index" => yosys_edge_idx);
                         let existing_net_our_idx = net_map.get(&yosys_edge_idx).unwrap();
                         let existing_net = nets.get_mut(*existing_net_our_idx);
+                        if let Some(ref old_name) = existing_net.name {
+                            warn!(logger, "nets - overwrote net name";
+                                "old name" => old_name,
+                                "new name" => netname_name,
+                                "index" => yosys_edge_idx);
+                        }
                         existing_net.name = Some(netname_name.to_owned());
                     }
                 }
@@ -232,13 +268,18 @@ impl IntermediateGraph {
         // Now we can actually process objects
         let mut nodes = ObjPool::new();
 
-        let bitval_to_net = |bitval| {
+        let bitval_to_net = |bitval, conn_name: &str, logger: &slog::Logger| {
             match bitval {
                 yosys_netlist_json::BitVal::N(n) => Ok(*net_map.get(&n).unwrap()),
                 yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_0) => Ok(vss_net),
                 yosys_netlist_json::BitVal::S(yosys_netlist_json::SpecialBit::_1) => Ok(vdd_net),
                 // We should never see an x/z in our processing
-                _ => Err("Illegal bit value in JSON"),
+                _ => {
+                    error!(logger, "cells - illegal bit value";
+                        "connection name" => conn_name,
+                        "value" => bitval);
+                    Err("Illegal bit value in JSON")
+                },
             }
         };
 
@@ -246,15 +287,26 @@ impl IntermediateGraph {
         for &cell_name in &cell_names {
             let cell_obj = &top_module.cells[cell_name];
 
+            let logger = logger.new(o!("cell name" => cell_name.to_owned()));
+
             // Helper to retrieve a parameter
             let numeric_param = |name: &str| {
                 let param_option = cell_obj.parameters.get(name);
                 if param_option.is_none() {
+                    error!(logger, "cells - missing required parameter";
+                        "name" => name);
                     return Err("required cell parameter is missing");
                 }
+                let param_option_copy = param_option.as_ref().unwrap();
                 if let &yosys_netlist_json::AttributeVal::N(n) = param_option.unwrap() {
+                    info!(logger, "cells - numeric parameter";
+                        "name" => name,
+                        "value" => n);
                     return Ok(n)
                 } else {
+                    error!(logger, "cells - parameter not a number";
+                        "name" => name,
+                        "value" => param_option_copy);
                     return Err("cell parameter is not a number");
                 };
             };
@@ -265,9 +317,16 @@ impl IntermediateGraph {
                 if param_option.is_none() {
                     return Ok(None);
                 }
+                let param_option_copy = param_option.as_ref().unwrap();
                 if let &yosys_netlist_json::AttributeVal::S(ref s) = param_option.unwrap() {
+                    info!(logger, "cells - string parameter";
+                        "name" => name,
+                        "value" => s);
                     return Ok(Some(s))
                 } else {
+                    error!(logger, "cells - parameter not a string";
+                        "name" => name,
+                        "value" => param_option_copy);
                     return Err("cell parameter is not a string");
                 };
             };
@@ -277,10 +336,19 @@ impl IntermediateGraph {
                 let attrib = optional_string_attrib(name)?;
                 Ok(if let Some(attrib) = attrib {
                     if attrib.eq_ignore_ascii_case("true") {
+                        info!(logger, "cells - bool parameter";
+                            "name" => name,
+                            "value" => true);
                         true
                     } else if attrib.eq_ignore_ascii_case("false") {
+                        info!(logger, "cells - bool parameter";
+                            "name" => name,
+                            "value" => false);
                         false
                     } else {
+                        error!(logger, "cells - parameter not a boolean";
+                            "name" => name,
+                            "value" => attrib);
                         return Err("invalid attribute value");
                     }
                 } else {
@@ -289,43 +357,71 @@ impl IntermediateGraph {
             };
 
             // Helper to retrieve a single net that is definitely required
-            let single_required_connection = |name : &str| {
+            let single_required_connection = |name: &str, logger: &slog::Logger| {
                 let conn_obj = cell_obj.connections.get(name);
                 if conn_obj.is_none() {
+                    error!(logger, "cells - missing required connection";
+                        "connection name" => name);
                     return Err("cell is missing required connection");
                 }
                 let conn_obj = conn_obj.unwrap();
                 if conn_obj.len() != 1 {
+                    error!(logger, "cells - too many nets";
+                        "connection name" => name);
                     return Err("cell connection has too many nets")
                 }
-                return Ok(bitval_to_net(conn_obj[0].clone())?);
+                let result = bitval_to_net(conn_obj[0].clone(), name, logger)?;
+                info!(logger, "cells - mapped required connection";
+                    "connection name" => name,
+                    "yosys net idx" => conn_obj[0].clone(),
+                    "net pool idx" => result);
+                return Ok(result);
             };
 
             // Helper to retrieve a single net that is optional
-            let single_optional_connection = |name: &str| {
+            let single_optional_connection = |name: &str, logger: &slog::Logger| {
                 let conn_obj = cell_obj.connections.get(name);
                 if conn_obj.is_none() {
                     return Ok(None);
                 }
                 let conn_obj = conn_obj.unwrap();
                 if conn_obj.len() != 1 {
+                    error!(logger, "cells - too many nets";
+                        "connection name" => name);
                     return Err("cell connection has too many nets")
                 }
-                return Ok(Some(bitval_to_net(conn_obj[0].clone())?));
+                let result = bitval_to_net(conn_obj[0].clone(), name, logger)?;
+                info!(logger, "cells - mapped optional connection";
+                    "connection name" => name,
+                    "yosys net idx" => conn_obj[0].clone(),
+                    "net pool idx" => result);
+                return Ok(Some(result));
             };
 
             // Helper to retrieve an array of nets that is required
-            let multiple_required_connection = |name : &str| {
+            let multiple_required_connection = |name: &str, logger: &slog::Logger| {
                 let conn_obj = cell_obj.connections.get(name);
                 if conn_obj.is_none() {
+                    error!(logger, "cells - missing required connection";
+                        "connection name" => name);
                     return Err("cell is missing required connection");
                 }
                 let mut result = Vec::new();
+                let conn_obj_copy = conn_obj.as_ref().unwrap().clone();
                 for x in conn_obj.unwrap() {
-                    result.push(bitval_to_net(x.clone())?);
+                    result.push(bitval_to_net(x.clone(), name, logger)?);
+                }
+                for i in 0..result.len() {
+                    info!(logger, "cells - mapped multiple connections";
+                        "connection name" => name,
+                        "yosys net idx" => &conn_obj_copy[i],
+                        "net pool idx" => result[i]);
                 }
                 return Ok(result);
             };
+
+            info!(logger, "cells - processing";
+                "type" => &cell_obj.cell_type);
 
             match cell_obj.cell_type.as_ref() {
                 "IOBUFE"  => {
@@ -334,10 +430,14 @@ impl IntermediateGraph {
                     let slew_attrib = optional_string_attrib("SLEW")?;
                     let slew_is_fast = if let Some(attrib) = slew_attrib {
                         if attrib.eq_ignore_ascii_case("fast") {
+                            info!(logger, "cells - IOBUFE - slow is fast");
                             true
                         } else if attrib.eq_ignore_ascii_case("slow") {
+                            info!(logger, "cells - IOBUFE - slow is slow");
                             false
                         } else {
+                            error!(logger, "cells - IOBUFE - invalid slew rate";
+                                "value" => attrib);
                             return Err("invalid attribute value");
                         }
                     } else {
@@ -350,15 +450,15 @@ impl IntermediateGraph {
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::IOBuf {
-                            input: single_optional_connection("I")?,
-                            oe: single_optional_connection("E")?,
-                            output: single_optional_connection("O")?,
+                            input: single_optional_connection("I", &logger)?,
+                            oe: single_optional_connection("E", &logger)?,
+                            output: single_optional_connection("O", &logger)?,
                             schmitt_trigger: optional_string_bool_attrib("SCHMITT_TRIGGER")?,
                             termination_enabled: optional_string_bool_attrib("TERM")?,
                             slew_is_fast,
                             uses_data_gate,
                         },
-                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?, &logger)?,
                     });
                 },
                 "IBUF" => {
@@ -370,22 +470,27 @@ impl IntermediateGraph {
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::InBuf {
-                            output: single_required_connection("O")?,
+                            output: single_required_connection("O", &logger)?,
                             schmitt_trigger: optional_string_bool_attrib("SCHMITT_TRIGGER")?,
                             termination_enabled: optional_string_bool_attrib("TERM")?,
                             uses_data_gate,
                         },
-                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?, &logger)?,
                     });
                 },
                 "ANDTERM" => {
                     let num_true_inputs = numeric_param("TRUE_INP")?;
                     let num_comp_inputs = numeric_param("COMP_INP")?;
 
-                    let inputs_true = multiple_required_connection("IN")?;
-                    let inputs_comp = multiple_required_connection("IN_B")?;
+                    let inputs_true = multiple_required_connection("IN", &logger)?;
+                    let inputs_comp = multiple_required_connection("IN_B", &logger)?;
 
                     if num_true_inputs != inputs_true.len() || num_comp_inputs != inputs_comp.len() {
+                        error!(logger, "cells - ANDTERM - mismatched number of inputs";
+                            "true input attrib" => num_true_inputs,
+                            "comp input attrib" => num_comp_inputs,
+                            "true input conn" => inputs_true.len(),
+                            "comp input conn" => inputs_comp.len());
                         return Err("ANDTERM cell has a mismatched number of inputs");
                     }
 
@@ -394,17 +499,20 @@ impl IntermediateGraph {
                         variant: IntermediateGraphNodeVariant::AndTerm {
                             inputs_true,
                             inputs_comp,
-                            output: single_required_connection("OUT")?,
+                            output: single_required_connection("OUT", &logger)?,
                         },
-                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?, &logger)?,
                     });
                 },
                 "ORTERM" => {
                     let num_inputs = numeric_param("WIDTH")?;
 
-                    let inputs = multiple_required_connection("IN")?;
+                    let inputs = multiple_required_connection("IN", &logger)?;
 
                     if num_inputs != inputs.len() {
+                        error!(logger, "cells - ORTERM - mismatched number of inputs";
+                            "input attrib" => num_inputs,
+                            "input conn" => inputs.len());
                         return Err("ORTERM cell has a mismatched number of inputs");
                     }
 
@@ -412,53 +520,53 @@ impl IntermediateGraph {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::OrTerm {
                             inputs,
-                            output: single_required_connection("OUT")?,
+                            output: single_required_connection("OUT", &logger)?,
                         },
-                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?, &logger)?,
                     });
                 },
                 "MACROCELL_XOR" => {
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::Xor {
-                            andterm_input: single_optional_connection("IN_PTC")?,
-                            orterm_input: single_optional_connection("IN_ORTERM")?,
+                            andterm_input: single_optional_connection("IN_PTC", &logger)?,
+                            orterm_input: single_optional_connection("IN_ORTERM", &logger)?,
                             invert_out: numeric_param("INVERT_OUT")? != 0,
-                            output: single_required_connection("OUT")?,
+                            output: single_required_connection("OUT", &logger)?,
                         },
-                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?, &logger)?,
                     });
                 },
                 "BUFG" => {
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::BufgClk {
-                            input: single_required_connection("I")?,
-                            output: single_required_connection("O")?,
+                            input: single_required_connection("I", &logger)?,
+                            output: single_required_connection("O", &logger)?,
                         },
-                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?, &logger)?,
                     });
                 },
                 "BUFGTS" => {
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::BufgGTS {
-                            input: single_required_connection("I")?,
-                            output: single_required_connection("O")?,
+                            input: single_required_connection("I", &logger)?,
+                            output: single_required_connection("O", &logger)?,
                             invert: numeric_param("INVERT")? != 0,
                         },
-                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?, &logger)?,
                     });
                 },
                 "BUFGSR" => {
                     nodes.insert(IntermediateGraphNode {
                         name: cell_name.to_owned(),
                         variant: IntermediateGraphNodeVariant::BufgGSR {
-                            input: single_required_connection("I")?,
-                            output: single_required_connection("O")?,
+                            input: single_required_connection("I", &logger)?,
+                            output: single_required_connection("O", &logger)?,
                             invert: numeric_param("INVERT")? != 0,
                         },
-                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?, &logger)?,
                     });
                 },
                 "FDCP" | "FDCP_N" | "FDDCP" |
@@ -485,7 +593,7 @@ impl IntermediateGraph {
 
                     let mut ce_input = None;
                     if mode == XC2MCRegMode::DFFCE {
-                        ce_input = Some(single_required_connection("CE")?);
+                        ce_input = Some(single_required_connection("CE", &logger)?);
                     }
 
                     let dt_name = if mode == XC2MCRegMode::TFF {"T"} else {"D"};
@@ -498,17 +606,20 @@ impl IntermediateGraph {
                             clkinv,
                             clkddr,
                             init_state: numeric_param("INIT")? != 0,
-                            set_input: single_optional_connection("PRE")?,
-                            reset_input: single_optional_connection("CLR")?,
+                            set_input: single_optional_connection("PRE", &logger)?,
+                            reset_input: single_optional_connection("CLR", &logger)?,
                             ce_input,
-                            dt_input: single_required_connection(dt_name)?,
-                            clk_input: single_required_connection(clk_name)?,
-                            output: single_required_connection("Q")?,
+                            dt_input: single_required_connection(dt_name, &logger)?,
+                            clk_input: single_required_connection(clk_name, &logger)?,
+                            output: single_required_connection("Q", &logger)?,
                         },
-                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?)?,
+                        location: RequestedLocation::parse_location(optional_string_attrib("LOC")?, &logger)?,
                     });
                 }
-                _ => return Err("unsupported cell type")
+                _ => {
+                    error!(logger, "cells - unsupported cell type");
+                    return Err("unsupported cell type")
+                }
             }
         }
 
@@ -518,8 +629,14 @@ impl IntermediateGraph {
         let set_net_source = |nets: &mut ObjPool<IntermediateGraphNet>, output, x| {
             let output_net = nets.get_mut(output);
             if output_net.source.is_some() {
+                error!(logger, "connectivity - multiple drivers for net";
+                    "old driver" => output_net.source.unwrap(),
+                    "new driver" => x);
                 return Err("multiple drivers for net");
             }
+            info!(logger, "connectivity - connecting driver";
+                "net" => &output_net.name,
+                "driver" => x);
             output_net.source = Some(x);
             Ok(())
         };
@@ -596,6 +713,8 @@ impl IntermediateGraph {
 
             let net = nets.get(net_idx);
             if net.source.is_none() {
+                error!(logger, "connectivity - undriven net";
+                    "net" => &net.name);
                 return Err("net without driver");
             }
         }
@@ -731,7 +850,7 @@ pub struct RequestedLocation {
 }
 
 impl RequestedLocation {
-    fn parse_location(loc: Option<&str>) -> Result<Option<Self>, &'static str> {
+    fn parse_location(loc: Option<&str>, logger: &slog::Logger) -> Result<Option<Self>, &'static str> {
         if loc.is_none() {
             return Ok(None);
         }
@@ -742,29 +861,46 @@ impl RequestedLocation {
             let loc_fb_i = loc.split("_").collect::<Vec<_>>();
             if loc_fb_i.len() == 1 {
                 // FBn
+                let fb = loc_fb_i[0][2..].parse::<u32>().unwrap() - 1;
+                info!(logger, "loc - FB";
+                    "fb" => fb);
                 Ok(Some(RequestedLocation {
-                    fb: loc_fb_i[0][2..].parse::<u32>().unwrap() - 1,
+                    fb,
                     i: None,
                 }))
             } else if loc_fb_i.len() == 2 {
                 if !loc_fb_i[1].starts_with("P") {
                     // FBn_i
+                    let fb = loc_fb_i[0][2..].parse::<u32>().unwrap() - 1;
+                    let i = loc_fb_i[1].parse::<u32>().unwrap() - 1;
+                    info!(logger, "loc - FB/MC";
+                        "fb" => fb,
+                        "mc" => i);
                     Ok(Some(RequestedLocation {
-                        fb: loc_fb_i[0][2..].parse::<u32>().unwrap() - 1,
-                        i: Some(loc_fb_i[1].parse::<u32>().unwrap() - 1),
+                        fb,
+                        i: Some(i),
                     }))
                 } else {
                     // FBn_Pi
+                    let fb = loc_fb_i[0][2..].parse::<u32>().unwrap() - 1;
+                    let i = loc_fb_i[1][1..].parse::<u32>().unwrap();
+                    info!(logger, "loc - FB/Pterm";
+                        "fb" => fb,
+                        "pt" => i);
                     Ok(Some(RequestedLocation {
-                        fb: loc_fb_i[0][2..].parse::<u32>().unwrap() - 1,
-                        i: Some(loc_fb_i[1][1..].parse::<u32>().unwrap()),
+                        fb,
+                        i: Some(i),
                     }))
                 }
             } else {
+                error!(logger, "loc - malformed";
+                    "loc" => loc);
                 Err("Malformed LOC constraint")
             }
         } else {
             // TODO: Pin names
+            error!(logger, "loc - malformed";
+                "loc" => loc);
             Err("Malformed LOC constraint")
         }
     }
@@ -787,7 +923,7 @@ mod tests {
         File::open(&input_path).unwrap().read_to_end(&mut input_data).unwrap();
         let yosys_netlist = yosys_netlist_json::Netlist::from_slice(&input_data).unwrap();
         // This is what we get
-        let our_data_structure = IntermediateGraph::from_yosys_netlist(&yosys_netlist).unwrap();
+        let our_data_structure = IntermediateGraph::from_yosys_netlist(&yosys_netlist, None).unwrap();
 
         // Read reference json
         let mut output_path = input_path.to_path_buf();

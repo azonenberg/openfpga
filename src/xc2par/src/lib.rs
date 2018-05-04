@@ -26,6 +26,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #[macro_use]
 extern crate serde_derive;
 
+#[macro_use]
+extern crate slog;
+extern crate slog_stdlog;
+
+extern crate yosys_netlist_json;
+
+extern crate xc2bit;
+
 mod frontend;
 pub use frontend::*;
 
