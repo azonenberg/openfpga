@@ -23,8 +23,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 use std::collections::{HashMap, HashSet};
+use std::error;
+use std::fmt;
+use std::error::{Error};
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 use slog::Drain;
@@ -185,6 +187,33 @@ enum InputGraphAnyPoolIdx {
     BufgGSR(ObjPoolIndex<InputGraphBufgGSR>),
 }
 
+impl slog::Value for InputGraphAnyPoolIdx {
+    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut slog::Serializer) -> slog::Result {
+        match self {
+            &InputGraphAnyPoolIdx::Macrocell(i) => {
+                serializer.emit_usize(key, i.get_raw_i())?;
+                serializer.emit_str("inputgraph type", "macrocell")
+            },
+            &InputGraphAnyPoolIdx::PTerm(i) => {
+                serializer.emit_usize(key, i.get_raw_i())?;
+                serializer.emit_str("inputgraph type", "pterm")
+            },
+            &InputGraphAnyPoolIdx::BufgClk(i) => {
+                serializer.emit_usize(key, i.get_raw_i())?;
+                serializer.emit_str("inputgraph type", "bufg")
+            },
+            &InputGraphAnyPoolIdx::BufgGTS(i) => {
+                serializer.emit_usize(key, i.get_raw_i())?;
+                serializer.emit_str("inputgraph type", "bufgts")
+            },
+            &InputGraphAnyPoolIdx::BufgGSR(i) => {
+                serializer.emit_usize(key, i.get_raw_i())?;
+                serializer.emit_str("inputgraph type", "bufgsr")
+            },
+        }
+    }
+}
+
 impl InputGraphMacrocell {
     pub fn get_type(&self) -> InputGraphMacrocellType {
         if self.io_bits.is_some() {
@@ -244,8 +273,8 @@ fn combine_names(old: &str, additional: &str) -> String {
     }
 }
 
-fn combine_locs(old: Option<RequestedLocation>, additional: Option<RequestedLocation>)
-    -> Result<Option<RequestedLocation>, &'static str> {
+fn combine_locs(old: Option<RequestedLocation>, additional: Option<RequestedLocation>, logger: &slog::Logger)
+    -> Result<Option<RequestedLocation>, IntermedToInputError> {
 
     if old.is_none() {
         Ok(additional)
@@ -256,7 +285,10 @@ fn combine_locs(old: Option<RequestedLocation>, additional: Option<RequestedLoca
         let new = additional.unwrap();
 
         if old_.fb != new.fb {
-            Err("Mismatched FBs in LOC constraint")
+            error!(logger, "intermed2input - LOCs that need to agree do not agree on FB";
+                "first index" => old_.fb,
+                "second index" => new.fb);
+            Err(IntermedToInputError::LocMismatchedFB(old_.fb, new.fb))
         } else {
             if old_.i.is_none() {
                 Ok(additional)
@@ -267,7 +299,10 @@ fn combine_locs(old: Option<RequestedLocation>, additional: Option<RequestedLoca
                 let new_i = new.i.unwrap();
 
                 if old_i != new_i {
-                    Err("Mismatched macrocell in LOC constraint")
+                    error!(logger, "intermed2input - LOCs that need to agree do not agree on macrocell";
+                        "first index" => old_i,
+                        "second index" => new_i);
+                    Err(IntermedToInputError::LocMismatchedMC(old_i, new_i))
                 } else {
                     Ok(old)
                 }
@@ -276,9 +311,58 @@ fn combine_locs(old: Option<RequestedLocation>, additional: Option<RequestedLoca
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum IntermedToInputError {
+    WrongConnectionType(String),
+    WrongTiedValue(String),
+    WrongPTermInputs(String),
+    TooManyFeedbacksUsed(String),
+    LocMismatchedFB(u32, u32),
+    LocMismatchedMC(u32, u32),
+    SanityCheckError(&'static str),
+}
+
+impl error::Error for IntermedToInputError {
+    fn description(&self) -> &'static str {
+        match self {
+            &IntermedToInputError::WrongConnectionType(_) => "node is connected to another node of the wrong type",
+            &IntermedToInputError::WrongTiedValue(_) => "node input is tied to a disallowed constant",
+            &IntermedToInputError::WrongPTermInputs(_) => "p-term inputs incorrect (duplicate or in true+comp)",
+            &IntermedToInputError::TooManyFeedbacksUsed(_) => "too many feedback paths used (XOR + register + IO)",
+            &IntermedToInputError::LocMismatchedFB(_, _) => "two LOC constraints have mismatched FB index",
+            &IntermedToInputError::LocMismatchedMC(_, _) => "two LOC constraints have mismatched macrocell index",
+            &IntermedToInputError::SanityCheckError(_) => "sanity check failed",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        None
+    }
+}
+
+impl fmt::Display for IntermedToInputError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &IntermedToInputError::WrongConnectionType(ref s) |
+            &IntermedToInputError::WrongTiedValue(ref s) |
+            &IntermedToInputError::WrongPTermInputs(ref s) |
+            &IntermedToInputError::TooManyFeedbacksUsed(ref s) => {
+                write!(f, "{} - {}", self.description(), s)
+            },
+            &IntermedToInputError::SanityCheckError(s) => {
+                write!(f, "{} - {}", self.description(), s)
+            },
+            &IntermedToInputError::LocMismatchedFB(i1, i2) |
+            &IntermedToInputError::LocMismatchedMC(i1, i2) => {
+                write!(f, "{} - {}/{}", self.description(), i1, i2)
+            },
+        }
+    }
+}
+
 impl InputGraph {
     pub fn from_intermed_graph<L: Into<Option<slog::Logger>>>(g: &IntermediateGraph, logger: L)
-        -> Result<Self, &'static str> {
+        -> Result<Self, IntermedToInputError> {
 
         let logger = logger.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
 
@@ -344,13 +428,14 @@ impl InputGraph {
         }
 
         fn process_one_intermed_node<'a>(s: &mut process_one_intermed_node_state<'a>,
-            n_idx: ObjPoolIndex<IntermediateGraphNode>) -> Result<InputGraphAnyPoolIdx, &'static str> {
+            n_idx: ObjPoolIndex<IntermediateGraphNode>, logger: &slog::Logger)
+            -> Result<InputGraphAnyPoolIdx, IntermedToInputError> {
 
             let n = s.g.nodes.get(n_idx);
 
             if s.consumed_inputs.contains(&n_idx.get_raw_i()) {
                 // We're already here, but what are we?
-                return Ok(match n.variant {
+                let ret = match n.variant {
                     IntermediateGraphNodeVariant::IOBuf{..} |
                     IntermediateGraphNodeVariant::InBuf{..} |
                     IntermediateGraphNodeVariant::Reg{..} |
@@ -365,7 +450,12 @@ impl InputGraph {
                         InputGraphAnyPoolIdx::BufgGTS(*s.bufg_gts_map.get(&n_idx).unwrap()),
                     IntermediateGraphNodeVariant::BufgGSR{..} =>
                         InputGraphAnyPoolIdx::BufgGSR(*s.bufg_gsr_map.get(&n_idx).unwrap()),
-                })
+                };
+                debug!(logger, "intermed2input - found existing node";
+                    "name" => &n.name,
+                    "intermed" => n_idx,
+                    "inputgraph" => ret);
+                return Ok(ret);
             }
             s.consumed_inputs.insert(n_idx.get_raw_i());
 
@@ -385,7 +475,9 @@ impl InputGraph {
                             if input.unwrap() == s.g.vss_net {
                                 // Open-drain mode
                                 if oe.is_none() || oe.unwrap() == s.g.vdd_net || oe.unwrap() == s.g.vss_net {
-                                    return Err("broken open-drain connection");
+                                    error!(logger, "intermed2input - input is tied low but OE isn't used";
+                                        "name" => &n.name);
+                                    return Err(IntermedToInputError::WrongTiedValue(n.name.to_owned()));
                                 }
                                 // FIXME: Copypasta
                                 let input_n = s.g.nets.get(oe.unwrap()).source.unwrap();
@@ -396,18 +488,24 @@ impl InputGraph {
                                     IntermediateGraphNodeVariant::Reg{..} => {
                                         Some(InputGraphIOInputType::Reg)
                                     },
-                                    _ => return Err("mis-connected nodes"),
+                                    _ => {
+                                        error!(logger, "intermed2input - input is not an XOR or a register";
+                                            "name" => &n.name);
+                                        return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
+                                    },
                                 };
 
                                 // We need to recursively process this. Update the relevant map as well to make sure we
                                 // don't mess up along the way.
                                 assert!(!s.mcs_map.contains_key(&input_n));
                                 s.mcs_map.insert(input_n, newg_idx);
-                                process_one_intermed_node(s, input_n)?;
+                                process_one_intermed_node(s, input_n, logger)?;
 
                                 input_type
                             } else if input.unwrap() == s.g.vdd_net {
-                                return Err("broken constant-1 IO");
+                                error!(logger, "intermed2input - input is tied to a constant one";
+                                    "name" => &n.name);
+                                return Err(IntermedToInputError::WrongTiedValue(n.name.to_owned()));
                             } else {
                                 let input_n = s.g.nets.get(input.unwrap()).source.unwrap();
                                 let input_type = match s.g.nodes.get(input_n).variant {
@@ -417,14 +515,18 @@ impl InputGraph {
                                     IntermediateGraphNodeVariant::Reg{..} => {
                                         Some(InputGraphIOInputType::Reg)
                                     },
-                                    _ => return Err("mis-connected nodes"),
+                                    _ => {
+                                        error!(logger, "intermed2input - input is not an XOR or a register";
+                                            "name" => &n.name);
+                                        return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
+                                    },
                                 };
 
                                 // We need to recursively process this. Update the relevant map as well to make sure we
                                 // don't mess up along the way.
                                 assert!(!s.mcs_map.contains_key(&input_n));
                                 s.mcs_map.insert(input_n, newg_idx);
-                                process_one_intermed_node(s, input_n)?;
+                                process_one_intermed_node(s, input_n, logger)?;
 
                                 input_type
                             }
@@ -443,11 +545,15 @@ impl InputGraph {
                                     Some(InputGraphIOOEType::OpenDrain)
                                 } else {
                                     let oe_n = s.g.nets.get(oe.unwrap()).source.unwrap();
-                                    let oe_newg_n = process_one_intermed_node(s, oe_n)?;
+                                    let oe_newg_n = process_one_intermed_node(s, oe_n, logger)?;
                                     Some(match oe_newg_n {
                                         InputGraphAnyPoolIdx::PTerm(x) => InputGraphIOOEType::PTerm(x),
                                         InputGraphAnyPoolIdx::BufgGTS(x) => InputGraphIOOEType::GTS(x),
-                                        _ => return Err("mis-connected nodes"),
+                                        _ => {
+                                            error!(logger, "intermed2input - OE is not a P-term or GTS";
+                                                "name" => &n.name);
+                                            return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
+                                        },
                                     })
                                 }
                             }
@@ -457,10 +563,14 @@ impl InputGraph {
                     };
 
                     {
+                        info!(logger, "intermed2input - adding IO bits";
+                            "name" => &n.name,
+                            "intermed" => n_idx,
+                            "inputgraph" => newg_idx);
                         let newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.io_bits.is_none());
                         newg_n.name = combine_names(&newg_n.name, &n.name);
-                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
+                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location, logger)?;
                         newg_n.io_bits = Some(InputGraphIOBuf {
                             input,
                             oe,
@@ -477,10 +587,14 @@ impl InputGraph {
                     let newg_idx = *s.mcs_map.get(&n_idx).unwrap();
 
                     {
+                        info!(logger, "intermed2input - adding input bits";
+                            "name" => &n.name,
+                            "intermed" => n_idx,
+                            "inputgraph" => newg_idx);
                         let newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.io_bits.is_none());
                         newg_n.name = combine_names(&newg_n.name, &n.name);
-                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
+                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location, logger)?;
                         newg_n.io_bits = Some(InputGraphIOBuf {
                             input: None,
                             oe: None,
@@ -514,10 +628,13 @@ impl InputGraph {
                                 if let IntermediateGraphNodeVariant::AndTerm{..} =
                                     s.g.nodes.get(input_n).variant {} else {
 
-                                    return Err("mis-connected nodes");
+                                    error!(logger, "intermed2input - input is not a P-term";
+                                        "name" => &s.g.nodes.get(input_n).name);
+                                    return Err(IntermedToInputError::WrongConnectionType(
+                                        s.g.nodes.get(input_n).name.to_owned()));
                                 }
                                 // We need to recursively process this
-                                let input_newg_any = process_one_intermed_node(s, input_n)?;
+                                let input_newg_any = process_one_intermed_node(s, input_n, logger)?;
                                 let input_newg = if let InputGraphAnyPoolIdx::PTerm(x) = input_newg_any { x } else {
                                     panic!("Internal error - not a product term?");
                                 };
@@ -525,7 +642,9 @@ impl InputGraph {
                                 orterm_inputs.push(input_newg);
                             }
                         } else {
-                            return Err("mis-connected nodes");
+                            error!(logger, "intermed2input - input is not an OR term";
+                                "name" => &n.name);
+                            return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
                         }
                     }
 
@@ -540,11 +659,13 @@ impl InputGraph {
                                 None
                             } else {
                                 let ptc_n = s.g.nets.get(andterm_input.unwrap()).source.unwrap();
-                                let ptc_newg_n = process_one_intermed_node(s, ptc_n)?;
+                                let ptc_newg_n = process_one_intermed_node(s, ptc_n, logger)?;
                                 if let InputGraphAnyPoolIdx::PTerm(x) = ptc_newg_n {
                                     Some(x)
                                 } else {
-                                    return Err("mis-connected nodes");
+                                    error!(logger, "intermed2input - PTC input is not a P-term";
+                                        "name" => &n.name);
+                                    return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
                                 }
                             }
                         } else {
@@ -553,10 +674,14 @@ impl InputGraph {
                     };
 
                     {
+                        info!(logger, "intermed2input - adding XOR bits";
+                            "name" => &n.name,
+                            "intermed" => n_idx,
+                            "inputgraph" => newg_idx);
                         let newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.xor_bits.is_none());
                         newg_n.name = combine_names(&newg_n.name, &n.name);
-                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
+                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location, logger)?;
                         newg_n.xor_bits = Some(InputGraphXor {
                             orterm_inputs,
                             andterm_input: ptc_input,
@@ -577,11 +702,15 @@ impl InputGraph {
                             IntermediateGraphNodeVariant::Reg{..} => InputGraphPTermInputType::Reg,
                             IntermediateGraphNodeVariant::IOBuf{..} |
                             IntermediateGraphNodeVariant::InBuf{..} => InputGraphPTermInputType::Pin,
-                            _ => return Err("mis-connected nodes"),
+                            _ => {
+                                error!(logger, "intermed2input - input is not a register, XOR, or IO pad";
+                                    "name" => &n.name);
+                                return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
+                            },
                         };
 
                         // We need to recursively process this
-                        let input_newg_any = process_one_intermed_node(s, input_n)?;
+                        let input_newg_any = process_one_intermed_node(s, input_n, logger)?;
                         let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
                             panic!("Internal error - not a macrocell?");
                         };
@@ -607,11 +736,15 @@ impl InputGraph {
                             IntermediateGraphNodeVariant::Reg{..} => InputGraphPTermInputType::Reg,
                             IntermediateGraphNodeVariant::IOBuf{..} |
                             IntermediateGraphNodeVariant::InBuf{..} => InputGraphPTermInputType::Pin,
-                            _ => return Err("mis-connected nodes"),
+                            _ => {
+                                error!(logger, "intermed2input - input is not a register, XOR, or IO pad";
+                                    "name" => &n.name);
+                                return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
+                            },
                         };
 
                         // We need to recursively process this
-                        let input_newg_any = process_one_intermed_node(s, input_n)?;
+                        let input_newg_any = process_one_intermed_node(s, input_n, logger)?;
                         let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
                             panic!("Internal error - not a macrocell?");
                         };
@@ -637,6 +770,10 @@ impl InputGraph {
                     };
 
                     let newg_idx = s.pterms.insert(newg_n);
+                    info!(logger, "intermed2input - adding P-term";
+                        "name" => &n.name,
+                        "intermed" => n_idx,
+                        "inputgraph" => newg_idx);
                     s.pterms_map.insert(n_idx, newg_idx);
                     Ok(InputGraphAnyPoolIdx::PTerm(newg_idx))
                 },
@@ -660,7 +797,11 @@ impl InputGraph {
                             IntermediateGraphNodeVariant::InBuf{..} => {
                                 InputGraphRegInputType::Pin
                             },
-                            _ => return Err("mis-connected nodes"),
+                            _ => {
+                                error!(logger, "intermed2input - D/T input is not an XOR or IO pad";
+                                    "name" => &n.name);
+                                return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
+                            },
                         };
 
                         // We need to recursively process this. Update the relevant map as well to make sure we
@@ -668,7 +809,7 @@ impl InputGraph {
                         if input_type == InputGraphRegInputType::Xor {
                             assert!(!s.mcs_map.contains_key(&input_n));
                             s.mcs_map.insert(input_n, newg_idx);
-                            process_one_intermed_node(s, input_n)?;
+                            process_one_intermed_node(s, input_n, logger)?;
                         }
 
                         input_type
@@ -677,13 +818,15 @@ impl InputGraph {
                     // Visit clock input
                     let clk_input = {
                         let clk_n = s.g.nets.get(clk_input).source.unwrap();
-                        let clk_newg_n = process_one_intermed_node(s, clk_n)?;
+                        let clk_newg_n = process_one_intermed_node(s, clk_n, logger)?;
                         if let InputGraphAnyPoolIdx::PTerm(x) = clk_newg_n {
                             InputGraphRegClockType::PTerm(x)
                         } else if let InputGraphAnyPoolIdx::BufgClk(x) = clk_newg_n {
                             InputGraphRegClockType::GCK(x)
                         } else {
-                            return Err("mis-connected nodes");
+                            error!(logger, "intermed2input - clock input is not a P-term or global clock";
+                                "name" => &n.name);
+                            return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
                         }
                     };
 
@@ -691,11 +834,13 @@ impl InputGraph {
                     let ce_input = {
                         if ce_input.is_some() {
                             let ce_n = s.g.nets.get(ce_input.unwrap()).source.unwrap();
-                            let ce_newg_n = process_one_intermed_node(s, ce_n)?;
+                            let ce_newg_n = process_one_intermed_node(s, ce_n, logger)?;
                             if let InputGraphAnyPoolIdx::PTerm(x) = ce_newg_n {
                                 Some(x)
                             } else {
-                                return Err("mis-connected nodes");
+                                error!(logger, "intermed2input - CE input is not a P-term";
+                                    "name" => &n.name);
+                                return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
                             }
                         } else {
                             None
@@ -708,16 +853,20 @@ impl InputGraph {
                             if set_input.unwrap() == s.g.vss_net {
                                 None
                             } else if set_input.unwrap() == s.g.vdd_net {
-                                return Err("cannot tie set input high");
+                                error!(logger, "intermed2input - set input cannot be tied high";
+                                    "name" => &n.name);
+                                return Err(IntermedToInputError::WrongTiedValue(n.name.to_owned()));
                             } else {
                                 let set_n = s.g.nets.get(set_input.unwrap()).source.unwrap();
-                                let set_newg_n = process_one_intermed_node(s, set_n)?;
+                                let set_newg_n = process_one_intermed_node(s, set_n, logger)?;
                                 if let InputGraphAnyPoolIdx::PTerm(x) = set_newg_n {
                                     Some(InputGraphRegRSType::PTerm(x))
                                 } else if let InputGraphAnyPoolIdx::BufgGSR(x) = set_newg_n {
                                     Some(InputGraphRegRSType::GSR(x))
                                 } else {
-                                    return Err("mis-connected nodes");
+                                    error!(logger, "intermed2input - set input is not a P-term or GSR";
+                                        "name" => &n.name);
+                                    return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
                                 }
                             }
                         } else {
@@ -731,16 +880,20 @@ impl InputGraph {
                             if reset_input.unwrap() == s.g.vss_net {
                                 None
                             } else if reset_input.unwrap() == s.g.vdd_net {
-                                return Err("cannot tie reset input high");
+                                error!(logger, "intermed2input - reset input cannot be tied high";
+                                    "name" => &n.name);
+                                return Err(IntermedToInputError::WrongTiedValue(n.name.to_owned()));
                             } else {
                                 let reset_n = s.g.nets.get(reset_input.unwrap()).source.unwrap();
-                                let reset_newg_n = process_one_intermed_node(s, reset_n)?;
+                                let reset_newg_n = process_one_intermed_node(s, reset_n, logger)?;
                                 if let InputGraphAnyPoolIdx::PTerm(x) = reset_newg_n {
                                     Some(InputGraphRegRSType::PTerm(x))
                                 } else if let InputGraphAnyPoolIdx::BufgGSR(x) = reset_newg_n {
                                     Some(InputGraphRegRSType::GSR(x))
                                 } else {
-                                    return Err("mis-connected nodes");
+                                    error!(logger, "intermed2input - reset input is not a P-term or GSR";
+                                        "name" => &n.name);
+                                    return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
                                 }
                             }
                         } else {
@@ -749,10 +902,14 @@ impl InputGraph {
                     };
 
                     {
+                        info!(logger, "intermed2input - adding register bits";
+                            "name" => &n.name,
+                            "intermed" => n_idx,
+                            "inputgraph" => newg_idx);
                         let newg_n = s.mcs.get_mut(newg_idx);
                         assert!(newg_n.reg_bits.is_none());
                         newg_n.name = combine_names(&newg_n.name, &n.name);
-                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location)?;
+                        newg_n.requested_loc = combine_locs(newg_n.requested_loc, n.location, logger)?;
                         newg_n.reg_bits = Some(InputGraphReg {
                             mode,
                             clkinv,
@@ -775,11 +932,15 @@ impl InputGraph {
                     match s.g.nodes.get(input_n).variant {
                         IntermediateGraphNodeVariant::IOBuf{..} |
                         IntermediateGraphNodeVariant::InBuf{..} => {},
-                        _ => return Err("mis-connected nodes"),
+                        _ => {
+                            error!(logger, "intermed2input - input is not an IO pad";
+                                "name" => &n.name);
+                            return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
+                        },
                     };
 
                     // We need to recursively process this
-                    let input_newg_any = process_one_intermed_node(s, input_n)?;
+                    let input_newg_any = process_one_intermed_node(s, input_n, logger)?;
                     let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
                         panic!("Internal error - not a macrocell?");
                     };
@@ -791,6 +952,10 @@ impl InputGraph {
                     };
 
                     let newg_idx = s.bufg_clks.insert(newg_n);
+                    info!(logger, "intermed2input - adding BUFG";
+                        "name" => &n.name,
+                        "intermed" => n_idx,
+                        "inputgraph" => newg_idx);
                     s.bufg_clks_map.insert(n_idx, newg_idx);
                     Ok(InputGraphAnyPoolIdx::BufgClk(newg_idx))
                 },
@@ -799,11 +964,15 @@ impl InputGraph {
                     match s.g.nodes.get(input_n).variant {
                         IntermediateGraphNodeVariant::IOBuf{..} |
                         IntermediateGraphNodeVariant::InBuf{..} => {},
-                        _ => return Err("mis-connected nodes"),
+                        _ => {
+                            error!(logger, "intermed2input - input is not an IO pad";
+                                "name" => &n.name);
+                            return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
+                        },
                     };
 
                     // We need to recursively process this
-                    let input_newg_any = process_one_intermed_node(s, input_n)?;
+                    let input_newg_any = process_one_intermed_node(s, input_n, logger)?;
                     let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
                         panic!("Internal error - not a macrocell?");
                     };
@@ -816,6 +985,10 @@ impl InputGraph {
                     };
 
                     let newg_idx = s.bufg_gts.insert(newg_n);
+                    info!(logger, "intermed2input - adding BUFGTS";
+                        "name" => &n.name,
+                        "intermed" => n_idx,
+                        "inputgraph" => newg_idx);
                     s.bufg_gts_map.insert(n_idx, newg_idx);
                     Ok(InputGraphAnyPoolIdx::BufgGTS(newg_idx))
                 },
@@ -824,11 +997,15 @@ impl InputGraph {
                     match s.g.nodes.get(input_n).variant {
                         IntermediateGraphNodeVariant::IOBuf{..} |
                         IntermediateGraphNodeVariant::InBuf{..} => {},
-                        _ => return Err("mis-connected nodes"),
+                        _ => {
+                            error!(logger, "intermed2input - input is not an IO pad";
+                                "name" => &n.name);
+                            return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
+                        },
                     };
 
                     // We need to recursively process this
-                    let input_newg_any = process_one_intermed_node(s, input_n)?;
+                    let input_newg_any = process_one_intermed_node(s, input_n, logger)?;
                     let input_newg = if let InputGraphAnyPoolIdx::Macrocell(x) = input_newg_any { x } else {
                         panic!("Internal error - not a macrocell?");
                     };
@@ -841,6 +1018,10 @@ impl InputGraph {
                     };
 
                     let newg_idx = s.bufg_gsr.insert(newg_n);
+                    info!(logger, "intermed2input - adding BUFGSR";
+                        "name" => &n.name,
+                        "intermed" => n_idx,
+                        "inputgraph" => newg_idx);
                     s.bufg_gsr_map.insert(n_idx, newg_idx);
                     Ok(InputGraphAnyPoolIdx::BufgGSR(newg_idx))
                 },
@@ -864,7 +1045,7 @@ impl InputGraph {
                 consumed_inputs: &mut consumed_inputs,
             };
             for oldg_mc in gathered_mcs {
-                process_one_intermed_node(&mut s, oldg_mc)?;
+                process_one_intermed_node(&mut s, oldg_mc, &logger)?;
             }
         }
 
@@ -883,29 +1064,43 @@ impl InputGraph {
             bufg_gsr,
         };
 
-        ret.unfuse_pterms();
-        ret.sanity_check()?;
+        ret.unfuse_pterms(&logger);
+        ret.sanity_check(&logger)?;
 
         Ok(ret)
     }
 
-    fn sanity_check(&self) -> Result<(), &'static str> {
+    fn sanity_check(&self, logger: &slog::Logger) -> Result<(), IntermedToInputError> {
         // Check various connectivity rules in the CPLD
         for x in self.mcs.iter() {
             if x.io_feedback_used && x.io_bits.is_none() {
-                return Err("Used IO input but there is no IO data?");
+                error!(logger, "intermed2input (sanity) - the IO part of the macrocell was used, \
+                    but the IO data is missing";
+                    "name" => &x.name);
+                return Err(IntermedToInputError::SanityCheckError(
+                    "Used IO input but there is no IO data?"));
             }
 
             if x.reg_feedback_used && x.reg_bits.is_none() {
-                return Err("Used register input but there is no register data?");
+                error!(logger, "intermed2input (sanity) - the register part of the macrocell was used, \
+                    but the register data is missing";
+                    "name" => &x.name);
+                return Err(IntermedToInputError::SanityCheckError(
+                    "Used register input but there is no register data?"));
             }
 
             if x.xor_feedback_used && x.xor_bits.is_none() {
-                return Err("Used XOR input but there is no XOR data?");
+                error!(logger, "intermed2input (sanity) - the XOR part of the macrocell was used, \
+                    but the XOR data is missing";
+                    "name" => &x.name);
+                return Err(IntermedToInputError::SanityCheckError(
+                    "Used XOR input but there is no XOR data?"));
             }
 
             if x.io_feedback_used && x.reg_feedback_used && x.xor_feedback_used {
-                return Err("Too many feedback paths used");
+                error!(logger, "intermed2input (sanity) - used more than the possible feedback paths";
+                    "name" => &x.name);
+                return Err(IntermedToInputError::TooManyFeedbacksUsed(x.name.to_owned()));
             }
         }
 
@@ -917,79 +1112,71 @@ impl InputGraph {
                 HashSet::from_iter(pt.inputs_comp.iter().cloned());
 
             if inputs_true_set.len() != pt.inputs_true.len() {
-                return Err("Duplicate inputs to p-term");
+                error!(logger, "intermed2input (sanity) - duplicate true input to p-term";
+                    "name" => &pt.name);
+                return Err(IntermedToInputError::WrongPTermInputs(pt.name.to_owned()));
             }
             if inputs_comp_set.len() != pt.inputs_comp.len() {
-                return Err("Duplicate inputs to p-term");
+                error!(logger, "intermed2input (sanity) - duplicate comp input to p-term";
+                    "name" => &pt.name);
+                return Err(IntermedToInputError::WrongPTermInputs(pt.name.to_owned()));
             }
 
             if inputs_true_set.intersection(&inputs_comp_set).count() != 0 {
-                return Err("True and compliment input to p-term");
+                error!(logger, "intermed2input (sanity) - input to both true and comp input of p-term";
+                    "name" => &pt.name);
+                return Err(IntermedToInputError::WrongPTermInputs(pt.name.to_owned()));
             }
         }
 
         // Check that LOC constraints between the macrocells and p-terms are possible
         for x in self.mcs.iter() {
+            macro_rules! check_pterm {
+                ($mc_req_loc:expr, $pt:expr) => {
+                    if let Some(pt_req_loc) = self.pterms.get($pt).requested_loc {
+                        if $mc_req_loc.fb != pt_req_loc.fb {
+                            error!(logger, "intermed2input (sanity) - macrocell uses P-term in wrong FB";
+                                "macrocell name" => &x.name,
+                                "macrocell FB" => $mc_req_loc.fb,
+                                "p-term FB" => pt_req_loc.fb);
+                            return Err(IntermedToInputError::LocMismatchedFB($mc_req_loc.fb, pt_req_loc.fb));
+                        }
+                    }
+                }
+            }
+
             if let Some(mc_req_loc) = x.requested_loc {
                 if let Some(ref xor) = x.xor_bits {
                     if let Some(pterm) = xor.andterm_input {
-                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
-                            if mc_req_loc.fb != pt_req_loc.fb {
-                                return Err("Impossible LOC constraints across FBs");
-                            }
-                        }
+                        check_pterm!(mc_req_loc, pterm);
                     }
 
-                    for pterm in &xor.orterm_inputs {
-                        if let Some(pt_req_loc) = self.pterms.get(*pterm).requested_loc {
-                            if mc_req_loc.fb != pt_req_loc.fb {
-                                return Err("Impossible LOC constraints across FBs");
-                            }
-                        }
+                    for &pterm in &xor.orterm_inputs {
+                        check_pterm!(mc_req_loc, pterm);
                     }
                 }
 
                 if let Some(ref reg) = x.reg_bits {
                     if let Some(pterm) = reg.ce_input {
-                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
-                            if mc_req_loc.fb != pt_req_loc.fb {
-                                return Err("Impossible LOC constraints across FBs");
-                            }
-                        }
+                        check_pterm!(mc_req_loc, pterm);
                     }
 
                     if let InputGraphRegClockType::PTerm(pterm) = reg.clk_input {
-                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
-                            if mc_req_loc.fb != pt_req_loc.fb {
-                                return Err("Impossible LOC constraints across FBs");
-                            }
-                        }
+                        check_pterm!(mc_req_loc, pterm);
                     }
 
                     if let Some(InputGraphRegRSType::PTerm(pterm)) = reg.set_input {
-                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
-                            if mc_req_loc.fb != pt_req_loc.fb {
-                                return Err("Impossible LOC constraints across FBs");
-                            }
-                        }
+                        check_pterm!(mc_req_loc, pterm);
                     }
 
                     if let Some(InputGraphRegRSType::PTerm(pterm)) = reg.reset_input {
-                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
-                            if mc_req_loc.fb != pt_req_loc.fb {
-                                return Err("Impossible LOC constraints across FBs");
-                            }
-                        }
+                        check_pterm!(mc_req_loc, pterm);
                     }
                 }
 
                 if let Some(ref io) = x.io_bits {
                     if let Some(InputGraphIOOEType::PTerm(pterm)) = io.oe {
-                        if let Some(pt_req_loc) = self.pterms.get(pterm).requested_loc {
-                            if mc_req_loc.fb != pt_req_loc.fb {
-                                return Err("Impossible LOC constraints across FBs");
-                            }
-                        }
+                        check_pterm!(mc_req_loc, pterm);
                     }
                 }
             }
@@ -998,18 +1185,28 @@ impl InputGraph {
         Ok(())
     }
 
-    fn unfuse_pterms(&mut self) {
+    // XXX does this function actually do anything? Or can we get rid of it?
+    fn unfuse_pterms(&mut self, logger: &slog::Logger) {
         let mut used_pterms = HashSet::new();
 
         for mc in self.mcs.iter_mut() {
+            macro_rules! clone_pterm {
+                ($pterm:expr) => {{
+                    let cloned_pterm = self.pterms.get($pterm).clone();
+                    debug!(logger, "cloning a P-term";
+                        "pterm name" => &cloned_pterm.name,
+                        "referencing node" => &mc.name);
+                    let new_pterm = self.pterms.insert(cloned_pterm);
+                    new_pterm
+                }}
+            }
+
             if mc.xor_bits.is_some() {
                 let xor = mc.xor_bits.as_mut().unwrap();
 
                 if let Some(pterm) = xor.andterm_input {
                     if used_pterms.contains(&pterm) {
-                        let cloned_pterm = self.pterms.get(pterm).clone();
-                        let new_pterm = self.pterms.insert(cloned_pterm);
-                        xor.andterm_input = Some(new_pterm);
+                        xor.andterm_input = Some(clone_pterm!(pterm));
                     }
                     used_pterms.insert(pterm);
                 }
@@ -1017,9 +1214,7 @@ impl InputGraph {
                 for i in 0..xor.orterm_inputs.len() {
                     let pterm = xor.orterm_inputs[i];
                     if used_pterms.contains(&pterm) {
-                        let cloned_pterm = self.pterms.get(pterm).clone();
-                        let new_pterm = self.pterms.insert(cloned_pterm);
-                        xor.orterm_inputs[i] = new_pterm;
+                        xor.orterm_inputs[i] = clone_pterm!(pterm);
                     }
                     used_pterms.insert(pterm);
                 }
@@ -1030,36 +1225,28 @@ impl InputGraph {
 
                 if let Some(pterm) = reg.ce_input {
                     if used_pterms.contains(&pterm) {
-                        let cloned_pterm = self.pterms.get(pterm).clone();
-                        let new_pterm = self.pterms.insert(cloned_pterm);
-                        reg.ce_input = Some(new_pterm);
+                        reg.ce_input = Some(clone_pterm!(pterm));
                     }
                     used_pterms.insert(pterm);
                 }
 
                 if let InputGraphRegClockType::PTerm(pterm) = reg.clk_input {
                     if used_pterms.contains(&pterm) {
-                        let cloned_pterm = self.pterms.get(pterm).clone();
-                        let new_pterm = self.pterms.insert(cloned_pterm);
-                        reg.clk_input = InputGraphRegClockType::PTerm(new_pterm);
+                        reg.clk_input = InputGraphRegClockType::PTerm(clone_pterm!(pterm));
                     }
                     used_pterms.insert(pterm);
                 }
 
                 if let Some(InputGraphRegRSType::PTerm(pterm)) = reg.set_input {
                     if used_pterms.contains(&pterm) {
-                        let cloned_pterm = self.pterms.get(pterm).clone();
-                        let new_pterm = self.pterms.insert(cloned_pterm);
-                        reg.set_input = Some(InputGraphRegRSType::PTerm(new_pterm));
+                        reg.set_input = Some(InputGraphRegRSType::PTerm(clone_pterm!(pterm)));
                     }
                     used_pterms.insert(pterm);
                 }
 
                 if let Some(InputGraphRegRSType::PTerm(pterm)) = reg.reset_input {
                     if used_pterms.contains(&pterm) {
-                        let cloned_pterm = self.pterms.get(pterm).clone();
-                        let new_pterm = self.pterms.insert(cloned_pterm);
-                        reg.reset_input = Some(InputGraphRegRSType::PTerm(new_pterm));
+                        reg.reset_input = Some(InputGraphRegRSType::PTerm(clone_pterm!(pterm)));
                     }
                     used_pterms.insert(pterm);
                 }
@@ -1070,9 +1257,7 @@ impl InputGraph {
 
                 if let Some(InputGraphIOOEType::PTerm(pterm)) = io.oe {
                     if used_pterms.contains(&pterm) {
-                        let cloned_pterm = self.pterms.get(pterm).clone();
-                        let new_pterm = self.pterms.insert(cloned_pterm);
-                        io.oe = Some(InputGraphIOOEType::PTerm(new_pterm));
+                        io.oe = Some(InputGraphIOOEType::PTerm(clone_pterm!(pterm)));
                     }
                     used_pterms.insert(pterm);
                 }
