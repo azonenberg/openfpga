@@ -129,6 +129,18 @@ pub enum InputGraphMacrocellType {
     BuriedReg,
 }
 
+impl InputGraphMacrocellType {
+    pub fn is_pininput(&self) -> bool {
+        match self {
+            &InputGraphMacrocellType::PinOutput |
+            &InputGraphMacrocellType::BuriedComb |
+            &InputGraphMacrocellType::BuriedReg => false,
+            &InputGraphMacrocellType::PinInputReg |
+            &InputGraphMacrocellType::PinInputUnreg => true,
+        }
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum InputGraphPTermInputType {
     Reg,

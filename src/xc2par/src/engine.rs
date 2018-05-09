@@ -159,6 +159,33 @@ impl OutputGraph {
     }
 }
 
+// 0 is the non-input side, 1 is the input side
+fn mcs_idx_can_be_paired(g: &InputGraph,
+    mc_idx_0: ObjPoolIndex<InputGraphMacrocell>, mc_idx_1: ObjPoolIndex<InputGraphMacrocell>) -> bool {
+
+    let mc0 = g.mcs.get(mc_idx_0);
+    let mc1 = g.mcs.get(mc_idx_1);
+   
+    mcs_can_be_paired(mc0, mc1)
+}
+
+fn mcs_can_be_paired(mc0: &InputGraphMacrocell, mc1: &InputGraphMacrocell) -> bool {
+    let type_0 = mc0.get_type();
+    let type_1 = mc1.get_type();
+    match (type_0, type_1) {
+        (InputGraphMacrocellType::BuriedComb, InputGraphMacrocellType::PinInputUnreg) |
+        (InputGraphMacrocellType::BuriedComb, InputGraphMacrocellType::PinInputReg) => true,
+        (InputGraphMacrocellType::BuriedReg, InputGraphMacrocellType::PinInputUnreg) => {
+            // A buried reg implies that the reg output _must_ be used (if it's not, then the output must go to
+            // the IO, and it wouldn't be "buried").
+            assert!(mc0.reg_feedback_used);
+            // If the XOR and REG feedback are both used, no room for an input
+            !mc0.xor_feedback_used
+        }
+        _ => false,
+    }
+}
+
 // First element of tuple is anything, second element can only be pin input
 pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger: &slog::Logger)
     -> Option<Vec<PARFBAssignment>> {
@@ -332,44 +359,28 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
     // Immediately place all fully LOC'd macrocells now
     for i in g.mcs.iter_idx() {
         let mc = g.mcs.get(i);
-        let is_pininput = match mc.get_type() {
-            InputGraphMacrocellType::PinOutput |
-            InputGraphMacrocellType::BuriedComb |
-            InputGraphMacrocellType::BuriedReg => false,
-            InputGraphMacrocellType::PinInputReg |
-            InputGraphMacrocellType::PinInputUnreg => true,
-        };
+        let is_pininput = mc.get_type().is_pininput();
 
         if let Some(RequestedLocation{fb, i: Some(mc_idx)}) = mc.requested_loc {
-            if !is_pininput {
-                if ret[fb as usize][mc_idx as usize].0 != PARMCAssignment::None {
-                    error!(logger, "PAR - cannot place macrocell (non-input part) because site is already occupied";
-                        "name" => &mc.name,
-                        "fb" => fb,
-                        "mc" => mc_idx);
-                    return None;
-                }
-
-                info!(logger, "PAR - placed macrocell (fixed, non-input part)";
-                    "name" => &mc.name,
-                    "fb" => fb,
-                    "mc" => mc_idx);
-                ret[fb as usize][mc_idx as usize].0 = PARMCAssignment::MC(i);
+            let x = if !is_pininput {
+                &mut ret[fb as usize][mc_idx as usize].0
             } else {
-                if ret[fb as usize][mc_idx as usize].1 != PARMCAssignment::None {
-                    error!(logger, "PAR - cannot place macrocell (input part) because site is already occupied";
-                        "name" => &mc.name,
-                        "fb" => fb,
-                        "mc" => mc_idx);
-                    return None;
-                }
+                &mut ret[fb as usize][mc_idx as usize].1
+            };
 
-                info!(logger, "PAR - placed macrocell (fixed, input part)";
+            if *x != PARMCAssignment::None {
+                error!(logger, "PAR - cannot place macrocell (non-input part) because site is already occupied";
                     "name" => &mc.name,
                     "fb" => fb,
                     "mc" => mc_idx);
-                ret[fb as usize][mc_idx as usize].1 = PARMCAssignment::MC(i);
+                return None;
             }
+
+            info!(logger, "PAR - placed macrocell (fixed, non-input part)";
+                "name" => &mc.name,
+                "fb" => fb,
+                "mc" => mc_idx);
+            *x = PARMCAssignment::MC(i);
         }
     }
 
@@ -378,17 +389,14 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
         for mc_i in 0..MCS_PER_FB {
             if let PARMCAssignment::MC(mc_idx_0) = ret[fb_i as usize][mc_i].0 {
                 if let PARMCAssignment::MC(mc_idx_1) = ret[fb_i as usize][mc_i].1 {
-                    let type_0 = g.mcs.get(mc_idx_0).get_type();
-                    let type_1 = g.mcs.get(mc_idx_1).get_type();
-                    match (type_0, type_1) {
-                        (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedComb) |
-                        (InputGraphMacrocellType::PinInputReg, InputGraphMacrocellType::BuriedComb) => {},
-                        (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedReg) => {
-                            if g.mcs.get(mc_idx_0).xor_feedback_used {
-                                return None;
-                            }
-                        }
-                        _ => return None,
+                    if !mcs_idx_can_be_paired(g, mc_idx_0, mc_idx_1) {
+                        error!(logger, "PAR - tried to force together macrocells that cannot both occupy the \
+                            same location";
+                            "name 1" => &g.mcs.get(mc_idx_0).name,
+                            "name 2" => &g.mcs.get(mc_idx_1).name,
+                            "fb" => fb_i,
+                            "mc" => mc_i);
+                        return None;
                     }
                 }
             }
@@ -398,13 +406,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
     // Now place macrocells that have a FB constraint but no MC constraint
     for i in g.mcs.iter_idx() {
         let mc = g.mcs.get(i);
-        let is_pininput = match mc.get_type() {
-            InputGraphMacrocellType::PinOutput |
-            InputGraphMacrocellType::BuriedComb |
-            InputGraphMacrocellType::BuriedReg => false,
-            InputGraphMacrocellType::PinInputReg |
-            InputGraphMacrocellType::PinInputUnreg => true,
-        };
+        let is_pininput = mc.get_type().is_pininput();
 
         if let Some(RequestedLocation{fb, i: None}) = mc.requested_loc {
             let mut mc_i = None;
@@ -421,17 +423,8 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
                     // If this is a pin input, check if pairing is ok
                     // This logic relies on the gather_macrocells sorting.
                     if let PARMCAssignment::MC(mc_idx_0) = ret[fb as usize][i].0 {
-                        let type_0 = g.mcs.get(mc_idx_0).get_type();
-                        let type_1 = mc.get_type();
-                        match (type_0, type_1) {
-                            (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedComb) |
-                            (InputGraphMacrocellType::PinInputReg, InputGraphMacrocellType::BuriedComb) => {},
-                            (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedReg) => {
-                                if g.mcs.get(mc_idx_0).xor_feedback_used {
-                                    continue;
-                                }
-                            }
-                            _ => continue,
+                        if !mcs_can_be_paired(g.mcs.get(mc_idx_0), &mc) {
+                            continue;
                         }
                     }
                 }
@@ -456,13 +449,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
     // FIXME: Copypasta
     for i in g.mcs.iter_idx() {
         let mc = g.mcs.get(i);
-        let is_pininput = match mc.get_type() {
-            InputGraphMacrocellType::PinOutput |
-            InputGraphMacrocellType::BuriedComb |
-            InputGraphMacrocellType::BuriedReg => false,
-            InputGraphMacrocellType::PinInputReg |
-            InputGraphMacrocellType::PinInputUnreg => true,
-        };
+        let is_pininput = mc.get_type().is_pininput();
 
         if mc.requested_loc.is_none() {
             let mut fbmc_i = None;
@@ -480,17 +467,8 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
                         // If this is a pin input, check if pairing is ok
                         // This logic relies on the gather_macrocells sorting.
                         if let PARMCAssignment::MC(mc_idx_0) = ret[fb][i].0 {
-                            let type_0 = g.mcs.get(mc_idx_0).get_type();
-                            let type_1 = mc.get_type();
-                            match (type_0, type_1) {
-                                (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedComb) |
-                                (InputGraphMacrocellType::PinInputReg, InputGraphMacrocellType::BuriedComb) => {},
-                                (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedReg) => {
-                                    if g.mcs.get(mc_idx_0).xor_feedback_used {
-                                        continue;
-                                    }
-                                }
-                                _ => continue,
+                            if !mcs_can_be_paired(g.mcs.get(mc_idx_0), &mc) {
+                                continue;
                             }
                         }
                     }
@@ -962,38 +940,18 @@ pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PAR
     for mc_i in 0..MCS_PER_FB {
         if let PARMCAssignment::MC(mc_idx_0) = mc_assignments[fb_i as usize][mc_i].0 {
             if let PARMCAssignment::MC(mc_idx_1) = mc_assignments[fb_i as usize][mc_i].1 {
-                let type_0 = g.mcs.get(mc_idx_0).get_type();
-                let type_1 = g.mcs.get(mc_idx_1).get_type();
-                let loc_0 = g.mcs.get(mc_idx_0).requested_loc;
-                let loc_1 = g.mcs.get(mc_idx_1).requested_loc;
-                match (type_0, type_1) {
-                    (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedComb) |
-                    (InputGraphMacrocellType::PinInputReg, InputGraphMacrocellType::BuriedComb) => {},
-                    (InputGraphMacrocellType::PinInputUnreg, InputGraphMacrocellType::BuriedReg) => {
-                        if g.mcs.get(mc_idx_0).xor_feedback_used {
-                            // Conflict
+                if !mcs_idx_can_be_paired(g, mc_idx_0, mc_idx_1) {
+                    let loc_0 = g.mcs.get(mc_idx_0).requested_loc;
+                    let loc_1 = g.mcs.get(mc_idx_1).requested_loc;
 
-                            // If not fully-LOCed, then add it as a conflict
-                            if !(loc_0.is_some() && loc_0.unwrap().i.is_some()) {
-                                let x = constraint_violations.insert((fb_i, mc_i as u32, false), 1);
-                                assert!(x.is_none());
-                            }
-                            if !(loc_1.is_some() && loc_1.unwrap().i.is_some()) {
-                                let x = constraint_violations.insert((fb_i, mc_i as u32, true), 1);
-                                assert!(x.is_none());
-                            }
-                        }
-                    },
-                    _ => {
-                        // Conflict
-                        if !(loc_0.is_some() && loc_0.unwrap().i.is_some()) {
-                            let x = constraint_violations.insert((fb_i, mc_i as u32, false), 1);
-                            assert!(x.is_none());
-                        }
-                        if !(loc_1.is_some() && loc_1.unwrap().i.is_some()) {
-                            let x = constraint_violations.insert((fb_i, mc_i as u32, true), 1);
-                            assert!(x.is_none());
-                        }
+                    // If not fully-LOCed, then add it as a conflict
+                    if !(loc_0.is_some() && loc_0.unwrap().i.is_some()) {
+                        let x = constraint_violations.insert((fb_i, mc_i as u32, false), 1);
+                        assert!(x.is_none());
+                    }
+                    if !(loc_1.is_some() && loc_1.unwrap().i.is_some()) {
+                        let x = constraint_violations.insert((fb_i, mc_i as u32, true), 1);
+                        assert!(x.is_none());
                     }
                 }
             }
