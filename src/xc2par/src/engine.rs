@@ -160,7 +160,9 @@ impl OutputGraph {
 }
 
 // First element of tuple is anything, second element can only be pin input
-pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Option<Vec<PARFBAssignment>> {
+pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger: &slog::Logger)
+    -> Option<Vec<PARFBAssignment>> {
+
     let mut ret = Vec::new();
 
     // First greedily assign all of the global nets
@@ -185,7 +187,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Opt
 
                 let mc_req_loc = mc_req_loc.unwrap();
                 if mc_req_loc.i.is_some() {
-                    let mut idx = None;
+                    let mut found_proper_gbuf = false;
                     for i in 0..$cnt_name {
                         let actual_mc_loc = $loc_lookup(i);
 
@@ -193,14 +195,21 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Opt
                             continue;
                         }
 
-                        idx = Some(i as u32);
                         // Now force the buffer to have the full location
+                        found_proper_gbuf = true;
+                        info!(logger, "PAR - forcing global buffer LOC due to IO pad LOC";
+                            "name" => &gbuf.name,
+                            "index" => i);
                         gbuf.requested_loc = Some(RequestedLocation{fb: 0, i: Some(i as u32)});
                         break;
 
                     }
 
-                    if idx.is_none() {
+                    if !found_proper_gbuf {
+                        error!(logger, "PAR - failed to find global buffer location matching IO pad LOC constraint";
+                            "io pad name" => &g.mcs.get(gbuf.input).name,
+                            "fb" => mc_req_loc.fb,
+                            "mc" => mc_req_loc.i.unwrap());
                         return None;
                     }
                 }
@@ -218,6 +227,9 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Opt
             for (gbuf_idx, gbuf) in g.$g_name.iter_mut_idx() {
                 if let Some(RequestedLocation{i: Some(idx), ..}) = gbuf.requested_loc {
                     if $set_name.contains(&idx) {
+                        error!(logger, "PAR - cannot place global buffer because site is already occupied";
+                            "name" => &gbuf.name,
+                            "index" => idx);
                         return None;
                     }
                     $set_name.insert(idx);
@@ -227,6 +239,10 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Opt
                         fb: 0,
                         i: idx,
                     });
+
+                    info!(logger, "PAR - placed global buffer (fixed)";
+                        "name" => &gbuf.name,
+                        "index" => idx);
                 }
             }
         }
@@ -258,6 +274,9 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Opt
                     let actual_mc_loc = $loc_lookup(i);
                     assert!(mc_req_loc.is_none() || mc_req_loc.unwrap().i.is_none());
                     if mc_req_loc.is_some() && mc_req_loc.unwrap().fb != actual_mc_loc.0 {
+                        debug!(logger, "PAR - skipped global buffer site because of IO pad FB constraint";
+                            "name" => &gbuf.name,
+                            "index" => i);
                         continue;
                     }
 
@@ -268,10 +287,16 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Opt
                     // by the HDL designer to work properly anyways.
                     g.mcs.get_mut(gbuf.input).requested_loc = Some(RequestedLocation{
                         fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
+                    info!(logger, "PAR - forcing IO pad LOC due to newly-assigned global buffer LOC";
+                        "name" => &g.mcs.get(gbuf.input).name,
+                        "fb" => actual_mc_loc.0,
+                        "mc" => actual_mc_loc.1);
                     break;
                 }
 
                 if idx.is_none() {
+                    error!(logger, "PAR - cannot place global buffer because there are no more sites";
+                        "name" => &gbuf.name);
                     return None;
                 }
 
@@ -280,6 +305,10 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Opt
                     fb: 0,
                     i: idx.unwrap(),
                 });
+
+                info!(logger, "PAR - placed global buffer (free)";
+                    "name" => &gbuf.name,
+                    "index" => idx.unwrap());
             }
         }
     }
@@ -314,15 +343,31 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph) -> Opt
         if let Some(RequestedLocation{fb, i: Some(mc_idx)}) = mc.requested_loc {
             if !is_pininput {
                 if ret[fb as usize][mc_idx as usize].0 != PARMCAssignment::None {
+                    error!(logger, "PAR - cannot place macrocell (non-input part) because site is already occupied";
+                        "name" => &mc.name,
+                        "fb" => fb,
+                        "mc" => mc_idx);
                     return None;
                 }
 
+                info!(logger, "PAR - placed macrocell (fixed, non-input part)";
+                    "name" => &mc.name,
+                    "fb" => fb,
+                    "mc" => mc_idx);
                 ret[fb as usize][mc_idx as usize].0 = PARMCAssignment::MC(i);
             } else {
                 if ret[fb as usize][mc_idx as usize].1 != PARMCAssignment::None {
+                    error!(logger, "PAR - cannot place macrocell (input part) because site is already occupied";
+                        "name" => &mc.name,
+                        "fb" => fb,
+                        "mc" => mc_idx);
                     return None;
                 }
 
+                info!(logger, "PAR - placed macrocell (fixed, input part)";
+                    "name" => &mc.name,
+                    "fb" => fb,
+                    "mc" => mc_idx);
                 ret[fb as usize][mc_idx as usize].1 = PARMCAssignment::MC(i);
             }
         }
@@ -1014,26 +1059,44 @@ pub enum PARSanityResult {
 }
 
 // FIXME: What happens in netlist.rs and what happens here?
-pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
+pub fn do_par_sanity_check(g: &mut InputGraph, logger: &slog::Logger) -> PARSanityResult {
     // Check if everything fits in the device
-    if g.mcs.len() > 2 * (2 * MCS_PER_FB) {
+
+    const NUM_FBS: usize = 2;
+
+    if g.mcs.len() > 2 * (NUM_FBS * MCS_PER_FB) {
         // Note that this is a conservative fail-early check. It is incomplete because it doesn't account for
         // which macrocells can actually be paired together or which buried sites (in larger devices) can be used.
+        error!(logger, "PAR (sanity) - too many total macrocells. This can never fit.";
+            "num mcs" => g.mcs.len(),
+            "max mcs" => 2 * (NUM_FBS * MCS_PER_FB));
         return PARSanityResult::FailureTooManyMCs;
     }
 
     let pterms_set: HashSet<InputGraphPTerm> = HashSet::from_iter(g.pterms.iter().cloned());
-    if pterms_set.len() > 2 * ANDTERMS_PER_FB {
+    if pterms_set.len() > NUM_FBS * ANDTERMS_PER_FB {
+        error!(logger, "PAR (sanity) - too many total P-terms. This can never fit.";
+            "num p-terms" => pterms_set.len(),
+            "max p-terms" => NUM_FBS * ANDTERMS_PER_FB);
         return PARSanityResult::FailureTooManyPTerms;
     }
 
     if g.bufg_clks.len() > NUM_BUFG_CLK {
+        error!(logger, "PAR (sanity) - too many total BUFGs. This can never fit.";
+            "num BUFGs" => g.bufg_clks.len(),
+            "max BUFGs" => NUM_BUFG_CLK);
         return PARSanityResult::FailureTooManyBufgClk;
     }
-    if g.bufg_gts.len() > NUM_BUFG_GTS{
+    if g.bufg_gts.len() > NUM_BUFG_GTS {
+        error!(logger, "PAR (sanity) - too many total BUFGTSs. This can never fit.";
+            "num BUFGTSs" => g.bufg_gts.len(),
+            "max BUFGTSs" => NUM_BUFG_GTS);
         return PARSanityResult::FailureTooManyBufgGTS;
     }
     if g.bufg_gsr.len() > NUM_BUFG_GSR {
+        error!(logger, "PAR (sanity) - too many total BUFGSRs. This can never fit.";
+            "num BUFGSRs" => g.bufg_gsr.len(),
+            "max BUFGSRs" => NUM_BUFG_GSR);
         return PARSanityResult::FailureTooManyBufgGSR;
     }
 
@@ -1044,6 +1107,8 @@ pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
                 if let Some(ref xor_bits) = mc.xor_bits {
                     if let Some(xor_ptc_node_idx) = xor_bits.andterm_input {
                         if g.pterms.get(oe_node_idx) != g.pterms.get(xor_ptc_node_idx) {
+                            error!(logger, "PAR (sanity) - OE and PTC fast path both used, but they're different";
+                                "name" => &mc.name);
                             return PARSanityResult::FailurePTCNeverSatisfiable;
                         }
                     }
@@ -1071,6 +1136,11 @@ pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
                             return PARSanityResult::FailureGlobalNetWrongLoc;
                         }
 
+                        info!(logger, "PAR - forcing IO pad LOC due to global buffer LOC";
+                            "name" => &g.mcs.get(buf.input).name,
+                            "fb" => actual_mc_loc.0,
+                            "mc" => actual_mc_loc.1);
+
                         // Now force the MC to have the full location
                         g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
                             fb: actual_mc_loc.0, i: Some(actual_mc_loc.1)});
@@ -1079,6 +1149,11 @@ pub fn do_par_sanity_check(g: &mut InputGraph) -> PARSanityResult {
                         // There is a preference for the buffer, but no preference for the pin.
 
                         let actual_mc_loc = $loc_lookup(buf_idx as usize);
+
+                        info!(logger, "PAR - forcing IO pad LOC due to global buffer LOC";
+                            "name" => &g.mcs.get(buf.input).name,
+                            "fb" => actual_mc_loc.0,
+                            "mc" => actual_mc_loc.1);
 
                         // Now force the MC to have the full location
                         g.mcs.get_mut(buf.input).requested_loc = Some(RequestedLocation{
@@ -1111,14 +1186,14 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
 
     let mut go = OutputGraph::from_input_graph(g);
 
-    let sanity_check = do_par_sanity_check(g);
+    let sanity_check = do_par_sanity_check(g, &logger);
     if sanity_check != PARSanityResult::Ok {
         return PARResult::FailureSanity(sanity_check);
     }
 
     let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
 
-    let macrocell_placement = greedy_initial_placement(g, &mut go);
+    let macrocell_placement = greedy_initial_placement(g, &mut go, &logger);
     if macrocell_placement.is_none() {
         // XXX this is ugly
         return PARResult::FailureSanity(PARSanityResult::FailureTooManyMCs);
@@ -1200,8 +1275,6 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
             if let PARMCAssignment::MC(mc_idx) = macrocell_placement[move_fb as usize][move_mc as usize].0 {
                 mc_idx
             } else {
-                println!("bug bug bug {:?} {} {} {}", macrocell_placement, move_fb, move_mc, move_pininput);
-                println!("bug bug bug {:?} {}", bad_candidates, move_cand_idx);
                 unreachable!();
             }
         } else {
