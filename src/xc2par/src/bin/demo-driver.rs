@@ -73,14 +73,14 @@ fn main() {
     // TODO
     let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
 
-    let par_result = do_par(&mut input_graph);
+    let par_result = do_par(&mut input_graph, log.new(o!()));
     if let PARResult::Success(y) = par_result {
         for xx in &y.zia {
             for yy in xx.x.iter() {
                 println!("{:?}", yy);
             }
         }
-        println!("{:?}", input_graph);
+        // println!("{:?}", input_graph);
         // Get a bitstream result
         let bitstream = produce_bitstream(device_type, &input_graph, &y);
         println!("********************************************************************************");

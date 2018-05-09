@@ -26,6 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::cmp::Ordering;
 use std::collections::{HashSet, HashMap};
 use std::iter::FromIterator;
+use slog::Drain;
 
 extern crate rand;
 use self::rand::{Rng, SeedableRng, XorShiftRng};
@@ -1105,7 +1106,9 @@ pub enum PARResult {
     FailureIterationsExceeded,
 }
 
-pub fn do_par(g: &mut InputGraph) -> PARResult {
+pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> PARResult {
+    let logger = logger.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
+
     let mut go = OutputGraph::from_input_graph(g);
 
     let sanity_check = do_par_sanity_check(g);
@@ -1139,12 +1142,12 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         best_placement_violations_score += x;
     }
 
-    for _iter_count in 0..1000 {
-        println!("iter {}", _iter_count);
+    for iter_count in 0..1000 {
         macrocell_placement = best_placement.clone();
 
         if best_placement_violations.len() == 0 {
             // It worked!
+            info!(logger, "PAR - placement successfully found");
             for i in 0..2 {
                 let result_i = std::mem::replace(&mut best_par_results_per_fb[i], None);
                 let zia = result_i.unwrap();
@@ -1153,6 +1156,9 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
             return PARResult::Success(go);
         }
+
+        info!(logger, "PAR - new iteration";
+            "iter" => iter_count);
 
         // Here, we need to swap some stuff around
         let mut bad_candidates = Vec::new();
@@ -1186,7 +1192,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
             move_cand_idx += 1;
         }
         let ((move_fb, move_mc, move_pininput), _) = bad_candidates[move_cand_idx];
-        println!("moving {} {} {} ->", move_fb, move_mc, move_pininput);
+        info!(logger, "PAR - moving cell away";
+            "fb" => move_fb, "mc" => move_mc, "pininput" => move_pininput);
 
         // Are we moving something that is constrained to a particular FB?
         let to_move_mc_idx = if !move_pininput {
@@ -1296,7 +1303,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
                     }
                 }
 
-                println!("cand {} {}", cand_fb, cand_mc);
+                debug!(logger, "PAR - cell candidate location";
+                    "fb" => cand_fb, "mc" => cand_mc);
                 all_cand_sites.push((cand_fb, cand_mc));
 
                 // Swap it into this site
@@ -1320,7 +1328,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
                 // Is it better? Remember it
                 if new_placement_violations_score < new_best_placement_violations_score {
-                    println!("this cand is an improvement");
+                    info!(logger, "PAR - cell candidate improves score";
+                        "fb" => cand_fb, "mc" => cand_mc);
                     found_anything_better = true;
                     new_best_placement_violations_score = new_placement_violations_score;
                     best_placement = macrocell_placement.clone();
@@ -1330,7 +1339,6 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
                     // Is the score 0? We can immediately exit
                     if best_placement_violations.len() == 0 {
-                        println!("HUGE SUCCESS!");
                         break;
                     }
                 }
@@ -1341,7 +1349,6 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
 
             // Is the score 0? We can immediately exit
             if best_placement_violations.len() == 0 {
-                println!("HUGE SUCCESS!");
                 break;
             }
         }
@@ -1349,7 +1356,8 @@ pub fn do_par(g: &mut InputGraph) -> PARResult {
         if !found_anything_better {
             // No improvements possible. We have to do _something_, so move it somewhere random
             let (cand_fb, cand_mc) = all_cand_sites[prng.gen_range(0, all_cand_sites.len())];
-            println!("forcemove {} {}", cand_fb, cand_mc);
+            info!(logger, "PAR - cell forced move";
+                "fb" => cand_fb, "mc" => cand_mc);
 
             // XXX DEFINITELY fix copypasta
 
@@ -1402,7 +1410,7 @@ mod tests {
         // TODO
         let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
         // This is what we get
-        let our_data_structure = if let PARResult::Success(y) = do_par(&mut input_graph) {
+        let our_data_structure = if let PARResult::Success(y) = do_par(&mut input_graph, None) {
             // Get a bitstream result
             let bitstream = produce_bitstream(device_type, &input_graph, &y);
             let mut ret = Vec::new();
