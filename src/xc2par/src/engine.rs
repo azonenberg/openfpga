@@ -369,15 +369,17 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
             };
 
             if *x != PARMCAssignment::None {
-                error!(logger, "PAR - cannot place macrocell (non-input part) because site is already occupied";
+                error!(logger, "PAR - cannot place macrocell (fixed) because site is already occupied";
                     "name" => &mc.name,
+                    "pininput" => is_pininput,
                     "fb" => fb,
                     "mc" => mc_idx);
                 return None;
             }
 
-            info!(logger, "PAR - placed macrocell (fixed, non-input part)";
+            info!(logger, "PAR - placed macrocell (fixed)";
                 "name" => &mc.name,
+                "pininput" => is_pininput,
                 "fb" => fb,
                 "mc" => mc_idx);
             *x = PARMCAssignment::MC(i);
@@ -434,9 +436,17 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
             }
 
             if mc_i.is_none() {
+                error!(logger, "PAR - cannot place macrocell (FB fixed) because there are no more sites";
+                    "name" => &mc.name,
+                    "pininput" => is_pininput);
                 return None;
             }
             let mc_idx = mc_i.unwrap();
+            info!(logger, "PAR - placed macrocell (FB fixed)";
+                "name" => &mc.name,
+                "pininput" => is_pininput,
+                "fb" => fb,
+                "mc" => mc_idx);
             if !is_pininput {
                 ret[fb as usize][mc_idx as usize].0 = PARMCAssignment::MC(i);
             } else {
@@ -484,9 +494,17 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
             }
 
             if fbmc_i.is_none() {
+                error!(logger, "PAR - cannot place macrocell (free) because there are no more sites";
+                    "name" => &mc.name,
+                    "pininput" => is_pininput);
                 return None;
             }
             let (fb, mc_idx) = fbmc_i.unwrap();
+            info!(logger, "PAR - placed macrocell (free)";
+                "name" => &mc.name,
+                "pininput" => is_pininput,
+                "fb" => fb,
+                "mc" => mc_idx);
             if !is_pininput {
                 ret[fb as usize][mc_idx as usize].0 = PARMCAssignment::MC(i);
             } else {
@@ -1139,6 +1157,29 @@ pub enum PARResult {
     FailureIterationsExceeded,
 }
 
+// pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32,
+//     constraint_violations: &mut HashMap<PARFBAssignLoc, u32>) -> Option<PARZIAAssignment> {
+
+pub fn try_assign_entire_chip(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment])
+    -> (Vec<Option<PARZIAAssignment>>, HashMap<PARFBAssignLoc, u32>, u32) {
+
+    let num_fbs = mc_assignments.len();
+
+    let mut par_results_per_fb = Vec::with_capacity(num_fbs);
+    let mut placement_violations = HashMap::new();
+    for fb_i in 0..num_fbs {
+        let fb_assign_result = try_assign_fb(g, go, mc_assignments, fb_i as u32,
+            &mut placement_violations);
+        par_results_per_fb.push(fb_assign_result);
+    }
+    let mut placement_violations_score = 0;
+    for x in placement_violations.values() {
+        placement_violations_score += x;
+    }
+
+    (par_results_per_fb, placement_violations, placement_violations_score)
+}
+
 pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> PARResult {
     let logger = logger.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
 
@@ -1159,21 +1200,9 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
     let mut macrocell_placement = macrocell_placement.unwrap();
 
     // Score whatever we got out of the greedy placement
-    let mut best_par_results_per_fb = Vec::with_capacity(2);
-    for _ in 0..2 {
-        best_par_results_per_fb.push(None);
-    }
     let mut best_placement = macrocell_placement.clone();
-    let mut best_placement_violations = HashMap::new();
-    for fb_i in 0..2 {
-        let fb_assign_result = try_assign_fb(g, &mut go, &mut macrocell_placement, fb_i as u32,
-            &mut best_placement_violations);
-        best_par_results_per_fb[fb_i] = fb_assign_result;
-    }
-    let mut best_placement_violations_score = 0;
-    for x in best_placement_violations.values() {
-        best_placement_violations_score += x;
-    }
+    let (mut best_par_results_per_fb, mut best_placement_violations, mut best_placement_violations_score) =
+        try_assign_entire_chip(g, &mut go, &macrocell_placement);
 
     for iter_count in 0..1000 {
         macrocell_placement = best_placement.clone();
@@ -1191,7 +1220,8 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
         }
 
         info!(logger, "PAR - new iteration";
-            "iter" => iter_count);
+            "iter" => iter_count,
+            "score" => best_placement_violations_score);
 
         // Here, we need to swap some stuff around
         let mut bad_candidates = Vec::new();
@@ -1324,16 +1354,6 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
                     PARMCAssignment::None => {},
                 }
 
-                if !move_pininput {
-                    if macrocell_placement[cand_fb][cand_mc].0 == PARMCAssignment::Banned {
-                        continue;
-                    }
-                } else {
-                    if macrocell_placement[cand_fb][cand_mc].1 == PARMCAssignment::Banned {
-                        continue;
-                    }
-                }
-
                 debug!(logger, "PAR - cell candidate location";
                     "fb" => cand_fb, "mc" => cand_mc);
                 all_cand_sites.push((cand_fb, cand_mc));
@@ -1342,20 +1362,8 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
                 xchg_macrocells!(move_fb, move_mc, move_pininput, cand_fb as u32, cand_mc as u32);
 
                 // Score what we've got
-                let mut par_results_per_fb = Vec::with_capacity(2);
-                for _ in 0..2 {
-                    par_results_per_fb.push(None);
-                }
-                let mut new_placement_violations = HashMap::new();
-                for fb_i in 0..2 {
-                    let fb_assign_result = try_assign_fb(g, &mut go, &mut macrocell_placement, fb_i as u32,
-                        &mut new_placement_violations);
-                    par_results_per_fb[fb_i] = fb_assign_result;
-                }
-                let mut new_placement_violations_score = 0;
-                for x in new_placement_violations.values() {
-                    new_placement_violations_score += x;
-                }
+                let (par_results_per_fb, new_placement_violations, new_placement_violations_score) =
+                    try_assign_entire_chip(g, &mut go, &macrocell_placement);
 
                 // Is it better? Remember it
                 if new_placement_violations_score < new_best_placement_violations_score {
@@ -1396,23 +1404,11 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
             xchg_macrocells!(move_fb, move_mc, move_pininput, cand_fb as u32, cand_mc as u32);
 
             // Score what we've got
-            let mut par_results_per_fb = Vec::with_capacity(2);
-            for _ in 0..2 {
-                par_results_per_fb.push(None);
-            }
-            let mut new_placement_violations = HashMap::new();
-            for fb_i in 0..2 {
-                let fb_assign_result = try_assign_fb(g, &mut go, &mut macrocell_placement, fb_i as u32,
-                    &mut new_placement_violations);
-                par_results_per_fb[fb_i] = fb_assign_result;
-            }
-            let mut new_placement_violations_score = 0;
-            for x in new_placement_violations.values() {
-                new_placement_violations_score += x;
-            }
+            let (par_results_per_fb, new_placement_violations, new_placement_violations_score) =
+                try_assign_entire_chip(g, &mut go, &macrocell_placement);
 
             // Remember it
-            best_placement = macrocell_placement.clone();
+            best_placement = macrocell_placement;
             best_placement_violations = new_placement_violations;
             best_par_results_per_fb = par_results_per_fb;
             best_placement_violations_score = new_placement_violations_score;
