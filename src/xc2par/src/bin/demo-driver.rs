@@ -71,9 +71,9 @@ fn main() {
     // println!("{:?}", input_graph);
 
     // TODO
-    let device_type = XC2DeviceSpeedPackage::from_str("xc2c32a-4-vq44").expect("invalid device name");
+    let device_type = XC2DeviceSpeedPackage::from_str("xc2c64a-5-vq44").expect("invalid device name");
 
-    let par_result = do_par(&mut input_graph, log.new(o!()));
+    let par_result = do_par(&mut input_graph, device_type, log.new(o!()));
     if let PARResult::Success(y) = par_result {
         for xx in &y.zia {
             for yy in xx.x.iter() {

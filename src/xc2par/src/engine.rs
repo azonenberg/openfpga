@@ -185,8 +185,8 @@ fn mcs_can_be_paired(mc0: &InputGraphMacrocell, mc1: &InputGraphMacrocell) -> bo
 }
 
 // First element of tuple is anything, second element can only be pin input
-pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger: &slog::Logger)
-    -> Option<Vec<PARFBAssignment>> {
+pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, device_type: XC2DeviceSpeedPackage,
+    logger: &slog::Logger) -> Option<Vec<PARFBAssignment>> {
 
     let mut ret = Vec::new();
 
@@ -241,9 +241,9 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
             }
         }
     }
-    xfer_pin_loc_to_buf!(bufg_clks, NUM_BUFG_CLK, |i| get_gck(XC2Device::XC2C32A, i).unwrap());
-    xfer_pin_loc_to_buf!(bufg_gts, NUM_BUFG_GTS, |i| get_gts(XC2Device::XC2C32A, i).unwrap());
-    xfer_pin_loc_to_buf!(bufg_gsr, NUM_BUFG_GSR, |_| get_gsr(XC2Device::XC2C32A));
+    xfer_pin_loc_to_buf!(bufg_clks, NUM_BUFG_CLK, |i| get_gck(device_type.dev, i).unwrap());
+    xfer_pin_loc_to_buf!(bufg_gts, NUM_BUFG_GTS, |i| get_gts(device_type.dev, i).unwrap());
+    xfer_pin_loc_to_buf!(bufg_gsr, NUM_BUFG_GSR, |_| get_gsr(device_type.dev));
     
     // Begin with assigning those that have a LOC constraint on the buffer. We know that these already have LOC
     // constraints on the pin as well.
@@ -337,18 +337,17 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
             }
         }
     }
-    place_other_buf!(bufg_clks, gck_used, NUM_BUFG_CLK, |i| get_gck(XC2Device::XC2C32A, i).unwrap());
-    place_other_buf!(bufg_gts, gts_used, NUM_BUFG_GTS, |i| get_gts(XC2Device::XC2C32A, i).unwrap());
-    place_other_buf!(bufg_gsr, gsr_used, NUM_BUFG_GSR, |_| get_gsr(XC2Device::XC2C32A));
+    place_other_buf!(bufg_clks, gck_used, NUM_BUFG_CLK, |i| get_gck(device_type.dev, i).unwrap());
+    place_other_buf!(bufg_gts, gts_used, NUM_BUFG_GTS, |i| get_gts(device_type.dev, i).unwrap());
+    place_other_buf!(bufg_gsr, gsr_used, NUM_BUFG_GSR, |_| get_gsr(device_type.dev));
 
     // Now actually assign macrocell locations
-
-    // TODO: Number of FBs
-    // FIXME: Hack for dedicated input
-    for _ in 0..2 {
+    let mut num_fbs = device_type.dev.num_fbs();
+    for _ in 0..num_fbs {
         ret.push([(PARMCAssignment::None, PARMCAssignment::None); MCS_PER_FB]);
     }
-    if true {
+    if device_type.dev == XC2Device::XC2C32 || device_type.dev == XC2Device::XC2C32A {
+        num_fbs += 1;
         let x = ret.len();
         ret.push([(PARMCAssignment::Banned, PARMCAssignment::Banned); MCS_PER_FB]);
         ret[x][0] = (PARMCAssignment::Banned, PARMCAssignment::None);
@@ -385,7 +384,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
     }
 
     // Check for pairing violations
-    for fb_i in 0..3 {
+    for fb_i in 0..num_fbs {
         for mc_i in 0..MCS_PER_FB {
             if let PARMCAssignment::MC(mc_idx_0) = ret[fb_i as usize][mc_i].0 {
                 if let PARMCAssignment::MC(mc_idx_1) = ret[fb_i as usize][mc_i].1 {
@@ -461,7 +460,7 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
 
         if mc.requested_loc.is_none() {
             let mut fbmc_i = None;
-            for fb in 0..3 {
+            for fb in 0..num_fbs {
                 for i in 0..MCS_PER_FB {
                     if !is_pininput {
                         if ret[fb][i].0 != PARMCAssignment::None {
@@ -512,19 +511,19 @@ pub fn greedy_initial_placement(g: &mut InputGraph, go: &mut OutputGraph, logger
     }
 
     // Update the "reverse" pointers
-    for fb_i in 0..3 {
+    for fb_i in 0..num_fbs {
         for mc_i in 0..MCS_PER_FB {
             if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].0 {
                 let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
                 mc.loc = Some(AssignedLocation{
-                    fb: fb_i,
+                    fb: fb_i as u32,
                     i: mc_i as u32,
                 });
             }
             if let PARMCAssignment::MC(mc_idx) = ret[fb_i as usize][mc_i].1 {
                 let mc = go.mcs.get_mut(ObjPoolIndex::from(mc_idx));
                 mc.loc = Some(AssignedLocation{
-                    fb: fb_i,
+                    fb: fb_i as u32,
                     i: mc_i as u32,
                 });
             }
@@ -735,8 +734,8 @@ pub enum ZIAAssignmentResult {
     FailureUnroutable(u32),
 }
 
-pub fn try_assign_zia(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARFBAssignment)
-    -> ZIAAssignmentResult {
+pub fn try_assign_zia(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARFBAssignment,
+    device_type: XC2DeviceSpeedPackage) -> ZIAAssignmentResult {
 
     let mut ret_zia = PARZIAAssignment { x: [XC2ZIAInput::One; INPUTS_PER_ANDTERM] };
     let mut input_to_row_map = HashMap::new();
@@ -819,11 +818,13 @@ pub fn try_assign_zia(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARF
         // What input do we actually want?
         let choice = match input.0 {
             InputGraphPTermInputType::Pin => {
-                // FIXME: Hack
-                if true && fb == 2 && mc == 0 {
+                if (device_type.dev == XC2Device::XC2C32 || device_type.dev == XC2Device::XC2C32A)
+                    && fb == 2 && mc == 0 {
+
                     XC2ZIAInput::DedicatedInput
                 } else {
-                    XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap() as u16}
+                    XC2ZIAInput::IBuf{ibuf:
+                        fb_mc_num_to_iob_num(device_type.dev, fb as u32, mc as u32).unwrap() as u16}
                 }
             },
             InputGraphPTermInputType::Xor => {
@@ -831,7 +832,8 @@ pub fn try_assign_zia(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARF
             },
             InputGraphPTermInputType::Reg => {
                 if need_to_use_ibuf_zia_path {
-                    XC2ZIAInput::IBuf{ibuf: fb_mc_num_to_iob_num(XC2Device::XC2C32A, fb as u32, mc as u32).unwrap() as u16}
+                    XC2ZIAInput::IBuf{ibuf:
+                        fb_mc_num_to_iob_num(device_type.dev, fb as u32, mc as u32).unwrap() as u16}
                 } else {
                     XC2ZIAInput::Macrocell{fb: fb as u8, mc: mc as u8}
                 }
@@ -841,7 +843,7 @@ pub fn try_assign_zia(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARF
         // Actually search the ZIA table for it
         let mut candidate_sites_for_this_input = Vec::new();
         for zia_i in 0..INPUTS_PER_ANDTERM {
-            let row = zia_table_get_row(XC2Device::XC2C32A, zia_i);
+            let row = zia_table_get_row(device_type.dev, zia_i);
             for &x in row {
                 if x == choice {
                     candidate_sites_for_this_input.push(zia_i);
@@ -907,15 +909,15 @@ enum FBAssignmentResultInner {
     Failure(u32),
 }
 
-fn try_assign_fb_inner(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32)
-    -> FBAssignmentResultInner {
+fn try_assign_fb_inner(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32,
+    device_type: XC2DeviceSpeedPackage) -> FBAssignmentResultInner {
 
     let mut failing_score = 0;
     // TODO: Weight factors?
 
     // Can we even assign p-terms?
     let pterm_assign_result = try_assign_andterms(g, go, &mc_assignments[fb_i as usize], fb_i);
-    let zia_assign_result = try_assign_zia(g, go, &mc_assignments[fb_i as usize]);
+    let zia_assign_result = try_assign_zia(g, go, &mc_assignments[fb_i as usize], device_type);
 
     if pterm_assign_result == AndTermAssignmentResult::Success {
         if let ZIAAssignmentResult::Success(zia_assignment) = zia_assign_result {
@@ -947,8 +949,10 @@ fn try_assign_fb_inner(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[P
 }
 
 pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32,
-    constraint_violations: &mut HashMap<PARFBAssignLoc, u32>) -> Option<PARZIAAssignment> {
-    let initial_assign_result = try_assign_fb_inner(g, go, mc_assignments, fb_i);
+    constraint_violations: &mut HashMap<PARFBAssignLoc, u32>, device_type: XC2DeviceSpeedPackage)
+    -> Option<PARZIAAssignment> {
+
+    let initial_assign_result = try_assign_fb_inner(g, go, mc_assignments, fb_i, device_type);
 
     // Check for pairing violations
     // TODO: Fix copypasta
@@ -993,7 +997,9 @@ pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PAR
                     }
 
                     new_mc_assign[fb_i as usize][mc_i].0 = PARMCAssignment::None;
-                    let new_failing_score = match try_assign_fb_inner(g, &mut dummy_go, &new_mc_assign, fb_i) {
+                    let new_failing_score = match try_assign_fb_inner(g, &mut dummy_go, &new_mc_assign, fb_i,
+                        device_type) {
+
                         FBAssignmentResultInner::Success(_) => 0,
                         FBAssignmentResultInner::Failure(x) => x,
                     };
@@ -1033,25 +1039,27 @@ pub enum PARSanityResult {
 }
 
 // FIXME: What happens in netlist.rs and what happens here?
-pub fn do_par_sanity_check(g: &mut InputGraph, logger: &slog::Logger) -> PARSanityResult {
+pub fn do_par_sanity_check(g: &mut InputGraph, device_type: XC2DeviceSpeedPackage, logger: &slog::Logger)
+    -> PARSanityResult {
+
     // Check if everything fits in the device
 
-    const NUM_FBS: usize = 2;
+    let num_fbs = device_type.dev.num_fbs();
 
-    if g.mcs.len() > 2 * (NUM_FBS * MCS_PER_FB) {
+    if g.mcs.len() > 2 * (num_fbs * MCS_PER_FB) {
         // Note that this is a conservative fail-early check. It is incomplete because it doesn't account for
         // which macrocells can actually be paired together or which buried sites (in larger devices) can be used.
         error!(logger, "PAR (sanity) - too many total macrocells. This can never fit.";
             "num mcs" => g.mcs.len(),
-            "max mcs" => 2 * (NUM_FBS * MCS_PER_FB));
+            "max mcs" => 2 * (num_fbs * MCS_PER_FB));
         return PARSanityResult::FailureTooManyMCs;
     }
 
     let pterms_set: HashSet<InputGraphPTerm> = HashSet::from_iter(g.pterms.iter().cloned());
-    if pterms_set.len() > NUM_FBS * ANDTERMS_PER_FB {
+    if pterms_set.len() > num_fbs * ANDTERMS_PER_FB {
         error!(logger, "PAR (sanity) - too many total P-terms. This can never fit.";
             "num p-terms" => pterms_set.len(),
-            "max p-terms" => NUM_FBS * ANDTERMS_PER_FB);
+            "max p-terms" => num_fbs * ANDTERMS_PER_FB);
         return PARSanityResult::FailureTooManyPTerms;
     }
 
@@ -1142,9 +1150,9 @@ pub fn do_par_sanity_check(g: &mut InputGraph, logger: &slog::Logger) -> PARSani
             }
         }
     }
-    sanity_check_bufg!(bufg_clks, |i| get_gck(XC2Device::XC2C32A, i).unwrap());
-    sanity_check_bufg!(bufg_gts, |i| get_gts(XC2Device::XC2C32A, i).unwrap());
-    sanity_check_bufg!(bufg_gts, |_| get_gsr(XC2Device::XC2C32A));
+    sanity_check_bufg!(bufg_clks, |i| get_gck(device_type.dev, i).unwrap());
+    sanity_check_bufg!(bufg_gts, |i| get_gts(device_type.dev, i).unwrap());
+    sanity_check_bufg!(bufg_gts, |_| get_gsr(device_type.dev));
 
     PARSanityResult::Ok
 }
@@ -1158,8 +1166,8 @@ pub enum PARResult {
 // pub fn try_assign_fb(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment], fb_i: u32,
 //     constraint_violations: &mut HashMap<PARFBAssignLoc, u32>) -> Option<PARZIAAssignment> {
 
-pub fn try_assign_entire_chip(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment])
-    -> (Vec<Option<PARZIAAssignment>>, HashMap<PARFBAssignLoc, u32>, u32) {
+pub fn try_assign_entire_chip(g: &InputGraph, go: &mut OutputGraph, mc_assignments: &[PARFBAssignment],
+    device_type: XC2DeviceSpeedPackage) -> (Vec<Option<PARZIAAssignment>>, HashMap<PARFBAssignLoc, u32>, u32) {
 
     let num_fbs = mc_assignments.len();
 
@@ -1167,7 +1175,7 @@ pub fn try_assign_entire_chip(g: &InputGraph, go: &mut OutputGraph, mc_assignmen
     let mut placement_violations = HashMap::new();
     for fb_i in 0..num_fbs {
         let fb_assign_result = try_assign_fb(g, go, mc_assignments, fb_i as u32,
-            &mut placement_violations);
+            &mut placement_violations, device_type);
         par_results_per_fb.push(fb_assign_result);
     }
     let mut placement_violations_score = 0;
@@ -1178,19 +1186,21 @@ pub fn try_assign_entire_chip(g: &InputGraph, go: &mut OutputGraph, mc_assignmen
     (par_results_per_fb, placement_violations, placement_violations_score)
 }
 
-pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> PARResult {
+pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, device_type: XC2DeviceSpeedPackage, logger: L)
+    -> PARResult {
+
     let logger = logger.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
 
     let mut go = OutputGraph::from_input_graph(g);
 
-    let sanity_check = do_par_sanity_check(g, &logger);
+    let sanity_check = do_par_sanity_check(g, device_type, &logger);
     if sanity_check != PARSanityResult::Ok {
         return PARResult::FailureSanity(sanity_check);
     }
 
     let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
 
-    let macrocell_placement = greedy_initial_placement(g, &mut go, &logger);
+    let macrocell_placement = greedy_initial_placement(g, &mut go, device_type, &logger);
     if macrocell_placement.is_none() {
         // XXX this is ugly
         return PARResult::FailureSanity(PARSanityResult::FailureTooManyMCs);
@@ -1200,7 +1210,7 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
     // Score whatever we got out of the greedy placement
     let mut best_placement = macrocell_placement.clone();
     let (mut best_par_results_per_fb, mut best_placement_violations, mut best_placement_violations_score) =
-        try_assign_entire_chip(g, &mut go, &macrocell_placement);
+        try_assign_entire_chip(g, &mut go, &macrocell_placement, device_type);
 
     for iter_count in 0..1000 {
         macrocell_placement = best_placement.clone();
@@ -1208,7 +1218,7 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
         if best_placement_violations.len() == 0 {
             // It worked!
             info!(logger, "PAR - placement successfully found");
-            for i in 0..2 {
+            for i in 0..device_type.dev.num_fbs() {
                 let result_i = std::mem::replace(&mut best_par_results_per_fb[i], None);
                 let zia = result_i.unwrap();
                 go.zia.push(zia);
@@ -1315,7 +1325,7 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
         let mut found_anything_better = false;
         let mut all_cand_sites = Vec::new();
         let mut new_best_placement_violations_score = best_placement_violations_score;
-        for cand_fb in 0..2 {
+        for cand_fb in 0..device_type.dev.num_fbs() {
             if to_move_req_fb.is_some() && to_move_req_fb.unwrap() != cand_fb as u32 {
                 continue;
             }
@@ -1361,7 +1371,7 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
 
                 // Score what we've got
                 let (par_results_per_fb, new_placement_violations, new_placement_violations_score) =
-                    try_assign_entire_chip(g, &mut go, &macrocell_placement);
+                    try_assign_entire_chip(g, &mut go, &macrocell_placement, device_type);
 
                 // Is it better? Remember it
                 if new_placement_violations_score < new_best_placement_violations_score {
@@ -1403,7 +1413,7 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, logger: L) -> P
 
             // Score what we've got
             let (par_results_per_fb, new_placement_violations, new_placement_violations_score) =
-                try_assign_entire_chip(g, &mut go, &macrocell_placement);
+                try_assign_entire_chip(g, &mut go, &macrocell_placement, device_type);
 
             // Remember it
             best_placement = macrocell_placement;
@@ -1435,7 +1445,7 @@ mod tests {
         // TODO
         let device_type = XC2DeviceSpeedPackage::from_str("xc2c32a-4-vq44").expect("invalid device name");
         // This is what we get
-        let our_data_structure = if let PARResult::Success(y) = do_par(&mut input_graph, None) {
+        let our_data_structure = if let PARResult::Success(y) = do_par(&mut input_graph, device_type, None) {
             // Get a bitstream result
             let bitstream = produce_bitstream(device_type, &input_graph, &y);
             let mut ret = Vec::new();
