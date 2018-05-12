@@ -118,7 +118,7 @@ impl slog::Value for AttributeVal {
 }
 
 /// Represents an entire .json file used by Yosys
-#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default, Eq, PartialEq)]
 pub struct Netlist {
     /// The program that created this file.
     #[serde(default)]
@@ -129,7 +129,7 @@ pub struct Netlist {
 }
 
 /// Represents one module in the Yosys hierarchy
-#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default, Eq, PartialEq)]
 pub struct Module {
     /// Module attributes
     #[serde(default)]

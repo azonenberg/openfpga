@@ -28,8 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::io;
 use std::io::Write;
 
-extern crate jedec;
-use self::jedec::*;
+use jedec::*;
 
 use *;
 use fusemap_physical::{zia_block_loc, and_block_loc, or_block_loc};

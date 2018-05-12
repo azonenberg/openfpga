@@ -31,10 +31,7 @@ use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 use slog::Drain;
 
-extern crate xc2bit;
-use self::xc2bit::*;
-
-extern crate yosys_netlist_json;
+use xc2bit::*;
 
 use *;
 use objpool::*;

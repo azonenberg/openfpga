@@ -45,6 +45,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #[macro_use]
 extern crate bittwiddler;
 
+extern crate jedec;
+
 #[macro_use]
 extern crate serde_derive;
 
@@ -116,8 +118,7 @@ mod tests {
     use std::fs::File;
     use std::io::Read;
 
-    extern crate jedec;
-    use self::jedec::*;
+    use jedec::*;
 
     fn run_one_reftest(jed_filename: &'static str) {
         let jed_path = std::path::Path::new(jed_filename);

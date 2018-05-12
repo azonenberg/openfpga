@@ -30,8 +30,7 @@ use std::error::Error;
 use std::fmt;
 use std::str;
 
-extern crate jedec;
-use self::jedec::*;
+use jedec::*;
 
 /// Errors that can occur when parsing a bitstream
 #[derive(Debug, PartialEq, Eq)]

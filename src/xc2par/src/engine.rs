@@ -28,11 +28,9 @@ use std::collections::{HashSet, HashMap};
 use std::iter::FromIterator;
 use slog::Drain;
 
-extern crate rand;
-use self::rand::{Rng, SeedableRng, XorShiftRng};
+use rand::{Rng, SeedableRng, XorShiftRng};
 
-extern crate xc2bit;
-use self::xc2bit::*;
+use xc2bit::*;
 
 use *;
 use objpool::*;
