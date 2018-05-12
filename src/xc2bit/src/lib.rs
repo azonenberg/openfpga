@@ -97,7 +97,7 @@ pub use mc::{XC2Macrocell, XC2MCRegClkSrc, XC2MCRegResetSrc, XC2MCRegSetSrc, XC2
              XC2MCXorMode};
 
 mod partdb;
-pub use partdb::{XC2Device, XC2Speed, XC2Package, parse_part_name_string};
+pub use partdb::{XC2Device, XC2Speed, XC2Package, XC2DeviceSpeedPackage};
 
 mod pla;
 pub use pla::{XC2PLAAndTerm, XC2PLAOrTerm};

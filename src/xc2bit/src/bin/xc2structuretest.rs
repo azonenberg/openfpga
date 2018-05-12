@@ -39,7 +39,9 @@ fn main() {
     }
 
     let device_combination = &args[1];
-    let (device, _, _) = parse_part_name_string(device_combination).expect("invalid device name");
+    let XC2DeviceSpeedPackage {
+        dev: device, spd: _, pkg: _
+    } = XC2DeviceSpeedPackage::from_str(device_combination).expect("invalid device name");
 
     let node_vec = RefCell::new(Vec::new());
     let wire_vec = RefCell::new(Vec::new());

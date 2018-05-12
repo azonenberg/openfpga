@@ -2,7 +2,7 @@
 https://github.com/azonenberg/openfpga
 
 QF12278*
-N DEVICE XC2C32A-6-VQ44*
+N DEVICE XC2C32A-4-VQ44*
 
 L000000 01111110*
 L000008 01111110*

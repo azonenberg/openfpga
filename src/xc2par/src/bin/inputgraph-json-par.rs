@@ -53,7 +53,7 @@ fn main() {
     let mut input_graph = serde_json::from_slice(&data).unwrap();
 
     // TODO
-    let (device_type, _, _) = parse_part_name_string("xc2c32a-4-vq44").expect("invalid device name");
+    let device_type = XC2DeviceSpeedPackage::from_str("xc2c32a-4-vq44").expect("invalid device name");
 
     // PAR result
     if let PARResult::Success(y) = do_par(&mut input_graph, None) {

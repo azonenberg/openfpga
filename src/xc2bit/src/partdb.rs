@@ -233,83 +233,95 @@ fn is_valid_part_combination(device: XC2Device, speed: XC2Speed, package: XC2Pac
     }
 }
 
-/// Parses the given string in <device>-<speed>-<package> format and returns the parsed result if it is a legal
-/// combination. Returns `None` if the part name string does not represent a valid device.
-pub fn parse_part_name_string(part_name: &str) -> Option<(XC2Device, XC2Speed, XC2Package)> {
-    let dev;
-    let spd;
-    let pkg;
+/// Device type, speed grade, and package all in one struct
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+pub struct XC2DeviceSpeedPackage {
+    pub dev: XC2Device,
+    pub spd: XC2Speed,
+    pub pkg: XC2Package
+}
 
-    let name_split = part_name.split('-').collect::<Vec<_>>();
-    if name_split.len() != 3 {
-        return None;
+impl XC2DeviceSpeedPackage {
+    /// Parses the given string in <device>-<speed>-<package> format and returns the parsed result if it is a legal
+    /// combination. Returns `None` if the part name string does not represent a valid device.
+    pub fn from_str(part_name: &str) -> Option<Self> {
+        let dev;
+        let spd;
+        let pkg;
+
+        let name_split = part_name.split('-').collect::<Vec<_>>();
+        if name_split.len() != 3 {
+            return None;
+        }
+
+        if name_split[0].eq_ignore_ascii_case("xc2c32") {
+            dev = XC2Device::XC2C32;
+        } else if name_split[0].eq_ignore_ascii_case("xc2c32a") {
+            dev = XC2Device::XC2C32A;
+        } else if name_split[0].eq_ignore_ascii_case("xc2c64") {
+            dev = XC2Device::XC2C64;
+        } else if name_split[0].eq_ignore_ascii_case("xc2c64a") {
+            dev = XC2Device::XC2C64A;
+        } else if name_split[0].eq_ignore_ascii_case("xc2c128") {
+            dev = XC2Device::XC2C128;
+        } else if name_split[0].eq_ignore_ascii_case("xc2c256") {
+            dev = XC2Device::XC2C256;
+        } else if name_split[0].eq_ignore_ascii_case("xc2c384") {
+            dev = XC2Device::XC2C384;
+        } else if name_split[0].eq_ignore_ascii_case("xc2c512") {
+            dev = XC2Device::XC2C512;
+        } else {
+            return None;
+        }
+
+        if name_split[1] == "4" {
+            spd = XC2Speed::Speed4;
+        } else if name_split[1] == "5" {
+            spd = XC2Speed::Speed5;
+        } else if name_split[1] == "6" {
+            spd = XC2Speed::Speed6;
+        } else if name_split[1] == "7" {
+            spd = XC2Speed::Speed7;
+        } else if name_split[1] == "10" {
+            spd = XC2Speed::Speed10;
+        } else {
+            return None;
+        }
+
+        if name_split[2].eq_ignore_ascii_case("pc44") {
+            pkg = XC2Package::PC44;
+        } else if name_split[2].eq_ignore_ascii_case("qfg32") {
+            pkg = XC2Package::QFG32;
+        } else if name_split[2].eq_ignore_ascii_case("vq44") {
+            pkg = XC2Package::VQ44;
+        } else if name_split[2].eq_ignore_ascii_case("qfg48") {
+            pkg = XC2Package::QFG48;
+        } else if name_split[2].eq_ignore_ascii_case("cp56") {
+            pkg = XC2Package::CP56;
+        } else if name_split[2].eq_ignore_ascii_case("vq100") {
+            pkg = XC2Package::VQ100;
+        } else if name_split[2].eq_ignore_ascii_case("cp132") {
+            pkg = XC2Package::CP132;
+        } else if name_split[2].eq_ignore_ascii_case("tq144") {
+            pkg = XC2Package::TQ144;
+        } else if name_split[2].eq_ignore_ascii_case("pq208") {
+            pkg = XC2Package::PQ208;
+        } else if name_split[2].eq_ignore_ascii_case("ft256") {
+            pkg = XC2Package::FT256;
+        } else if name_split[2].eq_ignore_ascii_case("fg324") {
+            pkg = XC2Package::FG324;
+        } else {
+            return None;
+        }
+
+        if !is_valid_part_combination(dev, spd, pkg) {
+            return None;
+        }
+
+        Some(Self {
+            dev, spd, pkg
+        })
     }
-
-    if name_split[0].eq_ignore_ascii_case("xc2c32") {
-        dev = XC2Device::XC2C32;
-    } else if name_split[0].eq_ignore_ascii_case("xc2c32a") {
-        dev = XC2Device::XC2C32A;
-    } else if name_split[0].eq_ignore_ascii_case("xc2c64") {
-        dev = XC2Device::XC2C64;
-    } else if name_split[0].eq_ignore_ascii_case("xc2c64a") {
-        dev = XC2Device::XC2C64A;
-    } else if name_split[0].eq_ignore_ascii_case("xc2c128") {
-        dev = XC2Device::XC2C128;
-    } else if name_split[0].eq_ignore_ascii_case("xc2c256") {
-        dev = XC2Device::XC2C256;
-    } else if name_split[0].eq_ignore_ascii_case("xc2c384") {
-        dev = XC2Device::XC2C384;
-    } else if name_split[0].eq_ignore_ascii_case("xc2c512") {
-        dev = XC2Device::XC2C512;
-    } else {
-        return None;
-    }
-
-    if name_split[1] == "4" {
-        spd = XC2Speed::Speed4;
-    } else if name_split[1] == "5" {
-        spd = XC2Speed::Speed5;
-    } else if name_split[1] == "6" {
-        spd = XC2Speed::Speed6;
-    } else if name_split[1] == "7" {
-        spd = XC2Speed::Speed7;
-    } else if name_split[1] == "10" {
-        spd = XC2Speed::Speed10;
-    } else {
-        return None;
-    }
-
-    if name_split[2].eq_ignore_ascii_case("pc44") {
-        pkg = XC2Package::PC44;
-    } else if name_split[2].eq_ignore_ascii_case("qfg32") {
-        pkg = XC2Package::QFG32;
-    } else if name_split[2].eq_ignore_ascii_case("vq44") {
-        pkg = XC2Package::VQ44;
-    } else if name_split[2].eq_ignore_ascii_case("qfg48") {
-        pkg = XC2Package::QFG48;
-    } else if name_split[2].eq_ignore_ascii_case("cp56") {
-        pkg = XC2Package::CP56;
-    } else if name_split[2].eq_ignore_ascii_case("vq100") {
-        pkg = XC2Package::VQ100;
-    } else if name_split[2].eq_ignore_ascii_case("cp132") {
-        pkg = XC2Package::CP132;
-    } else if name_split[2].eq_ignore_ascii_case("tq144") {
-        pkg = XC2Package::TQ144;
-    } else if name_split[2].eq_ignore_ascii_case("pq208") {
-        pkg = XC2Package::PQ208;
-    } else if name_split[2].eq_ignore_ascii_case("ft256") {
-        pkg = XC2Package::FT256;
-    } else if name_split[2].eq_ignore_ascii_case("fg324") {
-        pkg = XC2Package::FG324;
-    } else {
-        return None;
-    }
-
-    if !is_valid_part_combination(dev, spd, pkg) {
-        return None;
-    }
-
-    Some((dev, spd, pkg))
 }
 
 #[cfg(test)]
@@ -318,21 +330,27 @@ mod tests {
 
     #[test]
     fn spot_test_valid_part() {
-        assert_eq!(parse_part_name_string("xc2c32a-6-vq44"),
-            Some((XC2Device::XC2C32A, XC2Speed::Speed6, XC2Package::VQ44)));
-        assert_eq!(parse_part_name_string("XC2C128-7-VQ100"),
-            Some((XC2Device::XC2C128, XC2Speed::Speed7, XC2Package::VQ100)));
+        assert_eq!(XC2DeviceSpeedPackage::from_str("xc2c32a-6-vq44"),
+            Some(XC2DeviceSpeedPackage {
+                dev: XC2Device::XC2C32A,
+                spd: XC2Speed::Speed6,
+                pkg: XC2Package::VQ44}));
+        assert_eq!(XC2DeviceSpeedPackage::from_str("XC2C128-7-VQ100"),
+            Some(XC2DeviceSpeedPackage {
+                dev: XC2Device::XC2C128,
+                spd: XC2Speed::Speed7,
+                pkg: XC2Package::VQ100}));
     }
 
     #[test]
     fn spot_test_invalid_part() {
-        assert_eq!(parse_part_name_string("xc2c32a-1-vq44"), None);
-        assert_eq!(parse_part_name_string("xc2c32a-5-vq100"), None);
+        assert_eq!(XC2DeviceSpeedPackage::from_str("xc2c32a-1-vq44"), None);
+        assert_eq!(XC2DeviceSpeedPackage::from_str("xc2c32a-5-vq100"), None);
     }
 
     #[test]
     fn malformed_part_names() {
-        assert_eq!(parse_part_name_string("asdf"), None);
-        assert_eq!(parse_part_name_string("xc2c32a-5-vq44-asdf"), None);
+        assert_eq!(XC2DeviceSpeedPackage::from_str("asdf"), None);
+        assert_eq!(XC2DeviceSpeedPackage::from_str("xc2c32a-5-vq44-asdf"), None);
     }
 }

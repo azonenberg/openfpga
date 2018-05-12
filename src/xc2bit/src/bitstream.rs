@@ -34,7 +34,6 @@ use *;
 use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx,
                       total_logical_fuse_count, clock_div_fuse_idx};
 use fusemap_physical::{fuse_array_dims, clock_div_fuse_coord};
-use partdb::{parse_part_name_string};
 use util::{LinebreakSet};
 use zia::{zia_get_row_width};
 
@@ -92,20 +91,22 @@ impl XC2Bitstream {
 
         let device = jed.dev_name_str.as_ref().unwrap();
 
-        let device_combination = parse_part_name_string(device);
+        let device_combination = XC2DeviceSpeedPackage::from_str(device);
         if device_combination.is_none() {
             return Err(XC2BitError::BadDeviceName(device.to_owned()));
         }
 
-        let (part, spd, pkg) = device_combination.unwrap();
+        let XC2DeviceSpeedPackage {
+            dev, spd, pkg
+        } = device_combination.unwrap();
 
         let fuses = &jed.f;
 
-        if fuses.len() != total_logical_fuse_count(part) {
+        if fuses.len() != total_logical_fuse_count(dev) {
             return Err(XC2BitError::WrongFuseCount);
         }
 
-        match part {
+        match dev {
             XC2Device::XC2C32 => {
                 let bits = read_32_bitstream_logical(fuses)?;
                 Ok(XC2Bitstream {
@@ -180,19 +181,21 @@ impl XC2Bitstream {
             return Err(XC2BitError::BadDeviceName(String::from("")));
         }
 
-        let device_combination = parse_part_name_string(fuse_array.dev_name_str.as_ref().unwrap());
+        let device_combination = XC2DeviceSpeedPackage::from_str(fuse_array.dev_name_str.as_ref().unwrap());
         if device_combination.is_none() {
             return Err(XC2BitError::BadDeviceName(fuse_array.dev_name_str.as_ref().unwrap().to_owned()));
         }
 
-        let (part, spd, pkg) = device_combination.unwrap();
+        let XC2DeviceSpeedPackage {
+            dev, spd, pkg
+        } = device_combination.unwrap();
 
-        if fuse_array.dim() != fuse_array_dims(part) {
+        if fuse_array.dim() != fuse_array_dims(dev) {
             return Err(XC2BitError::WrongFuseCount);
         }
 
 
-        match part {
+        match dev {
             XC2Device::XC2C32 => {
                 let bits = read_32_bitstream_physical(fuse_array)?;
                 Ok(XC2Bitstream {
@@ -261,17 +264,14 @@ impl XC2Bitstream {
     }
 
     /// Construct a new blank bitstream of the given part
-    pub fn blank_bitstream(device_name: &str) -> Result<Self, XC2BitError> {
-        let maybe_part_combination = parse_part_name_string(device_name);
-        if maybe_part_combination.is_none() {
-            return Err(XC2BitError::BadDeviceName(device_name.to_owned()));
-        }
-
-        let (device, speed_grade, package) = maybe_part_combination.unwrap();
+    pub fn blank_bitstream(part_combination: XC2DeviceSpeedPackage) -> Self {
+        let XC2DeviceSpeedPackage {
+            dev: device, spd: speed_grade, pkg: package
+        } = part_combination;
 
         match device {
             XC2Device::XC2C32 => {
-                Ok(XC2Bitstream {
+                XC2Bitstream {
                     speed_grade,
                     package,
                     bits: XC2BitstreamBits::XC2C32 {
@@ -282,10 +282,10 @@ impl XC2Bitstream {
                         ivoltage: false,
                         ovoltage: false,
                     }
-                })
+                }
             },
             XC2Device::XC2C32A => {
-                Ok(XC2Bitstream {
+                XC2Bitstream {
                     speed_grade,
                     package,
                     bits: XC2BitstreamBits::XC2C32A {
@@ -298,10 +298,10 @@ impl XC2Bitstream {
                         ivoltage: [false, false],
                         ovoltage: [false, false],
                     }
-                })
+                }
             },
             XC2Device::XC2C64 => {
-                Ok(XC2Bitstream {
+                XC2Bitstream {
                     speed_grade,
                     package,
                     bits: XC2BitstreamBits::XC2C64 {
@@ -311,10 +311,10 @@ impl XC2Bitstream {
                         ivoltage: false,
                         ovoltage: false,
                     }
-                })
+                }
             },
             XC2Device::XC2C64A => {
-                Ok(XC2Bitstream {
+                XC2Bitstream {
                     speed_grade,
                     package,
                     bits: XC2BitstreamBits::XC2C64A {
@@ -326,10 +326,10 @@ impl XC2Bitstream {
                         ivoltage: [false, false],
                         ovoltage: [false, false],
                     }
-                })
+                }
             },
             XC2Device::XC2C128 => {
-                Ok(XC2Bitstream {
+                XC2Bitstream {
                     speed_grade,
                     package,
                     bits: XC2BitstreamBits::XC2C128 {
@@ -342,10 +342,10 @@ impl XC2Bitstream {
                         use_vref: false,
                         clock_div: XC2ClockDiv::default(),
                     }
-                })
+                }
             },
             XC2Device::XC2C256 => {
-                Ok(XC2Bitstream {
+                XC2Bitstream {
                     speed_grade,
                     package,
                     bits: XC2BitstreamBits::XC2C256 {
@@ -358,10 +358,10 @@ impl XC2Bitstream {
                         use_vref: false,
                         clock_div: XC2ClockDiv::default(),
                     }
-                })
+                }
             },
             XC2Device::XC2C384 => {
-                Ok(XC2Bitstream {
+                XC2Bitstream {
                     speed_grade,
                     package,
                     bits: XC2BitstreamBits::XC2C384 {
@@ -374,10 +374,10 @@ impl XC2Bitstream {
                         use_vref: false,
                         clock_div: XC2ClockDiv::default(),
                     }
-                })
+                }
             },
             XC2Device::XC2C512 => {
-                Ok(XC2Bitstream {
+                XC2Bitstream {
                     speed_grade,
                     package,
                     bits: XC2BitstreamBits::XC2C512 {
@@ -390,7 +390,7 @@ impl XC2Bitstream {
                         use_vref: false,
                         clock_div: XC2ClockDiv::default(),
                     }
-                })
+                }
             }
         }
     }
@@ -572,6 +572,20 @@ impl XC2BitstreamBits {
         }
     }
 
+    /// Helper to extract only the function block data without having to perform an explicit `match`
+    pub fn get_fb_mut(&mut self) -> &mut [XC2BitstreamFB] {
+        match self {
+            &mut XC2BitstreamBits::XC2C32{ref mut fb, ..} => fb,
+            &mut XC2BitstreamBits::XC2C32A{ref mut fb, ..} => fb,
+            &mut XC2BitstreamBits::XC2C64{ref mut fb, ..} => fb,
+            &mut XC2BitstreamBits::XC2C64A{ref mut fb, ..} => fb,
+            &mut XC2BitstreamBits::XC2C128{ref mut fb, ..} => fb,
+            &mut XC2BitstreamBits::XC2C256{ref mut fb, ..} => fb,
+            &mut XC2BitstreamBits::XC2C384{ref mut fb, ..} => fb,
+            &mut XC2BitstreamBits::XC2C512{ref mut fb, ..} => fb,
+        }
+    }
+
     /// Helper to extract only the I/O data without having to perform an explicit `match`
     pub fn get_small_iob(&self, i: usize) -> Option<&XC2MCSmallIOB> {
         match self {
@@ -627,6 +641,20 @@ impl XC2BitstreamBits {
             &XC2BitstreamBits::XC2C256{ref global_nets, ..} => global_nets,
             &XC2BitstreamBits::XC2C384{ref global_nets, ..} => global_nets,
             &XC2BitstreamBits::XC2C512{ref global_nets, ..} => global_nets,
+        }
+    }
+
+    /// Helper to extract only the global net data without having to perform an explicit `match`
+    pub fn get_global_nets_mut(&mut self) -> &mut XC2GlobalNets {
+        match self {
+            &mut XC2BitstreamBits::XC2C32{ref mut global_nets, ..} => global_nets,
+            &mut XC2BitstreamBits::XC2C32A{ref mut global_nets, ..} => global_nets,
+            &mut XC2BitstreamBits::XC2C64{ref mut global_nets, ..} => global_nets,
+            &mut XC2BitstreamBits::XC2C64A{ref mut global_nets, ..} => global_nets,
+            &mut XC2BitstreamBits::XC2C128{ref mut global_nets, ..} => global_nets,
+            &mut XC2BitstreamBits::XC2C256{ref mut global_nets, ..} => global_nets,
+            &mut XC2BitstreamBits::XC2C384{ref mut global_nets, ..} => global_nets,
+            &mut XC2BitstreamBits::XC2C512{ref mut global_nets, ..} => global_nets,
         }
     }
 

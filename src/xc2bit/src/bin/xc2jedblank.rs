@@ -44,8 +44,8 @@ fn main() {
         ::std::process::exit(1);
     }
 
-    let device_combination = &args[1];
-    let bitstream = XC2Bitstream::blank_bitstream(device_combination).expect("failed to create bitstream");
+    let device_combination = XC2DeviceSpeedPackage::from_str(&args[1]).expect("invalid device name");
+    let bitstream = XC2Bitstream::blank_bitstream(device_combination);
 
     bitstream.to_jed(&mut ::std::io::stdout()).expect("failed to write jed");
 }
