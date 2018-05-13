@@ -35,7 +35,7 @@ use std::num::Wrapping;
 use std::str;
 
 /// Errors that can occur when parsing a .jed file
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum JedParserError {
     /// No STX byte found
     MissingSTX,
@@ -129,6 +129,7 @@ const ETX: u8 = 0x03;
 
 /// Struct representing a JEDEC programming file. Primarily consists of a fuse array, and also contains some other
 /// miscellaneous fields.
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct JEDECFile {
     /// Fuse array
     pub f: Vec<bool>,
@@ -410,101 +411,121 @@ mod tests {
 
     #[test]
     fn read_no_stx() {
-        let ret = read_jed(b"asdf");
+        let ret = JEDECFile::from_bytes(b"asdf");
 
         assert_eq!(ret, Err(JedParserError::MissingSTX));
     }
 
     #[test]
     fn read_no_etx() {
-        let ret = read_jed(b"asdf\x02fdsa");
+        let ret = JEDECFile::from_bytes(b"asdf\x02fdsa");
 
         assert_eq!(ret, Err(JedParserError::MissingETX));
     }
 
     #[test]
     fn read_no_csum() {
-        let ret = read_jed(b"asdf\x02fdsa\x03");
+        let ret = JEDECFile::from_bytes(b"asdf\x02fdsa\x03");
         assert_eq!(ret, Err(JedParserError::UnexpectedEnd));
 
-        let ret = read_jed(b"asdf\x02fdsa\x03AAA");
+        let ret = JEDECFile::from_bytes(b"asdf\x02fdsa\x03AAA");
         assert_eq!(ret, Err(JedParserError::UnexpectedEnd));
     }
 
     #[test]
     fn read_bad_csum() {
-        let ret = read_jed(b"asdf\x02fdsa\x03AAAA");
+        let ret = JEDECFile::from_bytes(b"asdf\x02fdsa\x03AAAA");
 
         assert_eq!(ret, Err(JedParserError::BadFileChecksum));
     }
 
     #[test]
     fn read_malformed_csum() {
-        let ret = read_jed(b"asdf\x02fdsa\x03AAAZ");
+        let ret = JEDECFile::from_bytes(b"asdf\x02fdsa\x03AAAZ");
 
         assert_eq!(ret, Err(JedParserError::InvalidCharacter));
     }
 
     #[test]
     fn read_no_f() {
-        let ret = read_jed(b"\x02QF1*\x030000");
+        let ret = JEDECFile::from_bytes(b"\x02QF1*\x030000");
 
         assert_eq!(ret, Err(JedParserError::MissingF));
     }
 
     #[test]
     fn read_empty_no_fuses() {
-        let ret = read_jed(b"\x02F0*\x030000");
+        let ret = JEDECFile::from_bytes(b"\x02F0*\x030000");
 
-        assert_eq!(ret, Ok((vec![], None)));
+        assert_eq!(ret, Ok(JEDECFile {
+            f: vec![],
+            dev_name_str: None
+
+        }));
     }
 
     #[test]
     fn read_bogus_f_command() {
-        let ret = read_jed(b"\x02F2*\x030000");
+        let ret = JEDECFile::from_bytes(b"\x02F2*\x030000");
 
         assert_eq!(ret, Err(JedParserError::InvalidCharacter));
     }
 
     #[test]
     fn read_empty_with_device() {
-        let ret = read_jed(b"\x02F0*N DEVICE asdf*\x030000");
+        let ret = JEDECFile::from_bytes(b"\x02F0*N DEVICE asdf*\x030000");
 
-        assert_eq!(ret, Ok((vec![], Some(String::from("asdf")))));
+        assert_eq!(ret, Ok(JEDECFile {
+            f: vec![],
+            dev_name_str: Some(String::from("asdf"))
+
+        }));
     }
 
     #[test]
     fn read_l_without_qf() {
-        let ret = read_jed(b"\x02F0*L0 0*\x030000");
+        let ret = JEDECFile::from_bytes(b"\x02F0*L0 0*\x030000");
 
         assert_eq!(ret, Err(JedParserError::MissingQF));
     }
 
     #[test]
     fn read_one_fuse() {
-        let ret = read_jed(b"\x02F0*QF1*L0 1*\x030000");
+        let ret = JEDECFile::from_bytes(b"\x02F0*QF1*L0 1*\x030000");
 
-        assert_eq!(ret, Ok((vec![true], None)));
+        assert_eq!(ret, Ok(JEDECFile {
+            f: vec![true],
+            dev_name_str: None
+
+        }));
     }
 
     #[test]
     fn read_one_fuse_csum_good() {
-        let ret = read_jed(b"\x02F0*QF1*L0 1*C0001*\x030000");
+        let ret = JEDECFile::from_bytes(b"\x02F0*QF1*L0 1*C0001*\x030000");
 
-        assert_eq!(ret, Ok((vec![true], None)));
+        assert_eq!(ret, Ok(JEDECFile {
+            f: vec![true],
+            dev_name_str: None
+
+        }));
     }
 
     #[test]
     fn read_one_fuse_csum_bad() {
-        let ret = read_jed(b"\x02F0*QF1*L0 1*C0002*\x030000");
+        let ret = JEDECFile::from_bytes(b"\x02F0*QF1*L0 1*C0002*\x030000");
 
         assert_eq!(ret, Err(JedParserError::BadFuseChecksum));
     }
 
     #[test]
     fn read_two_fuses_space() {
-        let ret = read_jed(b"\x02F0*QF2*L0 0 1*\x030000");
+        let ret = JEDECFile::from_bytes(b"\x02F0*QF2*L0 0 1*\x030000");
 
-        assert_eq!(ret, Ok((vec![false, true], None)));
+        assert_eq!(ret, Ok(JEDECFile {
+            f: vec![false, true],
+            dev_name_str: None
+
+        }));
     }
 }
