@@ -2,6 +2,9 @@
 name = "bittwiddler"
 version = "0.0.1"
 authors = ["Robert Ou <rqou@robertou.com>"]
+license = "BSD-2-Clause"
+description = "Magic macros for helping to read/write bitstreams"
+repository = "https://github.com/azonenberg/openfpga/tree/master/src/bittwiddler"
 
 [lib]
 proc-macro = true
