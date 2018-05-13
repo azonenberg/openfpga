@@ -36,6 +36,9 @@ extern crate yosys_netlist_json;
 
 extern crate xc2bit;
 
+mod compiler_driver;
+pub use compiler_driver::*;
+
 mod frontend;
 pub use frontend::*;
 

@@ -11,6 +11,7 @@ name = "xc2par"
 crate-type = ["rlib", "staticlib"]
 
 [dependencies]
+clap = "2"
 slog = "2"
 slog-stdlog = "3"
 slog-term = "2"

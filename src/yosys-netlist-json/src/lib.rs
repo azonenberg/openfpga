@@ -24,7 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::collections::HashMap;
-use std::io::Write;
+use std::io::{Read, Write};
 
 #[macro_use]
 extern crate serde_derive;
@@ -190,6 +190,11 @@ pub struct Netname {
 }
 
 impl Netlist {
+    /// Read netlist data from a reader
+    pub fn from_reader<R: Read>(reader: R) -> Result<Netlist, serde_json::Error> {
+        serde_json::from_reader(reader)
+    }
+
     /// Read netlist data from a slice containing the bytes from a Yosys .json file
     pub fn from_slice(input: &[u8]) -> Result<Netlist, serde_json::Error> {
         serde_json::from_slice(input)
@@ -201,7 +206,7 @@ impl Netlist {
     }
 
     /// Serialize to a writer
-    pub fn to_writer(&self, writer: &mut Write) -> Result<(), serde_json::Error> {
+    pub fn to_writer<W: Write>(&self, writer: W) -> Result<(), serde_json::Error> {
         serde_json::to_writer(writer, self)
     }
 }

@@ -1186,8 +1186,8 @@ pub fn try_assign_entire_chip(g: &InputGraph, go: &mut OutputGraph, mc_assignmen
     (par_results_per_fb, placement_violations, placement_violations_score)
 }
 
-pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, device_type: XC2DeviceSpeedPackage, logger: L)
-    -> PARResult {
+pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, device_type: XC2DeviceSpeedPackage,
+    options: &XC2ParOptions, logger: L) -> PARResult {
 
     let logger = logger.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
 
@@ -1198,7 +1198,7 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, device_type: XC
         return PARResult::FailureSanity(sanity_check);
     }
 
-    let mut prng: XorShiftRng = SeedableRng::from_seed([0, 0, 0, 1]);
+    let mut prng: XorShiftRng = SeedableRng::from_seed(options.rng_seed);
 
     let macrocell_placement = greedy_initial_placement(g, &mut go, device_type, &logger);
     if macrocell_placement.is_none() {
@@ -1212,7 +1212,7 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, device_type: XC
     let (mut best_par_results_per_fb, mut best_placement_violations, mut best_placement_violations_score) =
         try_assign_entire_chip(g, &mut go, &macrocell_placement, device_type);
 
-    for iter_count in 0..1000 {
+    for iter_count in 0..options.max_iter {
         macrocell_placement = best_placement.clone();
 
         if best_placement_violations.len() == 0 {
@@ -1445,7 +1445,9 @@ mod tests {
         // TODO
         let device_type = XC2DeviceSpeedPackage::from_str("xc2c32a-4-vq44").expect("invalid device name");
         // This is what we get
-        let our_data_structure = if let PARResult::Success(y) = do_par(&mut input_graph, device_type, None) {
+        let our_data_structure = if let PARResult::Success(y) = do_par(&mut input_graph, device_type,
+            &XC2ParOptions::new(), None) {
+
             // Get a bitstream result
             let bitstream = produce_bitstream(device_type, &input_graph, &y);
             let mut ret = Vec::new();

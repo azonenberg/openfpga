@@ -24,9 +24,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::fs::File;
-use std::io::Read;
+use std::path::{Path};
 
-extern crate serde_json;
+extern crate clap;
+use clap::{App, Arg};
+
+extern crate slog_term;
+#[macro_use]
+extern crate slog;
+use slog::Drain;
 
 extern crate xc2bit;
 use xc2bit::*;
@@ -34,33 +40,42 @@ use xc2bit::*;
 extern crate xc2par;
 use xc2par::*;
 
-extern crate yosys_netlist_json;
+fn main() -> Result<(), Box<std::error::Error>> {
+    let matches = App::new("xc2par")
+        .author("Robert Ou <rqou@robertou.com>")
+        .about("Unofficial place-and-route tool for Xilinx Coolrunner-II CPLDs")
+        .arg(Arg::with_name("INPUT")
+            .help("Input file name (Yosys JSON file)")
+            .required(true)
+            .index(1))
+        .arg(Arg::with_name("OUTPUT")
+            .help("Output file name")
+            .required(false)
+            .index(2))
+        .get_matches();
 
-fn main() {
-    let args = ::std::env::args().collect::<Vec<_>>();
+    let in_fn = Path::new(matches.value_of_os("INPUT").unwrap());
 
-    if args.len() != 2 {
-        println!("Usage: {} file.json", args[0]);
-        ::std::process::exit(1);
-    }
+    let out_fn = if let Some(out_fn_str) = matches.value_of_os("OUTPUT") {
+        Path::new(out_fn_str).to_owned()
+    } else {
+        let mut out_fn = in_fn.to_owned();
+        out_fn.set_extension("jed");
+        out_fn
+    };
 
-    // Read the entire input file
-    let mut f = File::open(&args[1]).expect("failed to open file");
-    let mut data = Vec::new();
-    f.read_to_end(&mut data).expect("failed to read data");
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = std::sync::Mutex::new(drain).fuse();
+    let log = slog::Logger::root(drain, o!());
 
-    // de-serialize the input graph
-    let mut input_graph = serde_json::from_slice(&data).unwrap();
+    let in_f = File::open(in_fn)?;
+    let out_f  = File::create(out_fn)?;
 
+    let options = XC2ParOptions::new();
     // TODO
     let device_type = XC2DeviceSpeedPackage::from_str("xc2c32a-4-vq44").expect("invalid device name");
+    xc2par_complete_flow(&options, device_type, in_f, out_f, log)?;
 
-    // PAR result
-    if let PARResult::Success(y) = do_par(&mut input_graph, device_type, &XC2ParOptions::new(), None) {
-        // Get a bitstream result
-        let bitstream = produce_bitstream(device_type, &input_graph, &y);
-        bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
-    } else {
-        panic!("PAR failed!");
-    }
+    Ok(())
 }

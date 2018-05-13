@@ -24,7 +24,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::fs::File;
-use std::io::Read;
 
 extern crate xc2bit;
 use xc2bit::*;
@@ -52,40 +51,10 @@ fn main() {
     let drain = std::sync::Mutex::new(drain).fuse();
     let log = slog::Logger::root(drain, o!());
 
-    // Read the entire input file
-    let mut f = File::open(&args[1]).expect("failed to open file");
-    let mut data = Vec::new();
-    f.read_to_end(&mut data).expect("failed to read data");
+    let f = File::open(&args[1]).expect("failed to open file");
 
-    // de-serialize the yosys netlist
-    let yosys_netlist = yosys_netlist_json::Netlist::from_slice(&data).unwrap();
-    // println!("{:?}", yosys_netlist);
-
-    // Netlist graph (native part)
-    let ngraph_rs = IntermediateGraph::from_yosys_netlist(&yosys_netlist, log.new(o!())).unwrap();
-    // ngraph_rs.insert_into_par_graph(&mut par_graphs, &lmap);
-    // println!("{:?}", ngraph_rs);
-
-    // New data structure
-    let mut input_graph = InputGraph::from_intermed_graph(&ngraph_rs, log.new(o!())).unwrap();
-    // println!("{:?}", input_graph);
-
+    let options = XC2ParOptions::new();
     // TODO
     let device_type = XC2DeviceSpeedPackage::from_str("xc2c32a-4-vq44").expect("invalid device name");
-
-    let par_result = do_par(&mut input_graph, device_type, log.new(o!()));
-    if let PARResult::Success(y) = par_result {
-        for xx in &y.zia {
-            for yy in xx.x.iter() {
-                println!("{:?}", yy);
-            }
-        }
-        // println!("{:?}", input_graph);
-        // Get a bitstream result
-        let bitstream = produce_bitstream(device_type, &input_graph, &y);
-        println!("********************************************************************************");
-        bitstream.to_jed(&mut ::std::io::stdout()).unwrap();
-    } else {
-        panic!("par failed!")
-    }
+    xc2par_complete_flow(&options, device_type, f, ::std::io::stdout(), log).unwrap();
 }

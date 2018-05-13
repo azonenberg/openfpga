@@ -119,7 +119,7 @@ impl FuseArray {
 
     /// Writes the fuse array to the internal "crbit" file format, which is an ASCII file containing '1' and '0'.
     /// (This format is intended to be compatible with `$readmemb`.)
-    pub fn write_to_writer(&self, writer: &mut Write) -> Result<(), io::Error> {
+    pub fn write_to_writer<W: Write>(&self, mut writer: W) -> Result<(), io::Error> {
         write!(writer, "// crbit native bitstream file written by xc2bit\n")?;
         write!(writer, "// https://github.com/azonenberg/openfpga\n\n")?;
 
