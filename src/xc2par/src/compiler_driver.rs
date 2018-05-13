@@ -86,6 +86,8 @@ pub enum PARFlowError {
     FrontendError(FrontendError),
     IntermedToInputError(IntermedToInputError),
     OutputWriteError(std::io::Error),
+    PARIterationsExceeded,
+    PARSanityCheckFailed(PARSanityResult),
 }
 
 impl error::Error for PARFlowError {
@@ -95,6 +97,8 @@ impl error::Error for PARFlowError {
             &PARFlowError::FrontendError(_) => "frontend pass failed",
             &PARFlowError::IntermedToInputError(_) => "intermediate pass failed",
             &PARFlowError::OutputWriteError(_) => "writing output failed",
+            &PARFlowError::PARIterationsExceeded => "maximum iterations exceeded",
+            &PARFlowError::PARSanityCheckFailed(_) => "PAR sanity check failed",
         }
     }
 
@@ -112,6 +116,7 @@ impl error::Error for PARFlowError {
             &PARFlowError::OutputWriteError(ref inner) => {
                 Some(inner)
             },
+            _ => None,
         }
     }
 }
@@ -119,6 +124,10 @@ impl error::Error for PARFlowError {
 impl fmt::Display for PARFlowError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            &PARFlowError::PARIterationsExceeded |
+            &PARFlowError::PARSanityCheckFailed(_) => {
+                write!(f, "{}", self.description())
+            }
             _ => {
                 write!(f, "{}", self.cause().unwrap())
             }
@@ -163,17 +172,19 @@ pub fn xc2par_complete_flow<R, W, L>(options: &XC2ParOptions, device_type: XC2De
     let par_result = do_par(&mut input_graph, device_type, options,
         logger.new(o!("pass" => "PAR")));
 
-    if let PARResult::Success(x) = par_result {
-        let bitstream = produce_bitstream(device_type, &input_graph, &x);
+    match par_result {
+        PARResult::Success(x) => {
+            let bitstream = produce_bitstream(device_type, &input_graph, &x);
 
-        if options.output_fmt == ParOutputFormat::Jed {
-            bitstream.to_jed(output)?;
-        } else {
-            bitstream.to_crbit().write_to_writer(output)?;
-        }
-    } else {
-        panic!("par failed!")
+            if options.output_fmt == ParOutputFormat::Jed {
+                bitstream.to_jed(output)?;
+            } else {
+                bitstream.to_crbit().write_to_writer(output)?;
+            }
+
+            Ok(())
+        },
+        PARResult::FailureSanity(x) => Err(PARFlowError::PARSanityCheckFailed(x)),
+        PARResult::FailureIterationsExceeded => Err(PARFlowError::PARIterationsExceeded),
     }
-
-    Ok(())
 }
