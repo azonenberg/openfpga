@@ -2,6 +2,10 @@
 name = "xc2par"
 version = "0.0.1"
 build = "build.rs"
+authors = ["Robert Ou <rqou@robertou.com>"]
+license = "BSD-2-Clause"
+description = "Unofficial open-source Coolrunner-II place-and-route"
+repository = "https://github.com/azonenberg/openfpga/tree/master/src/xc2par"
 
 [profile.release]
 lto = true
@@ -19,5 +23,5 @@ rand = "0.3"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
-yosys-netlist-json = { path = "../yosys-netlist-json" }
-xc2bit = { path = "../xc2bit" }
+yosys-netlist-json = { path = "../yosys-netlist-json", version = "0.0.2" }
+xc2bit = { path = "../xc2bit", version = "0.0.3" }
