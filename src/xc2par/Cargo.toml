@@ -1,6 +1,6 @@
 [package]
 name = "xc2par"
-version = "0.0.1"
+version = "0.0.2"
 build = "build.rs"
 authors = ["Robert Ou <rqou@robertou.com>"]
 license = "BSD-2-Clause"

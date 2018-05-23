@@ -37,7 +37,7 @@ pub fn produce_bitstream(device_type: XC2DeviceSpeedPackage, g: &InputGraph, go:
         // ZIA settings
         for fb_i in 0..go.zia.len() {
             for zia_i in 0..INPUTS_PER_ANDTERM {
-                *fb_bits[fb_i].get_mut_zia(zia_i) = go.zia[fb_i].x[zia_i];
+                *fb_bits[fb_i].get_mut_zia(zia_i) = go.zia[fb_i].get(zia_i);
             }
         }
 

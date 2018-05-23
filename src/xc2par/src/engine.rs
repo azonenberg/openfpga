@@ -46,10 +46,25 @@ type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
 // fb, mc, pininput?
 type PARFBAssignLoc = (u32, u32, bool);
 
-#[derive(Copy, Clone, Serialize)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PARZIAAssignment {
-    #[serde(serialize_with = "<[_]>::serialize")]
-    pub x: [XC2ZIAInput; INPUTS_PER_ANDTERM],
+    x: [[XC2ZIAInput; INPUTS_PER_ANDTERM / 2]; 2],
+}
+
+impl PARZIAAssignment {
+    pub fn new() -> Self {
+        Self {
+            x: [[XC2ZIAInput::One; INPUTS_PER_ANDTERM / 2]; 2]
+        }
+    }
+
+    pub fn get(&self, i: usize) -> XC2ZIAInput {
+        self.x[i / (INPUTS_PER_ANDTERM / 2)][i % (INPUTS_PER_ANDTERM / 2)]
+    }
+
+    pub fn set(&mut self, i: usize, x: XC2ZIAInput) {
+        self.x[i / (INPUTS_PER_ANDTERM / 2)][i % (INPUTS_PER_ANDTERM / 2)] = x;
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -79,7 +94,7 @@ pub struct OutputGraphBufgGSR {
     pub loc: Option<AssignedLocation>,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct OutputGraph {
     pub mcs: ObjPool<OutputGraphMacrocell>,
     pub pterms: ObjPool<OutputGraphPTerm>,
@@ -737,7 +752,7 @@ pub enum ZIAAssignmentResult {
 pub fn try_assign_zia(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARFBAssignment,
     device_type: XC2DeviceSpeedPackage) -> ZIAAssignmentResult {
 
-    let mut ret_zia = PARZIAAssignment { x: [XC2ZIAInput::One; INPUTS_PER_ANDTERM] };
+    let mut ret_zia = PARZIAAssignment::new();
     let mut input_to_row_map = HashMap::new();
 
     // Collect the p-terms that will be used by this FB
@@ -867,15 +882,15 @@ pub fn try_assign_zia(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARF
         }
         let (input, choice, ref candidate_sites_for_this_input) = candidate_sites[working_on_idx];
         for &candidate_zia_row in candidate_sites_for_this_input {
-            if ret.x[candidate_zia_row] == XC2ZIAInput::One {
+            if ret.get(candidate_zia_row) == XC2ZIAInput::One {
                 // It is possible to assign to this site
-                ret.x[candidate_zia_row] = choice;
+                ret.set(candidate_zia_row, choice);
                 input_to_row_map.insert(input, candidate_zia_row as u32);
                 *most_routed = working_on_idx as u32 + 1;
                 if backtrack_inner(most_routed, ret, candidate_sites, working_on_idx + 1, input_to_row_map) {
                     return true;
                 }
-                ret.x[candidate_zia_row] = XC2ZIAInput::One;
+                ret.set(candidate_zia_row, XC2ZIAInput::One);
                 input_to_row_map.remove(&input);
             }
         }
