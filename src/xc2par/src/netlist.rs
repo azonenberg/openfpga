@@ -415,6 +415,61 @@ impl InputGraph {
             let newg_idx = mcs.insert(dummy_mc);
             let oldg_idx = gathered_mcs[i];
             mcs_map.insert(oldg_idx, newg_idx);
+            let n = g.nodes.get(oldg_idx);
+            debug!(logger, "intermed2input - pre-mapping macrocell";
+                "name" => &n.name,
+                "intermed" => oldg_idx,
+                "inputgraph" => newg_idx);
+
+            // FIX: We need to add all of the IO/REG/XOR components to the map, not just the component pointed to
+            // directly by the gather function
+            // FIXME: This duplicates a lot of code
+            match n.variant {
+                IntermediateGraphNodeVariant::IOBuf{input, ..} => {
+                    if input.is_some() {
+                        let input = input.unwrap();
+
+                        let source_node_idx = g.nets.get(input).source.unwrap();
+                        let source_node = g.nodes.get(source_node_idx);
+                        if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
+                            debug!(logger, "intermed2input - also pre-mapping IOBUFE XOR";
+                                "name" => &n.name,
+                                "intermed" => source_node_idx,
+                                "inputgraph" => newg_idx);
+                            mcs_map.insert(source_node_idx, newg_idx);
+                        } else if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = source_node.variant {
+                            debug!(logger, "intermed2input - also pre-mapping IOBUFE reg";
+                                "name" => &n.name,
+                                "intermed" => source_node_idx,
+                                "inputgraph" => newg_idx);
+                            mcs_map.insert(source_node_idx, newg_idx);
+                            // Registered output, look at the input into the register
+                            let source_node_idx = g.nets.get(dt_input).source.unwrap();
+                            let source_node = g.nodes.get(source_node_idx);
+                            if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
+                                debug!(logger, "intermed2input - also pre-mapping IOBUFE XOR";
+                                    "name" => &n.name,
+                                    "intermed" => source_node_idx,
+                                    "inputgraph" => newg_idx);
+                                mcs_map.insert(source_node_idx, newg_idx);
+                            }
+                        }
+                    }
+                },
+                IntermediateGraphNodeVariant::Reg{dt_input, ..} => {
+                    // Look at the input into the register
+                    let source_node_idx = g.nets.get(dt_input).source.unwrap();
+                    let source_node = g.nodes.get(source_node_idx);
+                    if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
+                        debug!(logger, "intermed2input - also pre-mapping buried register XOR";
+                            "name" => &n.name,
+                            "intermed" => source_node_idx,
+                            "inputgraph" => newg_idx);
+                        mcs_map.insert(source_node_idx, newg_idx);
+                    }
+                }
+                _ => {}
+            }
         }
 
         #[allow(non_camel_case_types)]
@@ -506,7 +561,6 @@ impl InputGraph {
 
                                 // We need to recursively process this. Update the relevant map as well to make sure we
                                 // don't mess up along the way.
-                                assert!(!s.mcs_map.contains_key(&input_n));
                                 s.mcs_map.insert(input_n, newg_idx);
                                 process_one_intermed_node(s, input_n, logger)?;
 
@@ -533,7 +587,6 @@ impl InputGraph {
 
                                 // We need to recursively process this. Update the relevant map as well to make sure we
                                 // don't mess up along the way.
-                                assert!(!s.mcs_map.contains_key(&input_n));
                                 s.mcs_map.insert(input_n, newg_idx);
                                 process_one_intermed_node(s, input_n, logger)?;
 
@@ -816,7 +869,6 @@ impl InputGraph {
                         // We need to recursively process this. Update the relevant map as well to make sure we
                         // don't mess up along the way, but only if it's an XOR.
                         if input_type == InputGraphRegInputType::Xor {
-                            assert!(!s.mcs_map.contains_key(&input_n));
                             s.mcs_map.insert(input_n, newg_idx);
                             process_one_intermed_node(s, input_n, logger)?;
                         }
