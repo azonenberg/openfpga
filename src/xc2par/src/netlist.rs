@@ -433,13 +433,13 @@ impl InputGraph {
                         let source_node = g.nodes.get(source_node_idx);
                         if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
                             debug!(logger, "intermed2input - also pre-mapping IOBUFE XOR";
-                                "name" => &n.name,
+                                "name" => &source_node.name,
                                 "intermed" => source_node_idx,
                                 "inputgraph" => newg_idx);
                             mcs_map.insert(source_node_idx, newg_idx);
                         } else if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = source_node.variant {
                             debug!(logger, "intermed2input - also pre-mapping IOBUFE reg";
-                                "name" => &n.name,
+                                "name" => &source_node.name,
                                 "intermed" => source_node_idx,
                                 "inputgraph" => newg_idx);
                             mcs_map.insert(source_node_idx, newg_idx);
@@ -448,7 +448,7 @@ impl InputGraph {
                             let source_node = g.nodes.get(source_node_idx);
                             if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
                                 debug!(logger, "intermed2input - also pre-mapping IOBUFE XOR";
-                                    "name" => &n.name,
+                                    "name" => &source_node.name,
                                     "intermed" => source_node_idx,
                                     "inputgraph" => newg_idx);
                                 mcs_map.insert(source_node_idx, newg_idx);
@@ -462,12 +462,33 @@ impl InputGraph {
                     let source_node = g.nodes.get(source_node_idx);
                     if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
                         debug!(logger, "intermed2input - also pre-mapping buried register XOR";
-                            "name" => &n.name,
+                            "name" => &source_node.name,
                             "intermed" => source_node_idx,
                             "inputgraph" => newg_idx);
                         mcs_map.insert(source_node_idx, newg_idx);
                     }
-                }
+                },
+                IntermediateGraphNodeVariant::InBuf{output, ..} => {
+                    let mut maybe_reg_index = None;
+                    let mut maybe_reg_name = None;
+                    for &sink_node_idx in &g.nets.get(output).sinks {
+                        let sink_node = g.nodes.get(sink_node_idx);
+
+                        if let IntermediateGraphNodeVariant::Reg{..} = sink_node.variant {
+                            assert!(maybe_reg_index.is_none());
+                            maybe_reg_index = Some(sink_node_idx);
+                            maybe_reg_name = Some(&sink_node.name);
+                        }
+                    }
+
+                    if let Some(reg_idx) = maybe_reg_index {
+                        debug!(logger, "intermed2input - also pre-mapping registered IBUF FF";
+                            "name" => maybe_reg_name.unwrap(),
+                            "intermed" => reg_idx,
+                            "inputgraph" => newg_idx);
+                        mcs_map.insert(reg_idx, newg_idx);
+                    }
+                },
                 _ => {}
             }
         }
