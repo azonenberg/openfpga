@@ -1,0 +1,1339 @@
+{
+  "creator": "Yosys 0.7+580 (git sha1 bea71e71, clang 4.0.1-10 -fPIC -Os)",
+  "modules": {
+    "ANDTERM": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:10"
+      },
+      "ports": {
+        "IN": {
+          "direction": "input",
+          "bits": [ ]
+        },
+        "IN_B": {
+          "direction": "input",
+          "bits": [ ]
+        },
+        "OUT": {
+          "direction": "output",
+          "bits": [ 2 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "IN": {
+          "hide_name": 0,
+          "bits": [ ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:14"
+          }
+        },
+        "IN_B": {
+          "hide_name": 0,
+          "bits": [ ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:15"
+          }
+        },
+        "OUT": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:16"
+          }
+        }
+      }
+    },
+    "BUFG": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:138"
+      },
+      "ports": {
+        "I": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "O": {
+          "direction": "output",
+          "bits": [ 3 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "I": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:139"
+          }
+        },
+        "O": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:140"
+          }
+        }
+      }
+    },
+    "BUFGSR": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:145"
+      },
+      "ports": {
+        "I": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "O": {
+          "direction": "output",
+          "bits": [ 3 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "I": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:148"
+          }
+        },
+        "O": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:149"
+          }
+        }
+      }
+    },
+    "BUFGTS": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:154"
+      },
+      "ports": {
+        "I": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "O": {
+          "direction": "output",
+          "bits": [ 3 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "I": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:157"
+          }
+        },
+        "O": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:158"
+          }
+        }
+      }
+    },
+    "FDCP": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:58"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:61"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:61"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:61"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:61"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:62"
+          }
+        }
+      }
+    },
+    "FDCPE": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:252"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        },
+        "CE": {
+          "direction": "input",
+          "bits": [ 7 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:255"
+          }
+        },
+        "CE": {
+          "hide_name": 0,
+          "bits": [ 7 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:255"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:255"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:255"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:255"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:256"
+          }
+        }
+      }
+    },
+    "FDCPE_N": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:272"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        },
+        "CE": {
+          "direction": "input",
+          "bits": [ 7 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:275"
+          }
+        },
+        "CE": {
+          "hide_name": 0,
+          "bits": [ 7 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:275"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:275"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:275"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:275"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:276"
+          }
+        }
+      }
+    },
+    "FDCP_N": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:78"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:81"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:81"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:81"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:81"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:82"
+          }
+        }
+      }
+    },
+    "FDDCP": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:163"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:166"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:166"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:166"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:166"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:167"
+          }
+        }
+      }
+    },
+    "FDDCPE": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:292"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        },
+        "CE": {
+          "direction": "input",
+          "bits": [ 7 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:295"
+          }
+        },
+        "CE": {
+          "hide_name": 0,
+          "bits": [ 7 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:295"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:295"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:295"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:295"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:296"
+          }
+        }
+      }
+    },
+    "FTCP": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:183"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "T": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:186"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:186"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:186"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:187"
+          }
+        },
+        "T": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:186"
+          }
+        }
+      }
+    },
+    "FTCP_N": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:206"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "T": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:209"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:209"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:209"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:210"
+          }
+        },
+        "T": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:209"
+          }
+        }
+      }
+    },
+    "FTDCP": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:229"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "T": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:232"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:232"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:232"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:233"
+          }
+        },
+        "T": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:232"
+          }
+        }
+      }
+    },
+    "IBUF": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:1"
+      },
+      "ports": {
+        "I": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "O": {
+          "direction": "output",
+          "bits": [ 3 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "I": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:1"
+          }
+        },
+        "O": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:1"
+          }
+        }
+      }
+    },
+    "IOBUFE": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:5"
+      },
+      "ports": {
+        "I": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "E": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "O": {
+          "direction": "output",
+          "bits": [ 4 ]
+        },
+        "IO": {
+          "direction": "inout",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "E": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:5"
+          }
+        },
+        "I": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:5"
+          }
+        },
+        "IO": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:5"
+          }
+        },
+        "O": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:5"
+          }
+        }
+      }
+    },
+    "LDCP": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:98"
+      },
+      "ports": {
+        "G": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:101"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:101"
+          }
+        },
+        "G": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:101"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:101"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:102"
+          }
+        }
+      }
+    },
+    "LDCP_N": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:118"
+      },
+      "ports": {
+        "G": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:121"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:121"
+          }
+        },
+        "G": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:121"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:121"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:122"
+          }
+        }
+      }
+    },
+    "MACROCELL_XOR": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:45"
+      },
+      "ports": {
+        "IN_PTC": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "IN_ORTERM": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "OUT": {
+          "direction": "output",
+          "bits": [ 4 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "IN_ORTERM": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:49"
+          }
+        },
+        "IN_PTC": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:48"
+          }
+        },
+        "OUT": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:50"
+          }
+        }
+      }
+    },
+    "ORTERM": {
+      "attributes": {
+        "blackbox": 1,
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:29"
+      },
+      "ports": {
+        "IN": {
+          "direction": "input",
+          "bits": [ ]
+        },
+        "OUT": {
+          "direction": "output",
+          "bits": [ 2 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "IN": {
+          "hide_name": 0,
+          "bits": [ ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:32"
+          }
+        },
+        "OUT": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:33"
+          }
+        }
+      }
+    },
+    "top": {
+      "attributes": {
+        "top": 1,
+        "src": "registered_ibuf.v:1"
+      },
+      "ports": {
+        "in0": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "in1": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "out": {
+          "direction": "output",
+          "bits": [ 4 ]
+        },
+        "clk_": {
+          "direction": "input",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+        "$auto$coolrunner2_sop.cc:145:execute$55": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": 0,
+            "TRUE_INP": 2
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 6, 7 ],
+            "IN_B": [ ],
+            "OUT": [ 8 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:156:execute$56": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": 0
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_PTC": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_PTC": [ 8 ],
+            "OUT": [ 9 ]
+          }
+        },
+        "$auto$iopadmap.cc:385:execute$58": {
+          "hide_name": 1,
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB2_5",
+            "keep": 1,
+            "src": "registered_ibuf.v:10"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 5 ],
+            "O": [ 10 ]
+          }
+        },
+        "$auto$iopadmap.cc:385:execute$60": {
+          "hide_name": 1,
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB1_1",
+            "keep": 1,
+            "src": "registered_ibuf.v:4"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 2 ],
+            "O": [ 11 ]
+          }
+        },
+        "$auto$iopadmap.cc:385:execute$62": {
+          "hide_name": 1,
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB1_2",
+            "keep": 1,
+            "src": "registered_ibuf.v:6"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 3 ],
+            "O": [ 6 ]
+          }
+        },
+        "$auto$iopadmap.cc:385:execute$64": {
+          "hide_name": 1,
+          "type": "IOBUFE",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB1_3",
+            "keep": 1,
+            "src": "registered_ibuf.v:8"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout"
+          },
+          "connections": {
+            "I": [ 9 ],
+            "IO": [ 4 ]
+          }
+        },
+        "$auto$simplemap.cc:420:simplemap_dff$49": {
+          "hide_name": 1,
+          "type": "FDCP",
+          "parameters": {
+            "INIT": 0
+          },
+          "attributes": {
+            "src": "registered_ibuf.v:19"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "D": "input",
+            "PRE": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 12 ],
+            "CLR": [ "0" ],
+            "D": [ 11 ],
+            "PRE": [ "0" ],
+            "Q": [ 7 ]
+          }
+        },
+        "bufg0": {
+          "hide_name": 0,
+          "type": "BUFG",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "registered_ibuf.v:13"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 10 ],
+            "O": [ 12 ]
+          }
+        }
+      },
+      "netnames": {
+        "$auto$coolrunner2_sop.cc:126:execute$54": {
+          "hide_name": 1,
+          "bits": [ 8 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:368:execute$57": {
+          "hide_name": 1,
+          "bits": [ 10 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:368:execute$59": {
+          "hide_name": 1,
+          "bits": [ 11 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:368:execute$61": {
+          "hide_name": 1,
+          "bits": [ 6 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:368:execute$63": {
+          "hide_name": 1,
+          "bits": [ 9 ],
+          "attributes": {
+          }
+        },
+        "clk": {
+          "hide_name": 0,
+          "bits": [ 12 ],
+          "attributes": {
+          }
+        },
+        "clk_": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+          }
+        },
+        "in0": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+          }
+        },
+        "in0_": {
+          "hide_name": 0,
+          "bits": [ 7 ],
+          "attributes": {
+          }
+        },
+        "in1": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+          }
+        },
+        "out": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        }
+      }
+    }
+  }
+}

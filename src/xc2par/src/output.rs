@@ -84,9 +84,11 @@ pub fn produce_bitstream(device_type: XC2DeviceSpeedPackage, g: &InputGraph, go:
                         if mc.io_feedback_used {
                             // We need to set the ZIA mode to use the IO pad.
                             $iob_bit.zia_mode = XC2IOBZIAMode::PAD;
-                        } else if mc.xor_feedback_used && mc.reg_feedback_used {
+                        } else if (mc.xor_feedback_used && mc.reg_feedback_used) ||
+                            mc.get_type() == InputGraphMacrocellType::PinInputReg {
+
                             // If both of these are used, then the register _has_ to come from here. Otherwise use the
-                            // "normal" one.
+                            // "normal" one. Additionally, if we are a registered input pin, use the register.
                             $iob_bit.zia_mode = XC2IOBZIAMode::REG;
                         }
                         if let Some(input) = io_bits.input {

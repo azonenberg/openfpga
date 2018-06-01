@@ -846,7 +846,8 @@ pub fn try_assign_zia(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARF
                 XC2ZIAInput::Macrocell{fb: fb as u8, mc: mc as u8}
             },
             InputGraphPTermInputType::Reg => {
-                if need_to_use_ibuf_zia_path {
+                // If we're forced to go via the IO path, or if it's a direct-path registered input
+                if need_to_use_ibuf_zia_path || input_obj.get_type() == InputGraphMacrocellType::PinInputReg {
                     XC2ZIAInput::IBuf{ibuf:
                         fb_mc_num_to_iob_num(device_type.dev, fb as u32, mc as u32).unwrap() as u16}
                 } else {

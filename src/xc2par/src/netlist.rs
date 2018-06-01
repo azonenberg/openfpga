@@ -1184,6 +1184,17 @@ impl InputGraph {
                     "name" => &x.name);
                 return Err(IntermedToInputError::TooManyFeedbacksUsed(x.name.to_owned()));
             }
+
+            if x.get_type() == InputGraphMacrocellType::PinInputUnreg ||
+                x.get_type() == InputGraphMacrocellType::PinInputReg {
+
+                if x.xor_bits.is_some() {
+                    error!(logger, "intermed2input (sanity) - an input pin, but with XOR data?";
+                        "name" => &x.name);
+                    return Err(IntermedToInputError::SanityCheckError(
+                        "An input pin, but with XOR data?"));
+                }
+            }
         }
 
         // Check for duplicate inputs to p-terms
