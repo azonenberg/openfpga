@@ -5,8 +5,8 @@ function(add_sim_netlist name)
 
 	add_custom_command(
 		OUTPUT  "${CMAKE_CURRENT_BINARY_DIR}/${name}.vvp"
-		COMMAND "${IVERILOG_COMMAND}" "${CMAKE_CURRENT_SOURCE_DIR}/${name}.v"
-				-o "${CMAKE_CURRENT_BINARY_DIR}/${name}.vvp"
+		COMMAND "${IVERILOG_COMMAND}" "-o" "${CMAKE_CURRENT_BINARY_DIR}/${name}.vvp"
+				"${CMAKE_CURRENT_SOURCE_DIR}/${name}.v"
 		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${name}.v"
 		COMMENT "Synthesizing Verilog file ${CMAKE_CURRENT_SOURCE_DIR}/${name}"
 		VERBATIM)
