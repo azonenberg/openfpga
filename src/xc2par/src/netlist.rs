@@ -197,7 +197,7 @@ enum InputGraphAnyPoolIdx {
 }
 
 impl slog::Value for InputGraphAnyPoolIdx {
-    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut slog::Serializer) -> slog::Result {
+    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut dyn slog::Serializer) -> slog::Result {
         match self {
             &InputGraphAnyPoolIdx::Macrocell(i) => {
                 serializer.emit_usize(key, i.get_raw_i())?;
@@ -344,7 +344,7 @@ impl error::Error for IntermedToInputError {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         None
     }
 }

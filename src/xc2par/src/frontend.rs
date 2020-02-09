@@ -155,7 +155,7 @@ impl error::Error for FrontendError {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match self {
             &FrontendError::ParseIntError(ref inner) => Some(inner),
             _ => None,
@@ -998,7 +998,7 @@ impl error::Error for GatherMacrocellError {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         None
     }
 }

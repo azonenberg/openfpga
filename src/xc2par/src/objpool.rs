@@ -64,7 +64,7 @@ impl<T> ObjPoolIndex<T> {
 }
 
 impl<T> slog::Value for ObjPoolIndex<T> {
-    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut slog::Serializer) -> slog::Result {
+    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut dyn slog::Serializer) -> slog::Result {
         serializer.emit_usize(key, self.i)
     }
 }

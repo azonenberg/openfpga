@@ -102,7 +102,7 @@ impl error::Error for PARFlowError {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match self {
             &PARFlowError::SerdeError(ref inner) => {
                 Some(inner)

@@ -64,7 +64,7 @@ impl error::Error for XC2BitError {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             XC2BitError::JedParseError(ref err) => Some(err),
             XC2BitError::BadDeviceName(_) => None,

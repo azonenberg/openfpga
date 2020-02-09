@@ -40,7 +40,7 @@ use xc2bit::*;
 extern crate xc2par;
 use xc2par::*;
 
-fn main() -> Result<(), Box<std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = App::new("xc2par")
         .author("Robert Ou <rqou@robertou.com>")
         .about("Unofficial place-and-route tool for Xilinx Coolrunner-II CPLDs")

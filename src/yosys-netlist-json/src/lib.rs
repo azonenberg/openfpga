@@ -61,7 +61,7 @@ pub enum SpecialBit {
 }
 
 impl slog::Value for SpecialBit {
-    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut slog::Serializer) -> slog::Result {
+    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut dyn slog::Serializer) -> slog::Result {
         match self {
             &SpecialBit::_0 => serializer.emit_str(key, "0"),
             &SpecialBit::_1 => serializer.emit_str(key, "1"),
@@ -82,7 +82,7 @@ pub enum BitVal {
 }
 
 impl slog::Value for BitVal {
-    fn serialize(&self, record: &slog::Record, key: slog::Key, serializer: &mut slog::Serializer) -> slog::Result {
+    fn serialize(&self, record: &slog::Record, key: slog::Key, serializer: &mut dyn slog::Serializer) -> slog::Result {
         match self {
             &BitVal::N(n) => {
                 serializer.emit_usize(key, n)
@@ -105,7 +105,7 @@ pub enum AttributeVal {
 }
 
 impl slog::Value for AttributeVal {
-    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut slog::Serializer) -> slog::Result {
+    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut dyn slog::Serializer) -> slog::Result {
         match self {
             &AttributeVal::N(n) => {
                 serializer.emit_usize(key, n)
