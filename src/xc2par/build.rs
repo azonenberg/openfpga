@@ -17,7 +17,7 @@ fn one_set_of_reftests(outfile: &'static str, indir: &'static str) {
                 let path = path.canonicalize().unwrap();
 
                 let id_string = path.file_name().unwrap().to_str().unwrap().chars().map(|x| match x {
-                    'A'...'Z' | 'a'...'z' | '0'...'9' => x,
+                    'A'..='Z' | 'a'..='z' | '0'..='9' => x,
                     _ => '_',
                 }).collect::<String>();
 

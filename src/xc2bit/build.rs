@@ -16,7 +16,7 @@ fn main() {
                 let path = path.canonicalize().unwrap();
 
                 let id_string = path.file_name().unwrap().to_str().unwrap().chars().map(|x| match x {
-                    'A'...'Z' | 'a'...'z' | '0'...'9' => x,
+                    'A'..='Z' | 'a'..='z' | '0'..='9' => x,
                     _ => '_',
                 }).collect::<String>();
 

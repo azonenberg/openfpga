@@ -133,13 +133,13 @@ fn main() -> Result<(), Box<std::error::Error>> {
             for (i, c) in rng_seed_str.chars().enumerate() {
                 let shift = (rng_seed_str.len() - 1 - i) * 4;
                 let nybble = match c {
-                    '0'...'9' => {
+                    '0'..='9' => {
                         c as u32 - '0' as u32
                     },
-                    'a'...'f' => {
+                    'a'..='f' => {
                         c as u32 - 'a' as u32 + 10
                     },
-                    'A'...'F' => {
+                    'A'..='F' => {
                         c as u32 - 'A' as u32 + 10
                     },
                     _ => {
