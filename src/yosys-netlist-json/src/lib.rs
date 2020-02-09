@@ -104,6 +104,44 @@ pub enum AttributeVal {
     S(String),
 }
 
+impl AttributeVal {
+    pub fn to_number(&self) -> Option<usize> {
+        match self {
+            &AttributeVal::N(n) => Some(n),
+            &AttributeVal::S(ref s) => {
+                // If it's an empty string, the value was zero
+                if s.len() == 0 {
+                    Some(0)
+                } else {
+                    usize::from_str_radix(s, 2).ok()
+                }
+            }
+        }
+    }
+
+    pub fn to_string_if_string(&self) -> Option<&str> {
+        match self {
+            &AttributeVal::N(_) => None,
+            &AttributeVal::S(ref s) => {
+                if s.len() == 0 {
+                    // If it's an empty string then it wasn't originally a string
+                    None
+                } else if s.find(|c| !(c == '0' || c == '1' || c == 'x' || c == 'z')).is_none() {
+                    // If it only contains 01xz, then it wasn't originally a string
+                    None
+                } else {
+                    if *s.as_bytes().last().unwrap() == b' ' {
+                        // If the last character is a space, drop it
+                        Some(s.split_at(s.len() - 1).0)
+                    } else {
+                        Some(s)
+                    }
+                }
+            }
+        }
+    }
+}
+
 impl slog::Value for AttributeVal {
     fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut dyn slog::Serializer) -> slog::Result {
         match self {

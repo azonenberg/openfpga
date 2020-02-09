@@ -210,7 +210,7 @@ impl IntermediateGraph {
             debug!(logger, "found yosys netlist module"; "module name" => module_name);
 
             if let Some(top_attr) = module.attributes.get("top") {
-                if let &yosys_netlist_json::AttributeVal::N(n) = top_attr {
+                if let Some(n) = top_attr.to_number() {
                     if n != 0 {
                         // Claims to be a top-level module
                         debug!(logger, "found toplevel yosys netlist module"; "module name" => module_name);
@@ -382,7 +382,7 @@ impl IntermediateGraph {
                     return Err(FrontendError::MissingRequiredParameter(name.to_owned()));
                 }
                 let param_option_copy = *param_option.as_ref().unwrap();
-                if let &yosys_netlist_json::AttributeVal::N(n) = param_option.unwrap() {
+                if let Some(n) = param_option.unwrap().to_number() {
                     debug!(logger, "cells - numeric parameter";
                         "name" => name,
                         "value" => n);
@@ -402,7 +402,7 @@ impl IntermediateGraph {
                     return Ok(None);
                 }
                 let param_option_copy = *param_option.as_ref().unwrap();
-                if let &yosys_netlist_json::AttributeVal::S(ref s) = param_option.unwrap() {
+                if let Some(ref s) = param_option.unwrap().to_string_if_string() {
                     debug!(logger, "cells - string parameter";
                         "name" => name,
                         "value" => s);
