@@ -291,7 +291,7 @@ impl<'a> Iterator for StringSplitter<'a> {
                 end_of_ret_idx = self.str.len();
             }
 
-            unsafe { Some(self.str.slice_unchecked(start_of_ret_idx, end_of_ret_idx)) }
+            Some(self.str.get(start_of_ret_idx..end_of_ret_idx).unwrap())
         }
     }
 }
