@@ -64,7 +64,7 @@ impl error::Error for XC2BitError {
         }
     }
 
-    fn cause(&self) -> Option<&dyn error::Error> {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match *self {
             XC2BitError::JedParseError(ref err) => Some(err),
             XC2BitError::BadDeviceName(_) => None,
@@ -79,7 +79,7 @@ impl fmt::Display for XC2BitError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             XC2BitError::JedParseError(_) => {
-                write!(f, "{}: {}", self.description(), self.cause().unwrap())
+                write!(f, "{}: {}", self.description(), self.source().unwrap())
             },
             XC2BitError::BadDeviceName(ref devname) => {
                 write!(f, "device name \"{}\" is invalid/unsupported", devname)

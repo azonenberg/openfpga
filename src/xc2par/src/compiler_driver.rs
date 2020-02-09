@@ -102,7 +102,7 @@ impl error::Error for PARFlowError {
         }
     }
 
-    fn cause(&self) -> Option<&dyn error::Error> {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             &PARFlowError::SerdeError(ref inner) => {
                 Some(inner)
@@ -129,7 +129,7 @@ impl fmt::Display for PARFlowError {
                 write!(f, "{}", self.description())
             }
             _ => {
-                write!(f, "{}", self.cause().unwrap())
+                write!(f, "{}", self.source().unwrap())
             }
         }
     }

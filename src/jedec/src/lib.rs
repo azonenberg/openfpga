@@ -78,7 +78,7 @@ impl error::Error for JedParserError {
         }
     }
 
-    fn cause(&self) -> Option<&dyn error::Error> {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match *self {
             JedParserError::MissingSTX => None,
             JedParserError::MissingETX => None,
@@ -97,8 +97,8 @@ impl error::Error for JedParserError {
 
 impl fmt::Display for JedParserError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(cause) = self.cause() {
-            write!(f, "{}: {}", self.description(), cause)
+        if let Some(source) = self.source() {
+            write!(f, "{}: {}", self.description(), source)
         } else {
             write!(f, "{}", self.description())
         }
