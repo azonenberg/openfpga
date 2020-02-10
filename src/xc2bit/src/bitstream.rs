@@ -793,6 +793,36 @@ impl XC2BitstreamBits {
             },
             _ => {}
         }
+
+        // Initialize security/done/usercode rows to all 1s
+        for x in 0..fuse_array.dim().0 {
+            fuse_array.set(x, fuse_array.dim().1 - 1, true);
+            fuse_array.set(x, fuse_array.dim().1 - 2, true);
+        }
+
+        // Set done1 to 0
+        match self {
+            &XC2BitstreamBits::XC2C32{..} | &XC2BitstreamBits::XC2C32A{..} => {
+                fuse_array.set(9, 48, false);
+            },
+            &XC2BitstreamBits::XC2C64{..} | &XC2BitstreamBits::XC2C64A{..} => {
+                fuse_array.set(8, 96, false);
+            },
+            &XC2BitstreamBits::XC2C128{..} => {
+                fuse_array.set(9, 80, false);
+            },
+            &XC2BitstreamBits::XC2C256{..} => {
+                fuse_array.set(9, 96, false);
+            },
+            &XC2BitstreamBits::XC2C384{..} => {
+                fuse_array.set(9, 120, false);
+            },
+            &XC2BitstreamBits::XC2C512{..} => {
+                fuse_array.set(9, 160, false);
+            },
+        }
+
+        // TODO: Security bits and USERCODE bits
     }
 
     /// Dump a human-readable explanation of the bitstream to the given `writer` object.
