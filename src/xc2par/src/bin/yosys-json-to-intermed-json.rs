@@ -51,5 +51,5 @@ fn main() {
 
     // Netlist graph (native part)
     let ngraph_rs = IntermediateGraph::from_yosys_netlist(&yosys_netlist, None).unwrap();
-    println!("{}", serde_json::to_string(&ngraph_rs).unwrap());
+    println!("{}", serde_json::to_string_pretty(&ngraph_rs).unwrap());
 }

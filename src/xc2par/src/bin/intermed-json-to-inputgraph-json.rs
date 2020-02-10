@@ -51,5 +51,5 @@ fn main() {
 
     // Netlist graph
     let input_graph = InputGraph::from_intermed_graph(&intermed_graph, None).unwrap();
-    println!("{}", serde_json::to_string(&input_graph).unwrap());
+    println!("{}", serde_json::to_string_pretty(&input_graph).unwrap());
 }

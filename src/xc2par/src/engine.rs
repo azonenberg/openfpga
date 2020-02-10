@@ -42,6 +42,23 @@ pub enum PARMCAssignment {
     Banned,
 }
 
+impl slog::Value for PARMCAssignment {
+    fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut dyn slog::Serializer) -> slog::Result {
+        match self {
+            &PARMCAssignment::MC(i) => {
+                serializer.emit_usize(key, i.get_raw_i())?;
+                serializer.emit_str(key, "macrocell")
+            },
+            &PARMCAssignment::None => {
+                serializer.emit_str(key, "none")
+            },
+            &PARMCAssignment::Banned => {
+                serializer.emit_str(key, "banned")
+            }
+        }
+    }
+}
+
 type PARFBAssignment = [(PARMCAssignment, PARMCAssignment); MCS_PER_FB];
 // fb, mc, pininput?
 type PARFBAssignLoc = (u32, u32, bool);
@@ -1080,6 +1097,7 @@ pub fn do_par_sanity_check(g: &mut InputGraph, device_type: XC2DeviceSpeedPackag
             "max mcs" => 2 * (num_fbs * MCS_PER_FB));
         return PARSanityResult::FailureTooManyMCs;
     }
+    info!(logger, "PAR - total macrocell count"; "num mcs" => g.mcs.len());
 
     let pterms_set: HashSet<InputGraphPTerm> = HashSet::from_iter(g.pterms.iter().cloned());
     if pterms_set.len() > num_fbs * ANDTERMS_PER_FB {
@@ -1088,6 +1106,7 @@ pub fn do_par_sanity_check(g: &mut InputGraph, device_type: XC2DeviceSpeedPackag
             "max p-terms" => num_fbs * ANDTERMS_PER_FB);
         return PARSanityResult::FailureTooManyPTerms;
     }
+    info!(logger, "PAR - total unique pterm count"; "num pterms" => pterms_set.len());
 
     if g.bufg_clks.len() > NUM_BUFG_CLK {
         error!(logger, "PAR (sanity) - too many total BUFGs. This can never fit.";
@@ -1095,18 +1114,21 @@ pub fn do_par_sanity_check(g: &mut InputGraph, device_type: XC2DeviceSpeedPackag
             "max BUFGs" => NUM_BUFG_CLK);
         return PARSanityResult::FailureTooManyBufgClk;
     }
+    info!(logger, "PAR - total bufg count"; "num bufg" => g.bufg_clks.len());
     if g.bufg_gts.len() > NUM_BUFG_GTS {
         error!(logger, "PAR (sanity) - too many total BUFGTSs. This can never fit.";
             "num BUFGTSs" => g.bufg_gts.len(),
             "max BUFGTSs" => NUM_BUFG_GTS);
         return PARSanityResult::FailureTooManyBufgGTS;
     }
+    info!(logger, "PAR - total bufgts count"; "num bufgts" => g.bufg_gts.len());
     if g.bufg_gsr.len() > NUM_BUFG_GSR {
         error!(logger, "PAR (sanity) - too many total BUFGSRs. This can never fit.";
             "num BUFGSRs" => g.bufg_gsr.len(),
             "max BUFGSRs" => NUM_BUFG_GSR);
         return PARSanityResult::FailureTooManyBufgGSR;
     }
+    info!(logger, "PAR - total bufgsr count"; "num bufgsr" => g.bufg_gsr.len());
 
     // Check for impossible-to-satisfy PTC usage
     for mc in g.mcs.iter() {
@@ -1250,12 +1272,81 @@ pub fn do_par<L: Into<Option<slog::Logger>>>(g: &mut InputGraph, device_type: XC
                 go.zia.push(zia);
             }
 
+            debug!(logger, "PAR - dumping final locations");
+            for mc_idx in g.mcs.iter_idx() {
+                let mc = g.mcs.get(mc_idx);
+                let mc_go = go.mcs.get(ObjPoolIndex::from(mc_idx));
+                let fb_i = mc_go.loc.unwrap().fb;
+                let mc_i = mc_go.loc.unwrap().i;
+                debug!(logger, "PAR - final assignment";
+                    "type" => "macrocell",
+                    "name" => mc.name.clone(),
+                    "fb" => fb_i,
+                    "mc" => mc_i);
+            }
+            for pterm_idx in g.pterms.iter_idx() {
+                let pterm = g.pterms.get(pterm_idx);
+                let pterm_go = go.pterms.get(ObjPoolIndex::from(pterm_idx));
+                let fb_i = pterm_go.loc.unwrap().fb;
+                let pt_i = pterm_go.loc.unwrap().i;
+                debug!(logger, "PAR - final assignment";
+                    "type" => "pterm",
+                    "name" => pterm.name.clone(),
+                    "fb" => fb_i,
+                    "idx" => pt_i);
+            }
+            for idx in g.bufg_clks.iter_idx() {
+                let bufg = g.bufg_clks.get(idx);
+                let bufg_go = go.bufg_clks.get(ObjPoolIndex::from(idx));
+                let idx = bufg_go.loc.unwrap().i;
+                debug!(logger, "PAR - final assignment";
+                    "type" => "bufg",
+                    "name" => bufg.name.clone(),
+                    "idx" => idx);
+            }
+            for idx in g.bufg_gts.iter_idx() {
+                let bufg = g.bufg_gts.get(idx);
+                let bufg_go = go.bufg_gts.get(ObjPoolIndex::from(idx));
+                let idx = bufg_go.loc.unwrap().i;
+                debug!(logger, "PAR - final assignment";
+                    "type" => "bufgts",
+                    "name" => bufg.name.clone(),
+                    "idx" => idx);
+            }
+            for idx in g.bufg_gsr.iter_idx() {
+                let bufg = g.bufg_gsr.get(idx);
+                let bufg_go = go.bufg_gsr.get(ObjPoolIndex::from(idx));
+                let idx = bufg_go.loc.unwrap().i;
+                debug!(logger, "PAR - final assignment";
+                    "type" => "bufgsr",
+                    "name" => bufg.name.clone(),
+                    "idx" => idx);
+            }
+
             return PARResult::Success(go);
         }
 
         info!(logger, "PAR - new iteration";
             "iter" => iter_count,
             "score" => best_placement_violations_score);
+
+        debug!(logger, "PAR - dumping current assignment");
+        for (fb_i, fb) in best_placement.iter().enumerate() {
+            for (mc_i, mc) in fb.iter().enumerate() {
+                debug!(logger, "PAR - current assignment";
+                    "fb" => fb_i,
+                    "mc" => mc_i,
+                    "non-pininput" => mc.0,
+                    "pininput" => mc.1);
+            }
+        }
+        for (&k, &v) in &best_placement_violations {
+            debug!(logger, "PAR - current violations";
+                "fb" => k.0,
+                "mc" => k.1,
+                "pininput" => k.2,
+                "score" => v);
+        }
 
         // Here, we need to swap some stuff around
         let mut bad_candidates = Vec::new();
