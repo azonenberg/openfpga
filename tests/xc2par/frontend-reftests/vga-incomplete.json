@@ -1,0 +1,4794 @@
+{
+  "creator": "Yosys 0.9+1706 (git sha1 2e8d6ec0, gcc 9.2.1-8 -fPIC -Os)",
+  "modules": {
+    "ANDTERM": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "dynports": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:10"
+      },
+      "ports": {
+        "IN": {
+          "direction": "input",
+          "bits": [ ]
+        },
+        "IN_B": {
+          "direction": "input",
+          "bits": [ ]
+        },
+        "OUT": {
+          "direction": "output",
+          "bits": [ 2 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "IN": {
+          "hide_name": 0,
+          "bits": [ ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:14"
+          }
+        },
+        "IN_B": {
+          "hide_name": 0,
+          "bits": [ ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:15"
+          }
+        },
+        "OUT": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:16"
+          }
+        }
+      }
+    },
+    "BUFG": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:138"
+      },
+      "ports": {
+        "I": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "O": {
+          "direction": "output",
+          "bits": [ 3 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "I": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:139"
+          }
+        },
+        "O": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:140"
+          }
+        }
+      }
+    },
+    "BUFGSR": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:145"
+      },
+      "ports": {
+        "I": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "O": {
+          "direction": "output",
+          "bits": [ 3 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "I": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:148"
+          }
+        },
+        "O": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:149"
+          }
+        }
+      }
+    },
+    "BUFGTS": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:154"
+      },
+      "ports": {
+        "I": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "O": {
+          "direction": "output",
+          "bits": [ 3 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "I": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:157"
+          }
+        },
+        "O": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:158"
+          }
+        }
+      }
+    },
+    "FDCP": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:58"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:61"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:61"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:61"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:61"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:62"
+          }
+        }
+      }
+    },
+    "FDCPE": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:252"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        },
+        "CE": {
+          "direction": "input",
+          "bits": [ 7 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:255"
+          }
+        },
+        "CE": {
+          "hide_name": 0,
+          "bits": [ 7 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:255"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:255"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:255"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:255"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:256"
+          }
+        }
+      }
+    },
+    "FDCPE_N": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:272"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        },
+        "CE": {
+          "direction": "input",
+          "bits": [ 7 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:275"
+          }
+        },
+        "CE": {
+          "hide_name": 0,
+          "bits": [ 7 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:275"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:275"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:275"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:275"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:276"
+          }
+        }
+      }
+    },
+    "FDCP_N": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:78"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:81"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:81"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:81"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:81"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:82"
+          }
+        }
+      }
+    },
+    "FDDCP": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:163"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:166"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:166"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:166"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:166"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:167"
+          }
+        }
+      }
+    },
+    "FDDCPE": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:292"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        },
+        "CE": {
+          "direction": "input",
+          "bits": [ 7 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:295"
+          }
+        },
+        "CE": {
+          "hide_name": 0,
+          "bits": [ 7 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:295"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:295"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:295"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:295"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:296"
+          }
+        }
+      }
+    },
+    "FTCP": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:183"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "T": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:186"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:186"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:186"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:187"
+          }
+        },
+        "T": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:186"
+          }
+        }
+      }
+    },
+    "FTCP_N": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:206"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "T": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:209"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:209"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:209"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:210"
+          }
+        },
+        "T": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:209"
+          }
+        }
+      }
+    },
+    "FTDCP": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:229"
+      },
+      "ports": {
+        "C": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "T": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "C": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:232"
+          }
+        },
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:232"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:232"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:233"
+          }
+        },
+        "T": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:232"
+          }
+        }
+      }
+    },
+    "IBUF": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:1"
+      },
+      "ports": {
+        "I": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "O": {
+          "direction": "output",
+          "bits": [ 3 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "I": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:1"
+          }
+        },
+        "O": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:1"
+          }
+        }
+      }
+    },
+    "IOBUFE": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:5"
+      },
+      "ports": {
+        "I": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "E": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "O": {
+          "direction": "output",
+          "bits": [ 4 ]
+        },
+        "IO": {
+          "direction": "inout",
+          "bits": [ 5 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "E": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:5"
+          }
+        },
+        "I": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:5"
+          }
+        },
+        "IO": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:5"
+          }
+        },
+        "O": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:5"
+          }
+        }
+      }
+    },
+    "LDCP": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:98"
+      },
+      "ports": {
+        "G": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:101"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:101"
+          }
+        },
+        "G": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:101"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:101"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:102"
+          }
+        }
+      }
+    },
+    "LDCP_N": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:118"
+      },
+      "ports": {
+        "G": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "PRE": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "CLR": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "D": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "Q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "CLR": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:121"
+          }
+        },
+        "D": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:121"
+          }
+        },
+        "G": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:121"
+          }
+        },
+        "PRE": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:121"
+          }
+        },
+        "Q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:122"
+          }
+        }
+      }
+    },
+    "MACROCELL_XOR": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:45"
+      },
+      "ports": {
+        "IN_PTC": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "IN_ORTERM": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "OUT": {
+          "direction": "output",
+          "bits": [ 4 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "IN_ORTERM": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:49"
+          }
+        },
+        "IN_PTC": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:48"
+          }
+        },
+        "OUT": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:50"
+          }
+        }
+      }
+    },
+    "ORTERM": {
+      "attributes": {
+        "blackbox": "00000000000000000000000000000001",
+        "dynports": "00000000000000000000000000000001",
+        "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:29"
+      },
+      "ports": {
+        "IN": {
+          "direction": "input",
+          "bits": [ ]
+        },
+        "OUT": {
+          "direction": "output",
+          "bits": [ 2 ]
+        }
+      },
+      "cells": {
+      },
+      "netnames": {
+        "IN": {
+          "hide_name": 0,
+          "bits": [ ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:32"
+          }
+        },
+        "OUT": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/rqou/code/yosys/share/coolrunner2/cells_sim.v:33"
+          }
+        }
+      }
+    },
+    "top": {
+      "attributes": {
+        "top": "00000000000000000000000000000001",
+        "src": "blinky.v:1"
+      },
+      "ports": {
+        "r0": {
+          "direction": "output",
+          "bits": [ 2 ]
+        },
+        "r1": {
+          "direction": "output",
+          "bits": [ 3 ]
+        },
+        "g0": {
+          "direction": "output",
+          "bits": [ 4 ]
+        },
+        "g1": {
+          "direction": "output",
+          "bits": [ 5 ]
+        },
+        "b0": {
+          "direction": "output",
+          "bits": [ 6 ]
+        },
+        "b1": {
+          "direction": "output",
+          "bits": [ 7 ]
+        },
+        "hsync": {
+          "direction": "output",
+          "bits": [ 8 ]
+        },
+        "clk_": {
+          "direction": "input",
+          "bits": [ 9 ]
+        }
+      },
+      "cells": {
+        "$auto$coolrunner2_sop.cc:143:execute$1000": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10, 11, 12 ],
+            "IN_B": [ 13, 14 ],
+            "OUT": [ 15 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1002": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 11, 12 ],
+            "IN_B": [ 10, 14 ],
+            "OUT": [ 16 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1004": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000011",
+            "TRUE_INP": "00000000000000000000000000000011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 17, 11, 12 ],
+            "IN_B": [ 13, 10, 14 ],
+            "OUT": [ 18 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1006": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000100"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19, 20, 11, 12 ],
+            "IN_B": [ 13, 14 ],
+            "OUT": [ 21 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1008": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000011",
+            "TRUE_INP": "00000000000000000000000000000011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10, 11, 12 ],
+            "IN_B": [ 14, 17, 20 ],
+            "OUT": [ 22 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1010": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000101"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 23, 20, 24, 11, 12 ],
+            "IN_B": [ 13, 14 ],
+            "OUT": [ 25 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1012": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000100",
+            "TRUE_INP": "00000000000000000000000000000011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10, 11, 12 ],
+            "IN_B": [ 19, 23, 14, 17 ],
+            "OUT": [ 26 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1014": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000101",
+            "TRUE_INP": "00000000000000000000000000000011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10, 11, 12 ],
+            "IN_B": [ 19, 14, 17, 27, 24 ],
+            "OUT": [ 28 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1019": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 27 ],
+            "OUT": [ 29 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1021": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 11, 12 ],
+            "IN_B": [ ],
+            "OUT": [ 30 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1023": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 11 ],
+            "IN_B": [ 12 ],
+            "OUT": [ 31 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1025": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 19, 17, 20, 11 ],
+            "IN_B": [ ],
+            "OUT": [ 32 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1027": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000111"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 23, 17, 20, 24, 11 ],
+            "IN_B": [ ],
+            "OUT": [ 33 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1032": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 24 ],
+            "OUT": [ 34 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1034": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 11, 12 ],
+            "IN_B": [ ],
+            "OUT": [ 35 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1036": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 11 ],
+            "IN_B": [ 12 ],
+            "OUT": [ 36 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1038": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 19, 17, 20, 11 ],
+            "IN_B": [ ],
+            "OUT": [ 37 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1040": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000111"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 23, 17, 20, 24, 11 ],
+            "IN_B": [ ],
+            "OUT": [ 38 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1045": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 23 ],
+            "OUT": [ 39 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1047": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 11, 12 ],
+            "IN_B": [ ],
+            "OUT": [ 40 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1049": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 11 ],
+            "IN_B": [ 12 ],
+            "OUT": [ 41 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1051": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 19, 17, 20, 11 ],
+            "IN_B": [ ],
+            "OUT": [ 42 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1053": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000111"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 23, 17, 20, 24, 11 ],
+            "IN_B": [ ],
+            "OUT": [ 43 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1058": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19 ],
+            "IN_B": [ 11 ],
+            "OUT": [ 44 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1060": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000011",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19 ],
+            "IN_B": [ 14, 20, 12 ],
+            "OUT": [ 45 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1062": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000011",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19, 20 ],
+            "IN_B": [ 10, 14, 12 ],
+            "OUT": [ 46 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1064": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000011",
+            "TRUE_INP": "00000000000000000000000000000011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10, 19, 20 ],
+            "IN_B": [ 14, 17, 12 ],
+            "OUT": [ 47 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1066": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000011",
+            "TRUE_INP": "00000000000000000000000000000100"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10, 19, 17, 20 ],
+            "IN_B": [ 13, 14, 12 ],
+            "OUT": [ 48 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1071": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 20 ],
+            "OUT": [ 49 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1073": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 11, 12 ],
+            "IN_B": [ ],
+            "OUT": [ 50 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1075": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 11 ],
+            "IN_B": [ 12 ],
+            "OUT": [ 51 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1077": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 19, 17, 20, 11 ],
+            "IN_B": [ ],
+            "OUT": [ 52 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1079": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000111"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 23, 17, 20, 24, 11 ],
+            "IN_B": [ ],
+            "OUT": [ 53 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1084": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 17 ],
+            "OUT": [ 54 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1086": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 11, 12 ],
+            "IN_B": [ ],
+            "OUT": [ 55 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1088": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 11 ],
+            "IN_B": [ 12 ],
+            "OUT": [ 56 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1090": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 19, 17, 20, 11 ],
+            "IN_B": [ ],
+            "OUT": [ 57 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1092": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000111"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 23, 17, 20, 24, 11 ],
+            "IN_B": [ ],
+            "OUT": [ 58 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$1097": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 27 ],
+            "OUT": [ 59 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$877": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 23, 27, 24 ],
+            "IN_B": [ ],
+            "OUT": [ 60 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$880": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 23, 24 ],
+            "OUT": [ 61 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$882": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 23, 27, 24 ],
+            "IN_B": [ ],
+            "OUT": [ 62 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$884": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 24 ],
+            "IN_B": [ 23, 27 ],
+            "OUT": [ 63 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$886": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000101",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 17, 20, 27, 24, 11 ],
+            "IN_B": [ 13, 10, 19, 23, 12 ],
+            "OUT": [ 64 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$891": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 19, 20 ],
+            "OUT": [ 65 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$893": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19 ],
+            "IN_B": [ 20, 24 ],
+            "OUT": [ 66 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$895": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 24 ],
+            "IN_B": [ 20, 27 ],
+            "OUT": [ 67 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$897": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19, 24 ],
+            "IN_B": [ 23, 20 ],
+            "OUT": [ 68 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$899": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000101"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19, 23, 20, 27, 24 ],
+            "IN_B": [ ],
+            "OUT": [ 69 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$901": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000101",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 17, 20, 27, 24, 11 ],
+            "IN_B": [ 13, 10, 19, 23, 12 ],
+            "OUT": [ 70 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$906": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19, 23, 17, 20, 27, 24 ],
+            "IN_B": [ ],
+            "OUT": [ 71 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$909": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 19, 17 ],
+            "OUT": [ 72 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$911": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19 ],
+            "IN_B": [ 17, 20 ],
+            "OUT": [ 73 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$913": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 24 ],
+            "IN_B": [ 17, 27 ],
+            "OUT": [ 74 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$915": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 23 ],
+            "IN_B": [ 17, 24 ],
+            "OUT": [ 75 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$917": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19, 20 ],
+            "IN_B": [ 23, 17 ],
+            "OUT": [ 76 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$919": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19, 23, 17, 20, 27, 24 ],
+            "IN_B": [ ],
+            "OUT": [ 77 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$921": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000101",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 17, 20, 27, 24, 11 ],
+            "IN_B": [ 13, 10, 19, 23, 12 ],
+            "OUT": [ 78 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$926": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000001000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 19, 23, 17, 20, 27, 24 ],
+            "IN_B": [ ],
+            "OUT": [ 79 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$929": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13 ],
+            "IN_B": [ 17 ],
+            "OUT": [ 80 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$931": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 17 ],
+            "IN_B": [ 10 ],
+            "OUT": [ 81 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$933": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 19 ],
+            "IN_B": [ 23 ],
+            "OUT": [ 82 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$935": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 24 ],
+            "IN_B": [ 27 ],
+            "OUT": [ 83 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$937": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 23 ],
+            "IN_B": [ 24 ],
+            "OUT": [ 84 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$939": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 20 ],
+            "IN_B": [ 19 ],
+            "OUT": [ 85 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$941": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10 ],
+            "IN_B": [ 20 ],
+            "OUT": [ 86 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$943": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000001",
+            "TRUE_INP": "00000000000000000000000000000111"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10, 19, 23, 17, 20, 27, 24 ],
+            "IN_B": [ 13 ],
+            "OUT": [ 87 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$948": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 14, 12 ],
+            "OUT": [ 88 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$950": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 12 ],
+            "IN_B": [ 10, 14 ],
+            "OUT": [ 89 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$952": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 20 ],
+            "IN_B": [ 19, 14 ],
+            "OUT": [ 90 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$954": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10 ],
+            "IN_B": [ 13, 14 ],
+            "OUT": [ 91 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$956": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 23 ],
+            "IN_B": [ 14, 24 ],
+            "OUT": [ 92 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$958": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 24 ],
+            "IN_B": [ 14, 27 ],
+            "OUT": [ 93 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$960": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19 ],
+            "IN_B": [ 23, 14 ],
+            "OUT": [ 94 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$962": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10, 12 ],
+            "IN_B": [ 14, 17 ],
+            "OUT": [ 95 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$964": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10, 17 ],
+            "IN_B": [ 14, 20 ],
+            "OUT": [ 96 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$966": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000001010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 19, 23, 14, 17, 20, 27, 24, 12 ],
+            "IN_B": [ ],
+            "OUT": [ 97 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$968": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000101",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 17, 20, 27, 24, 11 ],
+            "IN_B": [ 13, 10, 19, 23, 12 ],
+            "OUT": [ 98 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$973": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ ],
+            "IN_B": [ 11, 12 ],
+            "OUT": [ 99 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$975": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 17 ],
+            "IN_B": [ 10, 11 ],
+            "OUT": [ 100 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$977": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 12 ],
+            "IN_B": [ 14, 11 ],
+            "OUT": [ 101 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$979": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 20 ],
+            "IN_B": [ 19, 11 ],
+            "OUT": [ 102 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$981": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10 ],
+            "IN_B": [ 13, 11 ],
+            "OUT": [ 103 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$983": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 23 ],
+            "IN_B": [ 24, 11 ],
+            "OUT": [ 104 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$985": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 24 ],
+            "IN_B": [ 27, 11 ],
+            "OUT": [ 105 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$987": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 19 ],
+            "IN_B": [ 23, 11 ],
+            "OUT": [ 106 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$989": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 10, 17 ],
+            "IN_B": [ 20, 11 ],
+            "OUT": [ 107 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$991": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000010",
+            "TRUE_INP": "00000000000000000000000000000010"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 12 ],
+            "IN_B": [ 17, 11 ],
+            "OUT": [ 108 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$993": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000101",
+            "TRUE_INP": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 14, 17, 20, 27, 24, 11 ],
+            "IN_B": [ 13, 10, 19, 23, 12 ],
+            "OUT": [ 109 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:143:execute$995": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000001011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 13, 10, 19, 23, 14, 17, 20, 27, 24, 11, 12 ],
+            "IN_B": [ ],
+            "OUT": [ 110 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:154:execute$1098": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000000"
+          },
+          "attributes": {
+            "src": "blinky.v:37"
+          },
+          "port_directions": {
+            "IN_PTC": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_PTC": [ 59 ],
+            "OUT": [ 111 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:154:execute$878": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_PTC": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_PTC": [ 60 ],
+            "OUT": [ 112 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:154:execute$907": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_PTC": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_PTC": [ 71 ],
+            "OUT": [ 113 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:154:execute$927": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_PTC": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_PTC": [ 79 ],
+            "OUT": [ 114 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$1016": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000001000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 28, 26, 25, 22, 21, 18, 16, 15 ],
+            "OUT": [ 115 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$1029": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000000101"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 33, 32, 31, 30, 29 ],
+            "OUT": [ 116 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$1042": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000000101"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 38, 37, 36, 35, 34 ],
+            "OUT": [ 117 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$1055": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000000101"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 43, 42, 41, 40, 39 ],
+            "OUT": [ 118 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$1068": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000000101"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 48, 47, 46, 45, 44 ],
+            "OUT": [ 119 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$1081": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000000101"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 53, 52, 51, 50, 49 ],
+            "OUT": [ 120 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$1094": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000000101"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 58, 57, 56, 55, 54 ],
+            "OUT": [ 121 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$888": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000000100"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 64, 63, 62, 61 ],
+            "OUT": [ 122 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$903": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000000110"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 70, 69, 68, 67, 66, 65 ],
+            "OUT": [ 123 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$923": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000000111"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 78, 77, 76, 75, 74, 73, 72 ],
+            "OUT": [ 124 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$945": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000001000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 87, 86, 85, 84, 83, 82, 81, 80 ],
+            "OUT": [ 125 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$970": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000001011"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88 ],
+            "OUT": [ 126 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:217:execute$997": {
+          "hide_name": 1,
+          "type": "ORTERM",
+          "parameters": {
+            "WIDTH": "00000000000000000000000000001100"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99 ],
+            "OUT": [ 127 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$1017": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 115 ],
+            "OUT": [ 128 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$1030": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 116 ],
+            "OUT": [ 129 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$1043": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 117 ],
+            "OUT": [ 130 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$1056": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 118 ],
+            "OUT": [ 131 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$1069": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 119 ],
+            "OUT": [ 132 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$1082": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 120 ],
+            "OUT": [ 133 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$1095": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 121 ],
+            "OUT": [ 134 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$889": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "blinky.v:37"
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 122 ],
+            "OUT": [ 135 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$904": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "blinky.v:37"
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 123 ],
+            "OUT": [ 136 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$924": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "blinky.v:37"
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 124 ],
+            "OUT": [ 137 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$946": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000000"
+          },
+          "attributes": {
+            "src": "blinky.v:37"
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 125 ],
+            "OUT": [ 138 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$971": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "blinky.v:37"
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 126 ],
+            "OUT": [ 139 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:223:execute$998": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000001"
+          },
+          "attributes": {
+            "src": "blinky.v:37"
+          },
+          "port_directions": {
+            "IN_ORTERM": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_ORTERM": [ 127 ],
+            "OUT": [ 140 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:285:execute$1101": {
+          "hide_name": 1,
+          "type": "ANDTERM",
+          "parameters": {
+            "COMP_INP": "00000000000000000000000000000000",
+            "TRUE_INP": "00000000000000000000000000000001"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN": "input",
+            "IN_B": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN": [ 27 ],
+            "IN_B": [ ],
+            "OUT": [ 141 ]
+          }
+        },
+        "$auto$coolrunner2_sop.cc:292:execute$1102": {
+          "hide_name": 1,
+          "type": "MACROCELL_XOR",
+          "parameters": {
+            "INVERT_OUT": "00000000000000000000000000000000"
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "IN_PTC": "input",
+            "OUT": "output"
+          },
+          "connections": {
+            "IN_PTC": [ 141 ],
+            "OUT": [ 142 ]
+          }
+        },
+        "$auto$iopadmap.cc:369:execute$1103": {
+          "hide_name": 1,
+          "type": "IOBUFE",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB1_4",
+            "keep": "00000000000000000000000000000001",
+            "src": "blinky.v:12"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout"
+          },
+          "connections": {
+            "I": [ 133 ],
+            "IO": [ 6 ]
+          }
+        },
+        "$auto$iopadmap.cc:369:execute$1104": {
+          "hide_name": 1,
+          "type": "IOBUFE",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB1_8",
+            "keep": "00000000000000000000000000000001",
+            "src": "blinky.v:14"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout"
+          },
+          "connections": {
+            "I": [ 134 ],
+            "IO": [ 7 ]
+          }
+        },
+        "$auto$iopadmap.cc:369:execute$1105": {
+          "hide_name": 1,
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB2_5",
+            "keep": "00000000000000000000000000000001",
+            "src": "blinky.v:21"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 9 ],
+            "O": [ 143 ]
+          }
+        },
+        "$auto$iopadmap.cc:369:execute$1106": {
+          "hide_name": 1,
+          "type": "IOBUFE",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB1_3",
+            "keep": "00000000000000000000000000000001",
+            "src": "blinky.v:8"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout"
+          },
+          "connections": {
+            "I": [ 131 ],
+            "IO": [ 4 ]
+          }
+        },
+        "$auto$iopadmap.cc:369:execute$1107": {
+          "hide_name": 1,
+          "type": "IOBUFE",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB1_7",
+            "keep": "00000000000000000000000000000001",
+            "src": "blinky.v:10"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout"
+          },
+          "connections": {
+            "I": [ 132 ],
+            "IO": [ 5 ]
+          }
+        },
+        "$auto$iopadmap.cc:369:execute$1108": {
+          "hide_name": 1,
+          "type": "IOBUFE",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB1_1",
+            "keep": "00000000000000000000000000000001",
+            "src": "blinky.v:16"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout"
+          },
+          "connections": {
+            "I": [ 128 ],
+            "IO": [ 8 ]
+          }
+        },
+        "$auto$iopadmap.cc:369:execute$1109": {
+          "hide_name": 1,
+          "type": "IOBUFE",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB1_2",
+            "keep": "00000000000000000000000000000001",
+            "src": "blinky.v:4"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout"
+          },
+          "connections": {
+            "I": [ 129 ],
+            "IO": [ 2 ]
+          }
+        },
+        "$auto$iopadmap.cc:369:execute$1110": {
+          "hide_name": 1,
+          "type": "IOBUFE",
+          "parameters": {
+          },
+          "attributes": {
+            "LOC": "FB1_6",
+            "keep": "00000000000000000000000000000001",
+            "src": "blinky.v:6"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout"
+          },
+          "connections": {
+            "I": [ 130 ],
+            "IO": [ 3 ]
+          }
+        },
+        "$auto$simplemap.cc:420:simplemap_dff$202": {
+          "hide_name": 1,
+          "type": "FDCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "D": "input",
+            "PRE": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "D": [ 111 ],
+            "PRE": [ "0" ],
+            "Q": [ 27 ]
+          }
+        },
+        "$auto$simplemap.cc:420:simplemap_dff$204": {
+          "hide_name": 1,
+          "type": "FDCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "D": "input",
+            "PRE": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "D": [ 135 ],
+            "PRE": [ "0" ],
+            "Q": [ 23 ]
+          }
+        },
+        "$auto$simplemap.cc:420:simplemap_dff$206": {
+          "hide_name": 1,
+          "type": "FDCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "D": "input",
+            "PRE": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "D": [ 136 ],
+            "PRE": [ "0" ],
+            "Q": [ 20 ]
+          }
+        },
+        "$auto$simplemap.cc:420:simplemap_dff$207": {
+          "hide_name": 1,
+          "type": "FDCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "D": "input",
+            "PRE": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "D": [ 137 ],
+            "PRE": [ "0" ],
+            "Q": [ 17 ]
+          }
+        },
+        "$auto$simplemap.cc:420:simplemap_dff$209": {
+          "hide_name": 1,
+          "type": "FDCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "D": "input",
+            "PRE": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "D": [ 138 ],
+            "PRE": [ "0" ],
+            "Q": [ 13 ]
+          }
+        },
+        "$auto$simplemap.cc:420:simplemap_dff$211": {
+          "hide_name": 1,
+          "type": "FDCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "D": "input",
+            "PRE": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "D": [ 139 ],
+            "PRE": [ "0" ],
+            "Q": [ 14 ]
+          }
+        },
+        "$auto$simplemap.cc:420:simplemap_dff$212": {
+          "hide_name": 1,
+          "type": "FDCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "D": "input",
+            "PRE": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "D": [ 140 ],
+            "PRE": [ "0" ],
+            "Q": [ 11 ]
+          }
+        },
+        "$extract$\\FTCP$832": {
+          "hide_name": 1,
+          "type": "FTCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "PRE": "input",
+            "Q": "output",
+            "T": "input"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "PRE": [ "0" ],
+            "Q": [ 24 ],
+            "T": [ 142 ]
+          }
+        },
+        "$extract$\\FTCP$833": {
+          "hide_name": 1,
+          "type": "FTCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "PRE": "input",
+            "Q": "output",
+            "T": "input"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "PRE": [ "0" ],
+            "Q": [ 19 ],
+            "T": [ 112 ]
+          }
+        },
+        "$extract$\\FTCP$834": {
+          "hide_name": 1,
+          "type": "FTCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "PRE": "input",
+            "Q": "output",
+            "T": "input"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "PRE": [ "0" ],
+            "Q": [ 10 ],
+            "T": [ 113 ]
+          }
+        },
+        "$extract$\\FTCP$835": {
+          "hide_name": 1,
+          "type": "FTCP",
+          "parameters": {
+            "INIT": ""
+          },
+          "attributes": {
+            "src": "blinky.v:30"
+          },
+          "port_directions": {
+            "C": "input",
+            "CLR": "input",
+            "PRE": "input",
+            "Q": "output",
+            "T": "input"
+          },
+          "connections": {
+            "C": [ 144 ],
+            "CLR": [ "0" ],
+            "PRE": [ "0" ],
+            "Q": [ 12 ],
+            "T": [ 114 ]
+          }
+        },
+        "bufg0": {
+          "hide_name": 0,
+          "type": "BUFG",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "blinky.v:24"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 143 ],
+            "O": [ 144 ]
+          }
+        }
+      },
+      "netnames": {
+        "$0\\dotcnt[10:0][0]": {
+          "hide_name": 1,
+          "bits": [ 111 ],
+          "attributes": {
+          }
+        },
+        "$0\\dotcnt[10:0][10]": {
+          "hide_name": 1,
+          "bits": [ 140 ],
+          "attributes": {
+          }
+        },
+        "$0\\dotcnt[10:0][2]": {
+          "hide_name": 1,
+          "bits": [ 135 ],
+          "attributes": {
+          }
+        },
+        "$0\\dotcnt[10:0][4]": {
+          "hide_name": 1,
+          "bits": [ 136 ],
+          "attributes": {
+          }
+        },
+        "$0\\dotcnt[10:0][5]": {
+          "hide_name": 1,
+          "bits": [ 137 ],
+          "attributes": {
+          }
+        },
+        "$0\\dotcnt[10:0][7]": {
+          "hide_name": 1,
+          "bits": [ 138 ],
+          "attributes": {
+          }
+        },
+        "$0\\dotcnt[10:0][9]": {
+          "hide_name": 1,
+          "bits": [ 139 ],
+          "attributes": {
+          }
+        },
+        "$abc$731$new_n43_": {
+          "hide_name": 1,
+          "bits": [ 112 ],
+          "attributes": {
+          }
+        },
+        "$abc$731$new_n67_": {
+          "hide_name": 1,
+          "bits": [ 113 ],
+          "attributes": {
+          }
+        },
+        "$abc$731$new_n81_": {
+          "hide_name": 1,
+          "bits": [ 114 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1001": {
+          "hide_name": 1,
+          "bits": [ 16 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1003": {
+          "hide_name": 1,
+          "bits": [ 18 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1005": {
+          "hide_name": 1,
+          "bits": [ 21 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1007": {
+          "hide_name": 1,
+          "bits": [ 22 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1009": {
+          "hide_name": 1,
+          "bits": [ 25 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1011": {
+          "hide_name": 1,
+          "bits": [ 26 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1013": {
+          "hide_name": 1,
+          "bits": [ 28 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1018": {
+          "hide_name": 1,
+          "bits": [ 29 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1020": {
+          "hide_name": 1,
+          "bits": [ 30 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1022": {
+          "hide_name": 1,
+          "bits": [ 31 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1024": {
+          "hide_name": 1,
+          "bits": [ 32 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1026": {
+          "hide_name": 1,
+          "bits": [ 33 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1031": {
+          "hide_name": 1,
+          "bits": [ 34 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1033": {
+          "hide_name": 1,
+          "bits": [ 35 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1035": {
+          "hide_name": 1,
+          "bits": [ 36 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1037": {
+          "hide_name": 1,
+          "bits": [ 37 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1039": {
+          "hide_name": 1,
+          "bits": [ 38 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1044": {
+          "hide_name": 1,
+          "bits": [ 39 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1046": {
+          "hide_name": 1,
+          "bits": [ 40 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1048": {
+          "hide_name": 1,
+          "bits": [ 41 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1050": {
+          "hide_name": 1,
+          "bits": [ 42 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1052": {
+          "hide_name": 1,
+          "bits": [ 43 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1057": {
+          "hide_name": 1,
+          "bits": [ 44 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1059": {
+          "hide_name": 1,
+          "bits": [ 45 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1061": {
+          "hide_name": 1,
+          "bits": [ 46 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1063": {
+          "hide_name": 1,
+          "bits": [ 47 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1065": {
+          "hide_name": 1,
+          "bits": [ 48 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1070": {
+          "hide_name": 1,
+          "bits": [ 49 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1072": {
+          "hide_name": 1,
+          "bits": [ 50 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1074": {
+          "hide_name": 1,
+          "bits": [ 51 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1076": {
+          "hide_name": 1,
+          "bits": [ 52 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1078": {
+          "hide_name": 1,
+          "bits": [ 53 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1083": {
+          "hide_name": 1,
+          "bits": [ 54 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1085": {
+          "hide_name": 1,
+          "bits": [ 55 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1087": {
+          "hide_name": 1,
+          "bits": [ 56 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1089": {
+          "hide_name": 1,
+          "bits": [ 57 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1091": {
+          "hide_name": 1,
+          "bits": [ 58 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$1096": {
+          "hide_name": 1,
+          "bits": [ 59 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$876": {
+          "hide_name": 1,
+          "bits": [ 60 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$879": {
+          "hide_name": 1,
+          "bits": [ 61 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$881": {
+          "hide_name": 1,
+          "bits": [ 62 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$883": {
+          "hide_name": 1,
+          "bits": [ 63 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$885": {
+          "hide_name": 1,
+          "bits": [ 64 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$890": {
+          "hide_name": 1,
+          "bits": [ 65 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$892": {
+          "hide_name": 1,
+          "bits": [ 66 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$894": {
+          "hide_name": 1,
+          "bits": [ 67 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$896": {
+          "hide_name": 1,
+          "bits": [ 68 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$898": {
+          "hide_name": 1,
+          "bits": [ 69 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$900": {
+          "hide_name": 1,
+          "bits": [ 70 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$905": {
+          "hide_name": 1,
+          "bits": [ 71 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$908": {
+          "hide_name": 1,
+          "bits": [ 72 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$910": {
+          "hide_name": 1,
+          "bits": [ 73 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$912": {
+          "hide_name": 1,
+          "bits": [ 74 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$914": {
+          "hide_name": 1,
+          "bits": [ 75 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$916": {
+          "hide_name": 1,
+          "bits": [ 76 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$918": {
+          "hide_name": 1,
+          "bits": [ 77 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$920": {
+          "hide_name": 1,
+          "bits": [ 78 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$925": {
+          "hide_name": 1,
+          "bits": [ 79 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$928": {
+          "hide_name": 1,
+          "bits": [ 80 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$930": {
+          "hide_name": 1,
+          "bits": [ 81 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$932": {
+          "hide_name": 1,
+          "bits": [ 82 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$934": {
+          "hide_name": 1,
+          "bits": [ 83 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$936": {
+          "hide_name": 1,
+          "bits": [ 84 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$938": {
+          "hide_name": 1,
+          "bits": [ 85 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$940": {
+          "hide_name": 1,
+          "bits": [ 86 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$942": {
+          "hide_name": 1,
+          "bits": [ 87 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$947": {
+          "hide_name": 1,
+          "bits": [ 88 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$949": {
+          "hide_name": 1,
+          "bits": [ 89 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$951": {
+          "hide_name": 1,
+          "bits": [ 90 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$953": {
+          "hide_name": 1,
+          "bits": [ 91 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$955": {
+          "hide_name": 1,
+          "bits": [ 92 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$957": {
+          "hide_name": 1,
+          "bits": [ 93 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$959": {
+          "hide_name": 1,
+          "bits": [ 94 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$961": {
+          "hide_name": 1,
+          "bits": [ 95 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$963": {
+          "hide_name": 1,
+          "bits": [ 96 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$965": {
+          "hide_name": 1,
+          "bits": [ 97 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$967": {
+          "hide_name": 1,
+          "bits": [ 98 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$972": {
+          "hide_name": 1,
+          "bits": [ 99 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$974": {
+          "hide_name": 1,
+          "bits": [ 100 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$976": {
+          "hide_name": 1,
+          "bits": [ 101 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$978": {
+          "hide_name": 1,
+          "bits": [ 102 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$980": {
+          "hide_name": 1,
+          "bits": [ 103 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$982": {
+          "hide_name": 1,
+          "bits": [ 104 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$984": {
+          "hide_name": 1,
+          "bits": [ 105 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$986": {
+          "hide_name": 1,
+          "bits": [ 106 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$988": {
+          "hide_name": 1,
+          "bits": [ 107 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$990": {
+          "hide_name": 1,
+          "bits": [ 108 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$992": {
+          "hide_name": 1,
+          "bits": [ 109 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$994": {
+          "hide_name": 1,
+          "bits": [ 110 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:124:execute$999": {
+          "hide_name": 1,
+          "bits": [ 15 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$1015": {
+          "hide_name": 1,
+          "bits": [ 115 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$1028": {
+          "hide_name": 1,
+          "bits": [ 116 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$1041": {
+          "hide_name": 1,
+          "bits": [ 117 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$1054": {
+          "hide_name": 1,
+          "bits": [ 118 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$1067": {
+          "hide_name": 1,
+          "bits": [ 119 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$1080": {
+          "hide_name": 1,
+          "bits": [ 120 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$1093": {
+          "hide_name": 1,
+          "bits": [ 121 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$887": {
+          "hide_name": 1,
+          "bits": [ 122 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$902": {
+          "hide_name": 1,
+          "bits": [ 123 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$922": {
+          "hide_name": 1,
+          "bits": [ 124 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$944": {
+          "hide_name": 1,
+          "bits": [ 125 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$969": {
+          "hide_name": 1,
+          "bits": [ 126 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:214:execute$996": {
+          "hide_name": 1,
+          "bits": [ 127 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:282:execute$1099": {
+          "hide_name": 1,
+          "bits": [ 141 ],
+          "attributes": {
+          }
+        },
+        "$auto$coolrunner2_sop.cc:283:execute$1100": {
+          "hide_name": 1,
+          "bits": [ 142 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:409:execute$1111": {
+          "hide_name": 1,
+          "bits": [ 130 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:409:execute$1112": {
+          "hide_name": 1,
+          "bits": [ 129 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:409:execute$1113": {
+          "hide_name": 1,
+          "bits": [ 128 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:409:execute$1114": {
+          "hide_name": 1,
+          "bits": [ 132 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:409:execute$1115": {
+          "hide_name": 1,
+          "bits": [ 131 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:409:execute$1116": {
+          "hide_name": 1,
+          "bits": [ 143 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:409:execute$1117": {
+          "hide_name": 1,
+          "bits": [ 134 ],
+          "attributes": {
+          }
+        },
+        "$auto$iopadmap.cc:409:execute$1118": {
+          "hide_name": 1,
+          "bits": [ 133 ],
+          "attributes": {
+          }
+        },
+        "b0": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+          }
+        },
+        "b1": {
+          "hide_name": 0,
+          "bits": [ 7 ],
+          "attributes": {
+          }
+        },
+        "clk": {
+          "hide_name": 0,
+          "bits": [ 144 ],
+          "attributes": {
+          }
+        },
+        "clk_": {
+          "hide_name": 0,
+          "bits": [ 9 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[0]": {
+          "hide_name": 0,
+          "bits": [ 27 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[10]": {
+          "hide_name": 0,
+          "bits": [ 11 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[1]": {
+          "hide_name": 0,
+          "bits": [ 24 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[2]": {
+          "hide_name": 0,
+          "bits": [ 23 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[3]": {
+          "hide_name": 0,
+          "bits": [ 19 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[4]": {
+          "hide_name": 0,
+          "bits": [ 20 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[5]": {
+          "hide_name": 0,
+          "bits": [ 17 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[6]": {
+          "hide_name": 0,
+          "bits": [ 10 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[7]": {
+          "hide_name": 0,
+          "bits": [ 13 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[8]": {
+          "hide_name": 0,
+          "bits": [ 12 ],
+          "attributes": {
+          }
+        },
+        "dotcnt[9]": {
+          "hide_name": 0,
+          "bits": [ 14 ],
+          "attributes": {
+          }
+        },
+        "g0": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+          }
+        },
+        "g1": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+          }
+        },
+        "hsync": {
+          "hide_name": 0,
+          "bits": [ 8 ],
+          "attributes": {
+          }
+        },
+        "r0": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+          }
+        },
+        "r1": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+          }
+        }
+      }
+    }
+  }
+}

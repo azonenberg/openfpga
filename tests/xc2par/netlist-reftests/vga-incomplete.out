@@ -1,0 +1,4379 @@
+{
+  "mcs": {
+    "storage": [
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$1082_$auto$iopadmap.cc:369:execute$1103",
+        "requested_loc": {
+          "fb": 0,
+          "i": 3
+        },
+        "io_bits": {
+          "input": "Xor",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 53,
+              "type_marker": null
+            },
+            {
+              "i": 54,
+              "type_marker": null
+            },
+            {
+              "i": 55,
+              "type_marker": null
+            },
+            {
+              "i": 56,
+              "type_marker": null
+            },
+            {
+              "i": 57,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$1095_$auto$iopadmap.cc:369:execute$1104",
+        "requested_loc": {
+          "fb": 0,
+          "i": 7
+        },
+        "io_bits": {
+          "input": "Xor",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 58,
+              "type_marker": null
+            },
+            {
+              "i": 59,
+              "type_marker": null
+            },
+            {
+              "i": 60,
+              "type_marker": null
+            },
+            {
+              "i": 61,
+              "type_marker": null
+            },
+            {
+              "i": 62,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$1056_$auto$iopadmap.cc:369:execute$1106",
+        "requested_loc": {
+          "fb": 0,
+          "i": 2
+        },
+        "io_bits": {
+          "input": "Xor",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 63,
+              "type_marker": null
+            },
+            {
+              "i": 64,
+              "type_marker": null
+            },
+            {
+              "i": 65,
+              "type_marker": null
+            },
+            {
+              "i": 66,
+              "type_marker": null
+            },
+            {
+              "i": 67,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$1069_$auto$iopadmap.cc:369:execute$1107",
+        "requested_loc": {
+          "fb": 0,
+          "i": 6
+        },
+        "io_bits": {
+          "input": "Xor",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 68,
+              "type_marker": null
+            },
+            {
+              "i": 69,
+              "type_marker": null
+            },
+            {
+              "i": 70,
+              "type_marker": null
+            },
+            {
+              "i": 71,
+              "type_marker": null
+            },
+            {
+              "i": 72,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$1017_$auto$iopadmap.cc:369:execute$1108",
+        "requested_loc": {
+          "fb": 0,
+          "i": 0
+        },
+        "io_bits": {
+          "input": "Xor",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 73,
+              "type_marker": null
+            },
+            {
+              "i": 74,
+              "type_marker": null
+            },
+            {
+              "i": 75,
+              "type_marker": null
+            },
+            {
+              "i": 76,
+              "type_marker": null
+            },
+            {
+              "i": 77,
+              "type_marker": null
+            },
+            {
+              "i": 78,
+              "type_marker": null
+            },
+            {
+              "i": 79,
+              "type_marker": null
+            },
+            {
+              "i": 80,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$1030_$auto$iopadmap.cc:369:execute$1109",
+        "requested_loc": {
+          "fb": 0,
+          "i": 1
+        },
+        "io_bits": {
+          "input": "Xor",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 81,
+              "type_marker": null
+            },
+            {
+              "i": 82,
+              "type_marker": null
+            },
+            {
+              "i": 83,
+              "type_marker": null
+            },
+            {
+              "i": 84,
+              "type_marker": null
+            },
+            {
+              "i": 85,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$1043_$auto$iopadmap.cc:369:execute$1110",
+        "requested_loc": {
+          "fb": 0,
+          "i": 5
+        },
+        "io_bits": {
+          "input": "Xor",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 86,
+              "type_marker": null
+            },
+            {
+              "i": 87,
+              "type_marker": null
+            },
+            {
+              "i": 88,
+              "type_marker": null
+            },
+            {
+              "i": 89,
+              "type_marker": null
+            },
+            {
+              "i": 90,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:154:execute$1098_$auto$simplemap.cc:420:simplemap_dff$202",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "DFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": {
+            "i": 0,
+            "type_marker": null
+          },
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:154:execute$878_$extract$\\FTCP$833",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "TFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": {
+            "i": 43,
+            "type_marker": null
+          },
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:154:execute$907_$extract$\\FTCP$834",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "TFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": {
+            "i": 44,
+            "type_marker": null
+          },
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:154:execute$927_$extract$\\FTCP$835",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "TFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": {
+            "i": 2,
+            "type_marker": null
+          },
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$889_$auto$simplemap.cc:420:simplemap_dff$204",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "DFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 39,
+              "type_marker": null
+            },
+            {
+              "i": 40,
+              "type_marker": null
+            },
+            {
+              "i": 41,
+              "type_marker": null
+            },
+            {
+              "i": 42,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$904_$auto$simplemap.cc:420:simplemap_dff$206",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "DFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 15,
+              "type_marker": null
+            },
+            {
+              "i": 16,
+              "type_marker": null
+            },
+            {
+              "i": 17,
+              "type_marker": null
+            },
+            {
+              "i": 18,
+              "type_marker": null
+            },
+            {
+              "i": 19,
+              "type_marker": null
+            },
+            {
+              "i": 20,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$924_$auto$simplemap.cc:420:simplemap_dff$207",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "DFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 21,
+              "type_marker": null
+            },
+            {
+              "i": 22,
+              "type_marker": null
+            },
+            {
+              "i": 23,
+              "type_marker": null
+            },
+            {
+              "i": 24,
+              "type_marker": null
+            },
+            {
+              "i": 25,
+              "type_marker": null
+            },
+            {
+              "i": 26,
+              "type_marker": null
+            },
+            {
+              "i": 27,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$946_$auto$simplemap.cc:420:simplemap_dff$209",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "DFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 45,
+              "type_marker": null
+            },
+            {
+              "i": 46,
+              "type_marker": null
+            },
+            {
+              "i": 47,
+              "type_marker": null
+            },
+            {
+              "i": 48,
+              "type_marker": null
+            },
+            {
+              "i": 49,
+              "type_marker": null
+            },
+            {
+              "i": 50,
+              "type_marker": null
+            },
+            {
+              "i": 51,
+              "type_marker": null
+            },
+            {
+              "i": 52,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$971_$auto$simplemap.cc:420:simplemap_dff$211",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "DFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 28,
+              "type_marker": null
+            },
+            {
+              "i": 29,
+              "type_marker": null
+            },
+            {
+              "i": 30,
+              "type_marker": null
+            },
+            {
+              "i": 31,
+              "type_marker": null
+            },
+            {
+              "i": 32,
+              "type_marker": null
+            },
+            {
+              "i": 33,
+              "type_marker": null
+            },
+            {
+              "i": 34,
+              "type_marker": null
+            },
+            {
+              "i": 35,
+              "type_marker": null
+            },
+            {
+              "i": 36,
+              "type_marker": null
+            },
+            {
+              "i": 37,
+              "type_marker": null
+            },
+            {
+              "i": 38,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$998_$auto$simplemap.cc:420:simplemap_dff$212",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "DFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 3,
+              "type_marker": null
+            },
+            {
+              "i": 4,
+              "type_marker": null
+            },
+            {
+              "i": 5,
+              "type_marker": null
+            },
+            {
+              "i": 6,
+              "type_marker": null
+            },
+            {
+              "i": 7,
+              "type_marker": null
+            },
+            {
+              "i": 8,
+              "type_marker": null
+            },
+            {
+              "i": 9,
+              "type_marker": null
+            },
+            {
+              "i": 10,
+              "type_marker": null
+            },
+            {
+              "i": 11,
+              "type_marker": null
+            },
+            {
+              "i": 12,
+              "type_marker": null
+            },
+            {
+              "i": 13,
+              "type_marker": null
+            },
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:292:execute$1102_$extract$\\FTCP$832",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "TFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": {
+            "i": 1,
+            "type_marker": null
+          },
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$iopadmap.cc:369:execute$1105",
+        "requested_loc": {
+          "fb": 1,
+          "i": 4
+        },
+        "io_bits": {
+          "input": null,
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": true,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": null,
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      }
+    ]
+  },
+  "pterms": {
+    "storage": [
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1097",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:285:execute$1101",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$926",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$995",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$993",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$991",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$989",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$987",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$985",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$983",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$981",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$979",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$977",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$975",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$973",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$901",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$899",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$897",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$895",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$893",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$891",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$921",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$919",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$917",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$915",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$913",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$911",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$909",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$968",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$966",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$964",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$962",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$960",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$958",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$956",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$954",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$952",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$950",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$948",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$886",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$884",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$882",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$880",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$877",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$906",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$943",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$941",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$939",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$937",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$935",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$933",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$931",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$929",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1079",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1077",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1075",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1073",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1071",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1092",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1090",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1088",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1086",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1084",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1053",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1051",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1049",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1047",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1045",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1066",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1064",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1062",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1060",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1058",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1014",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1012",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1010",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1008",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1006",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1004",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1002",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1000",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1027",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1025",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1023",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1021",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1019",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1040",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 11,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1038",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 14,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 9,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 8,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 13,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 12,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1036",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 15,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1034",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 16,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 10,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$1032",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 17,
+              "type_marker": null
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "bufg_clks": {
+    "storage": [
+      {
+        "name": "bufg0",
+        "requested_loc": null,
+        "input": {
+          "i": 18,
+          "type_marker": null
+        }
+      }
+    ]
+  },
+  "bufg_gts": {
+    "storage": []
+  },
+  "bufg_gsr": {
+    "storage": []
+  }
+}

@@ -728,16 +728,26 @@ pub fn try_assign_andterms(g: &InputGraph, go: &mut OutputGraph, mc_assignment: 
         }
     }
 
-    for pterm_idx in g.pterms.iter_idx() {
-        let pterm = g.pterms.get(pterm_idx);
-        // Only do this update if this lookup succeeds. This lookup will fail for terms that are in other FBs
-        if let Some(&mc_i) = existing_pterm_map.get(pterm) {
-            let pterm_go = go.pterms.get_mut(ObjPoolIndex::from(pterm_idx));
-            pterm_go.loc = Some(AssignedLocation{
-                fb: fb_i,
-                i: mc_i as u32,
-            });
-        }
+    // pterm_and_candidate_sites combined with free_pterms is the set of all
+    // pterms we need to update the locations for. The HashMap that was just
+    // created is important because multiple identical pterms can share a site
+    for (pt_g_idx, _) in pterm_and_candidate_sites {
+        let pterm = g.pterms.get(pt_g_idx);
+        let pt_i = *existing_pterm_map.get(pterm).unwrap();
+        let pterm_go = go.pterms.get_mut(ObjPoolIndex::from(pt_g_idx));
+        pterm_go.loc = Some(AssignedLocation{
+            fb: fb_i,
+            i: pt_i as u32,
+        });
+    }
+    for &pt_g_idx in &free_pterms {
+        let pterm = g.pterms.get(pt_g_idx);
+        let pt_i = *existing_pterm_map.get(pterm).unwrap();
+        let pterm_go = go.pterms.get_mut(ObjPoolIndex::from(pt_g_idx));
+        pterm_go.loc = Some(AssignedLocation{
+            fb: fb_i,
+            i: pt_i as u32,
+        });
     }
 
     AndTermAssignmentResult::Success
