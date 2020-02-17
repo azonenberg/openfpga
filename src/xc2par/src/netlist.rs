@@ -429,22 +429,8 @@ impl InputGraph {
                     if input.is_some() {
                         let input = input.unwrap();
 
-                        let source_node_idx = g.nets.get(input).source.unwrap();
-                        let source_node = g.nodes.get(source_node_idx);
-                        if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
-                            debug!(logger, "intermed2input - also pre-mapping IOBUFE XOR";
-                                "name" => &source_node.name,
-                                "intermed" => source_node_idx,
-                                "inputgraph" => newg_idx);
-                            mcs_map.insert(source_node_idx, newg_idx);
-                        } else if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = source_node.variant {
-                            debug!(logger, "intermed2input - also pre-mapping IOBUFE reg";
-                                "name" => &source_node.name,
-                                "intermed" => source_node_idx,
-                                "inputgraph" => newg_idx);
-                            mcs_map.insert(source_node_idx, newg_idx);
-                            // Registered output, look at the input into the register
-                            let source_node_idx = g.nets.get(dt_input).source.unwrap();
+                        if input != g.vdd_net && input != g.vss_net {
+                            let source_node_idx = g.nets.get(input).source.unwrap();
                             let source_node = g.nodes.get(source_node_idx);
                             if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
                                 debug!(logger, "intermed2input - also pre-mapping IOBUFE XOR";
@@ -452,6 +438,22 @@ impl InputGraph {
                                     "intermed" => source_node_idx,
                                     "inputgraph" => newg_idx);
                                 mcs_map.insert(source_node_idx, newg_idx);
+                            } else if let IntermediateGraphNodeVariant::Reg{dt_input, ..} = source_node.variant {
+                                debug!(logger, "intermed2input - also pre-mapping IOBUFE reg";
+                                    "name" => &source_node.name,
+                                    "intermed" => source_node_idx,
+                                    "inputgraph" => newg_idx);
+                                mcs_map.insert(source_node_idx, newg_idx);
+                                // Registered output, look at the input into the register
+                                let source_node_idx = g.nets.get(dt_input).source.unwrap();
+                                let source_node = g.nodes.get(source_node_idx);
+                                if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
+                                    debug!(logger, "intermed2input - also pre-mapping IOBUFE XOR";
+                                        "name" => &source_node.name,
+                                        "intermed" => source_node_idx,
+                                        "inputgraph" => newg_idx);
+                                    mcs_map.insert(source_node_idx, newg_idx);
+                                }
                             }
                         }
                     }
@@ -558,38 +560,62 @@ impl InputGraph {
                             None
                         } else if input.is_some() {
                             if input.unwrap() == s.g.vss_net {
-                                // Open-drain mode
-                                if oe.is_none() || oe.unwrap() == s.g.vdd_net || oe.unwrap() == s.g.vss_net {
-                                    error!(logger, "intermed2input - input is tied low but OE isn't used";
-                                        "name" => &n.name);
-                                    return Err(IntermedToInputError::WrongTiedValue(n.name.to_owned()));
+                                // Input tied permanently low, why?
+                                if oe.is_none() || oe.unwrap() == s.g.vdd_net {
+                                    // Because it's supposed to output a constant 0
+                                    info!(logger, "intermed2input - constant 0 XOR bits";
+                                        "name" => &n.name,
+                                        "intermed" => n_idx,
+                                        "inputgraph" => newg_idx);
+                                    let newg_n = s.mcs.get_mut(newg_idx);
+                                    assert!(newg_n.xor_bits.is_none());
+                                    newg_n.xor_bits = Some(InputGraphXor {
+                                        orterm_inputs: vec![],
+                                        andterm_input: None,
+                                        invert_out: false,
+                                    });
+
+                                    Some(InputGraphIOInputType::Xor)
+                                } else {
+                                    // Open-drain mode
+                                    assert!(oe.unwrap() != s.g.vss_net);
+                                    // FIXME: Copypasta
+                                    let input_n = s.g.nets.get(oe.unwrap()).source.unwrap();
+                                    let input_type = match s.g.nodes.get(input_n).variant {
+                                        IntermediateGraphNodeVariant::Xor{..} => {
+                                            Some(InputGraphIOInputType::Xor)
+                                        },
+                                        IntermediateGraphNodeVariant::Reg{..} => {
+                                            Some(InputGraphIOInputType::Reg)
+                                        },
+                                        _ => {
+                                            error!(logger, "intermed2input - input is not an XOR or a register";
+                                                "name" => &n.name);
+                                            return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
+                                        },
+                                    };
+
+                                    // We need to recursively process this. Update the relevant map as well to make sure we
+                                    // don't mess up along the way.
+                                    s.mcs_map.insert(input_n, newg_idx);
+                                    process_one_intermed_node(s, input_n, logger)?;
+
+                                    input_type
                                 }
-                                // FIXME: Copypasta
-                                let input_n = s.g.nets.get(oe.unwrap()).source.unwrap();
-                                let input_type = match s.g.nodes.get(input_n).variant {
-                                    IntermediateGraphNodeVariant::Xor{..} => {
-                                        Some(InputGraphIOInputType::Xor)
-                                    },
-                                    IntermediateGraphNodeVariant::Reg{..} => {
-                                        Some(InputGraphIOInputType::Reg)
-                                    },
-                                    _ => {
-                                        error!(logger, "intermed2input - input is not an XOR or a register";
-                                            "name" => &n.name);
-                                        return Err(IntermedToInputError::WrongConnectionType(n.name.to_owned()));
-                                    },
-                                };
-
-                                // We need to recursively process this. Update the relevant map as well to make sure we
-                                // don't mess up along the way.
-                                s.mcs_map.insert(input_n, newg_idx);
-                                process_one_intermed_node(s, input_n, logger)?;
-
-                                input_type
                             } else if input.unwrap() == s.g.vdd_net {
-                                error!(logger, "intermed2input - input is tied to a constant one";
-                                    "name" => &n.name);
-                                return Err(IntermedToInputError::WrongTiedValue(n.name.to_owned()));
+                                info!(logger, "intermed2input - constant 1 XOR bits";
+                                    "name" => &n.name,
+                                    "intermed" => n_idx,
+                                    "inputgraph" => newg_idx);
+                                let newg_n = s.mcs.get_mut(newg_idx);
+                                assert!(newg_n.xor_bits.is_none());
+                                newg_n.xor_bits = Some(InputGraphXor {
+                                    orterm_inputs: vec![],
+                                    andterm_input: None,
+                                    invert_out: true,
+                                });
+
+                                Some(InputGraphIOInputType::Xor)
                             } else {
                                 let input_n = s.g.nets.get(input.unwrap()).source.unwrap();
                                 let input_type = match s.g.nodes.get(input_n).variant {

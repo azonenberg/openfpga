@@ -838,6 +838,13 @@ impl IntermediateGraph {
                 if input.is_some() {
                     let input = input.unwrap();
 
+                    if input == self.vdd_net || input == self.vss_net {
+                        debug!(logger, "gather - IOBUFE set to constant value";
+                            "iobufe name" => &node.name,
+                            "value" => if input == self.vdd_net {"VDD"} else {"VSS"});
+                        continue;
+                    }
+
                     let source_node_idx = self.nets.get(input).source.unwrap();
                     let source_node = self.nodes.get(source_node_idx);
                     if let IntermediateGraphNodeVariant::Xor{..} = source_node.variant {
