@@ -1,0 +1,80 @@
+{
+  "nodes": {
+    "storage": [
+      {
+        "variant": {
+          "IOBuf": {
+            "input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "oe": null,
+            "output": null,
+            "schmitt_trigger": false,
+            "termination_enabled": false,
+            "slew_is_fast": false,
+            "uses_data_gate": false
+          }
+        },
+        "name": "$auto$iopadmap.cc:369:execute$47",
+        "location": {
+          "fb": 0,
+          "i": 8
+        }
+      },
+      {
+        "variant": {
+          "IOBuf": {
+            "input": {
+              "i": 0,
+              "type_marker": null
+            },
+            "oe": null,
+            "output": null,
+            "schmitt_trigger": false,
+            "termination_enabled": false,
+            "slew_is_fast": false,
+            "uses_data_gate": false
+          }
+        },
+        "name": "$auto$iopadmap.cc:369:execute$48",
+        "location": {
+          "fb": 0,
+          "i": 9
+        }
+      }
+    ]
+  },
+  "nets": {
+    "storage": [
+      {
+        "name": "<internal virtual Vdd net>",
+        "source": null,
+        "sinks": [
+          {
+            "i": 1,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "<internal virtual Vss net>",
+        "source": null,
+        "sinks": [
+          {
+            "i": 0,
+            "type_marker": null
+          }
+        ]
+      }
+    ]
+  },
+  "vdd_net": {
+    "i": 0,
+    "type_marker": null
+  },
+  "vss_net": {
+    "i": 1,
+    "type_marker": null
+  }
+}

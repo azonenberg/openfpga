@@ -1,0 +1,66 @@
+{
+  "mcs": {
+    "storage": [
+      {
+        "name": "$auto$iopadmap.cc:369:execute$47",
+        "requested_loc": {
+          "fb": 0,
+          "i": 8
+        },
+        "io_bits": {
+          "input": "Xor",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": null,
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$iopadmap.cc:369:execute$48",
+        "requested_loc": {
+          "fb": 0,
+          "i": 9
+        },
+        "io_bits": {
+          "input": "Xor",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": null,
+          "invert_out": true
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      }
+    ]
+  },
+  "pterms": {
+    "storage": []
+  },
+  "bufg_clks": {
+    "storage": []
+  },
+  "bufg_gts": {
+    "storage": []
+  },
+  "bufg_gsr": {
+    "storage": []
+  }
+}
