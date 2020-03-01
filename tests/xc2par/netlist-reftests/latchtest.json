@@ -1,0 +1,973 @@
+{
+  "nodes": {
+    "storage": [
+      {
+        "variant": {
+          "AndTerm": {
+            "inputs_true": [
+              {
+                "i": 2,
+                "type_marker": null
+              }
+            ],
+            "inputs_comp": [],
+            "output": {
+              "i": 3,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_fixup.cc:101:execute$305",
+        "location": null
+      },
+      {
+        "variant": {
+          "Xor": {
+            "orterm_input": null,
+            "andterm_input": {
+              "i": 3,
+              "type_marker": null
+            },
+            "invert_out": false,
+            "output": {
+              "i": 4,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_fixup.cc:108:execute$306",
+        "location": null
+      },
+      {
+        "variant": {
+          "AndTerm": {
+            "inputs_true": [
+              {
+                "i": 5,
+                "type_marker": null
+              },
+              {
+                "i": 6,
+                "type_marker": null
+              }
+            ],
+            "inputs_comp": [],
+            "output": {
+              "i": 7,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:143:execute$274",
+        "location": null
+      },
+      {
+        "variant": {
+          "AndTerm": {
+            "inputs_true": [],
+            "inputs_comp": [
+              {
+                "i": 8,
+                "type_marker": null
+              }
+            ],
+            "output": {
+              "i": 9,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:143:execute$277",
+        "location": null
+      },
+      {
+        "variant": {
+          "AndTerm": {
+            "inputs_true": [],
+            "inputs_comp": [
+              {
+                "i": 6,
+                "type_marker": null
+              },
+              {
+                "i": 10,
+                "type_marker": null
+              }
+            ],
+            "output": {
+              "i": 11,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:143:execute$280",
+        "location": null
+      },
+      {
+        "variant": {
+          "AndTerm": {
+            "inputs_true": [],
+            "inputs_comp": [
+              {
+                "i": 5,
+                "type_marker": null
+              },
+              {
+                "i": 10,
+                "type_marker": null
+              }
+            ],
+            "output": {
+              "i": 12,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:143:execute$282",
+        "location": null
+      },
+      {
+        "variant": {
+          "AndTerm": {
+            "inputs_true": [
+              {
+                "i": 6,
+                "type_marker": null
+              },
+              {
+                "i": 2,
+                "type_marker": null
+              }
+            ],
+            "inputs_comp": [],
+            "output": {
+              "i": 13,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:143:execute$287",
+        "location": null
+      },
+      {
+        "variant": {
+          "AndTerm": {
+            "inputs_true": [],
+            "inputs_comp": [
+              {
+                "i": 5,
+                "type_marker": null
+              },
+              {
+                "i": 6,
+                "type_marker": null
+              }
+            ],
+            "output": {
+              "i": 14,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:143:execute$290",
+        "location": null
+      },
+      {
+        "variant": {
+          "AndTerm": {
+            "inputs_true": [],
+            "inputs_comp": [
+              {
+                "i": 2,
+                "type_marker": null
+              }
+            ],
+            "output": {
+              "i": 15,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:143:execute$293",
+        "location": null
+      },
+      {
+        "variant": {
+          "Xor": {
+            "orterm_input": null,
+            "andterm_input": {
+              "i": 7,
+              "type_marker": null
+            },
+            "invert_out": false,
+            "output": {
+              "i": 8,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:154:execute$275",
+        "location": null
+      },
+      {
+        "variant": {
+          "Xor": {
+            "orterm_input": null,
+            "andterm_input": {
+              "i": 9,
+              "type_marker": null
+            },
+            "invert_out": false,
+            "output": {
+              "i": 16,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:154:execute$278",
+        "location": null
+      },
+      {
+        "variant": {
+          "Xor": {
+            "orterm_input": null,
+            "andterm_input": {
+              "i": 13,
+              "type_marker": null
+            },
+            "invert_out": false,
+            "output": {
+              "i": 17,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:154:execute$288",
+        "location": null
+      },
+      {
+        "variant": {
+          "Xor": {
+            "orterm_input": null,
+            "andterm_input": {
+              "i": 15,
+              "type_marker": null
+            },
+            "invert_out": false,
+            "output": {
+              "i": 18,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:154:execute$294",
+        "location": null
+      },
+      {
+        "variant": {
+          "OrTerm": {
+            "inputs": [
+              {
+                "i": 12,
+                "type_marker": null
+              },
+              {
+                "i": 11,
+                "type_marker": null
+              }
+            ],
+            "output": {
+              "i": 19,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:217:execute$284",
+        "location": null
+      },
+      {
+        "variant": {
+          "Xor": {
+            "orterm_input": {
+              "i": 19,
+              "type_marker": null
+            },
+            "andterm_input": null,
+            "invert_out": false,
+            "output": {
+              "i": 20,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$coolrunner2_sop.cc:223:execute$285",
+        "location": null
+      },
+      {
+        "variant": {
+          "InBuf": {
+            "output": {
+              "i": 10,
+              "type_marker": null
+            },
+            "schmitt_trigger": false,
+            "termination_enabled": false,
+            "uses_data_gate": false
+          }
+        },
+        "name": "$auto$iopadmap.cc:369:execute$295",
+        "location": {
+          "fb": 0,
+          "i": 13
+        }
+      },
+      {
+        "variant": {
+          "InBuf": {
+            "output": {
+              "i": 21,
+              "type_marker": null
+            },
+            "schmitt_trigger": false,
+            "termination_enabled": false,
+            "uses_data_gate": false
+          }
+        },
+        "name": "$auto$iopadmap.cc:369:execute$296",
+        "location": {
+          "fb": 1,
+          "i": 4
+        }
+      },
+      {
+        "variant": {
+          "IOBuf": {
+            "input": {
+              "i": 22,
+              "type_marker": null
+            },
+            "oe": null,
+            "output": null,
+            "schmitt_trigger": false,
+            "termination_enabled": false,
+            "slew_is_fast": false,
+            "uses_data_gate": false
+          }
+        },
+        "name": "$auto$iopadmap.cc:369:execute$297",
+        "location": {
+          "fb": 0,
+          "i": 1
+        }
+      },
+      {
+        "variant": {
+          "IOBuf": {
+            "input": {
+              "i": 23,
+              "type_marker": null
+            },
+            "oe": null,
+            "output": null,
+            "schmitt_trigger": false,
+            "termination_enabled": false,
+            "slew_is_fast": false,
+            "uses_data_gate": false
+          }
+        },
+        "name": "$auto$iopadmap.cc:369:execute$298",
+        "location": {
+          "fb": 0,
+          "i": 5
+        }
+      },
+      {
+        "variant": {
+          "Reg": {
+            "mode": "DFF",
+            "clkinv": false,
+            "clkddr": false,
+            "init_state": false,
+            "set_input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "reset_input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "ce_input": null,
+            "dt_input": {
+              "i": 18,
+              "type_marker": null
+            },
+            "clk_input": {
+              "i": 24,
+              "type_marker": null
+            },
+            "output": {
+              "i": 2,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$simplemap.cc:420:simplemap_dff$154",
+        "location": null
+      },
+      {
+        "variant": {
+          "Reg": {
+            "mode": "LATCH",
+            "clkinv": true,
+            "clkddr": false,
+            "init_state": false,
+            "set_input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "reset_input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "ce_input": null,
+            "dt_input": {
+              "i": 16,
+              "type_marker": null
+            },
+            "clk_input": {
+              "i": 14,
+              "type_marker": null
+            },
+            "output": {
+              "i": 22,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$simplemap.cc:517:simplemap_dlatch$152",
+        "location": null
+      },
+      {
+        "variant": {
+          "Reg": {
+            "mode": "LATCH",
+            "clkinv": true,
+            "clkddr": false,
+            "init_state": false,
+            "set_input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "reset_input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "ce_input": null,
+            "dt_input": {
+              "i": 20,
+              "type_marker": null
+            },
+            "clk_input": {
+              "i": 14,
+              "type_marker": null
+            },
+            "output": {
+              "i": 23,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$auto$simplemap.cc:517:simplemap_dlatch$153",
+        "location": null
+      },
+      {
+        "variant": {
+          "Reg": {
+            "mode": "TFF",
+            "clkinv": false,
+            "clkddr": false,
+            "init_state": false,
+            "set_input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "reset_input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "ce_input": null,
+            "dt_input": {
+              "i": 4,
+              "type_marker": null
+            },
+            "clk_input": {
+              "i": 24,
+              "type_marker": null
+            },
+            "output": {
+              "i": 6,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$extract$\\FTCP$262",
+        "location": null
+      },
+      {
+        "variant": {
+          "Reg": {
+            "mode": "TFF",
+            "clkinv": false,
+            "clkddr": false,
+            "init_state": false,
+            "set_input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "reset_input": {
+              "i": 1,
+              "type_marker": null
+            },
+            "ce_input": null,
+            "dt_input": {
+              "i": 17,
+              "type_marker": null
+            },
+            "clk_input": {
+              "i": 24,
+              "type_marker": null
+            },
+            "output": {
+              "i": 5,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "$extract$\\FTCP$263",
+        "location": null
+      },
+      {
+        "variant": {
+          "BufgClk": {
+            "input": {
+              "i": 21,
+              "type_marker": null
+            },
+            "output": {
+              "i": 24,
+              "type_marker": null
+            }
+          }
+        },
+        "name": "bufg0",
+        "location": null
+      }
+    ]
+  },
+  "nets": {
+    "storage": [
+      {
+        "name": "<internal virtual Vdd net>",
+        "source": null,
+        "sinks": []
+      },
+      {
+        "name": "<internal virtual Vss net>",
+        "source": null,
+        "sinks": [
+          {
+            "i": 19,
+            "type_marker": null
+          },
+          {
+            "i": 19,
+            "type_marker": null
+          },
+          {
+            "i": 20,
+            "type_marker": null
+          },
+          {
+            "i": 20,
+            "type_marker": null
+          },
+          {
+            "i": 21,
+            "type_marker": null
+          },
+          {
+            "i": 21,
+            "type_marker": null
+          },
+          {
+            "i": 22,
+            "type_marker": null
+          },
+          {
+            "i": 22,
+            "type_marker": null
+          },
+          {
+            "i": 23,
+            "type_marker": null
+          },
+          {
+            "i": 23,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "dotcnt[0]",
+        "source": {
+          "i": 19,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 0,
+            "type_marker": null
+          },
+          {
+            "i": 6,
+            "type_marker": null
+          },
+          {
+            "i": 8,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_fixup.cc:98:execute$303",
+        "source": {
+          "i": 0,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 1,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_fixup.cc:99:execute$304",
+        "source": {
+          "i": 1,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 22,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "dotcnt[2]",
+        "source": {
+          "i": 23,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 2,
+            "type_marker": null
+          },
+          {
+            "i": 5,
+            "type_marker": null
+          },
+          {
+            "i": 7,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "dotcnt[1]",
+        "source": {
+          "i": 22,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 2,
+            "type_marker": null
+          },
+          {
+            "i": 4,
+            "type_marker": null
+          },
+          {
+            "i": 6,
+            "type_marker": null
+          },
+          {
+            "i": 7,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:124:execute$273",
+        "source": {
+          "i": 2,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 9,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$abc$264$new_n11_",
+        "source": {
+          "i": 9,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 3,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:124:execute$276",
+        "source": {
+          "i": 3,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 10,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$iopadmap.cc:409:execute$302",
+        "source": {
+          "i": 15,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 4,
+            "type_marker": null
+          },
+          {
+            "i": 5,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:124:execute$279",
+        "source": {
+          "i": 4,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 13,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:124:execute$281",
+        "source": {
+          "i": 5,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 13,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:124:execute$286",
+        "source": {
+          "i": 6,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 11,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:124:execute$289",
+        "source": {
+          "i": 7,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 20,
+            "type_marker": null
+          },
+          {
+            "i": 21,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:124:execute$292",
+        "source": {
+          "i": 8,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 12,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$0\\r0[0:0]",
+        "source": {
+          "i": 10,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 20,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$abc$249$new_n18_",
+        "source": {
+          "i": 11,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 23,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$0\\dotcnt[2:0][0]",
+        "source": {
+          "i": 12,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 19,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:214:execute$283",
+        "source": {
+          "i": 13,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 14,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$0\\r1[0:0]",
+        "source": {
+          "i": 14,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 21,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$iopadmap.cc:409:execute$301",
+        "source": {
+          "i": 16,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 24,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$iopadmap.cc:409:execute$300",
+        "source": {
+          "i": 20,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 17,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "$auto$iopadmap.cc:409:execute$299",
+        "source": {
+          "i": 21,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 18,
+            "type_marker": null
+          }
+        ]
+      },
+      {
+        "name": "clk",
+        "source": {
+          "i": 24,
+          "type_marker": null
+        },
+        "sinks": [
+          {
+            "i": 19,
+            "type_marker": null
+          },
+          {
+            "i": 22,
+            "type_marker": null
+          },
+          {
+            "i": 23,
+            "type_marker": null
+          }
+        ]
+      }
+    ]
+  },
+  "vdd_net": {
+    "i": 0,
+    "type_marker": null
+  },
+  "vss_net": {
+    "i": 1,
+    "type_marker": null
+  }
+}

@@ -575,7 +575,17 @@ pub enum AndTermAssignmentResult {
 pub fn try_assign_andterms(g: &InputGraph, go: &mut OutputGraph, mc_assignment: &PARFBAssignment, fb_i: u32)
     -> AndTermAssignmentResult {
 
-    let mut ret = [None; ANDTERMS_PER_FB];
+    // FIXME: Too big for default to work
+    let mut ret = [
+        HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(),
+        HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(),
+        HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(),
+        HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(),
+        HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(),
+        HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(),
+        HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(),
+        HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(), HashSet::new(),
+    ];
 
     // This is a collection of p-terms that have some restrictions on where they can be placed (either because the
     // p-term is used for some special function or because there is a LOC constraint on it). The algorithm will run
@@ -686,7 +696,7 @@ pub fn try_assign_andterms(g: &InputGraph, go: &mut OutputGraph, mc_assignment: 
     // TODO: MRV/LCV?
     let mut most_placed = 0;
     fn backtrack_inner(g: &InputGraph, most_placed: &mut u32,
-        ret: &mut [Option<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB],
+        ret: &mut [HashSet<ObjPoolIndex<InputGraphPTerm>>; ANDTERMS_PER_FB],
         candidate_sites: &[(ObjPoolIndex<InputGraphPTerm>, Vec<u32>)],
         working_on_idx: usize) -> bool {
 
@@ -697,14 +707,16 @@ pub fn try_assign_andterms(g: &InputGraph, go: &mut OutputGraph, mc_assignment: 
         let (pt_idx, ref candidate_sites_for_this_input) = candidate_sites[working_on_idx];
         let pt = g.pterms.get(pt_idx);
         for &candidate_pt_i in candidate_sites_for_this_input {
-            if ret[candidate_pt_i as usize].is_none() || (g.pterms.get(ret[candidate_pt_i as usize].unwrap()) == pt) {
+            if ret[candidate_pt_i as usize].is_empty() || (g.pterms.get(*ret[candidate_pt_i as usize].iter().next().unwrap()) == pt) {
                 // It is possible to assign to this site
-                ret[candidate_pt_i as usize] = Some(pt_idx);
+                let x = ret[candidate_pt_i as usize].insert(pt_idx);
+                assert!(x);
                 *most_placed = working_on_idx as u32 + 1;
                 if backtrack_inner(g, most_placed, ret, candidate_sites, working_on_idx + 1) {
                     return true;
                 }
-                ret[candidate_pt_i as usize] = None;
+                let x = ret[candidate_pt_i as usize].remove(&pt_idx);
+                assert!(x);
             }
         }
         return false;
@@ -720,9 +732,10 @@ pub fn try_assign_andterms(g: &InputGraph, go: &mut OutputGraph, mc_assignment: 
         let pt = g.pterms.get(pt_idx);
         let mut found = false;
         for candidate_pt_i in 0..ANDTERMS_PER_FB {
-            if ret[candidate_pt_i].is_none() || (g.pterms.get(ret[candidate_pt_i].unwrap()) == pt) {
+            if ret[candidate_pt_i].is_empty() || (g.pterms.get(*ret[candidate_pt_i].iter().next().unwrap()) == pt) {
                 // It is possible to assign to this site
-                ret[candidate_pt_i] = Some(pt_idx);
+                let x = ret[candidate_pt_i].insert(pt_idx);
+                assert!(x);
                 most_placed += 1;
                 found = true;
                 break;
@@ -737,34 +750,14 @@ pub fn try_assign_andterms(g: &InputGraph, go: &mut OutputGraph, mc_assignment: 
     }
 
     // If we got here, everything is assigned. Update the "reverse" pointers
-    let mut existing_pterm_map = HashMap::new();
     for pterm_i in 0..ANDTERMS_PER_FB {
-        if let Some(pterm_idx) = ret[pterm_i] {
-            let pterm_obj = g.pterms.get(pterm_idx);
-            existing_pterm_map.insert(pterm_obj.clone(), pterm_i);
+        for &pt_g_idx in ret[pterm_i].iter() {
+            let pterm_go = go.pterms.get_mut(ObjPoolIndex::from(pt_g_idx));
+            pterm_go.loc = Some(AssignedLocation{
+                fb: fb_i,
+                i: pterm_i as u32,
+            });
         }
-    }
-
-    // pterm_and_candidate_sites combined with free_pterms is the set of all
-    // pterms we need to update the locations for. The HashMap that was just
-    // created is important because multiple identical pterms can share a site
-    for (pt_g_idx, _) in pterm_and_candidate_sites {
-        let pterm = g.pterms.get(pt_g_idx);
-        let pt_i = *existing_pterm_map.get(pterm).unwrap();
-        let pterm_go = go.pterms.get_mut(ObjPoolIndex::from(pt_g_idx));
-        pterm_go.loc = Some(AssignedLocation{
-            fb: fb_i,
-            i: pt_i as u32,
-        });
-    }
-    for &pt_g_idx in &free_pterms {
-        let pterm = g.pterms.get(pt_g_idx);
-        let pt_i = *existing_pterm_map.get(pterm).unwrap();
-        let pterm_go = go.pterms.get_mut(ObjPoolIndex::from(pt_g_idx));
-        pterm_go.loc = Some(AssignedLocation{
-            fb: fb_i,
-            i: pt_i as u32,
-        });
     }
 
     AndTermAssignmentResult::Success

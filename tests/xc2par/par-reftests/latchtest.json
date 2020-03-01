@@ -1,0 +1,439 @@
+{
+  "mcs": {
+    "storage": [
+      {
+        "name": "$auto$coolrunner2_sop.cc:154:execute$278_$auto$simplemap.cc:517:simplemap_dlatch$152_$auto$iopadmap.cc:369:execute$297",
+        "requested_loc": {
+          "fb": 0,
+          "i": 1
+        },
+        "io_bits": {
+          "input": "Reg",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": {
+          "mode": "LATCH",
+          "clkinv": true,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "PTerm": {
+              "i": 5,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": {
+            "i": 4,
+            "type_marker": null
+          },
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:223:execute$285_$auto$simplemap.cc:517:simplemap_dlatch$153_$auto$iopadmap.cc:369:execute$298",
+        "requested_loc": {
+          "fb": 0,
+          "i": 5
+        },
+        "io_bits": {
+          "input": "Reg",
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": false,
+          "uses_data_gate": false
+        },
+        "reg_bits": {
+          "mode": "LATCH",
+          "clkinv": true,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "PTerm": {
+              "i": 8,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [
+            {
+              "i": 6,
+              "type_marker": null
+            },
+            {
+              "i": 7,
+              "type_marker": null
+            }
+          ],
+          "andterm_input": null,
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_fixup.cc:108:execute$306_$extract$\\FTCP$262",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "TFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": {
+            "i": 1,
+            "type_marker": null
+          },
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:154:execute$275",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": null,
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": {
+            "i": 3,
+            "type_marker": null
+          },
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": true
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:154:execute$288_$extract$\\FTCP$263",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "TFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": {
+            "i": 2,
+            "type_marker": null
+          },
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:154:execute$294_$auto$simplemap.cc:420:simplemap_dff$154",
+        "requested_loc": null,
+        "io_bits": null,
+        "reg_bits": {
+          "mode": "DFF",
+          "clkinv": false,
+          "clkddr": false,
+          "init_state": false,
+          "set_input": null,
+          "reset_input": null,
+          "ce_input": null,
+          "dt_input": "Xor",
+          "clk_input": {
+            "GCK": {
+              "i": 0,
+              "type_marker": null
+            }
+          }
+        },
+        "xor_bits": {
+          "orterm_inputs": [],
+          "andterm_input": {
+            "i": 0,
+            "type_marker": null
+          },
+          "invert_out": false
+        },
+        "io_feedback_used": false,
+        "reg_feedback_used": true,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$iopadmap.cc:369:execute$295",
+        "requested_loc": {
+          "fb": 0,
+          "i": 13
+        },
+        "io_bits": {
+          "input": null,
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": true,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": null,
+        "io_feedback_used": true,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      },
+      {
+        "name": "$auto$iopadmap.cc:369:execute$296",
+        "requested_loc": {
+          "fb": 1,
+          "i": 4
+        },
+        "io_bits": {
+          "input": null,
+          "oe": null,
+          "schmitt_trigger": false,
+          "termination_enabled": false,
+          "slew_is_fast": true,
+          "uses_data_gate": false
+        },
+        "reg_bits": null,
+        "xor_bits": null,
+        "io_feedback_used": false,
+        "reg_feedback_used": false,
+        "xor_feedback_used": false
+      }
+    ]
+  },
+  "pterms": {
+    "storage": [
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$293",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 5,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_fixup.cc:101:execute$305",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 5,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$287",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 2,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 5,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$274",
+        "requested_loc": null,
+        "inputs_true": [
+          [
+            "Reg",
+            {
+              "i": 4,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 2,
+              "type_marker": null
+            }
+          ]
+        ],
+        "inputs_comp": []
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$277",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Xor",
+            {
+              "i": 3,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$290",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 4,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 2,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$282",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 4,
+              "type_marker": null
+            }
+          ],
+          [
+            "Pin",
+            {
+              "i": 6,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$280",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 2,
+              "type_marker": null
+            }
+          ],
+          [
+            "Pin",
+            {
+              "i": 6,
+              "type_marker": null
+            }
+          ]
+        ]
+      },
+      {
+        "name": "$auto$coolrunner2_sop.cc:143:execute$290",
+        "requested_loc": null,
+        "inputs_true": [],
+        "inputs_comp": [
+          [
+            "Reg",
+            {
+              "i": 4,
+              "type_marker": null
+            }
+          ],
+          [
+            "Reg",
+            {
+              "i": 2,
+              "type_marker": null
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "bufg_clks": {
+    "storage": [
+      {
+        "name": "bufg0",
+        "requested_loc": null,
+        "input": {
+          "i": 7,
+          "type_marker": null
+        }
+      }
+    ]
+  },
+  "bufg_gts": {
+    "storage": []
+  },
+  "bufg_gsr": {
+    "storage": []
+  }
+}
