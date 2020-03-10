@@ -81,16 +81,6 @@ pub fn produce_bitstream(device_type: XC2DeviceSpeedPackage, g: &InputGraph, go:
                     ($iob_bit:expr) => {{
                         $iob_bit.termination_enabled = io_bits.termination_enabled;
                         $iob_bit.slew_is_fast = io_bits.slew_is_fast;
-                        if mc.io_feedback_used {
-                            // We need to set the ZIA mode to use the IO pad.
-                            $iob_bit.zia_mode = XC2IOBZIAMode::PAD;
-                        } else if (mc.xor_feedback_used && mc.reg_feedback_used) ||
-                            mc.get_type() == InputGraphMacrocellType::PinInputReg {
-
-                            // If both of these are used, then the register _has_ to come from here. Otherwise use the
-                            // "normal" one. Additionally, if we are a registered input pin, use the register.
-                            $iob_bit.zia_mode = XC2IOBZIAMode::REG;
-                        }
                         if let Some(input) = io_bits.input {
                             $iob_bit.obuf_uses_ff = input == InputGraphIOInputType::Reg;
                             $iob_bit.obuf_mode = match io_bits.oe {
@@ -142,6 +132,34 @@ pub fn produce_bitstream(device_type: XC2DeviceSpeedPackage, g: &InputGraph, go:
                     iob_bit.uses_data_gate = io_bits.uses_data_gate;
                     output_iob_common!(iob_bit);
                 }
+            }
+        }
+
+        // Set the ZIA feedback mode (even if the io bit isn't actually used)
+        if let Some(i_iob) = fb_mc_num_to_iob_num(device_type.dev, fb_i as u32, mc_i as u32) {
+            macro_rules! output_iob_common {
+                ($iob_bit:expr) => {{
+                    if mc.io_feedback_used {
+                        // We need to set the ZIA mode to use the IO pad.
+                        $iob_bit.zia_mode = XC2IOBZIAMode::PAD;
+                    } else if (mc.xor_feedback_used && mc.reg_feedback_used) ||
+                        mc.get_type() == InputGraphMacrocellType::PinInputReg {
+
+                        // If both of these are used, then the register _has_ to come from here. Otherwise use the
+                        // "normal" one. Additionally, if we are a registered input pin, use the register.
+                        $iob_bit.zia_mode = XC2IOBZIAMode::REG;
+                    }
+                }}
+            }
+
+            if device_type.dev.is_small_iob() {
+                let iob_bit = result.bits.get_mut_small_iob(i_iob as usize).unwrap();
+
+                output_iob_common!(iob_bit);
+            } else {
+                let iob_bit = result.bits.get_mut_large_iob(i_iob as usize).unwrap();
+
+                output_iob_common!(iob_bit);
             }
         }
     }
