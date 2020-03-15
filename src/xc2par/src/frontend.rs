@@ -26,7 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::error;
 use std::fmt;
 use std::collections::{HashMap, HashSet};
-use objpool::*;
+use crate::objpool::*;
 use slog;
 use slog::Drain;
 use slog_stdlog;

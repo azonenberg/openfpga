@@ -28,10 +28,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::io;
 use std::io::Write;
 
-use *;
-use fusemap_logical::{gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx, clock_div_fuse_idx};
-use fusemap_physical::{gck_fuse_coords, gsr_fuse_coords, gts_fuse_coords, global_term_fuse_coord,
-                       clock_div_fuse_coord};
+use crate::*;
+use crate::fusemap_logical::{gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx, clock_div_fuse_idx};
+use crate::fusemap_physical::{gck_fuse_coords, gsr_fuse_coords, gts_fuse_coords, global_term_fuse_coord,
+                              clock_div_fuse_coord};
 
 /// Represents the configuration of the global nets. Coolrunner-II parts have various global control signals that have
 /// dedicated low-skew paths.

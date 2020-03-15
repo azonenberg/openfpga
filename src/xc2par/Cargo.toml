@@ -6,6 +6,7 @@ authors = ["Robert Ou <rqou@robertou.com>"]
 license = "BSD-2-Clause"
 description = "Unofficial open-source Coolrunner-II place-and-route"
 repository = "https://github.com/azonenberg/openfpga/tree/master/src/xc2par"
+edition = "2018"
 
 [profile.release]
 lto = true

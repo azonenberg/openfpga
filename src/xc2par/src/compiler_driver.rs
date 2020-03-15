@@ -30,7 +30,7 @@ use std::fmt;
 use slog::Drain;
 use xc2bit::*;
 
-use *;
+use crate::*;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum ParOutputFormat {

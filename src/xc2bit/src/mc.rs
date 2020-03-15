@@ -30,10 +30,10 @@ use std::io::Write;
 
 use jedec::*;
 
-use *;
-use fusemap_physical::{mc_block_loc};
-use util::{LinebreakSet};
-use zia::{zia_get_row_width};
+use crate::*;
+use crate::fusemap_physical::{mc_block_loc};
+use crate::util::{LinebreakSet};
+use crate::zia::{zia_get_row_width};
 
 /// Clock source for the register in a macrocell
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]

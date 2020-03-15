@@ -25,7 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains routines for dealing with xc2bit's "native" crbit format. TODO: Document this format.
 
-use util::{b2s};
+use crate::util::{b2s};
 
 use std::io;
 use std::io::Write;

@@ -30,10 +30,10 @@ use std::io::Write;
 
 use jedec::*;
 
-use *;
-use fusemap_physical::{mc_block_loc};
-use mc::{MC_TO_ROW_MAP_LARGE};
-use zia::{zia_get_row_width};
+use crate::*;
+use crate::fusemap_physical::{mc_block_loc};
+use crate::mc::{MC_TO_ROW_MAP_LARGE};
+use crate::zia::{zia_get_row_width};
 
 /// Mux selection for the ZIA input from this I/O pin's input. The ZIA input can be chosen to come from either the
 /// input pin directly or from the output of the register in the macrocell corresponding to this I/O pin. The latter

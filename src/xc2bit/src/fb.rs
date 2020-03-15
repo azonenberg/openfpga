@@ -30,10 +30,10 @@ use std::io::Write;
 
 use jedec::*;
 
-use *;
-use fusemap_physical::{zia_block_loc, and_block_loc, or_block_loc};
-use util::{LinebreakSet};
-use zia::{zia_get_row_width};
+use crate::*;
+use crate::fusemap_physical::{zia_block_loc, and_block_loc, or_block_loc};
+use crate::util::{LinebreakSet};
+use crate::zia::{zia_get_row_width};
 
 /// Represents a collection of all the parts that make up one function block
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]

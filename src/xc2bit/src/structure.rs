@@ -25,7 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains routines that provide the CPLD structure to other programs.
 
-use *;
+use crate::*;
 
 /// Returns the function block and macrocell index of the global clock signal GCKn for the given device
 pub fn get_gck(device: XC2Device, idx: usize) -> Option<(u32, u32)> {

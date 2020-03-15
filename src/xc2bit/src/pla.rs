@@ -25,7 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains functions pertaining to the PLA
 
-use *;
+use crate::*;
 
 /// Represents one single AND term in the PLA. Each AND term can perform an AND function on any subset of its inputs
 /// and the complement of those inputs. The index for each input is the corresponding ZIA row.

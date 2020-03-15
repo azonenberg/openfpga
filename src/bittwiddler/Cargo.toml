@@ -5,6 +5,7 @@ authors = ["Robert Ou <rqou@robertou.com>"]
 license = "BSD-2-Clause"
 description = "Magic macros for helping to read/write bitstreams"
 repository = "https://github.com/azonenberg/openfpga/tree/master/src/bittwiddler"
+edition = "2018"
 
 [lib]
 proc-macro = true

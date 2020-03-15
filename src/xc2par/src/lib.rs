@@ -37,18 +37,18 @@ extern crate yosys_netlist_json;
 extern crate xc2bit;
 
 mod compiler_driver;
-pub use compiler_driver::*;
+pub use crate::compiler_driver::*;
 
 mod frontend;
-pub use frontend::*;
+pub use crate::frontend::*;
 
 mod engine;
-pub use engine::*;
+pub use crate::engine::*;
 
 mod netlist;
-pub use netlist::*;
+pub use crate::netlist::*;
 
 mod objpool;
 
 mod output;
-pub use output::*;
+pub use crate::output::*;

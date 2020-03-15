@@ -71,43 +71,43 @@ pub const NUM_BUFG_GTS: usize = 4;
 pub const NUM_BUFG_GSR: usize = 1;
 
 mod bitstream;
-pub use bitstream::{XC2Bitstream, XC2BitstreamBits};
+pub use crate::bitstream::{XC2Bitstream, XC2BitstreamBits};
 
 mod crbit;
-pub use crbit::{FuseArray};
+pub use crate::crbit::{FuseArray};
 
 mod errors;
-pub use errors::{XC2BitError};
+pub use crate::errors::{XC2BitError};
 
 mod fb;
-pub use fb::{XC2BitstreamFB, CTC, CTR, CTS, CTE, get_pta, get_ptb, get_ptc};
+pub use crate::fb::{XC2BitstreamFB, CTC, CTR, CTS, CTE, get_pta, get_ptb, get_ptc};
 
 mod fusemap_logical;
 mod fusemap_physical;
 
 mod globalbits;
-pub use globalbits::{XC2GlobalNets, XC2ClockDivRatio, XC2ClockDiv};
+pub use crate::globalbits::{XC2GlobalNets, XC2ClockDivRatio, XC2ClockDiv};
 
 mod iob;
-pub use iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, XC2IOBIbufMode, XC2MCLargeIOB,
-              iob_num_to_fb_mc_num, fb_mc_num_to_iob_num};
+pub use crate::iob::{XC2MCSmallIOB, XC2IOBZIAMode, XC2IOBOBufMode, XC2ExtraIBuf, XC2IOBIbufMode, XC2MCLargeIOB,
+                     iob_num_to_fb_mc_num, fb_mc_num_to_iob_num};
 
 mod mc;
-pub use mc::{XC2Macrocell, XC2MCRegClkSrc, XC2MCRegResetSrc, XC2MCRegSetSrc, XC2MCRegMode, XC2MCFeedbackMode,
-             XC2MCXorMode};
+pub use crate::mc::{XC2Macrocell, XC2MCRegClkSrc, XC2MCRegResetSrc, XC2MCRegSetSrc, XC2MCRegMode, XC2MCFeedbackMode,
+                    XC2MCXorMode};
 
 mod partdb;
-pub use partdb::{XC2Device, XC2Speed, XC2Package, XC2DeviceSpeedPackage};
+pub use crate::partdb::{XC2Device, XC2Speed, XC2Package, XC2DeviceSpeedPackage};
 
 mod pla;
-pub use pla::{XC2PLAAndTerm, XC2PLAOrTerm};
+pub use crate::pla::{XC2PLAAndTerm, XC2PLAOrTerm};
 
 mod structure;
-pub use structure::{get_gck, get_gts, get_gsr, get_cdrst, get_dge, get_device_structure};
+pub use crate::structure::{get_gck, get_gts, get_gsr, get_cdrst, get_dge, get_device_structure};
 
 mod zia;
-pub use zia::{XC2ZIAInput, zia_table_get_row, ZIA_MAP_32, ZIA_MAP_64, ZIA_MAP_128, ZIA_MAP_256,
-              ZIA_MAP_384, ZIA_MAP_512};
+pub use crate::zia::{XC2ZIAInput, zia_table_get_row, ZIA_MAP_32, ZIA_MAP_64, ZIA_MAP_128, ZIA_MAP_256,
+                     ZIA_MAP_384, ZIA_MAP_512};
 
 mod util;
 

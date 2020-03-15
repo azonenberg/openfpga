@@ -30,12 +30,12 @@ use std::io::Write;
 
 use jedec::*;
 
-use *;
-use fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx,
-                      total_logical_fuse_count, clock_div_fuse_idx};
-use fusemap_physical::{fuse_array_dims, clock_div_fuse_coord};
-use util::{LinebreakSet};
-use zia::{zia_get_row_width};
+use crate::*;
+use crate::fusemap_logical::{fb_fuse_idx, gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx,
+                             total_logical_fuse_count, clock_div_fuse_idx};
+use crate::fusemap_physical::{fuse_array_dims, clock_div_fuse_coord};
+use crate::util::{LinebreakSet};
+use crate::zia::{zia_get_row_width};
 
 /// Toplevel struct representing an entire Coolrunner-II bitstream
 #[derive(Serialize)]

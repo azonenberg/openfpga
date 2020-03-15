@@ -25,7 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains functions pertaining to the ZIA
 
-use *;
+use crate::*;
 
 /// Represents one output of the ZIA. The ZIA is divided into rows, and each row can independently select a choice
 /// to connect to each function block. The ZIA has inputs from every part of the chip and can additionally output a

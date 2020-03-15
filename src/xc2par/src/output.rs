@@ -25,8 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use xc2bit::*;
 
-use *;
-use objpool::*;
+use crate::*;
+use crate::objpool::*;
 
 pub fn produce_bitstream(device_type: XC2DeviceSpeedPackage, g: &InputGraph, go: &OutputGraph) -> XC2Bitstream {
     let mut result = XC2Bitstream::blank_bitstream(device_type);

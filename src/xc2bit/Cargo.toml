@@ -8,6 +8,7 @@ repository = "https://github.com/azonenberg/openfpga/tree/master/src/xc2bit"
 keywords = ["coolrunner", "cpld", "xilinx", "bitstream", "eda"]
 categories = ["command-line-utilities", "parser-implementations"]
 build = "build.rs"
+edition = "2018"
 
 [profile.release]
 lto = true

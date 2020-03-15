@@ -32,8 +32,8 @@ use rand::{Rng, SeedableRng, XorShiftRng};
 
 use xc2bit::*;
 
-use *;
-use objpool::*;
+use crate::*;
+use crate::objpool::*;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum PARMCAssignment {

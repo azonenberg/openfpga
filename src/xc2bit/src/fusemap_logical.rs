@@ -23,7 +23,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-use *;
+use crate::*;
 
 /// Helper function that returns the first fuse for a given function block. This is made more complicated by buried
 /// macrocells in the larger devices
