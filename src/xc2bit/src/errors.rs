@@ -26,14 +26,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use util::{b2s};
 
 use std::error;
-use std::error::Error;
 use std::fmt;
-use std::str;
 
 use jedec::*;
 
 /// Errors that can occur when parsing a bitstream
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum XC2BitError {
     /// The .jed file could not be parsed
     JedParseError(JedParserError),
@@ -54,45 +52,35 @@ impl From<JedParserError> for XC2BitError {
 }
 
 impl error::Error for XC2BitError {
-    fn description(&self) -> &'static str {
-        match *self {
-            XC2BitError::JedParseError(_) => ".jed parsing failed",
-            XC2BitError::BadDeviceName(_) => "device name is invalid/unsupported",
-            XC2BitError::WrongFuseCount => "wrong number of fuses",
-            XC2BitError::UnsupportedOeConfiguration(_) => "unknown Oe field value",
-            XC2BitError::UnsupportedZIAConfiguration(_) => "unknown ZIA selection bit pattern",
-        }
-    }
-
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match *self {
-            XC2BitError::JedParseError(ref err) => Some(err),
-            XC2BitError::BadDeviceName(_) => None,
-            XC2BitError::WrongFuseCount => None,
-            XC2BitError::UnsupportedOeConfiguration(_) => None,
-            XC2BitError::UnsupportedZIAConfiguration(_) => None,
+        match self {
+            &XC2BitError::JedParseError(ref err) => Some(err),
+            &XC2BitError::BadDeviceName(_) => None,
+            &XC2BitError::WrongFuseCount => None,
+            &XC2BitError::UnsupportedOeConfiguration(_) => None,
+            &XC2BitError::UnsupportedZIAConfiguration(_) => None,
         }
     }
 }
 
 impl fmt::Display for XC2BitError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            XC2BitError::JedParseError(_) => {
-                write!(f, "{}: {}", self.description(), self.source().unwrap())
+        match self {
+            &XC2BitError::JedParseError(err) => {
+                write!(f, ".jed parsing failed: {}", err)
             },
-            XC2BitError::BadDeviceName(ref devname) => {
+            &XC2BitError::BadDeviceName(ref devname) => {
                 write!(f, "device name \"{}\" is invalid/unsupported", devname)
             },
-            XC2BitError::WrongFuseCount => {
-                write!(f, "{}", self.description())
+            &XC2BitError::WrongFuseCount => {
+                write!(f, "wrong number of fuses")
             },
-            XC2BitError::UnsupportedOeConfiguration(bits) => {
+            &XC2BitError::UnsupportedOeConfiguration(bits) => {
                 write!(f, "unknown Oe field value {}{}{}{}",
                     b2s(bits.0), b2s(bits.1),
                     b2s(bits.2), b2s(bits.3))
             },
-            XC2BitError::UnsupportedZIAConfiguration(ref bits) => {
+            &XC2BitError::UnsupportedZIAConfiguration(ref bits) => {
                 write!(f, "unknown ZIA selection bit pattern ")?;
                 for &bit in bits {
                     write!(f, "{}", b2s(bit))?;
