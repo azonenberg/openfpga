@@ -24,7 +24,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 use std::error;
-use std::error::{Error};
 use std::fmt;
 use std::collections::{HashMap, HashSet};
 use objpool::*;
@@ -136,25 +135,6 @@ pub enum FrontendError {
 }
 
 impl error::Error for FrontendError {
-    fn description(&self) -> &'static str {
-        match self {
-            &FrontendError::MultipleToplevelModules => "multiple top-level modules",
-            &FrontendError::NoToplevelModules => "no top-level modules",
-            &FrontendError::UnsupportedCellType(_) => "unsupported cell type",
-            &FrontendError::MultipleNetDrivers(_) => "multiple drivers for net",
-            &FrontendError::NoNetDrivers(_) => "no drivers for net",
-            &FrontendError::MalformedLoc(_) => "malformed LOC attribute",
-            &FrontendError::IllegalBitValue(_) => "illegal bit value",
-            &FrontendError::IllegalAttributeValue(_) => "illegal attribute value",
-            &FrontendError::IllegalStringAttributeValue(_) => "illegal string attribute value",
-            &FrontendError::MissingRequiredConnection(_) => "missing required connection",
-            &FrontendError::TooManyConnections(_) => "too many net connections",
-            &FrontendError::MissingRequiredParameter(_) => "missing required parameter",
-            &FrontendError::MismatchedInputCount => "mismatched input count",
-            &FrontendError::ParseIntError(_) => "integer parse error",
-        }
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         match self {
             &FrontendError::ParseIntError(ref inner) => Some(inner),
@@ -166,28 +146,48 @@ impl error::Error for FrontendError {
 impl fmt::Display for FrontendError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &FrontendError::UnsupportedCellType(ref s) |
-            &FrontendError::MultipleNetDrivers(ref s) |
-            &FrontendError::NoNetDrivers(ref s) |
-            &FrontendError::MalformedLoc(ref s) |
-            &FrontendError::IllegalStringAttributeValue(ref s) |
-            &FrontendError::MissingRequiredConnection(ref s) |
-            &FrontendError::TooManyConnections(ref s) |
+            &FrontendError::UnsupportedCellType(ref s) => {
+                write!(f, "unsupported cell type - {}", s)
+            },
+            &FrontendError::MultipleNetDrivers(ref s) => {
+                write!(f, "multiple drivers for net - {}", s)
+            },
+            &FrontendError::NoNetDrivers(ref s) => {
+                write!(f, "no drivers for net - {}", s)
+            },
+            &FrontendError::MalformedLoc(ref s) => {
+                write!(f, "malformed LOC attribute - {}", s)
+            },
+            &FrontendError::IllegalStringAttributeValue(ref s) => {
+                write!(f, "illegal string attribute value - {}", s)
+            },
+            &FrontendError::MissingRequiredConnection(ref s) => {
+                write!(f, "missing required connection - {}", s)
+            },
+            &FrontendError::TooManyConnections(ref s) => {
+                write!(f, "too many net connections - {}", s)
+            },
             &FrontendError::MissingRequiredParameter(ref s) => {
-                write!(f, "{} - {}", self.description(), s)
+                write!(f, "missing required parameter - {}", s)
             },
             &FrontendError::IllegalBitValue(v) => {
-                write!(f, "{} - {:?}", self.description(), v)
+                write!(f, "illegal bit value - {:?}", v)
             },
             &FrontendError::IllegalAttributeValue(ref v) => {
-                write!(f, "{} - {:?}", self.description(), v)
+                write!(f, "illegal attribute value - {:?}", v)
             },
             &FrontendError::ParseIntError(ref inner) => {
                 write!(f, "{}", inner)
-            }
-            _ => {
-                write!(f, "{}", self.description())
-            }
+            },
+            &FrontendError::MultipleToplevelModules => {
+                write!(f, "multiple top-level modules")
+            },
+            &FrontendError::NoToplevelModules => {
+                write!(f, "no top-level modules")
+            },
+            &FrontendError::MismatchedInputCount => {
+                write!(f, "mismatched input count")
+            },
         }
     }
 }
@@ -998,13 +998,6 @@ pub enum GatherMacrocellError {
 }
 
 impl error::Error for GatherMacrocellError {
-    fn description(&self) -> &'static str {
-        match self {
-            &GatherMacrocellError::IllegalNodeDriver(_) => "node is driven by illegal type of node",
-            &GatherMacrocellError::IllegalNodeSink(_) => "node sinks to too many nodes",
-        }
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         None
     }
@@ -1013,9 +1006,11 @@ impl error::Error for GatherMacrocellError {
 impl fmt::Display for GatherMacrocellError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &GatherMacrocellError::IllegalNodeDriver(ref s) |
+            &GatherMacrocellError::IllegalNodeDriver(ref s) => {
+                write!(f, "node is driven by illegal type of node - {}", s)
+            },
             &GatherMacrocellError::IllegalNodeSink(ref s) => {
-                write!(f, "{} - {}", self.description(), s)
+                write!(f, "node sinks to too many nodes - {}", s)
             },
         }
     }

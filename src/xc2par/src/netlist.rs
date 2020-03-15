@@ -26,7 +26,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::collections::{HashMap, HashSet};
 use std::error;
 use std::fmt;
-use std::error::{Error};
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 use slog::Drain;
@@ -332,18 +331,6 @@ pub enum IntermedToInputError {
 }
 
 impl error::Error for IntermedToInputError {
-    fn description(&self) -> &'static str {
-        match self {
-            &IntermedToInputError::WrongConnectionType(_) => "node is connected to another node of the wrong type",
-            &IntermedToInputError::WrongTiedValue(_) => "node input is tied to a disallowed constant",
-            &IntermedToInputError::WrongPTermInputs(_) => "p-term inputs incorrect (duplicate or in true+comp)",
-            &IntermedToInputError::TooManyFeedbacksUsed(_) => "too many feedback paths used (XOR + register + IO)",
-            &IntermedToInputError::LocMismatchedFB(_, _) => "two LOC constraints have mismatched FB index",
-            &IntermedToInputError::LocMismatchedMC(_, _) => "two LOC constraints have mismatched macrocell index",
-            &IntermedToInputError::SanityCheckError(_) => "sanity check failed",
-        }
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         None
     }
@@ -352,18 +339,26 @@ impl error::Error for IntermedToInputError {
 impl fmt::Display for IntermedToInputError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &IntermedToInputError::WrongConnectionType(ref s) |
-            &IntermedToInputError::WrongTiedValue(ref s) |
-            &IntermedToInputError::WrongPTermInputs(ref s) |
+            &IntermedToInputError::WrongConnectionType(ref s) => {
+                write!(f, "node is connected to another node of the wrong type - {}", s)
+            },
+            &IntermedToInputError::WrongTiedValue(ref s) => {
+                write!(f, "node input is tied to a disallowed constant - {}", s)
+            },
+            &IntermedToInputError::WrongPTermInputs(ref s) => {
+                write!(f, "p-term inputs incorrect (duplicate or in true+comp) - {}", s)
+            },
             &IntermedToInputError::TooManyFeedbacksUsed(ref s) => {
-                write!(f, "{} - {}", self.description(), s)
+                write!(f, "too many feedback paths used (XOR + register + IO) - {}", s)
             },
             &IntermedToInputError::SanityCheckError(s) => {
-                write!(f, "{} - {}", self.description(), s)
+                write!(f, "sanity check failed - {}", s)
             },
-            &IntermedToInputError::LocMismatchedFB(i1, i2) |
+            &IntermedToInputError::LocMismatchedFB(i1, i2) => {
+                write!(f, "two LOC constraints have mismatched FB index - {}/{}", i1, i2)
+            },
             &IntermedToInputError::LocMismatchedMC(i1, i2) => {
-                write!(f, "{} - {}/{}", self.description(), i1, i2)
+                write!(f, "two LOC constraints have mismatched macrocell index - {}/{}", i1, i2)
             },
         }
     }

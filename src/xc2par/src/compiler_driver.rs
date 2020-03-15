@@ -26,7 +26,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern crate serde_json;
 
 use std::error;
-use std::error::{Error};
 use std::fmt;
 use slog::Drain;
 use xc2bit::*;
@@ -97,8 +96,8 @@ impl error::Error for PARFlowError {
             &PARFlowError::FrontendError(_) => "frontend pass failed",
             &PARFlowError::IntermedToInputError(_) => "intermediate pass failed",
             &PARFlowError::OutputWriteError(_) => "writing output failed",
-            &PARFlowError::PARIterationsExceeded => "maximum iterations exceeded",
-            &PARFlowError::PARSanityCheckFailed(_) => "PAR sanity check failed",
+            &PARFlowError::PARIterationsExceeded => "",
+            &PARFlowError::PARSanityCheckFailed(_) => "",
         }
     }
 
@@ -124,13 +123,24 @@ impl error::Error for PARFlowError {
 impl fmt::Display for PARFlowError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &PARFlowError::PARIterationsExceeded |
+            &PARFlowError::PARIterationsExceeded => {
+                write!(f, "maximum iterations exceeded")
+            },
             &PARFlowError::PARSanityCheckFailed(_) => {
-                write!(f, "{}", self.description())
-            }
-            _ => {
-                write!(f, "{}", self.source().unwrap())
-            }
+                write!(f, "PAR sanity check failed")
+            },
+            &PARFlowError::SerdeError(ref inner) => {
+                write!(f, "{}", inner)
+            },
+            &PARFlowError::FrontendError(ref inner) => {
+                write!(f, "{}", inner)
+            },
+            &PARFlowError::IntermedToInputError(ref inner) => {
+                write!(f, "{}", inner)
+            },
+            &PARFlowError::OutputWriteError(ref inner) => {
+                write!(f, "{}", inner)
+            },
         }
     }
 }
