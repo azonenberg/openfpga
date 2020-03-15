@@ -355,15 +355,13 @@ impl JEDECFile {
     /// Writes the contents to a JEDEC file. Note that a `&mut Write` can also be passed as a writer. Line breaks
     /// happen every `break_inverval` fuses.
     pub fn write_with_linebreaks<W>(&self, writer: W, break_inverval: usize) -> Result<(), io::Error> where W: Write {
-        let linebreak = LinebreakIntervalIter(0, self.f.len(), break_inverval);
-        self.write_custom_linebreaks(writer, linebreak)
+        self.write_custom_linebreaks(writer, (0..self.f.len()).step_by(break_inverval).skip(1))
     }
 
     /// Writes the contents to a JEDEC file. Note that a `&mut Write` can also be passed as a writer. Line breaks
     /// default to once every 16 fuses.
     pub fn write<W>(&self, writer: W) -> Result<(), io::Error> where W: Write {
-        let linebreak = LinebreakIntervalIter(0, self.f.len(), 16);
-        self.write_custom_linebreaks(writer, linebreak)
+        self.write_with_linebreaks(writer, 16)
     }
 
     /// Constructs a fuse array with the given number of fuses
@@ -376,22 +374,6 @@ impl JEDECFile {
         Self {
             f,
             dev_name_str: None,
-        }
-    }
-}
-
-struct LinebreakIntervalIter(usize, usize, usize);
-
-impl Iterator for LinebreakIntervalIter {
-    type Item = usize;
-
-    fn next(&mut self) -> Option<usize> {
-        if self.0 < self.1 {
-            let v = self.0;
-            self.0 = v + self.2;
-            Some(v)
-        } else {
-            None
         }
     }
 }
