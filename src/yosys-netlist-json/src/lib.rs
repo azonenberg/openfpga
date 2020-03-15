@@ -23,14 +23,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{Read, Write};
-
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_json;
-
-extern crate slog;
 
 /// Legal values for the direction of a port on a module
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq, Hash)]

@@ -25,18 +25,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use std::fs::File;
 
-extern crate xc2bit;
 use xc2bit::*;
-
-extern crate xc2par;
 use xc2par::*;
-
-extern crate yosys_netlist_json;
-
-extern crate slog_term;
-#[macro_use]
-extern crate slog;
-use slog::Drain;
+use slog::*;
 
 fn main() {
     let args = ::std::env::args().collect::<Vec<_>>();

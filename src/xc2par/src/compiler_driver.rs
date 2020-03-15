@@ -23,10 +23,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-extern crate serde_json;
-
 use std::error;
 use std::fmt;
+use serde_derive::{Deserialize, Serialize};
 use slog::Drain;
 use xc2bit::*;
 

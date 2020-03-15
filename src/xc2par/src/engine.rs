@@ -26,6 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::cmp::Ordering;
 use std::collections::{HashSet, HashMap};
 use std::iter::FromIterator;
+use serde_derive::{Deserialize, Serialize};
 use slog::Drain;
 
 use rand::{Rng, SeedableRng, XorShiftRng};
@@ -1543,8 +1544,6 @@ mod tests {
     use std;
     use std::fs::File;
     use std::io::Read;
-
-    extern crate serde_json;
 
     fn run_one_reftest(input_filename: &'static str) {
         // Read original json

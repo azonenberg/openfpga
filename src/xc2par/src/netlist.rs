@@ -28,6 +28,7 @@ use std::error;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
+use serde_derive::{Deserialize, Serialize};
 use slog::Drain;
 
 use xc2bit::*;
@@ -1387,8 +1388,6 @@ mod tests {
     use std;
     use std::fs::File;
     use std::io::Read;
-
-    extern crate serde_json;
 
     fn run_one_reftest(input_filename: &'static str) {
         // Read original json

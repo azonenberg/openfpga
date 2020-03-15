@@ -23,18 +23,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-extern crate rand;
-
-#[macro_use]
-extern crate serde_derive;
-
 #[macro_use]
 extern crate slog;
-extern crate slog_stdlog;
-
-extern crate yosys_netlist_json;
-
-extern crate xc2bit;
 
 mod compiler_driver;
 pub use crate::compiler_driver::*;

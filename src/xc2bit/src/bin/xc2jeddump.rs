@@ -28,10 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::fs::File;
 use std::io::Read;
 
-extern crate jedec;
 use jedec::*;
-
-extern crate xc2bit;
 use xc2bit::*;
 
 fn main() {

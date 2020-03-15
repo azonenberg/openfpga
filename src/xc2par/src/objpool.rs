@@ -27,6 +27,7 @@ use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::slice::{Iter, IterMut};
 
+use serde_derive::{Deserialize, Serialize};
 use slog;
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -26,18 +26,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::fs::File;
 use std::path::{Path};
 
-extern crate clap;
 use clap::{App, Arg};
-
-extern crate slog_term;
 #[macro_use]
 extern crate slog;
 use slog::Drain;
-
-extern crate xc2bit;
 use xc2bit::*;
-
-extern crate xc2par;
 use xc2par::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

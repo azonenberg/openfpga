@@ -26,15 +26,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 use std::fs::File;
 use std::io::Read;
 
-extern crate serde_json;
-
-extern crate xc2bit;
 use xc2bit::*;
-
-extern crate xc2par;
 use xc2par::*;
-
-extern crate yosys_netlist_json;
 
 fn main() {
     let args = ::std::env::args().collect::<Vec<_>>();

@@ -27,6 +27,7 @@ use std::error;
 use std::fmt;
 use std::collections::{HashMap, HashSet};
 use crate::objpool::*;
+use serde_derive::{Deserialize, Serialize};
 use slog;
 use slog::Drain;
 use slog_stdlog;
@@ -1091,8 +1092,6 @@ mod tests {
     use std;
     use std::fs::File;
     use std::io::Read;
-
-    extern crate serde_json;
 
     fn run_one_reftest(input_filename: &'static str) {
         // Read original json

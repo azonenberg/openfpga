@@ -25,7 +25,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Testing tool that prints out a "blank" but valid bitstream for the given part.
 
-extern crate xc2bit;
 use xc2bit::*;
 
 fn main() {

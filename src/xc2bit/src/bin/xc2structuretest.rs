@@ -25,7 +25,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Testing tool that prints out the internal CPLD structure
 
-extern crate xc2bit;
 use xc2bit::*;
 
 use std::cell::RefCell;
