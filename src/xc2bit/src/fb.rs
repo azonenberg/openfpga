@@ -699,16 +699,16 @@ pub const CTS: u32 = 6;
 pub const CTE: u32 = 7;
 
 /// Returns the special PTA product term given a macrocell index
-pub fn get_pta(mc: u32) -> u32 {
+pub const fn get_pta(mc: u32) -> u32 {
     3 * mc + 8
 }
 
 /// Returns the special PTB product term given a macrocell index
-pub fn get_ptb(mc: u32) -> u32 {
+pub const fn get_ptb(mc: u32) -> u32 {
     3 * mc + 9
 }
 
 /// Returns the special PTC product term given a macrocell index
-pub fn get_ptc(mc: u32) -> u32 {
+pub const fn get_ptc(mc: u32) -> u32 {
     3 * mc + 10
 }
