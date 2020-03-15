@@ -26,7 +26,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //! JEDEC programming file format parser and writer
 
 use std::error;
-use std::error::Error;
 use std::fmt;
 use std::io;
 use std::io::Write;
@@ -62,45 +61,37 @@ pub enum JedParserError {
 }
 
 impl error::Error for JedParserError {
-    fn description(&self) -> &'static str {
-        match *self {
-            JedParserError::MissingSTX => "STX not found",
-            JedParserError::MissingETX => "ETX not found",
-            JedParserError::InvalidUtf8(_) => "invalid utf8 character",
-            JedParserError::InvalidCharacter => "invalid character in field",
-            JedParserError::UnexpectedEnd => "unexpected end of file",
-            JedParserError::BadFileChecksum => "invalid file checksum",
-            JedParserError::BadFuseChecksum => "invalid fuse checksum",
-            JedParserError::InvalidFuseIndex => "invalid fuse index value",
-            JedParserError::MissingQF => "missing QF field",
-            JedParserError::MissingF => "missing F field",
-            JedParserError::UnrecognizedField => "unrecognized field",
-        }
-    }
-
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match *self {
-            JedParserError::MissingSTX => None,
-            JedParserError::MissingETX => None,
-            JedParserError::InvalidUtf8(ref err) => Some(err),
-            JedParserError::InvalidCharacter => None,
-            JedParserError::UnexpectedEnd => None,
-            JedParserError::BadFileChecksum => None,
-            JedParserError::BadFuseChecksum => None,
-            JedParserError::InvalidFuseIndex => None,
-            JedParserError::MissingQF => None,
-            JedParserError::MissingF => None,
-            JedParserError::UnrecognizedField => None,
+        match self {
+            &JedParserError::MissingSTX => None,
+            &JedParserError::MissingETX => None,
+            &JedParserError::InvalidUtf8(ref err) => Some(err),
+            &JedParserError::InvalidCharacter => None,
+            &JedParserError::UnexpectedEnd => None,
+            &JedParserError::BadFileChecksum => None,
+            &JedParserError::BadFuseChecksum => None,
+            &JedParserError::InvalidFuseIndex => None,
+            &JedParserError::MissingQF => None,
+            &JedParserError::MissingF => None,
+            &JedParserError::UnrecognizedField => None,
         }
     }
 }
 
 impl fmt::Display for JedParserError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(source) = self.source() {
-            write!(f, "{}: {}", self.description(), source)
-        } else {
-            write!(f, "{}", self.description())
+        match self {
+            &JedParserError::MissingSTX => write!(f, "STX not found"),
+            &JedParserError::MissingETX => write!(f, "ETX not found"),
+            &JedParserError::InvalidUtf8(err) => write!(f, "invalid utf8 character: {}", err),
+            &JedParserError::InvalidCharacter => write!(f, "invalid character in field"),
+            &JedParserError::UnexpectedEnd => write!(f, "unexpected end of file"),
+            &JedParserError::BadFileChecksum => write!(f, "invalid file checksum"),
+            &JedParserError::BadFuseChecksum => write!(f, "invalid fuse checksum"),
+            &JedParserError::InvalidFuseIndex => write!(f, "invalid fuse index value"),
+            &JedParserError::MissingQF => write!(f, "missing QF field"),
+            &JedParserError::MissingF => write!(f, "missing F field"),
+            &JedParserError::UnrecognizedField => write!(f, "unrecognized field"),
         }
     }
 }
