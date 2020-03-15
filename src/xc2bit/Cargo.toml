@@ -1,6 +1,6 @@
 [package]
 name = "xc2bit"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Robert Ou <rqou@robertou.com>"]
 license = "BSD-2-Clause"
 description = "A library for working with Xilinx Coolrunner-II bitstreams"
@@ -20,6 +20,6 @@ crate-type = ["rlib"]
 [dependencies]
 serde = "1.0"
 serde_derive = "1.0"
-bittwiddler = { path = "../bittwiddler", version = "0.0.1" }
-jedec = { path = "../jedec", version = "0.0.2" }
-yosys-netlist-json = { path = "../yosys-netlist-json", version = "0.0.2" }
+bittwiddler = { path = "../bittwiddler", version = "0.0.2" }
+jedec = { path = "../jedec", version = "0.0.3" }
+yosys-netlist-json = { path = "../yosys-netlist-json", version = "0.0.3" }

@@ -1,12 +1,13 @@
 [package]
 name = "jedec"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Robert Ou <rqou@robertou.com>"]
 license = "BSD-2-Clause"
 description = "A library for working with JEDEC programming files"
 repository = "https://github.com/azonenberg/openfpga/tree/master/src/jedec"
 keywords = ["cpld", "pal", "gal", "jed", "jedec"]
 categories = ["parser-implementations"]
+edition = "2018"
 
 [profile.release]
 lto = true
