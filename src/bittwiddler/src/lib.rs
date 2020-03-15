@@ -1,4 +1,5 @@
 use proc_macro::TokenStream;
+use proc_macro2::{Ident, Span};
 use quote::*;
 use std::collections::HashSet;
 
@@ -8,13 +9,13 @@ fn parse_string_attr_helper<T, F>(attrs: &[syn::Attribute], attr_name: &str, cb:
     let mut ret = None;
     for attr in attrs {
         if attr.path.leading_colon.is_none() && attr.path.segments.len() == 1 &&
-           attr.path.segments[0].ident.as_ref() == attr_name {
+           attr.path.segments[0].ident.to_string() == attr_name {
             if ret.is_some() {
                 panic!("Only one {} allowed", attr_name);
             }
 
-            let attr_val = attr.interpret_meta();
-            if attr_val.is_none() {
+            let attr_val = attr.parse_meta();
+            if attr_val.is_err() {
                 panic!("Failed to parse {} attribute", attr_name);
             }
 
@@ -40,6 +41,7 @@ pub fn bitpattern(input: TokenStream) -> TokenStream {
 
     let bits_default: Option<syn::Expr> = parse_string_attr_helper(&input.attrs, "bits_default",
         |x| x.parse().expect("Failed to parse bits_default attribute contents"));
+    let bits_default = bits_default.iter();
 
     let bits_errtype: Option<syn::TypeParam> = parse_string_attr_helper(&input.attrs, "bits_errtype",
         |x| x.parse().expect("Failed to parse bits_errtype attribute contents"));
@@ -60,7 +62,7 @@ pub fn bitpattern(input: TokenStream) -> TokenStream {
 
             let bits_attr = parse_string_attr_helper(&var.attrs, "bits", |x| x)
                 .expect("All variants need a bits attribute");
-            var_bits.push((var.ident, bits_attr.value()));
+            var_bits.push((var.ident.clone(), bits_attr.value()));
         }
 
         let bits_len = var_bits[0].1.len();
@@ -82,11 +84,11 @@ pub fn bitpattern(input: TokenStream) -> TokenStream {
         let bools = var_bits[0].1.chars().map(|_| quote! {bool});
         let bools2 = var_bits[0].1.chars().map(|_| quote! {bool});
         // The name of the enum, repeated <number of variants> times
-        let idents_dummy_list = var_bits.iter().map(|_| input_ident);
-        let idents_dummy_list2 = var_bits.iter().map(|_| input_ident);
+        let idents_dummy_list = var_bits.iter().map(|_| input_ident.clone());
+        let idents_dummy_list2 = var_bits.iter().map(|_| input_ident.clone());
         // The names of each variant
-        let var_names = var_bits.iter().map(|x| x.0);
-        let var_names2 = var_bits.iter().map(|x| x.0);
+        let var_names = var_bits.iter().map(|x| x.0.clone());
+        let var_names2 = var_bits.iter().map(|x| x.0.clone());
 
         // The list of values for encoding
         let encode_values = var_bits.iter().map(|x|
@@ -96,7 +98,7 @@ pub fn bitpattern(input: TokenStream) -> TokenStream {
                     '1'|'X' => quote! {true},
                     _ => unreachable!(),
                 }
-            )
+            ).collect::<Vec<_>>()
         );
 
         // The list of values for decoding
@@ -108,7 +110,7 @@ pub fn bitpattern(input: TokenStream) -> TokenStream {
                     'x'|'X' => quote! {_},
                     _ => unreachable!(),
                 }
-            )
+            ).collect::<Vec<_>>()
         );
 
         let mut encode_tokens = quote! {
@@ -160,9 +162,9 @@ fn parse_multi_string_attr_helper<T, F>(attrs: &[syn::Attribute], attr_name: &st
     let mut ret = Vec::new();
     for attr in attrs {
         if attr.path.leading_colon.is_none() && attr.path.segments.len() == 1 &&
-           attr.path.segments[0].ident.as_ref() == attr_name {
-            let attr_val = attr.interpret_meta();
-            if attr_val.is_none() {
+           attr.path.segments[0].ident.to_string() == attr_name {
+            let attr_val = attr.parse_meta();
+            if attr_val.is_err() {
                 panic!("Failed to parse {} attribute", attr_name);
             }
 
@@ -181,9 +183,9 @@ fn parse_multi_string_attr_helper<T, F>(attrs: &[syn::Attribute], attr_name: &st
     ret.into_iter().map(cb)
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 enum BitTwiddlerFieldRef {
-    Ident(syn::Ident),
+    Ident(Ident),
     Index(usize),
     Self_,
 }
@@ -198,9 +200,9 @@ enum BitTwiddlerObjType {
 impl BitTwiddlerFieldRef {
     fn to_string(&self) -> String {
         match self {
-            &BitTwiddlerFieldRef::Ident(id) => id.as_ref().to_owned(),
-            &BitTwiddlerFieldRef::Index(idx) => format!("{}", idx),
-            &BitTwiddlerFieldRef::Self_ => "Enum".to_owned(),
+            BitTwiddlerFieldRef::Ident(id) => id.to_string().to_owned(),
+            BitTwiddlerFieldRef::Index(idx) => format!("{}", idx),
+            BitTwiddlerFieldRef::Self_ => "Enum".to_owned(),
         }
     }
 }
@@ -295,7 +297,7 @@ impl<'a> Iterator for StringSplitter<'a> {
 fn is_bool(ty: &syn::Type) -> bool {
     if let &syn::Type::Path(ref typep) = ty {
         if typep.qself.is_none() && typep.path.leading_colon.is_none() && typep.path.segments.len() == 1 &&
-            typep.path.segments[0].ident.as_ref() == "bool" {
+            typep.path.segments[0].ident.to_string() == "bool" {
 
             true
         } else {
@@ -322,14 +324,14 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             match datastruct.fields {
                 syn::Fields::Named(named) => {
                     for field in &named.named {
-                        let id = field.ident.unwrap();
+                        let id = field.ident.as_ref().unwrap();
                         let bittwiddler_field_attrs = parse_multi_string_attr_helper(&field.attrs, "bittwiddler_field",
                             |x| x.value()).collect::<Vec<_>>();
 
                         let is_bool = is_bool(&field.ty);
 
                         if bittwiddler_field_attrs.len() > 0 {
-                            fields_and_attrs.push((BitTwiddlerFieldRef::Ident(id),
+                            fields_and_attrs.push((BitTwiddlerFieldRef::Ident(id.clone()),
                                 bittwiddler_field_attrs, is_bool, Some(field.ty.clone())));
                         }
                     }
@@ -385,7 +387,7 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
         }
 
         let this_instance_attribs = fields_and_attrs.iter().map(|x|
-            (x.0, x.1.iter().map(|y| StringSplitter::new(y).collect::<Vec<_>>()).filter(|z|
+            (x.0.clone(), x.1.iter().map(|y| StringSplitter::new(y).collect::<Vec<_>>()).filter(|z|
                 z[0] == instance_name).collect::<Vec<_>>(), x.2, x.3.clone()));
 
         let mut errtype = None;
@@ -394,7 +396,7 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                 let mut errtype_tmp = x.split_at(4).1;
                 if errtype_tmp.starts_with("'") {
                     if !errtype_tmp.ends_with("'") {
-                        panic!("Malformed error type for {} on {}", instance_name, input_ident.as_ref());
+                        panic!("Malformed error type for {} on {}", instance_name, input_ident.to_string());
                     }
 
                     errtype_tmp = errtype_tmp.split_at(1).1;
@@ -407,11 +409,11 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
 
         let mut dimensions = None;
 
-        let encode_fn_ident = syn::Ident::from(format!("encode_{}", instance_name));
+        let encode_fn_ident = Ident::new(&format!("encode_{}", instance_name), Span::call_site());
 
         let mut encode_field_tokens = quote!{};
 
-        let decode_fn_ident = syn::Ident::from(format!("decode_{}", instance_name));
+        let decode_fn_ident = Ident::new(&format!("decode_{}", instance_name), Span::call_site());
 
         let mut decode_field_tokens = quote!{};
         let mut decode_field_ids = Vec::new();
@@ -436,13 +438,13 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
 
             if field_isbool && field_locs.len() != 1 {
                 panic!("Field {} of {} on {} has too many locations for a boolean",
-                    field_id.to_string(), instance_name, input_ident.as_ref());
+                    field_id.to_string(), instance_name, input_ident.to_string());
             }
 
             // Now we can actually generate code
             let mut encode_this_field = if !field_isbool {
                 match field_id {
-                    BitTwiddlerFieldRef::Ident(id) => {
+                    BitTwiddlerFieldRef::Ident(ref id) => {
                         quote! {
                             let x = self.#id.encode();
                         }
@@ -465,7 +467,7 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                 }
             } else {
                 match field_id {
-                    BitTwiddlerFieldRef::Ident(id) => {
+                    BitTwiddlerFieldRef::Ident(ref id) => {
                         quote! {
                             let x = self.#id;
                         }
@@ -514,7 +516,7 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                         dimensions = Some(coords.len());
                     } else {
                         if dimensions.unwrap() != coords.len() {
-                            panic!("Instance {} on {} has mismatched dimensions", instance_name, input_ident.as_ref());
+                            panic!("Instance {} on {} has mismatched dimensions", instance_name, input_ident.to_string());
                         }
                     }
 
@@ -536,7 +538,7 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                             };
 
                             if mirror {
-                                let mirror_ident = syn::Ident::from(format!("mirror_{}", dim_i));
+                                let mirror_ident = Ident::new(&format!("mirror_{}", dim_i), Span::call_site());
                                 // mirror_idents.push(quote!{#mirror_ident: bool});
                                 index_each_dim.push(quote! {
                                     (start_coord.#dim_idx as isize +
@@ -553,7 +555,7 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                             }
                         } else {
                             if mirror {
-                                let mirror_ident = syn::Ident::from(format!("mirror_{}", dim_i));
+                                let mirror_ident = Ident::new(&format!("mirror_{}", dim_i), Span::call_site());
                                 // mirror_idents.push(quote!{#mirror_ident: bool});
                                 index_each_dim.push(quote! {
                                     (start_coord as isize +
@@ -611,9 +613,9 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             };
             decode_this_field.append_all(if !field_isbool {
                 match field_id {
-                    BitTwiddlerFieldRef::Ident(id) => {
+                    BitTwiddlerFieldRef::Ident(ref id) => {
                         let ty = field_ty.unwrap();
-                        decode_field_ids.push(id);
+                        decode_field_ids.push(id.clone());
                         if needs_err {
                             quote! {
                                 let #id = #ty::decode(x)?;
@@ -626,8 +628,8 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
                     },
                     BitTwiddlerFieldRef::Index(idx) => {
                         let ty = field_ty.unwrap();
-                        let id = syn::Ident::from(format!{"field{}", idx});
-                        decode_field_ids.push(id);
+                        let id = Ident::new(&format!{"field{}", idx}, Span::call_site());
+                        decode_field_ids.push(id.clone());
                         if needs_err {
                             quote! {
                                 let #id = #ty::decode(x)?;
@@ -653,18 +655,18 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             } else {
                 if needs_err {
                     panic!("Field {} of {} on {} has \"err\" flag, but it's a boolean",
-                        field_id.to_string(), instance_name, input_ident.as_ref());
+                        field_id.to_string(), instance_name, input_ident.to_string());
                 }
                 match field_id {
-                    BitTwiddlerFieldRef::Ident(id) => {
-                        decode_field_ids.push(id);
+                    BitTwiddlerFieldRef::Ident(ref id) => {
+                        decode_field_ids.push(id.clone());
                         quote! {
                             let #id = x;
                         }
                     },
                     BitTwiddlerFieldRef::Index(idx) => {
-                        let id = syn::Ident::from(format!{"field{}", idx});
-                        decode_field_ids.push(id);
+                        let id = Ident::new(&format!{"field{}", idx}, Span::call_site());
+                        decode_field_ids.push(id.clone());
                         quote! {
                             let #id = x;
                         }
@@ -679,7 +681,7 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
         }
 
         if dimensions.is_none() {
-            panic!("Instance {} on {} has zero fields", instance_name, input_ident.as_ref());
+            panic!("Instance {} on {} has zero fields", instance_name, input_ident.to_string());
         }
 
         let mut usize_idents = Vec::with_capacity(dimensions.unwrap());
@@ -705,7 +707,7 @@ pub fn bittwiddler(input: TokenStream) -> TokenStream {
             let mirror = instance_attribs_hash.contains::<str>(&mirror_attrib);
 
             if mirror {
-                let mirror_ident = syn::Ident::from(format!("mirror_{}", dim_i));
+                let mirror_ident = Ident::new(&format!("mirror_{}", dim_i), Span::call_site());
                 mirror_idents.push(quote!{#mirror_ident: bool});
             }
         }
