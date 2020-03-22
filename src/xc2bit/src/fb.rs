@@ -142,7 +142,9 @@ impl XC2BitstreamFB {
     /// `fb` must be the index of this function block.
     pub fn dump_human_readable<W: Write>(&self, device: XC2Device, fb: u32, mut writer: W) -> Result<(), io::Error> {
         for i in 0..MCS_PER_FB {
-            self.mcs[i].dump_human_readable(fb, i as u32, &mut writer)?;
+            write!(writer, "\n")?;
+            write!(writer, "FF configuration for FB{}_{}\n", fb + 1, i + 1)?;
+            write!(writer, "{}", self.mcs[i])?;
         }
 
         write!(writer, "\n")?;

@@ -25,8 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains functions pertaining to macrocells
 
-use std::io;
-use std::io::Write;
+use core::fmt;
 
 use jedec::*;
 
@@ -265,48 +264,44 @@ impl Default for XC2Macrocell {
 pub static MC_TO_ROW_MAP_LARGE: [usize; MCS_PER_FB] = 
     [0, 3, 5, 8, 10, 13, 15, 18, 20, 23, 25, 28, 30, 33, 35, 38];
 
-impl XC2Macrocell {
-    /// Dump a human-readable explanation of the settings for this macrocell to the given `writer` object.
-    /// `fb` and `mc` must be the function block number and macrocell number of this macrocell.
-    pub fn dump_human_readable<W: Write>(&self, fb: u32, mc: u32, mut writer: W) -> Result<(), io::Error> {
-        write!(writer, "\n")?;
-        write!(writer, "FF configuration for FB{}_{}\n", fb + 1, mc + 1)?;
-        write!(writer, "FF mode: {}\n", match self.reg_mode {
+impl fmt::Display for XC2Macrocell {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "FF mode: {}\n", match self.reg_mode {
             XC2MCRegMode::DFF => "D flip-flop",
             XC2MCRegMode::LATCH => "transparent latch",
             XC2MCRegMode::TFF => "T flip-flop",
             XC2MCRegMode::DFFCE => "D flip-flop with clock-enable",
         })?;
-        write!(writer, "initial state: {}\n", if self.init_state {1} else {0})?;
-        write!(writer, "{}-edge triggered\n", if self.clk_invert_pol {"falling"} else {"rising"})?;
-        write!(writer, "DDR: {}\n", if self.is_ddr {"yes"} else {"no"})?;
-        write!(writer, "clock source: {}\n", match self.clk_src {
+        write!(f, "initial state: {}\n", if self.init_state {1} else {0})?;
+        write!(f, "{}-edge triggered\n", if self.clk_invert_pol {"falling"} else {"rising"})?;
+        write!(f, "DDR: {}\n", if self.is_ddr {"yes"} else {"no"})?;
+        write!(f, "clock source: {}\n", match self.clk_src {
             XC2MCRegClkSrc::GCK0 => "GCK0",
             XC2MCRegClkSrc::GCK1 => "GCK1",
             XC2MCRegClkSrc::GCK2 => "GCK2",
             XC2MCRegClkSrc::PTC => "PTC",
             XC2MCRegClkSrc::CTC => "CTC",
         })?;
-        write!(writer, "set source: {}\n", match self.s_src {
+        write!(f, "set source: {}\n", match self.s_src {
             XC2MCRegSetSrc::Disabled => "disabled",
             XC2MCRegSetSrc::PTA => "PTA",
             XC2MCRegSetSrc::GSR => "GSR",
             XC2MCRegSetSrc::CTS => "CTS",
         })?;
-        write!(writer, "reset source: {}\n", match self.r_src {
+        write!(f, "reset source: {}\n", match self.r_src {
             XC2MCRegResetSrc::Disabled => "disabled",
             XC2MCRegResetSrc::PTA => "PTA",
             XC2MCRegResetSrc::GSR => "GSR",
             XC2MCRegResetSrc::CTR => "CTR",
         })?;
-        write!(writer, "using ibuf direct path: {}\n", if self.ff_in_ibuf {"yes"} else {"no"})?;
-        write!(writer, "XOR gate input: {}\n", match self.xor_mode {
+        write!(f, "using ibuf direct path: {}\n", if self.ff_in_ibuf {"yes"} else {"no"})?;
+        write!(f, "XOR gate input: {}\n", match self.xor_mode {
             XC2MCXorMode::ZERO => "0",
             XC2MCXorMode::ONE => "1",
             XC2MCXorMode::PTC => "PTC",
             XC2MCXorMode::PTCB => "~PTC",
         })?;
-        write!(writer, "ZIA feedback: {}\n", match self.fb_mode {
+        write!(f, "ZIA feedback: {}\n", match self.fb_mode {
             XC2MCFeedbackMode::Disabled => "disabled",
             XC2MCFeedbackMode::COMB => "combinatorial",
             XC2MCFeedbackMode::REG => "registered",
@@ -314,7 +309,9 @@ impl XC2Macrocell {
 
         Ok(())
     }
+}
 
+impl XC2Macrocell {
     /// Write the crbit representation of this macrocell to the given `fuse_array`.
     pub fn to_crbit(&self, device: XC2Device, fb: u32, mc: u32, fuse_array: &mut FuseArray) {
         let (x, y, mirror) = mc_block_loc(device, fb);
