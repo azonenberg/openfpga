@@ -871,11 +871,11 @@ impl XC2BitstreamBits {
 
         // Clock divider
         if let Some(clock_div) = self.get_clock_div() {
-            clock_div.dump_human_readable(&mut writer)?;
+            write!(writer, "\n{}", clock_div)?;
         }
 
         // Global net configuration
-        self.get_global_nets().dump_human_readable(&mut writer)?;
+        write!(writer, "\n{}", self.get_global_nets())?;
 
         // IOBs
         for i in 0..self.device_type().num_iobs() {

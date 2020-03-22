@@ -25,8 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains functions pertaining to global control bits (e.g. clocks)
 
-use std::io;
-use std::io::Write;
+use core::fmt;
 
 use crate::*;
 use crate::fusemap_logical::{gck_fuse_idx, gsr_fuse_idx, gts_fuse_idx, global_term_fuse_idx, clock_div_fuse_idx};
@@ -71,36 +70,36 @@ impl Default for XC2GlobalNets {
     }
 }
 
-impl XC2GlobalNets {
-    /// Dump a human-readable explanation of the global net configuration to the given `writer` object.
-    pub fn dump_human_readable<W: Write>(&self, mut writer: W) -> Result<(), io::Error> {
-        write!(writer, "\n")?;
-        write!(writer, "GCK0 {}\n", if self.gck_enable[0] {"enabled"} else {"disabled"})?;
-        write!(writer, "GCK1 {}\n", if self.gck_enable[1] {"enabled"} else {"disabled"})?;
-        write!(writer, "GCK2 {}\n", if self.gck_enable[2] {"enabled"} else {"disabled"})?;
+impl fmt::Display for XC2GlobalNets {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "GCK0 {}\n", if self.gck_enable[0] {"enabled"} else {"disabled"})?;
+        write!(f, "GCK1 {}\n", if self.gck_enable[1] {"enabled"} else {"disabled"})?;
+        write!(f, "GCK2 {}\n", if self.gck_enable[2] {"enabled"} else {"disabled"})?;
 
-        write!(writer, "GSR {}, active {}\n",
+        write!(f, "GSR {}, active {}\n",
             if self.gsr_enable {"enabled"} else {"disabled"},
             if self.gsr_invert {"high"} else {"low"})?;
 
-        write!(writer, "GTS0 {}, acts as {}\n",
+        write!(f, "GTS0 {}, acts as {}\n",
             if self.gts_enable[0] {"enabled"} else {"disabled"},
             if self.gts_invert[0] {"!T"} else {"T"})?;
-        write!(writer, "GTS1 {}, acts as {}\n",
+        write!(f, "GTS1 {}, acts as {}\n",
             if self.gts_enable[1] {"enabled"} else {"disabled"},
             if self.gts_invert[1] {"!T"} else {"T"})?;
-        write!(writer, "GTS2 {}, acts as {}\n",
+        write!(f, "GTS2 {}, acts as {}\n",
             if self.gts_enable[2] {"enabled"} else {"disabled"},
             if self.gts_invert[2] {"!T"} else {"T"})?;
-        write!(writer, "GTS3 {}, acts as {}\n",
+        write!(f, "GTS3 {}, acts as {}\n",
             if self.gts_enable[3] {"enabled"} else {"disabled"},
             if self.gts_invert[3] {"!T"} else {"T"})?;
 
-        write!(writer, "global termination is {}\n", if self.global_pu {"pull-up"} else {"bus hold"})?;
+        write!(f, "global termination is {}\n", if self.global_pu {"pull-up"} else {"bus hold"})?;
 
         Ok(())
     }
+}
 
+impl XC2GlobalNets {
     /// Write the crbit representation of the global net settings to the given `fuse_array`.
     pub fn to_crbit(&self, device: XC2Device, fuse_array: &mut FuseArray) {
         let ((gck0x, gck0y), (gck1x, gck1y), (gck2x, gck2y)) = gck_fuse_coords(device);
@@ -225,14 +224,12 @@ pub struct XC2ClockDiv {
     pub enabled: bool,
 }
 
-impl XC2ClockDiv {
-    /// Dump a human-readable explanation of the clock divider to the given `writer` object.
-    pub fn dump_human_readable<W: Write>(&self, mut writer: W) -> Result<(), io::Error> {
-        write!(writer, "\n")?;
-        write!(writer, "GCK2 clock divider {}\n", if self.enabled {"enabled"} else {"disabled"})?;
-        write!(writer, "clock divider delay {}\n", if self.delay {"enabled"} else {"disabled"})?;
+impl fmt::Display for XC2ClockDiv {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "GCK2 clock divider {}\n", if self.enabled {"enabled"} else {"disabled"})?;
+        write!(f, "clock divider delay {}\n", if self.delay {"enabled"} else {"disabled"})?;
 
-        write!(writer, "clock division ratio: {}\n", match self.div_ratio {
+        write!(f, "clock division ratio: {}\n", match self.div_ratio {
             XC2ClockDivRatio::Div2 => "2",
             XC2ClockDivRatio::Div4 => "4",
             XC2ClockDivRatio::Div6 => "6",
