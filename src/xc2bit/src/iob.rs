@@ -25,8 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Contains functions pertaining to the I/O pins
 
-use std::io;
-use std::io::Write;
+use core::fmt;
 
 use jedec::*;
 
@@ -47,6 +46,16 @@ pub enum XC2IOBZIAMode {
     PAD,
     #[bits = "10"]
     REG,
+}
+
+impl fmt::Display for XC2IOBZIAMode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match self {
+            &XC2IOBZIAMode::Disabled => "disabled",
+            &XC2IOBZIAMode::PAD => "input pad",
+            &XC2IOBZIAMode::REG => "register",
+        })
+    }
 }
 
 /// Mode selection for the I/O pin's output buffer. See the Xilinx Coolrunner-II documentation for more information.
@@ -75,6 +84,23 @@ pub enum XC2IOBOBufMode {
     TriStateCTE,
     #[bits = "1110"]
     CGND,
+}
+
+impl fmt::Display for XC2IOBOBufMode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match self {
+            &XC2IOBOBufMode::Disabled => "disabled",
+            &XC2IOBOBufMode::PushPull => "push-pull",
+            &XC2IOBOBufMode::OpenDrain => "open-drain",
+            &XC2IOBOBufMode::TriStateGTS0 => "GTS0-controlled tri-state",
+            &XC2IOBOBufMode::TriStateGTS1 => "GTS1-controlled tri-state",
+            &XC2IOBOBufMode::TriStateGTS2 => "GTS2-controlled tri-state",
+            &XC2IOBOBufMode::TriStateGTS3 => "GTS3-controlled tri-state",
+            &XC2IOBOBufMode::TriStatePTB => "PTB-controlled tri-state",
+            &XC2IOBOBufMode::TriStateCTE => "CTE-controlled tri-state",
+            &XC2IOBOBufMode::CGND => "CGND",
+        })
+    }
 }
 
 /// Represents an I/O pin on "small" (32 and 64 macrocell) devices.
@@ -137,38 +163,20 @@ impl Default for XC2MCSmallIOB {
     }
 }
 
-impl XC2MCSmallIOB {
-    /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
-    /// `my_idx` must be the index of this I/O pin in the internal numbering scheme.
-    pub fn dump_human_readable<W: Write>(&self, device: XC2Device, my_idx: u32, mut writer: W) -> Result<(), io::Error> {
-        write!(writer, "\n")?;
-        let (fb, mc) = iob_num_to_fb_mc_num(device, my_idx).unwrap();
-        write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, mc + 1)?;
-        write!(writer, "output mode: {}\n", match self.obuf_mode {
-            XC2IOBOBufMode::Disabled => "disabled",
-            XC2IOBOBufMode::PushPull => "push-pull",
-            XC2IOBOBufMode::OpenDrain => "open-drain",
-            XC2IOBOBufMode::TriStateGTS0 => "GTS0-controlled tri-state",
-            XC2IOBOBufMode::TriStateGTS1 => "GTS1-controlled tri-state",
-            XC2IOBOBufMode::TriStateGTS2 => "GTS2-controlled tri-state",
-            XC2IOBOBufMode::TriStateGTS3 => "GTS3-controlled tri-state",
-            XC2IOBOBufMode::TriStatePTB => "PTB-controlled tri-state",
-            XC2IOBOBufMode::TriStateCTE => "CTE-controlled tri-state",
-            XC2IOBOBufMode::CGND => "CGND",
-        })?;
-        write!(writer, "output comes from {}\n", if self.obuf_uses_ff {"FF"} else {"XOR gate"})?;
-        write!(writer, "slew rate: {}\n", if self.slew_is_fast {"fast"} else {"slow"})?;
-        write!(writer, "ZIA driven from: {}\n", match self.zia_mode {
-            XC2IOBZIAMode::Disabled => "disabled",
-            XC2IOBZIAMode::PAD => "input pad",
-            XC2IOBZIAMode::REG => "register",
-        })?;
-        write!(writer, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"})?;
-        write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
+impl fmt::Display for XC2MCSmallIOB {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "output mode: {}\n", self.obuf_mode)?;
+        write!(f, "output comes from {}\n", if self.obuf_uses_ff {"FF"} else {"XOR gate"})?;
+        write!(f, "slew rate: {}\n", if self.slew_is_fast {"fast"} else {"slow"})?;
+        write!(f, "ZIA driven from: {}\n", self.zia_mode)?;
+        write!(f, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"})?;
+        write!(f, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
 
         Ok(())
     }
+}
 
+impl XC2MCSmallIOB {
     /// Write the crbit representation of the settings for this IO pin to the given `fuse_array`.
     /// `device` must be the device type this FB was extracted from.
     /// `iob` must be the index of this IO pin.
@@ -248,6 +256,17 @@ pub enum XC2IOBIbufMode {
     IsVref,
 }
 
+impl fmt::Display for XC2IOBIbufMode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match self {
+            &XC2IOBIbufMode::NoVrefNoSt => "no VREF, no Schmitt trigger",
+            &XC2IOBIbufMode::NoVrefSt => "no VREF, Schmitt trigger",
+            &XC2IOBIbufMode::UsesVref => "uses VREF (HSTL/SSTL)",
+            &XC2IOBIbufMode::IsVref => "is a VREF pin",
+        })
+    }
+}
+
 /// Represents an I/O pin on "large" (128 and greater macrocell) devices.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 #[derive(BitTwiddler)]
@@ -313,44 +332,21 @@ impl Default for XC2MCLargeIOB {
     }
 }
 
-impl XC2MCLargeIOB {
-    /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
-    /// `my_idx` must be the index of this I/O pin in the internal numbering scheme.
-    pub fn dump_human_readable<W: Write>(&self, device: XC2Device, my_idx: u32, mut writer: W) -> Result<(), io::Error> {
-        write!(writer, "\n")?;
-        let (fb, mc) = iob_num_to_fb_mc_num(device, my_idx).unwrap();
-        write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, mc + 1)?;
-        write!(writer, "output mode: {}\n", match self.obuf_mode {
-            XC2IOBOBufMode::Disabled => "disabled",
-            XC2IOBOBufMode::PushPull => "push-pull",
-            XC2IOBOBufMode::OpenDrain => "open-drain",
-            XC2IOBOBufMode::TriStateGTS0 => "GTS0-controlled tri-state",
-            XC2IOBOBufMode::TriStateGTS1 => "GTS1-controlled tri-state",
-            XC2IOBOBufMode::TriStateGTS2 => "GTS2-controlled tri-state",
-            XC2IOBOBufMode::TriStateGTS3 => "GTS3-controlled tri-state",
-            XC2IOBOBufMode::TriStatePTB => "PTB-controlled tri-state",
-            XC2IOBOBufMode::TriStateCTE => "CTE-controlled tri-state",
-            XC2IOBOBufMode::CGND => "CGND",
-        })?;
-        write!(writer, "input mode: {}\n", match self.ibuf_mode {
-            XC2IOBIbufMode::NoVrefNoSt => "no VREF, no Schmitt trigger",
-            XC2IOBIbufMode::NoVrefSt => "no VREF, Schmitt trigger",
-            XC2IOBIbufMode::UsesVref => "uses VREF (HSTL/SSTL)",
-            XC2IOBIbufMode::IsVref => "is a VREF pin",
-        })?;
-        write!(writer, "output comes from {}\n", if self.obuf_uses_ff {"FF"} else {"XOR gate"})?;
-        write!(writer, "slew rate: {}\n", if self.slew_is_fast {"fast"} else {"slow"})?;
-        write!(writer, "ZIA driven from: {}\n", match self.zia_mode {
-            XC2IOBZIAMode::Disabled => "disabled",
-            XC2IOBZIAMode::PAD => "input pad",
-            XC2IOBZIAMode::REG => "register",
-        })?;
-        write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
-        write!(writer, "DataGate used: {}\n", if self.uses_data_gate {"yes"} else {"no"})?;
+impl fmt::Display for XC2MCLargeIOB {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "output mode: {}\n", self.obuf_mode)?;
+        write!(f, "input mode: {}\n", self.ibuf_mode)?;
+        write!(f, "output comes from {}\n", if self.obuf_uses_ff {"FF"} else {"XOR gate"})?;
+        write!(f, "slew rate: {}\n", if self.slew_is_fast {"fast"} else {"slow"})?;
+        write!(f, "ZIA driven from: {}\n", self.zia_mode)?;
+        write!(f, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
+        write!(f, "DataGate used: {}\n", if self.uses_data_gate {"yes"} else {"no"})?;
 
         Ok(())
     }
+}
 
+impl XC2MCLargeIOB {
     /// Write the crbit representation of the settings for this IO pin to the given `fuse_array`.
     /// `device` must be the device type this FB was extracted from.
     /// `iob` must be the index of this IO pin.
@@ -434,13 +430,10 @@ impl Default for XC2ExtraIBuf {
     }
 }
 
-impl XC2ExtraIBuf {
-    /// Dump a human-readable explanation of the settings for this pin to the given `writer` object.
-    pub fn dump_human_readable<W: Write>(&self, mut writer: W) -> Result<(), io::Error> {
-        write!(writer, "\n")?;
-        write!(writer, "I/O configuration for input-only pin\n")?;
-        write!(writer, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"})?;
-        write!(writer, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
+impl fmt::Display for XC2ExtraIBuf {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Schmitt trigger input: {}\n", if self.schmitt_trigger {"yes"} else {"no"})?;
+        write!(f, "termination: {}\n", if self.termination_enabled {"yes"} else {"no"})?;
 
         Ok(())
     }

@@ -879,18 +879,23 @@ impl XC2BitstreamBits {
 
         // IOBs
         for i in 0..self.device_type().num_iobs() {
+            write!(writer, "\n")?;
+            let (fb, mc) = iob_num_to_fb_mc_num(self.device_type(), i as u32).unwrap();
+            write!(writer, "I/O configuration for FB{}_{}\n", fb + 1, mc + 1)?;
             if let Some(iob) = self.get_small_iob(i) {
-                iob.dump_human_readable(self.device_type(), i as u32, &mut writer)?;
+                write!(writer, "{}", iob)?;
             }
             if let Some(iob) = self.get_large_iob(i) {
-                iob.dump_human_readable(self.device_type(), i as u32, &mut writer)?;
+                write!(writer, "{}", iob)?;
             }
         }
 
         // Input-only pin
         match self {
             &XC2BitstreamBits::XC2C32 {ref inpin, ..} | &XC2BitstreamBits::XC2C32A {ref inpin, ..} => {
-                inpin.dump_human_readable(&mut writer)?;
+                write!(writer, "\n")?;
+                write!(writer, "I/O configuration for input-only pin\n")?;
+                write!(writer, "{}", inpin)?;
             },
             _ => {}
         }
