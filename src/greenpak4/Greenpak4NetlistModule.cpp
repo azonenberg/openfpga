@@ -24,6 +24,37 @@ using namespace std;
 #define VDD_NETNUM 1
 #define VSS_NETNUM 0
 
+static bool ParseYosysAttribute(struct json_object *obj, string &out) {
+	auto obj_type = json_object_get_type(obj);
+	out = json_object_get_string(obj);
+	if (obj_type == json_type_int) {
+		// Legacy style attribute, implicitly converted from integer to string
+		return true;
+	} else if (obj_type == json_type_string) {
+		// Attribute is a string, can be either a string or a new-style
+		// integer
+		size_t cursor = out.find_first_not_of("01xz");
+		if (cursor == string::npos) {
+			// only 01xz or empty string; is a new-style integer
+
+			// if it's <= 32 bits and doesn't contain xz then we can parse it
+			// and then store the string form
+			if (out.length() <= 32 && out.find_first_of("xz") == string::npos) {
+				// Convert to base 10
+				auto parsed_int = stoul(out, nullptr, 2);
+				out = to_string(parsed_int);
+			}
+		} else if (out.find_first_not_of(' ', cursor) == string::npos) {
+			// ends with a space; is a string but we have to strip the space off
+			out.pop_back();
+		}
+		return true;
+	} else {
+		// Not recognized
+		return false;
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Construction / destruction
 
@@ -248,7 +279,13 @@ void Greenpak4NetlistModule::LoadAttributes(json_object* object)
 		}
 
 		//Save the attribute
-		m_attributes[cname] = json_object_get_string(child);
+		string attr;
+		if(!ParseYosysAttribute(child, attr)) {
+			LogError("Illegal value for module attribute \"%s\"\n", cname.c_str());
+			m_parseOK = false;
+			return;
+		}
+		m_attributes[cname] = attr;
 	}
 }
 
@@ -476,7 +513,13 @@ void Greenpak4NetlistModule::LoadNetAttributes(Greenpak4NetlistNode* net, json_o
 		//LogNotice("    net %s attribute %s = %s\n", net->m_name.c_str(), cname.c_str(), json_object_get_string(child));
 
 		//Save the attribute
-		net->m_attributes[cname] = value;
+		string attr;
+		if(!ParseYosysAttribute(child, attr)) {
+			LogError("Illegal value for net attribute \"%s\"\n", cname.c_str());
+			m_parseOK = false;
+			return;
+		}
+		net->m_attributes[cname] = attr;
 	}
 }
 
@@ -499,7 +542,13 @@ void Greenpak4NetlistModule::LoadCellAttributes(Greenpak4NetlistCell* cell, json
 		}
 
 		//Save the attribute
-		cell->m_attributes[cname] = json_object_get_string(child);
+		string attr;
+		if(!ParseYosysAttribute(child, attr)) {
+			LogError("Illegal value for cell attribute \"%s\"\n", cname.c_str());
+			m_parseOK = false;
+			return;
+		}
+		cell->m_attributes[cname] = attr;
 	}
 }
 
@@ -524,7 +573,13 @@ void Greenpak4NetlistModule::LoadCellParameters(Greenpak4NetlistCell* cell, json
 		}
 
 		//Save the attribute
-		cell->m_parameters[cname] = json_object_get_string(child);
+		string attr;
+		if(!ParseYosysAttribute(child, attr)) {
+			LogError("Illegal value for cell parameter \"%s\"\n", cname.c_str());
+			m_parseOK = false;
+			return;
+		}
+		cell->m_parameters[cname] = attr;
 	}
 }
 
