@@ -329,6 +329,7 @@ bool Greenpak4Counter::Load(bool* bitstream)
 			case 8:
 				m_preDivide = 1;
 				m_clock = m_device->GetRingOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
 
 			case 10:
 				m_preDivide = 1;
@@ -383,6 +384,7 @@ bool Greenpak4Counter::Load(bool* bitstream)
 			case 6:
 				m_preDivide = 1;
 				m_clock = m_device->GetRingOscillator()->GetOutput("CLKOUT_HARDIP");
+				break;
 
 			//TODO: cascading
 			//TODO: Matrix outputs
