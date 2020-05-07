@@ -20,6 +20,7 @@
 #define PARGraph_h
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 class PARGraphNode;
@@ -51,6 +52,8 @@ public:
 
 	//Insertion
 	void AddNode(PARGraphNode* node);
+
+	std::string DumpAsDot() const;
 
 protected:
 
